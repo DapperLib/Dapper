@@ -20,6 +20,14 @@ namespace SqlMapper
             typeMap[typeof(int)] = SqlDbType.Int;
             typeMap[typeof(int?)] = SqlDbType.Int;
             typeMap[typeof(string)] = SqlDbType.NVarChar;
+
+            // weird ... I know see: http://msdn.microsoft.com/en-us/library/ms131092.aspx
+            typeMap[typeof(double)] = SqlDbType.Float;
+            typeMap[typeof(double?)] = SqlDbType.Float;
+
+            typeMap[typeof(bool)] = SqlDbType.Bit;
+            typeMap[typeof(bool?)] = SqlDbType.Bit;
+
             typeMap[typeof(Guid)] = SqlDbType.UniqueIdentifier;
             typeMap[typeof(Guid?)] = SqlDbType.UniqueIdentifier;
             typeMap[typeof(int[])] = SqlDbType.Structured;
@@ -106,7 +114,7 @@ namespace SqlMapper
                 object oDeserializer;
                 if (!cachedSerializers.TryGetValue(identity, out oDeserializer))
                 {
-                    if (typeof(T).IsClass)
+                    if (typeof(T).IsClass && typeof(T) != typeof(string))
                     {
                         oDeserializer = GetClassDeserializer<T>(reader);
                     }
@@ -210,12 +218,7 @@ namespace SqlMapper
         private static object GetStructDeserializer<T>(SqlDataReader reader)
         {
             Func<SqlDataReader, T> deserializer = null;
-            var type = typeof(T);
-            if (type == typeof(int))
-            {
-                // yuck boxing 
-                deserializer = r => (T)(object)r.GetInt32(0);
-            }
+            deserializer = r => (T)r.GetValue(0);
             return deserializer;
         }
 

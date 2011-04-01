@@ -45,6 +45,24 @@ namespace SqlMapper
             AssertEquals(items[2], 3);
         }
 
+
+        public void TestDoubleParam()
+        {
+            AssertEquals(connection.ExecuteMapperQuery<double>("select @d", new { d = 0.1d }).First(), 0.1d);
+        }
+
+        public void TestBoolParam()
+        {
+            AssertEquals(connection.ExecuteMapperQuery<bool>("select @b", new { b = false }).First(), false);
+        }
+
+        public void TestStrings()
+        {
+            var strings = connection.ExecuteMapperQuery<string>(@"select 'a' a union select 'b'").ToList();
+            AssertEquals(strings[0], "a");
+            AssertEquals(strings[1], "b");
+        }
+
         public class Dog
         {
             public int? Age { get; set; }
@@ -61,7 +79,6 @@ namespace SqlMapper
             AssertEquals(dog.Count(), 1);
             AssertNull(dog.First().Age);
         }
-
         
     }
 }
