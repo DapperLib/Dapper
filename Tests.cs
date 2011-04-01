@@ -16,6 +16,14 @@ namespace SqlMapper
             }
         }
 
+        void AssertNull(object a)
+        {
+            if (a != null)
+            {
+                throw new ApplicationException(string.Format("{0} should be null", a));
+            }
+        }
+
 
         SqlConnection connection = Program.GetOpenConnection();
 
@@ -36,5 +44,24 @@ namespace SqlMapper
             AssertEquals(items[1], 2);
             AssertEquals(items[2], 3);
         }
+
+        public class Dog
+        {
+            public int? Age { get; set; }
+            public Guid Id { get; set; }
+            public string Name { get; set; }
+            public float? Weight { get; set; }
+
+            public int IgnoredProperty { get { return 1; } }
+        }
+
+        public void TestIntSupportsNull()
+        {
+            var dog = connection.ExecuteMapperQuery<Dog>("select Age = @Age", new { Age = (int?)null });
+            AssertEquals(dog.Count(), 1);
+            AssertNull(dog.First().Age);
+        }
+
+        
     }
 }

@@ -81,12 +81,6 @@
       <LastGenOutput>DataClasses.designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </None>
-    <None Include="nhibernate\nhibernate-configuration.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="nhibernate\nhibernate-mapping.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -99,14 +93,6 @@
     <None Include="Linq2Sql\DataClasses.dbml.layout">
       <DependentUpon>DataClasses.dbml</DependentUpon>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="nhibernate\Iesi.Collections.dll" />
-    <Content Include="nhibernate\Iesi.Collections.pdb" />
-    <Content Include="nhibernate\Iesi.Collections.xml" />
-    <Content Include="nhibernate\NHibernate.dll" />
-    <Content Include="nhibernate\NHibernate.pdb" />
-    <Content Include="nhibernate\NHibernate.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
