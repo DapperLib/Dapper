@@ -56,7 +56,7 @@ namespace SqlMapper
 
         public void PassInIntArray()
         {
-            connection.ExecuteMapperQuery<int>("select * from @Ids", new { Ids = new int[] { 1, 2, 3 } })
+            connection.ExecuteMapperQuery<int>("select * from @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
              .IsSequenceEqual(new[] { 1, 2, 3 });
         }
 

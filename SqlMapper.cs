@@ -30,10 +30,28 @@ namespace SqlMapper
 
             typeMap[typeof(Guid)] = SqlDbType.UniqueIdentifier;
             typeMap[typeof(Guid?)] = SqlDbType.UniqueIdentifier;
-            typeMap[typeof(int[])] = SqlDbType.Structured;
-            typeMap[typeof(List<int>)] = SqlDbType.Structured;
-            typeMap[typeof(string[])] = SqlDbType.Structured;
-            typeMap[typeof(List<string>)] = SqlDbType.Structured;
+
+            typeMap[typeof(DateTime)] = SqlDbType.DateTime;
+            typeMap[typeof(DateTime?)] = SqlDbType.DateTime;
+
+        }
+
+        private static SqlDbType LookupDbType(Type type)
+        {
+            SqlDbType dbType;
+            if (typeMap.TryGetValue(type, out dbType))
+            {
+                return dbType;
+            }
+            else
+            {
+                if (typeof(IEnumerable<int>).IsAssignableFrom(type) || typeof(IEnumerable<string>).IsAssignableFrom(type))
+                {
+                    return SqlDbType.Structured;
+                }
+            }
+
+            throw new NotSupportedException("The type : " + type.ToString() + " is not supported by the mapper");
         }
 
 
@@ -193,7 +211,7 @@ namespace SqlMapper
                 il.Emit(OpCodes.Dup); // stack is now [list] [list]
 
                 il.Emit(OpCodes.Ldstr, prop.Name); // stack is  [list] [list] [name]
-                il.Emit(OpCodes.Ldc_I4, (int)typeMap[prop.PropertyType]); // stack is [list] [list] [name] [dbtype]
+                il.Emit(OpCodes.Ldc_I4, (int)LookupDbType(prop.PropertyType)); // stack is [list] [list] [name] [dbtype]
                 il.Emit(OpCodes.Ldloc_0); // stack is [list] [list] [name] [dbtype] [typed-param]
                 il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [list] [list] [name] [dbtype] [typed-value]
                 if (prop.PropertyType.IsValueType)
