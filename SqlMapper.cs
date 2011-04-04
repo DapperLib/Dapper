@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Reflection;
 using Microsoft.SqlServer.Server;
-using System.Security.Cryptography;
+using System.Dynamic;
 
 namespace SqlMapper
 {
@@ -32,6 +32,8 @@ namespace SqlMapper
             typeMap[typeof(Guid?)] = SqlDbType.UniqueIdentifier;
             typeMap[typeof(int[])] = SqlDbType.Structured;
             typeMap[typeof(List<int>)] = SqlDbType.Structured;
+            typeMap[typeof(string[])] = SqlDbType.Structured;
+            typeMap[typeof(List<string>)] = SqlDbType.Structured;
         }
 
 
@@ -43,7 +45,7 @@ namespace SqlMapper
 
             public static ParamInfo Create(string name, SqlDbType type, object val)
             {
-                return new ParamInfo { Name = name, Type = type, Val = val };
+                return new ParamInfo { Name = name, Type = type, Val = val};
             }
 
             public SqlDbType Type { get; private set; }
@@ -53,7 +55,6 @@ namespace SqlMapper
 
         private class Identity : IEquatable<Identity>
         {
-            
 
             public Type Type { get { return type; } }
             public string Sql { get { return sql; } }
@@ -89,6 +90,12 @@ namespace SqlMapper
 
         static Dictionary<Type, SqlDbType> typeMap;
 
+        public static List<dynamic> ExecuteMapperQuery (this SqlConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        {
+            // TODO: get rid of casting hackery
+            return ExecuteMapperQuery<ExpandoObject>(cnn, sql, param, transaction).Select(s => s as dynamic).ToList();
+        }
+
         public static List<T> ExecuteMapperQuery<T>(this SqlConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             var identity = new Identity(sql, typeof(T));
@@ -114,7 +121,11 @@ namespace SqlMapper
                 object oDeserializer;
                 if (!cachedSerializers.TryGetValue(identity, out oDeserializer))
                 {
-                    if (typeof(T).IsClass && typeof(T) != typeof(string))
+                    if (typeof(T) == typeof(ExpandoObject))
+                    {
+                        oDeserializer = GetDynamicDeserializer(reader);
+                    }
+                    else if (typeof(T).IsClass && typeof(T) != typeof(string))
                     {
                         oDeserializer = GetClassDeserializer<T>(reader);
                     }
@@ -133,6 +144,31 @@ namespace SqlMapper
                 // ignore any other grids; note that this might mean we miss exceptions that happen
                 // late in the TDS stream, but that is bad design anyhow
             }
+
+            return rval;
+        }
+
+        private static object GetDynamicDeserializer(SqlDataReader reader)
+        {
+            List<string> colNames = new List<string>();
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                colNames.Add(reader.GetName(i));
+            }
+
+            Func<SqlDataReader, ExpandoObject> rval =
+                r => 
+                {
+                    IDictionary<string, object> row = new ExpandoObject();
+                    int i = 0;
+                    foreach (var colName in colNames)
+                    {
+                        var tmp = reader.GetValue(i);
+                        row[colName] = tmp == DBNull.Value ? null : tmp;
+                        i++;
+                    }
+                    return (ExpandoObject)row;
+                };
 
             return rval;
         }
@@ -195,17 +231,41 @@ namespace SqlMapper
                         if (info.Type == SqlDbType.Structured)
                         {
                             List<SqlDataRecord> items = new List<SqlDataRecord>();
-                            SqlMetaData[] metadata = { new SqlMetaData("Id", SqlDbType.Int) };
-
-                            foreach (int id in (IEnumerable<int>)info.Val)
+                            SqlMetaData[] metadata;  
+                            
+                            var intList = info.Val as IEnumerable<int>;
+                            if (intList != null)
                             {
-                                SqlDataRecord rec = new SqlDataRecord(metadata);
-                                rec.SetInt32(0, id);
-                                items.Add(rec);
+                                metadata = new[] { new SqlMetaData("Id", SqlDbType.Int) };
+                                foreach (int id in intList)
+                                {
+                                    SqlDataRecord rec = new SqlDataRecord(metadata);
+                                    rec.SetInt32(0, id);
+                                    items.Add(rec);
+                                }
+                                param.TypeName = "int_list";
+                            }
+                            else
+                            {
+                                var strList = info.Val as IEnumerable<string>;
+                                if (strList != null)
+                                {
+                                    metadata = new[] { new SqlMetaData("Name", SqlDbType.NVarChar, 4000) };
+                                    foreach (var str in strList)
+                                    {
+                                        SqlDataRecord rec = new SqlDataRecord(metadata);
+                                        rec.SetString(0, str);
+                                        items.Add(rec);
+                                    }
+                                    param.TypeName = "string_list";
+                                }
+                                else
+                                {
+                                    throw new NotImplementedException();
+                                }
                             }
 
                             param.Direction = ParameterDirection.Input;
-                            param.TypeName = "int_list";
                             param.Value = items;
                         }
                     }

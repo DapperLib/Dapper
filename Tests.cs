@@ -6,61 +6,77 @@ using System.Data.SqlClient;
 
 namespace SqlMapper
 {
+    static class TestAssertions
+    {
+
+        public static void IsEquals<T>(this T obj, T other)
+        {
+            if (!obj.Equals(other))
+            {
+                throw new ApplicationException(string.Format("{0} should be equals to {1}", obj, other));
+            }
+        }
+
+        public static void IsSequenceEqual<T>(this IEnumerable<T> obj, IEnumerable<T> other)
+        {
+            if (!obj.SequenceEqual(other))
+            {
+                throw new ApplicationException(string.Format("{0} should be equals to {1}", obj, other));
+            }
+        }
+
+        public static void IsFalse(this bool b)
+        {
+            if (b)
+            {
+                throw new ApplicationException("Expected false");
+            }
+        }
+
+        public static void IsNull(this object obj)
+        {
+            if (obj != null)
+            {
+                throw new ApplicationException("Expected null");
+            }
+        }
+
+    }
+
     class Tests
     {
-        void AssertEquals(object a, object b)
-        {
-            if (!a.Equals(b))
-            {
-                throw new ApplicationException(string.Format("{0} should be equals to {1}",a,b));
-            }
-        }
-
-        void AssertNull(object a)
-        {
-            if (a != null)
-            {
-                throw new ApplicationException(string.Format("{0} should be null", a));
-            }
-        }
-
-
+       
         SqlConnection connection = Program.GetOpenConnection();
 
         public void SelectListInt()
         {
-            var items = connection.ExecuteMapperQuery<int>("select 1 union all select 2 union all select 3").ToList();
-
-            AssertEquals(items[0], 1);
-            AssertEquals(items[1], 2);
-            AssertEquals(items[2], 3);
+            connection.ExecuteMapperQuery<int>("select 1 union all select 2 union all select 3")
+              .IsSequenceEqual(new[] { 1, 2, 3 });
         }
 
         public void PassInIntArray()
         {
-            var items = connection.ExecuteMapperQuery<int>("select * from @Ids", new {Ids = new int[] {1,2,3} }).ToList();
-
-            AssertEquals(items[0], 1);
-            AssertEquals(items[1], 2);
-            AssertEquals(items[2], 3);
+            connection.ExecuteMapperQuery<int>("select * from @Ids", new { Ids = new int[] { 1, 2, 3 } })
+             .IsSequenceEqual(new[] { 1, 2, 3 });
         }
 
 
         public void TestDoubleParam()
         {
-            AssertEquals(connection.ExecuteMapperQuery<double>("select @d", new { d = 0.1d }).First(), 0.1d);
+            connection.ExecuteMapperQuery<double>("select @d", new { d = 0.1d }).First()
+                .IsEquals(0.1d);
         }
 
         public void TestBoolParam()
         {
-            AssertEquals(connection.ExecuteMapperQuery<bool>("select @b", new { b = false }).First(), false);
+            connection.ExecuteMapperQuery<bool>("select @b", new { b = false }).First()
+                .IsFalse();
         }
 
         public void TestStrings()
         {
-            var strings = connection.ExecuteMapperQuery<string>(@"select 'a' a union select 'b'").ToList();
-            AssertEquals(strings[0], "a");
-            AssertEquals(strings[1], "b");
+            connection.ExecuteMapperQuery<string>(@"select 'a' a union select 'b'")
+                .IsSequenceEqual(new[] { "a", "b" });
         }
 
         public class Dog
@@ -76,9 +92,36 @@ namespace SqlMapper
         public void TestIntSupportsNull()
         {
             var dog = connection.ExecuteMapperQuery<Dog>("select Age = @Age", new { Age = (int?)null });
-            AssertEquals(dog.Count(), 1);
-            AssertNull(dog.First().Age);
+            
+            dog.Count()
+                .IsEquals(1);
+
+            dog.First().Age
+                .IsNull();
         }
-        
+
+        public void TestExpando()
+        {
+            var rows = connection.ExecuteMapperQuery("select 1 A, 2 B union all select 3, 4");
+
+            ((int)rows[0].A)
+                .IsEquals(1);
+
+            ((int)rows[0].B)
+                .IsEquals(2);
+
+            ((int)rows[1].A)
+                .IsEquals(3);
+
+            ((int)rows[1].B)
+                .IsEquals(4);
+        }
+
+        public void TestStringList()
+        { 
+            connection.ExecuteMapperQuery<string>("select * from @strings", new {strings = new[] {"a","b","c"}})
+                .IsSequenceEqual(new[] {"a","b","c"});
+        }
+
     }
 }
