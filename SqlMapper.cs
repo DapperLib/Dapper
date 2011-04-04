@@ -163,7 +163,7 @@ namespace SqlMapper
                     int i = 0;
                     foreach (var colName in colNames)
                     {
-                        var tmp = reader.GetValue(i);
+                        var tmp = r.GetValue(i);
                         row[colName] = tmp == DBNull.Value ? null : tmp;
                         i++;
                     }

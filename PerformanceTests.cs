@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using SqlMapper.Linq2Sql;
 using System.Data.Linq;
 using System.Diagnostics;
+using Massive;
 
 namespace SqlMapper
 {
@@ -88,6 +89,14 @@ namespace SqlMapper
 
             var mapperConnection = Program.GetOpenConnection();
             tests.Add(id => mapperConnection.ExecuteMapperQuery<Post>("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Mapper Query");
+
+            var mapperConnection2 = Program.GetOpenConnection();
+            tests.Add(id => mapperConnection2.ExecuteMapperQuery("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Dynamic Mapper Query");
+
+
+            var massiveConnection = new DynamicModel(Program.connectionString);
+            tests.Add(id => massiveConnection.Query("select * from Posts where Id = @0", id).ToList(), "Dynamic Massive ORM Query");
+
 
             // HAND CODED 
 

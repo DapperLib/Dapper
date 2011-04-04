@@ -32,10 +32,11 @@ namespace SqlMapper
     class Program
     {
 
+        public static readonly string connectionString = "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
 
         public static SqlConnection GetOpenConnection()
         {
-            var connection = new SqlConnection("Data Source=.;Initial Catalog=tempdb;Integrated Security=True");
+            var connection = new SqlConnection(connectionString);
             connection.Open();
             return connection;
         }
