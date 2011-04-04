@@ -109,33 +109,28 @@ namespace SqlMapper
 
         static Dictionary<Type, SqlDbType> typeMap;
 
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static int ExecuteMapperCommand(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        {
+            return ExecuteCommand(cnn, transaction, sql, GetParamInfo(param));
+        }
+
         public static List<dynamic> ExecuteMapperQuery (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             // TODO: get rid of casting hackery
             return ExecuteMapperQuery<ExpandoObject>(cnn, sql, param, transaction).Select(s => s as dynamic).ToList();
         }
 
+       
         public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             var identity = new Identity(sql, typeof(T));
             var rval = new List<T>();
 
-
-            Func<object, List<ParamInfo>> paramInfoGenerator;
-            List<ParamInfo> paramInfo = null;
-
-            if (param != null)
-            {
-                if (!cachedParamReaders.TryGetValue(param.GetType(), out paramInfoGenerator))
-                {
-                    paramInfoGenerator = CreateParamInfoGenerator(param.GetType());
-                    cachedParamReaders[param.GetType()] = paramInfoGenerator;
-                }
-                paramInfo = paramInfoGenerator(param);
-            }
-
-            
-            using (var reader = GetReader<T>(cnn, transaction, sql, paramInfo))
+            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
             {
                 object oDeserializer;
                 if (!cachedSerializers.TryGetValue(identity, out oDeserializer))
@@ -165,6 +160,24 @@ namespace SqlMapper
             }
 
             return rval;
+        }
+
+        private static List<ParamInfo> GetParamInfo(object param)
+        {
+            Func<object, List<ParamInfo>> paramInfoGenerator;
+            List<ParamInfo> paramInfo = null;
+
+            if (param != null)
+            {
+                if (!cachedParamReaders.TryGetValue(param.GetType(), out paramInfoGenerator))
+                {
+                    paramInfoGenerator = CreateParamInfoGenerator(param.GetType());
+                    cachedParamReaders[param.GetType()] = paramInfoGenerator;
+                }
+                paramInfo = paramInfoGenerator(param);
+            }
+
+            return paramInfo;
         }
 
         private static object GetDynamicDeserializer(IDataReader reader)
@@ -228,60 +241,75 @@ namespace SqlMapper
             return (Func<object, List<ParamInfo>>)dm.CreateDelegate(typeof(Func<object, List<ParamInfo>>));
         }
 
-
-        private static IDataReader GetReader<T>(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static IDbCommand SetupCommand(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
         {
-            using (var cmd = cnn.CreateCommand())
+            var cmd = cnn.CreateCommand();
+            
+            cmd.Transaction = tranaction;
+            cmd.CommandText = sql;
+            if (paramInfo != null)
             {
-                cmd.Transaction = tranaction;
-                cmd.CommandText = sql;
-                if (paramInfo != null)
+                foreach (var info in paramInfo)
                 {
-                    foreach (var info in paramInfo)
+                    var param = new SqlParameter("@" + info.Name, info.Type);
+
+
+                    param.Value = info.Val ?? DBNull.Value;
+                    param.Direction = ParameterDirection.Input;
+                    if (info.Type == SqlDbType.NVarChar)
                     {
-                        var param = new SqlParameter("@" + info.Name, info.Type);
-                        
+                        param.Size = 4000;
+                    }
 
-                        param.Value = info.Val ?? DBNull.Value;
-                        param.Direction = ParameterDirection.Input;
-                        if (info.Type == SqlDbType.NVarChar)
+                    if (info.Type == SqlDbType.Structured)
+                    {
+
+                        // initially we tried TVP, however it performs quite poorly.
+                        // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
+
+                        var list = info.Val as IEnumerable;
+                        var count = 0;
+
+                        if (list != null)
                         {
-                            param.Size = 4000;
-                        }
-
-                        if (info.Type == SqlDbType.Structured)
-                        {
-
-                            // initially we tried TVP, however it performs quite poorly.
-                            // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
-                            
-                            var list = info.Val as IEnumerable;
-                            var count = 0; 
-
-                            if (list != null)
-                            {                                
-                                foreach (var item in list)
-                                {
-                                    count++;
-                                    cmd.Parameters.Add(new SqlParameter("@" + info.Name + count, item));
-                                }
-
-                                cmd.CommandText = cmd.CommandText.Replace("@" + info.Name, 
-                                    "(" + string.Join( 
-                                        ",", Enumerable.Range(1, count).Select(i => "@" + info.Name + i)
-                                    ) + ")");  
-                            }
-                            else
+                            foreach (var item in list)
                             {
-                                throw new NotImplementedException();
+                                count++;
+                                cmd.Parameters.Add(new SqlParameter("@" + info.Name + count, item));
                             }
+
+                            cmd.CommandText = cmd.CommandText.Replace("@" + info.Name,
+                                "(" + string.Join(
+                                    ",", Enumerable.Range(1, count).Select(i => "@" + info.Name + i)
+                                ) + ")");
                         }
                         else
                         {
-                            cmd.Parameters.Add(param);
+                            throw new NotImplementedException();
                         }
                     }
+                    else
+                    {
+                        cmd.Parameters.Add(param);
+                    }
                 }
+            }
+            return cmd;
+        }
+
+
+        private static int ExecuteCommand(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        {
+            using (var cmd = SetupCommand(cnn, tranaction, sql, paramInfo))
+            {
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static IDataReader GetReader(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        {
+            using (var cmd = SetupCommand(cnn, tranaction, sql, paramInfo))
+            {
                 return cmd.ExecuteReader();
             }
         }

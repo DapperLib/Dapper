@@ -118,9 +118,21 @@ namespace SqlMapper
         }
 
         public void TestStringList()
-        { 
+        {
             connection.ExecuteMapperQuery<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
                 .IsSequenceEqual(new[] {"a","b","c"});
+        }
+
+        public void TestExecuteCommand()
+        {
+            connection.ExecuteMapperCommand(@"
+    set nocount on 
+    create table #t(i int) 
+    set nocount off 
+    insert #t 
+    select @a a union all select @b 
+    set nocount on 
+    drop table #t", new {a=1, b=2 }).IsEquals(2);
         }
 
     }
