@@ -108,13 +108,13 @@ namespace SqlMapper
 
         static Dictionary<Type, SqlDbType> typeMap;
 
-        public static List<dynamic> ExecuteMapperQuery (this SqlConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static List<dynamic> ExecuteMapperQuery (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             // TODO: get rid of casting hackery
             return ExecuteMapperQuery<ExpandoObject>(cnn, sql, param, transaction).Select(s => s as dynamic).ToList();
         }
 
-        public static List<T> ExecuteMapperQuery<T>(this SqlConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             var identity = new Identity(sql, typeof(T));
             var rval = new List<T>();
@@ -154,7 +154,7 @@ namespace SqlMapper
 
                     cachedSerializers[identity] = oDeserializer;
                 }
-                Func<SqlDataReader, T> deserializer = (Func<SqlDataReader, T>)oDeserializer;
+                Func<IDataReader, T> deserializer = (Func<IDataReader, T>)oDeserializer;
                 while (reader.Read())
                 {
                     rval.Add(deserializer(reader));
@@ -166,7 +166,7 @@ namespace SqlMapper
             return rval;
         }
 
-        private static object GetDynamicDeserializer(SqlDataReader reader)
+        private static object GetDynamicDeserializer(IDataReader reader)
         {
             List<string> colNames = new List<string>();
             for (int i = 0; i < reader.FieldCount; i++)
@@ -174,7 +174,7 @@ namespace SqlMapper
                 colNames.Add(reader.GetName(i));
             }
 
-            Func<SqlDataReader, ExpandoObject> rval =
+            Func<IDataReader, ExpandoObject> rval =
                 r => 
                 {
                     IDictionary<string, object> row = new ExpandoObject();
@@ -228,7 +228,7 @@ namespace SqlMapper
         }
 
 
-        private static SqlDataReader GetReader<T>(SqlConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static IDataReader GetReader<T>(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
         {
             using (var cmd = cnn.CreateCommand())
             {
@@ -238,7 +238,9 @@ namespace SqlMapper
                 {
                     foreach (var info in paramInfo)
                     {
-                        var param = cmd.Parameters.Add("@" + info.Name, info.Type);
+                        var param = new SqlParameter("@" + info.Name, info.Type);
+                        cmd.Parameters.Add(param);
+
                         param.Value = info.Val ?? DBNull.Value;
                         param.Direction = ParameterDirection.Input;
                         if (info.Type == SqlDbType.NVarChar)
@@ -293,16 +295,16 @@ namespace SqlMapper
         }
 
 
-        private static object GetStructDeserializer<T>(SqlDataReader reader)
+        private static object GetStructDeserializer<T>(IDataReader reader)
         {
-            Func<SqlDataReader, T> deserializer = null;
+            Func<IDataReader, T> deserializer = null;
             deserializer = r => (T)r.GetValue(0);
             return deserializer;
         }
 
-        public static Func<SqlDataReader, T> GetClassDeserializer<T>(SqlDataReader reader)
+        public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader)
         {
-            DynamicMethod dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), typeof(T), new Type[] { typeof(SqlDataReader) }, true);
+            DynamicMethod dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), typeof(T), new Type[] { typeof(IDataReader) }, true);
 
             var il = dm.GetILGenerator();
 
@@ -324,7 +326,7 @@ namespace SqlMapper
                           ).ToList();
 
 
-            var getItem = typeof(SqlDataReader).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            var getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
                          .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
                          .Select(p => p.GetGetMethod()).First();
 
@@ -363,7 +365,7 @@ namespace SqlMapper
             }
             il.Emit(OpCodes.Ret); // stack is empty
 
-            return (Func<SqlDataReader, T>)dm.CreateDelegate(typeof(Func<SqlDataReader, T>));
+            return (Func<IDataReader, T>)dm.CreateDelegate(typeof(Func<IDataReader, T>));
         }
 
         private static void EmitInt32(ILGenerator il, int value)
