@@ -108,18 +108,19 @@ namespace SqlMapper
                     reader.Read();
                     var post = new Post();
                     post.Id = reader.GetInt32(0);
-                    post.Text = reader.GetString(1);
+                    post.Text = reader.GetNullableString(1);
                     post.CreationDate = reader.GetDateTime(2);
                     post.LastChangeDate = reader.GetDateTime(3);
-                    post.Counter1 = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4);
-                    post.Counter2 = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5);
-                    post.Counter3 = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6);
-                    post.Counter4 = reader.IsDBNull(7) ? (int?)null : reader.GetInt32(7);
-                    post.Counter5 = reader.IsDBNull(8) ? (int?)null : reader.GetInt32(8);
-                    post.Counter6 = reader.IsDBNull(9) ? (int?)null : reader.GetInt32(9);
-                    post.Counter7 = reader.IsDBNull(10) ? (int?)null : reader.GetInt32(10);
-                    post.Counter8 = reader.IsDBNull(11) ? (int?)null : reader.GetInt32(11);
-                    post.Counter9 = reader.IsDBNull(12) ? (int?)null : reader.GetInt32(12);
+
+                    post.Counter1 = reader.GetNullableValue<int>(4);
+                    post.Counter2 = reader.GetNullableValue<int>(5);
+                    post.Counter3 = reader.GetNullableValue<int>(6);
+                    post.Counter4 = reader.GetNullableValue<int>(7);
+                    post.Counter5 = reader.GetNullableValue<int>(8);
+                    post.Counter6 = reader.GetNullableValue<int>(9);
+                    post.Counter7 = reader.GetNullableValue<int>(10);
+                    post.Counter8 = reader.GetNullableValue<int>(11);
+                    post.Counter9 = reader.GetNullableValue<int>(12);
                 }
             }, "hand coded");
 
@@ -127,5 +128,28 @@ namespace SqlMapper
 
         }
 
+    }
+
+    static class SqlDataReaderHelper
+    {
+        public static string GetNullableString(this SqlDataReader reader, int index) 
+        {
+            object tmp = reader.GetValue(index);
+            if (tmp != DBNull.Value)
+            {
+                return (string)tmp;
+            }
+            return null;
+        }
+
+        public static Nullable<T> GetNullableValue<T>(this SqlDataReader reader, int index) where T : struct
+        {
+            object tmp = reader.GetValue(index);
+            if (tmp != DBNull.Value)
+            {
+                return (T)tmp;
+            }
+            return null;
+        }
     }
 }
