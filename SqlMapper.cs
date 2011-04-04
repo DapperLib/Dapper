@@ -9,6 +9,7 @@ using System.Data;
 using System.Reflection;
 using Microsoft.SqlServer.Server;
 using System.Dynamic;
+using System.Collections;
 
 namespace SqlMapper
 {
@@ -239,7 +240,7 @@ namespace SqlMapper
                     foreach (var info in paramInfo)
                     {
                         var param = new SqlParameter("@" + info.Name, info.Type);
-                        cmd.Parameters.Add(param);
+                        
 
                         param.Value = info.Val ?? DBNull.Value;
                         param.Direction = ParameterDirection.Input;
@@ -250,43 +251,34 @@ namespace SqlMapper
 
                         if (info.Type == SqlDbType.Structured)
                         {
-                            List<SqlDataRecord> items = new List<SqlDataRecord>();
-                            SqlMetaData[] metadata;  
+
+                            // initially we tried TVP, however it performs quite poorly.
+                            // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
                             
-                            var intList = info.Val as IEnumerable<int>;
-                            if (intList != null)
-                            {
-                                metadata = new[] { new SqlMetaData("Id", SqlDbType.Int) };
-                                foreach (int id in intList)
+                            var list = info.Val as IEnumerable;
+                            var count = 0; 
+
+                            if (list != null)
+                            {                                
+                                foreach (var item in list)
                                 {
-                                    SqlDataRecord rec = new SqlDataRecord(metadata);
-                                    rec.SetInt32(0, id);
-                                    items.Add(rec);
+                                    count++;
+                                    cmd.Parameters.Add(new SqlParameter("@" + info.Name + count, item));
                                 }
-                                param.TypeName = "int_list";
+
+                                cmd.CommandText = cmd.CommandText.Replace("@" + info.Name, 
+                                    "(" + string.Join( 
+                                        ",", Enumerable.Range(1, count).Select(i => "@" + info.Name + i)
+                                    ) + ")");  
                             }
                             else
                             {
-                                var strList = info.Val as IEnumerable<string>;
-                                if (strList != null)
-                                {
-                                    metadata = new[] { new SqlMetaData("Name", SqlDbType.NVarChar, 4000) };
-                                    foreach (var str in strList)
-                                    {
-                                        SqlDataRecord rec = new SqlDataRecord(metadata);
-                                        rec.SetString(0, str);
-                                        items.Add(rec);
-                                    }
-                                    param.TypeName = "string_list";
-                                }
-                                else
-                                {
-                                    throw new NotImplementedException();
-                                }
+                                throw new NotImplementedException();
                             }
-
-                            param.Direction = ParameterDirection.Input;
-                            param.Value = items;
+                        }
+                        else
+                        {
+                            cmd.Parameters.Add(param);
                         }
                     }
                 }

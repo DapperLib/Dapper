@@ -56,7 +56,7 @@ namespace SqlMapper
 
         public void PassInIntArray()
         {
-            connection.ExecuteMapperQuery<int>("select * from @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
+            connection.ExecuteMapperQuery<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
              .IsSequenceEqual(new[] { 1, 2, 3 });
         }
 
@@ -119,7 +119,7 @@ namespace SqlMapper
 
         public void TestStringList()
         { 
-            connection.ExecuteMapperQuery<string>("select * from @strings", new {strings = new[] {"a","b","c"}})
+            connection.ExecuteMapperQuery<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
                 .IsSequenceEqual(new[] {"a","b","c"});
         }
 
