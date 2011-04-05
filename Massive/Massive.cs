@@ -123,6 +123,22 @@ namespace Massive
             _factory = DbProviderFactories.GetFactory(_providerName);
             _connectionString = connectionString;
         }
+
+        public virtual List<dynamic> QueryHacked(string sql, DbConnection connection, params object[] args)
+        {
+            List<dynamic> list = new List<dynamic>();
+            using(var rdr = CreateCommand(sql, connection, args).ExecuteReader(CommandBehavior.Default))
+            while (rdr.Read())
+            {
+                var e = new ExpandoObject();
+                var d = e as IDictionary<string, object>;
+                for (var i = 0; i < rdr.FieldCount; i++)
+                    d.Add(rdr.GetName(i), rdr[i]);
+                list.Add(e);
+            }
+            return list;
+        }
+
         /// <summary>
         /// Enumerates the reader yielding the result - thanks to Jeroen Haegebaert
         /// </summary>

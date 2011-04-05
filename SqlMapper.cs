@@ -252,7 +252,7 @@ namespace SqlMapper
                 foreach (var info in paramInfo)
                 {
                     var param = new SqlParameter("@" + info.Name, info.Type);
-
+                    
 
                     param.Value = info.Val ?? DBNull.Value;
                     param.Direction = ParameterDirection.Input;

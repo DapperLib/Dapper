@@ -97,6 +97,11 @@ namespace SqlMapper
             var massiveConnection = new DynamicModel(Program.connectionString);
             tests.Add(id => massiveConnection.Query("select * from Posts where Id = @0", id).ToList(), "Dynamic Massive ORM Query");
 
+            // Massive was hacked a bit to support an open connection, the intention is to add this to the API at some point
+            var massiveConnection2 = new DynamicModel(Program.connectionString);
+            var hackedConnection = Program.GetOpenConnection();
+            tests.Add(id => massiveConnection.QueryHacked("select * from Posts where Id = @0", hackedConnection , id).ToList(), "Dynamic Massive ORM Query (hacked)");
+
 
             // HAND CODED 
 
