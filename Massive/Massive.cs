@@ -66,13 +66,17 @@ namespace Massive
             var result = new List<dynamic>();
             while (rdr.Read())
             {
-                dynamic e = new ExpandoObject();
-                var d = e as IDictionary<string, object>;
-                for (int i = 0; i < rdr.FieldCount; i++)
-                    d.Add(rdr.GetName(i), rdr[i]);
-                result.Add(e);
+                result.Add(rdr.RecordToExpando());
             }
             return result;
+        }
+        public static dynamic RecordToExpando(this IDataReader rdr)
+        {
+            dynamic e = new ExpandoObject();
+            var d = e as IDictionary<string, object>;
+            for (int i = 0; i < rdr.FieldCount; i++)
+                d.Add(rdr.GetName(i), rdr[i]);
+            return e;
         }
         /// <summary>
         /// Turns the object into an ExpandoObject
@@ -113,32 +117,28 @@ namespace Massive
         DbProviderFactory _factory;
         string _connectionString;
 
-        public DynamicModel(string connectionString = "", string tableName = "", string primaryKeyField = "")
+        public DynamicModel(string connectionStringName = "", string tableName = "", string primaryKeyField = "")
         {
+            _factory = DbProviderFactories.GetFactory("System.Data.SqlClient");
+            /*
             TableName = tableName == "" ? this.GetType().Name : tableName;
             PrimaryKeyField = string.IsNullOrEmpty(primaryKeyField) ? "ID" : primaryKeyField;
-
+            if (connectionStringName == "")
+                connectionStringName = ConfigurationManager.ConnectionStrings[0].Name;
             var _providerName = "System.Data.SqlClient";
-           
-            _factory = DbProviderFactories.GetFactory(_providerName);
-            _connectionString = connectionString;
-        }
-
-        public virtual List<dynamic> QueryHacked(string sql, DbConnection connection, params object[] args)
-        {
-            List<dynamic> list = new List<dynamic>();
-            using(var rdr = CreateCommand(sql, connection, args).ExecuteReader(CommandBehavior.Default))
-            while (rdr.Read())
+            if (ConfigurationManager.ConnectionStrings[connectionStringName] != null)
             {
-                var e = new ExpandoObject();
-                var d = e as IDictionary<string, object>;
-                for (var i = 0; i < rdr.FieldCount; i++)
-                    d.Add(rdr.GetName(i), rdr[i]);
-                list.Add(e);
+                if (!string.IsNullOrEmpty(ConfigurationManager.ConnectionStrings[connectionStringName].ProviderName))
+                    _providerName = ConfigurationManager.ConnectionStrings[connectionStringName].ProviderName;
             }
-            return list;
+            else
+            {
+                throw new InvalidOperationException("Can't find a connection string with the name '" + connectionStringName + "'");
+            }
+            _factory = DbProviderFactories.GetFactory(_providerName);
+            _connectionString = ConfigurationManager.ConnectionStrings[connectionStringName].ConnectionString;
+             */
         }
-
         /// <summary>
         /// Enumerates the reader yielding the result - thanks to Jeroen Haegebaert
         /// </summary>
@@ -146,23 +146,23 @@ namespace Massive
         {
             using (var conn = OpenConnection())
             {
-                var rdr = CreateCommand(sql, conn, args).ExecuteReader(CommandBehavior.CloseConnection);
+                var rdr = CreateCommand(sql, conn, args).ExecuteReader();
                 while (rdr.Read())
                 {
-                    var e = new ExpandoObject();
-                    var d = e as IDictionary<string, object>;
-                    for (var i = 0; i < rdr.FieldCount; i++)
-                        d.Add(rdr.GetName(i), rdr[i]);
-                    yield return e;
+                    yield return rdr.RecordToExpando(); ;
                 }
             }
         }
-        /// <summary>
-        /// Runs a query against the database
-        /// </summary>
-        public virtual IList<dynamic> Fetch(string sql, params object[] args)
+        public virtual IEnumerable<dynamic> Query(string sql, DbConnection connection, params object[] args)
         {
-            return Query(sql, args).ToList<dynamic>();
+            using (var rdr = CreateCommand(sql, connection, args).ExecuteReader())
+            {
+                while (rdr.Read())
+                {
+                    yield return rdr.RecordToExpando(); ;
+                }
+            }
+
         }
         /// <summary>
         /// Returns a single result
@@ -181,8 +181,7 @@ namespace Massive
         /// </summary>
         DbCommand CreateCommand(string sql, DbConnection conn, params object[] args)
         {
-            DbCommand result = null;
-            result = _factory.CreateCommand();
+            var result = _factory.CreateCommand();
             result.Connection = conn;
             result.CommandText = sql;
             if (args.Length > 0)
@@ -194,10 +193,10 @@ namespace Massive
         /// </summary>
         public virtual DbConnection OpenConnection()
         {
-            var conn = _factory.CreateConnection();
-            conn.ConnectionString = _connectionString;
-            conn.Open();
-            return conn;
+            var result = _factory.CreateConnection();
+            result.ConnectionString = _connectionString;
+            result.Open();
+            return result;
         }
         /// <summary>
         /// Builds a set of Insert and Update commands based on the passed-on objects.
@@ -436,7 +435,8 @@ namespace Massive
         public virtual dynamic Single(object key, string columns = "*")
         {
             var sql = string.Format("SELECT {0} FROM {1} WHERE {2} = @0", columns, TableName, PrimaryKeyField);
-            return Fetch(sql, key).FirstOrDefault();
+            var items = Query(sql, key).ToList();
+            return items.FirstOrDefault();
         }
     }
 }
