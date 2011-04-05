@@ -89,15 +89,19 @@ namespace SqlMapper
             public int IgnoredProperty { get { return 1; } }
         }
 
-        public void TestIntSupportsNull()
+        public void TestStrongType()
         {
-            var dog = connection.ExecuteMapperQuery<Dog>("select Age = @Age", new { Age = (int?)null });
+            var guid = Guid.NewGuid();
+            var dog = connection.ExecuteMapperQuery<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
             
             dog.Count()
                 .IsEquals(1);
 
             dog.First().Age
                 .IsNull();
+
+            dog.First().Id
+                .IsEquals(guid);
         }
 
         public void TestExpando()

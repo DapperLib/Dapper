@@ -269,13 +269,19 @@ namespace SqlMapper
 
                         var list = info.Val as IEnumerable;
                         var count = 0;
+                        bool isString = info.Val is IEnumerable<string>;
 
                         if (list != null)
                         {
                             foreach (var item in list)
                             {
                                 count++;
-                                cmd.Parameters.Add(new SqlParameter("@" + info.Name + count, item));
+                                var sqlParam = new SqlParameter("@" + info.Name + count, item);
+                                if (isString)
+                                {
+                                    sqlParam.Size = 4000;
+                                }
+                                cmd.Parameters.Add(sqlParam);
                             }
 
                             cmd.CommandText = cmd.CommandText.Replace("@" + info.Name,
