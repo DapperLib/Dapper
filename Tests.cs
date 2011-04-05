@@ -139,5 +139,12 @@ namespace SqlMapper
     drop table #t", new {a=1, b=2 }).IsEquals(2);
         }
 
+        public void TestMassiveStrings()
+        { 
+            var str = new string('X', 20000);
+            connection.ExecuteMapperQuery<string>("select @a", new { a = str }).First()
+                .IsEquals(str);
+        }
+
     }
 }

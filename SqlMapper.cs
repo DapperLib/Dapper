@@ -259,6 +259,10 @@ namespace SqlMapper
                     if (info.Type == SqlDbType.NVarChar)
                     {
                         param.Size = 4000;
+                        if (info.Val != null && ((string)info.Val).Length > 4000)
+                        {
+                            param.Size = -1;
+                        }
                     }
 
                     if (info.Type == SqlDbType.Structured)
@@ -276,10 +280,14 @@ namespace SqlMapper
                             foreach (var item in list)
                             {
                                 count++;
-                                var sqlParam = new SqlParameter("@" + info.Name + count, item);
+                                var sqlParam = new SqlParameter("@" + info.Name + count, item ?? DBNull.Value);
                                 if (isString)
                                 {
                                     sqlParam.Size = 4000;
+                                    if (item != null && ((string)item).Length > 4000)
+                                    {
+                                        sqlParam.Size = -1;
+                                    }
                                 }
                                 cmd.Parameters.Add(sqlParam);
                             }
