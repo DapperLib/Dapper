@@ -1,0 +1,38 @@
+--- PerformanceTests.cs
++++ PerformanceTests.cs
+@@ -1,13 +1,13 @@
+ ﻿using System;
+ using System.Collections.Generic;
++using System.Data.Linq;
++using System.Data.SqlClient;
++using System.Diagnostics;
+ using System.Linq;
+-using System.Text;
+-using System.Data.SqlClient;
+-using SqlMapper.Linq2Sql;
+-using System.Data.Linq;
+-using System.Diagnostics;
+ using Massive;
+ using Simple.Data;
++using SqlMapper.Linq2Sql;
++using SqlMapper.NHibernate;
+ 
+ namespace SqlMapper
+ {
+@@ -113,6 +113,16 @@
+             var simpleDataDb5 = Database.OpenConnection(Program.connectionString);
+             tests.Add(id => simpleDataDb5.Posts.FindAllById(id).ToList<Post>(), "Simple.Data FindAllBy ToList<Post>");
+ 
++            var nhSession1 = NHibernateHelper.OpenSession();
++            tests.Add(id => nhSession1.CreateSQLQuery(@"select * from Posts where Id = :id")
++                .SetInt32("id", id)
++                .List(), "NHibernate SQL");
++
++            var nhSession2 = NHibernateHelper.OpenSession();
++            tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
++                .SetInt32("id", id)
++                .List(), "NHibernate HQL");
++
+             // HAND CODED 
+             var connection = Program.GetOpenConnection();
+ 
