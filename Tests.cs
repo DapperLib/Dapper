@@ -9,7 +9,7 @@ namespace SqlMapper
     static class TestAssertions
     {
 
-        public static void IsEquals<T>(this T obj, T other)
+        public static void IsEqualTo<T>(this T obj, T other)
         {
             if (!obj.Equals(other))
             {
@@ -17,7 +17,7 @@ namespace SqlMapper
             }
         }
 
-        public static void IsSequenceEqual<T>(this IEnumerable<T> obj, IEnumerable<T> other)
+        public static void IsSequenceEqualTo<T>(this IEnumerable<T> obj, IEnumerable<T> other)
         {
             if (!obj.SequenceEqual(other))
             {
@@ -51,20 +51,20 @@ namespace SqlMapper
         public void SelectListInt()
         {
             connection.ExecuteMapperQuery<int>("select 1 union all select 2 union all select 3")
-              .IsSequenceEqual(new[] { 1, 2, 3 });
+              .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
 
         public void PassInIntArray()
         {
             connection.ExecuteMapperQuery<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
-             .IsSequenceEqual(new[] { 1, 2, 3 });
+             .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
 
 
         public void TestDoubleParam()
         {
             connection.ExecuteMapperQuery<double>("select @d", new { d = 0.1d }).First()
-                .IsEquals(0.1d);
+                .IsEqualTo(0.1d);
         }
 
         public void TestBoolParam()
@@ -76,7 +76,7 @@ namespace SqlMapper
         public void TestStrings()
         {
             connection.ExecuteMapperQuery<string>(@"select 'a' a union select 'b'")
-                .IsSequenceEqual(new[] { "a", "b" });
+                .IsSequenceEqualTo(new[] { "a", "b" });
         }
 
         public class Dog
@@ -95,13 +95,13 @@ namespace SqlMapper
             var dog = connection.ExecuteMapperQuery<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
             
             dog.Count()
-                .IsEquals(1);
+                .IsEqualTo(1);
 
             dog.First().Age
                 .IsNull();
 
             dog.First().Id
-                .IsEquals(guid);
+                .IsEqualTo(guid);
         }
 
         public void TestExpando()
@@ -109,22 +109,22 @@ namespace SqlMapper
             var rows = connection.ExecuteMapperQuery("select 1 A, 2 B union all select 3, 4");
 
             ((int)rows[0].A)
-                .IsEquals(1);
+                .IsEqualTo(1);
 
             ((int)rows[0].B)
-                .IsEquals(2);
+                .IsEqualTo(2);
 
             ((int)rows[1].A)
-                .IsEquals(3);
+                .IsEqualTo(3);
 
             ((int)rows[1].B)
-                .IsEquals(4);
+                .IsEqualTo(4);
         }
 
         public void TestStringList()
         {
             connection.ExecuteMapperQuery<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
-                .IsSequenceEqual(new[] {"a","b","c"});
+                .IsSequenceEqualTo(new[] {"a","b","c"});
         }
 
         public void TestExecuteCommand()
@@ -136,14 +136,14 @@ namespace SqlMapper
     insert #t 
     select @a a union all select @b 
     set nocount on 
-    drop table #t", new {a=1, b=2 }).IsEquals(2);
+    drop table #t", new {a=1, b=2 }).IsEqualTo(2);
         }
 
         public void TestMassiveStrings()
         { 
             var str = new string('X', 20000);
             connection.ExecuteMapperQuery<string>("select @a", new { a = str }).First()
-                .IsEquals(str);
+                .IsEqualTo(str);
         }
 
     }

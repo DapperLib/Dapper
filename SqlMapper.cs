@@ -118,10 +118,26 @@ namespace SqlMapper
             return ExecuteCommand(cnn, transaction, sql, GetParamInfo(param));
         }
 
+
+        static class DynamicStub
+        {
+            public static Type Type = typeof(DynamicStub);
+        }
+
         public static List<dynamic> ExecuteMapperQuery (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
-            // TODO: get rid of casting hackery
-            return ExecuteMapperQuery<ExpandoObject>(cnn, sql, param, transaction).Select(s => s as dynamic).ToList();
+            var identity = new Identity(sql, DynamicStub.Type);
+            var list = new List<dynamic>();
+
+            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
+            {
+                Func<IDataReader, ExpandoObject> deserializer = GetDeserializer<ExpandoObject>(identity, reader);
+                while (reader.Read())
+                {
+                    list.Add(deserializer(reader));
+                }
+            }
+            return list;
         }
 
        
@@ -132,25 +148,7 @@ namespace SqlMapper
 
             using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
             {
-                object oDeserializer;
-                if (!cachedSerializers.TryGetValue(identity, out oDeserializer))
-                {
-                    if (typeof(T) == typeof(ExpandoObject))
-                    {
-                        oDeserializer = GetDynamicDeserializer(reader);
-                    }
-                    else if (typeof(T).IsClass && typeof(T) != typeof(string))
-                    {
-                        oDeserializer = GetClassDeserializer<T>(reader);
-                    }
-                    else
-                    {
-                        oDeserializer = GetStructDeserializer<T>(reader);
-                    }
-
-                    cachedSerializers[identity] = oDeserializer;
-                }
-                Func<IDataReader, T> deserializer = (Func<IDataReader, T>)oDeserializer;
+                Func<IDataReader, T> deserializer = GetDeserializer<T>(identity, reader);
                 while (reader.Read())
                 {
                     rval.Add(deserializer(reader));
@@ -160,6 +158,30 @@ namespace SqlMapper
             }
 
             return rval;
+        }
+
+        private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader)
+        {
+            object oDeserializer;
+            if (!cachedSerializers.TryGetValue(identity, out oDeserializer))
+            {
+                if (typeof(T) == DynamicStub.Type || typeof(T) == typeof(ExpandoObject))
+                {
+                    oDeserializer = GetDynamicDeserializer(reader);
+                }
+                else if (typeof(T).IsClass && typeof(T) != typeof(string))
+                {
+                    oDeserializer = GetClassDeserializer<T>(reader);
+                }
+                else
+                {
+                    oDeserializer = GetStructDeserializer<T>(reader);
+                }
+
+                cachedSerializers[identity] = oDeserializer;
+            }
+            Func<IDataReader, T> deserializer = (Func<IDataReader, T>)oDeserializer;
+            return deserializer;
         }
 
         private static List<ParamInfo> GetParamInfo(object param)
