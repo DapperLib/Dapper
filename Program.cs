@@ -51,12 +51,12 @@ namespace SqlMapper
         static void Main(string[] args)
         {
 
-//#if DEBUG
- //           RunTests();
-//#else 
+#if DEBUG
+            RunTests();
+#else 
             EnsureDBSetup();
             RunPerformanceTests();
-//#endif
+#endif
 
             Console.ReadKey();
         }
