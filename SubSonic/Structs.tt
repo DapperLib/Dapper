@@ -1,0 +1,67 @@
+<#@ template language="C#v3.5" debug="False" hostspecific="True"  #>
+<#@ output extension=".cs" #>
+<#@ include file="SQLServer.ttinclude" #>
+<#
+    var tables = LoadTables();
+#>
+using System;
+using SubSonic.Schema;
+using System.Collections.Generic;
+using SubSonic.DataProviders;
+using System.Data;
+
+namespace <#=Namespace#> {
+	
+<#  foreach(var tbl in tables){
+        if(!ExcludeTables.Contains(tbl.Name))
+        {
+#>
+        /// <summary>
+        /// Table: <#=tbl.Name#>
+        /// Primary Key: <#=tbl.PrimaryKey#>
+        /// </summary>
+
+        public class <#=tbl.CleanName#>Table: DatabaseTable {
+            
+            public <#=tbl.CleanName#>Table(IDataProvider provider):base("<#=tbl.Name#>",provider){
+                ClassName = "<#=tbl.ClassName#>";
+                SchemaName = "<#=tbl.Schema ?? ""#>";
+                
+<#          foreach(var col in tbl.Columns){#>
+
+                Columns.Add(new DatabaseColumn("<#=col.Name#>", this)
+                {
+	                IsPrimaryKey = <#=col.IsPK.ToString().ToLower()#>,
+	                DataType = DbType.<#=col.DbType.ToString()#>,
+	                IsNullable = <#=col.IsNullable.ToString().ToLower()#>,
+	                AutoIncrement = <#=col.AutoIncrement.ToString().ToLower()#>,
+	                IsForeignKey = <#=col.IsForeignKey.ToString().ToLower()#>,
+	                MaxLength = <#=col.MaxLength#>
+                });
+<#          }#>                    
+                
+                
+            }
+
+<#          foreach(var col in tbl.Columns){#>
+            public IColumn <#=col.CleanName#>{
+                get{
+                    return this.GetColumn("<#=col.Name#>");
+                }
+            }
+				
+   			public static string <#= col.CleanName #>Column{
+			      get{
+        			return "<#= col.Name #>";
+      			}
+		    }
+            
+<#          }#>                    
+        }
+        
+<#    
+        }
+        
+    }
+#>
+}

@@ -1,0 +1,30 @@
+﻿<#@ template language="C#v3.5" debug="False" hostspecific="True"  #>
+<#@ output extension=".cs" #>
+<#@ include file="SQLServer.ttinclude" #>
+<#
+    var sps = GetSPs(); 
+    if(sps.Count>0){ 
+#>  
+using System;
+using SubSonic;
+using SubSonic.Schema;
+using SubSonic.DataProviders;
+using System.Data;
+
+namespace <#=Namespace#>{
+	public partial class <#=DatabaseName#>DB{
+
+<#  foreach(var sp in sps){#>
+        public StoredProcedure <#=sp.CleanName#>(<#=sp.ArgList#>){
+            StoredProcedure sp=new StoredProcedure("<#=sp.Name#>",this.Provider);
+<#      foreach(var par in sp.Parameters){#>
+            sp.Command.AddParameter("<#=par.Name#>",<#=par.CleanName#>,DbType.<#=par.DbType#>);
+<#      }#>
+            return sp;
+        }
+<#  }#>
+	
+	}
+	
+}
+<#  }#> 
