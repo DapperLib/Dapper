@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Data.SqlClient;
 using BLToolkit.Data;
+using ServiceStack.OrmLite;
+using ServiceStack.OrmLite.SqlServer;
 using SqlMapper.Linq2Sql;
 using System.Data.Linq;
 using System.Diagnostics;
@@ -133,6 +136,11 @@ namespace SqlMapper
 			// bltoolkit
 			var db1 = new DbManager(Program.GetOpenConnection());
 			tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
+
+			//ServiceStack.OrmLite Provider:
+			OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
+			IDbCommand ormLiteCmd = Program.GetOpenConnection().CreateCommand();
+			tests.Add(id => ormLiteCmd.Select<Post>("select * from Posts where Id = {0}", id), "ServiceStack.OrmLite SQL Query");
 
             
             // HAND CODED 
