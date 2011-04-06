@@ -98,8 +98,27 @@ namespace SqlMapper
             var massiveConnection = Program.GetOpenConnection();
             tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).ToList(), "Dynamic Massive ORM Query");
 
+			// PetaPoco test with all default options
+			var petapoco = new PetaPoco.Database(Program.connectionString, "System.Data.SqlClient");
+			petapoco.OpenSharedConnection();
+			tests.Add(id => petapoco.Fetch<Post>("SELECT * from Posts where Id=@0", id), "PetaPoco (Normal)");
 
-            // HAND CODED 
+			// PetaPoco with some "smart" functionality disabled
+			var petapocoFast = new PetaPoco.Database(Program.connectionString, "System.Data.SqlClient");
+			petapocoFast.OpenSharedConnection();
+			petapocoFast.EnableAutoSelect = false;
+			petapocoFast.EnableNamedParams = false;
+			petapocoFast.ForceDateTimesToUtc = false;
+			tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id), "PetaPoco (Fast)");
+
+			// Subsonic ActiveRecord
+			tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
+
+			// Subsonic ActiveRecord
+			SubSonic.tempdbDB db=new SubSonic.tempdbDB();
+			tests.Add(id => new SubSonic.Query.CodingHorror(db.Provider, "select * from Posts where Id = @0", id).ExecuteTypedList<Post>(), "SubSonic Coding Horror");
+
+			// HAND CODED 
 
             var connection = Program.GetOpenConnection();
 
