@@ -1,0 +1,552 @@
+<#@ template language="C#v3.5" debug="True" hostspecific="True" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="System.Core.dll" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Configuration" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Globalization" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ import namespace="System.Configuration" #>
+
+<#+
+
+    const string Namespace = "SubSonic";
+    const string ConnectionStringName = "Smackdown.Properties.Settings.tempdbConnectionString";
+    
+    //This is the name of your database and is used in naming
+    //the repository. By default we set it to the connection string name
+    const string DatabaseName = "tempdb";
+
+    const bool TreatTinyint1AsBool = false;
+
+    //this is a list of tables you don't want generated
+    string[] ExcludeTables = new string[]{
+    "sysdiagrams",
+    "BuildVersion",
+    };
+
+     string CleanUp(string tableName){
+	    string result=tableName;
+    	
+	    //strip blanks
+	    result=result.Replace(" ","");
+    	
+	    //put your logic here...
+    	
+	    return result;
+    }
+    
+    string CheckNullable(Column col){
+        string result="";
+        if(col.IsNullable && col.SysType !="byte[]" && col.SysType !="string")
+            result="?";
+        return result;
+    }
+    string GetConnectionString(string connectionStringName){
+        var _CurrentProject = GetCurrentProject();
+        
+        string result="";
+        ExeConfigurationFileMap configFile = new ExeConfigurationFileMap();
+        configFile.ExeConfigFilename = GetConfigPath();
+
+        if (string.IsNullOrEmpty(configFile.ExeConfigFilename))
+            throw new ArgumentNullException("The project does not contain App.config or Web.config file.");
+        
+        
+        var config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None);
+        var connSection=config.ConnectionStrings;
+
+        //if the connectionString is empty - which is the defauls
+        //look for count-1 - this is the last connection string
+        //and takes into account AppServices and LocalSqlServer
+        if(string.IsNullOrEmpty(connectionStringName)){
+            if(connSection.ConnectionStrings.Count>1){
+                result=connSection.ConnectionStrings[connSection.ConnectionStrings.Count-1].ConnectionString;
+            }            
+        }else{
+            try{
+                result=connSection.ConnectionStrings[connectionStringName].ConnectionString;
+            }catch{
+                result="There is no connection string name called '"+connectionStringName+"'";
+            }
+        }
+        
+        return result;
+    }
+
+    string _connectionString="";
+    public string ConnectionString{
+	    get {
+	        if(String.IsNullOrEmpty(_connectionString)){
+                
+                _connectionString=GetConnectionString(ConnectionStringName);
+		        
+	        }
+    	        
+	        if(_connectionString.Contains("|DataDirectory|")){
+	            //have to replace it
+	            string dataFilePath=GetDataDirectory();
+	            _connectionString=_connectionString.Replace("|DataDirectory|",dataFilePath);
+	        }    
+    	        
+	        return _connectionString;
+	    }
+    }
+
+    public EnvDTE.Project GetCurrentProject()  {
+  
+        IServiceProvider _ServiceProvider = (IServiceProvider)Host;
+        if (_ServiceProvider == null)
+            throw new Exception("Host property returned unexpected value (null)");
+		
+        EnvDTE.DTE dte = (EnvDTE.DTE)_ServiceProvider.GetService(typeof(EnvDTE.DTE));
+        if (dte == null)
+            throw new Exception("Unable to retrieve EnvDTE.DTE");
+		
+        Array activeSolutionProjects = (Array)dte.ActiveSolutionProjects;
+        if (activeSolutionProjects == null)
+            throw new Exception("DTE.ActiveSolutionProjects returned null");
+		
+        EnvDTE.Project dteProject = (EnvDTE.Project)activeSolutionProjects.GetValue(0);
+        if (dteProject == null)
+            throw new Exception("DTE.ActiveSolutionProjects[0] returned null");
+		
+        return dteProject;
+
+    }
+    
+    private string GetProjectPath()
+    {
+        EnvDTE.Project project = GetCurrentProject();
+        System.IO.FileInfo info = new System.IO.FileInfo(project.FullName);
+        return info.Directory.FullName;
+	}
+    
+    private string GetConfigPath()
+    {
+        EnvDTE.Project project = GetCurrentProject();
+        foreach (EnvDTE.ProjectItem item in project.ProjectItems)
+        {
+            // if it is the app.config file, then open it up
+            if (item.Name.Equals("App.config",StringComparison.InvariantCultureIgnoreCase) || item.Name.Equals("Web.config",StringComparison.InvariantCultureIgnoreCase))
+				return GetProjectPath() + "\\" + item.Name;
+        }
+        return String.Empty;
+    }
+    
+    public string GetDataDirectory(){
+        EnvDTE.Project project=GetCurrentProject();
+        return System.IO.Path.GetDirectoryName(project.FileName)+"\\App_Data\\";
+    }
+
+    public class Table{
+   
+        public List<Column> Columns;
+        public List<FKTable> FKTables;
+        public string Name;
+        public string CleanName;
+        public string ClassName;
+        public string PrimaryKey;
+        public string Schema;
+        public string QueryableName;
+        
+        public bool HasLogicalDelete(){
+            return this.Columns.Any(x=>x.Name.ToLower()=="deleted" || x.Name.ToLower()=="isdeleted");
+        }
+        public Column DeleteColumn{
+            get{
+                Column result=null;
+                if(this.Columns.Any(x=>x.Name.ToLower()=="deleted"))
+                    result=this.Columns.Single(x=>x.Name.ToLower()=="deleted");
+                if(this.Columns.Any(x=>x.Name.ToLower()=="isdeleted"))
+                    result=this.Columns.Single(x=>x.Name.ToLower()=="isdeleted");
+                return result;
+            }
+        }
+        public Column PK{
+            get{
+                return this.Columns.FirstOrDefault(x=>x.IsPK) ?? this.Columns[0];
+            }
+        }
+        public Column Descriptor{
+            get{
+                if(this.Columns.Count==1){
+                    return this.Columns[0];
+                }else{
+                    //get the first string column
+                    Column result=null;
+                    result=this.Columns.FirstOrDefault(x=>x.SysType.ToLower().Trim()=="string");
+                    if(result==null)
+                        result=this.Columns[1];
+                    return result;
+                }
+            }
+        }
+    }
+
+    public class Column{
+        public string Name;
+        public string CleanName;
+        public string SysType;
+        public string DataType;
+        public DbType DbType;
+        public bool AutoIncrement;
+        public bool IsPK;
+        public int MaxLength;
+        public bool IsNullable;
+        public bool IsForeignKey;
+        public bool IsUnsigned;
+    }
+    public class FKTable{
+        public string ThisTable;
+        public string ThisColumn;
+        public string OtherTable;
+        public string OtherColumn;
+        public string OtherClass;
+        public string OtherQueryable;
+    }
+    
+    public class SP{
+        public string Name;
+        public string CleanName;
+        public string ClassName;
+        public List<SPParam> Parameters;
+        public SP(){
+            Parameters=new List<SPParam>();
+        }        
+        public string ArgList{
+            get{
+                StringBuilder sb=new StringBuilder();
+                int loopCount=1;
+                foreach(var par in Parameters){
+                    sb.AppendFormat("{0} {1}", par.SysType,par.CleanName);
+                    if(loopCount<Parameters.Count)
+                        sb.Append(",");
+                    loopCount++;
+                }
+                return sb.ToString();
+            }
+        }
+    }
+    public class SPParam{
+        public string Name;
+        public string CleanName;
+        public string SysType;
+        public string DbType;
+    }
+    
+
+/*
+ * SubSonic - http://subsonicproject.com
+ * 
+ * The contents of this file are subject to the New BSD
+ * License (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.opensource.org/licenses/bsd-license.php
+ * 
+ * Software distributed under the License is distributed on an 
+ * "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
+*/
+
+    /// <summary>
+    /// Summary for the Inflector class
+    /// </summary>
+    public static class Inflector {
+        private static readonly List<InflectorRule> _plurals = new List<InflectorRule>();
+        private static readonly List<InflectorRule> _singulars = new List<InflectorRule>();
+        private static readonly List<string> _uncountables = new List<string>();
+
+        /// <summary>
+        /// Initializes the <see cref="Inflector"/> class.
+        /// </summary>
+        static Inflector() {
+            AddPluralRule("$", "s");
+            AddPluralRule("s$", "s");
+            AddPluralRule("(ax|test)is$", "$1es");
+            AddPluralRule("(octop|vir)us$", "$1i");
+            AddPluralRule("(alias|status)$", "$1es");
+            AddPluralRule("(bu)s$", "$1ses");
+            AddPluralRule("(buffal|tomat)o$", "$1oes");
+            AddPluralRule("([ti])um$", "$1a");
+            AddPluralRule("sis$", "ses");
+            AddPluralRule("(?:([^f])fe|([lr])f)$", "$1$2ves");
+            AddPluralRule("(hive)$", "$1s");
+            AddPluralRule("([^aeiouy]|qu)y$", "$1ies");
+            AddPluralRule("(x|ch|ss|sh)$", "$1es");
+            AddPluralRule("(matr|vert|ind)ix|ex$", "$1ices");
+            AddPluralRule("([m|l])ouse$", "$1ice");
+            AddPluralRule("^(ox)$", "$1en");
+            AddPluralRule("(quiz)$", "$1zes");
+
+            AddSingularRule("s$", String.Empty);
+            AddSingularRule("ss$", "ss");
+            AddSingularRule("(n)ews$", "$1ews");
+            AddSingularRule("([ti])a$", "$1um");
+            AddSingularRule("((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$", "$1$2sis");
+            AddSingularRule("(^analy)ses$", "$1sis");
+            AddSingularRule("([^f])ves$", "$1fe");
+            AddSingularRule("(hive)s$", "$1");
+            AddSingularRule("(tive)s$", "$1");
+            AddSingularRule("([lr])ves$", "$1f");
+            AddSingularRule("([^aeiouy]|qu)ies$", "$1y");
+            AddSingularRule("(s)eries$", "$1eries");
+            AddSingularRule("(m)ovies$", "$1ovie");
+            AddSingularRule("(x|ch|ss|sh)es$", "$1");
+            AddSingularRule("([m|l])ice$", "$1ouse");
+            AddSingularRule("(bus)es$", "$1");
+            AddSingularRule("(o)es$", "$1");
+            AddSingularRule("(shoe)s$", "$1");
+            AddSingularRule("(cris|ax|test)es$", "$1is");
+            AddSingularRule("(octop|vir)i$", "$1us");
+            AddSingularRule("(alias|status)$", "$1");
+            AddSingularRule("(alias|status)es$", "$1");
+            AddSingularRule("^(ox)en", "$1");
+            AddSingularRule("(vert|ind)ices$", "$1ex");
+            AddSingularRule("(matr)ices$", "$1ix");
+            AddSingularRule("(quiz)zes$", "$1");
+
+            AddIrregularRule("person", "people");
+            AddIrregularRule("man", "men");
+            AddIrregularRule("child", "children");
+            AddIrregularRule("sex", "sexes");
+            AddIrregularRule("tax", "taxes");
+            AddIrregularRule("move", "moves");
+
+            AddUnknownCountRule("equipment");
+            AddUnknownCountRule("information");
+            AddUnknownCountRule("rice");
+            AddUnknownCountRule("money");
+            AddUnknownCountRule("species");
+            AddUnknownCountRule("series");
+            AddUnknownCountRule("fish");
+            AddUnknownCountRule("sheep");
+        }
+
+        /// <summary>
+        /// Adds the irregular rule.
+        /// </summary>
+        /// <param name="singular">The singular.</param>
+        /// <param name="plural">The plural.</param>
+        private static void AddIrregularRule(string singular, string plural) {
+            AddPluralRule(String.Concat("(", singular[0], ")", singular.Substring(1), "$"), String.Concat("$1", plural.Substring(1)));
+            AddSingularRule(String.Concat("(", plural[0], ")", plural.Substring(1), "$"), String.Concat("$1", singular.Substring(1)));
+        }
+
+        /// <summary>
+        /// Adds the unknown count rule.
+        /// </summary>
+        /// <param name="word">The word.</param>
+        private static void AddUnknownCountRule(string word) {
+            _uncountables.Add(word.ToLower());
+        }
+
+        /// <summary>
+        /// Adds the plural rule.
+        /// </summary>
+        /// <param name="rule">The rule.</param>
+        /// <param name="replacement">The replacement.</param>
+        private static void AddPluralRule(string rule, string replacement) {
+            _plurals.Add(new InflectorRule(rule, replacement));
+        }
+
+        /// <summary>
+        /// Adds the singular rule.
+        /// </summary>
+        /// <param name="rule">The rule.</param>
+        /// <param name="replacement">The replacement.</param>
+        private static void AddSingularRule(string rule, string replacement) {
+            _singulars.Add(new InflectorRule(rule, replacement));
+        }
+
+        /// <summary>
+        /// Makes the plural.
+        /// </summary>
+        /// <param name="word">The word.</param>
+        /// <returns></returns>
+        public static string MakePlural(string word) {
+            return ApplyRules(_plurals, word);
+        }
+
+        /// <summary>
+        /// Makes the singular.
+        /// </summary>
+        /// <param name="word">The word.</param>
+        /// <returns></returns>
+        public static string MakeSingular(string word) {
+            return ApplyRules(_singulars, word);
+        }
+
+        /// <summary>
+        /// Applies the rules.
+        /// </summary>
+        /// <param name="rules">The rules.</param>
+        /// <param name="word">The word.</param>
+        /// <returns></returns>
+        private static string ApplyRules(IList<InflectorRule> rules, string word) {
+            string result = word;
+            if (!_uncountables.Contains(word.ToLower())) {
+                for (int i = rules.Count - 1; i >= 0; i--) {
+                    string currentPass = rules[i].Apply(word);
+                    if (currentPass != null) {
+                        result = currentPass;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Converts the string to title case.
+        /// </summary>
+        /// <param name="word">The word.</param>
+        /// <returns></returns>
+        public static string ToTitleCase(string word) {
+            return Regex.Replace(ToHumanCase(AddUnderscores(word)), @"\b([a-z])",
+                delegate(Match match) { return match.Captures[0].Value.ToUpper(); });
+        }
+
+        /// <summary>
+        /// Converts the string to human case.
+        /// </summary>
+        /// <param name="lowercaseAndUnderscoredWord">The lowercase and underscored word.</param>
+        /// <returns></returns>
+        public static string ToHumanCase(string lowercaseAndUnderscoredWord) {
+            return MakeInitialCaps(Regex.Replace(lowercaseAndUnderscoredWord, @"_", " "));
+        }
+
+
+        /// <summary>
+        /// Adds the underscores.
+        /// </summary>
+        /// <param name="pascalCasedWord">The pascal cased word.</param>
+        /// <returns></returns>
+        public static string AddUnderscores(string pascalCasedWord) {
+            return Regex.Replace(Regex.Replace(Regex.Replace(pascalCasedWord, @"([A-Z]+)([A-Z][a-z])", "$1_$2"), @"([a-z\d])([A-Z])", "$1_$2"), @"[-\s]", "_").ToLower();
+        }
+
+        /// <summary>
+        /// Makes the initial caps.
+        /// </summary>
+        /// <param name="word">The word.</param>
+        /// <returns></returns>
+        public static string MakeInitialCaps(string word) {
+            return String.Concat(word.Substring(0, 1).ToUpper(), word.Substring(1).ToLower());
+        }
+
+        /// <summary>
+        /// Makes the initial lower case.
+        /// </summary>
+        /// <param name="word">The word.</param>
+        /// <returns></returns>
+        public static string MakeInitialLowerCase(string word) {
+            return String.Concat(word.Substring(0, 1).ToLower(), word.Substring(1));
+        }
+
+
+        /// <summary>
+        /// Determine whether the passed string is numeric, by attempting to parse it to a double
+        /// </summary>
+        /// <param name="str">The string to evaluated for numeric conversion</param>
+        /// <returns>
+        /// 	<c>true</c> if the string can be converted to a number; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsStringNumeric(string str) {
+            double result;
+            return (double.TryParse(str, NumberStyles.Float, NumberFormatInfo.CurrentInfo, out result));
+        }
+
+        /// <summary>
+        /// Adds the ordinal suffix.
+        /// </summary>
+        /// <param name="number">The number.</param>
+        /// <returns></returns>
+        public static string AddOrdinalSuffix(string number) {
+            if (IsStringNumeric(number)) {
+                int n = int.Parse(number);
+                int nMod100 = n % 100;
+
+                if (nMod100 >= 11 && nMod100 <= 13)
+                    return String.Concat(number, "th");
+
+                switch (n % 10) {
+                    case 1:
+                        return String.Concat(number, "st");
+                    case 2:
+                        return String.Concat(number, "nd");
+                    case 3:
+                        return String.Concat(number, "rd");
+                    default:
+                        return String.Concat(number, "th");
+                }
+            }
+            return number;
+        }
+
+        /// <summary>
+        /// Converts the underscores to dashes.
+        /// </summary>
+        /// <param name="underscoredWord">The underscored word.</param>
+        /// <returns></returns>
+        public static string ConvertUnderscoresToDashes(string underscoredWord) {
+            return underscoredWord.Replace('_', '-');
+        }
+
+
+        #region Nested type: InflectorRule
+
+        /// <summary>
+        /// Summary for the InflectorRule class
+        /// </summary>
+        private class InflectorRule {
+            /// <summary>
+            /// 
+            /// </summary>
+            public readonly Regex regex;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public readonly string replacement;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="InflectorRule"/> class.
+            /// </summary>
+            /// <param name="regexPattern">The regex pattern.</param>
+            /// <param name="replacementText">The replacement text.</param>
+            public InflectorRule(string regexPattern, string replacementText) {
+                regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
+                replacement = replacementText;
+            }
+
+            /// <summary>
+            /// Applies the specified word.
+            /// </summary>
+            /// <param name="word">The word.</param>
+            /// <returns></returns>
+            public string Apply(string word) {
+                if (!regex.IsMatch(word))
+                    return null;
+
+                string replace = regex.Replace(word, replacement);
+                if (word == word.ToUpper())
+                    replace = replace.ToUpper();
+
+                return replace;
+            }
+        }
+
+        #endregion
+    }
+
+#>
