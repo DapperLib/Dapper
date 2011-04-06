@@ -7,6 +7,7 @@ using SqlMapper.Linq2Sql;
 using System.Data.Linq;
 using System.Diagnostics;
 using Massive;
+using SqlMapper.NHibernate;
 
 namespace SqlMapper
 {
@@ -118,7 +119,22 @@ namespace SqlMapper
 			SubSonic.tempdbDB db=new SubSonic.tempdbDB();
 			tests.Add(id => new SubSonic.Query.CodingHorror(db.Provider, "select * from Posts where Id = @0", id).ExecuteTypedList<Post>(), "SubSonic Coding Horror");
 
-			// HAND CODED 
+            // NHibernate
+
+            var nhSession1 = NHibernateHelper.OpenSession();
+            tests.Add(id => nhSession1.CreateSQLQuery(@"select * from Posts where Id = :id")
+                .SetInt32("id", id)
+                .List(), "NHibernate SQL");
+         
+
+            var nhSession2 = NHibernateHelper.OpenSession();
+            tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
+                .SetInt32("id", id)
+                .List(), "NHibernate HQL");
+
+
+            
+            // HAND CODED 
 
             var connection = Program.GetOpenConnection();
 

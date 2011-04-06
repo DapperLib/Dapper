@@ -1,0 +1,44 @@
+--- SqlMapper.csproj
++++ SqlMapper.csproj
+@@ -35,6 +35,18 @@
+     <WarningLevel>4</WarningLevel>
+   </PropertyGroup>
+   <ItemGroup>
++    <Reference Include="Iesi.Collections">
++      <HintPath>Dependencies\Iesi.Collections.dll</HintPath>
++    </Reference>
++    <Reference Include="LinFu.DynamicProxy">
++      <HintPath>Dependencies\LinFu.DynamicProxy.dll</HintPath>
++    </Reference>
++    <Reference Include="NHibernate">
++      <HintPath>Dependencies\NHibernate.dll</HintPath>
++    </Reference>
++    <Reference Include="NHibernate.ByteCode.LinFu">
++      <HintPath>Dependencies\NHibernate.ByteCode.LinFu.dll</HintPath>
++    </Reference>
+     <Reference Include="Simple.Data, Version=0.5.6.0, Culture=neutral, processorArchitecture=MSIL">
+       <SpecificVersion>False</SpecificVersion>
+       <HintPath>Dependencies\Simple.Data.dll</HintPath>
+@@ -72,6 +84,7 @@
+     </Compile>
+     <Compile Include="Linq2Sql\Post.cs" />
+     <Compile Include="Massive\Massive.cs" />
++    <Compile Include="NHibernate\NHibernateHelper.cs" />
+     <Compile Include="PerformanceTests.cs" />
+     <Compile Include="Program.cs" />
+     <Compile Include="Properties\AssemblyInfo.cs" />
+@@ -107,6 +120,14 @@
+       <DependentUpon>DataClasses.dbml</DependentUpon>
+     </None>
+   </ItemGroup>
++  <ItemGroup>
++    <EmbeddedResource Include="NHibernate\Post.hbm.xml" />
++  </ItemGroup>
++  <ItemGroup>
++    <Content Include="NHibernate\hibernate.cfg.xml">
++      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
++    </Content>
++  </ItemGroup>
+   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+        Other similar extension points exist, see Microsoft.Common.targets.

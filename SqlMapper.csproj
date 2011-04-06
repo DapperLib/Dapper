@@ -35,6 +35,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Iesi.Collections">
+      <HintPath>NHibernate\Iesi.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="LinFu.DynamicProxy">
+      <HintPath>NHibernate\LinFu.DynamicProxy.dll</HintPath>
+    </Reference>
+    <Reference Include="NHibernate">
+      <HintPath>NHibernate\NHibernate.dll</HintPath>
+    </Reference>
+    <Reference Include="NHibernate.ByteCode.LinFu">
+      <HintPath>NHibernate\NHibernate.ByteCode.LinFu.dll</HintPath>
+    </Reference>
     <Reference Include="SubSonic.Core">
       <HintPath>SubSonic\SubSonic.Core.dll</HintPath>
     </Reference>
@@ -64,6 +76,7 @@
     </Compile>
     <Compile Include="Linq2Sql\Post.cs" />
     <Compile Include="Massive\Massive.cs" />
+    <Compile Include="NHibernate\NHibernateHelper.cs" />
     <Compile Include="PerformanceTests.cs" />
     <Compile Include="PetaPoco\PetaPoco.cs" />
     <Compile Include="Program.cs" />
@@ -139,7 +152,10 @@
       <DependentUpon>DataClasses.dbml</DependentUpon>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="NHibernate\hibernate.cfg.xml" />
+    <Content Include="NHibernate\Post.hbm.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
