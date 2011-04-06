@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Data.SqlClient;
+using BLToolkit.Data;
 using SqlMapper.Linq2Sql;
 using System.Data.Linq;
 using System.Diagnostics;
@@ -13,7 +13,6 @@ namespace SqlMapper
 {
     class PerformanceTests
     {
-
         class Test
         {
             public static Test Create(Action<int> iteration, string name)
@@ -126,12 +125,14 @@ namespace SqlMapper
                 .SetInt32("id", id)
                 .List(), "NHibernate SQL");
          
-
             var nhSession2 = NHibernateHelper.OpenSession();
             tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
                 .SetInt32("id", id)
                 .List(), "NHibernate HQL");
 
+			// bltoolkit
+			var db1 = new DbManager(Program.GetOpenConnection());
+			tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
 
             
             // HAND CODED 
