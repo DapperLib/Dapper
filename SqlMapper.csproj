@@ -35,6 +35,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BLToolkit.4">
+      <HintPath>bltoolkit\BLToolkit.4.dll</HintPath>
+    </Reference>
     <Reference Include="Iesi.Collections">
       <HintPath>NHibernate\Iesi.Collections.dll</HintPath>
     </Reference>
@@ -155,6 +158,9 @@
   <ItemGroup>
     <Content Include="NHibernate\hibernate.cfg.xml" />
     <Content Include="NHibernate\Post.hbm.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bltoolkit\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
