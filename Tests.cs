@@ -146,5 +146,7 @@ namespace SqlMapper
                 .IsEqualTo(str);
         }
 
+       
+
     }
 }

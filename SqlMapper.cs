@@ -15,40 +15,64 @@ namespace SqlMapper
 {
     public static class SqlMapper
     {
+        static ConcurrentDictionary<Identity, object> cachedSerializers = new ConcurrentDictionary<Identity, object>();
+        static ConcurrentDictionary<Type, Func<object, List<ParamInfo>>> cachedParamReaders = new ConcurrentDictionary<Type, Func<object, List<ParamInfo>>>();
+        static Dictionary<Type, DbType> typeMap;
+
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, SqlDbType>();
-            typeMap[typeof(int)] = SqlDbType.Int;
-            typeMap[typeof(int?)] = SqlDbType.Int;
-            typeMap[typeof(string)] = SqlDbType.NVarChar;
+            typeMap = new Dictionary<Type, DbType>();
+            typeMap[typeof(byte)] = DbType.Byte;
+            typeMap[typeof(sbyte)] = DbType.SByte;
+            typeMap[typeof(short)] = DbType.Int16;
+            typeMap[typeof(ushort)] = DbType.UInt16;
+            typeMap[typeof(int)] = DbType.Int32;
+            typeMap[typeof(uint)] = DbType.UInt32;
+            typeMap[typeof(long)] = DbType.Int64;
+            typeMap[typeof(ulong)] = DbType.UInt64;
+            typeMap[typeof(float)] = DbType.Single;
+            typeMap[typeof(double)] = DbType.Double;
+            typeMap[typeof(decimal)] = DbType.Decimal;
+            typeMap[typeof(bool)] = DbType.Boolean;
+            typeMap[typeof(string)] = DbType.String;
+            typeMap[typeof(char)] = DbType.StringFixedLength;
+            typeMap[typeof(Guid)] = DbType.Guid;
+            typeMap[typeof(DateTime)] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset)] = DbType.DateTimeOffset;
+            typeMap[typeof(byte[])] = DbType.Binary;
 
-            // weird ... I know see: http://msdn.microsoft.com/en-us/library/ms131092.aspx
-            typeMap[typeof(double)] = SqlDbType.Float;
-            typeMap[typeof(double?)] = SqlDbType.Float;
-
-            typeMap[typeof(bool)] = SqlDbType.Bit;
-            typeMap[typeof(bool?)] = SqlDbType.Bit;
-
-            typeMap[typeof(Guid)] = SqlDbType.UniqueIdentifier;
-            typeMap[typeof(Guid?)] = SqlDbType.UniqueIdentifier;
-
-            typeMap[typeof(DateTime)] = SqlDbType.DateTime;
-            typeMap[typeof(DateTime?)] = SqlDbType.DateTime;
+            typeMap[typeof(byte?)] = DbType.Byte;
+            typeMap[typeof(sbyte?)] = DbType.SByte;
+            typeMap[typeof(short?)] = DbType.Int16;
+            typeMap[typeof(ushort?)] = DbType.UInt16;
+            typeMap[typeof(int?)] = DbType.Int32;
+            typeMap[typeof(uint?)] = DbType.UInt32;
+            typeMap[typeof(long?)] = DbType.Int64;
+            typeMap[typeof(ulong?)] = DbType.UInt64;
+            typeMap[typeof(float?)] = DbType.Single;
+            typeMap[typeof(double?)] = DbType.Double;
+            typeMap[typeof(decimal?)] = DbType.Decimal;
+            typeMap[typeof(bool?)] = DbType.Boolean;
+            typeMap[typeof(char?)] = DbType.StringFixedLength;
+            typeMap[typeof(Guid?)] = DbType.Guid;
+            typeMap[typeof(DateTime?)] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
 
         }
 
-        private static SqlDbType LookupDbType(Type type)
+        private static DbType LookupDbType(Type type)
         {
-            SqlDbType dbType;
+            DbType dbType;
             if (typeMap.TryGetValue(type, out dbType))
             {
                 return dbType;
             }
             else
             {
-                if (typeof(IEnumerable<int>).IsAssignableFrom(type) || typeof(IEnumerable<string>).IsAssignableFrom(type))
+                if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
-                    return SqlDbType.Structured;
+                    // use xml to denote its a list, hacky but will work on any DB
+                    return DbType.Xml;
                 }
             }
 
@@ -62,12 +86,12 @@ namespace SqlMapper
             {
             }
 
-            public static ParamInfo Create(string name, SqlDbType type, object val)
+            public static ParamInfo Create(string name, DbType type, object val)
             {
                 return new ParamInfo { Name = name, Type = type, Val = val};
             }
 
-            public SqlDbType Type { get; private set; }
+            public DbType Type { get; private set; }
             public string Name { get; private set; }
             public object Val { get; private set; }
         }
@@ -104,10 +128,7 @@ namespace SqlMapper
             }
         }
 
-        static ConcurrentDictionary<Identity, object> cachedSerializers = new ConcurrentDictionary<Identity, object>();
-        static ConcurrentDictionary<Type, Func<object, List<ParamInfo>>> cachedParamReaders = new ConcurrentDictionary<Type, Func<object, List<ParamInfo>>>();
-
-        static Dictionary<Type, SqlDbType> typeMap;
+      
 
         /// <summary>
         /// Execute parameterized SQL  
@@ -117,7 +138,6 @@ namespace SqlMapper
         {
             return ExecuteCommand(cnn, transaction, sql, GetParamInfo(param));
         }
-
 
         static class DynamicStub
         {
@@ -242,7 +262,7 @@ namespace SqlMapper
 
             foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
             {
-                // we want to call list.Add(ParamInfo.Create(string name, SqlDbType type, object val))
+                // we want to call list.Add(ParamInfo.Create(string name, DbType type, object val))
 
                 il.Emit(OpCodes.Dup); // stack is now [list] [list]
 
@@ -263,7 +283,7 @@ namespace SqlMapper
             return (Func<object, List<ParamInfo>>)dm.CreateDelegate(typeof(Func<object, List<ParamInfo>>));
         }
 
-        private static IDbCommand SetupCommand(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
         {
             var cmd = cnn.CreateCommand();
             
@@ -273,12 +293,12 @@ namespace SqlMapper
             {
                 foreach (var info in paramInfo)
                 {
-                    var param = new SqlParameter("@" + info.Name, info.Type);
-                    
-
+                    var param = cmd.CreateParameter();
+                    param.ParameterName = "@" + info.Name;
+                    param.DbType = info.Type;     
                     param.Value = info.Val ?? DBNull.Value;
                     param.Direction = ParameterDirection.Input;
-                    if (info.Type == SqlDbType.NVarChar)
+                    if (info.Type == DbType.String)
                     {
                         param.Size = 4000;
                         if (info.Val != null && ((string)info.Val).Length > 4000)
@@ -287,7 +307,7 @@ namespace SqlMapper
                         }
                     }
 
-                    if (info.Type == SqlDbType.Structured)
+                    if (info.Type == DbType.Xml)
                     {
 
                         // initially we tried TVP, however it performs quite poorly.
@@ -302,16 +322,18 @@ namespace SqlMapper
                             foreach (var item in list)
                             {
                                 count++;
-                                var sqlParam = new SqlParameter("@" + info.Name + count, item ?? DBNull.Value);
+                                var listParam = cmd.CreateParameter();
+                                listParam.ParameterName =  "@" + info.Name + count; 
+                                listParam.Value = item ?? DBNull.Value;
                                 if (isString)
                                 {
-                                    sqlParam.Size = 4000;
+                                    listParam.Size = 4000;
                                     if (item != null && ((string)item).Length > 4000)
                                     {
-                                        sqlParam.Size = -1;
+                                        listParam.Size = -1;
                                     }
                                 }
-                                cmd.Parameters.Add(sqlParam);
+                                cmd.Parameters.Add(listParam);
                             }
 
                             cmd.CommandText = cmd.CommandText.Replace("@" + info.Name,
@@ -334,7 +356,7 @@ namespace SqlMapper
         }
 
 
-        private static int ExecuteCommand(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static int ExecuteCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
         {
             using (var cmd = SetupCommand(cnn, tranaction, sql, paramInfo))
             {
@@ -342,7 +364,7 @@ namespace SqlMapper
             }
         }
 
-        private static IDataReader GetReader(IDbConnection cnn, SqlTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static IDataReader GetReader(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
         {
             using (var cmd = SetupCommand(cnn, tranaction, sql, paramInfo))
             {
