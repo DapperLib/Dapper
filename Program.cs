@@ -44,7 +44,7 @@ namespace SqlMapper
         static void RunPerformanceTests()
         {
             var test = new PerformanceTests();
-            Console.WriteLine("Running 500 itrations that load up a post entity");
+            Console.WriteLine("Running 500 iterations that load up a post entity");
             test.Run(500);
         }
 
