@@ -128,8 +128,6 @@ namespace SqlMapper
             }
         }
 
-      
-
         /// <summary>
         /// Execute parameterized SQL  
         /// </summary>
@@ -421,7 +419,7 @@ namespace SqlMapper
                     Label finishLabel = il.DefineLabel();
 
                     il.Emit(OpCodes.Ldarg_0); // stack is now [target][target][reader]
-                    EmitInt32(il, index++); // stack is now [target][target][reader][index]
+                    EmitInt32(il, index); // stack is now [target][target][reader][index]
 
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
 
@@ -440,6 +438,7 @@ namespace SqlMapper
 
                     il.MarkLabel(finishLabel);
                 }
+                index += 1;
             }
             il.Emit(OpCodes.Ret); // stack is empty
 
