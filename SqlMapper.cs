@@ -99,16 +99,18 @@ namespace SqlMapper
         private class Identity : IEquatable<Identity>
         {
 
+            public String ConnectionString { get {return connectionString;} }
             public Type Type { get { return type; } }
             public string Sql { get { return sql; } }
-            internal Identity(string sql, Type type)
+            internal Identity(string sql, IDbConnection cnn, Type type)
             {
                 this.sql = sql;
-
+                this.connectionString = cnn.ConnectionString;
                 this.type = type;
                 hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
                 hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
                 hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
+                hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
             }
             public override bool Equals(object obj)
             {
@@ -117,6 +119,7 @@ namespace SqlMapper
             private readonly string sql;
             private readonly int hashCode;
             private readonly Type type;
+            private readonly string connectionString;
             public override int GetHashCode()
             {
                 return hashCode;
@@ -124,7 +127,7 @@ namespace SqlMapper
             public bool Equals(Identity other)
             {
                 return other != null && this.type == other.type
-                    && sql == other.sql;
+                    && sql == other.sql && connectionString == other.connectionString;
             }
         }
 
@@ -144,7 +147,7 @@ namespace SqlMapper
 
         public static List<dynamic> ExecuteMapperQuery (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
-            var identity = new Identity(sql, DynamicStub.Type);
+            var identity = new Identity(sql,cnn, DynamicStub.Type);
             var list = new List<dynamic>();
 
             using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
@@ -161,8 +164,9 @@ namespace SqlMapper
        
         public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
-            var identity = new Identity(sql, typeof(T));
+            var identity = new Identity(sql, cnn, typeof(T));
             var rval = new List<T>();
+
 
             using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
             {
