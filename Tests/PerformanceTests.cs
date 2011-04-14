@@ -69,6 +69,8 @@ namespace SqlMapper
             return new DataClassesDataContext(Program.GetOpenConnection());
         }
 
+		private static Func<EntityFramework.tempdbEntities1, int, EntityFramework.Post> entityFrameworkCompiled = System.Data.Objects.CompiledQuery.Compile<EntityFramework.tempdbEntities1, int, EntityFramework.Post>((db, id) => db.Posts.First(p => p.Id == id));
+
         public void Run(int iterations)
         {
             var tests = new Tests();
@@ -89,14 +91,26 @@ namespace SqlMapper
 
             var entityContext2 = new EntityFramework.tempdbEntities1();
             entityContext2.Connection.Open();
-            tests.Add(id => entityContext.ExecuteStoreQuery<Post>("select * from Posts where Id = {0}", id).ToList(), "Entity framework ExecuteStoreQuery");
+            tests.Add(id => entityContext2.ExecuteStoreQuery<Post>("select * from Posts where Id = {0}", id).ToList(), "Entity framework ExecuteStoreQuery");
+
+			var entityContext3 = new EntityFramework.tempdbEntities1();
+			entityContext3.Connection.Open();
+			tests.Add(id => entityFrameworkCompiled(entityContext3, id), "Entity framework CompiledQuery");
+
+			var entityContext4 = new EntityFramework.tempdbEntities1();
+			entityContext4.Connection.Open();
+			tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)), "Entity framework ESQL");
+
+			var entityContext5 = new EntityFramework.tempdbEntities1();
+			entityContext5.Connection.Open();
+			entityContext5.Posts.MergeOption = System.Data.Objects.MergeOption.NoTracking;
+			tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework No Tracking");
 
             var mapperConnection = Program.GetOpenConnection();
             tests.Add(id => mapperConnection.ExecuteMapperQuery<Post>("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Mapper Query");
 
             var mapperConnection2 = Program.GetOpenConnection();
             tests.Add(id => mapperConnection2.ExecuteMapperQuery("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Dynamic Mapper Query");
-
 
             var massiveModel = new DynamicModel(Program.connectionString);
             var massiveConnection = Program.GetOpenConnection();
