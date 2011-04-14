@@ -1,0 +1,21 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Dapper</id>
+    <version>1.0</version>
+    <authors>Sam Saffron</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A high performance micro ORM</description>
+    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core" targetFramework="net40-client, net40" />
+      <frameworkAssembly assemblyName="System" targetFramework="net40-client, net40" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net40-client, net40" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework="net40-client, net40" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="bin\Release\dapper.dll" target="lib" />
+  </files>
+</package>

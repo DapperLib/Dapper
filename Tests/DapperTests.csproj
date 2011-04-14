@@ -109,7 +109,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="SqlMapper.cs" />
     <Compile Include="SubSonic\ActiveRecord.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -186,6 +185,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bltoolkit\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dapper\Dapper.csproj">
+      <Project>{DAF737E1-05B5-4189-A5AA-DAC6233B64D7}</Project>
+      <Name>Dapper</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
