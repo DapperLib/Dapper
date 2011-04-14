@@ -11,6 +11,7 @@ using System.Data.Linq;
 using System.Diagnostics;
 using Massive;
 using SqlMapper.NHibernate;
+using Dapper;
 
 namespace SqlMapper
 {

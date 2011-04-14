@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ License: http://www.apache.org/licenses/LICENSE-2.0 
+ Home page: http://code.google.com/p/dapper-dot-net/
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +16,7 @@ using Microsoft.SqlServer.Server;
 using System.Dynamic;
 using System.Collections;
 
-namespace SqlMapper
+namespace Dapper
 {
     public static class SqlMapper
     {
@@ -88,7 +93,7 @@ namespace SqlMapper
 
             public static ParamInfo Create(string name, DbType type, object val)
             {
-                return new ParamInfo { Name = name, Type = type, Val = val};
+                return new ParamInfo { Name = name, Type = type, Val = val };
             }
 
             public DbType Type { get; private set; }
@@ -99,7 +104,7 @@ namespace SqlMapper
         private class Identity : IEquatable<Identity>
         {
 
-            public String ConnectionString { get {return connectionString;} }
+            public String ConnectionString { get { return connectionString; } }
             public Type Type { get { return type; } }
             public string Sql { get { return sql; } }
             internal Identity(string sql, IDbConnection cnn, Type type)
@@ -145,9 +150,9 @@ namespace SqlMapper
             public static Type Type = typeof(DynamicStub);
         }
 
-        public static List<dynamic> ExecuteMapperQuery (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static List<dynamic> ExecuteMapperQuery(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
-            var identity = new Identity(sql,cnn, DynamicStub.Type);
+            var identity = new Identity(sql, cnn, DynamicStub.Type);
             var list = new List<dynamic>();
 
             using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
@@ -161,7 +166,7 @@ namespace SqlMapper
             return list;
         }
 
-       
+
         public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, typeof(T));
@@ -233,7 +238,7 @@ namespace SqlMapper
             }
 
             Func<IDataReader, ExpandoObject> rval =
-                r => 
+                r =>
                 {
                     IDictionary<string, object> row = new ExpandoObject();
                     int i = 0;
@@ -288,7 +293,7 @@ namespace SqlMapper
         private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
         {
             var cmd = cnn.CreateCommand();
-            
+
             cmd.Transaction = tranaction;
             cmd.CommandText = sql;
             if (paramInfo != null)
@@ -297,7 +302,7 @@ namespace SqlMapper
                 {
                     var param = cmd.CreateParameter();
                     param.ParameterName = "@" + info.Name;
-                    param.DbType = info.Type;     
+                    param.DbType = info.Type;
                     param.Value = info.Val ?? DBNull.Value;
                     param.Direction = ParameterDirection.Input;
                     if (info.Type == DbType.String)
@@ -325,7 +330,7 @@ namespace SqlMapper
                             {
                                 count++;
                                 var listParam = cmd.CreateParameter();
-                                listParam.ParameterName =  "@" + info.Name + count; 
+                                listParam.ParameterName = "@" + info.Name + count;
                                 listParam.Value = item ?? DBNull.Value;
                                 if (isString)
                                 {
