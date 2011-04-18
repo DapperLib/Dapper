@@ -121,6 +121,10 @@ namespace SqlMapper
                 .IsEqualTo(guid);
         }
 
+        public void TestSimpleNull()
+        {
+            connection.ExecuteMapperQuery<DateTime?>("select null").First().IsNull();
+        }
 
         public void TestExpando()
         {
