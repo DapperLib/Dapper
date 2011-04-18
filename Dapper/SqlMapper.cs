@@ -386,7 +386,7 @@ namespace Dapper
 
             deserializer = r =>
             {
-                var val = reader.GetValue(0);
+                var val = r.GetValue(0);
                 if (val == DBNull.Value)
                 {
                     val = null;
