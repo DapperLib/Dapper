@@ -152,6 +152,10 @@ namespace SqlMapper
 			var db1 = new DbManager(Program.GetOpenConnection());
 			tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
 
+            // Simple.Data
+            var sdb = Simple.Data.Database.OpenConnection(Program.connectionString);
+            tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
+
 			//ServiceStack.OrmLite Provider:
             /*
              * Unhandled Exception: System.FormatException: Input string was not in a correct f
