@@ -99,7 +99,7 @@ namespace SqlMapper
 
 			var entityContext4 = new EntityFramework.tempdbEntities1();
 			entityContext4.Connection.Open();
-			tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)), "Entity framework ESQL");
+			tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)).First(), "Entity framework ESQL");
 
 			var entityContext5 = new EntityFramework.tempdbEntities1();
 			entityContext5.Connection.Open();
