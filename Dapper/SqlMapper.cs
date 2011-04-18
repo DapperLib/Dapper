@@ -383,7 +383,16 @@ namespace Dapper
         private static object GetStructDeserializer<T>(IDataReader reader)
         {
             Func<IDataReader, T> deserializer = null;
-            deserializer = r => (T)r.GetValue(0);
+
+            deserializer = r =>
+            {
+                var val = reader.GetValue(0);
+                if (val == DBNull.Value)
+                {
+                    val = null;
+                }
+                return (T)val;
+            };
             return deserializer;
         }
 
