@@ -70,13 +70,13 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>OrmLite\ServiceStack.Text.dll</HintPath>
     </Reference>
-    <Reference Include="Simple.Data, Version=0.5.10.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Simple.Data">
       <HintPath>Simple.Data\Simple.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Simple.Data.Ado, Version=0.5.10.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Simple.Data.Ado">
       <HintPath>Simple.Data\Simple.Data.Ado.dll</HintPath>
     </Reference>
-    <Reference Include="Simple.Data.SqlServer, Version=0.5.10.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Simple.Data.SqlServer">
       <HintPath>Simple.Data\Simple.Data.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="SubSonic.Core">
