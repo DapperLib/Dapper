@@ -403,8 +403,8 @@ namespace Dapper
             var il = dm.GetILGenerator();
 
             var properties = typeof(T)
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Select(p => new { Name = p.Name, Setter = p.GetSetMethod(), Type = p.PropertyType })
+                .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Select(p => new { Name = p.Name, Setter = p.GetSetMethod(true), Type = p.PropertyType })
                 .Where(info => info.Setter != null)
                 .ToList();
 

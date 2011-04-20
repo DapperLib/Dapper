@@ -168,6 +168,25 @@ namespace SqlMapper
                 .IsEqualTo(str);
         }
 
+        class TestObj
+        {
+            public int _internal;
+            internal int Internal { set { _internal = value; } }
+
+            public int _priv;
+            internal int Priv { set { _priv = value; } }
+        }
+
+        public void TestSetInternal()
+        {
+            connection.ExecuteMapperQuery<TestObj>("select 10 as [Internal]").First()._internal.IsEqualTo(10);
+        }
+
+        public void TestSetPrivate()
+        {
+            connection.ExecuteMapperQuery<TestObj>("select 10 as [Priv]").First()._priv.IsEqualTo(10);
+        }
+
        
 
     }
