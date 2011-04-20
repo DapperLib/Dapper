@@ -34,6 +34,14 @@ namespace SqlMapper
             }
         }
 
+        public static void IsTrue(this bool b)
+        {
+            if (b)
+            {
+                throw new ApplicationException("Expected true");
+            }
+        }
+
         public static void IsNull(this object obj)
         {
             if (obj != null)
@@ -187,7 +195,48 @@ namespace SqlMapper
             connection.ExecuteMapperQuery<TestObj>("select 10 as [Priv]").First()._priv.IsEqualTo(10);
         }
 
-       
+        public void TestEnumeration()
+        {
+            var en = connection.EnumerateMapperQuery<int>("select 1 as one");
+            bool gotException = false;
+            try
+            {
+                connection.EnumerateMapperQuery<int>("select 1 as one");
+            }
+            catch (Exception)
+            {
+                gotException = true;
+            }
+
+            var realItems = en.ToList();
+
+            // should not exception, since enumertated
+            en = connection.EnumerateMapperQuery<int>("select 1 as one");
+
+            gotException.IsTrue();
+        }
+
+        public void TestEnumerationDynamic()
+        {
+            var en = connection.EnumerateMapperQuery("select 1 as one");
+            bool gotException = false;
+            try
+            {
+                connection.EnumerateMapperQuery("select 1 as one");
+            }
+            catch (Exception)
+            {
+                gotException = true;
+            }
+
+            int i = en.First().one;
+            i.IsEqualTo(1);
+
+            // should not exception, since enumertated
+            en = connection.EnumerateMapperQuery("select 1 as one");
+
+            gotException.IsTrue();
+        }
 
     }
 }

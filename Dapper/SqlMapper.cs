@@ -45,7 +45,6 @@ namespace Dapper
             typeMap[typeof(DateTime)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset)] = DbType.DateTimeOffset;
             typeMap[typeof(byte[])] = DbType.Binary;
-
             typeMap[typeof(byte?)] = DbType.Byte;
             typeMap[typeof(sbyte?)] = DbType.SByte;
             typeMap[typeof(short?)] = DbType.Int16;
@@ -62,7 +61,6 @@ namespace Dapper
             typeMap[typeof(Guid?)] = DbType.Guid;
             typeMap[typeof(DateTime?)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
-
         }
 
         private static DbType LookupDbType(Type type)
@@ -83,7 +81,6 @@ namespace Dapper
 
             throw new NotSupportedException("The type : " + type.ToString() + " is not supported by the mapper");
         }
-
 
         class ParamInfo
         {
@@ -150,6 +147,43 @@ namespace Dapper
             public static Type Type = typeof(DynamicStub);
         }
 
+        /// <summary>
+        /// Enumerates the query, keeping the reader open after it is called. Use when iterating through huge result sets . You should usually use ExecuteMapperQuery instead. 
+        /// </summary>
+        public static IEnumerable<T> EnumerateMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        {
+            var identity = new Identity(sql, cnn, typeof(T));
+
+            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
+            {
+                Func<IDataReader, T> deserializer = GetDeserializer<T>(identity, reader);
+                while (reader.Read())
+                {
+                    yield return deserializer(reader);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enumerates the query, keeping the reader open after it is called. Use when iterating through huge result sets. You should usually use ExecuteMapperQuery instead 
+        /// </summary>
+        public static IEnumerable<dynamic> EnumerateMapperQuery(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        {
+            var identity = new Identity(sql, cnn, DynamicStub.Type);
+
+            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
+            {
+                Func<IDataReader, ExpandoObject> deserializer = GetDeserializer<ExpandoObject>(identity, reader);
+                while (reader.Read())
+                {
+                    yield return deserializer(reader);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
         public static List<dynamic> ExecuteMapperQuery(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, DynamicStub.Type);
@@ -166,7 +200,9 @@ namespace Dapper
             return list;
         }
 
-
+        /// <summary>
+        /// Return a typed list of objects, reader is closed after the call
+        /// </summary>
         public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, typeof(T));
@@ -180,10 +216,7 @@ namespace Dapper
                 {
                     rval.Add(deserializer(reader));
                 }
-                // ignore any other grids; note that this might mean we miss exceptions that happen
-                // late in the TDS stream, but that is bad design anyhow
             }
-
             return rval;
         }
 
@@ -480,6 +513,5 @@ namespace Dapper
                 default: il.Emit(OpCodes.Ldc_I4, value); break;
             }
         }
-
     }
 }
