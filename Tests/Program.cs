@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
 using System.Data.SqlClient;
-using System.Data.Metadata.Edm;
 using System.Reflection;
-using System.Data.EntityClient;
-using System.Data.Linq;
 
 namespace SqlMapper
 {
@@ -57,6 +50,7 @@ namespace SqlMapper
             EnsureDBSetup();
             RunPerformanceTests();
 #endif
+            Console.WriteLine("(end of tests; press any key)");
 
             Console.ReadKey();
         }

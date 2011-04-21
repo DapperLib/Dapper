@@ -4,17 +4,14 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data.SqlClient;
-using System.Reflection.Emit;
-using System.Collections.Concurrent;
-using System.Data;
-using System.Reflection;
-using Microsoft.SqlServer.Server;
-using System.Dynamic;
 using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Data;
+using System.Dynamic;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Dapper
 {
@@ -137,7 +134,7 @@ namespace Dapper
         /// Execute parameterized SQL  
         /// </summary>
         /// <returns>Number of rows affected</returns>
-        public static int ExecuteMapperCommand(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static int ExecuteMapperCommand(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
             return ExecuteCommand(cnn, transaction, sql, GetParamInfo(param));
         }
@@ -150,7 +147,7 @@ namespace Dapper
         /// <summary>
         /// Enumerates the query, keeping the reader open after it is called. Use when iterating through huge result sets . You should usually use ExecuteMapperQuery instead. 
         /// </summary>
-        public static IEnumerable<T> EnumerateMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static IEnumerable<T> EnumerateMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, typeof(T));
 
@@ -167,7 +164,7 @@ namespace Dapper
         /// <summary>
         /// Enumerates the query, keeping the reader open after it is called. Use when iterating through huge result sets. You should usually use ExecuteMapperQuery instead 
         /// </summary>
-        public static IEnumerable<dynamic> EnumerateMapperQuery(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static IEnumerable<dynamic> EnumerateMapperQuery(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, DynamicStub.Type);
 
@@ -184,7 +181,7 @@ namespace Dapper
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static List<dynamic> ExecuteMapperQuery(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static List<dynamic> ExecuteMapperQuery(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, DynamicStub.Type);
             var list = new List<dynamic>();
@@ -203,7 +200,7 @@ namespace Dapper
         /// <summary>
         /// Return a typed list of objects, reader is closed after the call
         /// </summary>
-        public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+        public static List<T> ExecuteMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, typeof(T));
             var rval = new List<T>();
