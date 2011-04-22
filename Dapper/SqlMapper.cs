@@ -106,10 +106,13 @@ namespace Dapper
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
-                hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
-                hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
-                hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
-                hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
+                unchecked
+                {
+                    hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
+                    hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
+                    hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
+                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
+                }
             }
             public override bool Equals(object obj)
             {
