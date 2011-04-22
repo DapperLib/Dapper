@@ -449,7 +449,9 @@ namespace Dapper
 
             var setters = (
                             from n in names
-                            select new { Name = n, Info = properties.FirstOrDefault(p => p.Name == n) }
+                            let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCulture)) // case sensitive first
+                                  ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCultureIgnoreCase)) // case insensitive second
+                            select new { Name = n, Info = prop }
                           ).ToList();
 
 
