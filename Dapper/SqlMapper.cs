@@ -12,6 +12,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.ComponentModel;
 
 namespace Dapper
 {
@@ -20,7 +21,7 @@ namespace Dapper
         class CacheInfo
         {
             public object Deserializer { get; set; }
-            public Func<object, List<ParamInfo>> ParamReader { get; set; }
+            public Action<IDbCommand, object> ParamReader { get; set; }
         }
 
         static ConcurrentDictionary<Identity, CacheInfo> queryCache = new ConcurrentDictionary<Identity, CacheInfo>();
@@ -84,22 +85,6 @@ namespace Dapper
             throw new NotSupportedException("The type : " + type.ToString() + " is not supported by dapper");
         }
 
-        class ParamInfo
-        {
-            private ParamInfo()
-            {
-            }
-
-            public static ParamInfo Create(string name, DbType type, object val)
-            {
-                return new ParamInfo { Name = name, Type = type, Val = val };
-            }
-
-            public DbType Type { get; private set; }
-            public string Name { get; private set; }
-            public object Val { get; private set; }
-        }
-
         private class Identity : IEquatable<Identity>
         {
 
@@ -154,13 +139,7 @@ namespace Dapper
         {
             var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType());
             var info = GetCacheInfo(param, identity);
-            List<ParamInfo> paramInfos = null;
-            if (info.ParamReader != null)
-            {
-                paramInfos = info.ParamReader(param);
-            }
-
-            return ExecuteCommand(cnn, transaction, sql, paramInfos);
+            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, param);
         }
 
         /// <summary>
@@ -195,13 +174,8 @@ namespace Dapper
 
             var info = GetCacheInfo(param, identity);
 
-            List<ParamInfo> paramInfos = null;
-            if (info.ParamReader != null)
-            {
-                paramInfos = info.ParamReader(param);
-            }
 
-            using (var reader = GetReader(cnn, transaction, sql, paramInfos))
+            using (var reader = GetReader(cnn, transaction, sql, info.ParamReader, param))
             {
                 if (info.Deserializer == null)
                 { 
@@ -218,7 +192,7 @@ namespace Dapper
             }
 
         }
-
+        
         private static CacheInfo GetCacheInfo(object param, Identity identity)
         {
             CacheInfo info;
@@ -289,127 +263,196 @@ namespace Dapper
 
             return rval;
         }
-
-        private static Func<object, List<ParamInfo>> CreateParamInfoGenerator(Type type)
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("This method is for internal usage only", true)]
+        public static void PackListParameters(IDbCommand command, string namePrefix, object value)
         {
-            DynamicMethod dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), typeof(List<ParamInfo>), new Type[] { typeof(object) }, true);
+            // initially we tried TVP, however it performs quite poorly.
+            // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
+
+            var list = value as IEnumerable;
+            var count = 0;
+            bool isString = value is IEnumerable<string>;
+
+            if (list != null)
+            {
+                foreach (var item in list)
+                {
+                    count++;
+                    var listParam = command.CreateParameter();
+                    listParam.ParameterName = namePrefix + count.ToString();
+                    listParam.Value = item ?? DBNull.Value;
+                    if (isString)
+                    {
+                        listParam.Size = 4000;
+                        if (item != null && ((string)item).Length > 4000)
+                        {
+                            listParam.Size = -1;
+                        }
+                    }
+                    command.Parameters.Add(listParam);
+                }
+
+                command.CommandText = command.CommandText.Replace(namePrefix,
+                    "(" + string.Join(
+                        ",", Enumerable.Range(1, count).Select(i => namePrefix + i.ToString())
+                    ) + ")");
+            }
+
+        }
+        private static Action<IDbCommand, object> CreateParamInfoGenerator(Type type)
+        {
+            DynamicMethod dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new Type[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();
 
             il.DeclareLocal(type); // 0
-            il.Emit(OpCodes.Ldarg_0); // stack is now [untyped-param]
+            bool haveInt32Arg1 = false;
+            il.Emit(OpCodes.Ldarg_1); // stack is now [untyped-param]
             il.Emit(OpCodes.Unbox_Any, type); // stack is now [typed-param]
             il.Emit(OpCodes.Stloc_0);// stack is now empty
 
-            il.Emit(OpCodes.Newobj, typeof(List<ParamInfo>).GetConstructor(Type.EmptyTypes)); // stack is now [list]
-
+            il.Emit(OpCodes.Ldarg_0); // stack is now [command]
+            il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetProperty("Parameters").GetGetMethod(), null); // stack is now [parameters]
+            
+            
             foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
             {
-                // we want to call list.Add(ParamInfo.Create(string name, DbType type, object val))
+                DbType dbType = LookupDbType(prop.PropertyType);
+                if (dbType == DbType.Xml)
+                {
+                    // this actually represents special handling for list types;
+                    il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [command]
+                    il.Emit(OpCodes.Ldstr, "@" + prop.Name); // stack is now [parameters] [command] [name]
+                    il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [command] [name] [typed-param]
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [command] [name] [typed-value]
+                    if (prop.PropertyType.IsValueType)
+                    {
+                        il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [command] [name] [boxed-value]
+                    }
+                    il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("PackListParameters"), null); // stack is [parameters]
+                    continue;
+                }
+                il.Emit(OpCodes.Dup); // stack is now [parameters] [parameters]
 
-                il.Emit(OpCodes.Dup); // stack is now [list] [list]
+                il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [parameters] [command]
+                il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetMethod("CreateParameter"), null);// stack is now [parameters] [parameters] [parameter]
 
-                il.Emit(OpCodes.Ldstr, prop.Name); // stack is  [list] [list] [name]
-                il.Emit(OpCodes.Ldc_I4, (int)LookupDbType(prop.PropertyType)); // stack is [list] [list] [name] [dbtype]
-                il.Emit(OpCodes.Ldloc_0); // stack is [list] [list] [name] [dbtype] [typed-param]
-                il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [list] [list] [name] [dbtype] [typed-value]
+                il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
+                il.Emit(OpCodes.Ldstr, "@" + prop.Name); // stack is now [parameters] [parameters] [parameter] [parameter] [name]
+                il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("ParameterName").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+
+                il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
+                EmitInt32(il, (int)dbType);// stack is now [parameters] [parameters] [parameter] [parameter] [db-type]
+
+                il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("DbType").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+
+                il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
+                EmitInt32(il, (int)ParameterDirection.Input);// stack is now [parameters] [parameters] [parameter] [parameter] [dir]
+                il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("Direction").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+
+                il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
+                il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [parameters] [parameter] [parameter] [typed-param]
+                il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [parameters] [parameter] [parameter] [typed-value]
+                bool checkForNull = true;
                 if (prop.PropertyType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, prop.PropertyType); // stack is [list] [list] [name] [dbtype] [untyped-value]
+                    il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [parameters] [parameter] [parameter] [boxed-value]
+                    if (Nullable.GetUnderlyingType(prop.PropertyType) == null)
+                    {   // struct but not Nullable<T>; boxed value cannot be null
+                        checkForNull = false;
+                    }
                 }
-                il.Emit(OpCodes.Call, typeof(ParamInfo).GetMethod("Create", BindingFlags.Static | BindingFlags.Public)); // stack is [list] [list] [param-info]
-                il.Emit(OpCodes.Callvirt, typeof(List<ParamInfo>).GetMethod("Add", BindingFlags.Public | BindingFlags.Instance)); // stack is [list]
+                if (checkForNull)
+                {
+                    if (dbType == DbType.String && !haveInt32Arg1)
+                    {
+                        il.DeclareLocal(typeof(int));
+                        haveInt32Arg1 = true;
+                    }
+                    // relative stack: [boxed value]
+                    il.Emit(OpCodes.Dup);// relative stack: [boxed value] [boxed value]
+                    Label notNull = il.DefineLabel();
+                    Label? allDone = dbType == DbType.String ? il.DefineLabel() : (Label?)null;
+                    il.Emit(OpCodes.Brtrue_S, notNull);
+                    // relative stack [boxed value = null]
+                    il.Emit(OpCodes.Pop); // relative stack empty
+                    il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField("Value")); // relative stack [DBNull]
+                    if (dbType == DbType.String)
+                    {
+                        EmitInt32(il, 0);
+                        il.Emit(OpCodes.Stloc_1);
+                    }
+                    if (allDone != null) il.Emit(OpCodes.Br_S, allDone.Value);
+                    il.MarkLabel(notNull);
+                    if (prop.PropertyType == typeof(string))
+                    {
+                        il.Emit(OpCodes.Dup); // [string] [string]
+                        il.EmitCall(OpCodes.Callvirt, typeof(string).GetProperty("Length").GetGetMethod(), null); // [string] [length]
+                        EmitInt32(il, 4000); // [string] [length] [4000]
+                        il.Emit(OpCodes.Cgt); // [string] [0 or 1]
+                        Label isLong = il.DefineLabel(), lenDone = il.DefineLabel();
+                        il.Emit(OpCodes.Brtrue_S, isLong);
+                        EmitInt32(il, 4000); // [string] [4000]
+                        il.Emit(OpCodes.Br_S, lenDone);
+                        il.MarkLabel(isLong);
+                        EmitInt32(il, -1); // [string] [-1]
+                        il.MarkLabel(lenDone);
+                        il.Emit(OpCodes.Stloc_1); // [string] 
+                    }
+                    if (allDone != null) il.MarkLabel(allDone.Value);
+                    // relative stack [boxed value or DBNull]
+                }
+                il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("Value").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+
+                if (prop.PropertyType == typeof(string))
+                {
+                    var endOfSize = il.DefineLabel();
+                    // don't set if 0
+                    il.Emit(OpCodes.Ldloc_1); // [parameters] [parameters] [parameter] [size]
+                    il.Emit(OpCodes.Brfalse_S, endOfSize); // [parameters] [parameters] [parameter]
+
+                    il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
+                    il.Emit(OpCodes.Ldloc_1); // stack is now [parameters] [parameters] [parameter] [parameter] [size]
+                    il.EmitCall(OpCodes.Callvirt, typeof(IDbDataParameter).GetProperty("Size").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+
+                    il.MarkLabel(endOfSize);
+                }
+
+                il.EmitCall(OpCodes.Callvirt, typeof(IList).GetMethod("Add"), null); // stack is now [parameters]
+                il.Emit(OpCodes.Pop); // IList.Add returns the new index (int); we don't care
             }
-
+            // stack is currently [command]
+            il.Emit(OpCodes.Pop); // stack is now empty
             il.Emit(OpCodes.Ret);
-
-            return (Func<object, List<ParamInfo>>)dm.CreateDelegate(typeof(Func<object, List<ParamInfo>>));
+            return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
         }
 
-        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj)
         {
             var cmd = cnn.CreateCommand();
 
             cmd.Transaction = tranaction;
             cmd.CommandText = sql;
-            if (paramInfo != null)
+            if (paramReader != null)
             {
-                foreach (var info in paramInfo)
-                {
-                    var param = cmd.CreateParameter();
-                    param.ParameterName = "@" + info.Name;
-                    param.DbType = info.Type;
-                    param.Value = info.Val ?? DBNull.Value;
-                    param.Direction = ParameterDirection.Input;
-                    if (info.Type == DbType.String)
-                    {
-                        param.Size = 4000;
-                        if (info.Val != null && ((string)info.Val).Length > 4000)
-                        {
-                            param.Size = -1;
-                        }
-                    }
-
-                    if (info.Type == DbType.Xml)
-                    {
-
-                        // initially we tried TVP, however it performs quite poorly.
-                        // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
-
-                        var list = info.Val as IEnumerable;
-                        var count = 0;
-                        bool isString = info.Val is IEnumerable<string>;
-
-                        if (list != null)
-                        {
-                            foreach (var item in list)
-                            {
-                                count++;
-                                var listParam = cmd.CreateParameter();
-                                listParam.ParameterName = "@" + info.Name + count;
-                                listParam.Value = item ?? DBNull.Value;
-                                if (isString)
-                                {
-                                    listParam.Size = 4000;
-                                    if (item != null && ((string)item).Length > 4000)
-                                    {
-                                        listParam.Size = -1;
-                                    }
-                                }
-                                cmd.Parameters.Add(listParam);
-                            }
-
-                            cmd.CommandText = cmd.CommandText.Replace("@" + info.Name,
-                                "(" + string.Join(
-                                    ",", Enumerable.Range(1, count).Select(i => "@" + info.Name + i)
-                                ) + ")");
-                        }
-                        else
-                        {
-                            throw new NotImplementedException();
-                        }
-                    }
-                    else
-                    {
-                        cmd.Parameters.Add(param);
-                    }
-                }
+                paramReader(cmd, obj);
             }
             return cmd;
         }
 
 
-        private static int ExecuteCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static int ExecuteCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj)
         {
-            using (var cmd = SetupCommand(cnn, tranaction, sql, paramInfo))
+            using (var cmd = SetupCommand(cnn, tranaction, sql, paramReader, obj))
             {
                 return cmd.ExecuteNonQuery();
             }
         }
 
-        private static IDataReader GetReader(IDbConnection cnn, IDbTransaction tranaction, string sql, List<ParamInfo> paramInfo)
+        private static IDataReader GetReader(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj)
         {
-            using (var cmd = SetupCommand(cnn, tranaction, sql, paramInfo))
+            using (var cmd = SetupCommand(cnn, tranaction, sql, paramReader, obj))
             {
                 return cmd.ExecuteReader();
             }
