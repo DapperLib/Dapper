@@ -237,5 +237,22 @@ namespace SqlMapper
             gotException.IsTrue();
         }
 
+
+        class User 
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+        class Post 
+        {
+            public int Id { get; set; }
+            public User Owner { get; set; }
+            public string Content { get; set; }
+        }
+        public void TestMultiMap()
+        {
+
+            var test = connection.ExecuteMapperQuery<Post, User>("select * from Posts p left join Users u on u.Id = p.OwnerId");
+        }
     }
 }
