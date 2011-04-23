@@ -106,10 +106,13 @@ namespace Dapper
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
-                hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
-                hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
-                hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
-                hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
+                unchecked
+                {
+                    hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
+                    hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
+                    hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
+                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
+                }
             }
             public override bool Equals(object obj)
             {
@@ -463,7 +466,9 @@ namespace Dapper
 
             var setters = (
                             from n in names
-                            select new { Name = n, Info = properties.FirstOrDefault(p => p.Name == n) }
+                            let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCulture)) // case sensitive first
+                                  ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCultureIgnoreCase)) // case insensitive second
+                            select new { Name = n, Info = prop }
                           ).ToList();
 
 
