@@ -17,8 +17,13 @@ namespace Dapper
 {
     public static class SqlMapper
     {
-        static ConcurrentDictionary<Identity, object> cachedSerializers = new ConcurrentDictionary<Identity, object>();
-        static ConcurrentDictionary<Type, Func<object, List<ParamInfo>>> cachedParamReaders = new ConcurrentDictionary<Type, Func<object, List<ParamInfo>>>();
+        class CacheInfo
+        {
+            public object Deserializer { get; set; }
+            public Func<object, List<ParamInfo>> ParamReader { get; set; }
+        }
+
+        static ConcurrentDictionary<Identity, CacheInfo> queryCache = new ConcurrentDictionary<Identity, CacheInfo>();
         static Dictionary<Type, DbType> typeMap;
 
         static SqlMapper()
@@ -76,7 +81,7 @@ namespace Dapper
                 }
             }
 
-            throw new NotSupportedException("The type : " + type.ToString() + " is not supported by the mapper");
+            throw new NotSupportedException("The type : " + type.ToString() + " is not supported by dapper");
         }
 
         class ParamInfo
@@ -101,17 +106,20 @@ namespace Dapper
             public String ConnectionString { get { return connectionString; } }
             public Type Type { get { return type; } }
             public string Sql { get { return sql; } }
-            internal Identity(string sql, IDbConnection cnn, Type type)
+            public Type ParametersType { get { return ParametersType; } }
+            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType)
             {
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
+                this.parametersType = parametersType;
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
                     hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
                     hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
                     hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
+                    hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
             }
             public override bool Equals(object obj)
@@ -122,14 +130,19 @@ namespace Dapper
             private readonly int hashCode;
             private readonly Type type;
             private readonly string connectionString;
+            private readonly Type parametersType; 
             public override int GetHashCode()
             {
                 return hashCode;
             }
             public bool Equals(Identity other)
             {
-                return other != null && this.type == other.type
-                    && sql == other.sql && connectionString == other.connectionString;
+                return 
+                    other != null && 
+                    this.type == other.type && 
+                    sql == other.sql && 
+                    connectionString == other.connectionString &&
+                    parametersType == other.parametersType;
             }
         }
 
@@ -139,7 +152,15 @@ namespace Dapper
         /// <returns>Number of rows affected</returns>
         public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
-            return ExecuteCommand(cnn, transaction, sql, GetParamInfo(param));
+            var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType());
+            var info = GetCacheInfo(param, identity);
+            List<ParamInfo> paramInfos = null;
+            if (info.ParamReader != null)
+            {
+                paramInfos = info.ParamReader(param);
+            }
+
+            return ExecuteCommand(cnn, transaction, sql, paramInfos);
         }
 
         /// <summary>
@@ -147,49 +168,69 @@ namespace Dapper
         /// </summary>
         public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true)
         {
-            if (!buffered)
-            {
-                return EnumerateMapperQuery(cnn, sql, param, transaction);
-            }
-
-            var identity = new Identity(sql, cnn, DynamicStub.Type);
-            var list = new List<dynamic>();
-
-            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
-            {
-                Func<IDataReader, ExpandoObject> deserializer = GetDeserializer<ExpandoObject>(identity, reader);
-                while (reader.Read())
-                {
-                    list.Add(deserializer(reader));
-                }
-            }
-            return list;
+            return Query<ExpandoObject>(cnn, sql, param, transaction, buffered);
         }
+
+
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true)
+        {
+            var data = QueryInternal<T>(cnn, sql, param, transaction);
+            if (buffered)
+            {
+                return data.ToList();
+            }
+            else
+            {
+                return data;
+            }
+        }
+
 
         /// <summary>
         /// Return a typed list of objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true)
+        private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
+            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
 
-            if (!buffered)
+            var info = GetCacheInfo(param, identity);
+
+            List<ParamInfo> paramInfos = null;
+            if (info.ParamReader != null)
             {
-                return EnumerateMapperQuery<T>(cnn, sql, param, transaction);
+                paramInfos = info.ParamReader(param);
             }
 
-            var identity = new Identity(sql, cnn, typeof(T));
-            var rval = new List<T>();
-
-
-            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
+            using (var reader = GetReader(cnn, transaction, sql, paramInfos))
             {
-                Func<IDataReader, T> deserializer = GetDeserializer<T>(identity, reader);
+                if (info.Deserializer == null)
+                { 
+                    info.Deserializer = GetDeserializer<T>(identity, reader);
+                    queryCache[identity] = info;
+                }
+
+                var deserializer = (Func<IDataReader,T>)info.Deserializer;
+
                 while (reader.Read())
                 {
-                    rval.Add(deserializer(reader));
+                    yield return deserializer(reader);
                 }
             }
-            return rval;
+
+        }
+
+        private static CacheInfo GetCacheInfo(object param, Identity identity)
+        {
+            CacheInfo info;
+            if (!queryCache.TryGetValue(identity, out info))
+            {
+                info = new CacheInfo();
+                if (param != null)
+                {
+                    info.ParamReader = CreateParamInfoGenerator(param.GetType());
+                }
+            }
+            return info;
         }
 
         public static List<T> Query<T,U>(this IDbConnection cnn, string sql, Action<T,U> map, object param = null, IDbTransaction transaction = null)
@@ -203,80 +244,25 @@ namespace Dapper
             public static Type Type = typeof(DynamicStub);
         }
 
-        /// <summary>
-        /// Enumerates the query, keeping the reader open after it is called. Use when iterating through huge result sets . You should usually use ExecuteMapperQuery instead. 
-        /// </summary>
-        static IEnumerable<T> EnumerateMapperQuery<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
-        {
-            var identity = new Identity(sql, cnn, typeof(T));
-
-            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
-            {
-                Func<IDataReader, T> deserializer = GetDeserializer<T>(identity, reader);
-                while (reader.Read())
-                {
-                    yield return deserializer(reader);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Enumerates the query, keeping the reader open after it is called. Use when iterating through huge result sets. You should usually use ExecuteMapperQuery instead 
-        /// </summary>
-        static IEnumerable<dynamic> EnumerateMapperQuery(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
-        {
-            var identity = new Identity(sql, cnn, DynamicStub.Type);
-
-            using (var reader = GetReader(cnn, transaction, sql, GetParamInfo(param)))
-            {
-                Func<IDataReader, ExpandoObject> deserializer = GetDeserializer<ExpandoObject>(identity, reader);
-                while (reader.Read())
-                {
-                    yield return deserializer(reader);
-                }
-            }
-        }
-
         static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader)
         {
             object oDeserializer;
-            if (!cachedSerializers.TryGetValue(identity, out oDeserializer))
-            {
-                if (typeof(T) == DynamicStub.Type || typeof(T) == typeof(ExpandoObject))
-                {
-                    oDeserializer = GetDynamicDeserializer(reader);
-                }
-                else if (typeof(T).IsClass && typeof(T) != typeof(string))
-                {
-                    oDeserializer = GetClassDeserializer<T>(reader);
-                }
-                else
-                {
-                    oDeserializer = GetStructDeserializer<T>(reader);
-                }
 
-                cachedSerializers[identity] = oDeserializer;
+            if (typeof(T) == DynamicStub.Type || typeof(T) == typeof(ExpandoObject))
+            {
+                oDeserializer = GetDynamicDeserializer(reader);
             }
+            else if (typeof(T).IsClass && typeof(T) != typeof(string))
+            {
+                oDeserializer = GetClassDeserializer<T>(reader);
+            }
+            else
+            {
+                oDeserializer = GetStructDeserializer<T>(reader);
+            }
+
             Func<IDataReader, T> deserializer = (Func<IDataReader, T>)oDeserializer;
             return deserializer;
-        }
-
-        private static List<ParamInfo> GetParamInfo(object param)
-        {
-            Func<object, List<ParamInfo>> paramInfoGenerator;
-            List<ParamInfo> paramInfo = null;
-
-            if (param != null)
-            {
-                if (!cachedParamReaders.TryGetValue(param.GetType(), out paramInfoGenerator))
-                {
-                    paramInfoGenerator = CreateParamInfoGenerator(param.GetType());
-                    cachedParamReaders[param.GetType()] = paramInfoGenerator;
-                }
-                paramInfo = paramInfoGenerator(param);
-            }
-
-            return paramInfo;
         }
 
         private static object GetDynamicDeserializer(IDataReader reader)
