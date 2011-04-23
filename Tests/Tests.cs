@@ -58,32 +58,32 @@ namespace SqlMapper
 
         public void SelectListInt()
         {
-            connection.ExecuteMapperQuery<int>("select 1 union all select 2 union all select 3")
+            connection.Query<int>("select 1 union all select 2 union all select 3")
               .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
 
         public void PassInIntArray()
         {
-            connection.ExecuteMapperQuery<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
+            connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
              .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
 
 
         public void TestDoubleParam()
         {
-            connection.ExecuteMapperQuery<double>("select @d", new { d = 0.1d }).First()
+            connection.Query<double>("select @d", new { d = 0.1d }).First()
                 .IsEqualTo(0.1d);
         }
 
         public void TestBoolParam()
         {
-            connection.ExecuteMapperQuery<bool>("select @b", new { b = false }).First()
+            connection.Query<bool>("select @b", new { b = false }).First()
                 .IsFalse();
         }
 
         public void TestStrings()
         {
-            connection.ExecuteMapperQuery<string>(@"select 'a' a union select 'b'")
+            connection.Query<string>(@"select 'a' a union select 'b'")
                 .IsSequenceEqualTo(new[] { "a", "b" });
         }
 
@@ -100,7 +100,7 @@ namespace SqlMapper
         public void TestExtraFields()
         {
             var guid = Guid.NewGuid();
-            var dog = connection.ExecuteMapperQuery<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { Id = guid});
+            var dog = connection.Query<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { Id = guid});
 
             dog.Count()
                .IsEqualTo(1);
@@ -116,7 +116,7 @@ namespace SqlMapper
         public void TestStrongType()
         {
             var guid = Guid.NewGuid();
-            var dog = connection.ExecuteMapperQuery<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
+            var dog = connection.Query<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
             
             dog.Count()
                 .IsEqualTo(1);
@@ -130,13 +130,13 @@ namespace SqlMapper
 
         public void TestSimpleNull()
         {
-            connection.ExecuteMapperQuery<DateTime?>("select null").First().IsNull();
+            connection.Query<DateTime?>("select null").First().IsNull();
         }
 
         public void TestExpando()
         {
-            var rows = connection.ExecuteMapperQuery("select 1 A, 2 B union all select 3, 4");
-
+            var rows = connection.Query("select 1 A, 2 B union all select 3, 4").ToList();
+            
             ((int)rows[0].A)
                 .IsEqualTo(1);
 
@@ -152,13 +152,13 @@ namespace SqlMapper
 
         public void TestStringList()
         {
-            connection.ExecuteMapperQuery<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
+            connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
                 .IsSequenceEqualTo(new[] {"a","b","c"});
         }
 
         public void TestExecuteCommand()
         {
-            connection.ExecuteMapperCommand(@"
+            connection.Execute(@"
     set nocount on 
     create table #t(i int) 
     set nocount off 
@@ -171,7 +171,7 @@ namespace SqlMapper
         public void TestMassiveStrings()
         { 
             var str = new string('X', 20000);
-            connection.ExecuteMapperQuery<string>("select @a", new { a = str }).First()
+            connection.Query<string>("select @a", new { a = str }).First()
                 .IsEqualTo(str);
         }
 
@@ -186,21 +186,21 @@ namespace SqlMapper
 
         public void TestSetInternal()
         {
-            connection.ExecuteMapperQuery<TestObj>("select 10 as [Internal]").First()._internal.IsEqualTo(10);
+            connection.Query<TestObj>("select 10 as [Internal]").First()._internal.IsEqualTo(10);
         }
 
         public void TestSetPrivate()
         {
-            connection.ExecuteMapperQuery<TestObj>("select 10 as [Priv]").First()._priv.IsEqualTo(10);
+            connection.Query<TestObj>("select 10 as [Priv]").First()._priv.IsEqualTo(10);
         }
 
         public void TestEnumeration()
         {
-            var en = connection.EnumerateMapperQuery<int>("select 1 as one");
+            var en = connection.Query<int>("select 1 as one", buffered: false);
             bool gotException = false;
             try
             {
-                connection.EnumerateMapperQuery<int>("select 1 as one");
+                connection.Query<int>("select 1 as one", buffered: false);
             }
             catch (Exception)
             {
@@ -210,18 +210,18 @@ namespace SqlMapper
             var realItems = en.ToList();
 
             // should not exception, since enumertated
-            en = connection.EnumerateMapperQuery<int>("select 1 as one");
+            en = connection.Query<int>("select 1 as one", buffered: false);
 
             gotException.IsTrue();
         }
 
         public void TestEnumerationDynamic()
         {
-            var en = connection.EnumerateMapperQuery("select 1 as one");
+            var en = connection.Query("select 1 as one", buffered: false);
             bool gotException = false;
             try
             {
-                connection.EnumerateMapperQuery("select 1 as one");
+                connection.Query("select 1 as one", buffered: false);
             }
             catch (Exception)
             {
@@ -232,7 +232,7 @@ namespace SqlMapper
             i.IsEqualTo(1);
 
             // should not exception, since enumertated
-            en = connection.EnumerateMapperQuery("select 1 as one");
+            en = connection.Query("select 1 as one",buffered:false);
 
             gotException.IsTrue();
         }
@@ -252,7 +252,7 @@ namespace SqlMapper
         public void TestMultiMap()
         {
 
-            var test = connection.ExecuteMapperQuery<Post, User>("select * from Posts p left join Users u on u.Id = p.OwnerId");
+            var test = connection.Query<Post, User>("select * from Posts p left join Users u on u.Id = p.OwnerId", (post, user) => { post.Owner = user; });
         }
     }
 }
