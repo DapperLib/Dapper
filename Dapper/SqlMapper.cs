@@ -217,6 +217,11 @@ namespace Dapper
             return rval;
         }
 
+        public static List<T> ExecuteMapperQuery<T,U>(this IDbConnection cnn, string sql, Action<T,U> map, object param = null, IDbTransaction transaction = null)
+        {
+            return null;
+        }
+
         private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader)
         {
             object oDeserializer;
