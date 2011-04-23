@@ -104,10 +104,10 @@ namespace SqlMapper
 			tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework No Tracking");
 
             var mapperConnection = Program.GetOpenConnection();
-            tests.Add(id => mapperConnection.ExecuteMapperQuery<Post>("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Mapper Query");
+            tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Mapper Query");
 
             var mapperConnection2 = Program.GetOpenConnection();
-            tests.Add(id => mapperConnection2.ExecuteMapperQuery("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Dynamic Mapper Query");
+            tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Dynamic Mapper Query");
 
             var massiveModel = new DynamicModel(Program.connectionString);
             var massiveConnection = Program.GetOpenConnection();
