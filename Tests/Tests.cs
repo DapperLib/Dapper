@@ -251,8 +251,23 @@ namespace SqlMapper
         }
         public void TestMultiMap()
         {
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
 
-            var test = connection.Query<Post, User>("select * from Posts p left join Users u on u.Id = p.OwnerId", (post, user) => { post.Owner = user; });
+                insert #Users values(1, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 1, 'Sams Post1')
+                insert #Posts values(2, 1, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')
+";
+            connection.Execute(createSql);
+
+            var data = connection.Query<Post, User>("select * from #Posts p left join #Users u on u.Id = p.OwnerId Order by p.Id", (post, user) => { post.Owner = user; });
+
+            data.First().Content.IsEqualTo("Sams Post1");
+            data.First().Owner.Name.IsEqualTo("Sam");
         }
     }
 }
