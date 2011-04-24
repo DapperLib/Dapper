@@ -21,6 +21,7 @@ namespace Dapper
         class CacheInfo
         {
             public object Deserializer { get; set; }
+            public object Deserializer2 { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
         }
 
@@ -90,19 +91,22 @@ namespace Dapper
 
             public String ConnectionString { get { return connectionString; } }
             public Type Type { get { return type; } }
+            public Type Type2 { get { return Type2; } }
             public string Sql { get { return sql; } }
             public Type ParametersType { get { return ParametersType; } }
-            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType)
+            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type type2 = null)
             {
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
                 this.parametersType = parametersType;
+                this.type2 = type2;
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
                     hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
                     hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
+                    hashCode = hashCode * 23 + (type2 == null ? 0 : type2.GetHashCode());
                     hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
                     hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
@@ -114,6 +118,7 @@ namespace Dapper
             private readonly string sql;
             private readonly int hashCode;
             private readonly Type type;
+            private readonly Type type2;
             private readonly string connectionString;
             private readonly Type parametersType; 
             public override int GetHashCode()
@@ -171,9 +176,7 @@ namespace Dapper
         private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null)
         {
             var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
-
             var info = GetCacheInfo(param, identity);
-
 
             using (var reader = GetReader(cnn, transaction, sql, info.ParamReader, param))
             {
@@ -190,7 +193,55 @@ namespace Dapper
                     yield return deserializer(reader);
                 }
             }
+        }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <returns></returns>
+        public static IEnumerable<T> Query<T, U>(this IDbConnection cnn, string sql, Action<T, U> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id")
+        {
+            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
+            var info = GetCacheInfo(param, identity);
+
+            using (var reader = GetReader(cnn, transaction, sql, info.ParamReader, param))
+            {
+                if (info.Deserializer == null)
+                {
+                    int start = 0;
+                    int length = -1;
+
+                    for (length = 1; length < reader.FieldCount; length++)
+                    {
+                        if (reader.GetName(length) == splitOn)
+                        {
+                            break;
+                        }
+                    }
+
+                    info.Deserializer = GetDeserializer<T>(identity, reader, start, length);
+                    info.Deserializer2 = GetDeserializer<U>(identity, reader, start + length);
+                    queryCache[identity] = info;
+                }
+
+                var deserializer = (Func<IDataReader, T>)info.Deserializer;
+                var deserializer2 = (Func<IDataReader, U>)info.Deserializer2;
+
+                while (reader.Read())
+                {
+                    var tmp = deserializer(reader);
+                    map(tmp, deserializer2(reader));
+                    yield return tmp;
+                }
+            }
         }
         
         private static CacheInfo GetCacheInfo(object param, Identity identity)
@@ -207,18 +258,13 @@ namespace Dapper
             return info;
         }
 
-        public static List<T> Query<T,U>(this IDbConnection cnn, string sql, Action<T,U> map, object param = null, IDbTransaction transaction = null)
-        {
-            return null;
-        }
-
 
         static class DynamicStub
         {
             public static Type Type = typeof(DynamicStub);
         }
 
-        static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader)
+        static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1)
         {
             object oDeserializer;
 
@@ -228,7 +274,7 @@ namespace Dapper
             }
             else if (typeof(T).IsClass && typeof(T) != typeof(string))
             {
-                oDeserializer = GetClassDeserializer<T>(reader);
+                oDeserializer = GetClassDeserializer<T>(reader, startBound, length);
             }
             else
             {
@@ -475,7 +521,7 @@ namespace Dapper
             return deserializer;
         }
 
-        public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader)
+        public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1)
         {
             DynamicMethod dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), typeof(T), new Type[] { typeof(IDataReader) }, true);
 
@@ -487,8 +533,13 @@ namespace Dapper
                 .Where(info => info.Setter != null)
                 .ToList();
 
+            if (length == -1)
+            {
+                length = reader.FieldCount - startBound;
+            }
+
             var names = new List<string>();
-            for (int i = 0; i < reader.FieldCount; i++)
+            for (int i = startBound; i < startBound + length; i++)
             {
                 names.Add(reader.GetName(i));
             }
@@ -505,7 +556,7 @@ namespace Dapper
                          .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
                          .Select(p => p.GetGetMethod()).First();
 
-            int index = 0;
+            int index = startBound;
 
             // stack is empty
             il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes)); // stack is now [target]
