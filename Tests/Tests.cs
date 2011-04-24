@@ -255,19 +255,27 @@ namespace SqlMapper
                 create table #Users (Id int, Name varchar(20))
                 create table #Posts (Id int, OwnerId int, Content varchar(20))
 
-                insert #Users values(1, 'Sam')
+                insert #Users values(99, 'Sam')
                 insert #Users values(2, 'I am')
 
-                insert #Posts values(1, 1, 'Sams Post1')
-                insert #Posts values(2, 1, 'Sams Post2')
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
                 insert #Posts values(3, null, 'no ones post')
 ";
             connection.Execute(createSql);
 
-            var data = connection.Query<Post, User>("select * from #Posts p left join #Users u on u.Id = p.OwnerId Order by p.Id", (post, user) => { post.Owner = user; });
+            var sql = 
+@"select * from #Posts p 
+left join #Users u on u.Id = p.OwnerId 
+Order by p.Id";
 
-            data.First().Content.IsEqualTo("Sams Post1");
-            data.First().Owner.Name.IsEqualTo("Sam");
+            var data = connection.Query<Post, User>(sql, (post, user) => { post.Owner = user; });
+            var p = data.First();
+           
+            p.Content.IsEqualTo("Sams Post1");
+            p.Id.IsEqualTo(1);
+            p.Owner.Name.IsEqualTo("Sam");
+            p.Owner.Id.IsEqualTo(99);
         }
     }
 }
