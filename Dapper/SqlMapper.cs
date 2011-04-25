@@ -178,19 +178,22 @@ namespace Dapper
             var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
             var info = GetCacheInfo(param, identity);
 
-            using (var reader = GetReader(cnn, transaction, sql, info.ParamReader, param))
+            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param))
             {
-                if (info.Deserializer == null)
-                { 
-                    info.Deserializer = GetDeserializer<T>(identity, reader);
-                    queryCache[identity] = info;
-                }
-
-                var deserializer = (Func<IDataReader,T>)info.Deserializer;
-
-                while (reader.Read())
+                using (var reader = cmd.ExecuteReader())
                 {
-                    yield return deserializer(reader);
+                    if (info.Deserializer == null)
+                    {
+                        info.Deserializer = GetDeserializer<T>(identity, reader);
+                        queryCache[identity] = info;
+                    }
+
+                    var deserializer = (Func<IDataReader, T>)info.Deserializer;
+
+                    while (reader.Read())
+                    {
+                        yield return deserializer(reader);
+                    }
                 }
             }
         }
@@ -212,34 +215,37 @@ namespace Dapper
             var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
             var info = GetCacheInfo(param, identity);
 
-            using (var reader = GetReader(cnn, transaction, sql, info.ParamReader, param))
+            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param))
             {
-                if (info.Deserializer == null)
+                using (var reader = cmd.ExecuteReader())
                 {
-                    int start = 0;
-                    int length = -1;
-
-                    for (length = 1; length < reader.FieldCount; length++)
+                    if (info.Deserializer == null)
                     {
-                        if (reader.GetName(length) == splitOn)
+                        int start = 0;
+                        int length = -1;
+
+                        for (length = 1; length < reader.FieldCount; length++)
                         {
-                            break;
+                            if (reader.GetName(length) == splitOn)
+                            {
+                                break;
+                            }
                         }
+
+                        info.Deserializer = GetDeserializer<T>(identity, reader, start, length);
+                        info.Deserializer2 = GetDeserializer<U>(identity, reader, start + length);
+                        queryCache[identity] = info;
                     }
 
-                    info.Deserializer = GetDeserializer<T>(identity, reader, start, length);
-                    info.Deserializer2 = GetDeserializer<U>(identity, reader, start + length);
-                    queryCache[identity] = info;
-                }
+                    var deserializer = (Func<IDataReader, T>) info.Deserializer;
+                    var deserializer2 = (Func<IDataReader, U>) info.Deserializer2;
 
-                var deserializer = (Func<IDataReader, T>)info.Deserializer;
-                var deserializer2 = (Func<IDataReader, U>)info.Deserializer2;
-
-                while (reader.Read())
-                {
-                    var tmp = deserializer(reader);
-                    map(tmp, deserializer2(reader));
-                    yield return tmp;
+                    while (reader.Read())
+                    {
+                        var tmp = deserializer(reader);
+                        map(tmp, deserializer2(reader));
+                        yield return tmp;
+                    }
                 }
             }
         }
@@ -474,11 +480,11 @@ namespace Dapper
             return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
         }
 
-        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj)
+        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj)
         {
             var cmd = cnn.CreateCommand();
 
-            cmd.Transaction = tranaction;
+            cmd.Transaction = transaction;
             cmd.CommandText = sql;
             if (paramReader != null)
             {
@@ -495,15 +501,6 @@ namespace Dapper
                 return cmd.ExecuteNonQuery();
             }
         }
-
-        private static IDataReader GetReader(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj)
-        {
-            using (var cmd = SetupCommand(cnn, tranaction, sql, paramReader, obj))
-            {
-                return cmd.ExecuteReader();
-            }
-        }
-
 
         private static object GetStructDeserializer<T>(IDataReader reader)
         {
