@@ -556,7 +556,12 @@ namespace Dapper
 
             var properties = typeof(T)
                 .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Select(p => new { Name = p.Name, Setter = p.GetSetMethod(true), Type = p.PropertyType })
+                .Select(p => new 
+                { 
+                    Name = p.Name, 
+                    Setter = p.DeclaringType == typeof(T) ? p.GetSetMethod(true) : p.DeclaringType.GetProperty(p.Name).GetSetMethod(true), 
+                    Type = p.PropertyType 
+                })
                 .Where(info => info.Setter != null)
                 .ToList();
 

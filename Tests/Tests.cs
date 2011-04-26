@@ -317,5 +317,27 @@ Order by p.Id";
             connection.Execute("drop table #Users drop table #Posts");
         }
 
+        class InheritanceTest1
+        {
+            public string Base1 { get; set; }
+            public string Base2 { get; private set; }
+        }
+
+        class InheritanceTest2 : InheritanceTest1
+        {
+            public string Derived1 { get; set; }
+            public string Derived2 { get; private set; }
+        }
+
+        public void TestInheritance()
+        {
+            // Test that inheritance works.
+            var list = connection.Query<InheritanceTest2>("select 'One' as Derived1, 'Two' as Derived2, 'Three' as Base1, 'Four' as Base2");
+            list.First().Derived1.IsEqualTo("One");
+            list.First().Derived2.IsEqualTo("Two");
+            list.First().Base1.IsEqualTo("Three");
+            list.First().Base2.IsEqualTo("Four");
+        }
+
     }
 }
