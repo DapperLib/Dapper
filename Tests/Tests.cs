@@ -154,6 +154,9 @@ namespace SqlMapper
         {
             connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
                 .IsSequenceEqualTo(new[] {"a","b","c"});
+
+             connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new string[0] })
+	                .IsSequenceEqualTo(new string[0]);
         }
 
         public void TestExecuteCommand()

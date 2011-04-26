@@ -375,10 +375,17 @@ namespace Dapper
                     command.Parameters.Add(listParam);
                 }
 
-                command.CommandText = command.CommandText.Replace(namePrefix,
-                    "(" + string.Join(
-                        ",", Enumerable.Range(1, count).Select(i => namePrefix + i.ToString())
-                    ) + ")");
+                if (count == 0)
+                {
+                    command.CommandText = command.CommandText.Replace(namePrefix, "(SELECT NULL WHERE 1 = 0)");
+                }
+                else
+                {
+                    command.CommandText = command.CommandText.Replace(namePrefix,
+                        "(" + string.Join(
+                            ",", Enumerable.Range(1, count).Select(i => namePrefix + i.ToString())
+                        ) + ")");
+                }
             }
 
         }
