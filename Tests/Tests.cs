@@ -269,13 +269,53 @@ namespace SqlMapper
 left join #Users u on u.Id = p.OwnerId 
 Order by p.Id";
 
-            var data = connection.Query<Post, User>(sql, (post, user) => { post.Owner = user; });
+            var data = connection.Query<Post, User>(sql, (post, user) => { post.Owner = user; }).ToList();
             var p = data.First();
            
             p.Content.IsEqualTo("Sams Post1");
             p.Id.IsEqualTo(1);
             p.Owner.Name.IsEqualTo("Sam");
             p.Owner.Id.IsEqualTo(99);
+
+            data[2].Owner.IsNull();
+
+            connection.Execute("drop table #Users drop table #Posts");
         }
+
+
+        public void TestMultiMapDynamic()
+        {
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+
+                insert #Users values(99, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')
+";
+            connection.Execute(createSql);
+
+            var sql =
+@"select * from #Posts p 
+left join #Users u on u.Id = p.OwnerId 
+Order by p.Id";
+
+            var data = connection.Query<dynamic, dynamic>(sql, (post, user) => { post.Owner = user; }).ToList();
+            var p = data.First();
+
+            // hairy extension method support for dynamics
+            ((string)p.Content).IsEqualTo("Sams Post1");
+            ((int)p.Id).IsEqualTo(1);
+            ((string)p.Owner.Name).IsEqualTo("Sam");
+            ((int)p.Owner.Id).IsEqualTo(99);
+
+            ((object)data[2].Owner).IsNull();
+
+            connection.Execute("drop table #Users drop table #Posts");
+        }
+
     }
 }

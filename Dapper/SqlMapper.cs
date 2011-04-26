@@ -227,8 +227,25 @@ namespace Dapper
                         }
                     }
 
-                    info.Deserializer = GetDeserializer<T>(identity, reader, start, length);
-                    info.Deserializer2 = GetDeserializer<U>(identity, reader, start + length);
+                    // dynamic comes back as object ... 
+                    if (typeof(T) == typeof(object))
+                    {
+                        info.Deserializer = GetDeserializer<ExpandoObject>(identity, reader, start, length);
+                    }
+                    else
+                    {
+                        info.Deserializer = GetDeserializer<T>(identity, reader, start, length);
+                    }
+
+                    if (typeof(U) == typeof(object))
+                    {
+                        info.Deserializer2 = GetDeserializer<ExpandoObject>(identity, reader, start + length,returnNullIfFirstMissing:true);
+                    }
+                    else
+                    {
+                        info.Deserializer2 = GetDeserializer<U>(identity, reader, start + length, returnNullIfFirstMissing: true);
+                    }
+
                     queryCache[identity] = info;
                 }
 
@@ -259,22 +276,22 @@ namespace Dapper
         }
 
 
-        static class DynamicStub
+        class DynamicStub
         {
             public static Type Type = typeof(DynamicStub);
         }
 
-        static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1)
+        static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             object oDeserializer;
 
             if (typeof(T) == DynamicStub.Type || typeof(T) == typeof(ExpandoObject))
             {
-                oDeserializer = GetDynamicDeserializer(reader);
+                oDeserializer = GetDynamicDeserializer(reader,startBound, length, returnNullIfFirstMissing);
             }
             else if (typeof(T).IsClass && typeof(T) != typeof(string))
             {
-                oDeserializer = GetClassDeserializer<T>(reader, startBound, length);
+                oDeserializer = GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
             }
             else
             {
@@ -285,10 +302,16 @@ namespace Dapper
             return deserializer;
         }
 
-        private static object GetDynamicDeserializer(IDataReader reader)
+        private static object GetDynamicDeserializer(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             List<string> colNames = new List<string>();
-            for (int i = 0; i < reader.FieldCount; i++)
+
+            if (length == -1)
+            {
+                length = reader.FieldCount - startBound;
+            }
+
+            for (int i = startBound; i < startBound + length; i++)
             {
                 colNames.Add(reader.GetName(i));
             }
@@ -297,12 +320,19 @@ namespace Dapper
                 r =>
                 {
                     IDictionary<string, object> row = new ExpandoObject();
-                    int i = 0;
+                    int i = startBound;
+                    bool first = true;
                     foreach (var colName in colNames)
                     {
                         var tmp = r.GetValue(i);
-                        row[colName] = tmp == DBNull.Value ? null : tmp;
+                        tmp = tmp == DBNull.Value ? null : tmp;
+                        row[colName] = tmp;
+                        if (returnNullIfFirstMissing && first && tmp == null)
+                        {
+                            return null;
+                        }
                         i++;
+                        first = false;
                     }
                     return (ExpandoObject)row;
                 };
@@ -521,7 +551,7 @@ namespace Dapper
             return deserializer;
         }
 
-        public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1)
+        public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             DynamicMethod dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), typeof(T), new Type[] { typeof(IDataReader) }, true);
 
@@ -560,6 +590,7 @@ namespace Dapper
 
             // stack is empty
             il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes)); // stack is now [target]
+            bool first = true;
             foreach (var item in setters)
             {
                 if (item.Info != null)
@@ -581,13 +612,21 @@ namespace Dapper
                     il.Emit(OpCodes.Callvirt, item.Info.Setter); // stack is now [target]
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
-
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
+
                     il.Emit(OpCodes.Pop); // stack is now [target][target]
                     il.Emit(OpCodes.Pop); // stack is now [target]
 
+                    if (first && returnNullIfFirstMissing)
+                    {
+                        il.Emit(OpCodes.Pop);
+                        il.Emit(OpCodes.Ldnull); // stack is now [null]
+                        il.Emit(OpCodes.Ret);
+                    }
+
                     il.MarkLabel(finishLabel);
                 }
+                first = false;
                 index += 1;
             }
             il.Emit(OpCodes.Ret); // stack is empty
