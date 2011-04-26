@@ -6,7 +6,7 @@ using Dapper;
 
 namespace SqlMapper
 {
-    static class TestAssertions
+    static class Assert
     {
 
         public static void IsEqualTo<T>(this T obj, T other)
@@ -318,6 +318,44 @@ Order by p.Id";
             ((object)data[2].Owner).IsNull();
 
             connection.Execute("drop table #Users drop table #Posts");
+        }
+
+        public void TestMultiMappingVariations()
+        {
+            var sql = "select 1 as Id, 'a' as Content, 2 as Id, 'b' as Content, 3 as Id, 'c' as Content, 4 as Id, 'd' as Content, 5 as Id, 'e' as Content";
+            var mapped = connection.Query<dynamic, dynamic, dynamic>(sql, (a, b, c) => { a.B = b; a.C = c; }).First();
+
+            Assert.IsEqualTo(mapped.Id, 1);
+            Assert.IsEqualTo(mapped.Content, "a");
+            Assert.IsEqualTo(mapped.B.Id, 2);
+            Assert.IsEqualTo(mapped.B.Content, "b");
+            Assert.IsEqualTo(mapped.C.Id, 3);
+            Assert.IsEqualTo(mapped.C.Content, "c");
+
+            mapped = connection.Query<dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d) => { a.B = b; a.C = c; a.C.D = d; }).First();
+
+            Assert.IsEqualTo(mapped.Id, 1);
+            Assert.IsEqualTo(mapped.Content, "a");
+            Assert.IsEqualTo(mapped.B.Id, 2);
+            Assert.IsEqualTo(mapped.B.Content, "b");
+            Assert.IsEqualTo(mapped.C.Id, 3);
+            Assert.IsEqualTo(mapped.C.Content, "c");
+            Assert.IsEqualTo(mapped.C.D.Id, 4);
+            Assert.IsEqualTo(mapped.C.D.Content, "d");
+
+            mapped = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d, e) => { a.B = b; a.C = c; a.C.D = d; a.E = e; }).First();
+
+            Assert.IsEqualTo(mapped.Id, 1);
+            Assert.IsEqualTo(mapped.Content, "a");
+            Assert.IsEqualTo(mapped.B.Id, 2);
+            Assert.IsEqualTo(mapped.B.Content, "b");
+            Assert.IsEqualTo(mapped.C.Id, 3);
+            Assert.IsEqualTo(mapped.C.Content, "c");
+            Assert.IsEqualTo(mapped.C.D.Id, 4);
+            Assert.IsEqualTo(mapped.C.D.Content, "d");
+            Assert.IsEqualTo(mapped.E.Id, 5);
+            Assert.IsEqualTo(mapped.E.Content, "e");
+
         }
 
         class InheritanceTest1

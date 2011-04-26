@@ -21,7 +21,7 @@ namespace Dapper
         class CacheInfo
         {
             public object Deserializer { get; set; }
-            public object Deserializer2 { get; set; }
+            public object[] OtherDeserializers { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
         }
 
@@ -94,19 +94,25 @@ namespace Dapper
             public Type Type2 { get { return Type2; } }
             public string Sql { get { return sql; } }
             public Type ParametersType { get { return ParametersType; } }
-            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type type2 = null)
+            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes = null)
             {
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
                 this.parametersType = parametersType;
-                this.type2 = type2;
+                this.otherTypes = otherTypes;
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
                     hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
                     hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
-                    hashCode = hashCode * 23 + (type2 == null ? 0 : type2.GetHashCode());
+                    if (otherTypes != null)
+                    {
+                        for (int i = 0; i < otherTypes.Length; i++)
+                        {
+                            hashCode = hashCode * 23 + (otherTypes[i] == null ? 0 : otherTypes[i].GetHashCode());
+                        }
+                    }
                     hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
                     hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
@@ -118,7 +124,7 @@ namespace Dapper
             private readonly string sql;
             private readonly int hashCode;
             private readonly Type type;
-            private readonly Type type2;
+            private readonly Type[] otherTypes;
             private readonly string connectionString;
             private readonly Type parametersType; 
             public override int GetHashCode()
@@ -169,7 +175,6 @@ namespace Dapper
             }
         }
 
-
         /// <summary>
         /// Return a typed list of objects, reader is closed after the call
         /// </summary>
@@ -199,9 +204,9 @@ namespace Dapper
         }
 
         /// <summary>
-        /// 
+        /// Maps a query to objects
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">The return type</typeparam>
         /// <typeparam name="U"></typeparam>
         /// <param name="cnn"></param>
         /// <param name="sql"></param>
@@ -212,7 +217,28 @@ namespace Dapper
         /// <returns></returns>
         public static IEnumerable<T> Query<T, U>(this IDbConnection cnn, string sql, Action<T, U> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id")
         {
-            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
+            return MultiMap<T,U,DontMap, DontMap, DontMap>(cnn, sql, map, param, transaction, buffered, splitOn);
+        }
+
+        public static IEnumerable<T> Query<T, U, V>(this IDbConnection cnn, string sql, Action<T, U, V> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id")
+        {
+            return MultiMap<T,U,V, DontMap, DontMap>(cnn, sql, map, param, transaction, buffered, splitOn);
+        }
+
+        public static IEnumerable<T> Query<T, U, V, Z>(this IDbConnection cnn, string sql, Action<T, U, V, Z> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id")
+        {
+            return MultiMap<T,U, V, Z, DontMap>(cnn, sql, map, param, transaction, buffered, splitOn);
+        }
+
+        public static IEnumerable<T> Query<T, U, V, Z, X>(this IDbConnection cnn, string sql, Action<T, U, V, Z, X> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id")
+        {
+            return MultiMap<T,U,V,Z,X>(cnn, sql, map, param, transaction, buffered, splitOn);
+        }
+
+        class DontMap {}
+        static IEnumerable<T> MultiMap<T, U, V, Z, X>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id")
+        {
+            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), otherTypes: new Type[] {typeof(T), typeof(U), typeof(V), typeof(Z), typeof(X) });
             var info = GetCacheInfo(param, identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param))
@@ -221,47 +247,115 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        int start = 0;
-                        int length = -1;
+                        var split = 0;
+                        int current = 0;
 
-                        for (length = 1; length < reader.FieldCount; length++)
+                        Func<int> nextSplit = () =>
                         {
-                            if (reader.GetName(length) == splitOn)
+                            int pos;
+                            for (pos = current + 1; pos < reader.FieldCount; pos++)
                             {
-                                break;
+                                if (reader.GetName(pos) == splitOn)
+                                {
+                                    break;
+                                }
                             }
+                            current = pos;
+                            return pos;
+                        };
+
+                        List<object> otherDeserializer = new List<object>();
+                        
+                        split = nextSplit(); 
+                        info.Deserializer = GetDeserializer<T>(identity, reader, 0, split);
+                       
+                        if (typeof(U) != typeof(DontMap))
+                        {
+                            var next = nextSplit();
+                            otherDeserializer.Add(GetDeserializer<U>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            split = next;
+                        }
+                        if (typeof(V) != typeof(DontMap))
+                        {
+                            var next = nextSplit();
+                            otherDeserializer.Add(GetDeserializer<V>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            split = next;
+                        }
+                        if (typeof(Z) != typeof(DontMap))
+                        {
+                            var next = nextSplit();
+                            otherDeserializer.Add(GetDeserializer<Z>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            split = next;
+                        }
+                        if (typeof(X) != typeof(DontMap))
+                        {
+                            var next = nextSplit();
+                            otherDeserializer.Add(GetDeserializer<X>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
                         }
 
-                    // dynamic comes back as object ... 
-                    if (typeof(T) == typeof(object))
-                    {
-                        info.Deserializer = GetDeserializer<ExpandoObject>(identity, reader, start, length);
-                    }
-                    else
-                    {
-                        info.Deserializer = GetDeserializer<T>(identity, reader, start, length);
-                    }
-
-                    if (typeof(U) == typeof(object))
-                    {
-                        info.Deserializer2 = GetDeserializer<ExpandoObject>(identity, reader, start + length,returnNullIfFirstMissing:true);
-                    }
-                    else
-                    {
-                        info.Deserializer2 = GetDeserializer<U>(identity, reader, start + length, returnNullIfFirstMissing: true);
-                    }
+                        info.OtherDeserializers = otherDeserializer.ToArray();
 
                         queryCache[identity] = info;
                     }
 
-                    var deserializer = (Func<IDataReader, T>) info.Deserializer;
-                    var deserializer2 = (Func<IDataReader, U>) info.Deserializer2;
+                    var deserializer = (Func<IDataReader, T>)info.Deserializer;
+                    var deserializer2 = (Func<IDataReader, U>)info.OtherDeserializers[0];
+
+
+                    Func<IDataReader,T> mapIt = null;
+
+                    if (info.OtherDeserializers.Length == 1)
+                    {
+                        mapIt = r =>
+                        {
+                            var tmp = deserializer(r);
+                            ((Action<T, U>)map)(tmp, deserializer2(r));
+                            return tmp;
+                        };
+                    }
+
+                    if (info.OtherDeserializers.Length > 1)
+                    {
+                        var deserializer3 = (Func<IDataReader, V>)info.OtherDeserializers[1];
+
+                        if (info.OtherDeserializers.Length == 2)
+                        {
+                            mapIt = r =>
+                            {
+                                var tmp = deserializer(r);
+                                ((Action<T, U, V>)map)(tmp, deserializer2(r), deserializer3(r));
+                                return tmp;
+                            };
+                        }
+                        if (info.OtherDeserializers.Length > 2)
+                        {
+                            var deserializer4 = (Func<IDataReader, Z>)info.OtherDeserializers[2];
+                            if (info.OtherDeserializers.Length == 3)
+                            {
+                                mapIt = r =>
+                                {
+                                    var tmp = deserializer(r);
+                                    ((Action<T, U, V, Z>)map)(tmp, deserializer2(r), deserializer3(r), deserializer4(r));
+                                    return tmp;
+                                };
+                            }
+
+                            if (info.OtherDeserializers.Length > 3)
+                            {
+                                var deserializer5 = (Func<IDataReader, X>)info.OtherDeserializers[3];
+                                mapIt = r =>
+                                {
+                                    var tmp = deserializer(r);
+                                    ((Action<T, U, V, Z, X>)map)(tmp, deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
+                                    return tmp;
+                                };
+                            }
+                        }
+                    }
 
                     while (reader.Read())
                     {
-                        var tmp = deserializer(reader);
-                        map(tmp, deserializer2(reader));
-                        yield return tmp;
+                        yield return mapIt(reader);
                     }
                 }
             }
@@ -281,17 +375,12 @@ namespace Dapper
             return info;
         }
 
-
-        class DynamicStub
-        {
-            public static Type Type = typeof(DynamicStub);
-        }
-
         static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             object oDeserializer;
 
-            if (typeof(T) == DynamicStub.Type || typeof(T) == typeof(ExpandoObject))
+            // dynamic is passed in as Object ... by c# design
+            if (typeof(T) == typeof(object) || typeof(T) == typeof(ExpandoObject))
             {
                 oDeserializer = GetDynamicDeserializer(reader,startBound, length, returnNullIfFirstMissing);
             }
