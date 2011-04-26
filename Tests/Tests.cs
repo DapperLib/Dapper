@@ -322,39 +322,45 @@ Order by p.Id";
 
         public void TestMultiMappingVariations()
         {
-            var sql = "select 1 as Id, 'a' as Content, 2 as Id, 'b' as Content, 3 as Id, 'c' as Content, 4 as Id, 'd' as Content, 5 as Id, 'e' as Content";
-            var mapped = connection.Query<dynamic, dynamic, dynamic>(sql, (a, b, c) => { a.B = b; a.C = c; }).First();
+            var sql = @"select 1 as Id, 'a' as Content, 2 as Id, 'b' as Content, 3 as Id, 'c' as Content, 4 as Id, 'd' as Content, 5 as Id, 'e' as Content";
+            
+            var order = connection.Query<dynamic, dynamic, dynamic>(sql, (o, owner, creator) => { o.Owner = owner; o.Creator = creator; }).First();
 
-            Assert.IsEqualTo(mapped.Id, 1);
-            Assert.IsEqualTo(mapped.Content, "a");
-            Assert.IsEqualTo(mapped.B.Id, 2);
-            Assert.IsEqualTo(mapped.B.Content, "b");
-            Assert.IsEqualTo(mapped.C.Id, 3);
-            Assert.IsEqualTo(mapped.C.Content, "c");
+            Assert.IsEqualTo(order.Id, 1);
+            Assert.IsEqualTo(order.Content, "a");
+            Assert.IsEqualTo(order.Owner.Id, 2);
+            Assert.IsEqualTo(order.Owner.Content, "b");
+            Assert.IsEqualTo(order.Creator.Id, 3);
+            Assert.IsEqualTo(order.Creator.Content, "c");
 
-            mapped = connection.Query<dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d) => { a.B = b; a.C = c; a.C.D = d; }).First();
+            order = connection.Query<dynamic, dynamic, dynamic, dynamic>(sql, (o, owner, creator, address) => 
+                { 
+                  o.Owner = owner; 
+                  o.Creator = creator; 
+                  o.Owner.Address = address;
+                }).First();
 
-            Assert.IsEqualTo(mapped.Id, 1);
-            Assert.IsEqualTo(mapped.Content, "a");
-            Assert.IsEqualTo(mapped.B.Id, 2);
-            Assert.IsEqualTo(mapped.B.Content, "b");
-            Assert.IsEqualTo(mapped.C.Id, 3);
-            Assert.IsEqualTo(mapped.C.Content, "c");
-            Assert.IsEqualTo(mapped.C.D.Id, 4);
-            Assert.IsEqualTo(mapped.C.D.Content, "d");
+            Assert.IsEqualTo(order.Id, 1);
+            Assert.IsEqualTo(order.Content, "a");
+            Assert.IsEqualTo(order.Owner.Id, 2);
+            Assert.IsEqualTo(order.Owner.Content, "b");
+            Assert.IsEqualTo(order.Creator.Id, 3);
+            Assert.IsEqualTo(order.Creator.Content, "c");
+            Assert.IsEqualTo(order.Owner.Address.Id, 4);
+            Assert.IsEqualTo(order.Owner.Address.Content, "d");
 
-            mapped = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d, e) => { a.B = b; a.C = c; a.C.D = d; a.E = e; }).First();
+            order = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d, e) => { a.B = b; a.C = c; a.C.D = d; a.E = e; }).First();
 
-            Assert.IsEqualTo(mapped.Id, 1);
-            Assert.IsEqualTo(mapped.Content, "a");
-            Assert.IsEqualTo(mapped.B.Id, 2);
-            Assert.IsEqualTo(mapped.B.Content, "b");
-            Assert.IsEqualTo(mapped.C.Id, 3);
-            Assert.IsEqualTo(mapped.C.Content, "c");
-            Assert.IsEqualTo(mapped.C.D.Id, 4);
-            Assert.IsEqualTo(mapped.C.D.Content, "d");
-            Assert.IsEqualTo(mapped.E.Id, 5);
-            Assert.IsEqualTo(mapped.E.Content, "e");
+            Assert.IsEqualTo(order.Id, 1);
+            Assert.IsEqualTo(order.Content, "a");
+            Assert.IsEqualTo(order.B.Id, 2);
+            Assert.IsEqualTo(order.B.Content, "b");
+            Assert.IsEqualTo(order.C.Id, 3);
+            Assert.IsEqualTo(order.C.Content, "c");
+            Assert.IsEqualTo(order.C.D.Id, 4);
+            Assert.IsEqualTo(order.C.D.Content, "d");
+            Assert.IsEqualTo(order.E.Id, 5);
+            Assert.IsEqualTo(order.E.Content, "e");
 
         }
 
