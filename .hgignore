@@ -2,3 +2,4 @@
 bin/*
 obj/*
 /*.user
+glob:Dapper/NuGet.exe
