@@ -153,15 +153,16 @@ namespace Dapper
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+        public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
         {
-            return Query<ExpandoObject>(cnn, sql, param, transaction, buffered, commandTimeout);
+            return Query<ExpandoObject>(cnn, sql, param as object, transaction, buffered, commandTimeout);
         }
 
 
-        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+        // the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new <space> get new object
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
         {
-            var data = QueryInternal<T>(cnn, sql, param, transaction, commandTimeout);
+            var data = QueryInternal<T>(cnn, sql, param as object, transaction, commandTimeout);
             return (buffered) ? data.ToList() : data;
         }
 
@@ -207,24 +208,24 @@ namespace Dapper
         /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns></returns>
-        public static IEnumerable<T> Query<T, U>(this IDbConnection cnn, string sql, Action<T, U> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<T> Query<T, U>(this IDbConnection cnn, string sql, Action<T, U> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T,U,DontMap, DontMap, DontMap>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<T,U,DontMap, DontMap, DontMap>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
-        public static IEnumerable<T> Query<T, U, V>(this IDbConnection cnn, string sql, Action<T, U, V> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<T> Query<T, U, V>(this IDbConnection cnn, string sql, Action<T, U, V> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T, U, V, DontMap, DontMap>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<T, U, V, DontMap, DontMap>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
-        public static IEnumerable<T> Query<T, U, V, Z>(this IDbConnection cnn, string sql, Action<T, U, V, Z> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<T> Query<T, U, V, Z>(this IDbConnection cnn, string sql, Action<T, U, V, Z> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T, U, V, Z, DontMap>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<T, U, V, Z, DontMap>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
-        public static IEnumerable<T> Query<T, U, V, Z, X>(this IDbConnection cnn, string sql, Action<T, U, V, Z, X> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<T> Query<T, U, V, Z, X>(this IDbConnection cnn, string sql, Action<T, U, V, Z, X> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T, U, V, Z, X>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<T, U, V, Z, X>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
         class DontMap {}
