@@ -79,6 +79,18 @@
     <Reference Include="Simple.Data.SqlServer">
       <HintPath>Simple.Data\Simple.Data.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="Soma.Core, Version=0.8.0.0, Culture=neutral, PublicKeyToken=bc5ae85929f8312a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Soma\Soma.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Soma.Core.IT.MsSql, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Soma\Soma.Core.IT.MsSql.dll</HintPath>
+    </Reference>
+    <Reference Include="Soma.Core.IT.MsSqlCe, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Soma\Soma.Core.IT.MsSqlCe.dll</HintPath>
+    </Reference>
     <Reference Include="SubSonic.Core">
       <HintPath>SubSonic\SubSonic.Core.dll</HintPath>
     </Reference>
@@ -196,6 +208,9 @@
     <Content Include="OrmLite\ServiceStack.OrmLite.dll" />
     <Content Include="OrmLite\ServiceStack.OrmLite.SqlServer.dll" />
     <Content Include="OrmLite\ServiceStack.Text.dll" />
+    <Content Include="Soma\Soma.Core.dll" />
+    <Content Include="Soma\Soma.Core.IT.MsSql.dll" />
+    <Content Include="Soma\Soma.Core.IT.MsSqlCe.dll" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bltoolkit\" />
