@@ -163,7 +163,7 @@ namespace Dapper
         public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
         {
             var data = QueryInternal<T>(cnn, sql, param as object, transaction, commandTimeout);
-            return (buffered) ? data.ToList() : data;
+            return buffered ? data.ToList() : data;
         }
 
         /// <summary>
@@ -231,7 +231,13 @@ namespace Dapper
         class DontMap {}
         static IEnumerable<T> MultiMap<T, U, V, Z, X>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), otherTypes: new[] {typeof(T), typeof(U), typeof(V), typeof(Z), typeof(X) });
+            var results = MultiMapImpl<T, U, V, Z, X>(cnn, sql, map, param, transaction, splitOn, commandTimeout);
+            return buffered ? results.ToList() : results;
+        }
+
+        static IEnumerable<T> MultiMapImpl<T, U, V, Z, X>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, string splitOn = "Id", int? commandTimeout = null)
+        {
+            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), otherTypes: new[] { typeof(T), typeof(U), typeof(V), typeof(Z), typeof(X) });
             var info = GetCacheInfo(param, identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout))
@@ -249,7 +255,7 @@ namespace Dapper
                             for (pos = current + 1; pos < reader.FieldCount; pos++)
                             {
                                 // some people like ID some id ... assuming case insensitive splits for now
-                                if (string.Equals(reader.GetName(pos),splitOn,StringComparison.InvariantCultureIgnoreCase))
+                                if (string.Equals(reader.GetName(pos), splitOn, StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     break;
                                 }
@@ -259,10 +265,10 @@ namespace Dapper
                         };
 
                         var otherDeserializer = new List<object>();
-                        
-                        split = nextSplit(); 
+
+                        split = nextSplit();
                         info.Deserializer = GetDeserializer<T>(identity, reader, 0, split);
-                       
+
                         if (typeof(U) != typeof(DontMap))
                         {
                             var next = nextSplit();
@@ -296,7 +302,7 @@ namespace Dapper
                     var deserializer2 = (Func<IDataReader, U>)info.OtherDeserializers[0];
 
 
-                    Func<IDataReader,T> mapIt = null;
+                    Func<IDataReader, T> mapIt = null;
 
                     if (info.OtherDeserializers.Length == 1)
                     {
@@ -347,15 +353,16 @@ namespace Dapper
                         }
                     }
 
-                    if (mapIt!=null)
+                    if (mapIt != null)
                         while (reader.Read())
                         {
                             yield return mapIt(reader);
                         }
                 }
             }
-        }
+        }  
         
+
         private static CacheInfo GetCacheInfo(object param, Identity identity)
         {
             CacheInfo info;
