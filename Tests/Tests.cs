@@ -432,7 +432,8 @@ Order by p.Id";
                 cnn.Close();
             }
         }
-
+        /* TODO:
+         * 
         public void TestMagicParam()
         {
             // magic params allow you to pass in single params without using an anon class
@@ -441,6 +442,7 @@ Order by p.Id";
             var first = connection.Query("select @a as a", 1).First();
             Assert.IsEqualTo(first.a, 1);
         }
+         * */
 
     }
 }
