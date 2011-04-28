@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
+using System.Data.SqlServerCe;
+using System.IO;
 
 namespace SqlMapper
 {
@@ -384,6 +386,49 @@ Order by p.Id";
             list.First().Derived2.IsEqualTo("Two");
             list.First().Base1.IsEqualTo("Three");
             list.First().Base2.IsEqualTo("Four");
+        }
+
+
+        public class PostCE
+        {
+            public int ID { get; set; }
+            public string Title { get; set; }
+            public string Body { get; set; }
+
+            public AuthorCE Author { get; set; }
+        }
+
+        public class AuthorCE
+        {
+            public int ID { get; set; }
+            public string Name { get; set; }
+        }
+
+        public void MultiRSSqlCE()
+        {
+            if (File.Exists("Test.sdf"))
+                File.Delete("Test.sdf");
+
+            var cnnStr = "Data Source = Test.sdf;";
+            var engine = new SqlCeEngine(cnnStr);
+            engine.CreateDatabase();
+            
+            using (var cnn = new SqlCeConnection(cnnStr))
+            {
+                cnn.Open();
+
+                cnn.Execute("create table Posts (ID int, Title nvarchar(50), Body nvarchar(50), AuthorID int)");
+                cnn.Execute("create table Authors (ID int, Name nvarchar(50))");
+
+                cnn.Execute("insert Posts values (1,'title','body',1)");
+                cnn.Execute("insert Posts values(2,'title2','body2',null)");
+                cnn.Execute("insert Authors values(1,'sam')");
+
+                var data = cnn.Query<PostCE, AuthorCE>(@"select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; });
+                var firstPost = data.First();
+                var title = firstPost.Title;
+                cnn.Close();
+            }
         }
 
     }
