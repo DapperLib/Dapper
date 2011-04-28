@@ -424,11 +424,22 @@ Order by p.Id";
                 cnn.Execute("insert Posts values(2,'title2','body2',null)");
                 cnn.Execute("insert Authors values(1,'sam')");
 
-                var data = cnn.Query<PostCE, AuthorCE>(@"select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; });
+                var data = cnn.Query<PostCE, AuthorCE>(@"select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; }).ToList();
                 var firstPost = data.First();
-                var title = firstPost.Title;
+                firstPost.Title.IsEqualTo("title");
+                firstPost.Author.Name.IsEqualTo("sam");
+                data[1].Author.IsNull();
                 cnn.Close();
             }
+        }
+
+        public void TestMagicParam()
+        {
+            // magic params allow you to pass in single params without using an anon class
+            // this test fails for now, but I would like to support a single param by parsing the sql with regex and remapping. 
+
+            var first = connection.Query("select @a as a", 1).First();
+            Assert.IsEqualTo(first.a, 1);
         }
 
     }
