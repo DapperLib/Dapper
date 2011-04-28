@@ -248,7 +248,8 @@ namespace Dapper
                             int pos;
                             for (pos = current + 1; pos < reader.FieldCount; pos++)
                             {
-                                if (reader.GetName(pos) == splitOn)
+                                // some people like ID some id ... assuming case insensitive splits for now
+                                if (string.Equals(reader.GetName(pos),splitOn,StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     break;
                                 }
