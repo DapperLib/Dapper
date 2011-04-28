@@ -74,6 +74,11 @@ namespace SqlMapper
 			{
 				get { return Program.connectionString; }
 			}
+
+			public override void Log(Soma.Core.PreparedStatement preparedStatement)
+			{
+				// no op
+			}
 		}
 
         public void Run(int iterations)
