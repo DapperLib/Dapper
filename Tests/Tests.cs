@@ -322,6 +322,22 @@ Order by p.Id";
             connection.Execute("drop table #Users drop table #Posts");
         }
 
+
+        public void TestMultiReaderBasic()
+        {
+            var sql = @"select 1 as Id union all select 2 as Id     select 'abc' as name   select 1 as Id union all select 2 as Id";
+            int i, j;
+            string s;
+            using (var multi = connection.QueryMultiple(sql))
+            {
+                i = multi.Read<int>().First();
+                s = multi.Read<string>().Single();
+                j = multi.Read<int>().Sum();
+            }
+            Assert.IsEqualTo(i, 1);
+            Assert.IsEqualTo(s, "abc");
+            Assert.IsEqualTo(j, 3);
+        }
         public void TestMultiMappingVariations()
         {
             var sql = @"select 1 as Id, 'a' as Content, 2 as Id, 'b' as Content, 3 as Id, 'c' as Content, 4 as Id, 'd' as Content, 5 as Id, 'e' as Content";
