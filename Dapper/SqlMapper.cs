@@ -778,15 +778,14 @@ namespace Dapper
             /// <summary>
             /// Read the next grid of results
             /// </summary>
-            public IEnumerable<T> Read<T>(bool buffered = true)
+            public IEnumerable<T> Read<T>()
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
                 var identity = new Identity(sql, connection, typeof(T), null);
                 var deserializer = SqlMapper.GetDeserializer<T>(identity, reader);
                 consumed = true;
-                var results = ReadDeferred(gridIndex, deserializer);
-                return buffered ? results.ToList() : results;
+                return ReadDeferred(gridIndex, deserializer);
             }
 
             // todo multimapping. 
