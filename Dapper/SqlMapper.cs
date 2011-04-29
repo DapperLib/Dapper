@@ -167,6 +167,30 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var identity = new Identity(sql, cnn, typeof(GridReader), param == null ? null : param.GetType());
+            var info = GetCacheInfo(param, identity);
+
+            IDbCommand cmd = null;
+            IDataReader reader = null;
+            try
+            {
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout);
+                reader = cmd.ExecuteReader();
+                return new GridReader(cmd, reader, cnn, sql);
+            }
+            catch
+            {
+                if (reader != null) reader.Dispose();
+                if (cmd != null) cmd.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Return a typed list of objects, reader is closed after the call
         /// </summary>
         private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -377,7 +401,7 @@ namespace Dapper
             return info;
         }
 
-        static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             object oDeserializer;
 
@@ -753,5 +777,85 @@ namespace Dapper
                 default: il.Emit(OpCodes.Ldc_I4, value); break;
             }
         }
+
+        public class GridReader : IDisposable
+        {
+            private IDataReader reader;
+            private IDbConnection connection;
+            private IDbCommand command;
+            private readonly string sql;
+            internal GridReader(IDbCommand command, IDataReader reader, IDbConnection connection, string sql)
+            {
+                if (reader == null) throw new ArgumentNullException("reader");
+                if (connection == null) throw new ArgumentNullException("connection");
+                if (sql == null) throw new ArgumentNullException("sql");
+                if (command == null) throw new ArgumentNullException("command");
+
+                this.sql = sql;
+                this.command = command;
+                this.connection = connection;
+                this.reader = reader;
+            }
+            /// <summary>
+            /// Read the next grid of results
+            /// </summary>
+            public IEnumerable<T> Read<T>()
+            {
+                if (reader == null) throw new ObjectDisposedException(GetType().Name);
+                if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
+                var identity = new Identity(sql, connection, typeof(T), null);
+                var deserializer = SqlMapper.GetDeserializer<T>(identity, reader);
+                consumed = true;
+                return ReadDeferred(gridIndex, deserializer);
+            }
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, T> deserializer)
+            {
+                try
+                {
+                    while (index == gridIndex && reader.Read())
+                    {
+                        yield return deserializer(reader);
+                    }
+                }
+                finally // finally so that First etc progresses things even when multiple rows
+                {
+                    if (index == gridIndex)
+                    {
+                        NextResult();
+                    }
+                }
+            }
+            private int gridIndex;
+            private bool consumed;
+            private void NextResult()
+            {
+                if (reader.NextResult())
+                {
+                    gridIndex++;
+                    consumed = false;
+                }
+                else
+                {
+                    Dispose();
+                }
+
+            }
+            public void Dispose()
+            {
+                connection = null;
+                if (reader != null)
+                {
+                    reader.Dispose();
+                    reader = null;
+                }
+                if (command != null)
+                {
+                    command.Dispose();
+                    command = null;
+                }
+            }
+        }
     }
+
+    
 }
