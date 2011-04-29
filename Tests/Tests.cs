@@ -274,7 +274,7 @@ namespace SqlMapper
 left join #Users u on u.Id = p.OwnerId 
 Order by p.Id";
 
-            var data = connection.Query<Post, User>(sql, (post, user) => { post.Owner = user; }).ToList();
+            var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
             var p = data.First();
            
             p.Content.IsEqualTo("Sams Post1");
@@ -308,7 +308,7 @@ Order by p.Id";
 left join #Users u on u.Id = p.OwnerId 
 Order by p.Id";
 
-            var data = connection.Query<dynamic, dynamic>(sql, (post, user) => { post.Owner = user; }).ToList();
+            var data = connection.Query<dynamic, dynamic, dynamic>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
             var p = data.First();
 
             // hairy extension method support for dynamics
@@ -341,8 +341,8 @@ Order by p.Id";
         public void TestMultiMappingVariations()
         {
             var sql = @"select 1 as Id, 'a' as Content, 2 as Id, 'b' as Content, 3 as Id, 'c' as Content, 4 as Id, 'd' as Content, 5 as Id, 'e' as Content";
-            
-            var order = connection.Query<dynamic, dynamic, dynamic>(sql, (o, owner, creator) => { o.Owner = owner; o.Creator = creator; }).First();
+
+            var order = connection.Query<dynamic, dynamic, dynamic, dynamic>(sql, (o, owner, creator) => { o.Owner = owner; o.Creator = creator; return o; }).First();
 
             Assert.IsEqualTo(order.Id, 1);
             Assert.IsEqualTo(order.Content, "a");
@@ -351,11 +351,12 @@ Order by p.Id";
             Assert.IsEqualTo(order.Creator.Id, 3);
             Assert.IsEqualTo(order.Creator.Content, "c");
 
-            order = connection.Query<dynamic, dynamic, dynamic, dynamic>(sql, (o, owner, creator, address) => 
+            order = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (o, owner, creator, address) => 
                 { 
                   o.Owner = owner; 
                   o.Creator = creator; 
                   o.Owner.Address = address;
+                  return o;
                 }).First();
 
             Assert.IsEqualTo(order.Id, 1);
@@ -367,7 +368,7 @@ Order by p.Id";
             Assert.IsEqualTo(order.Owner.Address.Id, 4);
             Assert.IsEqualTo(order.Owner.Address.Content, "d");
 
-            order = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d, e) => { a.B = b; a.C = c; a.C.D = d; a.E = e; }).First();
+            order = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (a, b, c, d, e) => { a.B = b; a.C = c; a.C.D = d; a.E = e; return a; }).First();
 
             Assert.IsEqualTo(order.Id, 1);
             Assert.IsEqualTo(order.Content, "a");
@@ -440,7 +441,7 @@ Order by p.Id";
                 cnn.Execute("insert Posts values(2,'title2','body2',null)");
                 cnn.Execute("insert Authors values(1,'sam')");
 
-                var data = cnn.Query<PostCE, AuthorCE>(@"select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; }).ToList();
+                var data = cnn.Query<PostCE, AuthorCE, PostCE>(@"select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; return post; }).ToList();
                 var firstPost = data.First();
                 firstPost.Title.IsEqualTo("title");
                 firstPost.Author.Name.IsEqualTo("sam");

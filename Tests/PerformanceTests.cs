@@ -126,10 +126,10 @@ namespace SqlMapper
 			petapocoFast.ForceDateTimesToUtc = false;
 			tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id), "PetaPoco (Fast)");
 
-			// Subsonic ActiveRecord
+			// Subsonic ActiveRecord 
 			tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
 
-			// Subsonic ActiveRecord
+			// Subsonic coding horror
 			SubSonic.tempdbDB db=new SubSonic.tempdbDB();
 			tests.Add(id => new SubSonic.Query.CodingHorror(db.Provider, "select * from Posts where Id = @0", id).ExecuteTypedList<Post>(), "SubSonic Coding Horror");
 
