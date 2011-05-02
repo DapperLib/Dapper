@@ -85,19 +85,12 @@ namespace Dapper
 
         private class Identity : IEquatable<Identity>
         {
-
-            public String ConnectionString { get { return connectionString; } }
-            public Type Type { get { return type; } }
-            public Type Type2 { get { return Type2; } }
-            public string Sql { get { return sql; } }
-            public Type ParametersType { get { return ParametersType; } }
             internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes = null)
             {
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
                 this.parametersType = parametersType;
-                this.otherTypes = otherTypes;
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
@@ -121,7 +114,6 @@ namespace Dapper
             private readonly string sql;
             private readonly int hashCode;
             private readonly Type type;
-            private readonly Type[] otherTypes;
             private readonly string connectionString;
             private readonly Type parametersType; 
             public override int GetHashCode()
