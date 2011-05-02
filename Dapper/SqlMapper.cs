@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -262,7 +263,6 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        var split = 0;
                         int current = 0;
 
                         Func<int> nextSplit = () =>
@@ -282,7 +282,7 @@ namespace Dapper
 
                         var otherDeserializer = new List<object>();
 
-                        split = nextSplit();
+                        int split = nextSplit();
                         info.Deserializer = GetDeserializer<T>(identity, reader, 0, split);
 
                         if (typeof(U) != typeof(DontMap))
@@ -767,10 +767,10 @@ namespace Dapper
             private readonly string sql;
             internal GridReader(IDbCommand command, IDataReader reader, IDbConnection connection, string sql)
             {
-                if (reader == null) throw new ArgumentNullException("reader");
-                if (connection == null) throw new ArgumentNullException("connection");
-                if (sql == null) throw new ArgumentNullException("sql");
-                if (command == null) throw new ArgumentNullException("command");
+                Debug.Assert(reader != null);
+                Debug.Assert(connection != null);
+                Debug.Assert(sql != null);
+                Debug.Assert(command != null);
 
                 this.sql = sql;
                 this.command = command;
