@@ -395,24 +395,17 @@ namespace Dapper
 
         private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            object oDeserializer;
-
             // dynamic is passed in as Object ... by c# design
             if (typeof(T) == typeof(object) || typeof(T) == typeof(ExpandoObject))
             {
                 return GetDynamicDeserializer<T>(reader,startBound, length, returnNullIfFirstMissing);
             }
-            else if (typeof(T).IsClass && typeof(T) != typeof(string))
+            if (typeof(T).IsClass && typeof(T) != typeof(string))
             {
                 return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
             }
-            else
-            {
-                return GetStructDeserializer<T>(reader);
-            }
+                return GetStructDeserializer<T>();
 
-            var deserializer = (Func<IDataReader, T>)oDeserializer;
-            return deserializer;
         }
 
         private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
@@ -647,7 +640,7 @@ namespace Dapper
             }
         }
 
-        private static Func<IDataReader, T> GetStructDeserializer<T>(IDataReader reader)
+        private static Func<IDataReader, T> GetStructDeserializer<T>()
         {
            return r =>
             {
