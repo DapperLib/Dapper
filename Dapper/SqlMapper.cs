@@ -400,22 +400,22 @@ namespace Dapper
             // dynamic is passed in as Object ... by c# design
             if (typeof(T) == typeof(object) || typeof(T) == typeof(ExpandoObject))
             {
-                oDeserializer = GetDynamicDeserializer(reader,startBound, length, returnNullIfFirstMissing);
+                return GetDynamicDeserializer<T>(reader,startBound, length, returnNullIfFirstMissing);
             }
             else if (typeof(T).IsClass && typeof(T) != typeof(string))
             {
-                oDeserializer = GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
+                return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
             }
             else
             {
-                oDeserializer = GetStructDeserializer<T>(reader);
+                return GetStructDeserializer<T>(reader);
             }
 
             var deserializer = (Func<IDataReader, T>)oDeserializer;
             return deserializer;
         }
 
-        private static object GetDynamicDeserializer(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             var colNames = new List<string>();
 
@@ -429,7 +429,7 @@ namespace Dapper
                 colNames.Add(reader.GetName(i));
             }
 
-            Func<IDataReader, ExpandoObject> rval =
+            return
                 r =>
                 {
                     IDictionary<string, object> row = new ExpandoObject();
@@ -442,15 +442,14 @@ namespace Dapper
                         row[colName] = tmp;
                         if (returnNullIfFirstMissing && first && tmp == null)
                         {
-                            return null;
+                            return default(T);
                         }
                         i++;
                         first = false;
                     }
-                    return (ExpandoObject)row;
+                    return (T)row;
                 };
 
-            return rval;
         }
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
@@ -648,11 +647,9 @@ namespace Dapper
             }
         }
 
-        private static object GetStructDeserializer<T>(IDataReader reader)
+        private static Func<IDataReader, T> GetStructDeserializer<T>(IDataReader reader)
         {
-            Func<IDataReader, T> deserializer = null;
-
-            deserializer = r =>
+           return r =>
             {
                 var val = r.GetValue(0);
                 if (val == DBNull.Value)
@@ -661,7 +658,6 @@ namespace Dapper
                 }
                 return (T)val;
             };
-            return deserializer;
         }
 
         public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
@@ -796,7 +792,7 @@ namespace Dapper
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
                 var identity = new Identity(sql, connection, typeof(T), null);
-                var deserializer = SqlMapper.GetDeserializer<T>(identity, reader);
+                var deserializer = GetDeserializer<T>(identity, reader);
                 consumed = true;
                 return ReadDeferred(gridIndex, deserializer);
             }
