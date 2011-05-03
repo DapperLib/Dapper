@@ -449,6 +449,21 @@ Order by p.Id";
                 cnn.Close();
             }
         }
+
+        enum TestEnum : byte
+        { 
+           Bla = 1 
+        }
+        class TestEnumClass
+        {
+            public TestEnum? EnumEnum { get; set; }
+        }
+        public void TestEnumWeirdness()
+        {
+            connection.Query<TestEnumClass>("select null as [EnumEnum]");
+            connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]");
+        }
+
         /* TODO:
          * 
         public void TestMagicParam()
