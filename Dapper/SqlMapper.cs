@@ -662,11 +662,11 @@ namespace Dapper
             il.Emit(OpCodes.Stloc_0);
             var properties = typeof(T)
                 .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Select(p => new 
+                .Select(p => new
                 {
-                    p.Name, 
-                    Setter = p.DeclaringType == typeof(T) ? p.GetSetMethod(true) : p.DeclaringType.GetProperty(p.Name).GetSetMethod(true), 
-                    Type = p.PropertyType 
+                    p.Name,
+                    Setter = p.DeclaringType == typeof(T) ? p.GetSetMethod(true) : p.DeclaringType.GetProperty(p.Name).GetSetMethod(true),
+                    Type = p.PropertyType
                 })
                 .Where(info => info.Setter != null)
                 .ToList();
@@ -719,7 +719,15 @@ namespace Dapper
                     il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [target][target][value-as-object][DBNull or null]
                     il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
 
-                    il.Emit(OpCodes.Unbox_Any, item.Info.Type); // stack is now [target][target][typed-value]
+                    // unbox nullable enums as the primitive, i.e. byte etc
+                    var nullUnderlyingType = Nullable.GetUnderlyingType(item.Info.Type);
+                    var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : item.Info.Type;
+                    il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+                    if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
+                    {
+                        il.Emit(OpCodes.Newobj, item.Info.Type.GetConstructor(new[] { nullUnderlyingType }));
+                    }
+
                     il.Emit(OpCodes.Callvirt, item.Info.Setter); // stack is now [target]
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
@@ -752,7 +760,7 @@ namespace Dapper
             il.EndExceptionBlock();
 
             il.Emit(OpCodes.Ldloc_1); // stack is empty
-            il.Emit(OpCodes.Ret); 
+            il.Emit(OpCodes.Ret);
 
             return (Func<IDataReader, T>)dm.CreateDelegate(typeof(Func<IDataReader, T>));
         }
