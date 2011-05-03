@@ -758,8 +758,21 @@ namespace Dapper
         }
         public static void ThrowDataException(Exception ex, int index, IDataReader reader)
         {
-            string name = reader != null && index >= 0 && index < reader.FieldCount ? reader.GetName(index) : "(n/a)";
-            throw new DataException(string.Format("Error parsing column {0} ({1})", index, name), ex);
+            string name = "(n/a)", value = "(n/a)";
+            if (reader != null && index >= 0 && index < reader.FieldCount)
+            {
+                name = reader.GetName(index);
+                object val = reader.GetValue(index);
+                if (val == null || val is DBNull)
+                {
+                    value = "<null>";
+                }
+                else
+                {
+                    value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
+                }
+            }
+            throw new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name,value), ex);
         }
         private static void EmitInt32(ILGenerator il, int value)
         {
