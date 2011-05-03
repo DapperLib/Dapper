@@ -677,7 +677,10 @@ namespace Dapper
             var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), typeof(T), new[] { typeof(IDataReader) }, true);
 
             var il = dm.GetILGenerator();
-
+            il.DeclareLocal(typeof(int));
+            il.DeclareLocal(typeof(T));
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Stloc_0);
             var properties = typeof(T)
                 .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .Select(p => new 
@@ -714,9 +717,11 @@ namespace Dapper
 
             int index = startBound;
 
+            var @try = il.BeginExceptionBlock();
             // stack is empty
             il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes)); // stack is now [target]
             bool first = true;
+            var @allDone = il.DefineLabel();
             foreach (var item in setters)
             {
                 if (item.Info != null)
@@ -727,7 +732,8 @@ namespace Dapper
 
                     il.Emit(OpCodes.Ldarg_0); // stack is now [target][target][reader]
                     EmitInt32(il, index); // stack is now [target][target][reader][index]
-
+                    il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
+                    il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
 
                     il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
@@ -747,7 +753,8 @@ namespace Dapper
                     {
                         il.Emit(OpCodes.Pop);
                         il.Emit(OpCodes.Ldnull); // stack is now [null]
-                        il.Emit(OpCodes.Ret);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Br, @allDone);
                     }
 
                     il.MarkLabel(finishLabel);
@@ -755,11 +762,26 @@ namespace Dapper
                 first = false;
                 index += 1;
             }
-            il.Emit(OpCodes.Ret); // stack is empty
+            il.Emit(OpCodes.Stloc_1); // stack is empty
+            il.MarkLabel(@allDone);
+            il.BeginCatchBlock(typeof(Exception)); // stack is Exception
+            il.Emit(OpCodes.Ldloc_0); // stack is Exception, index
+            il.Emit(OpCodes.Ldarg_0); // stack is Exception, index, reader
+            il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("ThrowDataException"), null);
+            il.Emit(OpCodes.Ldnull);
+            il.Emit(OpCodes.Stloc_1); // to make it verifiable
+            il.EndExceptionBlock();
+
+            il.Emit(OpCodes.Ldloc_1); // stack is empty
+            il.Emit(OpCodes.Ret); 
 
             return (Func<IDataReader, T>)dm.CreateDelegate(typeof(Func<IDataReader, T>));
         }
-
+        public static void ThrowDataException(Exception ex, int index, IDataReader reader)
+        {
+            string name = reader != null && index >= 0 && index < reader.FieldCount ? reader.GetName(index) : "(n/a)";
+            throw new DataException(string.Format("Error parsing column {0} ({1})", index, name), ex);
+        }
         private static void EmitInt32(ILGenerator il, int value)
         {
             switch (value)
