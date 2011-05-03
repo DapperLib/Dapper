@@ -232,36 +232,36 @@ namespace Dapper
         /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns></returns>
-        public static IEnumerable<T> Query<T, U>(this IDbConnection cnn, string sql, Action<T, U> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T,U,DontMap, DontMap, DontMap>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
-        public static IEnumerable<T> Query<T, U, V>(this IDbConnection cnn, string sql, Action<T, U, V> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T, U, V, DontMap, DontMap>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
-        public static IEnumerable<T> Query<T, U, V, Z>(this IDbConnection cnn, string sql, Action<T, U, V, Z> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T, U, V, Z, DontMap>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
-        public static IEnumerable<T> Query<T, U, V, Z, X>(this IDbConnection cnn, string sql, Action<T, U, V, Z, X> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return MultiMap<T, U, V, Z, X>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
+            return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
         }
 
         class DontMap {}
-        static IEnumerable<T> MultiMap<T, U, V, Z, X>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            var results = MultiMapImpl<T, U, V, Z, X>(cnn, sql, map, param, transaction, splitOn, commandTimeout);
+            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param, transaction, splitOn, commandTimeout);
             return buffered ? results.ToList() : results;
         }
 
-        static IEnumerable<T> MultiMapImpl<T, U, V, Z, X>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, string splitOn = "Id", int? commandTimeout = null)
+        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, string splitOn = "Id", int? commandTimeout = null)
         {
-            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), otherTypes: new[] { typeof(T), typeof(U), typeof(V), typeof(Z), typeof(X) });
+            var identity = new Identity(sql, cnn, typeof(TFirst), param == null ? null : param.GetType(), otherTypes: new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
             var info = GetCacheInfo(param, identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout))
@@ -291,30 +291,30 @@ namespace Dapper
                         var otherDeserializer = new List<object>();
 
                         split = nextSplit();
-                        info.Deserializer = GetDeserializer<T>(identity, reader, 0, split);
+                        info.Deserializer = GetDeserializer<TFirst>(identity, reader, 0, split);
 
-                        if (typeof(U) != typeof(DontMap))
+                        if (typeof(TSecond) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<U>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TSecond>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
-                        if (typeof(V) != typeof(DontMap))
+                        if (typeof(TThird) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<V>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TThird>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
-                        if (typeof(Z) != typeof(DontMap))
+                        if (typeof(TFourth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<Z>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFourth>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
-                        if (typeof(X) != typeof(DontMap))
+                        if (typeof(TFifth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<X>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFifth>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
                         }
 
                         info.OtherDeserializers = otherDeserializer.ToArray();
@@ -322,57 +322,37 @@ namespace Dapper
                         queryCache[identity] = info;
                     }
 
-                    var deserializer = (Func<IDataReader, T>)info.Deserializer;
-                    var deserializer2 = (Func<IDataReader, U>)info.OtherDeserializers[0];
+                    var deserializer = (Func<IDataReader, TFirst>)info.Deserializer;
+                    var deserializer2 = (Func<IDataReader, TSecond>)info.OtherDeserializers[0];
 
 
-                    Func<IDataReader, T> mapIt = null;
+                    Func<IDataReader, TReturn> mapIt = null;
 
                     if (info.OtherDeserializers.Length == 1)
                     {
-                        mapIt = r =>
-                        {
-                            var tmp = deserializer(r);
-                            ((Action<T, U>)map)(tmp, deserializer2(r));
-                            return tmp;
-                        };
+                        mapIt = r => ((Func<TFirst, TSecond,TReturn>)map)(deserializer(r), deserializer2(r));
                     }
 
                     if (info.OtherDeserializers.Length > 1)
                     {
-                        var deserializer3 = (Func<IDataReader, V>)info.OtherDeserializers[1];
+                        var deserializer3 = (Func<IDataReader, TThird>)info.OtherDeserializers[1];
 
                         if (info.OtherDeserializers.Length == 2)
                         {
-                            mapIt = r =>
-                            {
-                                var tmp = deserializer(r);
-                                ((Action<T, U, V>)map)(tmp, deserializer2(r), deserializer3(r));
-                                return tmp;
-                            };
+                            mapIt = r => ((Func<TFirst, TSecond, TThird, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r));
                         }
                         if (info.OtherDeserializers.Length > 2)
                         {
-                            var deserializer4 = (Func<IDataReader, Z>)info.OtherDeserializers[2];
+                            var deserializer4 = (Func<IDataReader, TFourth>)info.OtherDeserializers[2];
                             if (info.OtherDeserializers.Length == 3)
                             {
-                                mapIt = r =>
-                                {
-                                    var tmp = deserializer(r);
-                                    ((Action<T, U, V, Z>)map)(tmp, deserializer2(r), deserializer3(r), deserializer4(r));
-                                    return tmp;
-                                };
+                                mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r),deserializer4(r));
                             }
 
                             if (info.OtherDeserializers.Length > 3)
                             {
-                                var deserializer5 = (Func<IDataReader, X>)info.OtherDeserializers[3];
-                                mapIt = r =>
-                                {
-                                    var tmp = deserializer(r);
-                                    ((Action<T, U, V, Z, X>)map)(tmp, deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
-                                    return tmp;
-                                };
+                                var deserializer5 = (Func<IDataReader, TFifth>)info.OtherDeserializers[3];
+                                mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth,TFifth,TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r),deserializer5(r));
                             }
                         }
                     }
@@ -386,7 +366,6 @@ namespace Dapper
             }
         }  
         
-
         private static CacheInfo GetCacheInfo(object param, Identity identity)
         {
             CacheInfo info;
@@ -830,6 +809,9 @@ namespace Dapper
                 consumed = true;
                 return ReadDeferred(gridIndex, deserializer);
             }
+
+            // todo multimapping. 
+
             private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, T> deserializer)
             {
                 try
@@ -878,6 +860,4 @@ namespace Dapper
             }
         }
     }
-
-    
 }
