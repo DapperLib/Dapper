@@ -404,35 +404,24 @@ namespace Dapper
 
         private static object GetDynamicDeserializer(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            var colNames = new List<string>();
-
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
-            }
-
-            for (var i = startBound; i < startBound + length; i++)
-            {
-                colNames.Add(reader.GetName(i));
             }
 
             Func<IDataReader, ExpandoObject> rval =
                 r =>
                 {
                     IDictionary<string, object> row = new ExpandoObject();
-                    var i = startBound;
-                    var first = true;
-                    foreach (var colName in colNames)
+                    for (var i = startBound; i < startBound + length; i++)
                     {
                         var tmp = r.GetValue(i);
                         tmp = tmp == DBNull.Value ? null : tmp;
-                        row[colName] = tmp;
-                        if (returnNullIfFirstMissing && first && tmp == null)
+                        row[r.GetName(i)] = tmp;
+                        if (returnNullIfFirstMissing && i == startBound && tmp == null)
                         {
                             return null;
                         }
-                        i++;
-                        first = false;
                     }
                     return (ExpandoObject)row;
                 };
