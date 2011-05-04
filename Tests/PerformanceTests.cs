@@ -68,6 +68,19 @@ namespace SqlMapper
 
 		private static Func<EntityFramework.tempdbEntities1, int, EntityFramework.Post> entityFrameworkCompiled = System.Data.Objects.CompiledQuery.Compile<EntityFramework.tempdbEntities1, int, EntityFramework.Post>((db, id) => db.Posts.First(p => p.Id == id));
 
+		internal class SomaConfig : Soma.Core.MsSqlConfig
+		{
+			public override string ConnectionString
+			{
+				get { return Program.connectionString; }
+			}
+
+			public override void Log(Soma.Core.PreparedStatement preparedStatement)
+			{
+				// no op
+			}
+		}
+
         public void Run(int iterations)
         {
             var tests = new Tests();
@@ -164,6 +177,9 @@ r& number, NumberFormatInfo info, Boolean parseDecimal)
 	//		IDbCommand ormLiteCmd = Program.GetOpenConnection().CreateCommand();
 	//		tests.Add(id => ormLiteCmd.Select<Post>("select * from Posts where Id = {0}", id), "ServiceStack.OrmLite SQL Query");
 
+			// Soma
+			var somadb = new Soma.Core.Db(new SomaConfig());
+			tests.Add(id => somadb.Find<Post>(id), "Soma");
             
             // HAND CODED 
 
