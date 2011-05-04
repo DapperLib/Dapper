@@ -155,7 +155,7 @@ namespace Dapper
         /// </summary>
         public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
         {
-            return Query<ExpandoObject>(cnn, sql, param as object, transaction, buffered, commandTimeout);
+            return Query<FastExpando>(cnn, sql, param as object, transaction, buffered, commandTimeout);
         }
 
 
@@ -385,7 +385,7 @@ namespace Dapper
             object oDeserializer;
 
             // dynamic is passed in as Object ... by c# design
-            if (typeof(T) == typeof(object) || typeof(T) == typeof(ExpandoObject))
+            if (typeof(T) == typeof(object) || typeof(T) == typeof(FastExpando))
             {
                 oDeserializer = GetDynamicDeserializer(reader,startBound, length, returnNullIfFirstMissing);
             }
@@ -402,6 +402,29 @@ namespace Dapper
             return deserializer;
         }
 
+        private class FastExpando : DynamicObject
+        {
+            IDictionary<string, object> data;
+
+            public static FastExpando Attach(IDictionary<string, object> data)
+            {
+                FastExpando expando = new FastExpando();
+                expando.data = data;
+                return expando;
+            }
+
+            public override bool TrySetMember(SetMemberBinder binder, object value)
+            {
+                data[binder.Name] = value;
+                return true;
+            }
+
+            public override bool TryGetMember(GetMemberBinder binder, out object result)
+            {
+                return data.TryGetValue(binder.Name, out result);
+            }
+        }
+
         private static object GetDynamicDeserializer(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             if (length == -1)
@@ -409,10 +432,10 @@ namespace Dapper
                 length = reader.FieldCount - startBound;
             }
 
-            Func<IDataReader, ExpandoObject> rval =
+            Func<IDataReader, FastExpando> rval =
                 r =>
                 {
-                    IDictionary<string, object> row = new ExpandoObject();
+                    IDictionary<string, object> row = new Dictionary<string,object>(length);
                     for (var i = startBound; i < startBound + length; i++)
                     {
                         var tmp = r.GetValue(i);
@@ -423,7 +446,7 @@ namespace Dapper
                             return null;
                         }
                     }
-                    return (ExpandoObject)row;
+                    return FastExpando.Attach(row);
                 };
 
             return rval;
