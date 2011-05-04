@@ -4,8 +4,10 @@ using System.Reflection;
 
 namespace SqlMapper
 {
+	[Soma.Core.Table(Name = "Posts")]
     class Post
     {
+		[Soma.Core.Id(Soma.Core.IdKind.Identity)]
         public int Id { get; set; }
         public string Text { get; set; }
         public DateTime CreationDate { get; set; }
