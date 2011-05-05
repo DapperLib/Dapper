@@ -88,7 +88,6 @@ namespace Dapper
 
             public String ConnectionString { get { return connectionString; } }
             public Type Type { get { return type; } }
-            public Type Type2 { get { return Type2; } }
             public string Sql { get { return sql; } }
             public Type ParametersType { get { return ParametersType; } }
             internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes = null)
