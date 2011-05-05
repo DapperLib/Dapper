@@ -7,6 +7,8 @@ using System.Linq;
 using BLToolkit.Data;
 using Dapper;
 using Massive;
+using NHibernate.Criterion;
+using NHibernate.Linq;
 using SqlMapper.Linq2Sql;
 using SqlMapper.NHibernate;
 
@@ -144,6 +146,16 @@ namespace SqlMapper
             tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
                 .SetInt32("id", id)
                 .List(), "NHibernate HQL");
+
+            var nhSession3 = NHibernateHelper.OpenSession();
+            tests.Add(id => nhSession3.CreateCriteria<Post>()
+                .Add(Restrictions.IdEq(id))
+                .List(), "NHibernate Criteria");
+
+            var nhSession4 = NHibernateHelper.OpenSession();
+            tests.Add(id => nhSession4
+                .Query<Post>()
+                .Where(p => p.Id == id).ToList(), "NHibernate LINQ");
 
 			// bltoolkit
 			var db1 = new DbManager(Program.GetOpenConnection());
