@@ -322,6 +322,36 @@ Order by p.Id";
             connection.Execute("drop table #Users drop table #Posts");
         }
 
+        public void TestFieldsAndPrivates()
+        {
+            var data = connection.Query<TestFieldCaseAndPrivatesEntity>(
+                @"select a=1,b=2,c=3,d=4,f='5'").Single();
+
+            
+            data.a.IsEqualTo(1);
+            data.GetB().IsEqualTo(2);
+            data.c.IsEqualTo(3);
+            data.GetD().IsEqualTo(4);
+            data.e.IsEqualTo(5);
+
+
+        }
+
+        private class TestFieldCaseAndPrivatesEntity
+        {
+            public int a { get; set; }
+            private int b { get; set; }
+            public int GetB() { return b; }
+            public int c = 0;
+            private int d = 0;
+            public int GetD() { return d; }
+            public int e { get; set; }
+            private string f
+            {
+                get { return e.ToString(); }
+                set { e = int.Parse(value); }
+            }
+        }
 
         public void TestMultiReaderBasic()
         {
