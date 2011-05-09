@@ -670,7 +670,7 @@ namespace Dapper
                 })
                 .Where(info => info.Setter != null)
                 .ToList();
-
+            var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
@@ -684,9 +684,11 @@ namespace Dapper
 
             var setters = (
                             from n in names
-                            let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCulture)) // case sensitive first
-                                  ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCultureIgnoreCase)) // case insensitive second
-                            select new { Name = n, Info = prop }
+                            let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCulture)) // property case sensitive first
+                                  ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCultureIgnoreCase)) // property case insensitive second
+                            let field = prop != null ? null : (fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCulture)) // field case sensitive third
+                                ?? fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.InvariantCultureIgnoreCase))) // field case insensitive fourth
+                            select new { Name = n, Property = prop, Field = field }
                           ).ToList();
 
 
@@ -703,7 +705,7 @@ namespace Dapper
             var @allDone = il.DefineLabel();
             foreach (var item in setters)
             {
-                if (item.Info != null)
+                if (item.Property != null || item.Field != null)
                 {
                     il.Emit(OpCodes.Dup); // stack is now [target][target]
                     Label isDbNullLabel = il.DefineLabel();
@@ -720,15 +722,22 @@ namespace Dapper
                     il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
 
                     // unbox nullable enums as the primitive, i.e. byte etc
-                    var nullUnderlyingType = Nullable.GetUnderlyingType(item.Info.Type);
-                    var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : item.Info.Type;
+                    Type memberType = item.Property != null ? item.Property.Type : item.Field.FieldType;
+                    var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
+                    var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
                     il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                     if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
                     {
-                        il.Emit(OpCodes.Newobj, item.Info.Type.GetConstructor(new[] { nullUnderlyingType }));
+                        il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                     }
-
-                    il.Emit(OpCodes.Callvirt, item.Info.Setter); // stack is now [target]
+                    if (item.Property != null)
+                    {
+                        il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                    }
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
