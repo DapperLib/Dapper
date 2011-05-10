@@ -195,13 +195,17 @@ namespace Dapper
             {
                 using (var reader = cmd.ExecuteReader())
                 {
+                    Func<IDataReader, T> deserializer;
                     if (info.Deserializer == null)
                     {
-                        info.Deserializer = GetDeserializer<T>(identity, reader);
+                     info.Deserializer =  deserializer = GetDeserializer<T>(reader);
                         queryCache[identity] = info;
                     }
+                    else
+                    {
+                        deserializer = (Func<IDataReader, T>)info.Deserializer;    
+                    }
 
-                    var deserializer = (Func<IDataReader, T>)info.Deserializer;
 
                     while (reader.Read())
                     {
@@ -283,30 +287,30 @@ namespace Dapper
                         var otherDeserializer = new List<object>();
 
                         int split = nextSplit();
-                        info.Deserializer = GetDeserializer<T>(identity, reader, 0, split);
+                        info.Deserializer = GetDeserializer<T>(reader, 0, split);
 
                         if (typeof(U) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<U>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<U>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(V) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<V>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<V>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(Z) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<Z>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<Z>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(X) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<X>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<X>(reader, split, next - split, returnNullIfFirstMissing: true));
                         }
 
                         info.OtherDeserializers = otherDeserializer.ToArray();
@@ -382,27 +386,33 @@ namespace Dapper
         private static CacheInfo GetCacheInfo(object param, Identity identity)
         {
             CacheInfo info;
-            if (!queryCache.TryGetValue(identity, out info))
+            if (queryCache.TryGetValue(identity, out info))
             {
-                info = new CacheInfo();
-                if (param != null)
-                {
-                    info.ParamReader = CreateParamInfoGenerator(param.GetType());
-                }
+                return info;
+            }
+            info = new CacheInfo();
+            if (param != null)
+            {
+                info.ParamReader = CreateParamInfoGenerator(param.GetType());
             }
             return info;
         }
 
-        private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        static RuntimeTypeHandle objectTypeHandle = typeof(object).TypeHandle;
+        static RuntimeTypeHandle expandoTypeHandle = typeof(ExpandoObject).TypeHandle;
+        static RuntimeTypeHandle stringTypeHandle = typeof(string).TypeHandle;
+
+        private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             // dynamic is passed in as Object ... by c# design
-            if (typeof(T) == typeof(object) || typeof(T) == typeof(ExpandoObject))
+            var tHandle = typeof(T).TypeHandle;
+            if (tHandle.Equals(objectTypeHandle) || tHandle.Equals(expandoTypeHandle))
             {
                 return GetDynamicDeserializer<T>(reader,startBound, length, returnNullIfFirstMissing);
             }
-            if (typeof(T).IsClass && typeof(T) != typeof(string))
+            if (typeof(T).IsClass && !tHandle.Equals(stringTypeHandle))
             {
-                return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
+                return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
                 return GetStructDeserializer<T>();
 
@@ -784,8 +794,7 @@ namespace Dapper
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
-                var identity = new Identity(sql, connection, typeof(T), null);
-                var deserializer = GetDeserializer<T>(identity, reader);
+                var deserializer = GetDeserializer<T>(reader);
                 consumed = true;
                 return ReadDeferred(gridIndex, deserializer);
             }
