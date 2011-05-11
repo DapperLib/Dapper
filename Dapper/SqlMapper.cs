@@ -966,12 +966,9 @@ namespace Dapper
             }
         }
 
-        public object this[string name]
+        public T Get<T>(string name)
         {
-            get
-            {
-                return parameters[name].AttachedParam.Value;
-            }
+            return (T)parameters[name].AttachedParam.Value;
         }
 
         public IEnumerator GetEnumerator()
