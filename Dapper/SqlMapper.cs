@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -809,11 +810,6 @@ namespace Dapper
             private readonly string sql;
             internal GridReader(IDbCommand command, IDataReader reader, IDbConnection connection, string sql)
             {
-                if (reader == null) throw new ArgumentNullException("reader");
-                if (connection == null) throw new ArgumentNullException("connection");
-                if (sql == null) throw new ArgumentNullException("sql");
-                if (command == null) throw new ArgumentNullException("command");
-
                 this.sql = sql;
                 this.command = command;
                 this.connection = connection;
