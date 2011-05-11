@@ -174,7 +174,7 @@ namespace Dapper
             {
                 cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout);
                 reader = cmd.ExecuteReader();
-                return new GridReader(cmd, reader, cnn, sql);
+                return new GridReader(cmd, reader);
             }
             catch
             {
@@ -805,14 +805,10 @@ namespace Dapper
         public class GridReader : IDisposable
         {
             private IDataReader reader;
-            private IDbConnection connection;
             private IDbCommand command;
-            private readonly string sql;
-            internal GridReader(IDbCommand command, IDataReader reader, IDbConnection connection, string sql)
+            internal GridReader(IDbCommand command, IDataReader reader)
             {
-                this.sql = sql;
                 this.command = command;
-                this.connection = connection;
                 this.reader = reader;
             }
             /// <summary>
@@ -863,7 +859,6 @@ namespace Dapper
             }
             public void Dispose()
             {
-                connection = null;
                 if (reader != null)
                 {
                     reader.Dispose();
