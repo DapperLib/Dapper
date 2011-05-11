@@ -26,51 +26,51 @@ namespace Dapper
         }
 
         static readonly ConcurrentDictionary<Identity, CacheInfo> queryCache = new ConcurrentDictionary<Identity, CacheInfo>();
-        static readonly Dictionary<Type, DbType> typeMap;
+        static readonly Dictionary<RuntimeTypeHandle, DbType> typeMap;
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, DbType>();
-            typeMap[typeof(byte)] = DbType.Byte;
-            typeMap[typeof(sbyte)] = DbType.SByte;
-            typeMap[typeof(short)] = DbType.Int16;
-            typeMap[typeof(ushort)] = DbType.UInt16;
-            typeMap[typeof(int)] = DbType.Int32;
-            typeMap[typeof(uint)] = DbType.UInt32;
-            typeMap[typeof(long)] = DbType.Int64;
-            typeMap[typeof(ulong)] = DbType.UInt64;
-            typeMap[typeof(float)] = DbType.Single;
-            typeMap[typeof(double)] = DbType.Double;
-            typeMap[typeof(decimal)] = DbType.Decimal;
-            typeMap[typeof(bool)] = DbType.Boolean;
-            typeMap[typeof(string)] = DbType.String;
-            typeMap[typeof(char)] = DbType.StringFixedLength;
-            typeMap[typeof(Guid)] = DbType.Guid;
-            typeMap[typeof(DateTime)] = DbType.DateTime;
-            typeMap[typeof(DateTimeOffset)] = DbType.DateTimeOffset;
-            typeMap[typeof(byte[])] = DbType.Binary;
-            typeMap[typeof(byte?)] = DbType.Byte;
-            typeMap[typeof(sbyte?)] = DbType.SByte;
-            typeMap[typeof(short?)] = DbType.Int16;
-            typeMap[typeof(ushort?)] = DbType.UInt16;
-            typeMap[typeof(int?)] = DbType.Int32;
-            typeMap[typeof(uint?)] = DbType.UInt32;
-            typeMap[typeof(long?)] = DbType.Int64;
-            typeMap[typeof(ulong?)] = DbType.UInt64;
-            typeMap[typeof(float?)] = DbType.Single;
-            typeMap[typeof(double?)] = DbType.Double;
-            typeMap[typeof(decimal?)] = DbType.Decimal;
-            typeMap[typeof(bool?)] = DbType.Boolean;
-            typeMap[typeof(char?)] = DbType.StringFixedLength;
-            typeMap[typeof(Guid?)] = DbType.Guid;
-            typeMap[typeof(DateTime?)] = DbType.DateTime;
-            typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
+            typeMap = new Dictionary<RuntimeTypeHandle, DbType>();
+            typeMap[typeof(byte).TypeHandle] = DbType.Byte;
+            typeMap[typeof(sbyte).TypeHandle] = DbType.SByte;
+            typeMap[typeof(short).TypeHandle] = DbType.Int16;
+            typeMap[typeof(ushort).TypeHandle] = DbType.UInt16;
+            typeMap[typeof(int).TypeHandle] = DbType.Int32;
+            typeMap[typeof(uint).TypeHandle] = DbType.UInt32;
+            typeMap[typeof(long).TypeHandle] = DbType.Int64;
+            typeMap[typeof(ulong).TypeHandle] = DbType.UInt64;
+            typeMap[typeof(float).TypeHandle] = DbType.Single;
+            typeMap[typeof(double).TypeHandle] = DbType.Double;
+            typeMap[typeof(decimal).TypeHandle] = DbType.Decimal;
+            typeMap[typeof(bool).TypeHandle] = DbType.Boolean;
+            typeMap[typeof(string).TypeHandle] = DbType.String;
+            typeMap[typeof(char).TypeHandle] = DbType.StringFixedLength;
+            typeMap[typeof(Guid).TypeHandle] = DbType.Guid;
+            typeMap[typeof(DateTime).TypeHandle] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset).TypeHandle] = DbType.DateTimeOffset;
+            typeMap[typeof(byte[]).TypeHandle] = DbType.Binary;
+            typeMap[typeof(byte?).TypeHandle] = DbType.Byte;
+            typeMap[typeof(sbyte?).TypeHandle] = DbType.SByte;
+            typeMap[typeof(short?).TypeHandle] = DbType.Int16;
+            typeMap[typeof(ushort?).TypeHandle] = DbType.UInt16;
+            typeMap[typeof(int?).TypeHandle] = DbType.Int32;
+            typeMap[typeof(uint?).TypeHandle] = DbType.UInt32;
+            typeMap[typeof(long?).TypeHandle] = DbType.Int64;
+            typeMap[typeof(ulong?).TypeHandle] = DbType.UInt64;
+            typeMap[typeof(float?).TypeHandle] = DbType.Single;
+            typeMap[typeof(double?).TypeHandle] = DbType.Double;
+            typeMap[typeof(decimal?).TypeHandle] = DbType.Decimal;
+            typeMap[typeof(bool?).TypeHandle] = DbType.Boolean;
+            typeMap[typeof(char?).TypeHandle] = DbType.StringFixedLength;
+            typeMap[typeof(Guid?).TypeHandle] = DbType.Guid;
+            typeMap[typeof(DateTime?).TypeHandle] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset?).TypeHandle] = DbType.DateTimeOffset;
         }
 
         private static DbType LookupDbType(Type type)
         {
             DbType dbType;
-            if (typeMap.TryGetValue(type, out dbType))
+            if (typeMap.TryGetValue(type.TypeHandle, out dbType))
             {
                 return dbType;
             }
