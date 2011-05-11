@@ -263,7 +263,6 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        var split = 0;
                         int current = 0;
 
                         Func<int> nextSplit = () =>
@@ -283,7 +282,7 @@ namespace Dapper
 
                         var otherDeserializer = new List<object>();
 
-                        split = nextSplit();
+                        int split = nextSplit();
                         info.Deserializer = GetDeserializer<TFirst>(reader, 0, split);
 
                         if (typeof(TSecond) != typeof(DontMap))
@@ -444,10 +443,10 @@ namespace Dapper
 
             var list = value as IEnumerable;
             var count = 0;
-            bool isString = value is IEnumerable<string>;
 
             if (list != null)
             {
+                bool isString = value is IEnumerable<string>;
                 foreach (var item in list)
                 {
                     count++;
