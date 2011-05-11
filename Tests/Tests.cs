@@ -5,6 +5,8 @@ using System.Linq;
 using Dapper;
 using System.Data.SqlServerCe;
 using System.IO;
+using System.Data;
+using System.Collections;
 
 namespace SqlMapper
 {
@@ -492,6 +494,22 @@ Order by p.Id";
         {
             connection.Query<TestEnumClass>("select null as [EnumEnum]");
             connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]");
+        }
+
+       
+       
+
+        public void TestSupportForParamDictionary()
+        {
+
+
+            var p = new DynamicParameters();
+            p.Add("@name", "bob");
+            p.Add("@age", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                    
+            connection.Query<string>("set @age = 11 select @name", p).First().IsEqualTo("bob");
+
+            ((int)p["@age"]).IsEqualTo(11);
         }
 
         /* TODO:

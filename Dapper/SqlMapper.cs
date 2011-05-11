@@ -16,8 +16,13 @@ using System.ComponentModel;
 
 namespace Dapper
 {
-    public static class SqlMapper
+    public static partial class SqlMapper
     {
+        public interface IDynamicParameters
+        {
+            void AddParameter(IDbCommand command);
+        }
+
         class CacheInfo
         {
             public object Deserializer { get; set; }
@@ -142,7 +147,7 @@ namespace Dapper
         /// Execute parameterized SQL  
         /// </summary>
         /// <returns>Number of rows affected</returns>
-        public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int Execute(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType());
             var info = GetCacheInfo(param, identity);
@@ -373,7 +378,14 @@ namespace Dapper
                 info = new CacheInfo();
                 if (param != null)
                 {
-                    info.ParamReader = CreateParamInfoGenerator(param.GetType());
+                    if (param is IDynamicParameters)
+                    {
+                        info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameter(cmd); };
+                    }
+                    else
+                    {
+                        info.ParamReader = CreateParamInfoGenerator(param.GetType());
+                    }
                 }
             }
             return info;
@@ -494,6 +506,8 @@ namespace Dapper
             }
 
         }
+
+
         private static Action<IDbCommand, object> CreateParamInfoGenerator(Type type)
         {
             var dm = new DynamicMethod(string.Format("ParamInfo{0}", Guid.NewGuid()), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
@@ -899,6 +913,70 @@ namespace Dapper
                     command = null;
                 }
             }
+        }
+    }
+    public class DynamicParameters : SqlMapper.IDynamicParameters, IEnumerable
+    {
+        Dictionary<string, ParamInfo> parameters = new Dictionary<string,ParamInfo>();
+
+        class ParamInfo
+        {
+            public string Name { get; set; }
+            public object Value { get; set; }
+            public ParameterDirection ParameterDirection { get; set; }
+            public DbType? DbType { get; set; }
+            public int? Size { get; set; }
+            public IDbDataParameter AttachedParam { get; set; }
+        }
+
+
+        public void Add(string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null)
+        {
+            parameters[name] = new ParamInfo() { Name = name, Value = value, ParameterDirection = direction ?? ParameterDirection.Input, DbType = dbType, Size = size };
+        }
+
+
+        void SqlMapper.IDynamicParameters.AddParameter(IDbCommand command)
+        {
+            foreach (var param in parameters.Values)
+            {
+                var p = command.CreateParameter();
+                var val = param.Value;
+                p.ParameterName = param.Name;
+                p.Value = val;
+                p.Direction = param.ParameterDirection;
+                var s = val as string; 
+                if (s != null)
+                {
+                    if (s.Length < 4000)
+                    {
+                        p.Size = 4000;
+                    }
+                }
+                if (param.Size != null)
+                {
+                    p.Size = param.Size.Value;
+                }
+                if (param.DbType != null)
+                {
+                    p.DbType = param.DbType.Value;
+                }
+                command.Parameters.Add(p);
+                param.AttachedParam = p;
+            }
+        }
+
+        public object this[string name]
+        {
+            get
+            {
+                return parameters[name].AttachedParam.Value;
+            }
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            throw new NotImplementedException();
         }
     }
 }
