@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -31,51 +32,51 @@ namespace Dapper
         }
 
         static readonly ConcurrentDictionary<Identity, CacheInfo> queryCache = new ConcurrentDictionary<Identity, CacheInfo>();
-        static readonly Dictionary<Type, DbType> typeMap;
+        static readonly Dictionary<RuntimeTypeHandle, DbType> typeMap;
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, DbType>();
-            typeMap[typeof(byte)] = DbType.Byte;
-            typeMap[typeof(sbyte)] = DbType.SByte;
-            typeMap[typeof(short)] = DbType.Int16;
-            typeMap[typeof(ushort)] = DbType.UInt16;
-            typeMap[typeof(int)] = DbType.Int32;
-            typeMap[typeof(uint)] = DbType.UInt32;
-            typeMap[typeof(long)] = DbType.Int64;
-            typeMap[typeof(ulong)] = DbType.UInt64;
-            typeMap[typeof(float)] = DbType.Single;
-            typeMap[typeof(double)] = DbType.Double;
-            typeMap[typeof(decimal)] = DbType.Decimal;
-            typeMap[typeof(bool)] = DbType.Boolean;
-            typeMap[typeof(string)] = DbType.String;
-            typeMap[typeof(char)] = DbType.StringFixedLength;
-            typeMap[typeof(Guid)] = DbType.Guid;
-            typeMap[typeof(DateTime)] = DbType.DateTime;
-            typeMap[typeof(DateTimeOffset)] = DbType.DateTimeOffset;
-            typeMap[typeof(byte[])] = DbType.Binary;
-            typeMap[typeof(byte?)] = DbType.Byte;
-            typeMap[typeof(sbyte?)] = DbType.SByte;
-            typeMap[typeof(short?)] = DbType.Int16;
-            typeMap[typeof(ushort?)] = DbType.UInt16;
-            typeMap[typeof(int?)] = DbType.Int32;
-            typeMap[typeof(uint?)] = DbType.UInt32;
-            typeMap[typeof(long?)] = DbType.Int64;
-            typeMap[typeof(ulong?)] = DbType.UInt64;
-            typeMap[typeof(float?)] = DbType.Single;
-            typeMap[typeof(double?)] = DbType.Double;
-            typeMap[typeof(decimal?)] = DbType.Decimal;
-            typeMap[typeof(bool?)] = DbType.Boolean;
-            typeMap[typeof(char?)] = DbType.StringFixedLength;
-            typeMap[typeof(Guid?)] = DbType.Guid;
-            typeMap[typeof(DateTime?)] = DbType.DateTime;
-            typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
+            typeMap = new Dictionary<RuntimeTypeHandle, DbType>();
+            typeMap[typeof(byte).TypeHandle] = DbType.Byte;
+            typeMap[typeof(sbyte).TypeHandle] = DbType.SByte;
+            typeMap[typeof(short).TypeHandle] = DbType.Int16;
+            typeMap[typeof(ushort).TypeHandle] = DbType.UInt16;
+            typeMap[typeof(int).TypeHandle] = DbType.Int32;
+            typeMap[typeof(uint).TypeHandle] = DbType.UInt32;
+            typeMap[typeof(long).TypeHandle] = DbType.Int64;
+            typeMap[typeof(ulong).TypeHandle] = DbType.UInt64;
+            typeMap[typeof(float).TypeHandle] = DbType.Single;
+            typeMap[typeof(double).TypeHandle] = DbType.Double;
+            typeMap[typeof(decimal).TypeHandle] = DbType.Decimal;
+            typeMap[typeof(bool).TypeHandle] = DbType.Boolean;
+            typeMap[typeof(string).TypeHandle] = DbType.String;
+            typeMap[typeof(char).TypeHandle] = DbType.StringFixedLength;
+            typeMap[typeof(Guid).TypeHandle] = DbType.Guid;
+            typeMap[typeof(DateTime).TypeHandle] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset).TypeHandle] = DbType.DateTimeOffset;
+            typeMap[typeof(byte[]).TypeHandle] = DbType.Binary;
+            typeMap[typeof(byte?).TypeHandle] = DbType.Byte;
+            typeMap[typeof(sbyte?).TypeHandle] = DbType.SByte;
+            typeMap[typeof(short?).TypeHandle] = DbType.Int16;
+            typeMap[typeof(ushort?).TypeHandle] = DbType.UInt16;
+            typeMap[typeof(int?).TypeHandle] = DbType.Int32;
+            typeMap[typeof(uint?).TypeHandle] = DbType.UInt32;
+            typeMap[typeof(long?).TypeHandle] = DbType.Int64;
+            typeMap[typeof(ulong?).TypeHandle] = DbType.UInt64;
+            typeMap[typeof(float?).TypeHandle] = DbType.Single;
+            typeMap[typeof(double?).TypeHandle] = DbType.Double;
+            typeMap[typeof(decimal?).TypeHandle] = DbType.Decimal;
+            typeMap[typeof(bool?).TypeHandle] = DbType.Boolean;
+            typeMap[typeof(char?).TypeHandle] = DbType.StringFixedLength;
+            typeMap[typeof(Guid?).TypeHandle] = DbType.Guid;
+            typeMap[typeof(DateTime?).TypeHandle] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset?).TypeHandle] = DbType.DateTimeOffset;
         }
 
         private static DbType LookupDbType(Type type)
         {
             DbType dbType;
-            if (typeMap.TryGetValue(type, out dbType))
+            if (typeMap.TryGetValue(type.TypeHandle, out dbType))
             {
                 return dbType;
             }
@@ -91,17 +92,12 @@ namespace Dapper
         private class Identity : IEquatable<Identity>
         {
 
-            public String ConnectionString { get { return connectionString; } }
-            public Type Type { get { return type; } }
-            public string Sql { get { return sql; } }
-            public Type ParametersType { get { return ParametersType; } }
             internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes = null)
             {
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
                 this.type = type;
                 this.parametersType = parametersType;
-                this.otherTypes = otherTypes;
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
@@ -125,7 +121,6 @@ namespace Dapper
             private readonly string sql;
             private readonly int hashCode;
             private readonly Type type;
-            private readonly Type[] otherTypes;
             private readonly string connectionString;
             private readonly Type parametersType; 
             public override int GetHashCode()
@@ -184,7 +179,7 @@ namespace Dapper
             {
                 cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout);
                 reader = cmd.ExecuteReader();
-                return new GridReader(cmd, reader, cnn, sql);
+                return new GridReader(cmd, reader);
             }
             catch
             {
@@ -208,7 +203,7 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        info.Deserializer = GetDeserializer<T>(identity, reader);
+                        info.Deserializer = GetDeserializer<T>(reader);
                         queryCache[identity] = info;
                     }
 
@@ -274,7 +269,6 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        var split = 0;
                         int current = 0;
 
                         Func<int> nextSplit = () =>
@@ -294,31 +288,31 @@ namespace Dapper
 
                         var otherDeserializer = new List<object>();
 
-                        split = nextSplit();
-                        info.Deserializer = GetDeserializer<TFirst>(identity, reader, 0, split);
+                        int split = nextSplit();
+                        info.Deserializer = GetDeserializer<TFirst>(reader, 0, split);
 
                         if (typeof(TSecond) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TSecond>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(TThird) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TThird>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(TFourth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFourth>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(TFifth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFifth>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, returnNullIfFirstMissing: true));
                         }
 
                         info.OtherDeserializers = otherDeserializer.ToArray();
@@ -391,26 +385,19 @@ namespace Dapper
             return info;
         }
 
-        private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            object oDeserializer;
-
             // dynamic is passed in as Object ... by c# design
-            if (typeof(T) == typeof(object) || typeof(T) == typeof(FastExpando))
+            if (typeof (T) == typeof (object) || typeof (T) == typeof (FastExpando))
             {
-                oDeserializer = GetDynamicDeserializer(reader,startBound, length, returnNullIfFirstMissing);
+                return GetDynamicDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
-            else if (typeof(T).IsClass && typeof(T) != typeof(string))
+            if (typeof (T).IsClass && typeof (T) != typeof (string))
             {
-                oDeserializer = GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
+                return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
-            else
-            {
-                oDeserializer = GetStructDeserializer<T>(reader);
-            }
+            return GetStructDeserializer<T>();
 
-            var deserializer = (Func<IDataReader, T>)oDeserializer;
-            return deserializer;
         }
 
         private class FastExpando : DynamicObject
@@ -419,9 +406,7 @@ namespace Dapper
 
             public static FastExpando Attach(IDictionary<string, object> data)
             {
-                FastExpando expando = new FastExpando();
-                expando.data = data;
-                return expando;
+                return new FastExpando {data = data};
             }
 
             public override bool TrySetMember(SetMemberBinder binder, object value)
@@ -436,14 +421,14 @@ namespace Dapper
             }
         }
 
-        private static object GetDynamicDeserializer(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
             }
 
-            Func<IDataReader, FastExpando> rval =
+           return
                 r =>
                 {
                     IDictionary<string, object> row = new Dictionary<string,object>(length);
@@ -454,13 +439,13 @@ namespace Dapper
                         row[r.GetName(i)] = tmp;
                         if (returnNullIfFirstMissing && i == startBound && tmp == null)
                         {
-                            return null;
+                            return default(T);
                         }
                     }
-                    return FastExpando.Attach(row);
+                    //we know this is an object so it will not box
+                    return (T)(object)FastExpando.Attach(row);
                 };
 
-            return rval;
         }
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
@@ -471,10 +456,10 @@ namespace Dapper
 
             var list = value as IEnumerable;
             var count = 0;
-            bool isString = value is IEnumerable<string>;
 
             if (list != null)
             {
+                bool isString = value is IEnumerable<string>;
                 foreach (var item in list)
                 {
                     count++;
@@ -660,11 +645,9 @@ namespace Dapper
             }
         }
 
-        private static object GetStructDeserializer<T>(IDataReader reader)
+        private static Func<IDataReader, T> GetStructDeserializer<T>()
         {
-            Func<IDataReader, T> deserializer = null;
-
-            deserializer = r =>
+           return r =>
             {
                 var val = r.GetValue(0);
                 if (val == DBNull.Value)
@@ -673,7 +656,6 @@ namespace Dapper
                 }
                 return (T)val;
             };
-            return deserializer;
         }
 
         public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
@@ -723,7 +705,7 @@ namespace Dapper
 
             int index = startBound;
 
-            var @try = il.BeginExceptionBlock();
+            il.BeginExceptionBlock();
             // stack is empty
             il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes)); // stack is now [target]
             bool first = true;
@@ -837,19 +819,10 @@ namespace Dapper
         public class GridReader : IDisposable
         {
             private IDataReader reader;
-            private IDbConnection connection;
             private IDbCommand command;
-            private readonly string sql;
-            internal GridReader(IDbCommand command, IDataReader reader, IDbConnection connection, string sql)
+            internal GridReader(IDbCommand command, IDataReader reader)
             {
-                if (reader == null) throw new ArgumentNullException("reader");
-                if (connection == null) throw new ArgumentNullException("connection");
-                if (sql == null) throw new ArgumentNullException("sql");
-                if (command == null) throw new ArgumentNullException("command");
-
-                this.sql = sql;
                 this.command = command;
-                this.connection = connection;
                 this.reader = reader;
             }
             /// <summary>
@@ -859,8 +832,7 @@ namespace Dapper
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
-                var identity = new Identity(sql, connection, typeof(T), null);
-                var deserializer = SqlMapper.GetDeserializer<T>(identity, reader);
+                var deserializer = GetDeserializer<T>(reader);
                 consumed = true;
                 return ReadDeferred(gridIndex, deserializer);
             }
@@ -901,7 +873,6 @@ namespace Dapper
             }
             public void Dispose()
             {
-                connection = null;
                 if (reader != null)
                 {
                     reader.Dispose();
