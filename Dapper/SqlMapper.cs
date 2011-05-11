@@ -197,7 +197,7 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        info.Deserializer = GetDeserializer<T>(identity, reader);
+                        info.Deserializer = GetDeserializer<T>(reader);
                         queryCache[identity] = info;
                     }
 
@@ -284,30 +284,30 @@ namespace Dapper
                         var otherDeserializer = new List<object>();
 
                         split = nextSplit();
-                        info.Deserializer = GetDeserializer<TFirst>(identity, reader, 0, split);
+                        info.Deserializer = GetDeserializer<TFirst>(reader, 0, split);
 
                         if (typeof(TSecond) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TSecond>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(TThird) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TThird>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(TFourth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFourth>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, returnNullIfFirstMissing: true));
                             split = next;
                         }
                         if (typeof(TFifth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFifth>(identity, reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, returnNullIfFirstMissing: true));
                         }
 
                         info.OtherDeserializers = otherDeserializer.ToArray();
@@ -373,7 +373,7 @@ namespace Dapper
             return info;
         }
 
-        private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             // dynamic is passed in as Object ... by c# design
             if (typeof (T) == typeof (object) || typeof (T) == typeof (FastExpando))
@@ -384,7 +384,7 @@ namespace Dapper
             {
                 return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer<T>(reader);
+            return GetStructDeserializer<T>();
 
         }
 
@@ -631,7 +631,7 @@ namespace Dapper
             }
         }
 
-        private static Func<IDataReader, T> GetStructDeserializer<T>(IDataReader reader)
+        private static Func<IDataReader, T> GetStructDeserializer<T>()
         {
            return r =>
             {
@@ -691,7 +691,7 @@ namespace Dapper
 
             int index = startBound;
 
-            var @try = il.BeginExceptionBlock();
+            il.BeginExceptionBlock();
             // stack is empty
             il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes)); // stack is now [target]
             bool first = true;
@@ -827,8 +827,7 @@ namespace Dapper
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
-                var identity = new Identity(sql, connection, typeof(T), null);
-                var deserializer = SqlMapper.GetDeserializer<T>(identity, reader);
+                var deserializer = GetDeserializer<T>(reader);
                 consumed = true;
                 return ReadDeferred(gridIndex, deserializer);
             }
