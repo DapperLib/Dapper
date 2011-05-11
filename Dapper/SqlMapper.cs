@@ -375,24 +375,17 @@ namespace Dapper
 
         private static Func<IDataReader, T> GetDeserializer<T>(Identity identity, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            object oDeserializer;
-
             // dynamic is passed in as Object ... by c# design
-            if (typeof(T) == typeof(object) || typeof(T) == typeof(FastExpando))
+            if (typeof (T) == typeof (object) || typeof (T) == typeof (FastExpando))
             {
-                oDeserializer = GetDynamicDeserializer(reader,startBound, length, returnNullIfFirstMissing);
+                return GetDynamicDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
-            else if (typeof(T).IsClass && typeof(T) != typeof(string))
+            if (typeof (T).IsClass && typeof (T) != typeof (string))
             {
-                oDeserializer = GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing: returnNullIfFirstMissing);
+                return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
-            else
-            {
-                oDeserializer = GetStructDeserializer<T>(reader);
-            }
+            return GetStructDeserializer<T>(reader);
 
-            var deserializer = (Func<IDataReader, T>)oDeserializer;
-            return deserializer;
         }
 
         private class FastExpando : DynamicObject
@@ -401,9 +394,7 @@ namespace Dapper
 
             public static FastExpando Attach(IDictionary<string, object> data)
             {
-                FastExpando expando = new FastExpando();
-                expando.data = data;
-                return expando;
+                return new FastExpando {data = data};
             }
 
             public override bool TrySetMember(SetMemberBinder binder, object value)
@@ -418,14 +409,14 @@ namespace Dapper
             }
         }
 
-        private static object GetDynamicDeserializer(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
             }
 
-            Func<IDataReader, FastExpando> rval =
+           return
                 r =>
                 {
                     IDictionary<string, object> row = new Dictionary<string,object>(length);
@@ -436,13 +427,13 @@ namespace Dapper
                         row[r.GetName(i)] = tmp;
                         if (returnNullIfFirstMissing && i == startBound && tmp == null)
                         {
-                            return null;
+                            return default(T);
                         }
                     }
-                    return FastExpando.Attach(row);
+                    //we know this is an object so it will not box
+                    return (T)(object)FastExpando.Attach(row);
                 };
 
-            return rval;
         }
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
@@ -640,11 +631,9 @@ namespace Dapper
             }
         }
 
-        private static object GetStructDeserializer<T>(IDataReader reader)
+        private static Func<IDataReader, T> GetStructDeserializer<T>(IDataReader reader)
         {
-            Func<IDataReader, T> deserializer = null;
-
-            deserializer = r =>
+           return r =>
             {
                 var val = r.GetValue(0);
                 if (val == DBNull.Value)
@@ -653,7 +642,6 @@ namespace Dapper
                 }
                 return (T)val;
             };
-            return deserializer;
         }
 
         public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
