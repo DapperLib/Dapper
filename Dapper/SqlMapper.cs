@@ -8,7 +8,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -886,7 +885,7 @@ namespace Dapper
             }
         }
     }
-    public class DynamicParameters : SqlMapper.IDynamicParameters, IEnumerable
+    public class DynamicParameters : SqlMapper.IDynamicParameters
     {
         Dictionary<string, ParamInfo> parameters = new Dictionary<string,ParamInfo>();
 
@@ -940,11 +939,6 @@ namespace Dapper
         public T Get<T>(string name)
         {
             return (T)parameters[name].AttachedParam.Value;
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
         }
     }
 }
