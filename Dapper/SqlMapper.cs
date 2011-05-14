@@ -270,13 +270,21 @@ namespace Dapper
                     {
                         int current = 0;
 
+                        var splits = splitOn.Split(',').ToArray();
+                        var splitIndex = 0; 
+
                         Func<int> nextSplit = () =>
                         {
+                            var currentSplit = splits[splitIndex];
+                            if (splits.Length > splitIndex + 1)
+                            {
+                                splitIndex++;
+                            }
                             int pos;
                             for (pos = current + 1; pos < reader.FieldCount; pos++)
                             {
                                 // some people like ID some id ... assuming case insensitive splits for now
-                                if (string.Equals(reader.GetName(pos), splitOn, StringComparison.InvariantCultureIgnoreCase))
+                                if (string.Equals(reader.GetName(pos), currentSplit, StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     break;
                                 }

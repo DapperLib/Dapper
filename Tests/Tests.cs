@@ -39,7 +39,7 @@ namespace SqlMapper
 
         public static void IsTrue(this bool b)
         {
-            if (b)
+            if (!b)
             {
                 throw new ApplicationException("Expected true");
             }
@@ -203,18 +203,22 @@ namespace SqlMapper
 
         public void TestEnumeration()
         {
-            var en = connection.Query<int>("select 1 as one", buffered: false);
+            var en = connection.Query<int>("select 1 as one union all select 2 as one", buffered: false);
+            var i = en.GetEnumerator();
+            i.MoveNext();
+
             bool gotException = false;
             try
             {
-                connection.Query<int>("select 1 as one", buffered: false);
+                var x = connection.Query<int>("select 1 as one", buffered: false).First();
             }
             catch (Exception)
             {
                 gotException = true;
             }
 
-            var realItems = en.ToList();
+            while (i.MoveNext())
+            { }
 
             // should not exception, since enumertated
             en = connection.Query<int>("select 1 as one", buffered: false);
@@ -224,22 +228,25 @@ namespace SqlMapper
 
         public void TestEnumerationDynamic()
         {
-            var en = connection.Query("select 1 as one", buffered: false);
+            var en = connection.Query("select 1 as one union all select 2 as one", buffered: false);
+            var i = en.GetEnumerator();
+            i.MoveNext();
+
             bool gotException = false;
             try
             {
-                connection.Query("select 1 as one", buffered: false);
+                var x = connection.Query("select 1 as one", buffered: false).First();
             }
             catch (Exception)
             {
                 gotException = true;
             }
 
-            int i = en.First().one;
-            i.IsEqualTo(1);
+            while (i.MoveNext())
+            { }
 
             // should not exception, since enumertated
-            en = connection.Query("select 1 as one",buffered:false);
+            en = connection.Query("select 1 as one", buffered: false);
 
             gotException.IsTrue();
         }
@@ -528,6 +535,46 @@ end");
 
             p.Get<int>("@c").IsEqualTo(11);
             p.Get<int>("@b").IsEqualTo(999);
+
+        }
+
+        class Person
+        {
+            public int PersonId { get; set; }
+            public string Name { get; set; }
+        }
+
+        class Address
+        {
+            public int AddressId { get; set; }
+            public string Name { get; set; }
+            public int PersonId { get; set; }
+        }
+
+        class Extra
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+
+        public void TestFlexibleMultiMapping()
+        {
+            var sql = 
+@"select 
+    1 as PersonId, 'bob' as Name, 
+    2 as AddressId, 'abc street' as Name, 1 as PersonId,
+    3 as Id, 'fred' as Name
+    ";
+            var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address,Extra>>
+                (sql, (p,a,e) => Tuple.Create(p, a, e), splitOn: "AddressId,Id").First();
+
+            personWithAddress.Item1.PersonId.IsEqualTo(1);
+            personWithAddress.Item1.Name.IsEqualTo("bob");
+            personWithAddress.Item2.AddressId.IsEqualTo(2);
+            personWithAddress.Item2.Name.IsEqualTo("abc street");
+            personWithAddress.Item2.PersonId.IsEqualTo(1);
+            personWithAddress.Item3.Id.IsEqualTo(3);
+            personWithAddress.Item3.Name.IsEqualTo("fred");
 
         }
 
