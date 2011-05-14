@@ -3,3 +3,5 @@ bin/*
 obj/*
 /*.user
 glob:Dapper/NuGet.exe
+syntax: glob
+*.docstates
