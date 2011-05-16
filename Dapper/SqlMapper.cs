@@ -1,18 +1,19 @@
 /*
  License: http://www.apache.org/licenses/LICENSE-2.0 
  Home page: http://code.google.com/p/dapper-dot-net/
- */
 
+ Note: to build on C# 3.0 + .NET 3.5, include the CSHARP30 compiler symbol (and yes,
+ I know the difference between language and runtime versions; this is a compromise).
+ */
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
-using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.ComponentModel;
+using System.Text;
 
 namespace Dapper
 {
@@ -29,8 +30,44 @@ namespace Dapper
             public object[] OtherDeserializers { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
         }
-
-        static readonly ConcurrentDictionary<Identity, CacheInfo> queryCache = new ConcurrentDictionary<Identity, CacheInfo>();
+#if CSHARP30
+        private static readonly System.Threading.ReaderWriterLockSlim queryLock = new System.Threading.ReaderWriterLockSlim();
+        private static readonly Dictionary<Identity, CacheInfo> _queryCache = new Dictionary<Identity, CacheInfo>();
+        private static void SetQueryCache(Identity key, CacheInfo value)
+        {
+            queryLock.EnterWriteLock();
+            try
+            {
+                _queryCache[key] = value;
+            }
+            finally
+            {
+                queryLock.ExitWriteLock();
+            }
+        }
+        private static bool TryGetQueryCache(Identity key, out CacheInfo value)
+        {
+            queryLock.EnterReadLock();
+            try
+            {
+                return _queryCache.TryGetValue(key, out value);
+            }
+            finally
+            {
+                queryLock.ExitReadLock();
+            }
+        }
+#else
+        static readonly System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo> _queryCache = new System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo>();
+        private static void SetQueryCache(Identity key, CacheInfo value)
+        {
+            _queryCache[key] = value;
+        }
+        private static bool TryGetQueryCache(Identity key, out CacheInfo value)
+        {
+            return _queryCache.TryGetValue(key, out value);
+        }
+#endif
         static readonly Dictionary<RuntimeTypeHandle, DbType> typeMap;
 
         static SqlMapper()
@@ -91,7 +128,7 @@ namespace Dapper
         private class Identity : IEquatable<Identity>
         {
 
-            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes = null)
+            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes)
             {
                 this.sql = sql;
                 this.connectionString = cnn.ConnectionString;
@@ -141,13 +178,19 @@ namespace Dapper
         /// Execute parameterized SQL  
         /// </summary>
         /// <returns>Number of rows affected</returns>
-        public static int Execute(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null,  CommandType? commandType = null)
+        public static int Execute(
+#if CSHARP30
+            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+            this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
         {
-            var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType());
+            var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(param, identity);
             return ExecuteCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
         }
-
+#if !CSHARP30
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
@@ -155,10 +198,16 @@ namespace Dapper
         {
             return Query<FastExpando>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
         }
-
+#endif
 
         // the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new <space> get new object
-        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<T> Query<T>(
+#if CSHARP30
+            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType
+#else
+            this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
+#endif
+            )
         {
             var data = QueryInternal<T>(cnn, sql, param as object, transaction, commandTimeout, commandType);
             return buffered ? data.ToList() : data;
@@ -167,9 +216,16 @@ namespace Dapper
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
-        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        public static GridReader QueryMultiple(
+#if CSHARP30  
+            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+            this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+            
+            )
         {
-            var identity = new Identity(sql, cnn, typeof(GridReader), param == null ? null : param.GetType());
+            var identity = new Identity(sql, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(param, identity);
 
             IDbCommand cmd = null;
@@ -191,9 +247,9 @@ namespace Dapper
         /// <summary>
         /// Return a typed list of objects, reader is closed after the call
         /// </summary>
-        private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
         {
-            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType());
+            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(param, identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
@@ -202,8 +258,8 @@ namespace Dapper
                 {
                     if (info.Deserializer == null)
                     {
-                        info.Deserializer = GetDeserializer<T>(reader);
-                        queryCache[identity] = info;
+                        info.Deserializer = GetDeserializer<T>(reader, 0, -1, false);
+                        SetQueryCache(identity, info);
                     }
 
                     var deserializer = (Func<IDataReader, T>)info.Deserializer;
@@ -230,36 +286,55 @@ namespace Dapper
         /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns></returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(
+#if CSHARP30  
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
+#else
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+#endif
+            )
         {
             return MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(
+#if CSHARP30
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
+#else
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+#endif
+            )
         {
             return MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(
+#if CSHARP30
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
+#else
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+#endif
+            )
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
-
+#if !CSHARP30
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
-
+#endif
         class DontMap {}
-        static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(            
+            this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
             var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param, transaction, splitOn, commandTimeout, commandType);
             return buffered ? results.ToList() : results;
         }
 
-        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param = null, IDbTransaction transaction = null, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var identity = new Identity(sql, cnn, typeof(TFirst), param == null ? null : param.GetType(), otherTypes: new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
+            var identity = new Identity(sql, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
             var info = GetCacheInfo(param, identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
@@ -288,35 +363,35 @@ namespace Dapper
                         var otherDeserializer = new List<object>();
 
                         int split = nextSplit();
-                        info.Deserializer = GetDeserializer<TFirst>(reader, 0, split);
+                        info.Deserializer = GetDeserializer<TFirst>(reader, 0, split, false);
 
                         if (typeof(TSecond) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, true));
                             split = next;
                         }
                         if (typeof(TThird) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, true));
                             split = next;
                         }
                         if (typeof(TFourth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, true));
                             split = next;
                         }
                         if (typeof(TFifth) != typeof(DontMap))
                         {
                             var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, returnNullIfFirstMissing: true));
+                            otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, true));
                         }
 
                         info.OtherDeserializers = otherDeserializer.ToArray();
 
-                        queryCache[identity] = info;
+                        SetQueryCache(identity, info);
                     }
 
                     var deserializer = (Func<IDataReader, TFirst>)info.Deserializer;
@@ -348,8 +423,12 @@ namespace Dapper
 
                             if (info.OtherDeserializers.Length > 3)
                             {
+#if CSHARP30
+                                throw new NotSupportedException();
+#else
                                 var deserializer5 = (Func<IDataReader, TFifth>)info.OtherDeserializers[3];
                                 mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth,TFifth,TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r),deserializer5(r));
+#endif
                             }
                         }
                     }
@@ -366,7 +445,7 @@ namespace Dapper
         private static CacheInfo GetCacheInfo(object param, Identity identity)
         {
             CacheInfo info;
-            if (!queryCache.TryGetValue(identity, out info))
+            if (!TryGetQueryCache(identity, out info))
             {
                 info = new CacheInfo();
                 if (param != null)
@@ -384,13 +463,16 @@ namespace Dapper
             return info;
         }
 
-        private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
+#if !CSHARP30
             // dynamic is passed in as Object ... by c# design
-            if (typeof (T) == typeof (object) || typeof (T) == typeof (FastExpando))
+            if (typeof (T) == typeof (object)
+                || typeof (T) == typeof (FastExpando))
             {
                 return GetDynamicDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
+#endif
             if (typeof (T).IsClass && typeof (T) != typeof (string))
             {
                 return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
@@ -398,8 +480,8 @@ namespace Dapper
             return GetStructDeserializer<T>();
 
         }
-
-        private class FastExpando : DynamicObject
+#if !CSHARP30
+        private class FastExpando : System.Dynamic.DynamicObject
         {
             IDictionary<string, object> data;
 
@@ -408,19 +490,20 @@ namespace Dapper
                 return new FastExpando {data = data};
             }
 
-            public override bool TrySetMember(SetMemberBinder binder, object value)
+            public override bool TrySetMember(System.Dynamic.SetMemberBinder binder, object value)
             {
                 data[binder.Name] = value;
                 return true;
             }
 
-            public override bool TryGetMember(GetMemberBinder binder, out object result)
+            public override bool TryGetMember(System.Dynamic.GetMemberBinder binder, out object result)
             {
                 return data.TryGetValue(binder.Name, out result);
             }
         }
 
-        private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+
+        private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
             if (length == -1)
             {
@@ -444,8 +527,8 @@ namespace Dapper
                     //we know this is an object so it will not box
                     return (T)(object)FastExpando.Attach(row);
                 };
-
         }
+#endif
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
         public static void PackListParameters(IDbCommand command, string namePrefix, object value)
@@ -482,10 +565,13 @@ namespace Dapper
                 }
                 else
                 {
-                    command.CommandText = command.CommandText.Replace(namePrefix,
-                        "(" + string.Join(
-                            ",", Enumerable.Range(1, count).Select(i => namePrefix + i.ToString())
-                        ) + ")");
+                    var sb = new StringBuilder("(").Append(namePrefix).Append(1);
+                    for (int i = 2; i <= count; i++)
+                    {
+                        sb.Append(',').Append(namePrefix).Append(i);
+                    }
+                    string inQuery = sb.Append(')').ToString();
+                    command.CommandText = command.CommandText.Replace(namePrefix, inQuery);
                 }
             }
 
@@ -659,7 +745,13 @@ namespace Dapper
             };
         }
 
-        public static Func<IDataReader, T> GetClassDeserializer<T>(IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        public static Func<IDataReader, T> GetClassDeserializer<T>(
+#if CSHARP30
+            IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
+#else
+            IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
+#endif            
+            )
         {
             var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), typeof(T), new[] { typeof(IDataReader) }, true);
 
@@ -833,7 +925,7 @@ namespace Dapper
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
-                var deserializer = GetDeserializer<T>(reader);
+                var deserializer = GetDeserializer<T>(reader, 0, -1, false);
                 consumed = true;
                 return ReadDeferred(gridIndex, deserializer);
             }
@@ -902,7 +994,13 @@ namespace Dapper
         }
 
 
-        public void Add(string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null)
+        public void Add(
+#if CSHARP30
+            string name, object value, DbType? dbType, ParameterDirection? direction, int? size
+#else
+            string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null
+#endif            
+            )
         {
             parameters[name] = new ParamInfo() { Name = name, Value = value, ParameterDirection = direction ?? ParameterDirection.Input, DbType = dbType, Size = size };
         }
