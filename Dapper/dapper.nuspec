@@ -1,22 +1,25 @@
-﻿<?xml version="1.0"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata>
+  <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.1</version>
-    <authors>Sam Saffron</authors>
+    <version>1.2</version>
+    <title>Dapper dot net</title>
+    <authors>Sam Saffron,Marc Gravell</authors>
+    <owners>Sam Saffron,Marc Gravell</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..</description>
-    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
-    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System.Core" targetFramework="net40-client, net40" />
-      <frameworkAssembly assemblyName="System" targetFramework="net40-client, net40" />
-      <frameworkAssembly assemblyName="System.Data" targetFramework="net40-client, net40" />
-      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework="net40-client, net40" />
-    </frameworkAssemblies>
+    <summary>A high performance Micro-ORM</summary>
     <tags>orm,sql,micro-orm</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+    </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="bin\Release\dapper.dll" target="lib" />
+    <file src="SqlMapper.cs" target="content\Dapper\SqlMapper.cs" />
   </files>
 </package>
