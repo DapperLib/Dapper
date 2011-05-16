@@ -31,31 +31,16 @@ namespace Dapper
             public Action<IDbCommand, object> ParamReader { get; set; }
         }
 #if CSHARP30
-        private static readonly System.Threading.ReaderWriterLockSlim queryLock = new System.Threading.ReaderWriterLockSlim();
         private static readonly Dictionary<Identity, CacheInfo> _queryCache = new Dictionary<Identity, CacheInfo>();
+        // note: conflicts between readers and writers are so short-lived that it isn't worth the overhead of
+        // ReaderWriterLockSlim etc; a simple lock is faster
         private static void SetQueryCache(Identity key, CacheInfo value)
         {
-            queryLock.EnterWriteLock();
-            try
-            {
-                _queryCache[key] = value;
-            }
-            finally
-            {
-                queryLock.ExitWriteLock();
-            }
+            lock (_queryCache) { _queryCache[key] = value; }
         }
         private static bool TryGetQueryCache(Identity key, out CacheInfo value)
         {
-            queryLock.EnterReadLock();
-            try
-            {
-                return _queryCache.TryGetValue(key, out value);
-            }
-            finally
-            {
-                queryLock.ExitReadLock();
-            }
+            lock (_queryCache) { return _queryCache.TryGetValue(key, out value); }
         }
 #else
         static readonly System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo> _queryCache = new System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo>();
