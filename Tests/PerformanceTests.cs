@@ -95,7 +95,7 @@ namespace SqlMapper
             tests.Add(id => compiledGetPost(l2scontext2,id), "Linq 2 SQL Compiled");
 
             var l2scontext3 = GetL2SContext();
-            tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).ToList(), "Linq 2 SQL ExecuteQuery");
+            tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).First(), "Linq 2 SQL ExecuteQuery");
             
             var entityContext = new EntityFramework.tempdbEntities1();
             entityContext.Connection.Open();
@@ -103,7 +103,7 @@ namespace SqlMapper
 
             var entityContext2 = new EntityFramework.tempdbEntities1();
             entityContext2.Connection.Open();
-            tests.Add(id => entityContext2.ExecuteStoreQuery<Post>("select * from Posts where Id = {0}", id).ToList(), "Entity framework ExecuteStoreQuery");
+            tests.Add(id => entityContext2.ExecuteStoreQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity framework ExecuteStoreQuery");
 
 			var entityContext3 = new EntityFramework.tempdbEntities1();
 			entityContext3.Connection.Open();
@@ -119,14 +119,18 @@ namespace SqlMapper
 			tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework No Tracking");
 
             var mapperConnection = Program.GetOpenConnection();
-            tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Mapper Query");
+            tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
+
+            tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
 
             var mapperConnection2 = Program.GetOpenConnection();
-            tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }).ToList(), "Dynamic Mapper Query");
+            tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
+
+            tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (non-buffered)");
 
             var massiveModel = new DynamicModel(Program.connectionString);
             var massiveConnection = Program.GetOpenConnection();
-            tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).ToList(), "Dynamic Massive ORM Query");
+            tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
 
 			// PetaPoco test with all default options
 			var petapoco = new PetaPoco.Database(Program.connectionString, "System.Data.SqlClient");
@@ -168,7 +172,7 @@ namespace SqlMapper
             var nhSession4 = NHibernateHelper.OpenSession();
             tests.Add(id => nhSession4
                 .Query<Post>()
-                .Where(p => p.Id == id).ToList(), "NHibernate LINQ");
+                .Where(p => p.Id == id).First(), "NHibernate LINQ");
 
 			// bltoolkit
 			var db1 = new DbManager(Program.GetOpenConnection());

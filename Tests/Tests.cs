@@ -72,6 +72,12 @@ namespace SqlMapper
              .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
 
+        public void TestReadMultipleIntegersWithSplitOnAny()
+        {
+            connection.Query<int,int,int,Tuple<int,int,int>>(
+                "select 1,2,3 union all select 4,5,6", Tuple.Create, splitOn: "*")
+             .IsSequenceEqualTo(new[] {Tuple.Create(1,2,3), Tuple.Create(4,5,6)});
+        }
 
         public void TestDoubleParam()
         {

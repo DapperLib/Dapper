@@ -344,7 +344,7 @@ namespace Dapper
                             for (pos = current + 1; pos < reader.FieldCount; pos++)
                             {
                                 // some people like ID some id ... assuming case insensitive splits for now
-                                if (string.Equals(reader.GetName(pos), currentSplit, StringComparison.InvariantCultureIgnoreCase))
+                                if (splitOn=="*" || string.Equals(reader.GetName(pos), currentSplit, StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     break;
                                 }
@@ -470,7 +470,7 @@ namespace Dapper
             {
                 return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer<T>();
+            return GetStructDeserializer<T>(startBound);
 
         }
 #if !CSHARP30
@@ -725,11 +725,11 @@ namespace Dapper
             }
         }
 
-        private static Func<IDataReader, T> GetStructDeserializer<T>()
+        private static Func<IDataReader, T> GetStructDeserializer<T>(int index)
         {
            return r =>
             {
-                var val = r.GetValue(0);
+                var val = r.GetValue(index);
                 if (val == DBNull.Value)
                 {
                     val = null;
