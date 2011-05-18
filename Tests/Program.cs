@@ -39,11 +39,12 @@ namespace SqlMapper
         static void RunPerformanceTests()
         {
             var test = new PerformanceTests();
-            Console.WriteLine("Running 500 iterations that load up a post entity");
-            test.Run(500);
+            const int iterations = 500;
+            Console.WriteLine("Running {0} iterations that load up a post entity", iterations);
+            test.Run(iterations);
         }
 
-        static void Main(string[] args)
+        static void Main()
         {
 
 #if DEBUG
@@ -91,7 +92,7 @@ begin
 
 	set @i = 0
 
-	while @i < 5000
+	while @i <= 5001
 	begin 
 		
 		insert Posts ([Text],CreationDate, LastChangeDate) values (replicate('x', 2000), GETDATE(), GETDATE())
