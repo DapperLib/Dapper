@@ -589,6 +589,15 @@ namespace Dapper
             
             foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
             {
+                if(prop.PropertyType == typeof(DbString))
+                {
+                    il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [typed-param]
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [dbstring]
+                    il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [dbstring] [command]
+                    il.Emit(OpCodes.Ldstr, "@" + prop.Name); // stack is now [parameters] [dbstring] [command] [name]
+                    il.EmitCall(OpCodes.Callvirt, typeof(DbString).GetMethod("AddParameter"), null); // stack is now [parameters]
+                    continue;
+                }
                 DbType dbType = LookupDbType(prop.PropertyType);
                 if (dbType == DbType.Xml)
                 {
@@ -1006,12 +1015,12 @@ namespace Dapper
                 var p = command.CreateParameter();
                 var val = param.Value;
                 p.ParameterName = param.Name;
-                p.Value = val;
+                p.Value = val ?? DBNull.Value;
                 p.Direction = param.ParameterDirection;
                 var s = val as string; 
                 if (s != null)
                 {
-                    if (s.Length < 4000)
+                    if (s.Length <= 4000)
                     {
                         p.Size = 4000;
                     }
@@ -1032,6 +1041,34 @@ namespace Dapper
         public T Get<T>(string name)
         {
             return (T)parameters[name].AttachedParam.Value;
+        }
+    }
+    public sealed class DbString
+    {
+        public DbString() { Length = -1; }
+        public bool IsAnsi { get; set; }
+        public bool IsFixedLength { get; set; }
+        public int Length { get; set; }
+        public string Value { get; set; }
+        public void AddParameter(IDbCommand command, string name)
+        {
+            if (IsFixedLength && Length == -1)
+            {
+                throw new InvalidOperationException("If specifying IsFixedLength,  a Length must also be specified");
+            }
+            var param = command.CreateParameter();
+            param.ParameterName = name;
+            param.Value = (object)Value ?? DBNull.Value;
+            if (Length == -1 && Value != null && Value.Length <= 4000)
+            {
+                param.Size = 4000;
+            }
+            else
+            {
+                param.Size = Length;
+            }
+            param.DbType = IsAnsi ? (IsFixedLength ? DbType.AnsiStringFixedLength : DbType.AnsiString) : (IsFixedLength ? DbType.StringFixedLength : DbType.String);
+            command.Parameters.Add(param);
         }
     }
 }
