@@ -49,10 +49,10 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
         /// <returns>Entity of T</returns>
-        public static T Get<T>(this IDbConnection connection, object id) 
+        public static T Get<T>(this IDbConnection connection, object id)
         {
             var type = typeof(T);
-            if(!type.IsInterface)
+            if (!type.IsInterface)
                 throw new DataException("This version of Get<T>() only supports interfaces.");
 
             var keys = KeyPropertiesCache(type);
@@ -68,24 +68,20 @@ namespace Dapper.Contrib.Extensions
             var sql = "select * from " + name + "s where " + onlyKey.Name + " = @" + onlyKey.Name;
             var dynParms = new DynamicParameters();
             dynParms.Add("@" + onlyKey.Name, id);
+            var res = connection.Query(sql, dynParms).FirstOrDefault() as SqlMapper.FastExpando;
+            
+            if (res == null)
+                return (T) ((object) null);
+            
+            var proxy = ProxyGenerator.GetInterfaceProxy<T>();
+            foreach (var property in TypePropertiesCache(type))
+            {
+                var val = res.GetProperty(property.Name);
+                property.SetValue(proxy, val, null);
+            }
+            ((IProxy)proxy).IsDirty = false;   //reset change tracking and return
+            return proxy;
 
-            if (type.IsInterface)
-            {
-                var proxy = ProxyGenerator.GetInterfaceProxy<T>();
-                var res = connection.Query(sql, dynParms).FirstOrDefault() as SqlMapper.FastExpando;
-                foreach (var property in TypePropertiesCache(type))
-                {
-                    var val = res.GetProperty(property.Name);
-                    property.SetValue(proxy,val,null);
-                }
-                ((IProxy) proxy).IsDirty = false;   //reset change tracking and return
-                return proxy;
-            }
-            else //for future support, will never be called now...
-            {
-                var res = connection.Query<T>(sql, dynParms);
-                return res.FirstOrDefault();
-            }
         }
 
         /// <summary>
@@ -102,7 +98,7 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("insert into {0}s (", name);
 
             var allProperties = TypePropertiesCache(typeof(T));
-            var keyProperties = KeyPropertiesCache(typeof (T));
+            var keyProperties = KeyPropertiesCache(typeof(T));
 
             for (var i = 0; i < allProperties.Count(); i++)
             {
@@ -126,7 +122,7 @@ namespace Dapper.Contrib.Extensions
             sb.Append(") ");
             connection.Execute(sb.ToString(), entityToInsert);
             //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-            var r = connection.Query("select @@IDENTITY id");   
+            var r = connection.Query("select @@IDENTITY id");
             tx.Commit();
             return (int)r.First().id;
         }
@@ -140,7 +136,7 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static bool Update<T>(this IDbConnection connection, T entityToUpdate)
         {
-            var proxy = ((IProxy) entityToUpdate);
+            var proxy = ((IProxy)entityToUpdate);
             if (proxy != null)
             {
                 if (!proxy.IsDirty) return false;
