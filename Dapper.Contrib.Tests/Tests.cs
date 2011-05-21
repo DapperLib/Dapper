@@ -45,12 +45,11 @@ namespace Dapper.Contrib.Tests
             {
                 try
                 {
-                    var user = connection.Get<User>(1);
+                    connection.Get<User>(1);
                     Debug.Fail("Fail, should have thrown exception");
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("ok");
                 }
             }
 
@@ -60,6 +59,8 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.Get<IUser>(3).IsNull();
+
                 var id = connection.Insert(new User {Name = "Adam", Age = 10});
                 id.IsEqualTo(1);
                 var user = connection.Get<IUser>(id);
