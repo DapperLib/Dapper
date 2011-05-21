@@ -399,7 +399,7 @@ namespace Dapper
 
         }
 
-        private class FastExpando : DynamicObject
+        public class FastExpando : DynamicObject
         {
             IDictionary<string, object> data;
 
@@ -417,6 +417,11 @@ namespace Dapper
             public override bool TryGetMember(GetMemberBinder binder, out object result)
             {
                 return data.TryGetValue(binder.Name, out result);
+            }
+
+            public object GetProperty(string name)
+            {
+                return data[name];
             }
         }
 
