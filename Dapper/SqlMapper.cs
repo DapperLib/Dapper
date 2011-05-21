@@ -1010,7 +1010,16 @@ namespace Dapper
                 case 6: il.Emit(OpCodes.Ldc_I4_6); break;
                 case 7: il.Emit(OpCodes.Ldc_I4_7); break;
                 case 8: il.Emit(OpCodes.Ldc_I4_8); break;
-                default: il.Emit(value >= -128 && value <= 127 ? OpCodes.Ldc_I4_S: OpCodes.Ldc_I4, value); break;
+                default:
+                    if (value >= -128 && value <= 127)
+                    {
+                        il.Emit(OpCodes.Ldc_I4_S, (sbyte)value);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldc_I4, value);
+                    }
+                    break;
             }
         }
 
