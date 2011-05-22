@@ -27,6 +27,29 @@ namespace Dapper.Contrib.Extensions
             return assemblyBuilder;
         }
 
+        public static T GetClassProxy<T>()
+        {
+            Type typeOfT = typeof(T);
+
+            if (TypeCache.ContainsKey(typeOfT))
+            {
+                return (T)TypeCache[typeOfT];
+            }
+            var assemblyBuilder = GetAsmBuilder(typeOfT.Name);
+
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule("SqlMapperExtensions." + typeOfT.Name); //NOTE: to save, add "asdasd.dll" parameter
+
+            var typeBuilder = moduleBuilder.DefineType(typeOfT.Name + "_" + Guid.NewGuid(),
+                TypeAttributes.Public | TypeAttributes.Class, typeOfT);
+
+            var generatedType = typeBuilder.CreateType();
+            var generatedObject = Activator.CreateInstance(generatedType);
+
+            TypeCache.Add(typeOfT, generatedObject);
+            return (T)generatedObject;
+        }
+
+
         public static T GetInterfaceProxy<T>()
         {
             Type typeOfT = typeof(T);
@@ -40,7 +63,6 @@ namespace Dapper.Contrib.Extensions
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("SqlMapperExtensions." + typeOfT.Name); //NOTE: to save, add "asdasd.dll" parameter
 
             var interfaceType = typeof(IProxy);
-
             var typeBuilder = moduleBuilder.DefineType(typeOfT.Name + "_" + Guid.NewGuid(), 
                 TypeAttributes.Public | TypeAttributes.Class);
             typeBuilder.AddInterfaceImplementation(typeOfT);
