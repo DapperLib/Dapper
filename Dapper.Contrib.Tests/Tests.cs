@@ -39,22 +39,6 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
-        public void Get()
-        {
-            using (var connection = GetOpenConnection())
-            {
-                try
-                {
-                    connection.Get<User>(1);
-                    Debug.Fail("Fail, should have thrown exception");
-                }
-                catch (Exception)
-                {
-                }
-            }
-
-        }
-
         public void InsertGetUpdate()
         {
             using (var connection = GetOpenConnection())
@@ -63,6 +47,8 @@ namespace Dapper.Contrib.Tests
 
                 var id = connection.Insert(new User {Name = "Adam", Age = 10});
                 id.IsEqualTo(1);
+
+                //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
                 user.Name.IsEqualTo("Adam");
                 connection.Update(user).IsEqualTo(false);    //returns false if not updated, based on tracking
@@ -70,9 +56,20 @@ namespace Dapper.Contrib.Tests
                 connection.Update(user).IsEqualTo(true);    //returns true if updated, based on tracking
                 user = connection.Get<IUser>(id);
                 user.Name.IsEqualTo("Bob");
-                connection.Query<User>("select * from Users").Count().Equals(2);
-                connection.Delete(user).Equals(true);
-                connection.Query<User>("select * from Users").Count().Equals(1);
+
+                //get a user with no tracking
+                var notrackedUser = connection.Get<User>(1);
+                notrackedUser.Name.IsEqualTo("Bob");
+                connection.Update(notrackedUser).IsEqualTo(true);   //returns true, even though user was not changed
+                notrackedUser.Name = "Cecil";
+                connection.Update(notrackedUser).IsEqualTo(true);
+                connection.Get<User>(1).Name.IsEqualTo("Cecil");
+
+                connection.Query<User>("select * from Users").Count().IsEqualTo(1);
+                connection.Delete(user).IsEqualTo(true);
+                connection.Query<User>("select * from Users").Count().IsEqualTo(0);
+
+                connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
             }
         }
     }

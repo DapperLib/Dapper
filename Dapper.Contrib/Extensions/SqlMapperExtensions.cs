@@ -49,11 +49,12 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
         /// <returns>Entity of T</returns>
-        public static T Get<T>(this IDbConnection connection, object id)
+        public static T Get<T>(this IDbConnection connection, object id) 
         {
             var type = typeof(T);
-            if (!type.IsInterface)
-                throw new DataException("This version of Get<T>() only supports interfaces.");
+
+//            if (!type.IsInterface)
+//                throw new DataException("This version of Get<T>() only supports interfaces.");
 
             var keys = KeyPropertiesCache(type);
             if (keys.Count() > 1)
@@ -72,15 +73,17 @@ namespace Dapper.Contrib.Extensions
             
             if (res == null)
                 return (T) ((object) null);
+
+            var obj = type.IsInterface ? ProxyGenerator.GetInterfaceProxy<T>() : ProxyGenerator.GetClassProxy<T>();
             
-            var proxy = ProxyGenerator.GetInterfaceProxy<T>();
             foreach (var property in TypePropertiesCache(type))
             {
                 var val = res.GetProperty(property.Name);
-                property.SetValue(proxy, val, null);
+                property.SetValue(obj, val, null);
             }
-            ((IProxy)proxy).IsDirty = false;   //reset change tracking and return
-            return proxy;
+            if(type.IsInterface)
+                ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+            return obj;
 
         }
 
@@ -136,7 +139,7 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static bool Update<T>(this IDbConnection connection, T entityToUpdate)
         {
-            var proxy = ((IProxy)entityToUpdate);
+            var proxy = entityToUpdate as IProxy;
             if (proxy != null)
             {
                 if (!proxy.IsDirty) return false;
