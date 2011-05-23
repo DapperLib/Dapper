@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -15,6 +16,7 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
         private static IEnumerable<PropertyInfo> KeyPropertiesCache(Type type)
         {
@@ -73,13 +75,12 @@ namespace Dapper.Contrib.Extensions
                     throw new DataException("Get<T> only supports en entity with a [Key] property");
 
                 var onlyKey = keys.First();
-                var name = type.Name;
-                if (type.IsInterface && name.StartsWith("I"))
-                    name = name.Substring(1);
+
+                var name = GetTableName(type);
 
                 // TODO: pluralizer 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name + "s where " + onlyKey.Name + " = @id";
+                sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
            
@@ -112,24 +113,44 @@ namespace Dapper.Contrib.Extensions
             return obj;
         }
 
-
-
+        private static string GetTableName(Type type)
+        {
+            string name;
+            if (!TypeTableName.TryGetValue(type.TypeHandle, out name))
+            {
+                name = type.Name + "s";
+                if (type.IsInterface && name.StartsWith("I"))
+                    name = name.Substring(1);
+              
+                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
+                var tableattr = type.GetCustomAttributes(false).Where(attr => attr.GetType().Name == "TableAttribute").SingleOrDefault() as
+                    dynamic;
+                if (tableattr != null)
+                    name = tableattr.Name;
+                TypeTableName[type.TypeHandle] = name;
+            }
+            return name;
+        }
+        
         /// <summary>
         /// Inserts an entity into table "Ts" and returns identity id.
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert)
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert) where T : class
         {
             using (var tx = connection.BeginTransaction())
             {
-                var name = entityToInsert.GetType().Name;
-                var sb = new StringBuilder(null);
-                sb.AppendFormat("insert into {0}s (", name);
+                var type = typeof(T);
 
-                var allProperties = TypePropertiesCache(typeof(T));
-                var keyProperties = KeyPropertiesCache(typeof(T));
+                var name = GetTableName(type);
+
+                var sb = new StringBuilder(null);
+                sb.AppendFormat("insert into {0} (", name);
+
+                var allProperties = TypePropertiesCache(type);
+                var keyProperties = KeyPropertiesCache(type);
 
                 for (var i = 0; i < allProperties.Count(); i++)
                 {
@@ -166,7 +187,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToUpdate">Entity to be updated</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static bool Update<T>(this IDbConnection connection, T entityToUpdate)
+        public static bool Update<T>(this IDbConnection connection, T entityToUpdate) where T : class
         {
             var proxy = entityToUpdate as IProxy;
             if (proxy != null)
@@ -180,12 +201,10 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count() == 0)
                 throw new ArgumentException("Entity must have at least one [Key] property");
 
-            var name = type.Name;
-            if (type.IsInterface && name.StartsWith("I"))
-                name = name.Substring(1);
+            var name = GetTableName(type);
 
             var sb = new StringBuilder();
-            sb.AppendFormat("update {0}s set ", name);
+            sb.AppendFormat("update {0} set ", name);
 
             var allProperties = TypePropertiesCache(type);
             var nonIdProps = allProperties.Where(a => !keyProperties.Contains(a));
@@ -216,7 +235,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToDelete">Entity to delete</param>
         /// <returns>true if deleted, false if not found</returns>
-        public static bool Delete<T>(this IDbConnection connection, T entityToDelete)
+        public static bool Delete<T>(this IDbConnection connection, T entityToDelete) where T : class
         {
             var type = typeof(T);
 
@@ -224,12 +243,10 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count() == 0)
                 throw new ArgumentException("Entity must have at least one [Key] property");
 
-            var name = type.Name;
-            if (type.IsInterface && name.StartsWith("I"))
-                name = name.Substring(1);
+            var name = GetTableName(type);
 
             var sb = new StringBuilder();
-            sb.AppendFormat("delete from {0}s where ", name);
+            sb.AppendFormat("delete from {0} where ", name);
 
             for (var i = 0; i < keyProperties.Count(); i++)
             {
@@ -241,5 +258,15 @@ namespace Dapper.Contrib.Extensions
             var deleted = connection.Execute(sb.ToString(), entityToDelete);
             return deleted > 0;
         }
+    }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class TableAttribute : Attribute
+    {
+        public TableAttribute(string tableName)
+        {
+            Name = tableName;
+        }
+        public string Name { get; private set; }
     }
 }

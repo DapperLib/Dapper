@@ -76,55 +76,39 @@ namespace Dapper.Contrib.Extensions
       
         private static MethodInfo CreateIsDirtyProperty(TypeBuilder typeBuilder)
         {
-            Type propType = typeof(bool);
-            FieldBuilder field = typeBuilder.DefineField("_" + "IsDirty", propType, FieldAttributes.Private);
-            // Generate a public property
-            PropertyBuilder property =
-                typeBuilder.DefineProperty("IsDirty",
+            var propType = typeof(bool);
+            var field = typeBuilder.DefineField("_" + "IsDirty", propType, FieldAttributes.Private);
+            var property = typeBuilder.DefineProperty("IsDirty",
                                            PropertyAttributes.None,
                                            propType,
                                            new Type[] { propType });
 
-            // The property set and property get methods require a special set of attributes:
+            const MethodAttributes getSetAttr = MethodAttributes.Public | MethodAttributes.NewSlot | MethodAttributes.SpecialName |
+                                                MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig;
 
-            MethodAttributes GetSetAttr =
-                MethodAttributes.Public | MethodAttributes.NewSlot | MethodAttributes.SpecialName |
-                MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig;
-
-            // Define the "get" accessor method for current private field.
-            MethodBuilder currGetPropMthdBldr =
-                typeBuilder.DefineMethod("get_" + "IsDirty",
-                                         GetSetAttr,
+            // Define the "get" and "set" accessor methods
+            var currGetPropMthdBldr = typeBuilder.DefineMethod("get_" + "IsDirty",
+                                         getSetAttr,
                                          propType,
                                          Type.EmptyTypes);
-
-            // Intermediate Language stuff...
-            ILGenerator currGetIL = currGetPropMthdBldr.GetILGenerator();
+            var currGetIL = currGetPropMthdBldr.GetILGenerator();
             currGetIL.Emit(OpCodes.Ldarg_0);
             currGetIL.Emit(OpCodes.Ldfld, field);
             currGetIL.Emit(OpCodes.Ret);
-
-            // Define the "set" accessor method for current private field.
-            MethodBuilder currSetPropMthdBldr =
-                typeBuilder.DefineMethod("set_" + "IsDirty",
-                                         GetSetAttr,
+            var currSetPropMthdBldr = typeBuilder.DefineMethod("set_" + "IsDirty",
+                                         getSetAttr,
                                          null,
                                          new Type[] { propType });
-
-            // Again some Intermediate Language stuff...
-            ILGenerator currSetIL = currSetPropMthdBldr.GetILGenerator();
+            var currSetIL = currSetPropMthdBldr.GetILGenerator();
             currSetIL.Emit(OpCodes.Ldarg_0);
             currSetIL.Emit(OpCodes.Ldarg_1);
             currSetIL.Emit(OpCodes.Stfld, field);
             currSetIL.Emit(OpCodes.Ret);
 
-            // Last, we must map the two methods created above to our PropertyBuilder to 
-            // their corresponding behaviors, "get" and "set" respectively. 
             property.SetGetMethod(currGetPropMthdBldr);
             property.SetSetMethod(currSetPropMthdBldr);
-
-            MethodInfo getMethod = typeof(IProxy).GetMethod("get_" + "IsDirty");
-            MethodInfo setMethod = typeof(IProxy).GetMethod("set_" + "IsDirty");
+            var getMethod = typeof(IProxy).GetMethod("get_" + "IsDirty");
+            var setMethod = typeof(IProxy).GetMethod("set_" + "IsDirty");
             typeBuilder.DefineMethodOverride(currGetPropMthdBldr, getMethod);
             typeBuilder.DefineMethodOverride(currSetPropMthdBldr, setMethod);
 
@@ -133,42 +117,34 @@ namespace Dapper.Contrib.Extensions
 
         private static void CreateProperty<T>(TypeBuilder typeBuilder, string propertyName, Type propType, MethodInfo setIsDirtyMethod, bool isIdentity)
         {
-            FieldBuilder field = typeBuilder.DefineField("_" + propertyName, propType, FieldAttributes.Private);
-            // Generate a public property
-            PropertyBuilder property =
-                typeBuilder.DefineProperty(propertyName,
+            //Define the field and the property 
+            var field = typeBuilder.DefineField("_" + propertyName, propType, FieldAttributes.Private);
+            var property = typeBuilder.DefineProperty(propertyName,
                                            PropertyAttributes.None,
                                            propType,
                                            new Type[] { propType });
 
-            // The property set and property get methods require a special set of attributes:
+            const MethodAttributes getSetAttr = MethodAttributes.Public | MethodAttributes.Virtual |
+                                                MethodAttributes.HideBySig;
 
-            MethodAttributes GetSetAttr =
-                MethodAttributes.Public | MethodAttributes.Virtual |
-                MethodAttributes.HideBySig;
-
-            // Define the "get" accessor method for current private field.
-            MethodBuilder currGetPropMthdBldr =
-                typeBuilder.DefineMethod("get_" + propertyName,
-                                         GetSetAttr,
+            // Define the "get" and "set" accessor methods
+            var currGetPropMthdBldr = typeBuilder.DefineMethod("get_" + propertyName,
+                                         getSetAttr,
                                          propType,
                                          Type.EmptyTypes);
 
-            // Intermediate Language stuff...
-            ILGenerator currGetIL = currGetPropMthdBldr.GetILGenerator();
+            var currGetIL = currGetPropMthdBldr.GetILGenerator();
             currGetIL.Emit(OpCodes.Ldarg_0);
             currGetIL.Emit(OpCodes.Ldfld, field);
             currGetIL.Emit(OpCodes.Ret);
 
-            // Define the "set" accessor method for current private field.
-            MethodBuilder currSetPropMthdBldr =
-                typeBuilder.DefineMethod("set_" + propertyName,
-                                         GetSetAttr,
+            var currSetPropMthdBldr = typeBuilder.DefineMethod("set_" + propertyName,
+                                         getSetAttr,
                                          null,
                                          new Type[] { propType });
 
-            // Again some Intermediate Language stuff...
-            ILGenerator currSetIL = currSetPropMthdBldr.GetILGenerator();
+            //store value in private field and set the isdirty flag
+            var currSetIL = currSetPropMthdBldr.GetILGenerator();
             currSetIL.Emit(OpCodes.Ldarg_0);
             currSetIL.Emit(OpCodes.Ldarg_1);
             currSetIL.Emit(OpCodes.Stfld, field);
@@ -177,23 +153,19 @@ namespace Dapper.Contrib.Extensions
             currSetIL.Emit(OpCodes.Call, setIsDirtyMethod);
             currSetIL.Emit(OpCodes.Ret);
 
+            //TODO: Should copy all attributes defined by the interface?
             if (isIdentity)
             {
-                Type keyAttribute = typeof(KeyAttribute);
-                // Create a Constructorinfo object for attribute 'MyAttribute1'.
-                ConstructorInfo myConstructorInfo = keyAttribute.GetConstructor(new Type[] { });
-                // Create the CustomAttribute instance of attribute of type 'MyAttribute1'.
-                CustomAttributeBuilder attributeBuilder = new CustomAttributeBuilder(myConstructorInfo, new object[] { });
+                var keyAttribute = typeof(KeyAttribute);
+                var myConstructorInfo = keyAttribute.GetConstructor(new Type[] { });
+                var attributeBuilder = new CustomAttributeBuilder(myConstructorInfo, new object[] { });
                 property.SetCustomAttribute(attributeBuilder);
             }
 
-            // Last, we must map the two methods created above to our PropertyBuilder to 
-            // their corresponding behaviors, "get" and "set" respectively. 
             property.SetGetMethod(currGetPropMthdBldr);
             property.SetSetMethod(currSetPropMthdBldr);
-
-            MethodInfo getMethod = typeof(T).GetMethod("get_" + propertyName);
-            MethodInfo setMethod = typeof(T).GetMethod("set_" + propertyName);
+            var getMethod = typeof(T).GetMethod("get_" + propertyName);
+            var setMethod = typeof(T).GetMethod("set_" + propertyName);
             typeBuilder.DefineMethodOverride(currGetPropMthdBldr, getMethod);
             typeBuilder.DefineMethodOverride(currSetPropMthdBldr, setMethod);
         }
