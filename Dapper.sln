@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperTests", "Tests\Dapper
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper NET35", "Dapper NET35\Dapper NET35.csproj", "{B26305D8-3A89-4D68-A981-9BBF378B81FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib", "Dapper.Contrib\Dapper.Contrib.csproj", "{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib.Tests", "Dapper.Contrib.Tests\Dapper.Contrib.Tests.csproj", "{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +51,26 @@ Global
 		{B26305D8-3A89-4D68-A981-9BBF378B81FA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{B26305D8-3A89-4D68-A981-9BBF378B81FA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B26305D8-3A89-4D68-A981-9BBF378B81FA}.Release|x86.ActiveCfg = Release|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}.Release|x86.ActiveCfg = Release|Any CPU
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Debug|x86.ActiveCfg = Debug|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Debug|x86.Build.0 = Debug|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|Any CPU.ActiveCfg = Release|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|Mixed Platforms.Build.0 = Release|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|x86.ActiveCfg = Release|x86
+		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
