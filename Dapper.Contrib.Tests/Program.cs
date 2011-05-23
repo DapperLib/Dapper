@@ -1,0 +1,55 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SqlServerCe;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+
+namespace Dapper.Contrib.Tests
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Setup();
+            RunTests();
+        }
+
+        private static void Setup()
+        {
+            var projLoc = Assembly.GetAssembly(typeof(Program)).Location;
+            var projFolder = Path.GetDirectoryName(projLoc);
+
+            if (File.Exists(projFolder + "\\Test.sdf"))
+                File.Delete(projFolder + "\\Test.sdf");
+            var connectionString = "Data Source = " + projFolder + "\\Test.sdf;";
+            var engine = new SqlCeEngine(connectionString);
+            engine.CreateDatabase();
+            using (var connection = new SqlCeConnection(connectionString))
+            {
+                connection.Open();
+                var sql =
+                    @"
+                        create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) 
+                    ";
+                connection.Execute(sql);
+            }
+            Console.WriteLine("Created database");
+        }
+
+        private static void RunTests()
+        {
+            var tester = new Tests();
+            foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                Console.Write("Running " + method.Name);
+                method.Invoke(tester, null);
+                Console.WriteLine(" - OK!");
+            }
+            Console.ReadKey();
+        }
+
+    }
+}

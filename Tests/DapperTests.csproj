@@ -232,6 +232,10 @@
     <Folder Include="Simple.Data\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj">
+      <Project>{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}</Project>
+      <Name>Dapper.Contrib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dapper\Dapper.csproj">
       <Project>{DAF737E1-05B5-4189-A5AA-DAC6233B64D7}</Project>
       <Name>Dapper</Name>

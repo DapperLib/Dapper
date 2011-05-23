@@ -11,6 +11,7 @@ using NHibernate.Criterion;
 using NHibernate.Linq;
 using SqlMapper.Linq2Sql;
 using SqlMapper.NHibernate;
+using Dapper.Contrib.Extensions;
 
 namespace SqlMapper
 {
@@ -120,13 +121,15 @@ namespace SqlMapper
 
             var mapperConnection = Program.GetOpenConnection();
             tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
-
             tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
 
             var mapperConnection2 = Program.GetOpenConnection();
             tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
-
             tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (non-buffered)");
+
+            // dapper.contrib
+            var mapperConnection3 = Program.GetOpenConnection();
+            tests.Add(id => mapperConnection2.Get<Post>(id), "Dapper.Cotrib");
 
             var massiveModel = new DynamicModel(Program.connectionString);
             var massiveConnection = Program.GetOpenConnection();
@@ -181,17 +184,6 @@ namespace SqlMapper
             // Simple.Data
             var sdb = Simple.Data.Database.OpenConnection(Program.connectionString);
             tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
-
-			//ServiceStack.OrmLite Provider:
-            /*
-             * Unhandled Exception: System.FormatException: Input string was not in a correct f
-ormat.
-   at System.Number.StringToNumber(String str, NumberStyles options, NumberBuffe
-r& number, NumberFormatInfo info, Boolean parseDecimal)
-             */
-    //        OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
-	//		IDbCommand ormLiteCmd = Program.GetOpenConnection().CreateCommand();
-	//		tests.Add(id => ormLiteCmd.Select<Post>("select * from Posts where Id = {0}", id), "ServiceStack.OrmLite SQL Query");
 
 			// Soma
 			var somadb = new Soma.Core.Db(new SomaConfig());
