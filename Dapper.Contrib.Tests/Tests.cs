@@ -1,13 +1,11 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.SqlServerCe;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
 using Dapper.Contrib.Extensions;
+
 
 namespace Dapper.Contrib.Tests
 {
@@ -26,6 +24,13 @@ namespace Dapper.Contrib.Tests
         public int Age { get; set; }
     }
 
+    [Table("Automobiles")]
+    public class Car
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
     public class Tests
     {
         private IDbConnection GetOpenConnection()
@@ -38,7 +43,19 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
-
+        public void TableName()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                // tests against "Automobiles" table (Table attribute)
+                connection.Insert(new Car {Name = "Volvo"});
+                connection.Get<Car>(1).Name.IsEqualTo("Volvo");
+                connection.Update(new Car() {Id = 1, Name = "Saab"}).IsEqualTo(true);
+                connection.Get<Car>(1).Name.IsEqualTo("Saab");
+                connection.Delete(new Car() {Id = 1}).IsEqualTo(true);
+                connection.Get<Car>(1).IsNull();
+            }
+        }
 
         public void TestSimpleGet()
         {
