@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace Dapper.Contrib
+namespace Dapper.Contrib.Extensions
 {
     public static class TypeExtension
     {
