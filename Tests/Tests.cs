@@ -545,6 +545,18 @@ Order by p.Id";
             p.Get<int>("@age").IsEqualTo(11);
         }
 
+		public void TestSupportForObjectDictionary()
+		{
+			var p = new Dictionary<string, object>();
+			p.Add("name", "bob");
+
+			connection.Query<string>("select @name", p).First().IsEqualTo("bob");
+
+			var p2 = new Dictionary<string, object>();
+			p2.Add("age", 1);
+
+			connection.Query<int>("select @age", p2).First().IsEqualTo(1);
+		}
 
         public void TestProcSupport()
         {
@@ -626,7 +638,6 @@ end");
             personWithAddress.Item2.PersonId.IsEqualTo(1);
             personWithAddress.Item3.Id.IsEqualTo(3);
             personWithAddress.Item3.Name.IsEqualTo("fred");
-
         }
 
         /* TODO:
@@ -640,6 +651,5 @@ end");
             Assert.IsEqualTo(first.a, 1);
         }
          * */
-
     }
 }

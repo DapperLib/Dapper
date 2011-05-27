@@ -129,7 +129,7 @@ namespace SqlMapper
 
             // dapper.contrib
             var mapperConnection3 = Program.GetOpenConnection();
-            tests.Add(id => mapperConnection2.Get<Post>(id), "Dapper.Cotrib");
+            tests.Add(id => mapperConnection2.Get<Post>(id), "Dapper.Contrib");
 
             var massiveModel = new DynamicModel(Program.connectionString);
             var massiveConnection = Program.GetOpenConnection();

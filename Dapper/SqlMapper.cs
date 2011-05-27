@@ -30,6 +30,12 @@ namespace Dapper
             public object[] OtherDeserializers { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
         }
+		class ParamInfo
+		{
+			public string Name { get; set; }
+			public Type Type { get; set; }
+			public MethodInfo Getter { get; set; }
+		}
 #if CSHARP30
         private static readonly Dictionary<Identity, CacheInfo> _queryCache = new Dictionary<Identity, CacheInfo>();
         // note: conflicts between readers and writers are so short-lived that it isn't worth the overhead of
@@ -112,7 +118,6 @@ namespace Dapper
 
         private class Identity : IEquatable<Identity>
         {
-
             internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes)
             {
                 this.sql = sql;
@@ -449,7 +454,7 @@ namespace Dapper
                     }
                     else
                     {
-                        info.ParamReader = CreateParamInfoGenerator(param.GetType());
+                        info.ParamReader = CreateParamInfoGenerator(param);
                     }
                 }
             }
@@ -673,11 +678,22 @@ namespace Dapper
 
         }
 
+		private static void ReadValue(ILGenerator il, ParamInfo prop, Type paramType)
+		{
+			if (prop.Getter != null)
+				il.Emit(OpCodes.Callvirt, prop.Getter); // stack is [parameters] [parameters] [parameter] [parameter] [typed-value]
+			else {
+				il.Emit(OpCodes.Ldstr, prop.Name); // stack is [parameters] [parameters] [parameter] [parameter] [typed-param] [key]			
+				il.EmitCall(OpCodes.Callvirt, paramType.GetMethod("get_Item"), null); // stack is [parameters] [parameters] [parameter] [parameter] [untyped-value]
+				il.Emit(OpCodes.Unbox_Any, prop.Type); // stack is [parameters] [parameters] [parameter] [parameter] [typed-value]
+			}
+		}
 
-        private static Action<IDbCommand, object> CreateParamInfoGenerator(Type type)
+        private static Action<IDbCommand, object> CreateParamInfoGenerator(object param)
         {
-            var dm = new DynamicMethod(string.Format("ParamInfo{0}", Guid.NewGuid()), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
-
+			var type = param.GetType();
+			
+			var dm = new DynamicMethod(string.Format("ParamInfo{0}", Guid.NewGuid()), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
             var il = dm.GetILGenerator();
 
             il.DeclareLocal(type); // 0
@@ -688,30 +704,47 @@ namespace Dapper
 
             il.Emit(OpCodes.Ldarg_0); // stack is now [command]
             il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetProperty("Parameters").GetGetMethod(), null); // stack is now [parameters]
-            
-            
-            foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
+
+			IEnumerable<ParamInfo> properties;
+			if (param is Dictionary<string, object>) {
+				properties = ((Dictionary<string, object>)param).Select(p => new ParamInfo {
+					Name = p.Key,
+					Type = p.Value != null ? p.Value.GetType() : typeof(string)
+				});
+			}
+			else {
+				properties = param.GetType()
+								  .GetProperties()
+								  .OrderBy(p => p.Name)
+								  .Select(p => new ParamInfo {
+									  Name = p.Name,
+									  Type = p.PropertyType,
+									  Getter = p.GetGetMethod()
+								  });
+			}
+
+			foreach (var prop in properties)
             {
-                if(prop.PropertyType == typeof(DbString))
+                if(prop.Type == typeof(DbString))
                 {
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [typed-param]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [dbstring]
+					ReadValue(il, prop, type); // stack is [parameters] [dbstring]
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [dbstring] [command]
                     il.Emit(OpCodes.Ldstr, "@" + prop.Name); // stack is now [parameters] [dbstring] [command] [name]
                     il.EmitCall(OpCodes.Callvirt, typeof(DbString).GetMethod("AddParameter"), null); // stack is now [parameters]
                     continue;
                 }
-                DbType dbType = LookupDbType(prop.PropertyType);
+				DbType dbType = LookupDbType(prop.Type);
                 if (dbType == DbType.Xml)
                 {
                     // this actually represents special handling for list types;
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [command]
                     il.Emit(OpCodes.Ldstr, "@" + prop.Name); // stack is now [parameters] [command] [name]
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [command] [name] [typed-param]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [command] [name] [typed-value]
-                    if (prop.PropertyType.IsValueType)
+					ReadValue(il, prop, type); // stack is [parameters] [command] [name] [typed-value]
+					if (prop.Type.IsValueType)
                     {
-                        il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [command] [name] [boxed-value]
+						il.Emit(OpCodes.Box, prop.Type); // stack is [parameters] [command] [name] [boxed-value]
                     }
                     il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("PackListParameters"), null); // stack is [parameters]
                     continue;
@@ -736,12 +769,12 @@ namespace Dapper
 
                 il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
                 il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [parameters] [parameter] [parameter] [typed-param]
-                il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [parameters] [parameter] [parameter] [typed-value]
+				ReadValue(il, prop, type); // stack is [parameters] [parameters] [parameter] [parameter] [typed-value]
                 bool checkForNull = true;
-                if (prop.PropertyType.IsValueType)
+				if (prop.Type.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [parameters] [parameter] [parameter] [boxed-value]
-                    if (Nullable.GetUnderlyingType(prop.PropertyType) == null)
+					il.Emit(OpCodes.Box, prop.Type); // stack is [parameters] [parameters] [parameter] [parameter] [boxed-value]
+					if (Nullable.GetUnderlyingType(prop.Type) == null)
                     {   // struct but not Nullable<T>; boxed value cannot be null
                         checkForNull = false;
                     }
@@ -768,7 +801,7 @@ namespace Dapper
                     }
                     if (allDone != null) il.Emit(OpCodes.Br_S, allDone.Value);
                     il.MarkLabel(notNull);
-                    if (prop.PropertyType == typeof(string))
+					if (prop.Type == typeof(string))
                     {
                         il.Emit(OpCodes.Dup); // [string] [string]
                         il.EmitCall(OpCodes.Callvirt, typeof(string).GetProperty("Length").GetGetMethod(), null); // [string] [length]
@@ -788,7 +821,7 @@ namespace Dapper
                 }
                 il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("Value").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
 
-                if (prop.PropertyType == typeof(string))
+				if (prop.Type == typeof(string))
                 {
                     var endOfSize = il.DefineLabel();
                     // don't set if 0
