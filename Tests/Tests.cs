@@ -629,6 +629,14 @@ end");
 
         }
 
+
+        public void TestFastExpandoSupportsIDictionary()
+        {
+            var row = connection.Query("select 1 A, 'two' B").First() as IDictionary<string, object>;
+            row["A"].IsEqualTo(1);
+            row["B"].IsEqualTo("two");
+        }
+
         /* TODO:
          * 
         public void TestMagicParam()
