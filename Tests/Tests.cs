@@ -181,6 +181,15 @@ namespace SqlMapper
     drop table #t", new {a=1, b=2 }).IsEqualTo(2);
         }
 
+        public void TestExecuteMultipleCommand()
+        {
+            connection.Execute("create table #t(i int)");
+            int tally = connection.Execute(@"insert #t (i) values(@a)", new[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
+            int sum = connection.Query<int>("select sum(i) from #t drop table #t").First();
+            tally.IsEqualTo(4);
+            sum.IsEqualTo(10);
+        }
+
         public void TestMassiveStrings()
         { 
             var str = new string('X', 20000);

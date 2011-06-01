@@ -143,7 +143,7 @@ namespace Dapper
             private readonly int hashCode;
             private readonly Type type;
             private readonly string connectionString;
-            private readonly Type parametersType; 
+            internal readonly Type parametersType; 
             public override int GetHashCode()
             {
                 return hashCode;
@@ -171,9 +171,49 @@ namespace Dapper
 #endif
 )
         {
-            var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(param, identity);
-            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+            IEnumerable multiExec = (object)param as IEnumerable;
+            Identity identity;
+            CacheInfo info;
+            if (multiExec != null && !(multiExec is string))
+            { // we actually want a T from IEnumerable<T>
+                var interfaces = multiExec.GetType().GetInterfaces();
+                var openType = typeof(IEnumerable<>);
+                Type foundType = null;
+                for(int i = 0 ; i < interfaces.Length; i++)
+                {
+                    if(interfaces[i].IsGenericType && interfaces[i].GetGenericTypeDefinition() == openType)
+                    { // implementing more than one T is self-inflicted
+                        foundType = interfaces[i].GetGenericArguments()[0];
+                        identity = new Identity(sql, cnn, null, foundType, null);
+                        info = GetCacheInfo(identity);
+                        using (var cmd = SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+                        {
+                            bool isFirst = true;
+                            var masterSql = cmd.CommandText;
+                            var reader = info.ParamReader;
+                            int total = 0;
+                            foreach (var obj in multiExec)
+                            {
+                                if (isFirst) { isFirst = false; }
+                                else
+                                {
+                                    cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                                    cmd.Parameters.Clear(); // current code is Add-tastic
+                                }
+                                reader(cmd, obj);
+                                total += cmd.ExecuteNonQuery();
+                            }
+                            return total;
+                        }
+                    }
+                }
+                
+            }
+
+            // nice and simple
+            identity = new Identity(sql, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+            info = GetCacheInfo(identity);
+            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
         }
 #if !CSHARP30
         /// <summary>
@@ -210,14 +250,14 @@ namespace Dapper
             
             )
         {
-            var identity = new Identity(sql, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(param, identity);
+            Identity identity = new Identity(sql, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
+            CacheInfo info = GetCacheInfo(identity);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
             try
             {
-                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
                 reader = cmd.ExecuteReader();
                 return new GridReader(cmd, reader);
             }
@@ -235,7 +275,7 @@ namespace Dapper
         private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
         {
             var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(param, identity);
+            var info = GetCacheInfo(identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
             {
@@ -319,10 +359,10 @@ namespace Dapper
 
         static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var identity = new Identity(sql, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
-            var info = GetCacheInfo(param, identity);
+            Identity identity = new Identity(sql, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
+            CacheInfo info = GetCacheInfo(identity);
 
-            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
+            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType))
             {
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -435,23 +475,24 @@ namespace Dapper
             }
         }  
         
-        private static CacheInfo GetCacheInfo(object param, Identity identity)
+        private static CacheInfo GetCacheInfo(Identity identity)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
             {
                 info = new CacheInfo();
-                if (param != null)
+                if (identity.parametersType != null)
                 {
-                    if (param is IDynamicParameters)
+                    if (typeof(IDynamicParameters).IsAssignableFrom(identity.parametersType))
                     {
                         info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameter(cmd); };
                     }
                     else
                     {
-                        info.ParamReader = CreateParamInfoGenerator(param.GetType());
+                        info.ParamReader = CreateParamInfoGenerator(identity.parametersType);
                     }
                 }
+                SetQueryCache(identity, info);
             }
             return info;
         }
