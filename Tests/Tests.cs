@@ -180,7 +180,13 @@ namespace SqlMapper
     set nocount on 
     drop table #t", new {a=1, b=2 }).IsEqualTo(2);
         }
-
+        public void TestExecuteCommandWithHybridParameters()
+        {
+            var p = new DynamicParameters(new { a = 1, b = 2 });
+            p.Add("@c", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            connection.Execute(@"set @c = @a + @b", p);
+            p.Get<int>("@c").IsEqualTo(3);
+        }
         public void TestExecuteMultipleCommand()
         {
             connection.Execute("create table #t(i int)");
