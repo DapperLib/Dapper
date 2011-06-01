@@ -1194,6 +1194,27 @@ namespace Dapper
             public IDbDataParameter AttachedParam { get; set; }
         }
 
+        public DynamicParameters() { }
+        public DynamicParameters(object template)
+        {
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+            if (template != null)
+            {
+                foreach (PropertyInfo prop in template.GetType().GetProperties(bindingFlags))
+                {
+                    if (!prop.CanRead) continue;
+                    var idx = prop.GetIndexParameters();
+                    if (idx != null && idx.Length != 0) continue;
+                    Add("@" + prop.Name, prop.GetValue(template, null), null, ParameterDirection.Input, null);
+                }
+                foreach (FieldInfo field in template.GetType().GetFields(bindingFlags))
+                {
+                    Add("@" + field.Name, field.GetValue(template), null, ParameterDirection.Input, null);
+                }
+
+            }
+        }
+
 
         public void Add(
 #if CSHARP30
