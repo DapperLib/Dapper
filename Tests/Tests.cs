@@ -528,10 +528,28 @@ Order by p.Id";
         {
             public TestEnum? EnumEnum { get; set; }
         }
+        class TestEnumClassNoNull
+        {
+            public TestEnum EnumEnum { get; set; }
+        }
         public void TestEnumWeirdness()
         {
-            connection.Query<TestEnumClass>("select null as [EnumEnum]");
-            connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]");
+            connection.Query<TestEnumClass>("select null as [EnumEnum]").First().EnumEnum.IsEqualTo(null);
+            connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+        }
+        void Foo()
+        {
+            string s = "Bla";
+            var obj = new TestEnumClassNoNull();
+            obj.EnumEnum = (TestEnum)Enum.Parse(typeof(TestEnum), s, true);
+        }
+        public void TestEnumStrings()
+        {
+            connection.Query<TestEnumClassNoNull>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            connection.Query<TestEnumClassNoNull>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+
+            connection.Query<TestEnumClass>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            connection.Query<TestEnumClass>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
         }
 
         public void TestSupportForParamDictionary()

@@ -849,6 +849,11 @@ namespace Dapper
                 return (T)val;
             };
         }
+        static readonly MethodInfo
+                    enumParse = typeof(Enum).GetMethod("Parse", new Type[] { typeof(Type), typeof(string), typeof(bool) }),
+                    getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                        .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
+                        .Select(p => p.GetGetMethod()).First();
 
         public static Func<IDataReader, T> GetClassDeserializer<T>(
 #if CSHARP30
@@ -863,6 +868,7 @@ namespace Dapper
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(typeof(T));
+            bool haveEnumLocal = false;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
             var properties = typeof(T)
@@ -896,11 +902,6 @@ namespace Dapper
                             select new { Name = n, Property = prop, Field = field }
                           ).ToList();
 
-
-            var getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                         .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
-                         .Select(p => p.GetGetMethod()).First();
-
             int index = startBound;
 
             il.BeginExceptionBlock();
@@ -922,6 +923,7 @@ namespace Dapper
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
 
+
                     il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
                     il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [target][target][value-as-object][DBNull or null]
                     il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
@@ -930,6 +932,50 @@ namespace Dapper
                     Type memberType = item.Property != null ? item.Property.Type : item.Field.FieldType;
                     var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
                     var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
+
+                    if (unboxType.IsEnum)
+                    {
+                        if (!haveEnumLocal)
+                        {
+                            il.DeclareLocal(typeof(string));
+                            haveEnumLocal = true;
+                        }
+
+                        Label isNotString = il.DefineLabel();
+                        il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
+                        il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
+                        il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
+                        il.Emit(OpCodes.Stloc_2); // stack is now [target][target][value-as-object][string or null]
+                        il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
+
+                        il.Emit(OpCodes.Pop); // stack is now [target][target]
+
+                        
+                        il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
+                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
+                        il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
+                        il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
+                        il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
+
+                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+
+                        if (nullUnderlyingType != null)
+                        {
+                            il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
+                        }
+                        if (item.Property != null)
+                        {
+                            il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                        } 
+                        il.Emit(OpCodes.Br_S, finishLabel);
+
+
+                        il.MarkLabel(isNotString);
+                    }
                     il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                     if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
                     {
