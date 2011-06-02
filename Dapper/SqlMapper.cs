@@ -143,7 +143,7 @@ namespace Dapper
             private readonly int hashCode;
             private readonly Type type;
             private readonly string connectionString;
-            private readonly Type parametersType; 
+            internal readonly Type parametersType; 
             public override int GetHashCode()
             {
                 return hashCode;
@@ -171,9 +171,49 @@ namespace Dapper
 #endif
 )
         {
-            var identity = new Identity(sql, cnn, null, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(param, identity);
-            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+            IEnumerable multiExec = (object)param as IEnumerable;
+            Identity identity;
+            CacheInfo info;
+            if (multiExec != null && !(multiExec is string))
+            { // we actually want a T from IEnumerable<T>
+                var interfaces = multiExec.GetType().GetInterfaces();
+                var openType = typeof(IEnumerable<>);
+                Type foundType = null;
+                for(int i = 0 ; i < interfaces.Length; i++)
+                {
+                    if(interfaces[i].IsGenericType && interfaces[i].GetGenericTypeDefinition() == openType)
+                    { // implementing more than one T is self-inflicted
+                        foundType = interfaces[i].GetGenericArguments()[0];
+                        identity = new Identity(sql, cnn, null, foundType, null);
+                        info = GetCacheInfo(identity);
+                        using (var cmd = SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+                        {
+                            bool isFirst = true;
+                            var masterSql = cmd.CommandText;
+                            var reader = info.ParamReader;
+                            int total = 0;
+                            foreach (var obj in multiExec)
+                            {
+                                if (isFirst) { isFirst = false; }
+                                else
+                                {
+                                    cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                                    cmd.Parameters.Clear(); // current code is Add-tastic
+                                }
+                                reader(cmd, obj);
+                                total += cmd.ExecuteNonQuery();
+                            }
+                            return total;
+                        }
+                    }
+                }
+                
+            }
+
+            // nice and simple
+            identity = new Identity(sql, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+            info = GetCacheInfo(identity);
+            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
         }
 #if !CSHARP30
         /// <summary>
@@ -210,14 +250,14 @@ namespace Dapper
             
             )
         {
-            var identity = new Identity(sql, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(param, identity);
+            Identity identity = new Identity(sql, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
+            CacheInfo info = GetCacheInfo(identity);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
             try
             {
-                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
                 reader = cmd.ExecuteReader();
                 return new GridReader(cmd, reader);
             }
@@ -235,7 +275,7 @@ namespace Dapper
         private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
         {
             var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(param, identity);
+            var info = GetCacheInfo(identity);
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
             {
@@ -319,10 +359,10 @@ namespace Dapper
 
         static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var identity = new Identity(sql, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
-            var info = GetCacheInfo(param, identity);
+            Identity identity = new Identity(sql, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
+            CacheInfo info = GetCacheInfo(identity);
 
-            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
+            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType))
             {
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -435,23 +475,24 @@ namespace Dapper
             }
         }  
         
-        private static CacheInfo GetCacheInfo(object param, Identity identity)
+        private static CacheInfo GetCacheInfo(Identity identity)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
             {
                 info = new CacheInfo();
-                if (param != null)
+                if (identity.parametersType != null)
                 {
-                    if (param is IDynamicParameters)
+                    if (typeof(IDynamicParameters).IsAssignableFrom(identity.parametersType))
                     {
                         info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameter(cmd); };
                     }
                     else
                     {
-                        info.ParamReader = CreateParamInfoGenerator(param.GetType());
+                        info.ParamReader = CreateParamInfoGenerator(identity.parametersType);
                     }
                 }
+                SetQueryCache(identity, info);
             }
             return info;
         }
@@ -849,6 +890,11 @@ namespace Dapper
                 return (T)val;
             };
         }
+        static readonly MethodInfo
+                    enumParse = typeof(Enum).GetMethod("Parse", new Type[] { typeof(Type), typeof(string), typeof(bool) }),
+                    getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                        .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
+                        .Select(p => p.GetGetMethod()).First();
 
         public static Func<IDataReader, T> GetClassDeserializer<T>(
 #if CSHARP30
@@ -863,6 +909,7 @@ namespace Dapper
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(typeof(T));
+            bool haveEnumLocal = false;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
             var properties = typeof(T)
@@ -896,11 +943,6 @@ namespace Dapper
                             select new { Name = n, Property = prop, Field = field }
                           ).ToList();
 
-
-            var getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                         .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
-                         .Select(p => p.GetGetMethod()).First();
-
             int index = startBound;
 
             il.BeginExceptionBlock();
@@ -922,6 +964,7 @@ namespace Dapper
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
 
+
                     il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
                     il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [target][target][value-as-object][DBNull or null]
                     il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
@@ -930,6 +973,50 @@ namespace Dapper
                     Type memberType = item.Property != null ? item.Property.Type : item.Field.FieldType;
                     var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
                     var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
+
+                    if (unboxType.IsEnum)
+                    {
+                        if (!haveEnumLocal)
+                        {
+                            il.DeclareLocal(typeof(string));
+                            haveEnumLocal = true;
+                        }
+
+                        Label isNotString = il.DefineLabel();
+                        il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
+                        il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
+                        il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
+                        il.Emit(OpCodes.Stloc_2); // stack is now [target][target][value-as-object][string or null]
+                        il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
+
+                        il.Emit(OpCodes.Pop); // stack is now [target][target]
+
+                        
+                        il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
+                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
+                        il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
+                        il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
+                        il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
+
+                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+
+                        if (nullUnderlyingType != null)
+                        {
+                            il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
+                        }
+                        if (item.Property != null)
+                        {
+                            il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                        } 
+                        il.Emit(OpCodes.Br_S, finishLabel);
+
+
+                        il.MarkLabel(isNotString);
+                    }
                     il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                     if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
                     {
@@ -1105,6 +1192,27 @@ namespace Dapper
             public DbType? DbType { get; set; }
             public int? Size { get; set; }
             public IDbDataParameter AttachedParam { get; set; }
+        }
+
+        public DynamicParameters() { }
+        public DynamicParameters(object template)
+        {
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+            if (template != null)
+            {
+                foreach (PropertyInfo prop in template.GetType().GetProperties(bindingFlags))
+                {
+                    if (!prop.CanRead) continue;
+                    var idx = prop.GetIndexParameters();
+                    if (idx != null && idx.Length != 0) continue;
+                    Add("@" + prop.Name, prop.GetValue(template, null), null, ParameterDirection.Input, null);
+                }
+                foreach (FieldInfo field in template.GetType().GetFields(bindingFlags))
+                {
+                    Add("@" + field.Name, field.GetValue(template), null, ParameterDirection.Input, null);
+                }
+
+            }
         }
 
 
