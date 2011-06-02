@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using System.Threading;
 
 namespace Dapper
 {
@@ -23,7 +24,86 @@ namespace Dapper
         {
             void AddParameter(IDbCommand command);
         }
-
+        static Link<Type, Action<IDbCommand, bool>> bindByNameCache;
+        static Action<IDbCommand, bool> GetBindByName(Type commandType)
+        {
+            if(commandType == null) return null; // GIGO
+            Action<IDbCommand, bool> action;
+            if (Link<Type, Action<IDbCommand, bool>>.TryGet(bindByNameCache, commandType, out action))
+            {
+                return action;
+            }
+            var prop = commandType.GetProperty("BindByName", BindingFlags.Public | BindingFlags.Instance);
+            action = null;
+            ParameterInfo[] indexers;
+            MethodInfo setter;
+            if (prop != null && prop.CanWrite && prop.PropertyType == typeof(bool)
+                && ((indexers = prop.GetIndexParameters()) == null || indexers.Length == 0)
+                && (setter = prop.GetSetMethod()) != null
+                )
+            {
+                var method = new DynamicMethod(commandType.Name + "_BindByName", null, new Type[] { typeof(IDbCommand), typeof(bool) });
+                var il = method.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Castclass, commandType);
+                il.Emit(OpCodes.Ldarg_1);
+                il.EmitCall(OpCodes.Callvirt, setter, null);
+                il.Emit(OpCodes.Ret);
+                action = (Action<IDbCommand, bool>)method.CreateDelegate(typeof(Action<IDbCommand, bool>));
+            }
+            // cache it            
+            Link<Type, Action<IDbCommand, bool>>.TryAdd(ref bindByNameCache, commandType, ref action);
+            return action;
+        }
+        /// <summary>
+        /// This is a micro-cache; suitable when the number of terms is controllable (a few hundred, for example),
+        /// and strictly append-only; you cannot change existing values. All key matches are on **REFERENCE**
+        /// equality. The type is fully thread-safe.
+        /// </summary>
+        class Link<TKey, TValue> where TKey : class
+        {
+            public static bool TryGet(Link<TKey, TValue> link, TKey key, out TValue value)
+            {
+                while (link != null)
+                {
+                    if ((object)key==(object)link.Key)
+                    {
+                        value = link.Value;
+                        return true;
+                    }
+                    link = link.Tail;
+                }
+                value = default(TValue);
+                return false;
+            }
+            public static bool TryAdd(ref Link<TKey, TValue> head, TKey key, ref TValue value)
+            {
+                bool tryAgain;
+                do
+                {
+                    var snapshot = Interlocked.CompareExchange(ref head, null, null);
+                    TValue found;
+                    if (TryGet(snapshot, key, out found))
+                    { // existing match; report the existing value instead
+                        value = found;
+                        return false;
+                    }
+                    var newNode = new Link<TKey, TValue>(key, value, snapshot);
+                    // did somebody move our cheese?
+                    tryAgain = Interlocked.CompareExchange(ref head, newNode, snapshot) != snapshot;
+                } while (tryAgain);
+                return true;
+            }
+            private Link(TKey key, TValue value, Link<TKey, TValue> tail)
+            {
+                Key = key;
+                Value = value;
+                Tail = tail;
+            }
+            public TKey Key { get; private set; }
+            public TValue Value { get; private set; }
+            public Link<TKey, TValue> Tail { get; private set; }
+        }
         class CacheInfo
         {
             public object Deserializer { get; set; }
@@ -855,7 +935,8 @@ namespace Dapper
         private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
         {
             var cmd = cnn.CreateCommand();
-
+            var bindByName = GetBindByName(cmd.GetType());
+            if (bindByName != null) bindByName(cmd, true);
             cmd.Transaction = transaction;
             cmd.CommandText = sql;
             if (commandTimeout.HasValue)
