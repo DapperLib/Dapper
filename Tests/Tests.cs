@@ -637,6 +637,23 @@ end");
             row["B"].IsEqualTo("two");
         }
 
+
+        class PrivateDan
+        {
+            public int Shadow { get; set; }
+            private string ShadowInDB 
+            { 
+                set 
+                {
+                    Shadow = value == "one" ? 1 : 0; 
+                }
+            }
+        }
+        public void TestDapperSetsPrivates()
+        {
+            connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow.IsEqualTo(1);
+        }
+
         /* TODO:
          * 
         public void TestMagicParam()
