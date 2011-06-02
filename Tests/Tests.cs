@@ -686,7 +686,7 @@ end");
         {
             connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow.IsEqualTo(1);
         }
-
+        
         /* TODO:
          * 
         public void TestMagicParam()
