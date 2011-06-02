@@ -180,6 +180,21 @@ namespace SqlMapper
     set nocount on 
     drop table #t", new {a=1, b=2 }).IsEqualTo(2);
         }
+        public void TestExecuteCommandWithHybridParameters()
+        {
+            var p = new DynamicParameters(new { a = 1, b = 2 });
+            p.Add("@c", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            connection.Execute(@"set @c = @a + @b", p);
+            p.Get<int>("@c").IsEqualTo(3);
+        }
+        public void TestExecuteMultipleCommand()
+        {
+            connection.Execute("create table #t(i int)");
+            int tally = connection.Execute(@"insert #t (i) values(@a)", new[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
+            int sum = connection.Query<int>("select sum(i) from #t drop table #t").First();
+            tally.IsEqualTo(4);
+            sum.IsEqualTo(10);
+        }
 
         public void TestMassiveStrings()
         { 
@@ -528,10 +543,28 @@ Order by p.Id";
         {
             public TestEnum? EnumEnum { get; set; }
         }
+        class TestEnumClassNoNull
+        {
+            public TestEnum EnumEnum { get; set; }
+        }
         public void TestEnumWeirdness()
         {
-            connection.Query<TestEnumClass>("select null as [EnumEnum]");
-            connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]");
+            connection.Query<TestEnumClass>("select null as [EnumEnum]").First().EnumEnum.IsEqualTo(null);
+            connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+        }
+        void Foo()
+        {
+            string s = "Bla";
+            var obj = new TestEnumClassNoNull();
+            obj.EnumEnum = (TestEnum)Enum.Parse(typeof(TestEnum), s, true);
+        }
+        public void TestEnumStrings()
+        {
+            connection.Query<TestEnumClassNoNull>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            connection.Query<TestEnumClassNoNull>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+
+            connection.Query<TestEnumClass>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            connection.Query<TestEnumClass>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
         }
 
         public void TestSupportForParamDictionary()
