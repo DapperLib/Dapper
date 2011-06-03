@@ -122,6 +122,11 @@ namespace Dapper
         {
             lock (_queryCache) { return _queryCache.TryGetValue(key, out value); }
         }
+        private static void PurgeQueryCache(Identity key)
+        {
+            lock (_queryCache) { _queryCache.Remove(key); }
+        }
+
 #else
         static readonly System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo> _queryCache = new System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo>();
         private static void SetQueryCache(Identity key, CacheInfo value)
@@ -131,6 +136,11 @@ namespace Dapper
         private static bool TryGetQueryCache(Identity key, out CacheInfo value)
         {
             return _queryCache.TryGetValue(key, out value);
+        }
+        private static void PurgeQueryCache(Identity key)
+        {
+            CacheInfo info;
+            _queryCache.TryRemove(key, out info);
         }
 #endif
         static readonly Dictionary<RuntimeTypeHandle, DbType> typeMap;
@@ -190,18 +200,25 @@ namespace Dapper
             throw new NotSupportedException(string.Format("The type : {0} is not supported by dapper", type));
         }
 
-        private class Identity : IEquatable<Identity>
+        internal class Identity : IEquatable<Identity>
         {
-
-            internal Identity(string sql, IDbConnection cnn, Type type, Type parametersType, Type[] otherTypes)
+            internal Identity ForGrid(Type primaryType, int gridIndex)
+            {
+                return new Identity(sql, connectionString, primaryType, parametersType, null, gridIndex);
+            }
+            internal Identity(string sql, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
+                : this(sql, connection.ConnectionString, type, parametersType, otherTypes, 0)
+            { }
+            private Identity(string sql, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex)
             {
                 this.sql = sql;
-                this.connectionString = cnn.ConnectionString;
+                this.connectionString = connectionString;
                 this.type = type;
                 this.parametersType = parametersType;
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
+                    hashCode = hashCode * 23 + gridIndex.GetHashCode();
                     hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
                     hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
                     if (otherTypes != null)
@@ -220,7 +237,7 @@ namespace Dapper
                 return Equals(obj as Identity);
             }
             private readonly string sql;
-            private readonly int hashCode;
+            private readonly int hashCode, gridIndex;
             private readonly Type type;
             private readonly string connectionString;
             internal readonly Type parametersType; 
@@ -231,7 +248,8 @@ namespace Dapper
             public bool Equals(Identity other)
             {
                 return 
-                    other != null && 
+                    other != null &&
+                    gridIndex == other.gridIndex &&
                     type == other.type && 
                     sql == other.sql && 
                     connectionString == other.connectionString &&
@@ -339,7 +357,7 @@ namespace Dapper
             {
                 cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
                 reader = cmd.ExecuteReader();
-                return new GridReader(cmd, reader);
+                return new GridReader(cmd, reader, identity);
             }
             catch
             {
@@ -356,27 +374,41 @@ namespace Dapper
         {
             var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity);
-
-            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
+            bool clean = true;
+            try
             {
-                using (var reader = cmd.ExecuteReader())
+                using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
                 {
-                    if (info.Deserializer == null)
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        info.Deserializer = GetDeserializer<T>(reader, 0, -1, false);
-                        SetQueryCache(identity, info);
-                    }
+                        if (info.Deserializer == null)
+                        {
+                            info.Deserializer = GetDeserializer<T>(reader, 0, -1, false);
+                            SetQueryCache(identity, info);
+                        }
 
-                    var deserializer = (Func<IDataReader, T>)info.Deserializer;
+                        var deserializer = (Func<IDataReader, T>)info.Deserializer;
 
-                    while (reader.Read())
-                    {
-                        yield return deserializer(reader);
+                        while (reader.Read())
+                        {
+                            clean = false;
+                            var next = deserializer(reader);
+                            clean = true;
+                            yield return next;
+                        }
                     }
+                }
+                clean = false;
+            }
+            finally
+            {   // throw away query plan on failure - could 
+                if (!clean)
+                {
+                    PurgeQueryCache(identity);
                 }
             }
         }
-
+        
         /// <summary>
         /// Maps a query to objects
         /// </summary>
@@ -547,10 +579,23 @@ namespace Dapper
                     }
 
                     if (mapIt != null)
-                        while (reader.Read())
+                    {
+                        bool clean = true;
+                        try
                         {
-                            yield return mapIt(reader);
+                            while (reader.Read())
+                            {
+                                clean = false;
+                                TReturn next = mapIt(reader);
+                                clean = true;
+                                yield return next;
+                            }
                         }
+                        finally
+                        {
+                            if (!clean) PurgeQueryCache(identity);
+                        }
+                    }
                 }
             }
         }  
@@ -1195,10 +1240,12 @@ namespace Dapper
         {
             private IDataReader reader;
             private IDbCommand command;
-            internal GridReader(IDbCommand command, IDataReader reader)
+            private Identity identity;
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity)
             {
                 this.command = command;
                 this.reader = reader;
+                this.identity = identity;
             }
             /// <summary>
             /// Read the next grid of results
@@ -1207,24 +1254,40 @@ namespace Dapper
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().Name);
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
-                var deserializer = GetDeserializer<T>(reader, 0, -1, false);
+                var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
+                CacheInfo cache = GetCacheInfo(typedIdentity);
+                var deserializer = (Func<IDataReader, T>)cache.Deserializer;
+                if (deserializer == null)
+                {
+                    deserializer = GetDeserializer<T>(reader, 0, -1, false);
+                    cache.Deserializer = deserializer;
+                }
                 consumed = true;
-                return ReadDeferred(gridIndex, deserializer);
+                return ReadDeferred(gridIndex, deserializer, typedIdentity);
             }
 
             // todo multimapping. 
 
-            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, T> deserializer)
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, T> deserializer, Identity typedIdentity)
             {
+     
+                bool clean = true;
                 try
                 {
                     while (index == gridIndex && reader.Read())
                     {
-                        yield return deserializer(reader);
+                        clean = false;
+                        T next = deserializer(reader);
+                        clean = true;
+                        yield return next;
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows
                 {
+                    if (!clean)
+                    {
+                        PurgeQueryCache(typedIdentity);
+                    }
                     if (index == gridIndex)
                     {
                         NextResult();
