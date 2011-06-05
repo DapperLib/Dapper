@@ -187,6 +187,12 @@ namespace Dapper
         private static DbType LookupDbType(Type type)
         {
             DbType dbType;
+            var nullUnderlyingType = Nullable.GetUnderlyingType(type);
+            if (nullUnderlyingType != null) type = nullUnderlyingType;
+            if (type.IsEnum)
+            {
+                type = Enum.GetUnderlyingType(type);
+            }
             if (typeMap.TryGetValue(type.TypeHandle, out dbType))
             {
                 return dbType;
@@ -196,6 +202,7 @@ namespace Dapper
                 // use xml to denote its a list, hacky but will work on any DB
                 return DbType.Xml;
             }
+
 
             throw new NotSupportedException(string.Format("The type : {0} is not supported by dapper", type));
         }

@@ -97,6 +97,27 @@ namespace SqlMapper
                 .IsSequenceEqualTo(new[] { "a", "b" });
         }
 
+        enum EnumParam : short
+        {
+            None, A, B
+        }
+        class EnumParamObject
+        {
+            public EnumParam A { get; set; }
+            public EnumParam? B { get; set; }
+            public EnumParam? C { get; set; }
+        }
+        public void TestEnumParams()
+        {
+            EnumParam a = EnumParam.A;
+            EnumParam? b = EnumParam.B, c = null;
+            var obj = connection.Query<EnumParamObject>("select @a as A, @b as B, @c as C",
+                new { a, b, c }).Single();
+            obj.A.IsEqualTo(EnumParam.A);
+            obj.B.IsEqualTo(EnumParam.B);
+            obj.C.IsEqualTo(null);
+        }
+
         public class Dog
         {
             public int? Age { get; set; }
