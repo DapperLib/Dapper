@@ -771,7 +771,36 @@ end");
                 }
             }
         }
-        
+
+        class Parent
+        {
+            public int Id { get; set; }
+            public readonly List<Child> Children = new List<Child>();
+        }
+        class Child
+        {
+            public int Id { get; set; }
+        }
+        public void ParentChildIdentityAssociations()
+        {
+            var lookup = new Dictionary<int, Parent>();
+            var parents = connection.Query<Parent, Child, Parent>(@"select 1 as [Id], 1 as [Id] union all select 1,2 union all select 2,3 union all select 1,4 union all select 3,5",
+                (parent, child) =>
+                {
+                    Parent found;
+                    if (!lookup.TryGetValue(parent.Id, out found))
+                    {
+                        lookup.Add(parent.Id, found = parent);
+                    }
+                    found.Children.Add(child);
+                    return found;
+                }).Distinct().ToDictionary(p => p.Id);
+            parents.Count().IsEqualTo(3);
+            parents[1].Children.Select(c => c.Id).SequenceEqual(new[] { 1,2,4}).IsTrue();
+            parents[2].Children.Select(c => c.Id).SequenceEqual(new[] { 3 }).IsTrue();
+            parents[3].Children.Select(c => c.Id).SequenceEqual(new[] { 5 }).IsTrue();
+        }
+
         /* TODO:
          * 
         public void TestMagicParam()
