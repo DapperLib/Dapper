@@ -57,7 +57,7 @@ namespace SqlMapper
 
     class Tests
     {
-       
+
         SqlConnection connection = Program.GetOpenConnection();
 
         public void SelectListInt()
@@ -72,11 +72,17 @@ namespace SqlMapper
              .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
 
+        public void PassInEmptyIntArray()
+        {
+            connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[0] })
+             .IsSequenceEqualTo(new int[0]);
+        }
+
         public void TestReadMultipleIntegersWithSplitOnAny()
         {
-            connection.Query<int,int,int,Tuple<int,int,int>>(
+            connection.Query<int, int, int, Tuple<int, int, int>>(
                 "select 1,2,3 union all select 4,5,6", Tuple.Create, splitOn: "*")
-             .IsSequenceEqualTo(new[] {Tuple.Create(1,2,3), Tuple.Create(4,5,6)});
+             .IsSequenceEqualTo(new[] { Tuple.Create(1, 2, 3), Tuple.Create(4, 5, 6) });
         }
 
         public void TestDoubleParam()
@@ -131,7 +137,7 @@ namespace SqlMapper
         public void TestExtraFields()
         {
             var guid = Guid.NewGuid();
-            var dog = connection.Query<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { Id = guid});
+            var dog = connection.Query<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { Id = guid });
 
             dog.Count()
                .IsEqualTo(1);
@@ -148,7 +154,7 @@ namespace SqlMapper
         {
             var guid = Guid.NewGuid();
             var dog = connection.Query<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
-            
+
             dog.Count()
                 .IsEqualTo(1);
 
@@ -167,7 +173,7 @@ namespace SqlMapper
         public void TestExpando()
         {
             var rows = connection.Query("select 1 A, 2 B union all select 3, 4").ToList();
-            
+
             ((int)rows[0].A)
                 .IsEqualTo(1);
 
@@ -183,11 +189,11 @@ namespace SqlMapper
 
         public void TestStringList()
         {
-            connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new {strings = new[] {"a","b","c"}})
-                .IsSequenceEqualTo(new[] {"a","b","c"});
+            connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new[] { "a", "b", "c" } })
+                .IsSequenceEqualTo(new[] { "a", "b", "c" });
 
-             connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new string[0] })
-	                .IsSequenceEqualTo(new string[0]);
+            connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new string[0] })
+                   .IsSequenceEqualTo(new string[0]);
         }
 
         public void TestExecuteCommand()
@@ -199,12 +205,12 @@ namespace SqlMapper
     insert #t 
     select @a a union all select @b 
     set nocount on 
-    drop table #t", new {a=1, b=2 }).IsEqualTo(2);
+    drop table #t", new { a = 1, b = 2 }).IsEqualTo(2);
         }
         public void TestExecuteCommandWithHybridParameters()
         {
             var p = new DynamicParameters(new { a = 1, b = 2 });
-            p.Add("@c", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            p.Add("c", dbType: DbType.Int32, direction: ParameterDirection.Output);
             connection.Execute(@"set @c = @a + @b", p);
             p.Get<int>("@c").IsEqualTo(3);
         }
@@ -218,7 +224,7 @@ namespace SqlMapper
         }
 
         public void TestMassiveStrings()
-        { 
+        {
             var str = new string('X', 20000);
             connection.Query<string>("select @a", new { a = str }).First()
                 .IsEqualTo(str);
@@ -294,12 +300,12 @@ namespace SqlMapper
         }
 
 
-        class User 
+        class User
         {
             public int Id { get; set; }
             public string Name { get; set; }
         }
-        class Post 
+        class Post
         {
             public int Id { get; set; }
             public User Owner { get; set; }
@@ -320,14 +326,14 @@ namespace SqlMapper
 ";
             connection.Execute(createSql);
 
-            var sql = 
+            var sql =
 @"select * from #Posts p 
 left join #Users u on u.Id = p.OwnerId 
 Order by p.Id";
 
             var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
             var p = data.First();
-           
+
             p.Content.IsEqualTo("Sams Post1");
             p.Id.IsEqualTo(1);
             p.Owner.Name.IsEqualTo("Sam");
@@ -403,7 +409,7 @@ Order by p.Id";
             var data = connection.Query<TestFieldCaseAndPrivatesEntity>(
                 @"select a=1,b=2,c=3,d=4,f='5'").Single();
 
-            
+
             data.a.IsEqualTo(1);
             data.GetB().IsEqualTo(2);
             data.c.IsEqualTo(3);
@@ -457,13 +463,13 @@ Order by p.Id";
             Assert.IsEqualTo(order.Creator.Id, 3);
             Assert.IsEqualTo(order.Creator.Content, "c");
 
-            order = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (o, owner, creator, address) => 
-                { 
-                  o.Owner = owner; 
-                  o.Creator = creator; 
-                  o.Owner.Address = address;
-                  return o;
-                }).First();
+            order = connection.Query<dynamic, dynamic, dynamic, dynamic, dynamic>(sql, (o, owner, creator, address) =>
+            {
+                o.Owner = owner;
+                o.Creator = creator;
+                o.Owner.Address = address;
+                return o;
+            }).First();
 
             Assert.IsEqualTo(order.Id, 1);
             Assert.IsEqualTo(order.Content, "a");
@@ -535,7 +541,7 @@ Order by p.Id";
             var cnnStr = "Data Source = Test.sdf;";
             var engine = new SqlCeEngine(cnnStr);
             engine.CreateDatabase();
-            
+
             using (var cnn = new SqlCeConnection(cnnStr))
             {
                 cnn.Open();
@@ -557,8 +563,8 @@ Order by p.Id";
         }
 
         enum TestEnum : byte
-        { 
-           Bla = 1 
+        {
+            Bla = 1
         }
         class TestEnumClass
         {
@@ -591,21 +597,21 @@ Order by p.Id";
         public void TestSupportForParamDictionary()
         {
             var p = new DynamicParameters();
-            p.Add("@name", "bob");
-            p.Add("@age", dbType: DbType.Int32, direction: ParameterDirection.Output);
-                    
+            p.Add("name", "bob");
+            p.Add("age", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
             connection.Query<string>("set @age = 11 select @name", p).First().IsEqualTo("bob");
 
-            p.Get<int>("@age").IsEqualTo(11);
+            p.Get<int>("age").IsEqualTo(11);
         }
 
 
         public void TestProcSupport()
         {
             var p = new DynamicParameters();
-            p.Add("@a", 11);
-            p.Add("@b", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            p.Add("@c", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+            p.Add("a", 11);
+            p.Add("b", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            p.Add("c", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
             connection.Execute(@"create proc #TestProc 
 	@a int,
@@ -618,8 +624,8 @@ begin
 end");
             connection.Query<int>("#TestProc", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(1111);
 
-            p.Get<int>("@c").IsEqualTo(11);
-            p.Get<int>("@b").IsEqualTo(999);
+            p.Get<int>("c").IsEqualTo(11);
+            p.Get<int>("b").IsEqualTo(999);
 
         }
 
@@ -664,14 +670,14 @@ end");
 
         public void TestFlexibleMultiMapping()
         {
-            var sql = 
+            var sql =
 @"select 
     1 as PersonId, 'bob' as Name, 
     2 as AddressId, 'abc street' as Name, 1 as PersonId,
     3 as Id, 'fred' as Name
     ";
-            var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address,Extra>>
-                (sql, (p,a,e) => Tuple.Create(p, a, e), splitOn: "AddressId,Id").First();
+            var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address, Extra>>
+                (sql, (p, a, e) => Tuple.Create(p, a, e), splitOn: "AddressId,Id").First();
 
             personWithAddress.Item1.PersonId.IsEqualTo(1);
             personWithAddress.Item1.Name.IsEqualTo("bob");
@@ -695,11 +701,11 @@ end");
         class PrivateDan
         {
             public int Shadow { get; set; }
-            private string ShadowInDB 
-            { 
-                set 
+            private string ShadowInDB
+            {
+                set
                 {
-                    Shadow = value == "one" ? 1 : 0; 
+                    Shadow = value == "one" ? 1 : 0;
                 }
             }
         }
@@ -736,11 +742,11 @@ end");
                 }
 
                 // Add the table parameter.
-                var p = sqlCommand.Parameters.Add("@ints", SqlDbType.Structured);
+                var p = sqlCommand.Parameters.Add("ints", SqlDbType.Structured);
                 p.Direction = ParameterDirection.Input;
                 p.TypeName = "int_list_type";
                 p.Value = number_list;
-                
+
             }
         }
 
@@ -796,7 +802,7 @@ end");
                     return found;
                 }).Distinct().ToDictionary(p => p.Id);
             parents.Count().IsEqualTo(3);
-            parents[1].Children.Select(c => c.Id).SequenceEqual(new[] { 1,2,4}).IsTrue();
+            parents[1].Children.Select(c => c.Id).SequenceEqual(new[] { 1, 2, 4 }).IsTrue();
             parents[2].Children.Select(c => c.Id).SequenceEqual(new[] { 3 }).IsTrue();
             parents[3].Children.Select(c => c.Id).SequenceEqual(new[] { 5 }).IsTrue();
         }
