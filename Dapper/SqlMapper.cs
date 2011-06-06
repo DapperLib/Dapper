@@ -22,7 +22,7 @@ namespace Dapper
     {
         public interface IDynamicParameters
         {
-            void AddParameter(IDbCommand command);
+            void AddParameters(IDbCommand command);
         }
         static Link<Type, Action<IDbCommand, bool>> bindByNameCache;
         static Action<IDbCommand, bool> GetBindByName(Type commandType)
@@ -617,7 +617,7 @@ namespace Dapper
                 {
                     if (typeof(IDynamicParameters).IsAssignableFrom(identity.parametersType))
                     {
-                        info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameter(cmd); };
+                        info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameters(cmd); };
                     }
                     else
                     {
@@ -1379,7 +1379,7 @@ namespace Dapper
         }
 
 
-        void SqlMapper.IDynamicParameters.AddParameter(IDbCommand command)
+        void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command)
         {
             foreach (var param in parameters.Values)
             {

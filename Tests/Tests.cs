@@ -707,6 +707,70 @@ end");
         {
             connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow.IsEqualTo(1);
         }
+
+
+        class IntDynamicParam : Dapper.SqlMapper.IDynamicParameters
+        {
+            IEnumerable<int> numbers;
+            public IntDynamicParam(IEnumerable<int> numbers)
+            {
+                this.numbers = numbers;
+            }
+
+            public void AddParameters(IDbCommand command)
+            {
+                var sqlCommand = (SqlCommand)command;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                List<Microsoft.SqlServer.Server.SqlDataRecord> number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
+
+                // Create an SqlMetaData object that describes our table type.
+                Microsoft.SqlServer.Server.SqlMetaData[] tvp_definition = { new Microsoft.SqlServer.Server.SqlMetaData("n", SqlDbType.Int) };
+
+                foreach (int n in numbers)
+                {
+                    // Create a new record, using the metadata array above.
+                    Microsoft.SqlServer.Server.SqlDataRecord rec = new Microsoft.SqlServer.Server.SqlDataRecord(tvp_definition);
+                    rec.SetInt32(0, n);    // Set the value.
+                    number_list.Add(rec);      // Add it to the list.
+                }
+
+                // Add the table parameter.
+                var p = sqlCommand.Parameters.Add("@ints", SqlDbType.Structured);
+                p.Direction = ParameterDirection.Input;
+                p.TypeName = "int_list_type";
+                p.Value = number_list;
+                
+            }
+        }
+
+        // SQL Server specific test to demonstrate TVP 
+        public void TestTVP()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @ints int_list_type READONLY AS select * from @ints");
+
+                var nums = connection.Query<int>("get_ints", new IntDynamicParam(new int[] { 1, 2, 3 })).ToList();
+                nums[0].IsEqualTo(1);
+                nums[1].IsEqualTo(2);
+                nums[2].IsEqualTo(3);
+                nums.Count.IsEqualTo(3);
+
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
         
         /* TODO:
          * 
