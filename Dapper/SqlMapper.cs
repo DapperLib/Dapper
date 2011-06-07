@@ -632,15 +632,17 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
+            Type type = typeof(T);
 #if !CSHARP30
             // dynamic is passed in as Object ... by c# design
-            if (typeof(T) == typeof(object)
-                || typeof(T) == typeof(FastExpando))
+            if (type == typeof(object)
+                || type == typeof(FastExpando))
             {
                 return GetDynamicDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
 #endif
-            if (typeof(T).IsClass && typeof(T) != typeof(string))
+
+            if (type.IsClass && type != typeof(string) && type != typeof(byte[]))
             {
                 return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }

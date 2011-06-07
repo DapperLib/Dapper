@@ -65,7 +65,10 @@ namespace SqlMapper
             connection.Query<int>("select 1 union all select 2 union all select 3")
               .IsSequenceEqualTo(new[] { 1, 2, 3 });
         }
-
+        public void SelectBinary()
+        {
+            connection.Query<byte[]>("select cast(1 as varbinary(4))").First().SequenceEqual(new byte[] {1});
+        }
         public void PassInIntArray()
         {
             connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 }.AsEnumerable() })
