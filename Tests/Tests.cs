@@ -348,6 +348,51 @@ Order by p.Id";
         }
 
 
+
+        public void TestMultiMapGridReader()
+        {
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+
+                insert #Users values(99, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')
+";
+            connection.Execute(createSql);
+
+            var sql =
+@"select p.*, u.Id, u.Name + '0' Name from #Posts p 
+left join #Users u on u.Id = p.OwnerId 
+Order by p.Id
+
+select p.*, u.Id, u.Name + '1' Name from #Posts p 
+left join #Users u on u.Id = p.OwnerId 
+Order by p.Id
+";
+
+            var grid = connection.QueryMultiple(sql);
+
+            for (int i = 0; i < 2; i++)
+            {
+                var data = grid.Read<Post, User, Post>((post, user) => { post.Owner = user; return post; }).ToList();
+                var p = data.First();
+
+                p.Content.IsEqualTo("Sams Post1");
+                p.Id.IsEqualTo(1);
+                p.Owner.Name.IsEqualTo("Sam" + i);
+                p.Owner.Id.IsEqualTo(99);
+
+                data[2].Owner.IsNull();
+            }
+            
+            connection.Execute("drop table #Users drop table #Posts");
+
+        }
+
         public void TestMultiMapDynamic()
         {
             var createSql = @"
@@ -809,6 +854,7 @@ end");
             parents[2].Children.Select(c => c.Id).SequenceEqual(new[] { 3 }).IsTrue();
             parents[3].Children.Select(c => c.Id).SequenceEqual(new[] { 5 }).IsTrue();
         }
+
 
         /* TODO:
          * 
