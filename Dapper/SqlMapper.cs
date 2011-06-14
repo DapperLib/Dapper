@@ -214,6 +214,12 @@ namespace Dapper
             {
                 return new Identity(sql, connectionString, primaryType, parametersType, null, gridIndex);
             }
+
+            internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex)
+            {
+                return new Identity(sql, connectionString, primaryType, parametersType, otherTypes, gridIndex);
+            }
+
             internal Identity(string sql, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
                 : this(sql, connection.ConnectionString, type, parametersType, otherTypes, 0)
             { }
@@ -473,136 +479,160 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
             this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param, transaction, splitOn, commandTimeout, commandType);
+            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param, transaction, splitOn, commandTimeout, commandType, null, null);
             return buffered ? results.ToList() : results;
         }
 
-        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType)
+        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType, IDataReader reader, Identity identity)
         {
-            Identity identity = new Identity(sql, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
+            identity = identity ?? new Identity(sql, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
             CacheInfo info = GetCacheInfo(identity);
 
-            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType))
+            IDbCommand ownedCommand = null;
+            IDataReader ownedReader = null;
+
+            try
             {
-                using (var reader = cmd.ExecuteReader())
+                if (reader == null)
                 {
-                    if (info.Deserializer == null)
+                    ownedCommand = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
+                    ownedReader = ownedCommand.ExecuteReader();
+                    reader = ownedReader;
+                }
+
+                if (info.Deserializer == null)
+                {
+                    int current = 0;
+
+                    var splits = splitOn.Split(',').ToArray();
+                    var splitIndex = 0;
+
+                    Func<int> nextSplit = () =>
                     {
-                        int current = 0;
-
-                        var splits = splitOn.Split(',').ToArray();
-                        var splitIndex = 0;
-
-                        Func<int> nextSplit = () =>
+                        var currentSplit = splits[splitIndex];
+                        if (splits.Length > splitIndex + 1)
                         {
-                            var currentSplit = splits[splitIndex];
-                            if (splits.Length > splitIndex + 1)
+                            splitIndex++;
+                        }
+                        int pos;
+                        for (pos = current + 1; pos < reader.FieldCount; pos++)
+                        {
+                            // some people like ID some id ... assuming case insensitive splits for now
+                            if (splitOn == "*" || string.Equals(reader.GetName(pos), currentSplit, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                splitIndex++;
+                                break;
                             }
-                            int pos;
-                            for (pos = current + 1; pos < reader.FieldCount; pos++)
-                            {
-                                // some people like ID some id ... assuming case insensitive splits for now
-                                if (splitOn == "*" || string.Equals(reader.GetName(pos), currentSplit, StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    break;
-                                }
-                            }
-                            current = pos;
-                            return pos;
-                        };
-
-                        var otherDeserializer = new List<object>();
-
-                        int split = nextSplit();
-                        info.Deserializer = GetDeserializer<TFirst>(reader, 0, split, false);
-
-                        if (typeof(TSecond) != typeof(DontMap))
-                        {
-                            var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, true));
-                            split = next;
                         }
-                        if (typeof(TThird) != typeof(DontMap))
-                        {
-                            var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, true));
-                            split = next;
-                        }
-                        if (typeof(TFourth) != typeof(DontMap))
-                        {
-                            var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, true));
-                            split = next;
-                        }
-                        if (typeof(TFifth) != typeof(DontMap))
-                        {
-                            var next = nextSplit();
-                            otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, true));
-                        }
+                        current = pos;
+                        return pos;
+                    };
 
-                        info.OtherDeserializers = otherDeserializer.ToArray();
+                    var otherDeserializer = new List<object>();
 
-                        SetQueryCache(identity, info);
+                    int split = nextSplit();
+                    info.Deserializer = GetDeserializer<TFirst>(reader, 0, split, false);
+
+                    if (typeof(TSecond) != typeof(DontMap))
+                    {
+                        var next = nextSplit();
+                        otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, true));
+                        split = next;
+                    }
+                    if (typeof(TThird) != typeof(DontMap))
+                    {
+                        var next = nextSplit();
+                        otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, true));
+                        split = next;
+                    }
+                    if (typeof(TFourth) != typeof(DontMap))
+                    {
+                        var next = nextSplit();
+                        otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, true));
+                        split = next;
+                    }
+                    if (typeof(TFifth) != typeof(DontMap))
+                    {
+                        var next = nextSplit();
+                        otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, true));
                     }
 
-                    var deserializer = (Func<IDataReader, TFirst>)info.Deserializer;
-                    var deserializer2 = (Func<IDataReader, TSecond>)info.OtherDeserializers[0];
+                    info.OtherDeserializers = otherDeserializer.ToArray();
+
+                    SetQueryCache(identity, info);
+                }
+
+                var deserializer = (Func<IDataReader, TFirst>)info.Deserializer;
+                var deserializer2 = (Func<IDataReader, TSecond>)info.OtherDeserializers[0];
 
 
-                    Func<IDataReader, TReturn> mapIt = null;
+                Func<IDataReader, TReturn> mapIt = null;
 
-                    if (info.OtherDeserializers.Length == 1)
+                if (info.OtherDeserializers.Length == 1)
+                {
+                    mapIt = r => ((Func<TFirst, TSecond, TReturn>)map)(deserializer(r), deserializer2(r));
+                }
+
+                if (info.OtherDeserializers.Length > 1)
+                {
+                    var deserializer3 = (Func<IDataReader, TThird>)info.OtherDeserializers[1];
+
+                    if (info.OtherDeserializers.Length == 2)
                     {
-                        mapIt = r => ((Func<TFirst, TSecond, TReturn>)map)(deserializer(r), deserializer2(r));
+                        mapIt = r => ((Func<TFirst, TSecond, TThird, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r));
                     }
-
-                    if (info.OtherDeserializers.Length > 1)
+                    if (info.OtherDeserializers.Length > 2)
                     {
-                        var deserializer3 = (Func<IDataReader, TThird>)info.OtherDeserializers[1];
-
-                        if (info.OtherDeserializers.Length == 2)
+                        var deserializer4 = (Func<IDataReader, TFourth>)info.OtherDeserializers[2];
+                        if (info.OtherDeserializers.Length == 3)
                         {
-                            mapIt = r => ((Func<TFirst, TSecond, TThird, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r));
+                            mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r));
                         }
-                        if (info.OtherDeserializers.Length > 2)
-                        {
-                            var deserializer4 = (Func<IDataReader, TFourth>)info.OtherDeserializers[2];
-                            if (info.OtherDeserializers.Length == 3)
-                            {
-                                mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r));
-                            }
 
-                            if (info.OtherDeserializers.Length > 3)
-                            {
+                        if (info.OtherDeserializers.Length > 3)
+                        {
 #if CSHARP30
-                                throw new NotSupportedException();
+                            throw new NotSupportedException();
 #else
-                                var deserializer5 = (Func<IDataReader, TFifth>)info.OtherDeserializers[3];
-                                mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
+                            var deserializer5 = (Func<IDataReader, TFifth>)info.OtherDeserializers[3];
+                            mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
 #endif
-                            }
                         }
                     }
+                }
 
-                    if (mapIt != null)
+                if (mapIt != null)
+                {
+                    bool clean = true;
+                    try
                     {
-                        bool clean = true;
-                        try
+                        while (reader.Read())
                         {
-                            while (reader.Read())
-                            {
-                                clean = false;
-                                TReturn next = mapIt(reader);
-                                clean = true;
-                                yield return next;
-                            }
+                            clean = false;
+                            TReturn next = mapIt(reader);
+                            clean = true;
+                            yield return next;
                         }
-                        finally
-                        {
-                            if (!clean) PurgeQueryCache(identity);
-                        }
+                    }
+                    finally
+                    {
+                        if (!clean) PurgeQueryCache(identity);
+                    }
+                }
+            }
+            finally
+            {
+                try
+                {
+                    if (ownedReader != null)
+                    {
+                        ownedReader.Dispose();
+                    }
+                }
+                finally
+                {
+                    if (ownedCommand != null)
+                    {
+                        ownedCommand.Dispose();
                     }
                 }
             }
@@ -1254,6 +1284,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
             private IDataReader reader;
             private IDbCommand command;
             private Identity identity;
+            
             internal GridReader(IDbCommand command, IDataReader reader, Identity identity)
             {
                 this.command = command;
@@ -1279,7 +1310,63 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                 return ReadDeferred(gridIndex, deserializer, typedIdentity);
             }
 
-            // todo multimapping. 
+            private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(object func, string splitOn)
+            {
+
+                var identity = this.identity.ForGrid(typeof(TReturn), new Type[] { 
+                    typeof(TFirst), 
+                    typeof(TSecond),
+                    typeof(TThird),
+                    typeof(TFourth),
+                    typeof(TFifth)
+                }, gridIndex);
+                try
+                {
+                    foreach (var r in SqlMapper.MultiMapImpl<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(null, null, func, null, null, splitOn, null, null, reader, identity))
+                    {
+                        yield return r;
+                    }
+                }
+                finally
+                {
+                    NextResult();
+                }
+            }
+
+#if CSHARP30  
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn)
+#else
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn = "id")
+#endif
+            {
+                return MultiReadInternal<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
+            }
+
+#if CSHARP30  
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn)
+#else
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn = "id")
+#endif
+            {
+                return MultiReadInternal<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(func, splitOn);
+            }
+
+#if CSHARP30  
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn)
+#else
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn = "id")
+#endif
+            {
+                return MultiReadInternal<TFirst, TSecond, TThird, TFourth, DontMap, TReturn>(func, splitOn);
+            }
+
+#if !CSHARP30  
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> func, string splitOn = "id")
+
+            {
+                return MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(func, splitOn);
+            }
+#endif
 
             private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, T> deserializer, Identity typedIdentity)
             {
