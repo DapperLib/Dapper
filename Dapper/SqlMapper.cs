@@ -486,7 +486,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType, IDataReader reader, Identity identity)
         {
             identity = identity ?? new Identity(sql, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
-            CacheInfo info = GetCacheInfo(identity);
+            CacheInfo cinfo = GetCacheInfo(identity);
 
             IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
@@ -495,12 +495,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (reader == null)
                 {
-                    ownedCommand = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
+                    ownedCommand = SetupCommand(cnn, transaction, sql, cinfo.ParamReader, (object)param, commandTimeout, commandType);
                     ownedReader = ownedCommand.ExecuteReader();
                     reader = ownedReader;
                 }
-
-                if (info.Deserializer == null)
+                object deserializer;
+                object[] otherDeserializers;
+                if ((deserializer = cinfo.Deserializer) == null || (otherDeserializers = cinfo.OtherDeserializers) == null)
                 {
                     int current = 0;
 
@@ -530,7 +531,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     var otherDeserializer = new List<object>();
 
                     int split = nextSplit();
-                    info.Deserializer = GetDeserializer<TFirst>(reader, 0, split, false);
+                    deserializer = cinfo.Deserializer = GetDeserializer<TFirst>(reader, 0, split, false);
 
                     if (typeof(TSecond) != typeof(DontMap))
                     {
@@ -556,45 +557,45 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, true));
                     }
 
-                    info.OtherDeserializers = otherDeserializer.ToArray();
+                    otherDeserializers = cinfo.OtherDeserializers = otherDeserializer.ToArray();
 
-                    SetQueryCache(identity, info);
+                    SetQueryCache(identity, cinfo);
                 }
 
-                var deserializer = (Func<IDataReader, TFirst>)info.Deserializer;
-                var deserializer2 = (Func<IDataReader, TSecond>)info.OtherDeserializers[0];
+                var rootDeserializer = (Func<IDataReader, TFirst>)deserializer;
+                var deserializer2 = (Func<IDataReader, TSecond>)otherDeserializers[0];
 
 
                 Func<IDataReader, TReturn> mapIt = null;
 
-                if (info.OtherDeserializers.Length == 1)
+                if (otherDeserializers.Length == 1)
                 {
-                    mapIt = r => ((Func<TFirst, TSecond, TReturn>)map)(deserializer(r), deserializer2(r));
+                    mapIt = r => ((Func<TFirst, TSecond, TReturn>)map)(rootDeserializer(r), deserializer2(r));
                 }
 
-                if (info.OtherDeserializers.Length > 1)
+                if (otherDeserializers.Length > 1)
                 {
-                    var deserializer3 = (Func<IDataReader, TThird>)info.OtherDeserializers[1];
+                    var deserializer3 = (Func<IDataReader, TThird>)otherDeserializers[1];
 
-                    if (info.OtherDeserializers.Length == 2)
+                    if (otherDeserializers.Length == 2)
                     {
-                        mapIt = r => ((Func<TFirst, TSecond, TThird, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r));
+                        mapIt = r => ((Func<TFirst, TSecond, TThird, TReturn>)map)(rootDeserializer(r), deserializer2(r), deserializer3(r));
                     }
-                    if (info.OtherDeserializers.Length > 2)
+                    if (otherDeserializers.Length > 2)
                     {
-                        var deserializer4 = (Func<IDataReader, TFourth>)info.OtherDeserializers[2];
-                        if (info.OtherDeserializers.Length == 3)
+                        var deserializer4 = (Func<IDataReader, TFourth>)otherDeserializers[2];
+                        if (otherDeserializers.Length == 3)
                         {
-                            mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r));
+                            mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)(rootDeserializer(r), deserializer2(r), deserializer3(r), deserializer4(r));
                         }
 
-                        if (info.OtherDeserializers.Length > 3)
+                        if (otherDeserializers.Length > 3)
                         {
 #if CSHARP30
                             throw new NotSupportedException();
 #else
-                            var deserializer5 = (Func<IDataReader, TFifth>)info.OtherDeserializers[3];
-                            mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)(deserializer(r), deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
+                            var deserializer5 = (Func<IDataReader, TFifth>)otherDeserializers[3];
+                            mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)(rootDeserializer(r), deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
 #endif
                         }
                     }
