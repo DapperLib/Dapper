@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.SqlClient;
 using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace Dapper.Contrib.Tests
             var projLoc = Assembly.GetAssembly(GetType()).Location;
             var projFolder = Path.GetDirectoryName(projLoc);
 
-            var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+            var connection = new SqlConnection("Data Source=vmt-sql;Initial Catalog=dapper;Integrated Security=SSPI;");
             connection.Open();
             return connection;
         }

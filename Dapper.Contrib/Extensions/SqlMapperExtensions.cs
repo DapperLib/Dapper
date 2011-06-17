@@ -138,13 +138,20 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert) where T : class
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, string tableName = null) where T : class
         {
             using (var tx = connection.BeginTransaction())
             {
                 var type = typeof(T);
 
-                var name = GetTableName(type);
+                String name = tableName;
+                
+                if (String.IsNullOrEmpty(tableName))
+                {
+                     name = GetTableName(type);
+                }
+               
+               
 
                 var sb = new StringBuilder(null);
                 sb.AppendFormat("insert into {0} (", name);
@@ -172,9 +179,9 @@ namespace Dapper.Contrib.Extensions
                         sb.Append(", ");
                 }
                 sb.Append(") ");
-                connection.Execute(sb.ToString(), entityToInsert);
+                connection.Execute(sb.ToString(), entityToInsert, tx, commandType: new CommandType());
                 //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-                var r = connection.Query("select @@IDENTITY id");
+                var r = connection.Query("select @@IDENTITY id",transaction: tx);
                 tx.Commit();
                 return (int)r.First().id;
             }
