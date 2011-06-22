@@ -177,6 +177,9 @@ namespace SqlMapper
                 .Query<Post>()
                 .Where(p => p.Id == id).First(), "NHibernate LINQ");
 
+			var nhSession5 = NHibernateHelper.OpenSession();
+			tests.Add(id => nhSession5.Get<Post>(id), "NHibernate Session.Get");
+
 			// bltoolkit
 			var db1 = new DbManager(Program.GetOpenConnection());
 			tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
