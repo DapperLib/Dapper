@@ -25,9 +25,9 @@ namespace SqlMapper.NHibernate
             }
         }
 
-        public static ISession OpenSession()
+        public static IStatelessSession OpenSession()
         {
-            return SessionFactory.OpenSession();
+            return SessionFactory.OpenStatelessSession();
         }
     }
 }
