@@ -38,8 +38,9 @@ namespace Dapper.Contrib.Tests
         {
             var projLoc = Assembly.GetAssembly(GetType()).Location;
             var projFolder = Path.GetDirectoryName(projLoc);
-
-            var connection = new SqlConnection("Data Source=vmt-sql;Initial Catalog=dapper;Integrated Security=SSPI;");
+            
+            var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+      
             connection.Open();
             return connection;
         }
