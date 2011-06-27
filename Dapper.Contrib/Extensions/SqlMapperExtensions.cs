@@ -142,8 +142,8 @@ namespace Dapper.Contrib.Extensions
         {
             using (var tx = connection.BeginTransaction())
             {
-                var type = typeof(T);
-
+                var type = typeof(T);         
+                
                 var name = GetTableName(type);
 
                 var sb = new StringBuilder(null);
@@ -172,9 +172,9 @@ namespace Dapper.Contrib.Extensions
                         sb.Append(", ");
                 }
                 sb.Append(") ");
-                connection.Execute(sb.ToString(), entityToInsert);
+                connection.Execute(sb.ToString(), entityToInsert, tx);
                 //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-                var r = connection.Query("select @@IDENTITY id");
+                var r = connection.Query("select @@IDENTITY id",transaction: tx);
                 tx.Commit();
                 return (int)r.First().id;
             }
@@ -258,6 +258,8 @@ namespace Dapper.Contrib.Extensions
             var deleted = connection.Execute(sb.ToString(), entityToDelete);
             return deleted > 0;
         }
+
+       
     }
 
     [AttributeUsage(AttributeTargets.Class)]

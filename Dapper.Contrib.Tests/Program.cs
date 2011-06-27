@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Data.SqlServerCe;
 using System.Diagnostics;
 using System.IO;
@@ -24,11 +25,14 @@ namespace Dapper.Contrib.Tests
 
             if (File.Exists(projFolder + "\\Test.sdf"))
                 File.Delete(projFolder + "\\Test.sdf");
-            var connectionString = "Data Source = " + projFolder + "\\Test.sdf;";
-            var engine = new SqlCeEngine(connectionString);
-            engine.CreateDatabase();
-            using (var connection = new SqlCeConnection(connectionString))
-            {
+
+              var connectionString = "Data Source = " + projFolder + "\\Test.sdf;";
+ 	          var engine = new SqlCeEngine(connectionString);
+ 	
+                engine.CreateDatabase();
+ 	
+           using (var connection = new SqlCeConnection(connectionString))
+           {
                 connection.Open();
                 connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
