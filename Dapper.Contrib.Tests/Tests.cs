@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
