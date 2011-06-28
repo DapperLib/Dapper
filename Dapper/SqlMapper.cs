@@ -286,41 +286,34 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         {
             IEnumerable multiExec = (object)param as IEnumerable;
             Identity identity;
-            CacheInfo info;
+            CacheInfo info = null;
             if (multiExec != null && !(multiExec is string))
-            { // we actually want a T from IEnumerable<T>
-                var interfaces = multiExec.GetType().GetInterfaces();
-                var openType = typeof(IEnumerable<>);
-                Type foundType = null;
-                for (int i = 0; i < interfaces.Length; i++)
+            { 
+                bool isFirst = true;
+                int total = 0;
+                using (var cmd = SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
                 {
-                    if (interfaces[i].IsGenericType && interfaces[i].GetGenericTypeDefinition() == openType)
-                    { // implementing more than one T is self-inflicted
-                        foundType = interfaces[i].GetGenericArguments()[0];
-                        identity = new Identity(sql, cnn, null, foundType, null);
-                        info = GetCacheInfo(identity);
-                        using (var cmd = SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+                    
+                    string masterSql = null; 
+                    foreach (var obj in multiExec)
+                    {
+                        if (isFirst)
                         {
-                            bool isFirst = true;
-                            var masterSql = cmd.CommandText;
-                            var reader = info.ParamReader;
-                            int total = 0;
-                            foreach (var obj in multiExec)
-                            {
-                                if (isFirst) { isFirst = false; }
-                                else
-                                {
-                                    cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
-                                    cmd.Parameters.Clear(); // current code is Add-tastic
-                                }
-                                reader(cmd, obj);
-                                total += cmd.ExecuteNonQuery();
-                            }
-                            return total;
+                            masterSql = cmd.CommandText;
+                            isFirst = false;
+                            identity = new Identity(sql, cnn, null, obj.GetType(), null);
+                            info = GetCacheInfo(identity);
                         }
+                        else
+                        {
+                            cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                            cmd.Parameters.Clear(); // current code is Add-tastic
+                        }
+                        info.ParamReader(cmd, obj);
+                        total += cmd.ExecuteNonQuery();
                     }
                 }
-
+                return total;
             }
 
             // nice and simple
