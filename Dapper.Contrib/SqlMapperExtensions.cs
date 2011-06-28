@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
@@ -433,5 +432,11 @@ namespace Dapper.Contrib.Extensions
             Name = tableName;
         }
         public string Name { get; private set; }
+    }
+
+    // do not want to depend on data annotations that is not in client profile
+    [AttributeUsage(AttributeTargets.Property)]
+    public class KeyAttribute : Attribute
+    {
     }
 }
