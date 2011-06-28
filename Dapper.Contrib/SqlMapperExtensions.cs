@@ -146,44 +146,42 @@ namespace Dapper.Contrib.Extensions
         /// <returns>Identity of inserted entity</returns>
         public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            using (var tx = connection.BeginTransaction())
+            
+            var type = typeof(T);
+
+            var name = GetTableName(type);
+
+            var sb = new StringBuilder(null);
+            sb.AppendFormat("insert into {0} (", name);
+
+            var allProperties = TypePropertiesCache(type);
+            var keyProperties = KeyPropertiesCache(type);
+
+            for (var i = 0; i < allProperties.Count(); i++)
             {
-                var type = typeof(T);
+                var property = allProperties.ElementAt(i);
+                if (keyProperties.Contains(property)) continue;
 
-                var name = GetTableName(type);
-
-                var sb = new StringBuilder(null);
-                sb.AppendFormat("insert into {0} (", name);
-
-                var allProperties = TypePropertiesCache(type);
-                var keyProperties = KeyPropertiesCache(type);
-
-                for (var i = 0; i < allProperties.Count(); i++)
-                {
-                    var property = allProperties.ElementAt(i);
-                    if (keyProperties.Contains(property)) continue;
-
-                    sb.Append(property.Name);
-                    if (i < allProperties.Count() - 1)
-                        sb.Append(", ");
-                }
-                sb.Append(") values (");
-                for (var i = 0; i < allProperties.Count(); i++)
-                {
-                    var property = allProperties.ElementAt(i);
-                    if (keyProperties.Contains(property)) continue;
-
-                    sb.AppendFormat("@{0}", property.Name);
-                    if (i < allProperties.Count() - 1)
-                        sb.Append(", ");
-                }
-                sb.Append(") ");
-                connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-                //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-                var r = connection.Query("select @@IDENTITY id");
-                tx.Commit();
-                return (int)r.First().id;
+                sb.Append(property.Name);
+                if (i < allProperties.Count() - 1)
+                    sb.Append(", ");
             }
+            sb.Append(") values (");
+            for (var i = 0; i < allProperties.Count(); i++)
+            {
+                var property = allProperties.ElementAt(i);
+                if (keyProperties.Contains(property)) continue;
+
+                sb.AppendFormat("@{0}", property.Name);
+                if (i < allProperties.Count() - 1)
+                    sb.Append(", ");
+            }
+            sb.Append(") ");
+            connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+            //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
+            var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+            return (int)r.First().id;
+            
         }
 
         /// <summary>
