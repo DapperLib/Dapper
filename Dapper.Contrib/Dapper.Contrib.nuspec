@@ -1,17 +1,15 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata schemaVersion="2">
-    <id>DapperContrib</id>
+  <metadata>
+    <id>Dapper.Contrib</id>
     <version>1.0</version>
-    <title>Dapper dot net contrib</title>
     <authors>Sam Saffron,Johan Danforth</authors>
     <owners>Sam Saffron,Johan Danforth</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A collection of create,insert,update,delete helpers for dapper.net </description>
-    <summary>A collection of CRUD helpers for dapper</summary>
-    <tags>orm,sql,micro-orm</tags>
+    <description>A collection of create,insert,update,delete helpers for dapper.net</description>
+    <tags>orm sql micro-orm</tags>
     <dependencies>
       <dependency id="Dapper" />
     </dependencies>
