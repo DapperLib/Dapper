@@ -896,5 +896,28 @@ end");
         }
          * */
 
+        class WithBizarreData
+        {
+            public GenericUriParser Foo { get; set; }
+            public int Bar { get; set; }
+        }
+        public void TestUnexpectedDataMessage()
+        {
+            string msg = null;
+            try {
+                connection.Query<int>("select count(1) where 1 = @Foo", new WithBizarreData { Foo = new GenericUriParser(GenericUriParserOptions.Default), Bar = 23 }).First();
+
+            } catch(Exception ex)
+            {
+                msg = ex.Message;
+            }
+            msg.IsEqualTo("The member Foo of type System.GenericUriParser cannot be used as a parameter value");
+        }
+        public void TestUnexpectedButFilteredDataMessage()
+        {
+            int i = connection.Query<int>("select @Bar", new WithBizarreData { Foo = new GenericUriParser(GenericUriParserOptions.Default), Bar = 23 }).Single();
+
+            i.IsEqualTo(23);
+        }
     }
 }

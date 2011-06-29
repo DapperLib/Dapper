@@ -185,7 +185,7 @@ namespace Dapper
             typeMap[typeof(DateTimeOffset?).TypeHandle] = DbType.DateTimeOffset;
         }
 
-        private static DbType LookupDbType(Type type)
+        private static DbType LookupDbType(Type type, string name)
         {
             DbType dbType;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
@@ -205,27 +205,28 @@ namespace Dapper
             }
 
 
-            throw new NotSupportedException(string.Format("The type : {0} is not supported by dapper", type));
+            throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
 
         internal class Identity : IEquatable<Identity>
         {
             internal Identity ForGrid(Type primaryType, int gridIndex)
             {
-                return new Identity(sql, connectionString, primaryType, parametersType, null, gridIndex);
+                return new Identity(sql, commandType, connectionString, primaryType, parametersType, null, gridIndex);
             }
 
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex)
             {
-                return new Identity(sql, connectionString, primaryType, parametersType, otherTypes, gridIndex);
+                return new Identity(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
             }
 
-            internal Identity(string sql, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
-                : this(sql, connection.ConnectionString, type, parametersType, otherTypes, 0)
+            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
+                : this(sql, commandType, connection.ConnectionString, type, parametersType, otherTypes, 0)
             { }
-            private Identity(string sql, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex)
+            private Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex)
             {
                 this.sql = sql;
+                this.commandType = commandType;
                 this.connectionString = connectionString;
                 this.type = type;
                 this.parametersType = parametersType;
@@ -233,6 +234,7 @@ namespace Dapper
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
+                    hashCode = hashCode * 23 + commandType.GetHashCode();
                     hashCode = hashCode * 23 + gridIndex.GetHashCode();
                     hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
                     hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
@@ -251,7 +253,8 @@ namespace Dapper
             {
                 return Equals(obj as Identity);
             }
-            private readonly string sql;
+            internal readonly string sql;
+            internal readonly CommandType? commandType;
             private readonly int hashCode, gridIndex;
             private readonly Type type;
             private readonly string connectionString;
@@ -267,6 +270,7 @@ namespace Dapper
                     gridIndex == other.gridIndex &&
                     type == other.type &&
                     sql == other.sql &&
+                    commandType == other.commandType &&
                     connectionString == other.connectionString &&
                     parametersType == other.parametersType;
             }
@@ -301,7 +305,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                         {
                             masterSql = cmd.CommandText;
                             isFirst = false;
-                            identity = new Identity(sql, cnn, null, obj.GetType(), null);
+                            identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
                             info = GetCacheInfo(identity);
                         }
                         else
@@ -317,7 +321,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
 
             // nice and simple
-            identity = new Identity(sql, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+            identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
             info = GetCacheInfo(identity);
             return ExecuteCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
         }
@@ -356,7 +360,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 
 )
         {
-            Identity identity = new Identity(sql, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
+            Identity identity = new Identity(sql, commandType, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
             CacheInfo info = GetCacheInfo(identity);
 
             IDbCommand cmd = null;
@@ -380,7 +384,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// </summary>
         private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
         {
-            var identity = new Identity(sql, cnn, typeof(T), param == null ? null : param.GetType(), null);
+            var identity = new Identity(sql, commandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity);
             bool clean = true;
             try
@@ -478,7 +482,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType, IDataReader reader, Identity identity)
         {
-            identity = identity ?? new Identity(sql, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
+            identity = identity ?? new Identity(sql, commandType, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) });
             CacheInfo cinfo = GetCacheInfo(identity);
 
             IDbCommand ownedCommand = null;
@@ -646,7 +650,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     else
                     {
-                        info.ParamReader = CreateParamInfoGenerator(identity.parametersType);
+                        info.ParamReader = CreateParamInfoGenerator(identity);
                     }
                 }
                 SetQueryCache(identity, info);
@@ -877,8 +881,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
 
-        private static Action<IDbCommand, object> CreateParamInfoGenerator(Type type)
+        private static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity)
         {
+            Type type = identity.parametersType;
+            bool filterParams = identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
+
             var dm = new DynamicMethod(string.Format("ParamInfo{0}", Guid.NewGuid()), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();
@@ -895,6 +902,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
             {
+                if (filterParams)
+                {
+                    if (identity.sql.IndexOf("@" + prop.Name, StringComparison.InvariantCultureIgnoreCase) < 0
+                        && identity.sql.IndexOf(":" + prop.Name, StringComparison.InvariantCultureIgnoreCase) < 0)
+                    { // can't see the parameter in the text (even in a comment, etc) - burn it with fire
+                        continue;
+                    }                    
+                }
                 if (prop.PropertyType == typeof(DbString))
                 {
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [typed-param]
@@ -904,7 +919,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.EmitCall(OpCodes.Callvirt, typeof(DbString).GetMethod("AddParameter"), null); // stack is now [parameters]
                     continue;
                 }
-                DbType dbType = LookupDbType(prop.PropertyType);
+                DbType dbType = LookupDbType(prop.PropertyType, prop.Name);
                 if (dbType == DbType.Xml)
                 {
                     // this actually represents special handling for list types;
