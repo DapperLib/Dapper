@@ -357,7 +357,6 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #else
 this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
-
 )
         {
             Identity identity = new Identity(sql, commandType, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
@@ -880,6 +879,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         }
 
+        private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
+        {
+            return parameters.Where(p => Regex.IsMatch(sql, "[@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline));
+        }
 
         private static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity)
         {
@@ -899,8 +902,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.Emit(OpCodes.Ldarg_0); // stack is now [command]
             il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetProperty("Parameters").GetGetMethod(), null); // stack is now [parameters]
 
-
-            foreach (var prop in type.GetProperties().OrderBy(p => p.Name))
+            IEnumerable<PropertyInfo> props = type.GetProperties().OrderBy(p => p.Name);
+            if (filterParams)
+            {
+                props = FilterParameters(props, identity.sql);
+            }
+            foreach (var prop in props)
             {
                 if (filterParams)
                 {
@@ -1068,6 +1075,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return (T)val;
             };
         }
+
         static readonly MethodInfo
                     enumParse = typeof(Enum).GetMethod("Parse", new Type[] { typeof(Type), typeof(string), typeof(bool) }),
                     getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
