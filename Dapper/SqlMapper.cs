@@ -829,6 +829,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 #endif
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("This method is for internal usage only", false)]
+        public static char ReadChar(object value)
+        {
+            if (value == null || value is DBNull) throw new ArgumentNullException("value");
+            string s = value as string;
+            if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", "value");
+            return s[0];         
+        }
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("This method is for internal usage only", false)]
+        public static char? ReadNullableChar(object value)
+        {
+            if (value == null || value is DBNull) return null;
+            string s = value as string;
+            if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", "value");
+            return s[0];            
+        }
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
         public static void PackListParameters(IDbCommand command, string namePrefix, object value)
         {
@@ -1065,6 +1083,17 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         private static Func<IDataReader, T> GetStructDeserializer<T>(int index)
         {
+            // no point using special per-type handling here; it boils down to the same, plus not all are supported anyway (see: SqlDataReader.GetChar - not supported!)
+#pragma warning disable 618
+            if (typeof(T) == typeof(char))
+            { // this *does* need special handling, though
+                return (Func<IDataReader, T>)(object)new Func<IDataReader, char>(r => SqlMapper.ReadChar(r.GetValue(index)));
+            }
+            if (typeof(T) == typeof(char?))
+            {
+                return (Func<IDataReader, T>)(object)new Func<IDataReader, char?>(r => SqlMapper.ReadNullableChar(r.GetValue(index)));
+            }
+#pragma warning restore 618
             return r =>
             {
                 var val = r.GetValue(index);
@@ -1151,62 +1180,72 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
 
 
-                    il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
-                    il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [target][target][value-as-object][DBNull or null]
-                    il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
-
-                    // unbox nullable enums as the primitive, i.e. byte etc
                     Type memberType = item.Property != null ? item.Property.Type : item.Field.FieldType;
-                    var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
-                    var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
 
-                    if (unboxType.IsEnum)
+                    if (memberType == typeof(char) || memberType == typeof(char?))
                     {
-                        if (!haveEnumLocal)
-                        {
-                            il.DeclareLocal(typeof(string));
-                            haveEnumLocal = true;
-                        }
-
-                        Label isNotString = il.DefineLabel();
+                        il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
+                            memberType == typeof(char) ? "ReadChar" : "ReadNullableChar", BindingFlags.Static | BindingFlags.Public), null); // stack is now [target][target][typed-value]
+                    }
+                    else
+                    {
                         il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
-                        il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
-                        il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
-                        il.Emit(OpCodes.Stloc_2); // stack is now [target][target][value-as-object][string or null]
-                        il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
+                        il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [target][target][value-as-object][DBNull or null]
+                        il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
 
-                        il.Emit(OpCodes.Pop); // stack is now [target][target]
+                        // unbox nullable enums as the primitive, i.e. byte etc
+                        
+                        var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
+                        var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
+
+                        if (unboxType.IsEnum)
+                        {
+                            if (!haveEnumLocal)
+                            {
+                                il.DeclareLocal(typeof(string));
+                                haveEnumLocal = true;
+                            }
+
+                            Label isNotString = il.DefineLabel();
+                            il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
+                            il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
+                            il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
+                            il.Emit(OpCodes.Stloc_2); // stack is now [target][target][value-as-object][string or null]
+                            il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
+
+                            il.Emit(OpCodes.Pop); // stack is now [target][target]
 
 
-                        il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
-                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
-                        il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
-                        il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
-                        il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
+                            il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
+                            il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
+                            il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
+                            il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
+                            il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
 
+                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+
+                            if (nullUnderlyingType != null)
+                            {
+                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
+                            }
+                            if (item.Property != null)
+                            {
+                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                            }
+                            else
+                            {
+                                il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                            }
+                            il.Emit(OpCodes.Br_S, finishLabel);
+
+
+                            il.MarkLabel(isNotString);
+                        }
                         il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
-
-                        if (nullUnderlyingType != null)
+                        if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
                         {
                             il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                         }
-                        if (item.Property != null)
-                        {
-                            il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
-                        }
-                        else
-                        {
-                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
-                        }
-                        il.Emit(OpCodes.Br_S, finishLabel);
-
-
-                        il.MarkLabel(isNotString);
-                    }
-                    il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
-                    if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
-                    {
-                        il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                     }
                     if (item.Property != null)
                     {
