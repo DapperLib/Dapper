@@ -919,5 +919,44 @@ end");
 
             i.IsEqualTo(23);
         }
+
+        class WithCharValue
+        {
+            public char Value { get; set; }
+            public char? ValueNullable { get; set; }
+        }
+        public void TestCharInputAndOutput()
+        {
+            const char test = '〠';
+            char c = connection.Query<char>("select @c", new { c = test }).Single();
+
+            c.IsEqualTo(test);
+
+            var obj = connection.Query<WithCharValue>("select @Value as Value", new WithCharValue { Value = c }).Single();
+
+            obj.Value.IsEqualTo(test);
+        }
+        public void TestNullableCharInputAndOutputNonNull()
+        {
+            char? test = '〠';
+            char? c = connection.Query<char?>("select @c", new { c = test }).Single();
+
+            c.IsEqualTo(test);
+
+            var obj = connection.Query<WithCharValue>("select @ValueNullable as ValueNullable", new WithCharValue { ValueNullable = c }).Single();
+
+            obj.ValueNullable.IsEqualTo(test);
+        }
+        public void TestNullableCharInputAndOutputNull()
+        {
+            char? test = null;
+            char? c = connection.Query<char?>("select @c", new { c = test }).Single();
+
+            c.IsEqualTo(test);
+
+            var obj = connection.Query<WithCharValue>("select @ValueNullable as ValueNullable", new WithCharValue { ValueNullable = c }).Single();
+
+            obj.ValueNullable.IsEqualTo(test);
+        }
     }
 }
