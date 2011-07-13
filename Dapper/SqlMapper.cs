@@ -804,9 +804,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
+            var fieldCount = reader.FieldCount;
             if (length == -1)
             {
-                length = reader.FieldCount - startBound;
+                length = fieldCount - startBound;
+            }
+
+            if (fieldCount <= startBound)
+            {
+                throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
             }
 
             return
@@ -1143,7 +1149,13 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                 length = reader.FieldCount - startBound;
             }
 
+            if (reader.FieldCount <= startBound)
+            {
+                throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+            }
+
             var names = new List<string>();
+
             for (int i = startBound; i < startBound + length; i++)
             {
                 names.Add(reader.GetName(i));
