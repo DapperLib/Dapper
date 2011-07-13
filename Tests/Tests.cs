@@ -958,5 +958,25 @@ end");
 
             obj.ValueNullable.IsEqualTo(test);
         }
+        public void TestInvalidSplitCausesNiceError()
+        {
+            try
+            {
+                connection.Query<User, User, User>("select 1 A, 2 B, 3 C", (x, y) => x);
+            }
+            catch (ArgumentException)
+            { 
+                // expecting an app exception due to multi mapping being bodged 
+            }
+
+            try
+            {
+                connection.Query<dynamic, dynamic, dynamic>("select 1 A, 2 B, 3 C", (x, y) => x);
+            }
+            catch (ArgumentException)
+            {
+                // expecting an app exception due to multi mapping being bodged 
+            }
+        }
     }
 }
