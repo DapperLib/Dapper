@@ -183,6 +183,7 @@ namespace Dapper
             typeMap[typeof(Guid?).TypeHandle] = DbType.Guid;
             typeMap[typeof(DateTime?).TypeHandle] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset?).TypeHandle] = DbType.DateTimeOffset;
+            typeMap[typeof(System.Data.Linq.Binary).TypeHandle] = DbType.Binary;
         }
 
         private static DbType LookupDbType(Type type, string name)
@@ -702,7 +703,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #endif
 
-            if (type.IsClass && type != typeof(string) && type != typeof(byte[]))
+            if (type.IsClass && type != typeof(string) && type != typeof(byte[]) && type != typeof(System.Data.Linq.Binary))
             {
                 return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
             }
@@ -1065,6 +1066,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         il.MarkLabel(lenDone);
                         il.Emit(OpCodes.Stloc_1); // [string] 
                     }
+                    if (prop.PropertyType == typeof(System.Data.Linq.Binary))
+                    {
+                        il.EmitCall(OpCodes.Callvirt, typeof(System.Data.Linq.Binary).GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance), null);
+                    }
                     if (allDone != null) il.MarkLabel(allDone.Value);
                     // relative stack [boxed value or DBNull]
                 }
@@ -1131,6 +1136,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (typeof(T) == typeof(char?))
             {
                 return (Func<IDataReader, T>)(object)new Func<IDataReader, char?>(r => SqlMapper.ReadNullableChar(r.GetValue(index)));
+            }
+            if (typeof(T) == typeof(System.Data.Linq.Binary))
+            {
+                return (Func<IDataReader, T>)(object)new Func<IDataReader, System.Data.Linq.Binary>(r => new System.Data.Linq.Binary((byte[])r.GetValue(index)));
             }
 #pragma warning restore 618
             return r =>
@@ -1303,7 +1312,15 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
 
                             il.MarkLabel(isNotString);
                         }
-                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+                        if (memberType == typeof(System.Data.Linq.Binary))
+                        {
+                            il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][target][byte-array]
+                            il.Emit(OpCodes.Newobj, typeof(System.Data.Linq.Binary).GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [target][target][binary]
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+                        }
                         if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
                         {
                             il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
@@ -1317,6 +1334,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                     {
                         il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
                     }
+                    
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
