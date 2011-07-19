@@ -504,20 +504,53 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     var splits = splitOn.Split(',').ToArray();
                     var splitIndex = 0;
 
-                    Func<int> nextSplit = () =>
+                    Func<Type,int> nextSplit = type =>
                     {
                         var currentSplit = splits[splitIndex];
                         if (splits.Length > splitIndex + 1)
                         {
                             splitIndex++;
                         }
+
+                        bool skipFirst = false;
+                        int startingPos = current + 1;
+                        // if our current type has the split, skip the first time you see it. 
+                        if (type != typeof(Object))
+                        {
+                            var props = GetSettableProps(type);
+                            var fields = GetSettableFields(type);
+
+                            foreach (var name in props.Select(p => p.Name).Concat(fields.Select(f => f.Name)))
+                            {
+                                if (string.Equals(name, currentSplit, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    skipFirst = true;
+                                    startingPos = current;
+                                    break;
+                                }
+                            }
+
+                        }
+
+
                         int pos;
-                        for (pos = current + 1; pos < reader.FieldCount; pos++)
+                        for (pos = startingPos; pos < reader.FieldCount; pos++)
                         {
                             // some people like ID some id ... assuming case insensitive splits for now
-                            if (splitOn == "*" || string.Equals(reader.GetName(pos), currentSplit, StringComparison.OrdinalIgnoreCase))
+                            if (splitOn == "*")
                             {
                                 break;
+                            }
+                            if (string.Equals(reader.GetName(pos), currentSplit, StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (skipFirst)
+                                {
+                                    skipFirst = false;
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
                         }
                         current = pos;
@@ -526,30 +559,30 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                     var otherDeserializer = new List<object>();
 
-                    int split = nextSplit();
+                    int split = nextSplit(typeof(TFirst));
                     deserializer = cinfo.Deserializer = GetDeserializer<TFirst>(reader, 0, split, false);
 
                     if (typeof(TSecond) != typeof(DontMap))
                     {
-                        var next = nextSplit();
+                        var next = nextSplit(typeof(TSecond));
                         otherDeserializer.Add(GetDeserializer<TSecond>(reader, split, next - split, true));
                         split = next;
                     }
                     if (typeof(TThird) != typeof(DontMap))
                     {
-                        var next = nextSplit();
+                        var next = nextSplit(typeof(TThird));
                         otherDeserializer.Add(GetDeserializer<TThird>(reader, split, next - split, true));
                         split = next;
                     }
                     if (typeof(TFourth) != typeof(DontMap))
                     {
-                        var next = nextSplit();
+                        var next = nextSplit(typeof(TFourth));
                         otherDeserializer.Add(GetDeserializer<TFourth>(reader, split, next - split, true));
                         split = next;
                     }
                     if (typeof(TFifth) != typeof(DontMap))
                     {
-                        var next = nextSplit();
+                        var next = nextSplit(typeof(TFifth));
                         otherDeserializer.Add(GetDeserializer<TFifth>(reader, split, next - split, true));
                     }
 
@@ -1117,6 +1150,32 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
                         .Select(p => p.GetGetMethod()).First();
 
+        class PropInfo
+        {
+            public string Name { get; set; }
+            public MethodInfo Setter { get; set; }
+            public Type Type { get; set; }
+        }
+
+        static List<PropInfo> GetSettableProps(Type t)
+        {
+            return t
+                  .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                  .Select(p => new PropInfo
+                  {
+                      Name = p.Name,
+                      Setter = p.DeclaringType == t ? p.GetSetMethod(true) : p.DeclaringType.GetProperty(p.Name).GetSetMethod(true),
+                      Type = p.PropertyType
+                  })
+                  .Where(info => info.Setter != null)
+                  .ToList();  
+        }
+
+        static List<FieldInfo> GetSettableFields(Type t)
+        {
+            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+        }
+
         public static Func<IDataReader, T> GetClassDeserializer<T>(
 #if CSHARP30
             IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
@@ -1133,17 +1192,8 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
             bool haveEnumLocal = false;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
-            var properties = typeof(T)
-                .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Select(p => new
-                {
-                    p.Name,
-                    Setter = p.DeclaringType == typeof(T) ? p.GetSetMethod(true) : p.DeclaringType.GetProperty(p.Name).GetSetMethod(true),
-                    Type = p.PropertyType
-                })
-                .Where(info => info.Setter != null)
-                .ToList();
-            var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var properties = GetSettableProps(typeof(T));
+            var fields = GetSettableFields(typeof(T));
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
