@@ -1036,29 +1036,50 @@ Order by p.Id";
 
             p.Get<int?>("@b").IsNull();
         }
-
         class Foo1 
-        {
+         {
             public int Id;
             public int BarId { get; set; }
-        }
-
+         }
         class Bar1
         {
-            public int BarId;
-            public string Name { get; set; }
+           public int BarId;
+           public string Name { get; set; }
         }
-
         public void TestMultiMapperIsNotConfusedWithUnorderedCols()
         {
-
-            var result = connection.Query<Foo1,Bar1, Tuple<Foo1,Bar1>>("select 1 as Id, 2 as BarId, 3 as BarId, 'a' as Name", (f,b) => Tuple.Create(f,b), splitOn: "BarId").First();
+            var result = connection.Query<Foo1, Bar1, Tuple<Foo1, Bar1>>("select 1 as Id, 2 as BarId, 3 as BarId, 'a' as Name", (f, b) => Tuple.Create(f, b), splitOn: "BarId").First();
 
             result.Item1.Id.IsEqualTo(1);
             result.Item1.BarId.IsEqualTo(2);
             result.Item2.BarId.IsEqualTo(3);
             result.Item2.Name.IsEqualTo("a");
-            
+        }
+        public void TestLinqBinaryToClass()
+        {
+            byte[] orig = new byte[20];
+            new Random(123456).NextBytes(orig);
+            var input = new System.Data.Linq.Binary(orig);
+
+            var output = connection.Query<WithBinary>("select @input as [Value]", new { input }).First().Value;
+
+            output.ToArray().IsSequenceEqualTo(orig);
+        }
+
+        public void TestLinqBinaryRaw()
+        {
+            byte[] orig = new byte[20];
+            new Random(123456).NextBytes(orig);
+            var input = new System.Data.Linq.Binary(orig);
+
+            var output = connection.Query<System.Data.Linq.Binary>("select @input as [Value]", new { input }).First();
+
+            output.ToArray().IsSequenceEqualTo(orig);
+        }
+
+        class WithBinary
+        {
+            public System.Data.Linq.Binary Value { get; set; }
         }
     
     }
