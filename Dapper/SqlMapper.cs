@@ -1586,7 +1586,16 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
         public T Get<T>(string name)
         {
-            return (T)parameters[Clean(name)].AttachedParam.Value;
+            var val = parameters[Clean(name)].AttachedParam.Value;
+            if (val == DBNull.Value)
+            {
+                if (default(T) != null)
+                {
+                    throw new ApplicationException("Attempting to cast a DBNull to a non nullable type!");
+                }
+                return default(T);
+            }
+            return (T)val;
         }
     }
     public sealed class DbString

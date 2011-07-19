@@ -1026,5 +1026,15 @@ Order by p.Id";
 
             connection.Execute("drop table #Users drop table #Posts drop table #Comments");
         }
+
+        public void TestDynamicParamNullSupport()
+        {
+            var p = new DynamicParameters();
+
+            p.Add("@b", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            connection.Execute("select @b = null",p);
+
+            p.Get<int?>("@b").IsNull();
+        }
     }
 }
