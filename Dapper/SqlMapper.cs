@@ -1390,7 +1390,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                 }, gridIndex);
                 try
                 {
-                    foreach (var r in SqlMapper.MultiMapImpl<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(null, null, func, null, null, splitOn, null, null, reader, identity))
+                    foreach (var r in SqlMapper.MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(null, null, func, null, null, splitOn, null, null, reader, identity))
                     {
                         yield return r;
                     }

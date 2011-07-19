@@ -341,6 +341,7 @@ namespace SqlMapper
             public int Id { get; set; }
             public User Owner { get; set; }
             public string Content { get; set; }
+            public Comment Comment { get; set; }
         }
         public void TestMultiMap()
         {
@@ -977,6 +978,53 @@ end");
             {
                 // expecting an app exception due to multi mapping being bodged 
             }
+        }
+
+
+
+        class Comment
+        {
+            public int Id { get; set; }
+            public string CommentData { get; set; }
+        }
+
+
+        public void TestMultiMapThreeTypesWithGridReader()
+        {
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+                create table #Comments (Id int, PostId int, CommentData varchar(20))
+
+                insert #Users values(99, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')
+
+                insert #Comments values(1, 1, 'Comment 1')";
+            connection.Execute(createSql);
+
+            var sql = @"SELECT p.* FROM #Posts p
+
+select p.*, u.Id, u.Name + '0' Name, c.Id, c.CommentData from #Posts p 
+left join #Users u on u.Id = p.OwnerId 
+left join #Comments c on c.postId = p.Id
+where p.Id = 1
+Order by p.Id";
+
+            var grid = connection.QueryMultiple(sql);
+
+            var post1 = grid.Read<Post>().ToList();
+
+            var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault();
+
+            post2.Comment.Id.IsEqualTo(1);
+            post2.Owner.Id.IsEqualTo(99);
+
+
+            connection.Execute("drop table #Users drop table #Posts drop table #Comments");
         }
     }
 }
