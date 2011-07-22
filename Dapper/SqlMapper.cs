@@ -110,6 +110,9 @@ namespace Dapper
             public object Deserializer { get; set; }
             public object[] OtherDeserializers { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
+            private int hitCount;
+            public int GetHitCount() { return Interlocked.CompareExchange(ref hitCount, 0, 0); }
+            public void RecordHit() { Interlocked.Increment(ref hitCount); }
         }
 #if CSHARP30
         private static readonly Dictionary<Identity, CacheInfo> _queryCache = new Dictionary<Identity, CacheInfo>();
@@ -136,54 +139,95 @@ namespace Dapper
         }
         private static bool TryGetQueryCache(Identity key, out CacheInfo value)
         {
-            return _queryCache.TryGetValue(key, out value);
+            if(_queryCache.TryGetValue(key, out value))
+            {
+                value.RecordHit();
+                return true;
+            }
+            value = null;
+            return false;
         }
         private static void PurgeQueryCache(Identity key)
         {
             CacheInfo info;
             _queryCache.TryRemove(key, out info);
         }
+
+        public static int GetCachedSQLCount()
+        {
+            return _queryCache.Count;
+        }
+
+
+        public static IEnumerable<Tuple<string, string, int>> GetCachedSQL(int ignoreHitCountAbove = int.MaxValue)
+        {
+            var data = _queryCache.Select(pair => Tuple.Create(pair.Key.connectionString, pair.Key.sql, pair.Value.GetHitCount()));
+            if (ignoreHitCountAbove < int.MaxValue) data = data.Where(tuple => tuple.Item3 <= ignoreHitCountAbove);
+            return data;
+        }
+
+        public static IEnumerable<Tuple<int,int>> GetHashCollissions()
+        {
+            var counts = new Dictionary<int, int>();
+            foreach(var key in _queryCache.Keys)
+            {
+                int count;
+                if(!counts.TryGetValue(key.hashCode, out count))
+                {
+                    counts.Add(key.hashCode, 1);
+                } else
+                {
+                    counts[key.hashCode] = count + 1;
+                }
+            }
+            return from pair in counts
+                   where pair.Value > 1
+                   select Tuple.Create(pair.Key, pair.Value);
+
+        }
 #endif
-        static readonly Dictionary<RuntimeTypeHandle, DbType> typeMap;
+
+
+        static readonly Dictionary<Type, DbType> typeMap;
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<RuntimeTypeHandle, DbType>();
-            typeMap[typeof(byte).TypeHandle] = DbType.Byte;
-            typeMap[typeof(sbyte).TypeHandle] = DbType.SByte;
-            typeMap[typeof(short).TypeHandle] = DbType.Int16;
-            typeMap[typeof(ushort).TypeHandle] = DbType.UInt16;
-            typeMap[typeof(int).TypeHandle] = DbType.Int32;
-            typeMap[typeof(uint).TypeHandle] = DbType.UInt32;
-            typeMap[typeof(long).TypeHandle] = DbType.Int64;
-            typeMap[typeof(ulong).TypeHandle] = DbType.UInt64;
-            typeMap[typeof(float).TypeHandle] = DbType.Single;
-            typeMap[typeof(double).TypeHandle] = DbType.Double;
-            typeMap[typeof(decimal).TypeHandle] = DbType.Decimal;
-            typeMap[typeof(bool).TypeHandle] = DbType.Boolean;
-            typeMap[typeof(string).TypeHandle] = DbType.String;
-            typeMap[typeof(char).TypeHandle] = DbType.StringFixedLength;
-            typeMap[typeof(Guid).TypeHandle] = DbType.Guid;
-            typeMap[typeof(DateTime).TypeHandle] = DbType.DateTime;
-            typeMap[typeof(DateTimeOffset).TypeHandle] = DbType.DateTimeOffset;
-            typeMap[typeof(byte[]).TypeHandle] = DbType.Binary;
-            typeMap[typeof(byte?).TypeHandle] = DbType.Byte;
-            typeMap[typeof(sbyte?).TypeHandle] = DbType.SByte;
-            typeMap[typeof(short?).TypeHandle] = DbType.Int16;
-            typeMap[typeof(ushort?).TypeHandle] = DbType.UInt16;
-            typeMap[typeof(int?).TypeHandle] = DbType.Int32;
-            typeMap[typeof(uint?).TypeHandle] = DbType.UInt32;
-            typeMap[typeof(long?).TypeHandle] = DbType.Int64;
-            typeMap[typeof(ulong?).TypeHandle] = DbType.UInt64;
-            typeMap[typeof(float?).TypeHandle] = DbType.Single;
-            typeMap[typeof(double?).TypeHandle] = DbType.Double;
-            typeMap[typeof(decimal?).TypeHandle] = DbType.Decimal;
-            typeMap[typeof(bool?).TypeHandle] = DbType.Boolean;
-            typeMap[typeof(char?).TypeHandle] = DbType.StringFixedLength;
-            typeMap[typeof(Guid?).TypeHandle] = DbType.Guid;
-            typeMap[typeof(DateTime?).TypeHandle] = DbType.DateTime;
-            typeMap[typeof(DateTimeOffset?).TypeHandle] = DbType.DateTimeOffset;
-            typeMap[typeof(System.Data.Linq.Binary).TypeHandle] = DbType.Binary;
+            typeMap = new Dictionary<Type, DbType>();
+            typeMap[typeof(byte)] = DbType.Byte;
+            typeMap[typeof(sbyte)] = DbType.SByte;
+            typeMap[typeof(short)] = DbType.Int16;
+            typeMap[typeof(ushort)] = DbType.UInt16;
+            typeMap[typeof(int)] = DbType.Int32;
+            typeMap[typeof(uint)] = DbType.UInt32;
+            typeMap[typeof(long)] = DbType.Int64;
+            typeMap[typeof(ulong)] = DbType.UInt64;
+            typeMap[typeof(float)] = DbType.Single;
+            typeMap[typeof(double)] = DbType.Double;
+            typeMap[typeof(decimal)] = DbType.Decimal;
+            typeMap[typeof(bool)] = DbType.Boolean;
+            typeMap[typeof(string)] = DbType.String;
+            typeMap[typeof(char)] = DbType.StringFixedLength;
+            typeMap[typeof(Guid)] = DbType.Guid;
+            typeMap[typeof(DateTime)] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset)] = DbType.DateTimeOffset;
+            typeMap[typeof(byte[])] = DbType.Binary;
+            typeMap[typeof(byte?)] = DbType.Byte;
+            typeMap[typeof(sbyte?)] = DbType.SByte;
+            typeMap[typeof(short?)] = DbType.Int16;
+            typeMap[typeof(ushort?)] = DbType.UInt16;
+            typeMap[typeof(int?)] = DbType.Int32;
+            typeMap[typeof(uint?)] = DbType.UInt32;
+            typeMap[typeof(long?)] = DbType.Int64;
+            typeMap[typeof(ulong?)] = DbType.UInt64;
+            typeMap[typeof(float?)] = DbType.Single;
+            typeMap[typeof(double?)] = DbType.Double;
+            typeMap[typeof(decimal?)] = DbType.Decimal;
+            typeMap[typeof(bool?)] = DbType.Boolean;
+            typeMap[typeof(char?)] = DbType.StringFixedLength;
+            typeMap[typeof(Guid?)] = DbType.Guid;
+            typeMap[typeof(DateTime?)] = DbType.DateTime;
+            typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
+            typeMap[typeof(System.Data.Linq.Binary)] = DbType.Binary;
         }
 
         private static DbType LookupDbType(Type type, string name)
@@ -195,7 +239,7 @@ namespace Dapper
             {
                 type = Enum.GetUnderlyingType(type);
             }
-            if (typeMap.TryGetValue(type.TypeHandle, out dbType))
+            if (typeMap.TryGetValue(type, out dbType))
             {
                 return dbType;
             }
@@ -256,9 +300,9 @@ namespace Dapper
             }
             internal readonly string sql;
             internal readonly CommandType? commandType;
-            private readonly int hashCode, gridIndex;
+            internal readonly int hashCode, gridIndex;
             private readonly Type type;
-            private readonly string connectionString;
+            internal readonly string connectionString;
             internal readonly Type parametersType;
             public override int GetHashCode()
             {
