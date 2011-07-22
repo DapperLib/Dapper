@@ -8,3 +8,4 @@ syntax: glob
 glob:Dapper.Contrib/NuGet.exe
 *.nupkg
 */NuGet.exe
+_ReSharper.*
