@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib", "Dapper.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib.Tests", "Dapper.Contrib.Tests\Dapper.Contrib.Tests.csproj", "{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperTests NET35", "DapperTests NET35\DapperTests NET35.csproj", "{3BAA9F79-BA0A-4092-B47B-20170DD47989}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,16 @@ Global
 		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|Mixed Platforms.Build.0 = Release|x86
 		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|x86.ActiveCfg = Release|x86
 		{A4F4A06E-D179-4251-A232-AEF4CE9AD9B5}.Release|x86.Build.0 = Release|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Debug|x86.ActiveCfg = Debug|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Debug|x86.Build.0 = Debug|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Release|Any CPU.ActiveCfg = Release|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Release|Mixed Platforms.Build.0 = Release|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Release|x86.ActiveCfg = Release|x86
+		{3BAA9F79-BA0A-4092-B47B-20170DD47989}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
