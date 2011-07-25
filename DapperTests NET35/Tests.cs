@@ -20,7 +20,7 @@ namespace DapperTests_NET35
             arr.Select(x => x.Value).IsSequenceEqualTo(new[] { "abc", "def" });
         }
         class BasicType
-        {
+        { 
             public string Value { get; set; }
         }
     }
