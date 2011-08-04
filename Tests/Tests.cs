@@ -1038,6 +1038,18 @@ Order by p.Id";
         {
             public System.Data.Linq.Binary Value { get; set; }
         }
-    
+
+
+        class WithPrivateConstructor
+        {
+            public int Foo { get; set; }
+            private WithPrivateConstructor() { }
+        }
+
+        public void TestWithNonPublicConstructor()
+        {
+            var output = connection.Query<WithPrivateConstructor>("select 1 as Foo").First();
+            output.Foo.IsEqualTo(1);
+        }
     }
 }

@@ -1331,7 +1331,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
 
             il.BeginExceptionBlock();
             // stack is empty
-            il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes)); // stack is now [target]
+            il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)); // stack is now [target]
             bool first = true;
             var allDone = il.DefineLabel();
             foreach (var item in setters)
