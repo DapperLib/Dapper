@@ -437,4 +437,126 @@ namespace Dapper.Contrib.Extensions
     public class KeyAttribute : Attribute
     {
     }
+
+    public class SqlBuilder
+    {
+
+        Dictionary<string, Clauses> data = new Dictionary<string, Clauses>();
+        int seq;
+
+        class Clause
+        {
+            public string Sql { get; set; }
+            public object Parameters { get; set; }
+        }
+
+        class Clauses : List<Clause>
+        {
+            string joiner;
+            string prefix;
+            string postfix;
+
+            public Clauses(string joiner, string prefix = "", string postfix = "")
+            {
+                this.joiner = joiner;
+                this.prefix = prefix;
+                this.postfix = postfix;
+            }
+
+            public string ResolveClauses(DynamicParameters p)
+            {
+                foreach (var item in this)
+                {
+                    p.AddDynamicParams(item.Parameters);
+                }
+                return prefix + string.Join(joiner, this.Select(c => c.Sql)) + postfix;
+            }
+        }
+
+        public class Template
+        {
+            readonly string sql;
+            readonly SqlBuilder builder;
+            readonly object initParams;
+            int dataSeq;
+
+            public Template(SqlBuilder builder, string sql, dynamic parameters)
+            {
+                this.initParams = parameters;
+                this.sql = sql;
+                this.builder = builder;
+            }
+
+            static System.Text.RegularExpressions.Regex regex =
+                new System.Text.RegularExpressions.Regex(@"\/\*\*.+\*\*\/", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+
+            void ResolveSql()
+            {
+                if (dataSeq != builder.seq)
+                {
+                    DynamicParameters p = new DynamicParameters(initParams);
+
+                    rawSql = sql;
+
+                    foreach (var pair in builder.data)
+                    {
+                        rawSql = rawSql.Replace("/**" + pair.Key + "**/", pair.Value.ResolveClauses(p));
+                    }
+                    parameters = p;
+
+                    // replace all that is left with empty
+                    rawSql = regex.Replace(rawSql, "");
+
+                    dataSeq = builder.seq;
+                }
+            }
+
+            string rawSql;
+            object parameters;
+
+            public string RawSql { get { ResolveSql(); return rawSql; } }
+            public object Parameters { get { ResolveSql(); return parameters; } }
+        }
+
+
+        public SqlBuilder()
+        {
+        }
+
+        public Template AddTemplate(string sql, dynamic parameters = null)
+        {
+            return new Template(this, sql, parameters);
+        }
+
+        void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "")
+        {
+            Clauses clauses;
+            if (!data.TryGetValue(name, out clauses))
+            {
+                clauses = new Clauses(joiner, prefix, postfix);
+                data[name] = clauses;
+            }
+            clauses.Add(new Clause { Sql = sql, Parameters = parameters });
+            seq++;
+        }
+
+
+        public SqlBuilder LeftJoin(string sql, dynamic parameters = null)
+        {
+            AddClause("leftjoin", sql, parameters, joiner: "\nLEFT JOIN ", prefix: "\nLEFT JOIN ", postfix: "\n");
+            return this;
+        }
+
+        public SqlBuilder Where(string sql, dynamic parameters = null)
+        {
+            AddClause("where", sql, parameters, " AND ", prefix: "WHERE ", postfix: "\n");
+            return this;
+        }
+
+        public SqlBuilder OrderBy(string sql, dynamic parameters = null)
+        {
+            AddClause("orderby", sql, parameters, " , ", prefix: "ORDER BY ", postfix: "\n");
+            return this;
+        }
+    }
 }
