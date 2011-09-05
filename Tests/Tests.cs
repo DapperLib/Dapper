@@ -11,10 +11,8 @@ using System.Collections;
 namespace SqlMapper
 {
 
-
     class Tests
     {
-
         SqlConnection connection = Program.GetOpenConnection();
 
         public void SelectListInt()
@@ -757,7 +755,7 @@ end");
                 this.numbers = numbers;
             }
 
-            public void AddParameters(IDbCommand command)
+            public void AddParameters(IDbCommand command, Dapper.SqlMapper.Identity identity)
             {
                 var sqlCommand = (SqlCommand)command;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
@@ -1050,6 +1048,33 @@ Order by p.Id";
         {
             var output = connection.Query<WithPrivateConstructor>("select 1 as Foo").First();
             output.Foo.IsEqualTo(1);
+        }
+
+        public void TestAppendingAnonClasses()
+        {
+            DynamicParameters p = new DynamicParameters();
+            p.AddDynamicParams(new { A = 1, B = 2 });
+            p.AddDynamicParams(new { C = 3, D = 4 });
+
+            var result = connection.Query("select @A a,@B b,@C c,@D d", p).Single();
+
+            ((int)result.a).IsEqualTo(1);
+            ((int)result.b).IsEqualTo(2);
+            ((int)result.c).IsEqualTo(3);
+            ((int)result.d).IsEqualTo(4);
+        }
+
+        public void TestAppendingAList()
+        {
+            DynamicParameters p = new DynamicParameters();
+            var list = new int[] {1,2,3};
+            p.AddDynamicParams(new { list });
+
+            var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @list", p).ToList();
+
+            result[0].IsEqualTo(1);
+            result[1].IsEqualTo(2);
+            result[2].IsEqualTo(3);
         }
     }
 }

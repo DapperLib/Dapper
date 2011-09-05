@@ -23,7 +23,7 @@ namespace Dapper
     {
         public interface IDynamicParameters
         {
-            void AddParameters(IDbCommand command);
+            void AddParameters(IDbCommand command, Identity identity);
         }
         static Link<Type, Action<IDbCommand, bool>> bindByNameCache;
         static Action<IDbCommand, bool> GetBindByName(Type commandType)
@@ -279,7 +279,7 @@ namespace Dapper
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
 
-        internal class Identity : IEquatable<Identity>
+        public class Identity : IEquatable<Identity>
         {
             internal Identity ForGrid(Type primaryType, int gridIndex)
             {
@@ -289,6 +289,11 @@ namespace Dapper
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex)
             {
                 return new Identity(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
+            }
+
+            public Identity ForDynamicParameters(Type type)
+            {
+                return new Identity(sql, commandType, connectionString, this.type ,type, null, -1);
             }
 
             internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
@@ -324,12 +329,12 @@ namespace Dapper
             {
                 return Equals(obj as Identity);
             }
-            internal readonly string sql;
-            internal readonly CommandType? commandType;
-            internal readonly int hashCode, gridIndex;
+            public readonly string sql;
+            public readonly CommandType? commandType;
+            public readonly int hashCode, gridIndex;
             private readonly Type type;
-            internal readonly string connectionString;
-            internal readonly Type parametersType;
+            public readonly string connectionString;
+            public readonly Type parametersType;
             public override int GetHashCode()
             {
                 return hashCode;
@@ -777,7 +782,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     if (typeof(IDynamicParameters).IsAssignableFrom(identity.parametersType))
                     {
-                        info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameters(cmd); };
+                        info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameters(cmd,identity); };
                     }
                     else
                     {
@@ -1040,7 +1045,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return parameters.Where(p => Regex.IsMatch(sql, "[@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline));
         }
 
-        private static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity)
+        public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity)
         {
             Type type = identity.parametersType;
             bool filterParams = identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
@@ -1660,7 +1665,10 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
     }
     public class DynamicParameters : SqlMapper.IDynamicParameters
     {
+        static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
+
         Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
+        List<object> templates;
 
         class ParamInfo
         {
@@ -1675,21 +1683,31 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
         public DynamicParameters() { }
         public DynamicParameters(object template)
         {
-            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance;
             if (template != null)
             {
-                foreach (PropertyInfo prop in template.GetType().GetProperties(bindingFlags))
-                {
-                    if (!prop.CanRead) continue;
-                    var idx = prop.GetIndexParameters();
-                    if (idx != null && idx.Length != 0) continue;
-                    Add(prop.Name, prop.GetValue(template, null), null, ParameterDirection.Input, null);
-                }
-                foreach (FieldInfo field in template.GetType().GetFields(bindingFlags))
-                {
-                    Add(field.Name, field.GetValue(template), null, ParameterDirection.Input, null);
-                }
+                AddDynamicParams(template);
+            }
+        }
 
+        /// <summary>
+        /// Append a whole object full of params to the dynamic
+        /// EG: AddParams(new {A = 1, B = 2}) // will add property A and B to the dynamic
+        /// </summary>
+        /// <param name="param"></param>
+        public void AddDynamicParams(
+#if CSHARP30
+            object param
+#else
+            dynamic param
+#endif
+            )
+        {
+            object obj = param as object;
+
+            if (obj != null)
+            { 
+                templates = templates ?? new List<object>();
+                templates.Add(obj);
             }
         }
 
@@ -1720,8 +1738,28 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             return name;
         }
 
-        void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command)
+        void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
+            if (templates != null)
+            {
+                foreach (var template in templates)
+                {
+                    var newIdent = identity.ForDynamicParameters(template.GetType());
+                    Action<IDbCommand, object> appender;
+
+                    lock (paramReaderCache)
+                    {
+                        if (!paramReaderCache.TryGetValue(newIdent, out appender))
+                        {
+                            appender = SqlMapper.CreateParamInfoGenerator(newIdent);
+                            paramReaderCache[newIdent] = appender;
+                        }
+                    }
+
+                    appender(command, template);
+                }
+            }
+
             foreach (var param in parameters.Values)
             {
                 var p = command.CreateParameter();
