@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define POSTGRESQL
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -174,9 +176,11 @@ namespace Dapper.Contrib.Extensions
                 if (i < allPropertiesExceptKey.Count() - 1)
                     sb.Append(", ");
             }
+			long id = 0;
+#if POSTGRESQL
             sb.Append(") RETURNING * ");
             var r = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-			long id = 0;
+			// Return the key py assinging the corresponding property in the object - by product is that it supports compound primary keys
 			foreach (var p in keyProperties)
 			{
 				var value = ((IDictionary<string, object>)r.First())[p.Name.ToLower()];
@@ -184,6 +188,13 @@ namespace Dapper.Contrib.Extensions
 				if (id == 0)
 					id = Convert.ToInt64(value);
 			}
+#else
+            sb.Append(") ");
+            connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+            //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
+            var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+            id = (int)r.First().id;
+#endif
 			return id;
         }
 
