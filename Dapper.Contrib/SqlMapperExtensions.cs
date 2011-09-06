@@ -145,7 +145,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
         public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
-        {
+        {          
             
             var type = typeof(T);
 
@@ -156,24 +156,22 @@ namespace Dapper.Contrib.Extensions
 
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
+            var allPropertiesExceptKey = allProperties.Except(keyProperties);
 
-            for (var i = 0; i < allProperties.Count(); i++)
+            for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
             {
-                var property = allProperties.ElementAt(i);
-                if (keyProperties.Contains(property)) continue;
-
+                var property = allPropertiesExceptKey.ElementAt(i);
                 sb.Append(property.Name);
-                if (i < allProperties.Count() - 1)
+                if (i < allPropertiesExceptKey.Count() - 1)
                     sb.Append(", ");
             }
             sb.Append(") values (");
-            for (var i = 0; i < allProperties.Count(); i++)
-            {
-                var property = allProperties.ElementAt(i);
-                if (keyProperties.Contains(property)) continue;
 
+            for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
+            {
+                var property = allPropertiesExceptKey.ElementAt(i);
                 sb.AppendFormat("@{0}", property.Name);
-                if (i < allProperties.Count() - 1)
+                if (i < allPropertiesExceptKey.Count() - 1)
                     sb.Append(", ");
             }
             sb.Append(") ");
