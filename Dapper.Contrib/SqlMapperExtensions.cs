@@ -145,7 +145,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
         public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
-        {          
+        {
             
             var type = typeof(T);
 
@@ -174,12 +174,17 @@ namespace Dapper.Contrib.Extensions
                 if (i < allPropertiesExceptKey.Count() - 1)
                     sb.Append(", ");
             }
-            sb.Append(") ");
-            connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-            //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-            var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-            return (int)r.First().id;
-            
+            sb.Append(") RETURNING * ");
+            var r = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+			long id = 0;
+			foreach (var p in keyProperties)
+			{
+				var value = ((IDictionary<string, object>)r.First())[p.Name.ToLower()];
+				p.SetValue(entityToInsert, value, null);
+				if (id == 0)
+					id = Convert.ToInt64(value);
+			}
+			return id;
         }
 
         /// <summary>
