@@ -56,12 +56,23 @@ namespace Dapper.Contrib.Extensions
                 return TypeProperties[type.TypeHandle];
             }
 
-            var properties = type.GetProperties();
+            var properties = type.GetProperties().Where(IsWriteable);
             TypeProperties[type.TypeHandle] = properties;
             return properties;
         }
 
-        /// <summary>
+		public static bool IsWriteable(PropertyInfo pi)
+		{
+			object[] attributes = pi.GetCustomAttributes(typeof (WriteAttribute), false);
+			if (attributes.Length == 1)
+			{
+				WriteAttribute write = (WriteAttribute) attributes[0];
+				return write.Write;
+			}
+			return true;
+		}
+
+    	/// <summary>
         /// Returns a single entity by a single id from table "Ts". T must be of interface type. 
         /// Id must be marked with [Key] attribute.
         /// Created entity is tracked/intercepted for changes and used by the Update() extension. 
@@ -176,20 +187,30 @@ namespace Dapper.Contrib.Extensions
                 if (i < allPropertiesExceptKey.Count() - 1)
                     sb.Append(", ");
             }
+			sb.Append(") ");
 			long id = 0;
 #if POSTGRESQL
-            sb.Append(") RETURNING * ");
-            var r = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-			// Return the key py assinging the corresponding property in the object - by product is that it supports compound primary keys
-			foreach (var p in keyProperties)
+			if (keyProperties.Count() > 0)
 			{
-				var value = ((IDictionary<string, object>)r.First())[p.Name.ToLower()];
-				p.SetValue(entityToInsert, value, null);
-				if (id == 0)
-					id = Convert.ToInt64(value);
+				sb.Append(" RETURNING ");
+				for (var i = 0; i < keyProperties.Count(); i++)
+				{
+					var property = keyProperties.ElementAt(i);
+					sb.Append(property.Name);
+					if (i < keyProperties.Count() - 1)
+						sb.Append(", ");
+				}
+				var r = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+				// Return the key py assinging the corresponding property in the object - by product is that it supports compound primary keys
+				foreach (var p in keyProperties)
+				{
+					var value = ((IDictionary<string, object>) r.First())[p.Name.ToLower()];
+					p.SetValue(entityToInsert, value, null);
+					if (id == 0)
+						id = Convert.ToInt64(value);
+				}
 			}
 #else
-            sb.Append(") ");
             connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
             //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
             var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
@@ -451,4 +472,14 @@ namespace Dapper.Contrib.Extensions
     public class KeyAttribute : Attribute
     {
     }
+
+	[AttributeUsage(AttributeTargets.Property)]
+	public class WriteAttribute : Attribute
+	{
+		public WriteAttribute(bool write)
+        {
+			Write = write;
+        }
+        public bool Write { get; private set; }
+	}
 }
