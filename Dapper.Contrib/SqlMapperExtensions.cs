@@ -190,23 +190,28 @@ namespace Dapper.Contrib.Extensions
 			sb.Append(") ");
 			long id = 0;
 #if POSTGRESQL
-			sb.Append(" RETURNING ");
-			for (var i = 0; i < keyProperties.Count(); i++)
+			if (keyProperties.Count() > 0)
 			{
-				var property = keyProperties.ElementAt(i);
-				sb.Append(property.Name);
-				if (i < keyProperties.Count() - 1)
-					sb.Append(", ");
+				sb.Append(" RETURNING ");
+				for (var i = 0; i < keyProperties.Count(); i++)
+				{
+					var property = keyProperties.ElementAt(i);
+					sb.Append(property.Name);
+					if (i < keyProperties.Count() - 1)
+						sb.Append(", ");
+				}
+				var r = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+				// Return the key py assinging the corresponding property in the object - by product is that it supports compound primary keys
+				foreach (var p in keyProperties)
+				{
+					var value = ((IDictionary<string, object>) r.First())[p.Name.ToLower()];
+					p.SetValue(entityToInsert, value, null);
+					if (id == 0)
+						id = Convert.ToInt64(value);
+				}
 			}
-			var r = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-			// Return the key py assinging the corresponding property in the object - by product is that it supports compound primary keys
-			foreach (var p in keyProperties)
-			{
-				var value = ((IDictionary<string, object>) r.First())[p.Name.ToLower()];
-				p.SetValue(entityToInsert, value, null);
-				if (id == 0)
-					id = Convert.ToInt64(value);
-			}
+			else
+				connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
 #else
             connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
             //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
