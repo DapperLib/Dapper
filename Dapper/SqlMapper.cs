@@ -423,6 +423,28 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             info = GetCacheInfo(identity);
             return ExecuteCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Execute parameterized SQL Scaler method,  ideal for count queries 
+        /// </summary>
+        /// <returns>The first column on the first row of the results</returns>
+        public static object ExecuteScaler(
+#if CSHARP30
+            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+
+)
+        {
+            Identity identity;
+            CacheInfo info = null;
+            // nice and simple
+            identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+            info = GetCacheInfo(identity);
+            return ExecuteScaler(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
+        }
+
 #if !CSHARP30
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
@@ -1227,6 +1249,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return cmd.ExecuteNonQuery();
             }
         }
+
+        private static object ExecuteScaler(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        {
+            using (var cmd = SetupCommand(cnn, tranaction, sql, paramReader, obj, commandTimeout, commandType))
+            {
+                return cmd.ExecuteScalar();
+            }
+
+        }
+
 
         private static Func<IDataReader, T> GetStructDeserializer<T>(int index)
         {
