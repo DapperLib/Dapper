@@ -3,3 +3,4 @@ bin/
 obj/
 /*.user
 _Resharper*
+_ReSharper*/
