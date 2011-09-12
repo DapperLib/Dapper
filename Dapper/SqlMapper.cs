@@ -114,6 +114,15 @@ namespace Dapper
             public int GetHitCount() { return Interlocked.CompareExchange(ref hitCount, 0, 0); }
             public void RecordHit() { Interlocked.Increment(ref hitCount); }
         }
+
+        private static int totalErrorCount = 0;
+        private const int PurgeCacheAfterNErrors = 20;
+        public static event EventHandler QueryCachePurged;
+        private static void OnQueryCachePurged()
+        {
+            var handler = QueryCachePurged;
+            if (handler != null) handler(null, EventArgs.Empty);
+        }
 #if CSHARP30
         private static readonly Dictionary<Identity, CacheInfo> _queryCache = new Dictionary<Identity, CacheInfo>();
         // note: conflicts between readers and writers are so short-lived that it isn't worth the overhead of
@@ -128,9 +137,31 @@ namespace Dapper
         }
         private static void PurgeQueryCache(Identity key)
         {
-            lock (_queryCache) { _queryCache.Remove(key); }
+            bool purged = false;
+            lock (_queryCache)
+            {
+                if (++totalErrorCount >= PurgeCacheAfterNErrors)
+                {
+                    totalErrorCount = 0;
+                    _queryCache.Clear();
+                    purged = true;
+                }
+                else
+                {
+                    _queryCache.Remove(key);
+                }
+            }
+            if(purged) OnQueryCachePurged();
         }
-
+        public static void PurgeQueryCache()
+        {
+            lock (_queryCache)
+            {
+                totalErrorCount = 0;
+                 _queryCache.Clear();
+            }
+            OnQueryCachePurged();
+        }
 #else
         static readonly System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo> _queryCache = new System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo>();
         private static void SetQueryCache(Identity key, CacheInfo value)
@@ -155,6 +186,7 @@ namespace Dapper
                     }
                 }
             }
+         
             finally
             {
                 Interlocked.Exchange(ref collect, 0);
@@ -175,8 +207,19 @@ namespace Dapper
         }
         private static void PurgeQueryCache(Identity key)
         {
-            CacheInfo info;
-            _queryCache.TryRemove(key, out info);
+            if(Interlocked.Increment(ref totalErrorCount) >= PurgeCacheAfterNErrors)
+            {
+                PurgeQueryCache();
+            } else {
+                CacheInfo info;
+                _queryCache.TryRemove(key, out info);
+            }
+        }
+        public static void PurgeQueryCache()
+        {
+            _queryCache.Clear();
+            Interlocked.Exchange(ref totalErrorCount, 0);
+            OnQueryCachePurged();
         }
 
         public static int GetCachedSQLCount()
