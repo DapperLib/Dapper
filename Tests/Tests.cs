@@ -7,6 +7,7 @@ using System.Data.SqlServerCe;
 using System.IO;
 using System.Data;
 using System.Collections;
+using System.Reflection;
 
 namespace SqlMapper
 {
@@ -34,6 +35,40 @@ namespace SqlMapper
         {
             connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[0] })
              .IsSequenceEqualTo(new int[0]);
+        }
+
+        public void TestSchemaChanged()
+        {
+            connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            var d = connection.Query<Dog>("select * from #dog").Single();
+            d.Name.IsEqualTo("Alf");
+            d.Age.IsEqualTo(1);
+            connection.Execute("alter table #dog drop column Name");
+            d = connection.Query<Dog>("select * from #dog").Single();
+            d.Name.IsNull();
+            d.Age.IsEqualTo(1);
+            connection.Execute("drop table #dog");
+        }
+
+        public void TestSchemaChangedMultiMap()
+        {
+            connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            var tuple = connection.Query<Dog,Dog,Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1,d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+
+            tuple.Item1.Name.IsEqualTo("Alf");
+            tuple.Item1.Age.IsEqualTo(1);
+            tuple.Item2.Name.IsEqualTo("Alf");
+            tuple.Item2.Age.IsEqualTo(1);
+
+            connection.Execute("alter table #dog drop column Name");
+            tuple = connection.Query<Dog, Dog,Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+
+            tuple.Item1.Name.IsNull();
+            tuple.Item1.Age.IsEqualTo(1);
+            tuple.Item2.Name.IsNull();
+            tuple.Item2.Age.IsEqualTo(1);
+            
+            connection.Execute("drop table #dog");
         }
 
         public void TestReadMultipleIntegersWithSplitOnAny()
