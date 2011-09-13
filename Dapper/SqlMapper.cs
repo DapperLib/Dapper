@@ -107,8 +107,8 @@ namespace Dapper
         }
         class CacheInfo
         {
-            public object Deserializer { get; set; }
-            public object[] OtherDeserializers { get; set; }
+            public Func<IDataReader, object> Deserializer { get; set; }
+            public Func<IDataReader, object>[] OtherDeserializers { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
             private int hitCount;
             public int GetHitCount() { return Interlocked.CompareExchange(ref hitCount, 0, 0); }
@@ -506,11 +506,11 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             {
                 using (var reader = cmd.ExecuteReader())
                 {
-                    Func<Func<IDataReader, T>> cacheDeserializer =  () =>
+                    Func<Func<IDataReader, object>> cacheDeserializer =  () =>
                     {
-                        info.Deserializer = GetDeserializer<T>(reader, 0, -1, false);
+                        info.Deserializer = GetDeserializer(typeof(T), reader, 0, -1, false);
                         SetQueryCache(identity, info);
-                        return (Func<IDataReader, T>)info.Deserializer;
+                        return info.Deserializer;
                     };
 
                     if (info.Deserializer == null)
@@ -518,11 +518,11 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                         cacheDeserializer();
                     }
 
-                    var deserializer = (Func<IDataReader, T>)info.Deserializer;
+                    var deserializer = info.Deserializer;
 
                     while (reader.Read())
                     {
-                        T next;
+                        object next;
                         try
                         {
                             next = deserializer(reader);
@@ -533,7 +533,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                             deserializer = cacheDeserializer();
                             next = deserializer(reader);
                         }
-                        yield return next;
+                        yield return (T)next;
                     }
                     
                 }
@@ -617,8 +617,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     ownedReader = ownedCommand.ExecuteReader();
                     reader = ownedReader;
                 }
-                object deserializer = null;
-                object[] otherDeserializers = null;
+                Func<IDataReader, object> deserializer = null;
+                Func<IDataReader, object>[] otherDeserializers = null;
 
                 Action cacheDeserializers = () =>
                 { 
@@ -673,50 +673,26 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-        private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(object deserializer, object[] otherDeserializers, object map)
+        private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
         {
-            var rootDeserializer = (Func<IDataReader, TFirst>)deserializer;
-            var deserializer2 = (Func<IDataReader, TSecond>)otherDeserializers[0];
-
-            Func<IDataReader, TReturn> mapIt = null;
-
-            if (otherDeserializers.Length == 1)
+            switch(otherDeserializers.Length)
             {
-                mapIt = r => ((Func<TFirst, TSecond, TReturn>)map)(rootDeserializer(r), deserializer2(r));
-            }
-
-            if (otherDeserializers.Length > 1)
-            {
-                var deserializer3 = (Func<IDataReader, TThird>)otherDeserializers[1];
-
-                if (otherDeserializers.Length == 2)
-                {
-                    mapIt = r => ((Func<TFirst, TSecond, TThird, TReturn>)map)(rootDeserializer(r), deserializer2(r), deserializer3(r));
-                }
-                if (otherDeserializers.Length > 2)
-                {
-                    var deserializer4 = (Func<IDataReader, TFourth>)otherDeserializers[2];
-                    if (otherDeserializers.Length == 3)
-                    {
-                        mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)(rootDeserializer(r), deserializer2(r), deserializer3(r), deserializer4(r));
-                    }
-
-                    if (otherDeserializers.Length > 3)
-                    {
-#if CSHARP30
-                            throw new NotSupportedException();
-#else
-                        var deserializer5 = (Func<IDataReader, TFifth>)otherDeserializers[3];
-                        mapIt = r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)(rootDeserializer(r), deserializer2(r), deserializer3(r), deserializer4(r), deserializer5(r));
+                case 1:
+                    return r => ((Func<TFirst, TSecond, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r));
+                case 2:
+                    return r => ((Func<TFirst, TSecond, TThird, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r));
+                case 3:
+                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r));
+#if !CSHARP30
+                case 4:
+                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r));
 #endif
-                    }
-                }
+                default:
+                    throw new NotSupportedException();
             }
-
-            return mapIt;
         }
 
-        private static object[] GenerateDeserializers(Type[] types, string splitOn, IDataReader reader)
+        private static Func<IDataReader, object>[] GenerateDeserializers(Type[] types, string splitOn, IDataReader reader)
         {
             int current = 0;
             var splits = splitOn.Split(',').ToArray();
@@ -774,7 +750,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return pos;
             };
 
-            var deserializers = new List<object>();
+            var deserializers = new List<Func<IDataReader, object>>();
             int split = 0;
             bool first = true;
             foreach (var type in types)
@@ -813,52 +789,22 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return info;
         }
 
-        static MethodInfo getDeserializerMethodInfo;
-        private static object GetDeserializer(Type t, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
-        { 
-            if (getDeserializerMethodInfo == null)
-            {
-                foreach (var mi in typeof(SqlMapper).GetMethods(BindingFlags.NonPublic | BindingFlags.Static))
-	            {
-		            if (mi.Name == "GetDeserializer" && mi.IsGenericMethodDefinition)
-                    {
-                        getDeserializerMethodInfo = mi;
-                    }
-	            }
-            }
-
-            var method = getDeserializerMethodInfo.MakeGenericMethod(t);
-            try
-            {
-                return method.Invoke(null, new object[] { reader, startBound, length, returnNullIfFirstMissing });
-            }
-            catch (TargetInvocationException ex)
-            {
-                if (ex.InnerException != null && ex.InnerException.GetType() == typeof(ArgumentException))
-                {
-                    throw ex.InnerException;
-                }
-                throw;
-            }
-        }
-
-        private static Func<IDataReader, T> GetDeserializer<T>(IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
+        private static Func<IDataReader, object> GetDeserializer(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
-            Type type = typeof(T);
 #if !CSHARP30
             // dynamic is passed in as Object ... by c# design
             if (type == typeof(object)
                 || type == typeof(FastExpando))
             {
-                return GetDynamicDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
+                return GetDynamicDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
 #endif
 
             if (type.IsClass && type != typeof(string) && type != typeof(byte[]) && type != typeof(System.Data.Linq.Binary))
             {
-                return GetClassDeserializer<T>(reader, startBound, length, returnNullIfFirstMissing);
+                return GetClassDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer<T>(startBound);
+            return GetStructDeserializer(type, startBound);
 
         }
 #if !CSHARP30
@@ -987,7 +933,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
 
-        private static Func<IDataReader, T> GetDynamicDeserializer<T>(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
+        private static Func<IDataReader, object> GetDynamicDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
             var fieldCount = reader.FieldCount;
             if (length == -1)
@@ -1011,11 +957,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                          row[r.GetName(i)] = tmp;
                          if (returnNullIfFirstMissing && i == startBound && tmp == null)
                          {
-                             return default(T);
+                             return null;
                          }
                      }
                      //we know this is an object so it will not box
-                     return (T)(object)FastExpando.Attach(row);
+                     return FastExpando.Attach(row);
                  };
         }
 #endif
@@ -1276,31 +1222,27 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-        private static Func<IDataReader, T> GetStructDeserializer<T>(int index)
+        private static Func<IDataReader, object> GetStructDeserializer(Type type, int index)
         {
             // no point using special per-type handling here; it boils down to the same, plus not all are supported anyway (see: SqlDataReader.GetChar - not supported!)
 #pragma warning disable 618
-            if (typeof(T) == typeof(char))
+            if (type == typeof(char))
             { // this *does* need special handling, though
-                return (Func<IDataReader, T>)(object)new Func<IDataReader, char>(r => SqlMapper.ReadChar(r.GetValue(index)));
+                return r => SqlMapper.ReadChar(r.GetValue(index));
             }
-            if (typeof(T) == typeof(char?))
+            if (type == typeof(char?))
             {
-                return (Func<IDataReader, T>)(object)new Func<IDataReader, char?>(r => SqlMapper.ReadNullableChar(r.GetValue(index)));
+                return r => SqlMapper.ReadNullableChar(r.GetValue(index));
             }
-            if (typeof(T) == typeof(System.Data.Linq.Binary))
+            if (type == typeof(System.Data.Linq.Binary))
             {
-                return (Func<IDataReader, T>)(object)new Func<IDataReader, System.Data.Linq.Binary>(r => new System.Data.Linq.Binary((byte[])r.GetValue(index)));
+                return r => new System.Data.Linq.Binary((byte[])r.GetValue(index));
             }
 #pragma warning restore 618
             return r =>
             {
                 var val = r.GetValue(index);
-                if (val == DBNull.Value)
-                {
-                    val = null;
-                }
-                return (T)val;
+                return val is DBNull ? null : val;
             };
         }
 
@@ -1336,24 +1278,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
         }
 
-        public static Func<IDataReader, T> GetClassDeserializer<T>(
+        public static Func<IDataReader, object> GetClassDeserializer(
 #if CSHARP30
-            IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
+            Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
 #else
-IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
+            Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
 #endif
 )
         {
-            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), typeof(T), new[] { typeof(IDataReader) }, true);
+            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), type, new[] { typeof(IDataReader) }, true);
 
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
-            il.DeclareLocal(typeof(T));
+            il.DeclareLocal(type);
             bool haveEnumLocal = false;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
-            var properties = GetSettableProps(typeof(T));
-            var fields = GetSettableFields(typeof(T));
+            var properties = GetSettableProps(type);
+            var fields = GetSettableFields(type);
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
@@ -1384,7 +1326,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
 
             il.BeginExceptionBlock();
             // stack is empty
-            il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)); // stack is now [target]
+            il.Emit(OpCodes.Newobj, type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)); // stack is now [target]
             bool first = true;
             var allDone = il.DefineLabel();
             foreach (var item in setters)
@@ -1519,7 +1461,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
             il.Emit(OpCodes.Ldloc_1); // stack is empty
             il.Emit(OpCodes.Ret);
 
-            return (Func<IDataReader, T>)dm.CreateDelegate(typeof(Func<IDataReader, T>));
+            return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader,object>));
         }
         public static void ThrowDataException(Exception ex, int index, IDataReader reader)
         {
@@ -1587,11 +1529,11 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
                 var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
                 CacheInfo cache = GetCacheInfo(typedIdentity);
-                var deserializer = (Func<IDataReader, T>)cache.Deserializer;
+                var deserializer = cache.Deserializer;
 
-                Func<Func<IDataReader, T>> deserializerGenerator = () => 
+                Func<Func<IDataReader, object>> deserializerGenerator = () => 
                 {
-                    deserializer = GetDeserializer<T>(reader, 0, -1, false);
+                    deserializer = GetDeserializer(typeof(T), reader, 0, -1, false);
                     cache.Deserializer = deserializer;
                     return deserializer;
                 };
@@ -1601,7 +1543,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                     deserializer = deserializerGenerator();
                 }
                 consumed = true;
-                return ReadDeferred(gridIndex, deserializer, typedIdentity, deserializerGenerator);
+                return ReadDeferred<T>(gridIndex, deserializer, typedIdentity, deserializerGenerator);
             }
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(object func, string splitOn)
@@ -1662,13 +1604,13 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
             }
 #endif
 
-            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, T> deserializer, Identity typedIdentity, Func<Func<IDataReader, T>> deserializerGenerator)
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity, Func<Func<IDataReader, object>> deserializerGenerator)
             {
                 try
                 {
                     while (index == gridIndex && reader.Read())
                     {
-                        T next;
+                        object next;
                         try
                         {
                             next = deserializer(reader);
@@ -1678,7 +1620,7 @@ IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstM
                             deserializer = deserializerGenerator();
                             next = deserializer(reader);
                         }
-                        yield return next;
+                        yield return (T)next;
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows
