@@ -1762,7 +1762,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             {
                 var p = command.CreateParameter();
                 var val = param.Value;
-                p.ParameterName = param.Name;
+                p.ParameterName = Clean(param.Name);
                 p.Value = val ?? DBNull.Value;
                 p.Direction = param.ParameterDirection;
                 var s = val as string;
