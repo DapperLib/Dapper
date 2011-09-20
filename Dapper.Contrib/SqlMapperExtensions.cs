@@ -562,5 +562,12 @@ namespace Dapper.Contrib.Extensions
             AddClause("select", sql, parameters, " , ", prefix: "", postfix: "\n");
             return this;
         }
+
+        string parameterClause = Guid.NewGuid().ToString();
+        public SqlBuilder AddParameters(dynamic parameters)
+        {
+            AddClause(parameterClause, "", parameters, "");
+            return this;
+        }
     }
 }
