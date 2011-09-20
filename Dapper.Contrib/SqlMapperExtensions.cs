@@ -476,7 +476,7 @@ namespace Dapper.Contrib.Extensions
             readonly string sql;
             readonly SqlBuilder builder;
             readonly object initParams;
-            int dataSeq;
+            int dataSeq = -1; // Unresolved
 
             public Template(SqlBuilder builder, string sql, dynamic parameters)
             {

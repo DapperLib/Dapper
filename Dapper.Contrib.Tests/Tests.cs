@@ -103,7 +103,7 @@ namespace Dapper.Contrib.Tests
             }
         }
 
-        public void SelectClause()
+        public void BuilderSelectClause()
         {
             using (var connection = GetOpenConnection())
             {
@@ -130,6 +130,23 @@ namespace Dapper.Contrib.Tests
                     if (!ids.Any(i => u.Id == i)) throw new Exception("Missing ids in select");
                     if (!users.Any(a => a.Id == u.Id && a.Name == u.Name && a.Age == u.Age)) throw new Exception("Missing users in select");
                 }
+            }
+        }
+
+        public void BuilderTemplateWOComposition()
+        {
+            var builder = new SqlBuilder();
+            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new {age = 5});
+
+            if (template.RawSql == null) throw new Exception("RawSql null");
+            if (template.Parameters == null) throw new Exception("Parameters null");
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.Insert(new User { Age = 5, Name = "Testy McTestington" });
+
+                if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
+                    throw new Exception("Query failed");
             }
         }
     }
