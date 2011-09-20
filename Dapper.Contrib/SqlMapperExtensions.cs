@@ -556,5 +556,11 @@ namespace Dapper.Contrib.Extensions
             AddClause("orderby", sql, parameters, " , ", prefix: "ORDER BY ", postfix: "\n");
             return this;
         }
+
+        public SqlBuilder Select(string sql, dynamic parameters = null)
+        {
+            AddClause("select", sql, parameters, " , ", prefix: "", postfix: "\n");
+            return this;
+        }
     }
 }
