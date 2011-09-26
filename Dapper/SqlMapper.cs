@@ -431,9 +431,12 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
 
             // nice and simple
-            identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
-            info = GetCacheInfo(identity);
-            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
+            if ((object)param != null)
+            {
+                identity = new Identity(sql, commandType, cnn, null, (object) param == null ? null : ((object) param).GetType(), null);
+                info = GetCacheInfo(identity);
+            }
+            return ExecuteCommand(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
         }
 #if !CSHARP30
         /// <summary>
