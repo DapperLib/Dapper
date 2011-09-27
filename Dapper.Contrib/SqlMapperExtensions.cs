@@ -563,10 +563,15 @@ namespace Dapper.Contrib.Extensions
             return this;
         }
 
-        string parameterClause = Guid.NewGuid().ToString();
         public SqlBuilder AddParameters(dynamic parameters)
         {
-            AddClause(parameterClause, "", parameters, "");
+            AddClause("--parameters", "", parameters, "");
+            return this;
+        }
+
+        public SqlBuilder Join(string sql, dynamic parameters = null)
+        {
+            AddClause("join", sql, parameters, joiner: "\nJOIN ", prefix: "\nJOIN", postfix: "\n");
             return this;
         }
     }
