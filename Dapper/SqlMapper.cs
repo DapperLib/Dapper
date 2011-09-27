@@ -1698,14 +1698,37 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #else
             dynamic param
 #endif
-            )
+)
         {
             object obj = param as object;
 
             if (obj != null)
-            { 
-                templates = templates ?? new List<object>();
-                templates.Add(obj);
+            {
+                var subDynamic = obj as DynamicParameters;
+
+                if (subDynamic == null)
+                {
+                    templates = templates ?? new List<object>();
+                    templates.Add(obj);
+                }
+                else
+                {
+                    if (subDynamic.parameters != null)
+                    {
+                        foreach (var kvp in subDynamic.parameters)
+                        {
+                            parameters.Add(kvp.Key, kvp.Value);
+                        }
+                    }
+
+                    if (subDynamic.templates != null)
+                    {
+                        foreach (var t in subDynamic.templates)
+                        {
+                            templates.Add(t);
+                        }
+                    }
+                }
             }
         }
 
