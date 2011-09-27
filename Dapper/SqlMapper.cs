@@ -831,6 +831,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return data.TryGetValue(binder.Name, out result);
             }
 
+            public override IEnumerable<string> GetDynamicMemberNames()
+            {
+	            return data.Keys;
+            }
+
             #region IDictionary<string,object> Members
 
             void IDictionary<string, object>.Add(string key, object value)
@@ -871,7 +876,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 set
                 {
-                    throw new NotImplementedException();
+                    if (!data.ContainsKey(key)) 
+                    {
+	                    throw new NotImplementedException();
+                    }
+                    data[key] = value;
                 }
             }
 
