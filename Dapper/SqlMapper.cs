@@ -431,9 +431,12 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
 
             // nice and simple
-            identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
-            info = GetCacheInfo(identity);
-            return ExecuteCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
+            if ((object)param != null)
+            {
+                identity = new Identity(sql, commandType, cnn, null, (object) param == null ? null : ((object) param).GetType(), null);
+                info = GetCacheInfo(identity);
+            }
+            return ExecuteCommand(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
         }
 #if !CSHARP30
         /// <summary>
@@ -828,6 +831,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return data.TryGetValue(binder.Name, out result);
             }
 
+            public override IEnumerable<string> GetDynamicMemberNames()
+            {
+	            return data.Keys;
+            }
+
             #region IDictionary<string,object> Members
 
             void IDictionary<string, object>.Add(string key, object value)
@@ -868,7 +876,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 set
                 {
-                    throw new NotImplementedException();
+                    if (!data.ContainsKey(key)) 
+                    {
+	                    throw new NotImplementedException();
+                    }
+                    data[key] = value;
                 }
             }
 
@@ -1214,9 +1226,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
 
-        private static int ExecuteCommand(IDbConnection cnn, IDbTransaction tranaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        private static int ExecuteCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
         {
-            using (var cmd = SetupCommand(cnn, tranaction, sql, paramReader, obj, commandTimeout, commandType))
+            using (var cmd = SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType))
             {
                 return cmd.ExecuteNonQuery();
             }
