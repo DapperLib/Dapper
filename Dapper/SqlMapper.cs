@@ -19,10 +19,21 @@ using System.Text.RegularExpressions;
 
 namespace Dapper
 {
+    /// <summary>
+    /// Dapper, a light weight object mapper for ADO.NET
+    /// </summary>
     public static partial class SqlMapper
     {
+        /// <summary>
+        /// Implement this interface to pass an arbitrary db specific set of parameters to Dapper
+        /// </summary>
         public interface IDynamicParameters
         {
+            /// <summary>
+            /// Add all the parameters needed to the command just before it executes
+            /// </summary>
+            /// <param name="command">The raw command prior to execution</param>
+            /// <param name="identity">Information about the query</param>
             void AddParameters(IDbCommand command, Identity identity);
         }
         static Link<Type, Action<IDbCommand, bool>> bindByNameCache;
@@ -115,6 +126,9 @@ namespace Dapper
             public void RecordHit() { Interlocked.Increment(ref hitCount); }
         }
 
+        /// <summary>
+        /// Called if the query cache is purged via PurgeQueryCache
+        /// </summary>
         public static event EventHandler QueryCachePurged;
         private static void OnQueryCachePurged()
         {
@@ -185,18 +199,29 @@ namespace Dapper
             return false;
         }
 
+        /// <summary>
+        /// Purge the query cache 
+        /// </summary>
         public static void PurgeQueryCache()
         {
             _queryCache.Clear();
             OnQueryCachePurged();
         }
 
+        /// <summary>
+        /// Return a count of all the cached queries by dapper
+        /// </summary>
+        /// <returns></returns>
         public static int GetCachedSQLCount()
         {
             return _queryCache.Count;
         }
 
-
+        /// <summary>
+        /// Return a list of all the queries cached by dapper
+        /// </summary>
+        /// <param name="ignoreHitCountAbove"></param>
+        /// <returns></returns>
         public static IEnumerable<Tuple<string, string, int>> GetCachedSQL(int ignoreHitCountAbove = int.MaxValue)
         {
             var data = _queryCache.Select(pair => Tuple.Create(pair.Key.connectionString, pair.Key.sql, pair.Value.GetHitCount()));
@@ -204,6 +229,10 @@ namespace Dapper
             return data;
         }
 
+        /// <summary>
+        /// Deep diagnostics only: find any hash collisions in the cache
+        /// </summary>
+        /// <returns></returns>
         public static IEnumerable<Tuple<int,int>> GetHashCollissions()
         {
             var counts = new Dictionary<int, int>();
@@ -291,6 +320,9 @@ namespace Dapper
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
 
+        /// <summary>
+        /// Identity of a cached query in Dapper, used for extensability
+        /// </summary>
         public class Identity : IEquatable<Identity>
         {
             internal Identity ForGrid(Type primaryType, int gridIndex)
@@ -302,7 +334,11 @@ namespace Dapper
             {
                 return new Identity(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
             }
-
+            /// <summary>
+            /// Create an identity for use with DynamicParameters, internal use only
+            /// </summary>
+            /// <param name="type"></param>
+            /// <returns></returns>
             public Identity ForDynamicParameters(Type type)
             {
                 return new Identity(sql, commandType, connectionString, this.type ,type, null, -1);
@@ -337,20 +373,51 @@ namespace Dapper
                     hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
             }
+            
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
             public override bool Equals(object obj)
             {
                 return Equals(obj as Identity);
             }
+            /// <summary>
+            /// The sql
+            /// </summary>
             public readonly string sql;
+            /// <summary>
+            /// The command type 
+            /// </summary>
             public readonly CommandType? commandType;
+            
+            /// <summary>
+            /// 
+            /// </summary>
             public readonly int hashCode, gridIndex;
             private readonly Type type;
+            /// <summary>
+            /// 
+            /// </summary>
             public readonly string connectionString;
+            /// <summary>
+            /// 
+            /// </summary>
             public readonly Type parametersType;
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <returns></returns>
             public override int GetHashCode()
             {
                 return hashCode;
             }
+            /// <summary>
+            /// Compare 2 Identity objects
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
             public bool Equals(Identity other)
             {
                 return
@@ -451,7 +518,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
-        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new <space> get new object</remarks>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
@@ -546,8 +613,9 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <summary>
         /// Maps a query to objects
         /// </summary>
-        /// <typeparam name="T">The return type</typeparam>
-        /// <typeparam name="U"></typeparam>
+        /// <typeparam name="TFirst">The first type in the recordset</typeparam>
+        /// <typeparam name="TSecond">The second type in the recordset</typeparam>
+        /// <typeparam name="TReturn">The return type</typeparam>
         /// <param name="cnn"></param>
         /// <param name="sql"></param>
         /// <param name="map"></param>
@@ -556,6 +624,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <param name="buffered"></param>
         /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
         /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(
 #if CSHARP30  
@@ -568,6 +637,23 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic 
             return MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
+        /// <summary>
+        /// Maps a query to objects
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(
 #if CSHARP30
             this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
@@ -579,6 +665,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, 
             return MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
+        /// <summary>
+        /// Perform a multi mapping query with 4 input parameters
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TFourth"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(
 #if CSHARP30
             this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
@@ -590,6 +694,25 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 #if !CSHARP30
+        /// <summary>
+        /// Perform a multi mapping query with 5 input parameters
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TFourth"></typeparam>
+        /// <typeparam name="TFifth"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
@@ -977,6 +1100,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                  };
         }
 #endif
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", false)]
         public static char ReadChar(object value)
@@ -986,6 +1114,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", "value");
             return s[0];         
         }
+
+        /// <summary>
+        /// Internal use only
+        /// </summary>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", false)]
         public static char? ReadNullableChar(object value)
@@ -995,6 +1127,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", "value");
             return s[0];            
         }
+        /// <summary>
+        /// Internal use only
+        /// </summary>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
         public static void PackListParameters(IDbCommand command, string namePrefix, object value)
@@ -1051,6 +1186,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return parameters.Where(p => Regex.IsMatch(sql, "[@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline));
         }
 
+        /// <summary>
+        /// Internal use only
+        /// </summary>
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity)
         {
             Type type = identity.parametersType;
@@ -1290,6 +1428,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
         }
 
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="reader"></param>
+        /// <param name="startBound"></param>
+        /// <param name="length"></param>
+        /// <param name="returnNullIfFirstMissing"></param>
+        /// <returns></returns>
         public static Func<IDataReader, object> GetClassDeserializer(
 #if CSHARP30
             Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
@@ -1475,6 +1622,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader,object>));
         }
+
+        /// <summary>
+        /// Throws a data exception, only used internally
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="index"></param>
+        /// <param name="reader"></param>
         public static void ThrowDataException(Exception ex, int index, IDataReader reader)
         {
             string name = "(n/a)", value = "(n/a)";
@@ -1520,6 +1674,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
+        /// <summary>
+        /// The grid reader provides interfaces for reading multiple result sets from a Dapper query 
+        /// </summary>
         public class GridReader : IDisposable
         {
             private IDataReader reader;
@@ -1581,6 +1738,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
             }
 
+            /// <summary>
+            /// Read multiple objects from a single recordset on the grid
+            /// </summary>
+            /// <typeparam name="TFirst"></typeparam>
+            /// <typeparam name="TSecond"></typeparam>
+            /// <typeparam name="TReturn"></typeparam>
+            /// <param name="func"></param>
+            /// <param name="splitOn"></param>
+            /// <returns></returns>
 #if CSHARP30  
             public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn)
 #else
@@ -1590,6 +1756,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return MultiReadInternal<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
             }
 
+            /// <summary>
+            /// Read multiple objects from a single recordset on the grid
+            /// </summary>
+            /// <typeparam name="TFirst"></typeparam>
+            /// <typeparam name="TSecond"></typeparam>
+            /// <typeparam name="TThird"></typeparam>
+            /// <typeparam name="TReturn"></typeparam>
+            /// <param name="func"></param>
+            /// <param name="splitOn"></param>
+            /// <returns></returns>
 #if CSHARP30  
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn)
 #else
@@ -1599,6 +1775,17 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return MultiReadInternal<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(func, splitOn);
             }
 
+            /// <summary>
+            /// Read multiple objects from a single record set on the grid
+            /// </summary>
+            /// <typeparam name="TFirst"></typeparam>
+            /// <typeparam name="TSecond"></typeparam>
+            /// <typeparam name="TThird"></typeparam>
+            /// <typeparam name="TFourth"></typeparam>
+            /// <typeparam name="TReturn"></typeparam>
+            /// <param name="func"></param>
+            /// <param name="splitOn"></param>
+            /// <returns></returns>
 #if CSHARP30  
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn)
 #else
@@ -1609,6 +1796,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 
 #if !CSHARP30  
+            /// <summary>
+            /// Read multiple objects from a single record set on the grid
+            /// </summary>
+            /// <typeparam name="TFirst"></typeparam>
+            /// <typeparam name="TSecond"></typeparam>
+            /// <typeparam name="TThird"></typeparam>
+            /// <typeparam name="TFourth"></typeparam>
+            /// <typeparam name="TFifth"></typeparam>
+            /// <typeparam name="TReturn"></typeparam>
+            /// <param name="func"></param>
+            /// <param name="splitOn"></param>
+            /// <returns></returns>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> func, string splitOn = "id")
 
             {
@@ -1658,6 +1857,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
 
             }
+            /// <summary>
+            /// Dispose the grid, closing and disposing both the underlying reader and command.
+            /// </summary>
             public void Dispose()
             {
                 if (reader != null)
@@ -1673,6 +1875,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
     }
+
+    /// <summary>
+    /// A bag of parameters that can be passed to the Dapper Query and Execute methods
+    /// </summary>
     public class DynamicParameters : SqlMapper.IDynamicParameters
     {
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
@@ -1690,7 +1896,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             public IDbDataParameter AttachedParam { get; set; }
         }
 
+        /// <summary>
+        /// construct a dynamic parameter bag
+        /// </summary>
         public DynamicParameters() { }
+        /// <summary>
+        /// construct a dynamic parameter bag
+        /// </summary>
+        /// <param name="template">can be an anonymous type of a DynamicParameters bag</param>
         public DynamicParameters(object template)
         {
             if (template != null)
@@ -1744,7 +1957,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-
+        /// <summary>
+        /// Add a parameter to this dynamic parameter list
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <param name="dbType"></param>
+        /// <param name="direction"></param>
+        /// <param name="size"></param>
         public void Add(
 #if CSHARP30
             string name, object value, DbType? dbType, ParameterDirection? direction, int? size
@@ -1821,6 +2041,12 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             }
         }
 
+        /// <summary>
+        /// Get the value of a parameter
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <returns>The value, note DBNull.Value is not returned, instead the value is returned as null</returns>
         public T Get<T>(string name)
         {
             var val = parameters[Clean(name)].AttachedParam.Value;
@@ -1835,13 +2061,37 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             return (T)val;
         }
     }
+
+    /// <summary>
+    /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
+    /// </summary>
     public sealed class DbString
     {
+        /// <summary>
+        /// Create a new DbString
+        /// </summary>
         public DbString() { Length = -1; }
+        /// <summary>
+        /// Ansi vs Unicode 
+        /// </summary>
         public bool IsAnsi { get; set; }
+        /// <summary>
+        /// Fixed length 
+        /// </summary>
         public bool IsFixedLength { get; set; }
+        /// <summary>
+        /// Length of the string -1 for max
+        /// </summary>
         public int Length { get; set; }
+        /// <summary>
+        /// The value of the string
+        /// </summary>
         public string Value { get; set; }
+        /// <summary>
+        /// Add the parameter to the command... internal use only
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="name"></param>
         public void AddParameter(IDbCommand command, string name)
         {
             if (IsFixedLength && Length == -1)
