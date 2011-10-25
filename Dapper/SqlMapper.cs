@@ -926,10 +926,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #endif
 
-            if (type.IsClass && type != typeof(string) && type != typeof(byte[]) && type != typeof(System.Data.Linq.Binary))
+            if (
+                (type.IsClass && type != typeof(string) && type != typeof(byte[]) && type != typeof(System.Data.Linq.Binary)) ||
+                (type.IsValueType && !type.IsPrimitive && !(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                )
             {
-                return GetClassDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
+                return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
+            
             return GetStructDeserializer(type, startBound);
 
         }
@@ -1437,7 +1441,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <param name="length"></param>
         /// <param name="returnNullIfFirstMissing"></param>
         /// <returns></returns>
-        public static Func<IDataReader, object> GetClassDeserializer(
+        public static Func<IDataReader, object> GetTypeDeserializer(
 #if CSHARP30
             Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
 #else
@@ -1445,11 +1449,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
 )
         {
-            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), type, new[] { typeof(IDataReader) }, true);
+            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), type.IsValueType ? typeof(object) : type, new[] { typeof(IDataReader) }, true);
 
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
-            il.DeclareLocal(type);
+            var emptyLocal = il.DeclareLocal(type);
             bool haveEnumLocal = false;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
@@ -1485,7 +1489,20 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             il.BeginExceptionBlock();
             // stack is empty
-            il.Emit(OpCodes.Newobj, type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)); // stack is now [target]
+
+            if (type.IsValueType)
+            {
+                il.Emit(OpCodes.Ldloca, emptyLocal);
+                il.Emit(OpCodes.Initobj, type);
+                il.Emit(OpCodes.Ldloca, emptyLocal);
+            }
+            else
+            {
+                il.Emit(OpCodes.Newobj, type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)); 
+            }
+
+            // stack is now [target]
+
             bool first = true;
             var allDone = il.DefineLabel();
             foreach (var item in setters)
@@ -1501,7 +1518,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
-
 
                     Type memberType = item.Property != null ? item.Property.Type : item.Field.FieldType;
 
@@ -1580,7 +1596,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     if (item.Property != null)
                     {
-                        il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                        if (type.IsValueType)
+                        {
+                            il.Emit(OpCodes.Call, item.Property.Setter); // stack is now [target]
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                        }
                     }
                     else
                     {
@@ -1607,7 +1630,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 first = false;
                 index += 1;
             }
-            il.Emit(OpCodes.Stloc_1); // stack is empty
+            if (type.IsValueType)
+            {
+                il.Emit(OpCodes.Pop);
+            }
+            else
+            {
+                il.Emit(OpCodes.Stloc_1); // stack is empty
+            }
             il.MarkLabel(allDone);
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception
             il.Emit(OpCodes.Ldloc_0); // stack is Exception, index
@@ -1617,7 +1647,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.Emit(OpCodes.Stloc_1); // to make it verifiable
             il.EndExceptionBlock();
 
-            il.Emit(OpCodes.Ldloc_1); // stack is empty
+           
+            if (type.IsValueType)
+            {
+                il.Emit(OpCodes.Ldloc, emptyLocal); // stack is [rval]
+                il.Emit(OpCodes.Box, type);
+            }
+            else 
+            {
+                il.Emit(OpCodes.Ldloc_1); // stack is [rval]
+            }
             il.Emit(OpCodes.Ret);
 
             return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader,object>));

@@ -16,6 +16,28 @@ namespace SqlMapper
     {
         SqlConnection connection = Program.GetOpenConnection();
 
+        struct Car
+        {
+            public enum TrapEnum : int
+            {
+                A = 1,
+                B = 2
+            }
+            public string Name;
+            public int Age { get; set; }
+            public TrapEnum Trap { get; set; }
+        
+        }
+
+        public void TestStructs()
+        {
+            var car = connection.Query<Car>("select 'Ford' Name, 21 Age, 2 Trap").First();
+
+            car.Age.IsEqualTo(21);
+            car.Name.IsEqualTo("Ford");
+            ((int)car.Trap).IsEqualTo(2);
+        }
+
         public void SelectListInt()
         {
             connection.Query<int>("select 1 union all select 2 union all select 3")
@@ -1111,5 +1133,6 @@ Order by p.Id";
             result[1].IsEqualTo(2);
             result[2].IsEqualTo(3);
         }
+
     }
 }
