@@ -45,7 +45,7 @@ namespace SqlMapper
         }
         public void SelectBinary()
         {
-            connection.Query<byte[]>("select cast(1 as varbinary(4))").First().SequenceEqual(new byte[] {1});
+            connection.Query<byte[]>("select cast(1 as varbinary(4))").First().SequenceEqual(new byte[] { 1 });
         }
         public void PassInIntArray()
         {
@@ -75,7 +75,7 @@ namespace SqlMapper
         public void TestSchemaChangedMultiMap()
         {
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
-            var tuple = connection.Query<Dog,Dog,Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1,d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+            var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
 
             tuple.Item1.Name.IsEqualTo("Alf");
             tuple.Item1.Age.IsEqualTo(1);
@@ -83,13 +83,13 @@ namespace SqlMapper
             tuple.Item2.Age.IsEqualTo(1);
 
             connection.Execute("alter table #dog drop column Name");
-            tuple = connection.Query<Dog, Dog,Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+            tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
 
             tuple.Item1.Name.IsNull();
             tuple.Item1.Age.IsEqualTo(1);
             tuple.Item2.Name.IsNull();
             tuple.Item2.Age.IsEqualTo(1);
-            
+
             connection.Execute("drop table #dog");
         }
 
@@ -240,7 +240,7 @@ namespace SqlMapper
 
         class Student
         {
-            public string Name {get; set;}
+            public string Name { get; set; }
             public int Age { get; set; }
         }
 
@@ -345,7 +345,7 @@ namespace SqlMapper
         public void TestNakedBigInt()
         {
             long foo = 12345;
-            var result = connection.Query<long>("select @foo", new {foo}).Single();
+            var result = connection.Query<long>("select @foo", new { foo }).Single();
             foo.IsEqualTo(result);
         }
 
@@ -355,7 +355,7 @@ namespace SqlMapper
             var result = connection.Query<WithBigInt>(@"
 declare @bar table(Value bigint)
 insert @bar values (@foo)
-select * from @bar", new {foo}).Single();
+select * from @bar", new { foo }).Single();
             result.Value.IsEqualTo(foo);
         }
         class WithBigInt
@@ -449,7 +449,7 @@ Order by p.Id
 
                 data[2].Owner.IsNull();
             }
-            
+
             connection.Execute("drop table #Users drop table #Posts");
 
         }
@@ -937,10 +937,12 @@ end");
         public void TestUnexpectedDataMessage()
         {
             string msg = null;
-            try {
+            try
+            {
                 connection.Query<int>("select count(1) where 1 = @Foo", new WithBizarreData { Foo = new GenericUriParser(GenericUriParserOptions.Default), Bar = 23 }).First();
 
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 msg = ex.Message;
             }
@@ -998,7 +1000,7 @@ end");
                 connection.Query<User, User, User>("select 1 A, 2 B, 3 C", (x, y) => x);
             }
             catch (ArgumentException)
-            { 
+            {
                 // expecting an app exception due to multi mapping being bodged 
             }
 
@@ -1064,19 +1066,19 @@ Order by p.Id";
             var p = new DynamicParameters();
 
             p.Add("@b", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            connection.Execute("select @b = null",p);
+            connection.Execute("select @b = null", p);
 
             p.Get<int?>("@b").IsNull();
         }
-        class Foo1 
-         {
+        class Foo1
+        {
             public int Id;
             public int BarId { get; set; }
-         }
+        }
         class Bar1
         {
-           public int BarId;
-           public string Name { get; set; }
+            public int BarId;
+            public string Name { get; set; }
         }
         public void TestMultiMapperIsNotConfusedWithUnorderedCols()
         {
@@ -1144,7 +1146,7 @@ Order by p.Id";
         public void TestAppendingAList()
         {
             DynamicParameters p = new DynamicParameters();
-            var list = new int[] {1,2,3};
+            var list = new int[] { 1, 2, 3 };
             p.AddDynamicParams(new { list });
 
             var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @list", p).ToList();
@@ -1154,5 +1156,23 @@ Order by p.Id";
             result[2].IsEqualTo(3);
         }
 
+        public void TestUniqueIdentifier()
+        {
+            var guid = Guid.NewGuid();
+            var result = connection.Query<Guid>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
+            result.IsEqualTo(guid);
+        }
+        public void TestNullableUniqueIdentifierNonNull()
+        {
+            Guid? guid = Guid.NewGuid();
+            var result = connection.Query<Guid?>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
+            result.IsEqualTo(guid);
+        }
+        public void TestNullableUniqueIdentifierNull()
+        {
+            Guid? guid = null;
+            var result = connection.Query<Guid?>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
+            result.IsEqualTo(guid);
+        }
     }
 }
