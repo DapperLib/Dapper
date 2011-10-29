@@ -926,11 +926,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #endif
 
-            if (
-                (type.IsClass && type != typeof(string) && type != typeof(byte[]) && type != typeof(System.Data.Linq.Binary)) ||
-                (type.IsValueType && !type.IsPrimitive && !(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                && type != typeof(Guid))
-                )
+            if (!typeMap.ContainsKey(type))
             {
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }

@@ -16,6 +16,24 @@ namespace SqlMapper
     {
         SqlConnection connection = Program.GetOpenConnection();
 
+
+        public void TestNullableGuidSupport()
+        {
+            var guid = connection.Query<Guid?>("select null").First();
+            guid.IsNull();
+
+            guid = Guid.NewGuid();
+            var guid2 = connection.Query<Guid?>("select @guid", new { guid }).First();
+            guid.IsEqualTo(guid2);
+        }
+
+        public void TestNonNullableGuidSupport()
+        {
+            var guid = Guid.NewGuid();
+            var guid2 = connection.Query<Guid?>("select @guid", new { guid }).First();
+            Assert.IsTrue(guid == guid2);
+        }
+
         struct Car
         {
             public enum TrapEnum : int
