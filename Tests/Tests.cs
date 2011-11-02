@@ -1192,5 +1192,22 @@ Order by p.Id";
             var result = connection.Query<Guid?>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
             result.IsEqualTo(guid);
         }
+
+
+        public void TestFailInASaneWayWithWrongStructColumnTypes()
+        {
+            try
+            {
+                connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
+                throw new Exception("Should not have got here");
+            } catch(DataException ex)
+            {
+                ex.Message.IsEqualTo("Error parsing column 0 (Value=1 - Int64)");
+            }
+        }
+        struct CanHazInt
+        {
+            public int Value { get; set; }
+        }
     }
 }

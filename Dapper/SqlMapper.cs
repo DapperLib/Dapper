@@ -1446,11 +1446,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
 )
         {
-            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), type.IsValueType ? typeof(object) : type, new[] { typeof(IDataReader) }, true);
+            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), typeof(object), new[] { typeof(IDataReader) }, true);
 
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
-            var emptyLocal = il.DeclareLocal(type);
+            il.DeclareLocal(type);
             bool haveEnumLocal = false;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
@@ -1484,18 +1484,23 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             int index = startBound;
 
-            il.BeginExceptionBlock();
-            // stack is empty
-
             if (type.IsValueType)
             {
-                il.Emit(OpCodes.Ldloca, emptyLocal);
+                il.Emit(OpCodes.Ldloca_S, (byte)1);
                 il.Emit(OpCodes.Initobj, type);
-                il.Emit(OpCodes.Ldloca, emptyLocal);
             }
             else
             {
-                il.Emit(OpCodes.Newobj, type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)); 
+                il.Emit(OpCodes.Newobj, type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null));
+                il.Emit(OpCodes.Stloc_1);
+            }
+            il.BeginExceptionBlock();
+            if(type.IsValueType)
+            {
+                il.Emit(OpCodes.Ldloca_S, (byte)1);// [target]
+            } else
+            {
+                il.Emit(OpCodes.Ldloc_1);// [target]
             }
 
             // stack is now [target]
@@ -1640,19 +1645,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.Emit(OpCodes.Ldloc_0); // stack is Exception, index
             il.Emit(OpCodes.Ldarg_0); // stack is Exception, index, reader
             il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("ThrowDataException"), null);
-            il.Emit(OpCodes.Ldnull);
-            il.Emit(OpCodes.Stloc_1); // to make it verifiable
             il.EndExceptionBlock();
 
-           
-            if (type.IsValueType)
+            il.Emit(OpCodes.Ldloc_1); // stack is [rval]
+            if(type.IsValueType)
             {
-                il.Emit(OpCodes.Ldloc, emptyLocal); // stack is [rval]
                 il.Emit(OpCodes.Box, type);
-            }
-            else 
-            {
-                il.Emit(OpCodes.Ldloc_1); // stack is [rval]
             }
             il.Emit(OpCodes.Ret);
 
