@@ -2049,9 +2049,18 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
             foreach (var param in parameters.Values)
             {
-                var p = command.CreateParameter();
+                string name = Clean(param.Name);
+                bool add = !command.Parameters.Contains(name);
+                IDbDataParameter p;
+                if(add)
+                {
+                    p = command.CreateParameter();
+                    p.ParameterName = name;
+                } else
+                {
+                    p = (IDbDataParameter)command.Parameters[name];
+                }
                 var val = param.Value;
-                p.ParameterName = Clean(param.Name);
                 p.Value = val ?? DBNull.Value;
                 p.Direction = param.ParameterDirection;
                 var s = val as string;
@@ -2070,7 +2079,10 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 {
                     p.DbType = param.DbType.Value;
                 }
-                command.Parameters.Add(p);
+                if (add)
+                {
+                    command.Parameters.Add(p);
+                }
                 param.AttachedParam = p;
             }
         }

@@ -1205,6 +1205,51 @@ Order by p.Id";
                 ex.Message.IsEqualTo("Error parsing column 0 (Value=1 - Int64)");
             }
         }
+
+
+        public void TestProcWithOutParameter()
+        {
+            connection.Execute(
+                @"CREATE PROCEDURE #TestProcWithOutParameter
+        @ID int output,
+        @Foo varchar(100),
+        @Bar int
+        AS
+        SET @ID = @Bar + LEN(@Foo)");
+            var obj = new
+            {
+                ID = 0,
+                Foo = "abc",
+                Bar = 4
+            };
+            var args = new DynamicParameters(obj);
+            args.Add("ID", 0, direction: ParameterDirection.Output);
+            connection.Execute("#TestProcWithOutParameter", args, commandType: CommandType.StoredProcedure);
+            args.Get<int>("ID").IsEqualTo(7);
+        }
+        public void TestProcWithOutAndReturnParameter()
+        {
+            connection.Execute(
+                @"CREATE PROCEDURE #TestProcWithOutAndReturnParameter
+        @ID int output,
+        @Foo varchar(100),
+        @Bar int
+        AS
+        SET @ID = @Bar + LEN(@Foo)
+        RETURN 42");
+            var obj = new
+            {
+                ID = 0,
+                Foo = "abc",
+                Bar = 4
+            };
+            var args = new DynamicParameters(obj);
+            args.Add("ID", 0, direction: ParameterDirection.Output);
+            args.Add("result", 0, direction: ParameterDirection.ReturnValue);
+            connection.Execute("#TestProcWithOutAndReturnParameter", args, commandType: CommandType.StoredProcedure);
+            args.Get<int>("ID").IsEqualTo(7);
+            args.Get<int>("result").IsEqualTo(42);
+        }
         struct CanHazInt
         {
             public int Value { get; set; }
