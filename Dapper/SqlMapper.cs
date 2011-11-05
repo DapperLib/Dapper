@@ -294,9 +294,9 @@ namespace Dapper
             typeMap[typeof(Guid?)] = DbType.Guid;
             typeMap[typeof(DateTime?)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
-            typeMap[typeof(System.Data.Linq.Binary)] = DbType.Binary;
         }
 
+        private const string LinqBinary = "System.Data.Linq.Binary";
         private static DbType LookupDbType(Type type, string name)
         {
             DbType dbType;
@@ -309,6 +309,10 @@ namespace Dapper
             if (typeMap.TryGetValue(type, out dbType))
             {
                 return dbType;
+            }
+            if (type.FullName == LinqBinary)
+            {
+                return DbType.Binary;
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
@@ -926,7 +930,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #endif
 
-            if (!typeMap.ContainsKey(type))
+            if (!(typeMap.ContainsKey(type) || type.FullName == LinqBinary))
             {
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
@@ -1314,9 +1318,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         il.MarkLabel(lenDone);
                         il.Emit(OpCodes.Stloc_1); // [string] 
                     }
-                    if (prop.PropertyType == typeof(System.Data.Linq.Binary))
+                    if (prop.PropertyType.FullName == LinqBinary)
                     {
-                        il.EmitCall(OpCodes.Callvirt, typeof(System.Data.Linq.Binary).GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance), null);
+                        il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance), null);
                     }
                     if (allDone != null) il.MarkLabel(allDone.Value);
                     // relative stack [boxed value or DBNull]
@@ -1385,9 +1389,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 return r => SqlMapper.ReadNullableChar(r.GetValue(index));
             }
-            if (type == typeof(System.Data.Linq.Binary))
+            if (type.FullName == LinqBinary)
             {
-                return r => new System.Data.Linq.Binary((byte[])r.GetValue(index));
+                return r => Activator.CreateInstance(type, r.GetValue(index));
             }
 #pragma warning restore 618
             return r =>
@@ -1582,10 +1586,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                             il.MarkLabel(isNotString);
                         }
-                        if (memberType == typeof(System.Data.Linq.Binary))
+                        if (memberType.FullName == LinqBinary)
                         {
                             il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][target][byte-array]
-                            il.Emit(OpCodes.Newobj, typeof(System.Data.Linq.Binary).GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [target][target][binary]
+                            il.Emit(OpCodes.Newobj, memberType.GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [target][target][binary]
                         }
                         else
                         {
