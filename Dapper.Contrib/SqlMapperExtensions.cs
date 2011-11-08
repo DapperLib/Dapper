@@ -27,9 +27,10 @@ namespace Dapper.Contrib.Extensions
 
         private static IEnumerable<PropertyInfo> KeyPropertiesCache(Type type)
         {
-            if (KeyProperties.ContainsKey(type.TypeHandle))
+            IEnumerable<PropertyInfo> pis;
+            if (KeyProperties.TryGetValue(type.TypeHandle, out pis))
             {
-                return KeyProperties[type.TypeHandle];
+                return pis;
             }
 
             var allProperties = TypePropertiesCache(type);
@@ -44,18 +45,19 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            KeyProperties[type.TypeHandle] = keyProperties;
+            KeyProperties.TryAdd(type.TypeHandle, keyProperties);
             return keyProperties;
         }
         private static IEnumerable<PropertyInfo> TypePropertiesCache(Type type)
         {
-            if (TypeProperties.ContainsKey(type.TypeHandle))
+            IEnumerable<PropertyInfo> pis;
+            if (TypeProperties.TryGetValue(type.TypeHandle, out pis))
             {
-                return TypeProperties[type.TypeHandle];
+                return pis;
             }
 
             var properties = type.GetProperties();
-            TypeProperties[type.TypeHandle] = properties;
+            TypeProperties.TryAdd(type.TypeHandle, properties);
             return properties;
         }
 
@@ -87,7 +89,7 @@ namespace Dapper.Contrib.Extensions
                 // TODO: pluralizer 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
                 sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
-                GetQueries[type.TypeHandle] = sql;
+                GetQueries.TryAdd(type.TypeHandle, sql);
             }
            
             var dynParms = new DynamicParameters();
@@ -133,7 +135,7 @@ namespace Dapper.Contrib.Extensions
                     dynamic;
                 if (tableattr != null)
                     name = tableattr.Name;
-                TypeTableName[type.TypeHandle] = name;
+                TypeTableName.TryAdd(type.TypeHandle, name);
             }
             return name;
         }
