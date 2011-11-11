@@ -1571,6 +1571,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                         else
                         {
+                            if (memberType.IsValueType)
+                            {
+                                il.Emit(OpCodes.Ldtoken, unboxType);
+                                il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);
+                                MethodInfo mi = typeof(Convert).GetMethod("ChangeType", new[] { typeof(object), typeof(Type) });
+                                il.Emit(OpCodes.Call, mi);
+                            }
+
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                         }
                         if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
