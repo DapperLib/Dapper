@@ -1254,5 +1254,48 @@ Order by p.Id";
         {
             public int Value { get; set; }
         }
+        public void TestInt16Usage()
+        {
+            connection.Query<short>("select cast(42 as smallint)").Single().IsEqualTo((short)42);
+            connection.Query<short?>("select cast(42 as smallint)").Single().IsEqualTo((short?)42);
+            connection.Query<short?>("select cast(null as smallint)").Single().IsEqualTo((short?)null);
+
+            // hmmm.... these don't work currently... adding TODO
+            //connection.Query<ShortEnum>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum)42);
+            //connection.Query<ShortEnum?>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum?)42);
+            //connection.Query<ShortEnum?>("select cast(null as smallint)").Single().IsEqualTo((ShortEnum?)null);
+
+            var row =
+                connection.Query<WithInt16Values>(
+                    "select cast(1 as smallint) as NonNullableInt16, cast(2 as smallint) as NullableInt16, cast(3 as smallint) as NonNullableInt16Enum, cast(4 as smallint) as NullableInt16Enum")
+                    .Single();
+            row.NonNullableInt16.IsEqualTo((short)1);
+            row.NullableInt16.IsEqualTo((short)2);
+            row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Three);
+            row.NullableInt16Enum.IsEqualTo(ShortEnum.Four);
+
+            row =
+    connection.Query<WithInt16Values>(
+        "select cast(5 as smallint) as NonNullableInt16, cast(null as smallint) as NullableInt16, cast(6 as smallint) as NonNullableInt16Enum, cast(null as smallint) as NullableInt16Enum")
+        .Single();
+            row.NonNullableInt16.IsEqualTo((short)5);
+            row.NullableInt16.IsEqualTo((short?)null);
+            row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Six);
+            row.NullableInt16Enum.IsEqualTo((ShortEnum?)null);
+        }
+
+
+        public class WithInt16Values
+        {
+            public short NonNullableInt16 { get; set; }
+            public short? NullableInt16 { get; set; }
+            public ShortEnum NonNullableInt16Enum { get; set; }
+            public ShortEnum? NullableInt16Enum { get; set; }
+
+        }
+        public enum ShortEnum : short
+        {
+            Zero = 0, One = 1, Two = 2, Three = 3, Four = 4, Five = 5, Six = 6
+        }
     }
 }
