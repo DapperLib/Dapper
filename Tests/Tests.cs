@@ -297,7 +297,7 @@ namespace SqlMapper
             internal int Internal { set { _internal = value; } }
 
             public int _priv;
-            internal int Priv { set { _priv = value; } }
+            private int Priv { set { _priv = value; } }
         }
 
         public void TestSetInternal()
