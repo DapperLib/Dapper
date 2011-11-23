@@ -3,3 +3,8 @@ bin/
 obj/
 /*.user
 _Resharper*
+.hgtags
+NuGet.exe
+*.user
+*.nupkg
+.docstats
