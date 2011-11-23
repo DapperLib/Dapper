@@ -571,7 +571,7 @@ namespace Dapper.Contrib.Extensions
 
         public SqlBuilder Join(string sql, dynamic parameters = null)
         {
-            AddClause("join", sql, parameters, joiner: "\nJOIN ", prefix: "\nJOIN", postfix: "\n");
+            AddClause("join", sql, parameters, joiner: "\nJOIN ", prefix: "\nJOIN ", postfix: "\n");
             return this;
         }
     }
