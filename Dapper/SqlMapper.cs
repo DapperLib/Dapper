@@ -1147,6 +1147,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (list != null)
             {
                 bool isString = value is IEnumerable<string>;
+                bool isDbString = value is IEnumerable<DbString>;
                 foreach (var item in list)
                 {
                     count++;
@@ -1161,7 +1162,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             listParam.Size = -1;
                         }
                     }
-                    command.Parameters.Add(listParam);
+                    if (isDbString && item as DbString != null)
+                    {
+                        var str = item as DbString;
+                        str.AddParameter(command, listParam.ParameterName);
+                    }
+                    else
+                    {
+                        command.Parameters.Add(listParam);
+                    }
                 }
 
                 if (count == 0)
@@ -1197,7 +1206,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             Type type = identity.parametersType;
             bool filterParams = identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
-
             var dm = new DynamicMethod(string.Format("ParamInfo{0}", Guid.NewGuid()), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();

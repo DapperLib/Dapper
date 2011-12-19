@@ -17,6 +17,15 @@ namespace SqlMapper
         SqlConnection connection = Program.GetOpenConnection();
 
 
+        public void TestListOfAnsiStrings()
+        {
+            var results = connection.Query<string>("select * from (select 'a' str union select 'b' union select 'c') X where str in @strings",
+                new { strings = new[] { new DbString { IsAnsi = true, Value = "a" }, new DbString { IsAnsi = true, Value = "b" } } }).ToList();
+
+            results[0].IsEqualTo("a");
+            results[1].IsEqualTo("b");
+        }
+
         public void TestNullableGuidSupport()
         {
             var guid = connection.Query<Guid?>("select null").First();
