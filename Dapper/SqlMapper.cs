@@ -1428,7 +1428,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                   .Select(p => new PropInfo
                   {
                       Name = p.Name,
-                      Setter = p.DeclaringType == t ? p.GetSetMethod(true) : p.DeclaringType.GetProperty(p.Name).GetSetMethod(true),
+                      Setter = p.DeclaringType == t ? 
+                        p.GetSetMethod(true) : 
+                        p.DeclaringType.GetProperty(p.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetSetMethod(true),
                       Type = p.PropertyType
                   })
                   .Where(info => info.Setter != null)
