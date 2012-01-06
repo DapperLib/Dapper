@@ -20,6 +20,6 @@
     </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="SqlMapper.cs" target="content\Dapper\SqlMapper.cs" />
+    <file src="SqlMapper.cs.pp" target="content\Dapper\SqlMapper.cs.pp" />
   </files>
 </package>
