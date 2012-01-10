@@ -578,5 +578,17 @@ namespace Dapper.Contrib.Extensions
             AddClause("join", sql, parameters, joiner: "\nJOIN ", prefix: "\nJOIN ", postfix: "\n");
             return this;
         }
+
+        public SqlBuilder GroupBy(string sql, dynamic parameters = null)
+        {
+            AddClause("groupby", sql, parameters, joiner: " , ", prefix: "\nGROUP BY ", postfix: "\n");
+            return this;
+        }
+
+        public SqlBuilder Having(string sql, dynamic parameters = null)
+        {
+            AddClause("having", sql, parameters, joiner: "\nAND ", prefix: "HAVING ", postfix: "\n");
+            return this;
+        }
     }
 }
