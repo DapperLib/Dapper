@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ License: http://www.apache.org/licenses/LICENSE-2.0 
+ Home page: http://code.google.com/p/dapper-dot-net/
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -65,7 +70,7 @@ namespace Dapper
             /// <returns></returns>
             public int Update(int id, dynamic data)
             {
-                List<string> paramNames = GetParamNames(data);
+                List<string> paramNames = GetParamNames((object)data);
 
                 var builder = new StringBuilder();
                 builder.Append("update [").Append(TableName).Append("] set ");
@@ -135,7 +140,7 @@ namespace Dapper
         DbTransaction transaction;
 
 
-        public static TDatabase Create(DbConnection connection, int commandTimeout)
+        public static TDatabase Init(DbConnection connection, int commandTimeout)
         {
             TDatabase db = new TDatabase();
             db.InitDatabase(connection, commandTimeout);
@@ -173,7 +178,7 @@ namespace Dapper
             transaction = null;
         }
 
-        public Action<Database<TDatabase>> CreateTableConstructor()
+        protected Action<Database<TDatabase>> CreateTableConstructor()
         {
             var dm = new DynamicMethod("ConstructInstances", null, new Type[] { typeof(Database<TDatabase>) }, true);
             var il = dm.GetILGenerator();

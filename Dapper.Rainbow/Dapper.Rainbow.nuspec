@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Dapper.Rainbow</id>
+    <version>0.1</version>
+    <title>Dapper.Rainbow</title>
+    <authors>Sam Saffron</authors>
+    <owners>Sam Saffron</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Trivial micro-orm implemented on Dapper, provides with CRUD helpers</description>
+    <releaseNotes>* version 0.1 </releaseNotes>
+    <copyright>Copyright Sam Saffron 2012</copyright>
+    <tags>orm dapper micro-orm</tags>
+    <dependencies>
+      <dependency id="Dapper" version="1.8" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin\Release\Dapper.Rainbow.dll" target="lib\net40" />
+  </files>
+</package>
