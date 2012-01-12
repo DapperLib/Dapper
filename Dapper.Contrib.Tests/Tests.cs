@@ -6,6 +6,7 @@ using System.Reflection;
 using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
 using System;
+using Dapper;
 
 
 namespace Dapper.Contrib.Tests

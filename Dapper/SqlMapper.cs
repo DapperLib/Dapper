@@ -2101,6 +2101,18 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
 
         /// <summary>
+        /// All the names of the param in the bag, use Get to yank them out
+        /// </summary>
+        public IEnumerable<string> ParameterNames
+        {
+            get
+            {
+                return parameters.Select(p => p.Key);
+            }
+        }
+
+
+        /// <summary>
         /// Get the value of a parameter
         /// </summary>
         /// <typeparam name="T"></typeparam>
