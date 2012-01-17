@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Linq;
 using System.Data.SqlClient;
 using System.Diagnostics;
@@ -9,6 +10,8 @@ using Dapper;
 using Massive;
 using NHibernate.Criterion;
 using NHibernate.Linq;
+using ServiceStack.OrmLite;
+using ServiceStack.OrmLite.SqlServer;
 using SqlMapper.Linq2Sql;
 using SqlMapper.NHibernate;
 using Dapper.Contrib.Extensions;
@@ -191,6 +194,11 @@ namespace SqlMapper
 			// Soma
 			var somadb = new Soma.Core.Db(new SomaConfig());
 			tests.Add(id => somadb.Find<Post>(id), "Soma");
+
+            //ServiceStack's OrmLite:
+            OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
+            IDbCommand ormLiteCmd = Program.GetOpenConnection().CreateCommand();
+            tests.Add(id => ormLiteCmd.QueryById<Post>(id), "OrmLite QueryById");
             
             // HAND CODED 
 

@@ -4,6 +4,7 @@ using System.Reflection;
 
 namespace SqlMapper
 {
+    [ServiceStack.DataAnnotations.Alias("Posts")]
 	[Soma.Core.Table(Name = "Posts")]
     class Post
     {

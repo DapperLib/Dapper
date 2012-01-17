@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Dapper.Contrib.Extensions;
+using System.Collections.Generic;
+using System;
+using Dapper;
 
 
 namespace Dapper.Contrib.Tests
@@ -98,6 +101,53 @@ namespace Dapper.Contrib.Tests
                 connection.Query<User>("select * from Users").Count().IsEqualTo(0);
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+            }
+        }
+
+        public void BuilderSelectClause()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var rand = new Random(8675309);
+                var data = new List<User>();
+                for (int i = 0; i < 100; i++)
+                {
+                    var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
+                    data.Add(nU);
+                    nU.Id = (int)connection.Insert<User>(nU);
+                }
+
+                var builder = new SqlBuilder();
+                var justId = builder.AddTemplate("SELECT /**select**/ FROM Users");
+                var all = builder.AddTemplate("SELECT Name, /**select**/, Age FROM Users");
+
+                builder.Select("Id");
+
+                var ids = connection.Query<int>(justId.RawSql, justId.Parameters);
+                var users = connection.Query<User>(all.RawSql, all.Parameters);
+
+                foreach (var u in data)
+                {
+                    if (!ids.Any(i => u.Id == i)) throw new Exception("Missing ids in select");
+                    if (!users.Any(a => a.Id == u.Id && a.Name == u.Name && a.Age == u.Age)) throw new Exception("Missing users in select");
+                }
+            }
+        }
+
+        public void BuilderTemplateWOComposition()
+        {
+            var builder = new SqlBuilder();
+            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new {age = 5});
+
+            if (template.RawSql == null) throw new Exception("RawSql null");
+            if (template.Parameters == null) throw new Exception("Parameters null");
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.Insert(new User { Age = 5, Name = "Testy McTestington" });
+
+                if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
+                    throw new Exception("Query failed");
             }
         }
     }

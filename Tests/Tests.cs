@@ -7,15 +7,92 @@ using System.Data.SqlServerCe;
 using System.IO;
 using System.Data;
 using System.Collections;
+using System.Reflection;
 
 namespace SqlMapper
 {
 
-
     class Tests
     {
-
         SqlConnection connection = Program.GetOpenConnection();
+
+        public class AbstractInheritance
+        {
+            public abstract class Order
+            {
+                internal int Internal { get; set; }
+                protected int Protected { get; set; }
+                public int Public { get; set; }
+
+                public int ProtectedVal { get { return Protected; } }
+            }
+
+            public class ConcreteOrder : Order
+            {
+                public int Concrete { get; set; }
+            }
+        }
+
+        // http://stackoverflow.com/q/8593871
+        public void TestAbstractInheritance() 
+        {
+            var order = connection.Query<AbstractInheritance.ConcreteOrder>("select 1 Internal,2 Protected,3 [Public],4 Concrete").First();
+
+            order.Internal.IsEqualTo(1);
+            order.ProtectedVal.IsEqualTo(2);
+            order.Public.IsEqualTo(3);
+            order.Concrete.IsEqualTo(4);
+            
+        }
+
+
+        public void TestListOfAnsiStrings()
+        {
+            var results = connection.Query<string>("select * from (select 'a' str union select 'b' union select 'c') X where str in @strings",
+                new { strings = new[] { new DbString { IsAnsi = true, Value = "a" }, new DbString { IsAnsi = true, Value = "b" } } }).ToList();
+
+            results[0].IsEqualTo("a");
+            results[1].IsEqualTo("b");
+        }
+
+        public void TestNullableGuidSupport()
+        {
+            var guid = connection.Query<Guid?>("select null").First();
+            guid.IsNull();
+
+            guid = Guid.NewGuid();
+            var guid2 = connection.Query<Guid?>("select @guid", new { guid }).First();
+            guid.IsEqualTo(guid2);
+        }
+
+        public void TestNonNullableGuidSupport()
+        {
+            var guid = Guid.NewGuid();
+            var guid2 = connection.Query<Guid?>("select @guid", new { guid }).First();
+            Assert.IsTrue(guid == guid2);
+        }
+
+        struct Car
+        {
+            public enum TrapEnum : int
+            {
+                A = 1,
+                B = 2
+            }
+            public string Name;
+            public int Age { get; set; }
+            public TrapEnum Trap { get; set; }
+        
+        }
+
+        public void TestStructs()
+        {
+            var car = connection.Query<Car>("select 'Ford' Name, 21 Age, 2 Trap").First();
+
+            car.Age.IsEqualTo(21);
+            car.Name.IsEqualTo("Ford");
+            ((int)car.Trap).IsEqualTo(2);
+        }
 
         public void SelectListInt()
         {
@@ -24,7 +101,7 @@ namespace SqlMapper
         }
         public void SelectBinary()
         {
-            connection.Query<byte[]>("select cast(1 as varbinary(4))").First().SequenceEqual(new byte[] {1});
+            connection.Query<byte[]>("select cast(1 as varbinary(4))").First().SequenceEqual(new byte[] { 1 });
         }
         public void PassInIntArray()
         {
@@ -36,6 +113,40 @@ namespace SqlMapper
         {
             connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[0] })
              .IsSequenceEqualTo(new int[0]);
+        }
+
+        public void TestSchemaChanged()
+        {
+            connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            var d = connection.Query<Dog>("select * from #dog").Single();
+            d.Name.IsEqualTo("Alf");
+            d.Age.IsEqualTo(1);
+            connection.Execute("alter table #dog drop column Name");
+            d = connection.Query<Dog>("select * from #dog").Single();
+            d.Name.IsNull();
+            d.Age.IsEqualTo(1);
+            connection.Execute("drop table #dog");
+        }
+
+        public void TestSchemaChangedMultiMap()
+        {
+            connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+
+            tuple.Item1.Name.IsEqualTo("Alf");
+            tuple.Item1.Age.IsEqualTo(1);
+            tuple.Item2.Name.IsEqualTo("Alf");
+            tuple.Item2.Age.IsEqualTo(1);
+
+            connection.Execute("alter table #dog drop column Name");
+            tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+
+            tuple.Item1.Name.IsNull();
+            tuple.Item1.Age.IsEqualTo(1);
+            tuple.Item2.Name.IsNull();
+            tuple.Item2.Age.IsEqualTo(1);
+
+            connection.Execute("drop table #dog");
         }
 
         public void TestReadMultipleIntegersWithSplitOnAny()
@@ -185,7 +296,7 @@ namespace SqlMapper
 
         class Student
         {
-            public string Name {get; set;}
+            public string Name { get; set; }
             public int Age { get; set; }
         }
 
@@ -224,7 +335,7 @@ namespace SqlMapper
             internal int Internal { set { _internal = value; } }
 
             public int _priv;
-            internal int Priv { set { _priv = value; } }
+            private int Priv { set { _priv = value; } }
         }
 
         public void TestSetInternal()
@@ -287,6 +398,26 @@ namespace SqlMapper
             gotException.IsTrue();
         }
 
+        public void TestNakedBigInt()
+        {
+            long foo = 12345;
+            var result = connection.Query<long>("select @foo", new { foo }).Single();
+            foo.IsEqualTo(result);
+        }
+
+        public void TestBigIntMember()
+        {
+            long foo = 12345;
+            var result = connection.Query<WithBigInt>(@"
+declare @bar table(Value bigint)
+insert @bar values (@foo)
+select * from @bar", new { foo }).Single();
+            result.Value.IsEqualTo(foo);
+        }
+        class WithBigInt
+        {
+            public long Value { get; set; }
+        }
 
         class User
         {
@@ -374,7 +505,7 @@ Order by p.Id
 
                 data[2].Owner.IsNull();
             }
-            
+
             connection.Execute("drop table #Users drop table #Posts");
 
         }
@@ -757,7 +888,7 @@ end");
                 this.numbers = numbers;
             }
 
-            public void AddParameters(IDbCommand command)
+            public void AddParameters(IDbCommand command, Dapper.SqlMapper.Identity identity)
             {
                 var sqlCommand = (SqlCommand)command;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
@@ -862,10 +993,12 @@ end");
         public void TestUnexpectedDataMessage()
         {
             string msg = null;
-            try {
+            try
+            {
                 connection.Query<int>("select count(1) where 1 = @Foo", new WithBizarreData { Foo = new GenericUriParser(GenericUriParserOptions.Default), Bar = 23 }).First();
 
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 msg = ex.Message;
             }
@@ -923,7 +1056,7 @@ end");
                 connection.Query<User, User, User>("select 1 A, 2 B, 3 C", (x, y) => x);
             }
             catch (ArgumentException)
-            { 
+            {
                 // expecting an app exception due to multi mapping being bodged 
             }
 
@@ -989,19 +1122,19 @@ Order by p.Id";
             var p = new DynamicParameters();
 
             p.Add("@b", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            connection.Execute("select @b = null",p);
+            connection.Execute("select @b = null", p);
 
             p.Get<int?>("@b").IsNull();
         }
-        class Foo1 
-         {
+        class Foo1
+        {
             public int Id;
             public int BarId { get; set; }
-         }
+        }
         class Bar1
         {
-           public int BarId;
-           public string Name { get; set; }
+            public int BarId;
+            public string Name { get; set; }
         }
         public void TestMultiMapperIsNotConfusedWithUnorderedCols()
         {
@@ -1050,6 +1183,157 @@ Order by p.Id";
         {
             var output = connection.Query<WithPrivateConstructor>("select 1 as Foo").First();
             output.Foo.IsEqualTo(1);
+        }
+
+        public void TestAppendingAnonClasses()
+        {
+            DynamicParameters p = new DynamicParameters();
+            p.AddDynamicParams(new { A = 1, B = 2 });
+            p.AddDynamicParams(new { C = 3, D = 4 });
+
+            var result = connection.Query("select @A a,@B b,@C c,@D d", p).Single();
+
+            ((int)result.a).IsEqualTo(1);
+            ((int)result.b).IsEqualTo(2);
+            ((int)result.c).IsEqualTo(3);
+            ((int)result.d).IsEqualTo(4);
+        }
+
+        public void TestAppendingAList()
+        {
+            DynamicParameters p = new DynamicParameters();
+            var list = new int[] { 1, 2, 3 };
+            p.AddDynamicParams(new { list });
+
+            var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @list", p).ToList();
+
+            result[0].IsEqualTo(1);
+            result[1].IsEqualTo(2);
+            result[2].IsEqualTo(3);
+        }
+
+        public void TestUniqueIdentifier()
+        {
+            var guid = Guid.NewGuid();
+            var result = connection.Query<Guid>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
+            result.IsEqualTo(guid);
+        }
+        public void TestNullableUniqueIdentifierNonNull()
+        {
+            Guid? guid = Guid.NewGuid();
+            var result = connection.Query<Guid?>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
+            result.IsEqualTo(guid);
+        }
+        public void TestNullableUniqueIdentifierNull()
+        {
+            Guid? guid = null;
+            var result = connection.Query<Guid?>("declare @foo uniqueidentifier set @foo = @guid select @foo", new { guid }).Single();
+            result.IsEqualTo(guid);
+        }
+
+
+        public void TestFailInASaneWayWithWrongStructColumnTypes()
+        {
+            try
+            {
+                connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
+                throw new Exception("Should not have got here");
+            } catch(DataException ex)
+            {
+                ex.Message.IsEqualTo("Error parsing column 0 (Value=1 - Int64)");
+            }
+        }
+
+
+        public void TestProcWithOutParameter()
+        {
+            connection.Execute(
+                @"CREATE PROCEDURE #TestProcWithOutParameter
+        @ID int output,
+        @Foo varchar(100),
+        @Bar int
+        AS
+        SET @ID = @Bar + LEN(@Foo)");
+            var obj = new
+            {
+                ID = 0,
+                Foo = "abc",
+                Bar = 4
+            };
+            var args = new DynamicParameters(obj);
+            args.Add("ID", 0, direction: ParameterDirection.Output);
+            connection.Execute("#TestProcWithOutParameter", args, commandType: CommandType.StoredProcedure);
+            args.Get<int>("ID").IsEqualTo(7);
+        }
+        public void TestProcWithOutAndReturnParameter()
+        {
+            connection.Execute(
+                @"CREATE PROCEDURE #TestProcWithOutAndReturnParameter
+        @ID int output,
+        @Foo varchar(100),
+        @Bar int
+        AS
+        SET @ID = @Bar + LEN(@Foo)
+        RETURN 42");
+            var obj = new
+            {
+                ID = 0,
+                Foo = "abc",
+                Bar = 4
+            };
+            var args = new DynamicParameters(obj);
+            args.Add("ID", 0, direction: ParameterDirection.Output);
+            args.Add("result", 0, direction: ParameterDirection.ReturnValue);
+            connection.Execute("#TestProcWithOutAndReturnParameter", args, commandType: CommandType.StoredProcedure);
+            args.Get<int>("ID").IsEqualTo(7);
+            args.Get<int>("result").IsEqualTo(42);
+        }
+        struct CanHazInt
+        {
+            public int Value { get; set; }
+        }
+        public void TestInt16Usage()
+        {
+            connection.Query<short>("select cast(42 as smallint)").Single().IsEqualTo((short)42);
+            connection.Query<short?>("select cast(42 as smallint)").Single().IsEqualTo((short?)42);
+            connection.Query<short?>("select cast(null as smallint)").Single().IsEqualTo((short?)null);
+
+            // hmmm.... these don't work currently... adding TODO
+            //connection.Query<ShortEnum>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum)42);
+            //connection.Query<ShortEnum?>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum?)42);
+            //connection.Query<ShortEnum?>("select cast(null as smallint)").Single().IsEqualTo((ShortEnum?)null);
+
+            var row =
+                connection.Query<WithInt16Values>(
+                    "select cast(1 as smallint) as NonNullableInt16, cast(2 as smallint) as NullableInt16, cast(3 as smallint) as NonNullableInt16Enum, cast(4 as smallint) as NullableInt16Enum")
+                    .Single();
+            row.NonNullableInt16.IsEqualTo((short)1);
+            row.NullableInt16.IsEqualTo((short)2);
+            row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Three);
+            row.NullableInt16Enum.IsEqualTo(ShortEnum.Four);
+
+            row =
+    connection.Query<WithInt16Values>(
+        "select cast(5 as smallint) as NonNullableInt16, cast(null as smallint) as NullableInt16, cast(6 as smallint) as NonNullableInt16Enum, cast(null as smallint) as NullableInt16Enum")
+        .Single();
+            row.NonNullableInt16.IsEqualTo((short)5);
+            row.NullableInt16.IsEqualTo((short?)null);
+            row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Six);
+            row.NullableInt16Enum.IsEqualTo((ShortEnum?)null);
+        }
+
+
+        public class WithInt16Values
+        {
+            public short NonNullableInt16 { get; set; }
+            public short? NullableInt16 { get; set; }
+            public ShortEnum NonNullableInt16Enum { get; set; }
+            public ShortEnum? NullableInt16Enum { get; set; }
+
+        }
+        public enum ShortEnum : short
+        {
+            Zero = 0, One = 1, Two = 2, Three = 3, Four = 4, Five = 5, Six = 6
         }
     }
 }

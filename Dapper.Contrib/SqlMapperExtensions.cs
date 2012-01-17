@@ -29,9 +29,11 @@ namespace Dapper.Contrib.Extensions
 
         private static IEnumerable<PropertyInfo> KeyPropertiesCache(Type type)
         {
-            if (KeyProperties.ContainsKey(type.TypeHandle))
+
+            IEnumerable<PropertyInfo> pi;
+            if (KeyProperties.TryGetValue(type.TypeHandle,out pi))
             {
-                return KeyProperties[type.TypeHandle];
+                return pi;
             }
 
             var allProperties = TypePropertiesCache(type);
@@ -51,9 +53,10 @@ namespace Dapper.Contrib.Extensions
         }
         private static IEnumerable<PropertyInfo> TypePropertiesCache(Type type)
         {
-            if (TypeProperties.ContainsKey(type.TypeHandle))
+            IEnumerable<PropertyInfo> pis;
+            if (TypeProperties.TryGetValue(type.TypeHandle, out pis))
             {
-                return TypeProperties[type.TypeHandle];
+                return pis;
             }
 
             var properties = type.GetProperties().Where(IsWriteable);
@@ -325,9 +328,10 @@ namespace Dapper.Contrib.Extensions
             {
                 Type typeOfT = typeof(T);
 
-                if (TypeCache.ContainsKey(typeOfT))
+                object k;
+                if (TypeCache.TryGetValue(typeOfT, out k))
                 {
-                    return (T)TypeCache[typeOfT];
+                    return (T)k;
                 }
                 var assemblyBuilder = GetAsmBuilder(typeOfT.Name);
 

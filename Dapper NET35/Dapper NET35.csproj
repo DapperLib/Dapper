@@ -8,8 +8,8 @@
     <ProjectGuid>{B26305D8-3A89-4D68-A981-9BBF378B81FA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Dapper_NET35</RootNamespace>
-    <AssemblyName>Dapper NET35</AssemblyName>
+    <RootNamespace>Dapper</RootNamespace>
+    <AssemblyName>Dapper</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -36,7 +36,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Data.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Dapper\Properties\AssemblyInfo.cs">

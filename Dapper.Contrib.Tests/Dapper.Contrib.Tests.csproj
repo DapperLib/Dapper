@@ -65,6 +65,10 @@
       <Project>{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}</Project>
       <Name>Dapper.Contrib</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj">
+      <Project>{BF782EF1-2B0F-42FA-9DD0-928454A94C6D}</Project>
+      <Name>Dapper.SqlBuilder</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dapper\Dapper.csproj">
       <Project>{DAF737E1-05B5-4189-A5AA-DAC6233B64D7}</Project>
       <Name>Dapper</Name>
