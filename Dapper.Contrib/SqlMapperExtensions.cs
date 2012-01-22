@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Reflection.Emit;
 using System.Threading;
 using System.Runtime.CompilerServices;
+using Dapper;
 
 namespace Dapper.Contrib.Extensions
 {
@@ -24,6 +25,11 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
+
+		private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary = new Dictionary<string, ISqlAdapter>() {
+																							{"sqlconnection", new SqlServerAdapter()},
+																							{"npgsqlconnection", new PostgresAdapter()}
+																						};
 
         private static IEnumerable<PropertyInfo> KeyPropertiesCache(Type type)
         {
@@ -57,12 +63,23 @@ namespace Dapper.Contrib.Extensions
                 return pis;
             }
 
-            var properties = type.GetProperties();
+            var properties = type.GetProperties().Where(IsWriteable);
             TypeProperties[type.TypeHandle] = properties;
             return properties;
         }
 
-        /// <summary>
+		public static bool IsWriteable(PropertyInfo pi)
+		{
+			object[] attributes = pi.GetCustomAttributes(typeof (WriteAttribute), false);
+			if (attributes.Length == 1)
+			{
+				WriteAttribute write = (WriteAttribute) attributes[0];
+				return write.Write;
+			}
+			return true;
+		}
+
+    	/// <summary>
         /// Returns a single entity by a single id from table "Ts". T must be of interface type. 
         /// Id must be marked with [Key] attribute.
         /// Created entity is tracked/intercepted for changes and used by the Update() extension. 
@@ -148,41 +165,37 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
         public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
-        {          
+        {
             
             var type = typeof(T);
 
             var name = GetTableName(type);
 
-            var sb = new StringBuilder(null);
-            sb.AppendFormat("insert into {0} (", name);
+            var sbColumnList = new StringBuilder(null);
 
-            var allProperties = TypePropertiesCache(type);
+			var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
             var allPropertiesExceptKey = allProperties.Except(keyProperties);
 
             for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
             {
                 var property = allPropertiesExceptKey.ElementAt(i);
-                sb.Append(property.Name);
+				sbColumnList.Append(property.Name);
                 if (i < allPropertiesExceptKey.Count() - 1)
-                    sb.Append(", ");
+					sbColumnList.Append(", ");
             }
-            sb.Append(") values (");
 
-            for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
+			var sbParameterList = new StringBuilder(null);
+			for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
             {
                 var property = allPropertiesExceptKey.ElementAt(i);
-                sb.AppendFormat("@{0}", property.Name);
+                sbParameterList.AppendFormat("@{0}", property.Name);
                 if (i < allPropertiesExceptKey.Count() - 1)
-                    sb.Append(", ");
+                    sbParameterList.Append(", ");
             }
-            sb.Append(") ");
-            connection.Execute(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-            //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-            var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-            return (int)r.First().id;
-            
+			ISqlAdapter adapter = GetFormatter(connection);
+			int id = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(), sbParameterList.ToString(),  keyProperties, entityToInsert);
+			return id;
         }
 
         /// <summary>
@@ -203,7 +216,7 @@ namespace Dapper.Contrib.Extensions
             var type = typeof(T);
 
             var keyProperties = KeyPropertiesCache(type);
-            if (keyProperties.Count() == 0)
+            if (!keyProperties.Any())
                 throw new ArgumentException("Entity must have at least one [Key] property");
 
             var name = GetTableName(type);
@@ -264,8 +277,15 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+		public static ISqlAdapter GetFormatter(IDbConnection connection)
+		{
+			string name = connection.GetType().Name.ToLower();
+			if (!AdapterDictionary.ContainsKey(name))
+				return new SqlServerAdapter();
+			return AdapterDictionary[name];
+		}
 
-        class ProxyGenerator
+    	class ProxyGenerator
         {
             private static readonly Dictionary<Type, object> TypeCache = new Dictionary<Type, object>();
 
@@ -440,4 +460,63 @@ namespace Dapper.Contrib.Extensions
     {
     }
 
+	[AttributeUsage(AttributeTargets.Property)]
+	public class WriteAttribute : Attribute
+	{
+		public WriteAttribute(bool write)
+        {
+			Write = write;
+        }
+        public bool Write { get; private set; }
+	}
+}
+
+public interface ISqlAdapter
+{
+	int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
+}
+
+public class SqlServerAdapter : ISqlAdapter
+{
+	public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+	{
+		string cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+
+		connection.Execute(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout); 
+
+		//NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
+		var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+		return (int)r.First().id;
+	}
+}
+
+public class PostgresAdapter : ISqlAdapter
+{
+	public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+
+		sb.Append(" RETURNING ");
+		bool first = true;
+		foreach(var property in keyProperties)
+		{
+			if (!first)
+				sb.Append(", ");
+			first = false;
+			sb.Append(property.Name);
+		}
+		var results = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+
+		// Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
+		int id = 0;
+		foreach (var p in keyProperties)
+		{
+			var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
+			p.SetValue(entityToInsert, value, null);
+			if (id == 0)
+				id = Convert.ToInt32(value);
+		}
+		return id;
+	}
 }
