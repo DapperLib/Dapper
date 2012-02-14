@@ -1736,6 +1736,19 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 this.reader = reader;
                 this.identity = identity;
             }
+
+#if !CSHARP30
+
+            /// <summary>
+            /// Read the next grid of results, returned as a dynamic object
+            /// </summary>
+            public IEnumerable<dynamic> Read()
+            {
+                return Read<FastExpando>();
+            }
+
+#endif
+
             /// <summary>
             /// Read the next grid of results
             /// </summary>
