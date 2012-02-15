@@ -1504,7 +1504,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
-                il.Emit(OpCodes.Newobj, type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null));
+                var ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null); 
+                if (ctor == null) 
+                {
+                    throw new InvalidOperationException("A parameterless default constructor is required to allow for dapper materialization");
+                }
+                il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Stloc_1);
             }
             il.BeginExceptionBlock();
