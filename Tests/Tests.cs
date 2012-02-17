@@ -33,6 +33,29 @@ namespace SqlMapper
             }
         }
 
+        class NoDefualtConstructor 
+        {
+            public NoDefualtConstructor(int a)
+            {
+                A = a;
+            }
+            public int A { get; set; }
+        }
+
+        public void EnsureNoConstructorGivesNiceError()
+        {
+            try
+            {
+                connection.Query<NoDefualtConstructor>("select 1 A").First();
+            }
+            catch(InvalidOperationException e)
+            {
+                e.Message.IsEqualTo("A parameterless default constructor is required to allow for dapper materialization");
+            }
+   
+        }
+
+
         // http://stackoverflow.com/q/8593871
         public void TestAbstractInheritance() 
         {
@@ -42,9 +65,7 @@ namespace SqlMapper
             order.ProtectedVal.IsEqualTo(2);
             order.Public.IsEqualTo(3);
             order.Concrete.IsEqualTo(4);
-            
         }
-
 
         public void TestListOfAnsiStrings()
         {
