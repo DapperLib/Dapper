@@ -106,10 +106,21 @@ namespace Dapper
             seq++;
         }
 
+        public SqlBuilder InnerJoin(string sql, dynamic parameters = null)
+        {
+            AddClause("innerjoin", sql, parameters, joiner: "\nINNER JOIN ", prefix: "\nINNER JOIN ", postfix: "\n");
+            return this;
+        }
 
         public SqlBuilder LeftJoin(string sql, dynamic parameters = null)
         {
             AddClause("leftjoin", sql, parameters, joiner: "\nLEFT JOIN ", prefix: "\nLEFT JOIN ", postfix: "\n");
+            return this;
+        }
+
+        public SqlBuilder RightJoin(string sql, dynamic parameters = null)
+        {
+            AddClause("rightjoin", sql, parameters, joiner: "\nRIGHT JOIN ", prefix: "\nRIGHT JOIN ", postfix: "\n");
             return this;
         }
 
