@@ -1138,6 +1138,38 @@ Order by p.Id";
             connection.Execute("drop table #Users drop table #Posts drop table #Comments");
         }
 
+        public void TestReadDynamicWithGridReader()
+        {
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+
+                insert #Users values(99, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')";
+
+            connection.Execute(createSql);
+
+            var sql = @"SELECT * FROM #Users ORDER BY Id
+                        SELECT * FROM #Posts ORDER BY Id DESC";
+
+            var grid = connection.QueryMultiple(sql);
+
+            var users = grid.Read().ToList();
+            var posts = grid.Read().ToList();
+
+            users.Count.IsEqualTo(2);
+            posts.Count.IsEqualTo(3);
+
+            ((int)users.First().Id).IsEqualTo(2);
+            ((int)posts.First().Id).IsEqualTo(3);
+
+            connection.Execute("drop table #Users drop table #Posts");
+        }
+
         public void TestDynamicParamNullSupport()
         {
             var p = new DynamicParameters();
