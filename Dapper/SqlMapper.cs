@@ -1663,6 +1663,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
                     if (specializedConstructor != null)
                     {
+                        il.Emit(OpCodes.Pop);
                         Type itemType = item.Property != null ? item.Property.Type : item.Field.FieldType;
                         if (itemType.IsValueType)
                         {
