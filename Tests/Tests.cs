@@ -33,19 +33,22 @@ namespace SqlMapper
             }
         }
 
-        class NoDefaultConstructor 
+        class NoDefaultConstructor
         {
-            public NoDefaultConstructor(int a)
+            public NoDefaultConstructor(int a, float f)
             {
                 A = a;
+                F = f;
             }
             public int A { get; set; }
+            public float F { get; set; }
         }
 
         public void TestNoDefaultConstructor()
         {
-            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select 1 A").First();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select 1 A, CAST(NULL AS real) f").First();
             nodef.A.IsEqualTo(1);
+            nodef.F.IsEqualTo(0);
         }
 
         // http://stackoverflow.com/q/8593871
