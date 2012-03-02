@@ -1665,9 +1665,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         Type itemType = item.Property != null ? item.Property.Type : item.Field.FieldType;
                         if (itemType.IsValueType)
+                        {
+                            il.DeclareLocal(itemType);
+                            il.Emit(OpCodes.Ldloca_S, (byte)(index + 2));
                             il.Emit(OpCodes.Initobj, itemType);
+                            il.Emit(OpCodes.Ldloc, (short)(index + 2));
+                        }
                         else
+                        {
                             il.Emit(OpCodes.Ldnull);
+                        }
                     }
                     else
                     {
