@@ -1505,7 +1505,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
-                var types = new Type[length - startBound];
+                var types = new Type[length];
                 for (int i = startBound; i < startBound + length; i++)
                 {
                     types[i - startBound] = reader.GetFieldType(i);
