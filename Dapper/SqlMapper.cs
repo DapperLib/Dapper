@@ -1497,6 +1497,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             int index = startBound;
 
+            ConstructorInfo specializedConstructor = null;
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -1504,19 +1505,39 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
-                var ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null); 
-                if (ctor == null) 
+                var types = new Type[length - startBound];
+                for (int i = startBound; i < startBound + length; i++)
                 {
-                    throw new InvalidOperationException("A parameterless default constructor is required to allow for dapper materialization");
+                    types[i - startBound] = reader.GetFieldType(i);
                 }
-                il.Emit(OpCodes.Newobj, ctor);
-                il.Emit(OpCodes.Stloc_1);
+                var ctorWithParameters = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, types, null);
+                if (ctorWithParameters != null)
+                {
+                    var ctorParams = ctorWithParameters.GetParameters();
+                    for(int i =0; i< ctorParams.Length; i++)
+                    {
+                        if (!String.Equals(ctorParams[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                            break;
+                        specializedConstructor = ctorWithParameters;
+                    }
+                }
+                if(specializedConstructor == null)
+                {
+                    var ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+                    if (ctor == null)
+                    {
+                        throw new InvalidOperationException("A parameterless default constructor is required to allow for dapper materialization");
+                    }
+                    il.Emit(OpCodes.Newobj, ctor);
+                    il.Emit(OpCodes.Stloc_1);
+                }
             }
             il.BeginExceptionBlock();
             if(type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);// [target]
-            } else
+            }
+            else if(specializedConstructor == null)
             {
                 il.Emit(OpCodes.Ldloc_1);// [target]
             }
@@ -1529,7 +1550,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (item.Property != null || item.Field != null)
                 {
-                    il.Emit(OpCodes.Dup); // stack is now [target][target]
+                    if(specializedConstructor == null)
+                        il.Emit(OpCodes.Dup); // stack is now [target][target]
                     Label isDbNullLabel = il.DefineLabel();
                     Label finishLabel = il.DefineLabel();
 
@@ -1587,13 +1609,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             {
                                 il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                             }
-                            if (item.Property != null)
+                            if (specializedConstructor == null)
                             {
-                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                                if (item.Property != null)
+                                {
+                                    il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                                }
+                                else
+                                {
+                                    il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                                }
                             }
                             il.Emit(OpCodes.Br_S, finishLabel);
 
@@ -1614,28 +1639,41 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                         }
                     }
-                    if (item.Property != null)
+                    if (specializedConstructor == null)
                     {
-                        if (type.IsValueType)
+                        if (item.Property != null)
                         {
-                            il.Emit(OpCodes.Call, item.Property.Setter); // stack is now [target]
+                            if (type.IsValueType)
+                            {
+                                il.Emit(OpCodes.Call, item.Property.Setter); // stack is now [target]
+                            }
+                            else
+                            {
+                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                            }
                         }
                         else
                         {
-                            il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
                         }
-                    }
-                    else
-                    {
-                        il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
                     }
                     
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
-
-                    il.Emit(OpCodes.Pop); // stack is now [target][target]
-                    il.Emit(OpCodes.Pop); // stack is now [target]
+                    if (specializedConstructor != null)
+                    {
+                        Type itemType = item.Property != null ? item.Property.Type : item.Field.FieldType;
+                        if (itemType.IsValueType)
+                            il.Emit(OpCodes.Initobj, itemType);
+                        else
+                            il.Emit(OpCodes.Ldnull);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Pop); // stack is now [target][target]
+                        il.Emit(OpCodes.Pop); // stack is now [target]
+                    }
 
                     if (first && returnNullIfFirstMissing)
                     {
@@ -1656,6 +1694,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
+                if (specializedConstructor != null)
+                {
+                    il.Emit(OpCodes.Newobj, specializedConstructor);
+                }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
             }
             il.MarkLabel(allDone);

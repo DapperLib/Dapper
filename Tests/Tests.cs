@@ -33,28 +33,20 @@ namespace SqlMapper
             }
         }
 
-        class NoDefualtConstructor 
+        class NoDefaultConstructor 
         {
-            public NoDefualtConstructor(int a)
+            public NoDefaultConstructor(int a)
             {
                 A = a;
             }
             public int A { get; set; }
         }
 
-        public void EnsureNoConstructorGivesNiceError()
+        public void TestNoDefaultConstructor()
         {
-            try
-            {
-                connection.Query<NoDefualtConstructor>("select 1 A").First();
-            }
-            catch(InvalidOperationException e)
-            {
-                e.Message.IsEqualTo("A parameterless default constructor is required to allow for dapper materialization");
-            }
-   
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select 1 A").First();
+            nodef.A.IsEqualTo(1);
         }
-
 
         // http://stackoverflow.com/q/8593871
         public void TestAbstractInheritance() 
