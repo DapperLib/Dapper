@@ -1464,12 +1464,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(type);
-            bool haveEnumLocal = false;
+            int declareLocal = 1;
+            int enumDeclareLocal = -1;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
             var properties = GetSettableProps(type);
             var fields = GetSettableFields(type);
-            int enumOffset = 0;
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
@@ -1518,7 +1518,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     if (ctorParameters.Length != types.Length)
                         continue;
                     int i = 0;
-                    int ctorEnums = 0;
                     for (; i < ctorParameters.Length; i++)
                     {
                         if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase)
@@ -1529,13 +1528,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                                 && (ctorParameters[i].ParameterType.IsEnum && ctorParameters[i].ParameterType.GetEnumUnderlyingType() != types[i])))
 #endif
                             break;
-                        if (ctorParameters[i].ParameterType.IsEnum)
-                            ctorEnums++;
                     }
                     if (i == ctorParameters.Length)
                     {
                         specializedConstructor = ctor;
-                        enumOffset = ctorEnums;
                         break;
                     }
                 }
@@ -1564,8 +1560,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             bool first = true;
             var allDone = il.DefineLabel();
-            if (!haveEnumLocal)
-                il.DeclareLocal(typeof(string));
 
             foreach (var item in setters)
             {
@@ -1602,11 +1596,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                         if (unboxType.IsEnum)
                         {
+                            if (enumDeclareLocal == -1)
+                            {
+                                il.DeclareLocal(typeof(string));
+                                declareLocal++;
+                                enumDeclareLocal = declareLocal;
+                            }
+
                             Label isNotString = il.DefineLabel();
                             il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
                             il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
                             il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
-                            il.Emit(OpCodes.Stloc_2); // stack is now [target][target][value-as-object][string or null]
+                            il.Emit(OpCodes.Stloc, (short)enumDeclareLocal); // stack is now [target][target][value-as-object][string or null]
                             il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
 
                             il.Emit(OpCodes.Pop); // stack is now [target][target]
@@ -1683,9 +1684,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         if (itemType.IsValueType)
                         {
                             il.DeclareLocal(itemType);
-                            il.Emit(OpCodes.Ldloca_S, (byte)(index + enumOffset + 2));
+                            declareLocal++;
+                            il.Emit(OpCodes.Ldloca, (short)(declareLocal));
                             il.Emit(OpCodes.Initobj, itemType);
-                            il.Emit(OpCodes.Ldloc, (short)(index + enumOffset + 2));
+                            il.Emit(OpCodes.Ldloc, (short)(declareLocal));
                         }
                         else
                         {
