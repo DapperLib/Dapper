@@ -60,6 +60,24 @@ namespace SqlMapper
             nodef.N.IsEqualTo(null);
         }
 
+        class NoDefaultConstructorWithBinary
+        {
+            public System.Data.Linq.Binary Value { get; set; }
+            public NoDefaultConstructorWithBinary(System.Data.Linq.Binary value)
+            {
+                Value = value;
+            }
+        }
+
+        public void TestNoDefaultConstructorBinary()
+        {
+            byte[] orig = new byte[20];
+            new Random(123456).NextBytes(orig);
+            var input = new System.Data.Linq.Binary(orig);
+            var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as [value]", new { input }).First().Value;
+            output.ToArray().IsSequenceEqualTo(orig);
+        }
+
         // http://stackoverflow.com/q/8593871
         public void TestAbstractInheritance() 
         {

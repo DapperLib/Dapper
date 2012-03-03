@@ -1522,6 +1522,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
                             break;
+                        if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == LinqBinary)
+                            continue;
                         var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
                         if (unboxedType != types[i] && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i]))
                             break;
