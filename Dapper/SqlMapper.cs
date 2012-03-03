@@ -1487,18 +1487,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 names.Add(reader.GetName(i));
             }
 
-            var setters = (
-                            from n in names
-                            let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // property case sensitive first
-                                  ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)) // property case insensitive second
-                            let field = prop != null ? null : (fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // field case sensitive third
-                                ?? fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))) // field case insensitive fourth
-                            select new { Name = n, Property = prop, Field = field }
-                          ).ToList();
-
             int index = startBound;
 
             ConstructorInfo specializedConstructor = null;
+            ParameterInfo[] specializedParameters = null;
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -1531,6 +1523,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     if (i == ctorParameters.Length)
                     {
                         specializedConstructor = ctor;
+                        specializedParameters = ctorParameters;
                         break;
                     }
                 }
@@ -1554,6 +1547,17 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 il.Emit(OpCodes.Ldloc_1);// [target]
             }
+
+            var setters = specializedConstructor != null ?
+                names.Select((n, i) => new { Name = n, Property = new PropInfo() { Type = specializedParameters[i].ParameterType }, Field = (FieldInfo)null }).ToList()
+            :
+                (from n in names
+                 let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // property case sensitive first
+                       ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)) // property case insensitive second
+                 let field = prop != null ? null : (fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // field case sensitive third
+                     ?? fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))) // field case insensitive fourth
+                 select new { Name = n, Property = prop, Field = field }
+                ).ToList();
 
             // stack is now [target]
 
@@ -1679,13 +1683,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     if (specializedConstructor != null)
                     {
                         il.Emit(OpCodes.Pop);
-                        Type itemType = item.Property != null ? item.Property.Type : item.Field.FieldType;
-                        if (itemType.IsValueType)
+                        if (item.Property.Type.IsValueType)
                         {
-                            il.DeclareLocal(itemType);
+                            il.DeclareLocal(item.Property.Type);
                             declareLocal++;
                             il.Emit(OpCodes.Ldloca, (short)(declareLocal));
-                            il.Emit(OpCodes.Initobj, itemType);
+                            il.Emit(OpCodes.Initobj, item.Property.Type);
                             il.Emit(OpCodes.Ldloc, (short)(declareLocal));
                         }
                         else

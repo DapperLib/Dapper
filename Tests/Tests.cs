@@ -35,13 +35,13 @@ namespace SqlMapper
 
         class NoDefaultConstructor
         {
-            public NoDefaultConstructor(int a, int? b, float f, ShortEnum e, ShortEnum? n)
+            public NoDefaultConstructor(int a1, int? b1, float f1, ShortEnum e1, ShortEnum? n1)
             {
-                A = a;
-                B = b;
-                F = f;
-                E = e;
-                N = n;
+                A = a1;
+                B = b1;
+                F = f1;
+                E = e1;
+                N = n1;
             }
             public int A { get; set; }
             public int? B { get; set; }
@@ -52,7 +52,7 @@ namespace SqlMapper
 
         public void TestNoDefaultConstructor()
         {
-            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A,  CAST(NULL AS integer) b, CAST(NULL AS real) f, cast(2 as smallint) E, cast(null as smallint) n").First();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, cast(2 as smallint) E1, cast(null as smallint) n1").First();
             nodef.A.IsEqualTo(0);
             nodef.B.IsEqualTo(null);
             nodef.F.IsEqualTo(0);
@@ -63,9 +63,10 @@ namespace SqlMapper
         class NoDefaultConstructorWithBinary
         {
             public System.Data.Linq.Binary Value { get; set; }
-            public NoDefaultConstructorWithBinary(System.Data.Linq.Binary value)
+            public int Ynt { get; set; }
+            public NoDefaultConstructorWithBinary(System.Data.Linq.Binary val)
             {
-                Value = value;
+                Value = val;
             }
         }
 
@@ -74,7 +75,7 @@ namespace SqlMapper
             byte[] orig = new byte[20];
             new Random(123456).NextBytes(orig);
             var input = new System.Data.Linq.Binary(orig);
-            var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as [value]", new { input }).First().Value;
+            var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as val", new { input }).First().Value;
             output.ToArray().IsSequenceEqualTo(orig);
         }
 
