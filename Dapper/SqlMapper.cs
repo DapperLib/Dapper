@@ -1520,13 +1520,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     int i = 0;
                     for (; i < ctorParameters.Length; i++)
                     {
-                        if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase)
-                            || (types[i] != ctorParameters[i].ParameterType
-#if CSHARP30
-                            ))
-#else
-                                && !(ctorParameters[i].ParameterType.IsEnum && ctorParameters[i].ParameterType.GetEnumUnderlyingType() == types[i])))
-#endif
+                        if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                            break;
+                        var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
+                        if (unboxedType != types[i] && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i]))
                             break;
                     }
                     if (i == ctorParameters.Length)

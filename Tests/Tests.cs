@@ -35,23 +35,29 @@ namespace SqlMapper
 
         class NoDefaultConstructor
         {
-            public NoDefaultConstructor(int a, float f, ShortEnum e)
+            public NoDefaultConstructor(int a, int? b, float f, ShortEnum e, ShortEnum? n)
             {
                 A = a;
+                B = b;
                 F = f;
                 E = e;
+                N = n;
             }
             public int A { get; set; }
+            public int? B { get; set; }
             public float F { get; set; }
             public ShortEnum E { get; set; }
+            public ShortEnum? N { get; set; }
         }
 
         public void TestNoDefaultConstructor()
         {
-            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A, CAST(NULL AS real) f, cast(2 as smallint) E").First();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A,  CAST(NULL AS integer) b, CAST(NULL AS real) f, cast(2 as smallint) E, cast(null as smallint) n").First();
             nodef.A.IsEqualTo(0);
+            nodef.B.IsEqualTo(null);
             nodef.F.IsEqualTo(0);
             nodef.E.IsEqualTo(ShortEnum.Two);
+            nodef.N.IsEqualTo(null);
         }
 
         // http://stackoverflow.com/q/8593871
