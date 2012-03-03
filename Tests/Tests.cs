@@ -48,7 +48,7 @@ namespace SqlMapper
 
         public void TestNoDefaultConstructor()
         {
-            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A, CAST(NULL AS real) f, cast(null as smallint) E").First();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A, CAST(NULL AS real) f, cast(2 as smallint) E").First();
             nodef.A.IsEqualTo(0);
             nodef.F.IsEqualTo(0);
             nodef.E.IsEqualTo(ShortEnum.Two);

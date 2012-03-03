@@ -1469,6 +1469,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.Emit(OpCodes.Stloc_0);
             var properties = GetSettableProps(type);
             var fields = GetSettableFields(type);
+            int enumOffset = 0;
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
@@ -1510,15 +1511,32 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     types[i - startBound] = reader.GetFieldType(i);
                 }
-                var ctorWithParameters = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, types, null);
-                if (ctorWithParameters != null)
+                var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                foreach(ConstructorInfo ctor in constructors)
                 {
-                    var ctorParams = ctorWithParameters.GetParameters();
-                    for(int i =0; i< ctorParams.Length; i++)
+                    ParameterInfo[] ctorParameters = ctor.GetParameters();
+                    if (ctorParameters.Length != types.Length)
+                        continue;
+                    int i = 0;
+                    int ctorEnums = 0;
+                    for (; i < ctorParameters.Length; i++)
                     {
-                        if (!String.Equals(ctorParams[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                        if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase)
+                            || (types[i] != ctorParameters[i].ParameterType
+#if CSHARP30
+                            ))
+#else
+                                && (ctorParameters[i].ParameterType.IsEnum && ctorParameters[i].ParameterType.GetEnumUnderlyingType() != types[i])))
+#endif
                             break;
-                        specializedConstructor = ctorWithParameters;
+                        if (ctorParameters[i].ParameterType.IsEnum)
+                            ctorEnums++;
+                    }
+                    if (i == ctorParameters.Length)
+                    {
+                        specializedConstructor = ctor;
+                        enumOffset = ctorEnums;
+                        break;
                     }
                 }
                 if(specializedConstructor == null)
@@ -1546,6 +1564,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             bool first = true;
             var allDone = il.DefineLabel();
+            if (!haveEnumLocal)
+                il.DeclareLocal(typeof(string));
+
             foreach (var item in setters)
             {
                 if (item.Property != null || item.Field != null)
@@ -1581,12 +1602,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                         if (unboxType.IsEnum)
                         {
-                            if (!haveEnumLocal)
-                            {
-                                il.DeclareLocal(typeof(string));
-                                haveEnumLocal = true;
-                            }
-
                             Label isNotString = il.DefineLabel();
                             il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
                             il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
@@ -1668,9 +1683,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         if (itemType.IsValueType)
                         {
                             il.DeclareLocal(itemType);
-                            il.Emit(OpCodes.Ldloca_S, (byte)(index + 2));
+                            il.Emit(OpCodes.Ldloca_S, (byte)(index + enumOffset + 2));
                             il.Emit(OpCodes.Initobj, itemType);
-                            il.Emit(OpCodes.Ldloc, (short)(index + 2));
+                            il.Emit(OpCodes.Ldloc, (short)(index + enumOffset + 2));
                         }
                         else
                         {
