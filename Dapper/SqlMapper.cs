@@ -1525,7 +1525,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #if CSHARP30
                             ))
 #else
-                                && (ctorParameters[i].ParameterType.IsEnum && ctorParameters[i].ParameterType.GetEnumUnderlyingType() != types[i])))
+                                && !(ctorParameters[i].ParameterType.IsEnum && ctorParameters[i].ParameterType.GetEnumUnderlyingType() == types[i])))
 #endif
                             break;
                     }
