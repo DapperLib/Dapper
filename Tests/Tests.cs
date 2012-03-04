@@ -35,29 +35,74 @@ namespace SqlMapper
 
         class NoDefaultConstructor
         {
-            public NoDefaultConstructor(int a1, int? b1, float f1, ShortEnum e1, ShortEnum? n1)
+            public NoDefaultConstructor(int a1, int? b1, float f1, string s1, Guid G1)
             {
                 A = a1;
                 B = b1;
                 F = f1;
-                E = e1;
-                N = n1;
+                S = s1;
+                G = G1;
             }
             public int A { get; set; }
             public int? B { get; set; }
             public float F { get; set; }
-            public ShortEnum E { get; set; }
-            public ShortEnum? N { get; set; }
+            public string S { get; set; }
+            public Guid G { get; set; }
         }
 
         public void TestNoDefaultConstructor()
         {
-            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, cast(2 as smallint) E1, cast(null as smallint) n1").First();
+            var guid = Guid.NewGuid();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, 'Dapper' s1, G1 = @id", new { Id = guid }).First();
             nodef.A.IsEqualTo(0);
             nodef.B.IsEqualTo(null);
             nodef.F.IsEqualTo(0);
+            nodef.S.IsEqualTo("Dapper");
+            nodef.G.IsEqualTo(guid);
+        }
+
+        class NoDefaultConstructorWithChar
+        {
+            public NoDefaultConstructorWithChar(char c1, char? c2, char? c3)
+            {
+                Char1 = c1;
+                Char2 = c2;
+                Char3 = c3;
+            }
+            public char Char1 { get; set; }
+            public char? Char2 { get; set; }
+            public char? Char3 { get; set; }
+        }
+
+        public void TestNoDefaultConstructorWithChar()
+        {
+            const char c1 = 'ą';
+            const char c3 = 'ó';
+            NoDefaultConstructorWithChar nodef = connection.Query<NoDefaultConstructorWithChar>("select @c1 c1, @c2 c2, @c3 c3", new { c1 = c1, c2 = (char?)null, c3 = c3 }).First();
+            nodef.Char1.IsEqualTo(c1);
+            nodef.Char2.IsEqualTo(null);
+            nodef.Char3.IsEqualTo(c3);
+        }
+
+        class NoDefaultConstructorWithEnum
+        {
+            public NoDefaultConstructorWithEnum(ShortEnum e1, ShortEnum? n1, ShortEnum? n2)
+            {
+                E = e1;
+                NE1 = n1;
+                NE2 = n2;
+            }
+            public ShortEnum E { get; set; }
+            public ShortEnum? NE1 { get; set; }
+            public ShortEnum? NE2 { get; set; }
+        }
+
+        public void TestNoDefaultConstructorWithEnum()
+        {
+            NoDefaultConstructorWithEnum nodef = connection.Query<NoDefaultConstructorWithEnum>("select cast(2 as smallint) E1, cast(5 as smallint) n1, cast(null as smallint) n2").First();
             nodef.E.IsEqualTo(ShortEnum.Two);
-            nodef.N.IsEqualTo(null);
+            nodef.NE1.IsEqualTo(ShortEnum.Five);
+            nodef.NE2.IsEqualTo(null);
         }
 
         class NoDefaultConstructorWithBinary
