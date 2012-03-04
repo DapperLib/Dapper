@@ -33,6 +33,49 @@ namespace SqlMapper
             }
         }
 
+        class MultipleConstructors
+        {
+            public MultipleConstructors()
+            {
+
+            }
+            public MultipleConstructors(int a, string b)
+            {
+                A = a + 1;
+                B = b + "!";
+            }
+            public int A { get; set; }
+            public string B { get; set; }
+        }
+
+        public void TestMultipleConstructors()
+        {
+            MultipleConstructors mult = connection.Query<MultipleConstructors>("select 0 A, 'Dapper' b").First();
+            mult.A.IsEqualTo(0);
+            mult.B.IsEqualTo("Dapper");
+        }
+
+        class ConstructorsWithAccessModifiers
+        {
+            private ConstructorsWithAccessModifiers()
+            {
+            }
+            public ConstructorsWithAccessModifiers(int a, string b)
+            {
+                A = a + 1;
+                B = b + "!";
+            }
+            public int A { get; set; }
+            public string B { get; set; }
+        }
+
+        public void TestConstructorsWithAccessModifiers()
+        {
+            ConstructorsWithAccessModifiers value = connection.Query<ConstructorsWithAccessModifiers>("select 0 A, 'Dapper' b").First();
+            value.A.IsEqualTo(1);
+            value.B.IsEqualTo("Dapper!");
+        }
+
         class NoDefaultConstructor
         {
             public NoDefaultConstructor(int a1, int? b1, float f1, string s1, Guid G1)

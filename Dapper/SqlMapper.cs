@@ -1504,9 +1504,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     types[i - startBound] = reader.GetFieldType(i);
                 }
                 var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                foreach(ConstructorInfo ctor in constructors)
+                bool hasDefaultConstructor = false;
+                foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
                 {
                     ParameterInfo[] ctorParameters = ctor.GetParameters();
+                    if (ctorParameters.Length == 0)
+                    {
+                        il.Emit(OpCodes.Newobj, ctor);
+                        il.Emit(OpCodes.Stloc_1);
+                        hasDefaultConstructor = true;
+                        break;
+                    }
+
                     if (ctorParameters.Length != types.Length)
                         continue;
                     int i = 0;
@@ -1529,15 +1538,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         break;
                     }
                 }
-                if(specializedConstructor == null)
+                if (!hasDefaultConstructor && specializedConstructor == null)
                 {
-                    var ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-                    if (ctor == null)
-                    {
-                        throw new InvalidOperationException("A parameterless default constructor is required to allow for dapper materialization");
-                    }
-                    il.Emit(OpCodes.Newobj, ctor);
-                    il.Emit(OpCodes.Stloc_1);
+                    throw new InvalidOperationException("A parameterless default constructor or one matching order, names and types of values returned by the query is required to allow for dapper materialization");
                 }
             }
             il.BeginExceptionBlock();
