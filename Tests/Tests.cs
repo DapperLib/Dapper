@@ -33,6 +33,61 @@ namespace SqlMapper
             }
         }
 
+        class UserWithConstructor
+        {
+            public UserWithConstructor(int id, string name)
+            {
+                Ident = id;
+                FullName = name;
+            }
+            public int Ident { get; set; }
+            public string FullName { get; set; }
+        }
+
+        class PostWithConstructor
+        {
+            public PostWithConstructor(int id, int ownerid, string content)
+            {
+                Ident = id;
+                FullContent = content;
+            }
+
+            public int Ident { get; set; }
+            public UserWithConstructor Owner { get; set; }
+            public string FullContent { get; set; }
+            public Comment Comment { get; set; }
+        }
+
+        public void TestMultiMapWithConstructor()
+        { 
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+
+                insert #Users values(99, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')";
+            connection.Execute(createSql);
+            string sql = @"select * from #Posts p 
+                           left join #Users u on u.Id = p.OwnerId 
+                           Order by p.Id";
+            PostWithConstructor[] data = connection.Query<PostWithConstructor, UserWithConstructor, PostWithConstructor>(sql, (post, user) => { post.Owner = user; return post;}).ToArray();
+            var p = data.First();
+
+            p.FullContent.IsEqualTo("Sams Post1");
+            p.Ident.IsEqualTo(1);
+            p.Owner.FullName.IsEqualTo("Sam");
+            p.Owner.Ident.IsEqualTo(99);
+
+            data[2].Owner.IsNull();
+
+            connection.Execute("drop table #Users drop table #Posts");
+        }
+
+
         class MultipleConstructors
         {
             public MultipleConstructors()
