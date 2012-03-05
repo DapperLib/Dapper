@@ -1540,7 +1540,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 if (!hasDefaultConstructor && specializedConstructor == null)
                 {
-                    throw new InvalidOperationException(String.Format("Cannot find constructor for type {0}. A parameterless default constructor or one matching order, names and types of values returned by the query is required to allow for dapper materialization", type.FullName));
+                    string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                    throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
                 }
             }
             il.BeginExceptionBlock();
