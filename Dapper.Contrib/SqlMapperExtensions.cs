@@ -486,14 +486,9 @@ public class SqlServerAdapter : ISqlAdapter
 
 		//NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
 		var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-		int id = 0;
-		foreach (var p in keyProperties)
-		{
-			var value = ((IDictionary<string, object>)r.First())[p.Name.ToLower()];
-			p.SetValue(entityToInsert, value, null);
-			if (id == 0)
-				id = Convert.ToInt32(value);
-		} 
+		int id = (int)r.First().id;
+		if (keyProperties.Any())
+			keyProperties.First().SetValue(entityToInsert, id, null);
 		return id;
 	}
 }
