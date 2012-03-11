@@ -486,7 +486,15 @@ public class SqlServerAdapter : ISqlAdapter
 
 		//NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
 		var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-		return (int)r.First().id;
+		int id = 0;
+		foreach (var p in keyProperties)
+		{
+			var value = ((IDictionary<string, object>)r.First())[p.Name.ToLower()];
+			p.SetValue(entityToInsert, value, null);
+			if (id == 0)
+				id = Convert.ToInt32(value);
+		} 
+		return id;
 	}
 }
 
@@ -497,15 +505,22 @@ public class PostgresAdapter : ISqlAdapter
 		StringBuilder sb = new StringBuilder();
 		sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
-		sb.Append(" RETURNING ");
-		bool first = true;
-		foreach(var property in keyProperties)
+		// If no primary key then safe to assume a join table with not too much data to return
+		if (!keyProperties.Any())
+			sb.Append(" RETURNING *");
+		else
 		{
-			if (!first)
-				sb.Append(", ");
-			first = false;
-			sb.Append(property.Name);
+			sb.Append(" RETURNING ");
+			bool first = true;
+			foreach (var property in keyProperties)
+			{
+				if (!first)
+					sb.Append(", ");
+				first = false;
+				sb.Append(property.Name);
+			}
 		}
+
 		var results = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
 
 		// Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
