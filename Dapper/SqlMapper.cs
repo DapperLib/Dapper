@@ -1146,50 +1146,60 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             if (list != null)
             {
-                bool isString = value is IEnumerable<string>;
-                bool isDbString = value is IEnumerable<DbString>;
-                foreach (var item in list)
-                {
-                    count++;
-                    var listParam = command.CreateParameter();
-                    listParam.ParameterName = namePrefix + count;
-                    listParam.Value = item ?? DBNull.Value;
-                    if (isString)
-                    {
-                        listParam.Size = 4000;
-                        if (item != null && ((string)item).Length > 4000)
-                        {
-                            listParam.Size = -1;
-                        }
-                    }
-                    if (isDbString && item as DbString != null)
-                    {
-                        var str = item as DbString;
-                        str.AddParameter(command, listParam.ParameterName);
-                    }
-                    else
-                    {
-                        command.Parameters.Add(listParam);
-                    }
-                }
+				if (FeatureSupport.Get(command.Connection).Arrays)
+				{
+					var arrayParm = command.CreateParameter();
+					arrayParm.Value = list;
+					arrayParm.ParameterName = namePrefix;
+					command.Parameters.Add(arrayParm);
+				}
+				else
+				{
+					bool isString = value is IEnumerable<string>;
+					bool isDbString = value is IEnumerable<DbString>;
+					foreach (var item in list)
+					{
+						count++;
+						var listParam = command.CreateParameter();
+						listParam.ParameterName = namePrefix + count;
+						listParam.Value = item ?? DBNull.Value;
+						if (isString)
+						{
+							listParam.Size = 4000;
+							if (item != null && ((string) item).Length > 4000)
+							{
+								listParam.Size = -1;
+							}
+						}
+						if (isDbString && item as DbString != null)
+						{
+							var str = item as DbString;
+							str.AddParameter(command, listParam.ParameterName);
+						}
+						else
+						{
+							command.Parameters.Add(listParam);
+						}
+					}
 
-                if (count == 0)
-                {
-                    command.CommandText = Regex.Replace(command.CommandText, @"[?@:]" + Regex.Escape(namePrefix), "(SELECT NULL WHERE 1 = 0)");
-                }
-                else
-                {
-                    command.CommandText = Regex.Replace(command.CommandText, @"[?@:]" + Regex.Escape(namePrefix), match =>
-                    {
-                        var grp = match.Value;
-                        var sb = new StringBuilder("(").Append(grp).Append(1);
-                        for (int i = 2; i <= count; i++)
-                        {
-                            sb.Append(',').Append(grp).Append(i);
-                        }
-                        return sb.Append(')').ToString();
-                    });
-                }
+					if (count == 0)
+					{
+						command.CommandText = Regex.Replace(command.CommandText, @"[?@:]" + Regex.Escape(namePrefix), "(SELECT NULL WHERE 1 = 0)");
+					}
+					else
+					{
+						command.CommandText = Regex.Replace(command.CommandText, @"[?@:]" + Regex.Escape(namePrefix), match =>
+							{
+								var grp = match.Value;
+								var sb = new StringBuilder("(").Append(grp).Append(1);
+								for (int i = 2; i <= count; i++)
+								{
+									sb.Append(',').Append(grp).Append(i);
+								}
+								return sb.Append(')').ToString();
+							});
+					}
+				}
             }
 
         }
@@ -2184,4 +2194,34 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             command.Parameters.Add(param);
         }
     }
+
+	/// <summary>
+	/// Handles variances in features per DBMS
+	/// </summary>
+	public class FeatureSupport
+	{
+		/// <summary>
+		/// Dictionary of supported features index by connection type name
+		/// </summary>
+		private static readonly Dictionary<string, FeatureSupport> FeatureList = new Dictionary<string, FeatureSupport>() {
+				{"sqlserverconnection", new FeatureSupport { Arrays = false}},
+				{"npgsqlconnection", new FeatureSupport {Arrays = true}}
+		};
+
+		/// <summary>
+		/// Gets the featureset based on the passed connection
+		/// </summary>
+		public static FeatureSupport Get(IDbConnection connection)
+		{
+			string name = connection.GetType().Name.ToLower();
+			FeatureSupport features;
+			return FeatureList.TryGetValue(name, out features) ? features : FeatureList.Values.First();
+		}
+
+		/// <summary>
+		/// True if the db supports array columns e.g. Postgresql
+		/// </summary>
+		public bool Arrays { get; set; }
+	}
+
 }
