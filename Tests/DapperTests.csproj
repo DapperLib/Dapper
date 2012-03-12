@@ -65,6 +65,9 @@
     <Reference Include="NHibernate.ByteCode.LinFu">
       <HintPath>NHibernate\NHibernate.ByteCode.LinFu.dll</HintPath>
     </Reference>
+    <Reference Include="Npgsql">
+      <HintPath>..\..\..\WebSites\PoolBooking\bin\Npgsql.dll</HintPath>
+    </Reference>
     <Reference Include="ServiceStack.Common, Version=1.0.4110.36238, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>OrmLite\ServiceStack.Common.dll</HintPath>
@@ -183,7 +186,7 @@
       <LastGenOutput>DataClasses.designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </None>
-    <None Include="packages.config" />   
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
