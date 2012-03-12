@@ -104,6 +104,17 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void InsertCheckKey()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.Get<IUser>(3).IsNull();
+                User user = new User { Name = "Adamb", Age = 10 };
+                int id = (int)connection.Insert(user);
+                user.Id.IsEqualTo(id);
+            }
+        }
+
         public void BuilderSelectClause()
         {
             using (var connection = GetOpenConnection())
