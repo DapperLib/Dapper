@@ -50,18 +50,41 @@ namespace Dapper
             /// </summary>
             /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
             /// <returns></returns>
+            /// <summary>
+            /// Insert a row into the db
+            /// </summary>
+            /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
+            /// <returns></returns>
             public int? Insert(dynamic data)
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
 
+                if (database.IsSqlCompact)
+                {
+                    paramNames.Remove("Id");
+                }
+
                 string cols = string.Join(",", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
-                var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + cols_params + ") select cast(scope_identity() as int)";
 
-                return database.Query<int?>(sql, o).Single();
+                if (database.IsSqlCompact)
+                {
+                    var sql = "insert " + TableName + " (" + cols + ") values (" + cols_params + ")";
+                    if (database.Execute(sql, o) != 1)
+                    {
+                        return null;
+                    }
+
+                    return (int)database.Query<decimal>("SELECT @@IDENTITY AS LastInsertedId").Single();
+                }
+                else
+                {
+                    var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + cols_params + ") select cast(scope_identity() as int)";
+                    return database.Query<int?>(sql, o).Single();
+                }
             }
-
+			
             /// <summary>
             /// Update a record in the DB
             /// </summary>
@@ -139,11 +162,17 @@ namespace Dapper
         int commandTimeout;
         DbTransaction transaction;
 
-
         public static TDatabase Init(DbConnection connection, int commandTimeout)
         {
             TDatabase db = new TDatabase();
             db.InitDatabase(connection, commandTimeout);
+            return db;
+        }
+
+        public static TDatabase InitSqlCe(DbConnection connection)
+        {
+            var db = Init(connection, 0);
+            db.IsSqlCompact = true;
             return db;
         }
 
@@ -160,6 +189,8 @@ namespace Dapper
 
             tableConstructor(this);
         }
+
+        public bool IsSqlCompact { get; private set; }
 
         public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
         {
