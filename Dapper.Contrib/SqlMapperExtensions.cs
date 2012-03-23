@@ -255,6 +255,9 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if deleted, false if not found</returns>
         public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
+			if (entityToDelete == null)
+				throw new ArgumentException("Cannot Delete null Object", "entityToDelete");
+
             var type = typeof(T);
 
             var keyProperties = KeyPropertiesCache(type);
