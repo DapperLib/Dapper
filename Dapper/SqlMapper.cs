@@ -1584,33 +1584,22 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                             il.Emit(OpCodes.Pop); // stack is now [target][target]
 
-
                             il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
                             il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
                             il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
                             il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
                             il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
 
+                            il.MarkLabel(isNotString);
+
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
 
                             if (nullUnderlyingType != null)
                             {
-                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
+                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][enum-value]
                             }
-                            if (item.Property != null)
-                            {
-                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
-                            }
-                            il.Emit(OpCodes.Br_S, finishLabel);
-
-
-                            il.MarkLabel(isNotString);
                         }
-                        if (memberType.FullName == LinqBinary)
+                        else if (memberType.FullName == LinqBinary)
                         {
                             il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][target][byte-array]
                             il.Emit(OpCodes.Newobj, memberType.GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [target][target][binary]
@@ -1619,11 +1608,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         {
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                         }
-                        if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
-                        {
-                            il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
-                        }
                     }
+
+                    // Store the value in the property/field
                     if (item.Property != null)
                     {
                         if (type.IsValueType)
