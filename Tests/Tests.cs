@@ -1,4 +1,4 @@
-﻿#define POSTGRESQL
+﻿//#define POSTGRESQL - uncomment to run postgres tests
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
