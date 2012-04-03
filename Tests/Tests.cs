@@ -37,28 +37,194 @@ namespace SqlMapper
             }
         }
 
-        class NoDefualtConstructor 
+        class UserWithConstructor
         {
-            public NoDefualtConstructor(int a)
+            public UserWithConstructor(int id, string name)
             {
-                A = a;
+                Ident = id;
+                FullName = name;
+            }
+            public int Ident { get; set; }
+            public string FullName { get; set; }
+        }
+
+        class PostWithConstructor
+        {
+            public PostWithConstructor(int id, int ownerid, string content)
+            {
+                Ident = id;
+                FullContent = content;
+            }
+
+            public int Ident { get; set; }
+            public UserWithConstructor Owner { get; set; }
+            public string FullContent { get; set; }
+            public Comment Comment { get; set; }
+        }
+
+        public void TestMultiMapWithConstructor()
+        { 
+            var createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+
+                insert #Users values(99, 'Sam')
+                insert #Users values(2, 'I am')
+
+                insert #Posts values(1, 99, 'Sams Post1')
+                insert #Posts values(2, 99, 'Sams Post2')
+                insert #Posts values(3, null, 'no ones post')";
+            connection.Execute(createSql);
+            string sql = @"select * from #Posts p 
+                           left join #Users u on u.Id = p.OwnerId 
+                           Order by p.Id";
+            PostWithConstructor[] data = connection.Query<PostWithConstructor, UserWithConstructor, PostWithConstructor>(sql, (post, user) => { post.Owner = user; return post;}).ToArray();
+            var p = data.First();
+
+            p.FullContent.IsEqualTo("Sams Post1");
+            p.Ident.IsEqualTo(1);
+            p.Owner.FullName.IsEqualTo("Sam");
+            p.Owner.Ident.IsEqualTo(99);
+
+            data[2].Owner.IsNull();
+
+            connection.Execute("drop table #Users drop table #Posts");
+        }
+
+
+        class MultipleConstructors
+        {
+            public MultipleConstructors()
+            {
+
+            }
+            public MultipleConstructors(int a, string b)
+            {
+                A = a + 1;
+                B = b + "!";
             }
             public int A { get; set; }
+            public string B { get; set; }
         }
 
-        public void EnsureNoConstructorGivesNiceError()
+        public void TestMultipleConstructors()
         {
-            try
-            {
-                connection.Query<NoDefualtConstructor>("select 1 A").First();
-            }
-            catch(InvalidOperationException e)
-            {
-                e.Message.IsEqualTo("A parameterless default constructor is required to allow for dapper materialization");
-            }
-   
+            MultipleConstructors mult = connection.Query<MultipleConstructors>("select 0 A, 'Dapper' b").First();
+            mult.A.IsEqualTo(0);
+            mult.B.IsEqualTo("Dapper");
         }
 
+        class ConstructorsWithAccessModifiers
+        {
+            private ConstructorsWithAccessModifiers()
+            {
+            }
+            public ConstructorsWithAccessModifiers(int a, string b)
+            {
+                A = a + 1;
+                B = b + "!";
+            }
+            public int A { get; set; }
+            public string B { get; set; }
+        }
+
+        public void TestConstructorsWithAccessModifiers()
+        {
+            ConstructorsWithAccessModifiers value = connection.Query<ConstructorsWithAccessModifiers>("select 0 A, 'Dapper' b").First();
+            value.A.IsEqualTo(1);
+            value.B.IsEqualTo("Dapper!");
+        }
+
+        class NoDefaultConstructor
+        {
+            public NoDefaultConstructor(int a1, int? b1, float f1, string s1, Guid G1)
+            {
+                A = a1;
+                B = b1;
+                F = f1;
+                S = s1;
+                G = G1;
+            }
+            public int A { get; set; }
+            public int? B { get; set; }
+            public float F { get; set; }
+            public string S { get; set; }
+            public Guid G { get; set; }
+        }
+
+        public void TestNoDefaultConstructor()
+        {
+            var guid = Guid.NewGuid();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, 'Dapper' s1, G1 = @id", new { Id = guid }).First();
+            nodef.A.IsEqualTo(0);
+            nodef.B.IsEqualTo(null);
+            nodef.F.IsEqualTo(0);
+            nodef.S.IsEqualTo("Dapper");
+            nodef.G.IsEqualTo(guid);
+        }
+
+        class NoDefaultConstructorWithChar
+        {
+            public NoDefaultConstructorWithChar(char c1, char? c2, char? c3)
+            {
+                Char1 = c1;
+                Char2 = c2;
+                Char3 = c3;
+            }
+            public char Char1 { get; set; }
+            public char? Char2 { get; set; }
+            public char? Char3 { get; set; }
+        }
+
+        public void TestNoDefaultConstructorWithChar()
+        {
+            const char c1 = 'ą';
+            const char c3 = 'ó';
+            NoDefaultConstructorWithChar nodef = connection.Query<NoDefaultConstructorWithChar>("select @c1 c1, @c2 c2, @c3 c3", new { c1 = c1, c2 = (char?)null, c3 = c3 }).First();
+            nodef.Char1.IsEqualTo(c1);
+            nodef.Char2.IsEqualTo(null);
+            nodef.Char3.IsEqualTo(c3);
+        }
+
+        class NoDefaultConstructorWithEnum
+        {
+            public NoDefaultConstructorWithEnum(ShortEnum e1, ShortEnum? n1, ShortEnum? n2)
+            {
+                E = e1;
+                NE1 = n1;
+                NE2 = n2;
+            }
+            public ShortEnum E { get; set; }
+            public ShortEnum? NE1 { get; set; }
+            public ShortEnum? NE2 { get; set; }
+        }
+
+        public void TestNoDefaultConstructorWithEnum()
+        {
+            NoDefaultConstructorWithEnum nodef = connection.Query<NoDefaultConstructorWithEnum>("select cast(2 as smallint) E1, cast(5 as smallint) n1, cast(null as smallint) n2").First();
+            nodef.E.IsEqualTo(ShortEnum.Two);
+            nodef.NE1.IsEqualTo(ShortEnum.Five);
+            nodef.NE2.IsEqualTo(null);
+        }
+
+        class NoDefaultConstructorWithBinary
+        {
+            public System.Data.Linq.Binary Value { get; set; }
+            public int Ynt { get; set; }
+            public NoDefaultConstructorWithBinary(System.Data.Linq.Binary val)
+            {
+                Value = val;
+            }
+        }
+
+        public void TestNoDefaultConstructorBinary()
+        {
+            byte[] orig = new byte[20];
+            new Random(123456).NextBytes(orig);
+            var input = new System.Data.Linq.Binary(orig);
+            var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as val", new { input }).First().Value;
+            output.ToArray().IsSequenceEqualTo(orig);
+        }
 
         // http://stackoverflow.com/q/8593871
         public void TestAbstractInheritance() 

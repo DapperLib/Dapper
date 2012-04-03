@@ -1474,7 +1474,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(type);
-            bool haveEnumLocal = false;
+            int declareLocal = 1;
+            int enumDeclareLocal = -1;
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
             var properties = GetSettableProps(type);
@@ -1496,17 +1497,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 names.Add(reader.GetName(i));
             }
 
-            var setters = (
-                            from n in names
-                            let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // property case sensitive first
-                                  ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)) // property case insensitive second
-                            let field = prop != null ? null : (fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // field case sensitive third
-                                ?? fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))) // field case insensitive fourth
-                            select new { Name = n, Property = prop, Field = field }
-                          ).ToList();
-
             int index = startBound;
 
+            ConstructorInfo specializedConstructor = null;
+            ParameterInfo[] specializedParameters = null;
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -1514,32 +1508,84 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
-                var ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null); 
-                if (ctor == null) 
+                var types = new Type[length];
+                for (int i = startBound; i < startBound + length; i++)
                 {
-                    throw new InvalidOperationException("A parameterless default constructor is required to allow for dapper materialization");
+                    types[i - startBound] = reader.GetFieldType(i);
                 }
-                il.Emit(OpCodes.Newobj, ctor);
-                il.Emit(OpCodes.Stloc_1);
+                var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                bool hasDefaultConstructor = false;
+                foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
+                {
+                    ParameterInfo[] ctorParameters = ctor.GetParameters();
+                    if (ctorParameters.Length == 0)
+                    {
+                        il.Emit(OpCodes.Newobj, ctor);
+                        il.Emit(OpCodes.Stloc_1);
+                        hasDefaultConstructor = true;
+                        break;
+                    }
+
+                    if (ctorParameters.Length != types.Length)
+                        continue;
+                    int i = 0;
+                    for (; i < ctorParameters.Length; i++)
+                    {
+                        if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                            break;
+                        if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == LinqBinary)
+                            continue;
+                        var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
+                        if (unboxedType != types[i] 
+                            && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i])
+                            && !(unboxedType == typeof(char) && types[i] == typeof(string)))
+                            break;
+                    }
+                    if (i == ctorParameters.Length)
+                    {
+                        specializedConstructor = ctor;
+                        specializedParameters = ctorParameters;
+                        break;
+                    }
+                }
+                if (!hasDefaultConstructor && specializedConstructor == null)
+                {
+                    string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                    throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
+                }
             }
             il.BeginExceptionBlock();
             if(type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);// [target]
-            } else
+            }
+            else if(specializedConstructor == null)
             {
                 il.Emit(OpCodes.Ldloc_1);// [target]
             }
+
+            var setters = specializedConstructor != null ?
+                names.Select((n, i) => new { Name = n, Property = new PropInfo() { Type = specializedParameters[i].ParameterType }, Field = (FieldInfo)null }).ToList()
+            :
+                (from n in names
+                 let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // property case sensitive first
+                       ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)) // property case insensitive second
+                 let field = prop != null ? null : (fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // field case sensitive third
+                     ?? fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))) // field case insensitive fourth
+                 select new { Name = n, Property = prop, Field = field }
+                ).ToList();
 
             // stack is now [target]
 
             bool first = true;
             var allDone = il.DefineLabel();
+
             foreach (var item in setters)
             {
                 if (item.Property != null || item.Field != null)
                 {
-                    il.Emit(OpCodes.Dup); // stack is now [target][target]
+                    if(specializedConstructor == null)
+                        il.Emit(OpCodes.Dup); // stack is now [target][target]
                     Label isDbNullLabel = il.DefineLabel();
                     Label finishLabel = il.DefineLabel();
 
@@ -1569,17 +1615,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                         if (unboxType.IsEnum)
                         {
-                            if (!haveEnumLocal)
+                            if (enumDeclareLocal == -1)
                             {
                                 il.DeclareLocal(typeof(string));
-                                haveEnumLocal = true;
+                                declareLocal++;
+                                enumDeclareLocal = declareLocal;
                             }
 
                             Label isNotString = il.DefineLabel();
                             il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
                             il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
                             il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
-                            il.Emit(OpCodes.Stloc_2); // stack is now [target][target][value-as-object][string or null]
+                            il.Emit(OpCodes.Stloc, (short)enumDeclareLocal); // stack is now [target][target][value-as-object][string or null]
                             il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
 
                             il.Emit(OpCodes.Pop); // stack is now [target][target]
@@ -1597,13 +1644,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             {
                                 il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                             }
-                            if (item.Property != null)
+                            if (specializedConstructor == null)
                             {
-                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                                if (item.Property != null)
+                                {
+                                    il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                                }
+                                else
+                                {
+                                    il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                                }
                             }
                             il.Emit(OpCodes.Br_S, finishLabel);
 
@@ -1624,28 +1674,49 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
                         }
                     }
-                    if (item.Property != null)
+                    if (specializedConstructor == null)
                     {
-                        if (type.IsValueType)
+                        if (item.Property != null)
                         {
-                            il.Emit(OpCodes.Call, item.Property.Setter); // stack is now [target]
+                            if (type.IsValueType)
+                            {
+                                il.Emit(OpCodes.Call, item.Property.Setter); // stack is now [target]
+                            }
+                            else
+                            {
+                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                            }
                         }
                         else
                         {
-                            il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
                         }
-                    }
-                    else
-                    {
-                        il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
                     }
                     
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
-
-                    il.Emit(OpCodes.Pop); // stack is now [target][target]
-                    il.Emit(OpCodes.Pop); // stack is now [target]
+                    if (specializedConstructor != null)
+                    {
+                        il.Emit(OpCodes.Pop);
+                        if (item.Property.Type.IsValueType)
+                        {
+                            il.DeclareLocal(item.Property.Type);
+                            declareLocal++;
+                            il.Emit(OpCodes.Ldloca, (short)(declareLocal));
+                            il.Emit(OpCodes.Initobj, item.Property.Type);
+                            il.Emit(OpCodes.Ldloc, (short)(declareLocal));
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Ldnull);
+                        }
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Pop); // stack is now [target][target]
+                        il.Emit(OpCodes.Pop); // stack is now [target]
+                    }
 
                     if (first && returnNullIfFirstMissing)
                     {
@@ -1666,6 +1737,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
+                if (specializedConstructor != null)
+                {
+                    il.Emit(OpCodes.Newobj, specializedConstructor);
+                }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
             }
             il.MarkLabel(allDone);
