@@ -1372,7 +1372,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var cmd = cnn.CreateCommand();
             var bindByName = GetBindByName(cmd.GetType());
             if (bindByName != null) bindByName(cmd, true);
-            cmd.Transaction = transaction;
+            if (transaction != null)
+                cmd.Transaction = transaction;
             cmd.CommandText = sql;
             if (commandTimeout.HasValue)
                 cmd.CommandTimeout = commandTimeout.Value;
