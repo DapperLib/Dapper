@@ -778,7 +778,7 @@ Order by p.Id";
             connection.Query<TestEnumClass>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
         }
 
-        public void TestSupportForParamDictionary()
+        public void TestSupportForDynamicParameters()
         {
             var p = new DynamicParameters();
             p.Add("name", "bob");
@@ -788,7 +788,6 @@ Order by p.Id";
 
             p.Get<int>("age").IsEqualTo(11);
         }
-
 
         public void TestProcSupport()
         {
@@ -1248,6 +1247,36 @@ Order by p.Id";
             ((int)result.b).IsEqualTo(2);
             ((int)result.c).IsEqualTo(3);
             ((int)result.d).IsEqualTo(4);
+        }
+
+        public void TestAppendingADictionary()
+        {
+            var dictionary = new Dictionary<string, object>();
+            dictionary.Add("A", 1);
+            dictionary.Add("B", "two");
+
+            DynamicParameters p = new DynamicParameters();
+            p.AddDynamicParams(dictionary);
+
+            var result = connection.Query("select @A a, @B b", p).Single();
+
+            ((int)result.a).IsEqualTo(1);
+            ((string)result.b).IsEqualTo("two");
+        }
+
+        public void TestAppendingAnExpandoObject()
+        {
+            dynamic expando = new System.Dynamic.ExpandoObject();
+            expando.A = 1;
+            expando.B = "two";
+
+            DynamicParameters p = new DynamicParameters();
+            p.AddDynamicParams(expando);
+
+            var result = connection.Query("select @A a, @B b", p).Single();
+
+            ((int)result.a).IsEqualTo(1);
+            ((string)result.b).IsEqualTo("two");
         }
 
         public void TestAppendingAList()

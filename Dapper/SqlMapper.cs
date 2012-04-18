@@ -1963,16 +1963,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// construct a dynamic parameter bag
         /// </summary>
         public DynamicParameters() { }
+        
         /// <summary>
         /// construct a dynamic parameter bag
         /// </summary>
         /// <param name="template">can be an anonymous type of a DynamicParameters bag</param>
         public DynamicParameters(object template)
         {
-            if (template != null)
-            {
-                AddDynamicParams(template);
-            }
+            AddDynamicParams(template);
         }
 
         /// <summary>
@@ -1988,16 +1986,29 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
 )
         {
-            object obj = param as object;
-
+            var obj = param as object;
             if (obj != null)
             {
                 var subDynamic = obj as DynamicParameters;
-
                 if (subDynamic == null)
                 {
-                    templates = templates ?? new List<object>();
-                    templates.Add(obj);
+                    var dictionary = obj as IEnumerable<KeyValuePair<string, object>>;
+                    if (dictionary == null)
+                    {
+                        templates = templates ?? new List<object>();
+                        templates.Add(obj);
+                    }
+                    else
+                    {
+                        foreach (var kvp in dictionary)
+                        {
+#if CSHARP30
+                            Add(kvp.Key, kvp.Value, null, null, null);
+#else
+                            Add(kvp.Key, kvp.Value);
+#endif
+                        }
+                    }
                 }
                 else
                 {
