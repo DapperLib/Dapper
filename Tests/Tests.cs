@@ -1,4 +1,4 @@
-﻿//#define POSTGRESQL
+﻿//#define POSTGRESQL // uncomment to run postgres tests
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -10,7 +10,6 @@ using System.Data;
 using System.Collections;
 using System.Reflection;
 #if POSTGRESQL
-using Dapper.Contrib.Extensions;
 using Npgsql;
 #endif
 
@@ -1395,10 +1394,9 @@ Order by p.Id";
         }
 
 #if POSTGRESQL
-        [Table("tcat")]
+
         class Cat
         {
-            [Key]
             public int Id { get; set; }
             public string Breed { get; set; }
             public string Name { get; set; }
@@ -1424,9 +1422,7 @@ Order by p.Id";
                 conn.Open();
                 IDbTransaction transaction = conn.BeginTransaction();
                 conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
-
-                foreach (var cat in Cats)
-                    conn.Insert(cat);
+                conn.Execute("insert tcat(breed, name) values(:breed, :name) ", Cats);
 
                 var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new[] { 1, 3, 5 } });
                 r.Count().IsEqualTo(3);
