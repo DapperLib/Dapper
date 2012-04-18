@@ -1372,7 +1372,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var cmd = cnn.CreateCommand();
             var bindByName = GetBindByName(cmd.GetType());
             if (bindByName != null) bindByName(cmd, true);
-            cmd.Transaction = transaction;
+            if (transaction != null)
+                cmd.Transaction = transaction;
             cmd.CommandText = sql;
             if (commandTimeout.HasValue)
                 cmd.CommandTimeout = commandTimeout.Value;
@@ -1584,33 +1585,22 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                             il.Emit(OpCodes.Pop); // stack is now [target][target]
 
-
                             il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
                             il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
                             il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
                             il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
                             il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
 
+                            il.MarkLabel(isNotString);
+
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
 
                             if (nullUnderlyingType != null)
                             {
-                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
+                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][enum-value]
                             }
-                            if (item.Property != null)
-                            {
-                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
-                            }
-                            il.Emit(OpCodes.Br_S, finishLabel);
-
-
-                            il.MarkLabel(isNotString);
                         }
-                        if (memberType.FullName == LinqBinary)
+                        else if (memberType.FullName == LinqBinary)
                         {
                             il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][target][byte-array]
                             il.Emit(OpCodes.Newobj, memberType.GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [target][target][binary]
@@ -1619,11 +1609,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         {
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                         }
-                        if (nullUnderlyingType != null && nullUnderlyingType.IsEnum)
-                        {
-                            il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
-                        }
                     }
+
+                    // Store the value in the property/field
                     if (item.Property != null)
                     {
                         if (type.IsValueType)
@@ -1975,16 +1963,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// construct a dynamic parameter bag
         /// </summary>
         public DynamicParameters() { }
+        
         /// <summary>
         /// construct a dynamic parameter bag
         /// </summary>
         /// <param name="template">can be an anonymous type of a DynamicParameters bag</param>
         public DynamicParameters(object template)
         {
-            if (template != null)
-            {
-                AddDynamicParams(template);
-            }
+            AddDynamicParams(template);
         }
 
         /// <summary>
@@ -2000,16 +1986,29 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
 )
         {
-            object obj = param as object;
-
+            var obj = param as object;
             if (obj != null)
             {
                 var subDynamic = obj as DynamicParameters;
-
                 if (subDynamic == null)
                 {
-                    templates = templates ?? new List<object>();
-                    templates.Add(obj);
+                    var dictionary = obj as IEnumerable<KeyValuePair<string, object>>;
+                    if (dictionary == null)
+                    {
+                        templates = templates ?? new List<object>();
+                        templates.Add(obj);
+                    }
+                    else
+                    {
+                        foreach (var kvp in dictionary)
+                        {
+#if CSHARP30
+                            Add(kvp.Key, kvp.Value, null, null, null);
+#else
+                            Add(kvp.Key, kvp.Value);
+#endif
+                        }
+                    }
                 }
                 else
                 {

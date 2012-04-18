@@ -769,12 +769,6 @@ Order by p.Id";
             connection.Query<TestEnumClass>("select null as [EnumEnum]").First().EnumEnum.IsEqualTo(null);
             connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
         }
-        void Foo()
-        {
-            string s = "Bla";
-            var obj = new TestEnumClassNoNull();
-            obj.EnumEnum = (TestEnum)Enum.Parse(typeof(TestEnum), s, true);
-        }
         public void TestEnumStrings()
         {
             connection.Query<TestEnumClassNoNull>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
@@ -784,7 +778,7 @@ Order by p.Id";
             connection.Query<TestEnumClass>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
         }
 
-        public void TestSupportForParamDictionary()
+        public void TestSupportForDynamicParameters()
         {
             var p = new DynamicParameters();
             p.Add("name", "bob");
@@ -794,7 +788,6 @@ Order by p.Id";
 
             p.Get<int>("age").IsEqualTo(11);
         }
-
 
         public void TestProcSupport()
         {
@@ -1256,6 +1249,36 @@ Order by p.Id";
             ((int)result.d).IsEqualTo(4);
         }
 
+        public void TestAppendingADictionary()
+        {
+            var dictionary = new Dictionary<string, object>();
+            dictionary.Add("A", 1);
+            dictionary.Add("B", "two");
+
+            DynamicParameters p = new DynamicParameters();
+            p.AddDynamicParams(dictionary);
+
+            var result = connection.Query("select @A a, @B b", p).Single();
+
+            ((int)result.a).IsEqualTo(1);
+            ((string)result.b).IsEqualTo("two");
+        }
+
+        public void TestAppendingAnExpandoObject()
+        {
+            dynamic expando = new System.Dynamic.ExpandoObject();
+            expando.A = 1;
+            expando.B = "two";
+
+            DynamicParameters p = new DynamicParameters();
+            p.AddDynamicParams(expando);
+
+            var result = connection.Query("select @A a, @B b", p).Single();
+
+            ((int)result.a).IsEqualTo(1);
+            ((string)result.b).IsEqualTo("two");
+        }
+
         public void TestAppendingAList()
         {
             DynamicParameters p = new DynamicParameters();
@@ -1391,6 +1414,126 @@ Order by p.Id";
         public enum ShortEnum : short
         {
             Zero = 0, One = 1, Two = 2, Three = 3, Four = 4, Five = 5, Six = 6
+        }
+
+        public void TestTransactionCommit()
+        {
+            try
+            {
+                connection.Execute("create table #TransactionTest ([ID] int, [Value] varchar(32));");
+
+                using (var transaction = connection.BeginTransaction())
+                {
+                    connection.Execute("insert into #TransactionTest ([ID], [Value]) values (1, 'ABC');", transaction: transaction);
+
+                    transaction.Commit();
+                }
+
+                connection.Query<int>("select count(*) from #TransactionTest;").Single().IsEqualTo(1);
+            }
+            finally
+            {
+                connection.Execute("drop table #TransactionTest;");
+            }
+        }
+
+        public void TestTransactionRollback()
+        {
+            connection.Execute("create table #TransactionTest ([ID] int, [Value] varchar(32));");
+
+            try
+            {
+                using (var transaction = connection.BeginTransaction())
+                {
+                    connection.Execute("insert into #TransactionTest ([ID], [Value]) values (1, 'ABC');", transaction: transaction);
+
+                    transaction.Rollback();
+                }
+
+                connection.Query<int>("select count(*) from #TransactionTest;").Single().IsEqualTo(0);
+            }
+            finally
+            {
+                connection.Execute("drop table #TransactionTest;");
+            }
+        }
+
+        public void TestCommandWithInheritedTransaction()
+        {
+            connection.Execute("create table #TransactionTest ([ID] int, [Value] varchar(32));");
+
+            try
+            {
+                using (var transaction = connection.BeginTransaction())
+                {
+                    var transactedConnection = new TransactedConnection(connection, transaction);
+
+                    transactedConnection.Execute("insert into #TransactionTest ([ID], [Value]) values (1, 'ABC');");
+
+                    transaction.Rollback();
+                }
+
+                connection.Query<int>("select count(*) from #TransactionTest;").Single().IsEqualTo(0);
+            }
+            finally
+            {
+                connection.Execute("drop table #TransactionTest;");
+            }
+        }
+
+        class TransactedConnection : IDbConnection
+        {
+            IDbConnection _conn;
+            IDbTransaction _tran;
+
+            public TransactedConnection(IDbConnection conn, IDbTransaction tran)
+            {
+                _conn = conn;
+                _tran = tran;
+            }
+
+            public string ConnectionString { get { return _conn.ConnectionString; } set { _conn.ConnectionString = value; } }
+            public int ConnectionTimeout { get { return _conn.ConnectionTimeout; } }
+            public string Database { get { return _conn.Database; } }
+            public ConnectionState State { get { return _conn.State; } }
+
+            public IDbTransaction BeginTransaction(IsolationLevel il)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IDbTransaction BeginTransaction()
+            {
+                return _tran;
+            }
+
+            public void ChangeDatabase(string databaseName)
+            {
+                _conn.ChangeDatabase(databaseName);
+            }
+
+            public void Close()
+            {
+                _conn.Close();
+            }
+
+            public IDbCommand CreateCommand()
+            {
+                // The command inherits the "current" transaction.
+                var command = _conn.CreateCommand();
+                command.Transaction = _tran;
+                return command;
+            }
+
+            public void Dispose()
+            {
+                _conn.Dispose();
+            }
+
+            public void Open()
+            {
+                _conn.Open();
+            }
         }
 
 #if POSTGRESQL
