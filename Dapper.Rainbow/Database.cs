@@ -25,10 +25,10 @@ namespace Dapper
     public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
         public class Table<T>
-        {
-            Database<TDatabase> database;
-            string tableName;
-            string likelyTableName;
+        { 
+            internal Database<TDatabase> database;
+            internal string tableName;
+            internal string likelyTableName;
 
             public Table(Database<TDatabase> database, string likelyTableName)
             {
@@ -50,7 +50,7 @@ namespace Dapper
             /// </summary>
             /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
             /// <returns></returns>
-            public int? Insert(dynamic data)
+            public virtual int? Insert(dynamic data)
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
@@ -114,7 +114,7 @@ namespace Dapper
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
-            private static List<string> GetParamNames(object o)
+            internal static List<string> GetParamNames(object o)
             {
                 if (o is DynamicParameters)
                 {
@@ -147,18 +147,23 @@ namespace Dapper
             return db;
         }
 
-        private static Action<Database<TDatabase>> tableConstructor;
+        internal static Action<TDatabase> tableConstructor;
 
-        private void InitDatabase(DbConnection connection, int commandTimeout)
+        internal void InitDatabase(DbConnection connection, int commandTimeout)
         {
             this.connection = connection;
             this.commandTimeout = commandTimeout;
             if (tableConstructor == null)
             {
-                tableConstructor = CreateTableConstructor();
+                tableConstructor = CreateTableConstructorForTable();
             }
 
-            tableConstructor(this);
+            tableConstructor(this as TDatabase);
+        }
+
+        internal virtual Action<TDatabase> CreateTableConstructorForTable()
+        {
+            return CreateTableConstructor(typeof(Table<>));
         }
 
         public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
@@ -178,16 +183,16 @@ namespace Dapper
             transaction = null;
         }
 
-        protected Action<Database<TDatabase>> CreateTableConstructor()
+        protected Action<TDatabase> CreateTableConstructor(Type tableType)
         {
-            var dm = new DynamicMethod("ConstructInstances", null, new Type[] { typeof(Database<TDatabase>) }, true);
+            var dm = new DynamicMethod("ConstructInstances", null, new Type[] { typeof(TDatabase) }, true);
             var il = dm.GetILGenerator();
 
             var setters = GetType().GetProperties()
-                .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(Table<>))
+                .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == tableType)
                 .Select(p => Tuple.Create(
                         p.GetSetMethod(true),
-                        p.PropertyType.GetConstructor(new Type[] { typeof(Database<TDatabase>), typeof(string) }),
+                        p.PropertyType.GetConstructor(new Type[] { typeof(TDatabase), typeof(string) }),
                         p.Name,
                         p.DeclaringType
                  ));
@@ -221,7 +226,7 @@ namespace Dapper
             }
 
             il.Emit(OpCodes.Ret);
-            return (Action<Database<TDatabase>>)dm.CreateDelegate(typeof(Action<Database<TDatabase>>));
+            return (Action<TDatabase>)dm.CreateDelegate(typeof(Action<TDatabase>));
         }
 
         static ConcurrentDictionary<Type, string> tableNameMap = new ConcurrentDictionary<Type, string>();

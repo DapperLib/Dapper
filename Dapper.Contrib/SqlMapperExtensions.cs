@@ -255,6 +255,9 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if deleted, false if not found</returns>
         public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
+			if (entityToDelete == null)
+				throw new ArgumentException("Cannot Delete null Object", "entityToDelete");
+
             var type = typeof(T);
 
             var keyProperties = KeyPropertiesCache(type);
@@ -486,7 +489,10 @@ public class SqlServerAdapter : ISqlAdapter
 
 		//NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
 		var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-		return (int)r.First().id;
+		int id = (int)r.First().id;
+		if (keyProperties.Any())
+			keyProperties.First().SetValue(entityToInsert, id, null);
+		return id;
 	}
 }
 
@@ -497,15 +503,22 @@ public class PostgresAdapter : ISqlAdapter
 		StringBuilder sb = new StringBuilder();
 		sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
-		sb.Append(" RETURNING ");
-		bool first = true;
-		foreach(var property in keyProperties)
+		// If no primary key then safe to assume a join table with not too much data to return
+		if (!keyProperties.Any())
+			sb.Append(" RETURNING *");
+		else
 		{
-			if (!first)
-				sb.Append(", ");
-			first = false;
-			sb.Append(property.Name);
+			sb.Append(" RETURNING ");
+			bool first = true;
+			foreach (var property in keyProperties)
+			{
+				if (!first)
+					sb.Append(", ");
+				first = false;
+				sb.Append(property.Name);
+			}
 		}
+
 		var results = connection.Query(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
 
 		// Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys

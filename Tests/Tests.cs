@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define POSTGRESQL // uncomment to run postgres tests
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -8,6 +9,9 @@ using System.IO;
 using System.Data;
 using System.Collections;
 using System.Reflection;
+#if POSTGRESQL
+using Npgsql;
+#endif
 
 namespace SqlMapper
 {
@@ -1388,5 +1392,46 @@ Order by p.Id";
         {
             Zero = 0, One = 1, Two = 2, Three = 3, Four = 4, Five = 5, Six = 6
         }
+
+#if POSTGRESQL
+
+        class Cat
+        {
+            public int Id { get; set; }
+            public string Breed { get; set; }
+            public string Name { get; set; }
+        }
+
+        Cat[] Cats = {
+                                new Cat() { Breed = "Abyssinian", Name="KACTUS"},
+                                new Cat() { Breed = "Aegean cat", Name="KADAFFI"},
+                                new Cat() { Breed = "American Bobtail", Name="KANJI"},
+                                new Cat() { Breed = "Balinese", Name="MACARONI"},
+                                new Cat() { Breed = "Bombay", Name="MACAULAY"},
+                                new Cat() { Breed = "Burmese", Name="MACBETH"},
+                                new Cat() { Breed = "Chartreux", Name="MACGYVER"},
+                                new Cat() { Breed = "German Rex", Name="MACKENZIE"},
+                                new Cat() { Breed = "Javanese", Name="MADISON"},
+                                new Cat() { Breed = "Persian", Name="MAGNA"}
+                            };
+
+        public void TestPostresqlArrayParameters()
+        {
+            using (var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest;Encoding=UNICODE"))
+            {
+                conn.Open();
+                IDbTransaction transaction = conn.BeginTransaction();
+                conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
+                conn.Execute("insert tcat(breed, name) values(:breed, :name) ", Cats);
+
+                var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new[] { 1, 3, 5 } });
+                r.Count().IsEqualTo(3);
+                r.Count(c => c.Id == 1).IsEqualTo(1);
+                r.Count(c => c.Id == 3).IsEqualTo(1);
+                r.Count(c => c.Id == 5).IsEqualTo(1);
+                transaction.Rollback();
+            }
+        }
+#endif
     }
 }
