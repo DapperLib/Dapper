@@ -929,12 +929,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return GetDynamicDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
 #endif
-
-            if (!(typeMap.ContainsKey(type) || type.FullName == LinqBinary))
+            Type underlyingType = null;
+            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary ||
+                (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
             {
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer(type, startBound);
+            return GetStructDeserializer(type, underlyingType ?? type, startBound);
 
         }
 #if !CSHARP30
@@ -1395,7 +1396,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-        private static Func<IDataReader, object> GetStructDeserializer(Type type, int index)
+        private static Func<IDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index)
         {
             // no point using special per-type handling here; it boils down to the same, plus not all are supported anyway (see: SqlDataReader.GetChar - not supported!)
 #pragma warning disable 618
@@ -1412,6 +1413,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return r => Activator.CreateInstance(type, r.GetValue(index));
             }
 #pragma warning restore 618
+
+            if (effectiveType.IsEnum)
+            {   // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
+                return r =>
+                {
+                    var val = r.GetValue(index);
+                    return val is DBNull ? null : Enum.ToObject(effectiveType, val);
+                };
+            }
             return r =>
             {
                 var val = r.GetValue(index);

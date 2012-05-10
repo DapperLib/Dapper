@@ -1378,10 +1378,9 @@ Order by p.Id";
             connection.Query<short?>("select cast(42 as smallint)").Single().IsEqualTo((short?)42);
             connection.Query<short?>("select cast(null as smallint)").Single().IsEqualTo((short?)null);
 
-            // hmmm.... these don't work currently... adding TODO
-            //connection.Query<ShortEnum>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum)42);
-            //connection.Query<ShortEnum?>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum?)42);
-            //connection.Query<ShortEnum?>("select cast(null as smallint)").Single().IsEqualTo((ShortEnum?)null);
+            connection.Query<ShortEnum>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum)42);
+            connection.Query<ShortEnum?>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum?)42);
+            connection.Query<ShortEnum?>("select cast(null as smallint)").Single().IsEqualTo((ShortEnum?)null);
 
             var row =
                 connection.Query<WithInt16Values>(
@@ -1401,7 +1400,34 @@ Order by p.Id";
             row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Six);
             row.NullableInt16Enum.IsEqualTo((ShortEnum?)null);
         }
+        public void TestInt32Usage()
+        {
+            connection.Query<int>("select cast(42 as int)").Single().IsEqualTo((int)42);
+            connection.Query<int?>("select cast(42 as int)").Single().IsEqualTo((int?)42);
+            connection.Query<int?>("select cast(null as int)").Single().IsEqualTo((int?)null);
 
+            connection.Query<IntEnum>("select cast(42 as int)").Single().IsEqualTo((IntEnum)42);
+            connection.Query<IntEnum?>("select cast(42 as int)").Single().IsEqualTo((IntEnum?)42);
+            connection.Query<IntEnum?>("select cast(null as int)").Single().IsEqualTo((IntEnum?)null);
+
+            var row =
+                connection.Query<WithInt32Values>(
+                    "select cast(1 as int) as NonNullableInt32, cast(2 as int) as NullableInt32, cast(3 as int) as NonNullableInt32Enum, cast(4 as int) as NullableInt32Enum")
+                    .Single();
+            row.NonNullableInt32.IsEqualTo((int)1);
+            row.NullableInt32.IsEqualTo((int)2);
+            row.NonNullableInt32Enum.IsEqualTo(IntEnum.Three);
+            row.NullableInt32Enum.IsEqualTo(IntEnum.Four);
+
+            row =
+    connection.Query<WithInt32Values>(
+        "select cast(5 as int) as NonNullableInt32, cast(null as int) as NullableInt32, cast(6 as int) as NonNullableInt32Enum, cast(null as int) as NullableInt32Enum")
+        .Single();
+            row.NonNullableInt32.IsEqualTo((int)5);
+            row.NullableInt32.IsEqualTo((int?)null);
+            row.NonNullableInt32Enum.IsEqualTo(IntEnum.Six);
+            row.NullableInt32Enum.IsEqualTo((IntEnum?)null);
+        }
 
         public class WithInt16Values
         {
@@ -1409,9 +1435,19 @@ Order by p.Id";
             public short? NullableInt16 { get; set; }
             public ShortEnum NonNullableInt16Enum { get; set; }
             public ShortEnum? NullableInt16Enum { get; set; }
-
         }
         public enum ShortEnum : short
+        {
+            Zero = 0, One = 1, Two = 2, Three = 3, Four = 4, Five = 5, Six = 6
+        }
+        public class WithInt32Values
+        {
+            public int NonNullableInt32 { get; set; }
+            public int? NullableInt32 { get; set; }
+            public IntEnum NonNullableInt32Enum { get; set; }
+            public IntEnum? NullableInt32Enum { get; set; }
+        }
+        public enum IntEnum : int
         {
             Zero = 0, One = 1, Two = 2, Three = 3, Four = 4, Five = 5, Six = 6
         }
