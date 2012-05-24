@@ -235,8 +235,37 @@ namespace SqlMapper
                 }
             }, "hand coded");
 
-            tests.Run(iterations);
+            DataTable table = new DataTable
+            {
+                Columns =
+                    {
+                        {"Id", typeof (int)},
+                        {"Text", typeof (string)},
+                        {"CreationDate", typeof (DateTime)},
+                        {"LastChangeDate", typeof (DateTime)},
+                        {"Counter1", typeof (int)},
+                        {"Counter2", typeof (int)},
+                        {"Counter3", typeof (int)},
+                        {"Counter4", typeof (int)},
+                        {"Counter5", typeof (int)},
+                        {"Counter6", typeof (int)},
+                        {"Counter7", typeof (int)},
+                        {"Counter8", typeof (int)},
+                        {"Counter9", typeof (int)},
+                    }
+            };
+            tests.Add(id => {
+                idParam.Value = id;
+                object[] values = new object[13];
+                using(var reader = postCommand.ExecuteReader())
+                {
+                    reader.Read();
+                    reader.GetValues(values);
+                    table.Rows.Add(values);
+                }
+            }, "DataTable via IDataReader.GetValues");
 
+            tests.Run(iterations);
         }
 
     }
