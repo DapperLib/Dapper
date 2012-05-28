@@ -1,0 +1,49 @@
+﻿*.doc  diff=astextplain
+*.DOC	diff=astextplain
+*.docx	diff=astextplain
+*.DOCX	diff=astextplain
+*.dot	diff=astextplain
+*.DOT	diff=astextplain
+*.pdf	diff=astextplain
+*.PDF	diff=astextplain
+*.rtf	diff=astextplain
+*.RTF	diff=astextplain
+
+*.jpg binary
+*.png binary
+*.gif binary
+
+*.cs -text diff=csharp 
+*.vb -text
+*.c -text
+*.cpp -text
+*.cxx -text
+*.h -text
+*.hxx -text
+*.py -text
+*.rb -text
+*.java -text
+*.html -text
+*.htm -text
+*.css -text
+*.scss -text
+*.sass -text
+*.less -text
+*.js -text
+*.lisp -text
+*.clj -text
+*.sql -text
+*.php -text
+*.lua -text
+*.m -text
+*.asm -text
+*.erl -text
+*.fs -text
+*.fsx -text
+*.hs -text
+
+*.csproj -text merge=union 
+*.vbproj -text merge=union 
+*.fsproj -text merge=union 
+*.dbproj -text merge=union 
+*.sln -text merge=union 
