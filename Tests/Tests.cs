@@ -579,6 +579,7 @@ Order by p.Id";
         {
             public int Id { get; set; }
             public string Name { get; set; }
+            public string Description { get; set; }
         }
         public void TestMultiMapWithSplit() // http://stackoverflow.com/q/6056778/23354
         {
@@ -593,6 +594,22 @@ Order by p.Id";
             product.Name.IsEqualTo("abc");
             product.Category.Id.IsEqualTo(2);
             product.Category.Name.IsEqualTo("def");
+        }
+        public void TestMultiMapWithSplitWithNullValue() // http://stackoverflow.com/q/10744728/449906
+        {
+            var sql = @"select 1 as id, 'abc' as name, NULL as description, 'def' as name";
+            var product = connection.Query<Product, Category, Product>(sql, (prod, cat) =>
+            {
+                prod.Category = cat;
+                return prod;
+            }, splitOn: "description").First();
+            // assertions
+            product.Id.IsEqualTo(1);
+            product.Name.IsEqualTo("abc");
+            product.Category.IsNotNull();
+            product.Category.Id.IsEqualTo(0);
+            product.Category.Name.IsEqualTo("def");
+            product.Category.Description.IsNull();
         }
         public void TestFieldsAndPrivates()
         {
