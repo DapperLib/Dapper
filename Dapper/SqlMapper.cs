@@ -516,6 +516,29 @@ namespace Dapper
             return Query<T>(cnn, sql, param, transaction, true, null, commandType);
         }
 
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, IDbTransaction transaction) 
+        {
+            return QueryMultiple(cnn, sql, param, transaction, null, null);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, CommandType commandType) 
+        {
+            return QueryMultiple(cnn, sql, param, null, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return QueryMultiple(cnn, sql, param, transaction, null, commandType);
+        }
 #endif
         /// <summary>
         /// Execute parameterized SQL  
