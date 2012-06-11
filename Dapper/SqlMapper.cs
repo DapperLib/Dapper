@@ -118,12 +118,39 @@ namespace Dapper
         }
         class CacheInfo
         {
-            public Func<IDataReader, object> Deserializer { get; set; }
+            public DeserializerState Deserializer { get; set; }
             public Func<IDataReader, object>[] OtherDeserializers { get; set; }
             public Action<IDbCommand, object> ParamReader { get; set; }
             private int hitCount;
             public int GetHitCount() { return Interlocked.CompareExchange(ref hitCount, 0, 0); }
             public void RecordHit() { Interlocked.Increment(ref hitCount); }
+        }
+        static int GetColumnHash(IDataReader reader)
+        {
+            unchecked
+            {
+                int colCount = reader.FieldCount, hash = colCount;
+                for (int i = 0; i < colCount; i++)
+                {
+                    object tmp = reader.GetName(i);
+                    hash = (hash * 31) + (tmp == null ? 0 : tmp.GetHashCode());
+
+                    reader.GetFieldType(i);
+                    hash = (hash * 31) + (tmp == null ? 0 : tmp.GetHashCode());
+                }
+                return hash;
+            }
+        }
+        struct DeserializerState
+        {
+            public readonly int Hash;
+            public readonly Func<IDataReader, object> Func;
+
+            public DeserializerState(int hash, Func<IDataReader, object> func)
+            {
+                Hash = hash;
+                Func = func;
+            }
         }
 
         /// <summary>
@@ -580,34 +607,19 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             {
                 using (var reader = cmd.ExecuteReader())
                 {
-                    Func<Func<IDataReader, object>> cacheDeserializer =  () =>
+                    var tuple = info.Deserializer;
+                    int hash = GetColumnHash(reader);
+                    if (tuple.Func == null || tuple.Hash != hash)
                     {
-                        info.Deserializer = GetDeserializer(typeof(T), reader, 0, -1, false);
+                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
                         SetQueryCache(identity, info);
-                        return info.Deserializer;
-                    };
-
-                    if (info.Deserializer == null)
-                    {
-                        cacheDeserializer();
                     }
 
-                    var deserializer = info.Deserializer;
+                    var func = tuple.Func;
 
                     while (reader.Read())
                     {
-                        object next;
-                        try
-                        {
-                            next = deserializer(reader);
-                        }
-                        catch (DataException)
-                        {
-                            // give it another shot, in case the underlying schema changed
-                            deserializer = cacheDeserializer();
-                            next = deserializer(reader);
-                        }
-                        yield return (T)next;
+                        yield return (T)func(reader);
                     }
                     
                 }
@@ -747,40 +759,25 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     ownedReader = ownedCommand.ExecuteReader();
                     reader = ownedReader;
                 }
-                Func<IDataReader, object> deserializer = null;
+                DeserializerState deserializer = default(DeserializerState);
                 Func<IDataReader, object>[] otherDeserializers = null;
 
-                Action cacheDeserializers = () =>
-                { 
-                    var deserializers = GenerateDeserializers(new Type[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth)}, splitOn, reader);
-                    deserializer = cinfo.Deserializer = deserializers[0];
+                int hash = GetColumnHash(reader);
+                if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
+                {
+                    var deserializers = GenerateDeserializers(new Type[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth) }, splitOn, reader);
+                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
                     otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
                     SetQueryCache(identity, cinfo);
-                };
-
-                if ((deserializer = cinfo.Deserializer) == null || (otherDeserializers = cinfo.OtherDeserializers) == null)
-                {
-                    cacheDeserializers();
                 }
 
-                Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(deserializer, otherDeserializers, map);
+                Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(deserializer.Func, otherDeserializers, map);
 
                 if (mapIt != null)
                 {
                     while (reader.Read())
                     {
-                        TReturn next;
-                        try
-                        {
-                            next = mapIt(reader);
-                        }
-                        catch (DataException)
-                        {
-                            cacheDeserializers();
-                            mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(deserializer, otherDeserializers, map);
-                            next = mapIt(reader);
-                        }
-                        yield return next;
+                        yield return mapIt(reader);
                     }
                 }
             }
@@ -1773,19 +1770,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 CacheInfo cache = GetCacheInfo(typedIdentity);
                 var deserializer = cache.Deserializer;
 
-                Func<Func<IDataReader, object>> deserializerGenerator = () => 
+                int hash = GetColumnHash(reader);
+                if (deserializer.Func == null || deserializer.Hash != hash)
                 {
-                    deserializer = GetDeserializer(typeof(T), reader, 0, -1, false);
+                    deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
                     cache.Deserializer = deserializer;
-                    return deserializer;
-                };
-
-                if (deserializer == null)
-                {
-                    deserializer = deserializerGenerator();
                 }
                 consumed = true;
-                return ReadDeferred<T>(gridIndex, deserializer, typedIdentity, deserializerGenerator);
+                return ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
             }
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(object func, string splitOn)
@@ -1888,23 +1880,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #endif
 
-            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity, Func<Func<IDataReader, object>> deserializerGenerator)
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)
             {
                 try
                 {
                     while (index == gridIndex && reader.Read())
                     {
-                        object next;
-                        try
-                        {
-                            next = deserializer(reader);
-                        }
-                        catch (DataException)
-                        {
-                            deserializer = deserializerGenerator();
-                            next = deserializer(reader);
-                        }
-                        yield return (T)next;
+                        yield return (T)deserializer(reader);
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows

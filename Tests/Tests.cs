@@ -1517,6 +1517,47 @@ Order by p.Id";
             }
         }
 
+        public void TestReaderWhenResultsChange()
+        {
+            try
+            {
+                
+                connection.Execute("create table #ResultsChange (X int);create table #ResultsChange2 (Y int);insert #ResultsChange (X) values(1);insert #ResultsChange2 (Y) values(1);");
+
+                var obj1 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
+                obj1.X.IsEqualTo(1);
+                obj1.Y.IsEqualTo(0);
+                obj1.Z.IsEqualTo(0);
+
+                var obj2 = connection.Query<ResultsChangeType>("select * from #ResultsChange rc inner join #ResultsChange2 rc2 on rc2.Y=rc.X").Single();
+                obj2.X.IsEqualTo(1);
+                obj2.Y.IsEqualTo(1);
+                obj2.Z.IsEqualTo(0);
+
+                connection.Execute("alter table #ResultsChange add Z int null");
+                connection.Execute("update #ResultsChange set Z = 2");
+
+                var obj3 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
+                obj3.X.IsEqualTo(1);
+                obj3.Y.IsEqualTo(0);
+                obj3.Z.IsEqualTo(2);
+
+                var obj4 = connection.Query<ResultsChangeType>("select * from #ResultsChange rc inner join #ResultsChange2 rc2 on rc2.Y=rc.X").Single();
+                obj4.X.IsEqualTo(1);
+                obj4.Y.IsEqualTo(1);
+                obj4.Z.IsEqualTo(2);
+            } finally
+            {
+                connection.Execute("drop table #ResultsChange;drop table #ResultsChange2;");
+            }
+        }
+        class ResultsChangeType
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int Z { get; set; }
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
