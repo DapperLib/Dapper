@@ -131,11 +131,8 @@ namespace Dapper
             {
                 int colCount = reader.FieldCount, hash = colCount;
                 for (int i = 0; i < colCount; i++)
-                {
+                {   // binding code is only interested in names - not types
                     object tmp = reader.GetName(i);
-                    hash = (hash * 31) + (tmp == null ? 0 : tmp.GetHashCode());
-
-                    reader.GetFieldType(i);
                     hash = (hash * 31) + (tmp == null ? 0 : tmp.GetHashCode());
                 }
                 return hash;
