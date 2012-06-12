@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.8</version>
+    <version>1.9</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,6 +19,10 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.9 - Started release notes
+      *       Added: Better schema change detection
+      *       Fixed: Enum support for T in Query-of-T
+      *       Added: Dictionary support for parameters
       * 1.8 - Started release notes
       *       Important: Dapper is now shipping as a DLL which will work on .net 3.5 or .net 4.0,
       *          This improves the debugging experience as you no longer break into dapper when SQL fails.
