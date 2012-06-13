@@ -468,10 +468,37 @@ namespace Dapper
         {
             return Execute(cnn, sql, param, null, null, null);
         }
+
+        /// <summary>
+        /// Execute parameterized SQL
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static int Execute(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
+        {
+            return Execute(cnn, sql, param, transaction, null, null);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static int Execute(this IDbConnection cnn, string sql, object param, CommandType commandType)
+        {
+            return Execute(cnn, sql, param, null, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static int Execute(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return Execute(cnn, sql, param, transaction, null, commandType);
+        }
+
         /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
-        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new <space> get new object</remarks>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
@@ -480,6 +507,62 @@ namespace Dapper
             return Query<T>(cnn, sql, param, null, true, null, null);
         }
 
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
+        {
+            return Query<T>(cnn, sql, param, transaction, true, null, null);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param, CommandType commandType)
+        {
+            return Query<T>(cnn, sql, param, null, true, null, commandType);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return Query<T>(cnn, sql, param, transaction, true, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, IDbTransaction transaction) 
+        {
+            return QueryMultiple(cnn, sql, param, transaction, null, null);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, CommandType commandType) 
+        {
+            return QueryMultiple(cnn, sql, param, null, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return QueryMultiple(cnn, sql, param, transaction, null, commandType);
+        }
 #endif
         /// <summary>
         /// Execute parameterized SQL  
