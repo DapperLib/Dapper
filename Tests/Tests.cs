@@ -961,6 +961,77 @@ end");
             }
         }
 
+        class DynamicParameterWithIntTVP : Dapper.DynamicParameters, Dapper.SqlMapper.IDynamicParameters
+        {
+            IEnumerable<int> numbers;
+            public DynamicParameterWithIntTVP(IEnumerable<int> numbers)
+            {
+                this.numbers = numbers;
+            }
+
+            public new void AddParameters(IDbCommand command, Dapper.SqlMapper.Identity identity)
+            {
+                base.AddParameters(command, identity);
+
+                var sqlCommand = (SqlCommand)command;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                List<Microsoft.SqlServer.Server.SqlDataRecord> number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
+
+                // Create an SqlMetaData object that describes our table type.
+                Microsoft.SqlServer.Server.SqlMetaData[] tvp_definition = { new Microsoft.SqlServer.Server.SqlMetaData("n", SqlDbType.Int) };
+
+                foreach (int n in numbers)
+                {
+                    // Create a new record, using the metadata array above.
+                    Microsoft.SqlServer.Server.SqlDataRecord rec = new Microsoft.SqlServer.Server.SqlDataRecord(tvp_definition);
+                    rec.SetInt32(0, n);    // Set the value.
+                    number_list.Add(rec);      // Add it to the list.
+                }
+
+                // Add the table parameter.
+                var p = sqlCommand.Parameters.Add("ints", SqlDbType.Structured);
+                p.Direction = ParameterDirection.Input;
+                p.TypeName = "int_list_type";
+                p.Value = number_list;
+
+            }
+        }
+
+        public void TestTVPWithAdditionalParams()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_values @ints int_list_type READONLY, @stringParam varchar(20), @dateParam datetime AS select i.*, @stringParam as stringParam, @dateParam as dateParam from @ints i");
+
+                var dynamicParameters = new DynamicParameterWithIntTVP(new int[] { 1, 2, 3 });
+                dynamicParameters.AddDynamicParams(new { stringParam = "stringParam", dateParam = new DateTime(2012, 1, 1) });
+
+                var results = connection.Query("get_values", dynamicParameters, commandType: CommandType.StoredProcedure).ToList();
+                results.Count.IsEqualTo(3);
+                for (int i = 0; i < results.Count; i++)
+                {
+                    var result = results[i];
+                    Assert.IsEqualTo(i + 1, result.n);
+                    Assert.IsEqualTo("stringParam", result.stringParam);
+                    Assert.IsEqualTo(new DateTime(2012, 1, 1), result.dateParam);
+                }
+
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_values");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
         class Parent
         {
             public int Id { get; set; }
