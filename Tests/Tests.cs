@@ -9,6 +9,7 @@ using System.IO;
 using System.Data;
 using System.Collections;
 using System.Reflection;
+using System.Dynamic;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -787,6 +788,14 @@ Order by p.Id";
             connection.Query<string>("set @age = 11 select @name", p).First().IsEqualTo("bob");
 
             p.Get<int>("age").IsEqualTo(11);
+        }
+        public void TestSupportForExpandoObjectParameters()
+        {
+            dynamic p = new ExpandoObject();
+            p.name = "bob";
+            object parameters = p;
+            string result = connection.Query<string>("select @name", parameters).First();
+            result.IsEqualTo("bob");
         }
 
         public void TestProcSupport()

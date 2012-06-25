@@ -986,6 +986,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameters(cmd,identity); };
                     }
+#if !CSHARP30
+                    else if (typeof(IEnumerable<KeyValuePair<string, object>>).IsAssignableFrom(identity.parametersType) && typeof(System.Dynamic.IDynamicMetaObjectProvider).IsAssignableFrom(identity.parametersType))
+                    {
+                        info.ParamReader = (cmd, obj) =>
+                        {
+                            IDynamicParameters mapped = new DynamicParameters(obj);
+                            mapped.AddParameters(cmd, identity);
+                        };
+                    }
+#endif
                     else
                     {
                         info.ParamReader = CreateParamInfoGenerator(identity);
