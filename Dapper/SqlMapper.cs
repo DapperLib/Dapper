@@ -2150,6 +2150,16 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
         void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
+            AddParameters(command, identity);
+        }
+
+        /// <summary>
+        /// Add all the parameters needed to the command just before it executes
+        /// </summary>
+        /// <param name="command">The raw command prior to execution</param>
+        /// <param name="identity">Information about the query</param>
+        protected void AddParameters(IDbCommand command, SqlMapper.Identity identity)
+        {
             if (templates != null)
             {
                 foreach (var template in templates)
