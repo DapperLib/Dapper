@@ -111,11 +111,28 @@ end
         private static void RunTests()
         {
             var tester = new Tests();
+            int fail = 0;
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 Console.Write("Running " + method.Name);
-                method.Invoke(tester, null);
-                Console.WriteLine(" - OK!");
+                try
+                {
+                    method.Invoke(tester, null);
+                    Console.WriteLine(" - OK!");
+                } catch (Exception ex)
+                {
+                    fail++;
+                    Console.WriteLine(" - " + ex.Message);
+                }
+            }
+            Console.WriteLine();
+            if(fail == 0)
+            {
+                Console.WriteLine("(all tests successful)");
+            }
+            else
+            {
+                Console.WriteLine("#### FAILED: {0}", fail);
             }
         }
     }

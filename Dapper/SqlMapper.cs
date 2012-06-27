@@ -1778,21 +1778,29 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <param name="reader"></param>
         public static void ThrowDataException(Exception ex, int index, IDataReader reader)
         {
-            string name = "(n/a)", value = "(n/a)";
-            if (reader != null && index >= 0 && index < reader.FieldCount)
+            Exception toThrow;
+            try
             {
-                name = reader.GetName(index);
-                object val = reader.GetValue(index);
-                if (val == null || val is DBNull)
+                string name = "(n/a)", value = "(n/a)";
+                if (reader != null && index >= 0 && index < reader.FieldCount)
                 {
-                    value = "<null>";
+                    name = reader.GetName(index);
+                    object val = reader.GetValue(index);
+                    if (val == null || val is DBNull)
+                    {
+                        value = "<null>";
+                    }
+                    else
+                    {
+                        value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
+                    }
                 }
-                else
-                {
-                    value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
-                }
+                toThrow = new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name, value), ex);
+            } catch
+            { // throw the **original** exception, wrapped as DataException
+                toThrow = new DataException(ex.Message, ex);   
             }
-            throw new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name, value), ex);
+            throw toThrow;
         }
         private static void EmitInt32(ILGenerator il, int value)
         {
