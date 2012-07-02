@@ -318,6 +318,7 @@ namespace Dapper
             typeMap[typeof(Guid?)] = DbType.Guid;
             typeMap[typeof(DateTime?)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
+            typeMap[typeof (Object)] = DbType.Object;
         }
 
         private const string LinqBinary = "System.Data.Linq.Binary";
