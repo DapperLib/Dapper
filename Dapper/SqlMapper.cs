@@ -16,6 +16,11 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
+using System.Data.SqlClient;
+
+#if !CSHARP30
+using System.Threading.Tasks;
+#endif
 
 namespace Dapper
 {
@@ -645,6 +650,26 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             var data = QueryInternal<T>(cnn, sql, param as object, transaction, commandTimeout, commandType);
             return buffered ? data.ToList() : data;
         }
+		
+#if !CSHARP30
+		/// <summary>
+		/// Executes a query asyncronously, returning the data typed as per T
+		/// </summary>
+		/// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+		/// <returns> IAsyncResult used to wait on. The completion action returns the sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+		/// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+		/// </returns>
+		public static Task<IEnumerable<T>> QueryAsync<T>(
+			this IDbConnection cnn, 
+            string sql, 
+            dynamic param = null, 
+            IDbTransaction transaction = null, 
+            int? commandTimeout = null, 
+            CommandType? commandType = null )
+		{
+			return QueryInternalAsync<T>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+		}
+#endif
 
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
@@ -687,25 +712,57 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
             {
                 using (var reader = cmd.ExecuteReader())
-                {
-                    var tuple = info.Deserializer;
-                    int hash = GetColumnHash(reader);
-                    if (tuple.Func == null || tuple.Hash != hash)
-                    {
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
-                        SetQueryCache(identity, info);
-                    }
-
-                    var func = tuple.Func;
-
-                    while (reader.Read())
-                    {
-                        yield return (T)func(reader);
-                    }
-                    
+				{
+					return ExecuteReaderInternal<T>(reader, identity, info).ToList();
                 }
             }
         }
+
+		private static IEnumerable<T> ExecuteReaderInternal<T>(IDataReader reader, Identity identity, CacheInfo info)
+		{
+			var tuple = info.Deserializer;
+			int hash = GetColumnHash(reader);
+			if (tuple.Func == null || tuple.Hash != hash)
+			{
+				tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
+				SetQueryCache(identity, info);
+			}
+
+			var func = tuple.Func;
+
+			while (reader.Read())
+			{
+				yield return (T)func(reader);
+			}
+		}
+		
+#if !CSHARP30
+		/// <summary>
+		/// Return a typed list of objects asynchonously, reader is closed after the call
+		/// Requires SQL Server.
+		/// </summary>
+		private static Task<IEnumerable<T>> QueryInternalAsync<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
+		{
+			var identity = new Identity(sql, commandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
+			var info = GetCacheInfo(identity);
+
+			SqlCommand cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType) as SqlCommand;
+
+			var task = Task.Factory.FromAsync(
+				(callback, state) => cmd.BeginExecuteReader(callback, state),
+				ar => cmd.EndExecuteReader(ar),
+				TaskCreationOptions.AttachedToParent);
+
+			return task.ContinueWith<IEnumerable<T>>(t =>
+			{
+				if (!t.Result.HasRows)
+					return new List<T>();
+				else
+					return ExecuteReaderInternal<T>(t.Result, identity, info).ToArray();
+			},
+					TaskContinuationOptions.AttachedToParent);
+		}
+#endif
 
         /// <summary>
         /// Maps a query to objects
