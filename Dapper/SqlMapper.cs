@@ -16,11 +16,6 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
-using System.Data.SqlClient;
-
-#if !CSHARP30
-using System.Threading.Tasks;
-#endif
 
 namespace Dapper
 {
@@ -121,13 +116,21 @@ namespace Dapper
             public TValue Value { get; private set; }
             public Link<TKey, TValue> Tail { get; private set; }
         }
-        class CacheInfo
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public class CacheInfo
         {
+            /// <summary/>
             public DeserializerState Deserializer { get; set; }
+            /// <summary/>
             public Func<IDataReader, object>[] OtherDeserializers { get; set; }
+            /// <summary/>
             public Action<IDbCommand, object> ParamReader { get; set; }
             private int hitCount;
+            /// <summary/>
             public int GetHitCount() { return Interlocked.CompareExchange(ref hitCount, 0, 0); }
+            /// <summary/>
             public void RecordHit() { Interlocked.Increment(ref hitCount); }
         }
         static int GetColumnHash(IDataReader reader)
@@ -143,11 +146,17 @@ namespace Dapper
                 return hash;
             }
         }
-        struct DeserializerState
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public struct DeserializerState
         {
+            /// <summary/>
             public readonly int Hash;
+            /// <summary/>
             public readonly Func<IDataReader, object> Func;
 
+            /// <summary/>
             public DeserializerState(int hash, Func<IDataReader, object> func)
             {
                 Hash = hash;
@@ -378,7 +387,10 @@ namespace Dapper
                 return new Identity(sql, commandType, connectionString, this.type ,type, null, -1);
             }
 
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
+            /// <summary>
+            /// exposed for extensability
+            /// </summary>
+            public Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
                 : this(sql, commandType, connection.ConnectionString, type, parametersType, otherTypes, 0)
             { }
             private Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex)
@@ -650,26 +662,6 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             var data = QueryInternal<T>(cnn, sql, param as object, transaction, commandTimeout, commandType);
             return buffered ? data.ToList() : data;
         }
-		
-#if !CSHARP30
-		/// <summary>
-		/// Executes a query asyncronously, returning the data typed as per T
-		/// </summary>
-		/// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-		/// <returns> IAsyncResult used to wait on. The completion action returns the sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
-		/// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
-		/// </returns>
-		public static Task<IEnumerable<T>> QueryAsync<T>(
-			this IDbConnection cnn, 
-            string sql, 
-            dynamic param = null, 
-            IDbTransaction transaction = null, 
-            int? commandTimeout = null, 
-            CommandType? commandType = null )
-		{
-			return QueryInternalAsync<T>(cnn, sql, param as object, transaction, commandTimeout, commandType);
-		}
-#endif
 
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
@@ -718,7 +710,10 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
         }
 
-		private static IEnumerable<T> ExecuteReaderInternal<T>(IDataReader reader, Identity identity, CacheInfo info)
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+		public static IEnumerable<T> ExecuteReaderInternal<T>(IDataReader reader, Identity identity, CacheInfo info)
 		{
 			var tuple = info.Deserializer;
 			int hash = GetColumnHash(reader);
@@ -735,34 +730,6 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 				yield return (T)func(reader);
 			}
 		}
-		
-#if !CSHARP30
-		/// <summary>
-		/// Return a typed list of objects asynchonously, reader is closed after the call
-		/// Requires SQL Server.
-		/// </summary>
-		private static Task<IEnumerable<T>> QueryInternalAsync<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
-		{
-			var identity = new Identity(sql, commandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
-			var info = GetCacheInfo(identity);
-
-			SqlCommand cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType) as SqlCommand;
-
-			var task = Task.Factory.FromAsync(
-				(callback, state) => cmd.BeginExecuteReader(callback, state),
-				ar => cmd.EndExecuteReader(ar),
-				TaskCreationOptions.AttachedToParent);
-
-			return task.ContinueWith<IEnumerable<T>>(t =>
-			{
-				if (!t.Result.HasRows)
-					return new List<T>();
-				else
-					return ExecuteReaderInternal<T>(t.Result, identity, info).ToArray();
-			},
-					TaskContinuationOptions.AttachedToParent);
-		}
-#endif
 
         /// <summary>
         /// Maps a query to objects
@@ -1032,7 +999,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return deserializers.ToArray();
         }
 
-        private static CacheInfo GetCacheInfo(Identity identity)
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public static CacheInfo GetCacheInfo(Identity identity)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
@@ -1513,7 +1483,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
         }
 
-        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
         {
             var cmd = cnn.CreateCommand();
             var bindByName = GetBindByName(cmd.GetType());
