@@ -194,6 +194,14 @@ namespace SqlMapper
                 .IsFalse();
         }
 
+        // http://code.google.com/p/dapper-dot-net/issues/detail?id=70
+        // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
+        public void TestTimeSpanParam()
+        {
+            connection.Query<TimeSpan>("select @ts", new { ts = TimeSpan.FromMinutes(42) }).First()
+                .IsEqualTo(TimeSpan.FromMinutes(42));
+        }
+
         public void TestStrings()
         {
             connection.Query<string>(@"select 'a' a union select 'b'")
