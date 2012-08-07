@@ -1,4 +1,4 @@
-﻿//#define POSTGRESQL // uncomment to run postgres tests
+//#define POSTGRESQL // uncomment to run postgres tests
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -38,7 +38,7 @@ namespace SqlMapper
             }
         }
 
-        class NoDefualtConstructor 
+        class NoDefualtConstructor
         {
             public NoDefualtConstructor(int a)
             {
@@ -53,16 +53,16 @@ namespace SqlMapper
             {
                 connection.Query<NoDefualtConstructor>("select 1 A").First();
             }
-            catch(InvalidOperationException e)
+            catch (InvalidOperationException e)
             {
                 e.Message.IsEqualTo("A parameterless default constructor is required to allow for dapper materialization");
             }
-   
+
         }
 
 
         // http://stackoverflow.com/q/8593871
-        public void TestAbstractInheritance() 
+        public void TestAbstractInheritance()
         {
             var order = connection.Query<AbstractInheritance.ConcreteOrder>("select 1 Internal,2 Protected,3 [Public],4 Concrete").First();
 
@@ -108,7 +108,7 @@ namespace SqlMapper
             public string Name;
             public int Age { get; set; }
             public TrapEnum Trap { get; set; }
-        
+
         }
 
         public void TestStructs()
@@ -570,40 +570,6 @@ Order by p.Id";
             connection.Execute("drop table #Users drop table #Posts");
         }
 
-//        public void TestUnlimitedMultiMap()
-//        {
-//            var createSql = @"
-//                create table #Users (Id int, Name varchar(20))
-//                create table #Posts (Id int, OwnerId int, Content varchar(20))
-//
-//                insert #Users values(99, 'Sam')
-//                insert #Users values(2, 'I am')
-//
-//                insert #Posts values(1, 99, 'Sams Post1')
-//                insert #Posts values(2, 99, 'Sams Post2')
-//                insert #Posts values(3, null, 'no ones post')
-//";
-//            connection.Execute(createSql);
-
-//            var sql =
-//@"select * from #Posts p 
-//left join #Users u on u.Id = p.OwnerId 
-//Order by p.Id";
-
-//            var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
-//            var p = data.First();
-
-//            p.Content.IsEqualTo("Sams Post1");
-//            p.Id.IsEqualTo(1);
-//            p.Owner.Name.IsEqualTo("Sam");
-//            p.Owner.Id.IsEqualTo(99);
-
-//            data[2].Owner.IsNull();
-
-//            connection.Execute("drop table #Users drop table #Posts");
-//        }
-
-
         class Team
         {
             public int Id { get; set; }
@@ -627,26 +593,26 @@ Order by p.Id";
             public string Name { get; set; }
         }
 
-        public void TestUnlimitedMultiMapGridReader()
+        public void TestUnlimitedMultiMap()
         {
-            var createSql = @"
-                create table #Team (Id int, Name varchar(20), GoalkeeperId int, Defender1Id int, Defender2Id int, Defender3Id int, Defender4Id int, Winger1Id int, Winger2Id int, Midfielder1Id int, Midfielder2Id int, Striker1Id int, Striker2Id int)
-                create table #Player (Id int, Name varchar(20))
+            var createSql =
+@"create table #Team (Id int, Name varchar(20), GoalkeeperId int, Defender1Id int, Defender2Id int, Defender3Id int, Defender4Id int, Winger1Id int, Winger2Id int, Midfielder1Id int, Midfielder2Id int, Striker1Id int, Striker2Id int)
+create table #Player (Id int, Name varchar(20))
 
-                insert #Player values(1, 'Joe')
-                insert #Player values(2, 'Bill')
-                insert #Player values(3, 'Mark')
-                insert #Player values(4, 'John')
-                insert #Player values(5, 'Andy')
-                insert #Player values(6, 'Sam')
-                insert #Player values(7, 'Bob')
-                insert #Player values(8, 'Roy')
-                insert #Player values(9, 'Dave')
-                insert #Player values(10, 'Pete')
-                insert #Player values(11, 'Jim')
+insert #Player values(1, 'Joe')
+insert #Player values(2, 'Bill')
+insert #Player values(3, 'Mark')
+insert #Player values(4, 'John')
+insert #Player values(5, 'Andy')
+insert #Player values(6, 'Sam')
+insert #Player values(7, 'Bob')
+insert #Player values(8, 'Roy')
+insert #Player values(9, 'Dave')
+insert #Player values(10, 'Pete')
+insert #Player values(11, 'Jim')
 
-                insert #Team values(1, 'Dapper United', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-";
+insert #Team values(1, 'Dapper United', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)";
+
             connection.Execute(createSql);
 
             var sql =
@@ -661,32 +627,99 @@ inner join #Player p7 on p7.Id = t.Winger2Id
 inner join #Player p8 on p8.Id = t.Midfielder1Id
 inner join #Player p9 on p9.Id = t.Midfielder2Id
 inner join #Player p10 on p10.Id = t.Striker1Id
-inner join #Player p11 on p11.Id = t.Striker2Id
-";
+inner join #Player p11 on p11.Id = t.Striker2Id";
 
-            var grid = connection.QueryMultiple(sql);
-            
-            var data = grid.Read<Team, Team>(
-                new Type[] { typeof(Team), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player) },
-                (team, players) =>
-                {
-                    team.Goalkeeper = (Player)players[0];
-                    team.Defender1 = (Player)players[1];
-                    team.Defender2 = (Player)players[2];
-                    team.Defender3 = (Player)players[3];
-                    team.Defender4 = (Player)players[4];
-                    team.Winger1 = (Player)players[5];
-                    team.Winger2 = (Player)players[6];
-                    team.Midfielder1 = (Player)players[7];
-                    team.Midfielder2 = (Player)players[8];
-                    team.Striker1 = (Player)players[9];
-                    team.Striker2 = (Player)players[10];
-                    return team;
-                }
-            ).ToList();
+            try
+            {
+                var data = connection.Query<Team, Team>(
+                    sql,
+                    new Type[] { typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player) },
+                    (team, players) =>
+                    {
+                        team.Goalkeeper = (Player)players[0];
+                        team.Defender1 = (Player)players[1];
+                        team.Defender2 = (Player)players[2];
+                        team.Defender3 = (Player)players[3];
+                        team.Defender4 = (Player)players[4];
+                        team.Winger1 = (Player)players[5];
+                        team.Winger2 = (Player)players[6];
+                        team.Midfielder1 = (Player)players[7];
+                        team.Midfielder2 = (Player)players[8];
+                        team.Striker1 = (Player)players[9];
+                        team.Striker2 = (Player)players[10];
+                        return team;
+                    }
+                ).ToList();
+            }
+            finally
+            {
+                connection.Execute("drop table #Team drop table #Player");
+            }
+        }
 
-            connection.Execute("drop table #Team drop table #Player");
+        public void TestUnlimitedMultiMapGridReader()
+        {
+            var createSql =
+@"create table #Team (Id int, Name varchar(20), GoalkeeperId int, Defender1Id int, Defender2Id int, Defender3Id int, Defender4Id int, Winger1Id int, Winger2Id int, Midfielder1Id int, Midfielder2Id int, Striker1Id int, Striker2Id int)
+create table #Player (Id int, Name varchar(20))
 
+insert #Player values(1, 'Joe')
+insert #Player values(2, 'Bill')
+insert #Player values(3, 'Mark')
+insert #Player values(4, 'John')
+insert #Player values(5, 'Andy')
+insert #Player values(6, 'Sam')
+insert #Player values(7, 'Bob')
+insert #Player values(8, 'Roy')
+insert #Player values(9, 'Dave')
+insert #Player values(10, 'Pete')
+insert #Player values(11, 'Jim')
+
+insert #Team values(1, 'Dapper United', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)";
+
+            connection.Execute(createSql);
+
+            var sql =
+@"select t.*, p1.*, p2.*, p3.*, p4.*, p5.*, p6.*, p7.*, p8.*, p9.*, p10.*, p11.* from #Team t 
+inner join #Player p1 on p1.Id = t.GoalkeeperId
+inner join #Player p2 on p2.Id = t.Defender1Id
+inner join #Player p3 on p3.Id = t.Defender2Id
+inner join #Player p4 on p4.Id = t.Defender3Id
+inner join #Player p5 on p5.Id = t.Defender4Id
+inner join #Player p6 on p6.Id = t.Winger1Id
+inner join #Player p7 on p7.Id = t.Winger2Id
+inner join #Player p8 on p8.Id = t.Midfielder1Id
+inner join #Player p9 on p9.Id = t.Midfielder2Id
+inner join #Player p10 on p10.Id = t.Striker1Id
+inner join #Player p11 on p11.Id = t.Striker2Id";
+
+            try
+            {
+                var grid = connection.QueryMultiple(sql);
+
+                var data = grid.Read<Team, Team>(
+                    new Type[] { typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player) },
+                    (team, players) =>
+                    {
+                        team.Goalkeeper = (Player)players[0];
+                        team.Defender1 = (Player)players[1];
+                        team.Defender2 = (Player)players[2];
+                        team.Defender3 = (Player)players[3];
+                        team.Defender4 = (Player)players[4];
+                        team.Winger1 = (Player)players[5];
+                        team.Winger2 = (Player)players[6];
+                        team.Midfielder1 = (Player)players[7];
+                        team.Midfielder2 = (Player)players[8];
+                        team.Striker1 = (Player)players[9];
+                        team.Striker2 = (Player)players[10];
+                        return team;
+                    }
+                ).ToList();
+            }
+            finally
+            {
+                connection.Execute("drop table #Team drop table #Player");
+            }
         }
 
         class Product
@@ -1517,7 +1550,8 @@ Order by p.Id";
             {
                 connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
                 throw new Exception("Should not have got here");
-            } catch(DataException ex)
+            }
+            catch (DataException ex)
             {
                 ex.Message.IsEqualTo("Error parsing column 0 (Value=1 - Int64)");
             }
@@ -1720,7 +1754,7 @@ Order by p.Id";
         {
             try
             {
-                
+
                 connection.Execute("create table #ResultsChange (X int);create table #ResultsChange2 (Y int);insert #ResultsChange (X) values(1);insert #ResultsChange2 (Y) values(1);");
 
                 var obj1 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
@@ -1745,7 +1779,8 @@ Order by p.Id";
                 obj4.X.IsEqualTo(1);
                 obj4.Y.IsEqualTo(1);
                 obj4.Z.IsEqualTo(2);
-            } finally
+            }
+            finally
             {
                 connection.Execute("drop table #ResultsChange;drop table #ResultsChange2;");
             }
