@@ -100,7 +100,7 @@ namespace Dapper
             /// <returns></returns>
             public T Get(int id)
             {
-                return database.Query<T>("select * from " + TableName + " where id = @id", new { id }).FirstOrDefault();
+                return database.Query<T>("select * from " + TableName + " where Id = @id", new { id }).FirstOrDefault();
             }
 
             public T First()
