@@ -105,7 +105,9 @@ namespace SqlMapper
                 A = 1,
                 B = 2
             }
+#pragma warning disable 0649
             public string Name;
+#pragma warning restore 0649
             public int Age { get; set; }
             public TrapEnum Trap { get; set; }
         
@@ -1258,12 +1260,16 @@ Order by p.Id";
         }
         class Foo1
         {
+#pragma warning disable 0649
             public int Id;
+#pragma warning restore 0649
             public int BarId { get; set; }
         }
         class Bar1
         {
+#pragma warning disable 0649
             public int BarId;
+#pragma warning restore 0649
             public string Name { get; set; }
         }
         public void TestMultiMapperIsNotConfusedWithUnorderedCols()
