@@ -798,6 +798,19 @@ Order by p.Id";
             // assertions
             product.Id.IsEqualTo(1);
             product.Name.IsEqualTo("abc");
+            product.Category.IsNull();
+        }
+        public void TestMultiMapWithSplitWithNullValueAndSpoofColumn() // http://stackoverflow.com/q/10744728/449906
+        {
+            var sql = @"select 1 as id, 'abc' as name, 1 as spoof, NULL as description, 'def' as name";
+            var product = connection.Query<Product, Category, Product>(sql, (prod, cat) =>
+            {
+                prod.Category = cat;
+                return prod;
+            }, splitOn: "spoof").First();
+            // assertions
+            product.Id.IsEqualTo(1);
+            product.Name.IsEqualTo("abc");
             product.Category.IsNotNull();
             product.Category.Id.IsEqualTo(0);
             product.Category.Name.IsEqualTo("def");
