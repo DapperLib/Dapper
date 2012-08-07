@@ -25,7 +25,7 @@ namespace Dapper
     public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
         public class Table<T>
-        { 
+        {
             internal Database<TDatabase> database;
             internal string tableName;
             internal string likelyTableName;
@@ -114,6 +114,7 @@ namespace Dapper
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
+
             internal static List<string> GetParamNames(object o)
             {
                 if (o is DynamicParameters)
