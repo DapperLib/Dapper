@@ -625,6 +625,41 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         {
             return Query<FastExpando>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
         }
+#else
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param) {
+            return Query(cnn, sql, param, null, true, null, null);
+        }
+
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction) {
+            return Query(cnn, sql, param, transaction, true, null, null);
+        }
+
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, CommandType? commandType) {
+            return Query(cnn, sql, param, null, true, null, commandType);
+        }
+
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType? commandType) {
+            return Query(cnn, sql, param, transaction, true, null, commandType);
+        }
+
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
+        public static IEnumerable<IDictionary<string,object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType) {
+            return Query<IDictionary<string, object>>(cnn, sql, param, transaction, buffered, commandTimeout, commandType);
+        }
 #endif
         
         /// <summary>
@@ -1016,6 +1051,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 return GetDynamicDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
+#else
+            if(type.IsAssignableFrom(typeof(Dictionary<string,object>)))
+            {
+                return GetDictionaryDeserializer(reader, startBound, length, returnNullIfFirstMissing);
+            }
 #endif
             Type underlyingType = null;
             if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary ||
@@ -1159,9 +1199,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             #endregion
         }
+#endif
 
-
+#if !CSHARP30
         private static Func<IDataReader, object> GetDynamicDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
+#else
+        private static Func<IDataReader, object> GetDictionaryDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
+#endif
+        
         {
             var fieldCount = reader.FieldCount;
             if (length == -1)
@@ -1188,11 +1233,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                              return null;
                          }
                      }
+#if !CSHARP30
                      //we know this is an object so it will not box
                      return FastExpando.Attach(row);
+#else
+                     return row;
+#endif
                  };
         }
-#endif
+
         /// <summary>
         /// Internal use only
         /// </summary>
