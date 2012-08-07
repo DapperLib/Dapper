@@ -301,6 +301,7 @@ namespace Dapper
             typeMap[typeof(Guid)] = DbType.Guid;
             typeMap[typeof(DateTime)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset)] = DbType.DateTimeOffset;
+            typeMap[typeof(TimeSpan)] = DbType.Time;
             typeMap[typeof(byte[])] = DbType.Binary;
             typeMap[typeof(byte?)] = DbType.Byte;
             typeMap[typeof(sbyte?)] = DbType.SByte;
@@ -318,6 +319,7 @@ namespace Dapper
             typeMap[typeof(Guid?)] = DbType.Guid;
             typeMap[typeof(DateTime?)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
+            typeMap[typeof(TimeSpan?)] = DbType.Time;
             typeMap[typeof(Object)] = DbType.Object;
         }
 
@@ -1415,10 +1417,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [parameters] [parameter] [parameter] [name]
                 il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("ParameterName").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
 
-                il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
-                EmitInt32(il, (int)dbType);// stack is now [parameters] [parameters] [parameter] [parameter] [db-type]
+                if(dbType != DbType.Time) // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
+                {
+                    il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
+                    EmitInt32(il, (int)dbType);// stack is now [parameters] [parameters] [parameter] [parameter] [db-type]
 
-                il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("DbType").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+                    il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("DbType").GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
+                }
 
                 il.Emit(OpCodes.Dup);// stack is now [parameters] [parameters] [parameter] [parameter]
                 EmitInt32(il, (int)ParameterDirection.Input);// stack is now [parameters] [parameters] [parameter] [parameter] [dir]
