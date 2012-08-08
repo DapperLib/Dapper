@@ -16,7 +16,6 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
 
 namespace Dapper
 {
@@ -1803,6 +1802,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                         else
                         {
+                            // stack is [target][target][value-as-object]
+                            var methodInfo = typeof(SqlMapper).GetMethod("ConvertValue", BindingFlags.Static | BindingFlags.Public);
+                            methodInfo = methodInfo.MakeGenericMethod(unboxType);
+
+                            // calls the method
+                            il.EmitCall(OpCodes.Call, methodInfo, null); // stack is now [target][target][typed-value as object]
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                         }
                     }
@@ -2204,6 +2209,19 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
             }
         }
+
+        /// <summary>
+        /// Attempts to convert a value into the target type.
+        /// </summary>
+        /// <typeparam name="TTarget">The target type.</typeparam>
+        /// <param name="value">The source value.</param>
+        /// <returns>The converted value.</returns>
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("This method is for internal usage only", false)]
+        public static object ConvertValue<TTarget>(object value)
+        {
+            return DapperConverters.Convert<TTarget>(value);
+        }
     }
 
     /// <summary>
@@ -2519,4 +2537,63 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 		public bool Arrays { get; set; }
 	}
 
+    /// <summary>
+    /// Handles conversion between a source value to a target type.
+    /// </summary>
+    public interface IDapperConverter
+    {
+        /// <summary>
+        /// Converts a value to a configured target type.
+        /// </summary>
+        /// <param name="source">The source value.</param>
+        /// <returns>The value as the target type.</returns>
+        object Convert(object source);
+    }
+    /// <summary>
+    /// Performs conversion for a value between a source and target type using registered converters.
+    /// </summary>
+    public static class DapperConverters
+    {
+        /// <summary>
+        /// Collection of registered converters with Key = target type, Value = converter.
+        /// </summary>
+        static Dictionary<Type, IDapperConverter> converters = new Dictionary<Type, IDapperConverter>();
+
+        /// <summary>
+        /// Registers a converter for a target type in a thread-safe manner.
+        /// </summary>
+        /// <param name="target">The target type.</param>
+        /// <param name="converter">The converter.</param>
+        public static void Add(Type target, IDapperConverter converter)
+        {
+            lock (converters)
+            {
+                converters.Add(target, converter);
+            }
+        }
+        /// <summary>
+        /// Attempts to convert a value into the target type.
+        /// </summary>
+        /// <typeparam name="TTarget">The target type.</typeparam>
+        /// <param name="value">The source value.</param>
+        /// <returns>The converted value.</returns>
+        public static object Convert<TTarget>(object value)
+        {          
+            IDapperConverter converter = null;
+            if (!converters.TryGetValue(typeof(TTarget), out converter))
+            {
+                return value;
+            }
+
+            try
+            {
+                return (TTarget)converter.Convert(value);
+            }
+            catch
+            {
+            }
+
+            return value;
+        }
+    }
 }
