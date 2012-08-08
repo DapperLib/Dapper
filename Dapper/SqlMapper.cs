@@ -1974,7 +1974,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     else
                     {
-                        value = val.ToString() + " - " + Type.GetTypeCode(val.GetType());
+                        value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
                     }
                 }
                 toThrow = new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name, value), ex);
