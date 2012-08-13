@@ -37,6 +37,67 @@ namespace Dapper
             /// <param name="identity">Information about the query</param>
             void AddParameters(IDbCommand command, Identity identity);
         }
+
+        /// <summary>
+        /// Implement this interface to change default mapping of reader columns to type memebers
+        /// </summary>
+        public interface ITypeMap
+        {
+            /// <summary>
+            /// Finds best constructor
+            /// </summary>
+            /// <param name="names">DataReader column names</param>
+            /// <param name="types">DataReader column types</param>
+            /// <returns>Matching constructor or default one</returns>
+            ConstructorInfo FindConstructor(string[] names, Type[] types);
+
+            /// <summary>
+            /// Gets mapping for constructor parameter
+            /// </summary>
+            /// <param name="constructor">Constructor to resolve</param>
+            /// <param name="columnName">DataReader column name</param>
+            /// <returns>Mapping implementation</returns>
+            IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName);
+
+            /// <summary>
+            /// Gets member mapping for column
+            /// </summary>
+            /// <param name="columnName">DataReader column name</param>
+            /// <returns>Mapping implementation</returns>
+            IMemberMap GetMember(string columnName);
+        }
+
+        /// <summary>
+        /// Implements this interface to provide custom member mapping
+        /// </summary>
+        public interface IMemberMap
+        {
+            /// <summary>
+            /// Source DataReader column name
+            /// </summary>
+            string ColumnName { get; }
+
+            /// <summary>
+            ///  Target member type
+            /// </summary>
+            Type MemberType { get; }
+
+            /// <summary>
+            /// Target property
+            /// </summary>
+            PropertyInfo Property { get; }
+
+            /// <summary>
+            /// Target field
+            /// </summary>
+            FieldInfo Field { get; }
+
+            /// <summary>
+            /// Target constructor parameter
+            /// </summary>
+            ParameterInfo Parameter { get; }
+        }
+
         static Link<Type, Action<IDbCommand, bool>> bindByNameCache;
         static Action<IDbCommand, bool> GetBindByName(Type commandType)
         {
@@ -172,6 +233,15 @@ namespace Dapper
         {
             lock (_queryCache) { return _queryCache.TryGetValue(key, out value); }
         }
+        private static void PurgeQueryCacheByType(Type type)
+        {
+            lock (_queryCache)
+            {
+                var toRemove = _queryCache.Keys.Where(id => id.type == type).ToArray();
+                foreach (var key in toRemove)
+                    _queryCache.Remove(key);
+            }
+        }
         public static void PurgeQueryCache()
         {
             lock (_queryCache)
@@ -231,6 +301,16 @@ namespace Dapper
         {
             _queryCache.Clear();
             OnQueryCachePurged();
+        }
+
+        private static void PurgeQueryCacheByType(Type type)
+        {
+            foreach (var entry in _queryCache)
+            {
+                CacheInfo cache;
+                if (entry.Key.type == type)
+                    _queryCache.TryRemove(entry.Key, out cache);
+            }
         }
 
         /// <summary>
@@ -324,7 +404,7 @@ namespace Dapper
             typeMap[typeof(Object)] = DbType.Object;
         }
 
-        private const string LinqBinary = "System.Data.Linq.Binary";
+        internal const string LinqBinary = "System.Data.Linq.Binary";
         private static DbType LookupDbType(Type type, string name)
         {
             DbType dbType;
@@ -428,7 +508,10 @@ namespace Dapper
             /// 
             /// </summary>
             public readonly int hashCode, gridIndex;
-            private readonly Type type;
+            /// <summary>
+            /// 
+            /// </summary>
+            public readonly Type type;
             /// <summary>
             /// 
             /// </summary>
@@ -957,8 +1040,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 // if our current type has the split, skip the first time you see it. 
                 if (type != typeof(Object))
                 {
-                    var props = GetSettableProps(type);
-                    var fields = GetSettableFields(type);
+                    var props = DefaultTypeMap.GetSettableProps(type);
+                    var fields = DefaultTypeMap.GetSettableFields(type);
 
                     foreach (var name in props.Select(p => p.Name).Concat(fields.Select(f => f.Name)))
                     {
@@ -1578,32 +1661,43 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
                         .Select(p => p.GetGetMethod()).First();
 
-        class PropInfo
+        /// <summary>
+        /// Gets type map
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns>Type map implementation, DefaultTypeMap instance in no override present</returns>
+        public static ITypeMap GetTypeMap(Type type)
         {
-            public string Name { get; set; }
-            public MethodInfo Setter { get; set; }
-            public Type Type { get; set; }
+            ITypeMap typeMap;
+            lock (_typeMaps)
+            {
+                _typeMaps.TryGetValue(type, out typeMap);
+            }
+
+            return typeMap ?? new DefaultTypeMap(type);
         }
 
-        static List<PropInfo> GetSettableProps(Type t)
-        {
-            return t
-                  .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                  .Select(p => new PropInfo
-                  {
-                      Name = p.Name,
-                      Setter = p.DeclaringType == t ? 
-                        p.GetSetMethod(true) : 
-                        p.DeclaringType.GetProperty(p.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetSetMethod(true),
-                      Type = p.PropertyType
-                  })
-                  .Where(info => info.Setter != null)
-                  .ToList();  
-        }
 
-        static List<FieldInfo> GetSettableFields(Type t)
+        private static readonly Dictionary<Type, ITypeMap> _typeMaps = new Dictionary<Type, ITypeMap>();
+
+        /// <summary>
+        /// Set custom mapping for type deserializers
+        /// </summary>
+        /// <param name="type">Entity type to override</param>
+        /// <param name="map">Mapping rules impementation, null to remove custom map</param>
+        public static void SetTypeMap(Type type, ITypeMap map)
         {
-            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            if (map == null || map is DefaultTypeMap)
+                lock (_typeMaps)
+                    _typeMaps.Remove(type);
+            else
+                lock (_typeMaps)
+                    _typeMaps[type] = map;
+
+            PurgeQueryCacheByType(type);
         }
 
         /// <summary>
@@ -1630,8 +1724,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.DeclareLocal(type);
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
-            var properties = GetSettableProps(type);
-            var fields = GetSettableFields(type);
+
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
@@ -1642,17 +1735,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
             }
 
-            var names = new List<string>();
+            var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
 
-            for (int i = startBound; i < startBound + length; i++)
-            {
-                names.Add(reader.GetName(i));
-            }
+            ITypeMap typeMap = GetTypeMap(type);
 
             int index = startBound;
 
             ConstructorInfo specializedConstructor = null;
-            ParameterInfo[] specializedParameters = null;
+
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -1665,47 +1755,31 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     types[i - startBound] = reader.GetFieldType(i);
                 }
-                var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                bool hasDefaultConstructor = false;
-                foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
+
+                if (type.IsValueType)
                 {
-                    ParameterInfo[] ctorParameters = ctor.GetParameters();
-                    if (ctorParameters.Length == 0)
+                    il.Emit(OpCodes.Ldloca_S, (byte)1);
+                    il.Emit(OpCodes.Initobj, type);
+                }
+                else
+                {
+                    var ctor = typeMap.FindConstructor(names, types);
+                    if (ctor == null)
                     {
-                        il.Emit(OpCodes.Newobj, ctor);
-                        il.Emit(OpCodes.Stloc_1);
-                        hasDefaultConstructor = true;
-                        break;
+                        string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                        throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
                     }
 
-                    if (ctorParameters.Length != types.Length)
-                        continue;
-                    int i = 0;
-                    for (; i < ctorParameters.Length; i++)
+                    if (ctor.GetParameters().Length == 0)
                     {
-                        if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
-                            break;
-                        if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == LinqBinary)
-                            continue;
-                        var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
-                        if (unboxedType != types[i] 
-                            && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i])
-                            && !(unboxedType == typeof(char) && types[i] == typeof(string)))
-                            break;
+                        il.Emit(OpCodes.Newobj, ctor);
+                        il.Emit(OpCodes.Stloc_1); 
                     }
-                    if (i == ctorParameters.Length)
-                    {
+                    else
                         specializedConstructor = ctor;
-                        specializedParameters = ctorParameters;
-                        break;
-                    }
-                }
-                if (!hasDefaultConstructor && specializedConstructor == null)
-                {
-                    string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
-                    throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
                 }
             }
+
             il.BeginExceptionBlock();
             if(type.IsValueType)
             {
@@ -1716,27 +1790,20 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 il.Emit(OpCodes.Ldloc_1);// [target]
             }
 
-            var setters = specializedConstructor != null ?
-                names.Select((n, i) => new { Name = n, Property = new PropInfo() { Type = specializedParameters[i].ParameterType }, Field = (FieldInfo)null }).ToList()
-            :
-                (from n in names
-                 let prop = properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // property case sensitive first
-                       ?? properties.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)) // property case insensitive second
-                 let field = prop != null ? null : (fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.Ordinal)) // field case sensitive third
-                     ?? fields.FirstOrDefault(p => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))) // field case insensitive fourth
-                 select new { Name = n, Property = prop, Field = field }
-                ).ToList();
+            var members = (specializedConstructor != null 
+                ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
+                : names.Select(n => typeMap.GetMember(n))).ToList();
 
             // stack is now [target]
 
             bool first = true;
             var allDone = il.DefineLabel();
             int enumDeclareLocal = -1;
-            foreach (var item in setters)
+            foreach (var item in members)
             {
-                if (item.Property != null || item.Field != null)
+                if (item != null)
                 {
-                    if(specializedConstructor == null)
+                    if (specializedConstructor == null)
                         il.Emit(OpCodes.Dup); // stack is now [target][target]
                     Label isDbNullLabel = il.DefineLabel();
                     Label finishLabel = il.DefineLabel();
@@ -1747,7 +1814,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
 
-                    Type memberType = item.Property != null ? item.Property.Type : item.Field.FieldType;
+                    Type memberType = item.MemberType;
 
                     if (memberType == typeof(char) || memberType == typeof(char?))
                     {
@@ -1761,7 +1828,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
 
                         // unbox nullable enums as the primitive, i.e. byte etc
-                        
+
                         var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
                         var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
 
@@ -1813,11 +1880,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         {
                             if (type.IsValueType)
                             {
-                                il.Emit(OpCodes.Call, item.Property.Setter); // stack is now [target]
+                                il.Emit(OpCodes.Call, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
                             }
                             else
                             {
-                                il.Emit(OpCodes.Callvirt, item.Property.Setter); // stack is now [target]
+                                il.Emit(OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
                             }
                         }
                         else
@@ -1825,18 +1892,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
                         }
                     }
-                    
+
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
                     il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
                     if (specializedConstructor != null)
                     {
                         il.Emit(OpCodes.Pop);
-                        if (item.Property.Type.IsValueType)
+                        if (item.MemberType.IsValueType)
                         {
-                            int localIndex = il.DeclareLocal(item.Property.Type).LocalIndex;
+                            int localIndex = il.DeclareLocal(item.MemberType).LocalIndex;
                             LoadLocalAddress(il, localIndex);
-                            il.Emit(OpCodes.Initobj, item.Property.Type);
+                            il.Emit(OpCodes.Initobj, item.MemberType);
                             LoadLocal(il, localIndex);
                         }
                         else
@@ -2518,5 +2585,297 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 		/// </summary>
 		public bool Arrays { get; set; }
 	}
+
+    /// <summary>
+    /// Represents simple memeber map for one of target parameter or property or field to source DataReader column
+    /// </summary>
+    public sealed class SimpleMemberMap : SqlMapper.IMemberMap
+    {
+        private readonly string _columnName;
+        private readonly PropertyInfo _property;
+        private readonly FieldInfo _field;
+        private readonly ParameterInfo _parameter;
+
+        /// <summary>
+        /// Creates instance for simple property mapping
+        /// </summary>
+        /// <param name="columnName">DataReader column name</param>
+        /// <param name="property">Target property</param>
+        public SimpleMemberMap(string columnName, PropertyInfo property)
+        {
+            if (columnName == null)
+                throw new ArgumentNullException("columnName");
+
+            if (property == null)
+                throw new ArgumentNullException("property");
+
+            _columnName = columnName;
+            _property = property;
+        }
+
+        /// <summary>
+        /// Creates instance for simple field mapping
+        /// </summary>
+        /// <param name="columnName">DataReader column name</param>
+        /// <param name="field">Target property</param>
+        public SimpleMemberMap(string columnName, FieldInfo field)
+        {
+            if (columnName == null)
+                throw new ArgumentNullException("columnName");
+
+            if (field == null)
+                throw new ArgumentNullException("field");
+
+            _columnName = columnName;
+            _field = field;
+        }
+
+        /// <summary>
+        /// Creates instance for simple constructor parameter mapping
+        /// </summary>
+        /// <param name="columnName">DataReader column name</param>
+        /// <param name="parameter">Target constructor parameter</param>
+        public SimpleMemberMap(string columnName, ParameterInfo parameter)
+        {
+            if (columnName == null)
+                throw new ArgumentNullException("columnName");
+
+            if (parameter == null)
+                throw new ArgumentNullException("parameter");
+
+            _columnName = columnName;
+            _parameter = parameter;
+        }
+
+        /// <summary>
+        /// DataReader column name
+        /// </summary>
+        public string ColumnName
+        {
+            get { return _columnName; }
+        }
+
+        /// <summary>
+        /// Target member type
+        /// </summary>
+        public Type MemberType
+        {
+            get
+            {
+                if (_field != null)
+                    return _field.FieldType;
+
+                if (_property != null)
+                    return _property.PropertyType;
+
+                if (_parameter != null)
+                    return _parameter.ParameterType;
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Target property
+        /// </summary>
+        public PropertyInfo Property
+        {
+            get { return _property; }
+        }
+
+        /// <summary>
+        /// Target field
+        /// </summary>
+        public FieldInfo Field
+        {
+            get { return _field; }
+        }
+
+        /// <summary>
+        /// Target constructor parameter
+        /// </summary>
+        public ParameterInfo Parameter
+        {
+            get { return _parameter; }
+        }
+    }
+
+    /// <summary>
+    /// Represents default type mapping strategy used by Dapper
+    /// </summary>
+    public sealed class DefaultTypeMap : SqlMapper.ITypeMap
+    {
+        private readonly List<FieldInfo> _fields;
+        private readonly List<PropertyInfo> _properties;
+        private readonly Type _type;
+
+        /// <summary>
+        /// Creates default type map
+        /// </summary>
+        /// <param name="type">Entity type</param>
+        public DefaultTypeMap(Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            _fields = GetSettableFields(type);
+            _properties = GetSettableProps(type);
+            _type = type;
+        }
+
+        internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
+        {
+            return propertyInfo.DeclaringType == type ?
+                propertyInfo.GetSetMethod(true) :
+                propertyInfo.DeclaringType.GetProperty(propertyInfo.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetSetMethod(true);
+        }
+
+        internal static List<PropertyInfo> GetSettableProps(Type t)
+        {
+            return t
+                  .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                  .Where(p => GetPropertySetter(p, t) != null)
+                  .ToList();
+        }
+
+        internal static List<FieldInfo> GetSettableFields(Type t)
+        {
+            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+        }
+
+        /// <summary>
+        /// Finds best constructor
+        /// </summary>
+        /// <param name="names">DataReader column names</param>
+        /// <param name="types">DataReader column types</param>
+        /// <returns>Matching constructor or default one</returns>
+        public ConstructorInfo FindConstructor(string[] names, Type[] types)
+        {
+            var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
+            {
+                ParameterInfo[] ctorParameters = ctor.GetParameters();
+                if (ctorParameters.Length == 0)
+                    return ctor;
+
+                if (ctorParameters.Length != types.Length)
+                    continue;
+
+                int i = 0;
+                for (; i < ctorParameters.Length; i++)
+                {
+                    if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                        break;
+                    if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
+                        continue;
+                    var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
+                    if (unboxedType != types[i]
+                        && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i])
+                        && !(unboxedType == typeof(char) && types[i] == typeof(string)))
+                        break;
+                }
+
+                if (i == ctorParameters.Length)
+                    return ctor;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets mapping for constructor parameter
+        /// </summary>
+        /// <param name="constructor">Constructor to resolve</param>
+        /// <param name="columnName">DataReader column name</param>
+        /// <returns>Mapping implementation</returns>
+        public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
+        {
+            var parameters = constructor.GetParameters();
+
+            return new SimpleMemberMap(columnName, parameters.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        /// <summary>
+        /// Gets member mapping for column
+        /// </summary>
+        /// <param name="columnName">DataReader column name</param>
+        /// <returns>Mapping implementation</returns>
+        public SqlMapper.IMemberMap GetMember(string columnName)
+        {
+            var property = _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
+               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+
+            if (property != null)
+                return new SimpleMemberMap(columnName, property);
+
+            var field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+
+            if (field != null)
+                return new SimpleMemberMap(columnName, field);
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Implements custom property mapping by user provided criteria (usually presence of some custom attribute with column to member mapping)
+    /// </summary>
+    public sealed class CustomPropertyTypeMap : SqlMapper.ITypeMap
+    {
+        private readonly Type _type;
+        private readonly Func<Type, string, PropertyInfo> _propertySelector;
+
+        /// <summary>
+        /// Creates custom property mapping
+        /// </summary>
+        /// <param name="type">Target entity type</param>
+        /// <param name="propertySelector">Property selector based on target type and DataReader column name</param>
+        public CustomPropertyTypeMap(Type type, Func<Type, string, PropertyInfo> propertySelector)
+        {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            if (propertySelector == null)
+                throw new ArgumentNullException("propertySelector");
+
+            _type = type;
+            _propertySelector = propertySelector;
+        }
+
+        /// <summary>
+        /// Always returns default constructor
+        /// </summary>
+        /// <param name="names">DataReader column names</param>
+        /// <param name="types">DataReader column types</param>
+        /// <returns>Default constructor</returns>
+        public ConstructorInfo FindConstructor(string[] names, Type[] types)
+        {
+            return _type.GetConstructor(new Type[0]);
+        }
+
+        /// <summary>
+        /// Not impelmeneted as far as default constructor used for all cases
+        /// </summary>
+        /// <param name="constructor"></param>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
+        public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Returns property based on selector strategy
+        /// </summary>
+        /// <param name="columnName">DataReader column name</param>
+        /// <returns>Poperty member map</returns>
+        public SqlMapper.IMemberMap GetMember(string columnName)
+        {
+            var prop = _propertySelector(_type, columnName);
+            return prop != null ? new SimpleMemberMap(columnName, prop) : null;
+        }
+    }
+
 
 }
