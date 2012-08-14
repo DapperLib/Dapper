@@ -10,6 +10,7 @@ using System.Data;
 using System.Collections;
 using System.Reflection;
 using System.Dynamic;
+using System.ComponentModel;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -1861,6 +1862,38 @@ Order by p.Id";
             public int X { get; set; }
             public int Y { get; set; }
             public int Z { get; set; }
+        }
+
+        public void TestCustomTypeMap()
+        {
+            // default mapping
+            var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item.A.IsEqualTo("AVal");
+            item.B.IsEqualTo("BVal");
+
+            // custom mapping
+            var map = new CustomPropertyTypeMap(typeof(TypeWithMapping), 
+                (type, columnName) => type.GetProperties().Where(prop => prop.GetCustomAttributes(false).OfType<DescriptionAttribute>().Any(attr => attr.Description == columnName)).FirstOrDefault());
+            Dapper.SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
+
+            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item.A.IsEqualTo("BVal");
+            item.B.IsEqualTo("AVal");
+
+            // reset to default
+            Dapper.SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
+            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item.A.IsEqualTo("AVal");
+            item.B.IsEqualTo("BVal");
+        }
+
+        public class TypeWithMapping
+        {
+            [Description("B")]
+            public string A { get; set; }
+
+            [Description("A")]
+            public string B { get; set; }
         }
 
         class TransactedConnection : IDbConnection
