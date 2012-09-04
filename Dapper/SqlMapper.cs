@@ -1662,23 +1662,31 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         .Select(p => p.GetGetMethod()).First();
 
         /// <summary>
-        /// Gets type map
+        /// Gets type-map for the given type
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns>Type map implementation, DefaultTypeMap instance in no override present</returns>
+        /// <returns>Type map implementation, DefaultTypeMap instance if no override present</returns>
         public static ITypeMap GetTypeMap(Type type)
         {
-            ITypeMap typeMap;
-            lock (_typeMaps)
+            if (type == null) throw new ArgumentNullException("type");
+            var map = (ITypeMap)_typeMaps[type];
+            if(map == null)
             {
-                _typeMaps.TryGetValue(type, out typeMap);
+                lock(_typeMaps)
+                {   // double-checked; store this to avoid reflection next time we see this type
+                    // since multiple queries commonly use the same domain-entity/DTO/view-model type
+                    map = (ITypeMap)_typeMaps[type];
+                    if(map == null)
+                    {
+                        map = new DefaultTypeMap(type);
+                        _typeMaps[type] = map;
+                    }
+                }
             }
-
-            return typeMap ?? new DefaultTypeMap(type);
+            return map;
         }
 
-
-        private static readonly Dictionary<Type, ITypeMap> _typeMaps = new Dictionary<Type, ITypeMap>();
+        // use Hashtable to get free lockless reading
+        private static readonly Hashtable _typeMaps = new Hashtable();
 
         /// <summary>
         /// Set custom mapping for type deserializers
@@ -1691,11 +1699,19 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 throw new ArgumentNullException("type");
 
             if (map == null || map is DefaultTypeMap)
+            {
                 lock (_typeMaps)
+                {
                     _typeMaps.Remove(type);
+                }
+            }
             else
+            {
                 lock (_typeMaps)
+                {
                     _typeMaps[type] = map;
+                }
+            }
 
             PurgeQueryCacheByType(type);
         }
