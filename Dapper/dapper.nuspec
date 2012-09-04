@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.10</version>
+    <version>1.11</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,6 +19,7 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.11 - Custom type-map support
       * 1.10 - Fixed: error-handling could lose original exception if reader closed
       * 1.9 - Added: Better schema change detection
       *       Fixed: Enum support for T in Query-of-T
