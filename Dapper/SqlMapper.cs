@@ -178,13 +178,21 @@ namespace Dapper
             public TValue Value { get; private set; }
             public Link<TKey, TValue> Tail { get; private set; }
         }
-        class CacheInfo
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public class CacheInfo
         {
+            /// <summary/>
             public DeserializerState Deserializer { get; set; }
+            /// <summary/>
             public Func<IDataReader, object>[] OtherDeserializers { get; set; }
+            /// <summary/>
             public Action<IDbCommand, object> ParamReader { get; set; }
             private int hitCount;
+            /// <summary/>
             public int GetHitCount() { return Interlocked.CompareExchange(ref hitCount, 0, 0); }
+            /// <summary/>
             public void RecordHit() { Interlocked.Increment(ref hitCount); }
         }
         static int GetColumnHash(IDataReader reader)
@@ -200,11 +208,17 @@ namespace Dapper
                 return hash;
             }
         }
-        struct DeserializerState
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public struct DeserializerState
         {
+            /// <summary/>
             public readonly int Hash;
+            /// <summary/>
             public readonly Func<IDataReader, object> Func;
 
+            /// <summary/>
             public DeserializerState(int hash, Func<IDataReader, object> func)
             {
                 Hash = hash;
@@ -456,7 +470,10 @@ namespace Dapper
                 return new Identity(sql, commandType, connectionString, this.type ,type, null, -1);
             }
 
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
+            /// <summary>
+            /// exposed for extensability
+            /// </summary>
+            public Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
                 : this(sql, commandType, connection.ConnectionString, type, parametersType, otherTypes, 0)
             { }
             private Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex)
@@ -808,25 +825,32 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
             {
                 using (var reader = cmd.ExecuteReader())
-                {
-                    var tuple = info.Deserializer;
-                    int hash = GetColumnHash(reader);
-                    if (tuple.Func == null || tuple.Hash != hash)
-                    {
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
-                        SetQueryCache(identity, info);
-                    }
-
-                    var func = tuple.Func;
-
-                    while (reader.Read())
-                    {
-                        yield return (T)func(reader);
-                    }
-                    
+				{
+					return ExecuteReaderInternal<T>(reader, identity, info).ToList();
                 }
             }
         }
+
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+		public static IEnumerable<T> ExecuteReaderInternal<T>(IDataReader reader, Identity identity, CacheInfo info)
+		{
+			var tuple = info.Deserializer;
+			int hash = GetColumnHash(reader);
+			if (tuple.Func == null || tuple.Hash != hash)
+			{
+				tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
+				SetQueryCache(identity, info);
+			}
+
+			var func = tuple.Func;
+
+			while (reader.Read())
+			{
+				yield return (T)func(reader);
+			}
+		}
 
         /// <summary>
         /// Maps a query to objects
@@ -1096,7 +1120,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return deserializers.ToArray();
         }
 
-        private static CacheInfo GetCacheInfo(Identity identity)
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public static CacheInfo GetCacheInfo(Identity identity)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
@@ -1594,7 +1621,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
         }
 
-        private static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        /// <summary>
+        /// exposed for extensability
+        /// </summary>
+        public static IDbCommand SetupCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
         {
             var cmd = cnn.CreateCommand();
             var bindByName = GetBindByName(cmd.GetType());
