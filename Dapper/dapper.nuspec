@@ -35,5 +35,7 @@
     <file src="bin\Release\Dapper.pdb" target="lib\net40" />
     <file src="..\Dapper NET35\bin\Release\Dapper.dll" target="lib\net35" />
     <file src="..\Dapper NET35\bin\Release\Dapper.pdb" target="lib\net35" />
+	<file src="..\Dapper NET45\bin\Release\Dapper.dll" target="lib\net45" />
+    <file src="..\Dapper NET45\bin\Release\Dapper.pdb" target="lib\net45" />
   </files>
 </package>
