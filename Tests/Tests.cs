@@ -1618,16 +1618,10 @@ Order by p.Id";
         }
 
 
-        public void TestFailInASaneWayWithWrongStructColumnTypes()
+        public void WorkDespiteHavingWrongStructColumnTypes()
         {
-            try
-            {
-                connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
-                throw new Exception("Should not have got here");
-            } catch(DataException ex)
-            {
-                ex.Message.IsEqualTo("Error parsing column 0 (Value=1 - Int64)");
-            }
+            var hazInt = connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
+            hazInt.Value.Equals(1);
         }
 
 
@@ -1894,6 +1888,32 @@ Order by p.Id";
 
             [Description("A")]
             public string B { get; set; }
+        }
+
+        public class WrongTypes
+        {
+            public int A { get; set; }
+            public double B { get; set; }
+            public long C { get; set; }
+            public bool D { get; set; }
+        }
+        
+        public void TestWrongTypes_WithRightTypes()
+        {
+            var item = connection.Query<WrongTypes>("select 1 as A, cast(2.0 as float) as B, cast(3 as bigint) as C, cast(1 as bit) as D").Single();
+            item.A.Equals(1);
+            item.B.Equals(2.0);
+            item.C.Equals(3L);
+            item.D.Equals(true);
+        }
+        
+        public void TestWrongTypes_WithWrongTypes()
+        {
+            var item = connection.Query<WrongTypes>("select cast(1.0 as float) as A, 2 as B, 3 as C, cast(1 as bigint) as D").Single();
+            item.A.Equals(1);
+            item.B.Equals(2.0);
+            item.C.Equals(3L);
+            item.D.Equals(true);
         }
 
         class TransactedConnection : IDbConnection
