@@ -1886,6 +1886,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                         else
                         {
+                            // Convert the value type to the member type
+                            il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][value][member-type-token]
+                            il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
+                            il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("ConvertDbValue", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public), null); // stack is now [target][target][converted-value]
+
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                         }
                     }
@@ -2087,6 +2092,17 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     break;
             }
+        }
+
+        static Object ConvertDbValue(Object value, Type type)
+        {
+            if (value == null || value.GetType() == typeof(DBNull))
+                return null;
+
+            if (value.GetType() == type)
+                return value;
+
+            return Convert.ChangeType(value, type);
         }
 
         /// <summary>
