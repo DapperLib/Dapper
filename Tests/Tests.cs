@@ -1916,6 +1916,27 @@ Order by p.Id";
             item.D.Equals(true);
         }
 
+        public class ParameterWithIndexer
+        {
+            public int A { get; set; }
+            public virtual string this[string columnName]
+            {
+                get { return null; }
+                set { }
+            }
+        }
+
+        public void TestParameterWithIndexer()
+        {
+            connection.Execute(@"create proc #TestProcWithIndexer 
+	@A int
+as 
+begin
+	select @A
+end");
+            var item = connection.Query<int>("#TestProcWithIndexer", new ParameterWithIndexer(), commandType: CommandType.StoredProcedure).Single();
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
