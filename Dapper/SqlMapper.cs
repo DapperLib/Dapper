@@ -1939,6 +1939,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                                 { // unbox as the data-type, then use IL-level convert
                                     il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
                                     il.Emit(opCode); // stack is now [target][target][typed-value]
+                                    if (unboxTypeCode == TypeCode.Boolean)
+                                    { // compare to zero; I checked "csc" - this is the trick it uses; nice
+                                        il.Emit(OpCodes.Ldc_I4_0);
+                                        il.Emit(OpCodes.Ceq);
+                                        il.Emit(OpCodes.Ldc_I4_0);
+                                        il.Emit(OpCodes.Ceq);
+                                    }
                                 }
                                 else
                                 { // use flexible conversion

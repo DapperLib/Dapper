@@ -1937,6 +1937,27 @@ end");
             var item = connection.Query<int>("#TestProcWithIndexer", new ParameterWithIndexer(), commandType: CommandType.StoredProcedure).Single();
         }
 
+        public void Issue_40_AutomaticBoolConversion()
+        {
+            var user = connection.Query<Issue40_User>("select UserId=1,Email='abc',Password='changeme',Active=cast(1 as tinyint)").Single();
+            user.Active.IsTrue();
+            user.UserID.IsEqualTo(1);
+            user.Email.IsEqualTo("abc");
+            user.Password.IsEqualTo("changeme");
+        }
+
+        public class Issue40_User
+        {
+          public Issue40_User()
+          {
+             Email = Password = String.Empty;
+          }
+          public int UserID { get; set; }
+          public string Email { get; set; }
+          public string Password { get; set; }
+          public bool Active { get; set; }
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
