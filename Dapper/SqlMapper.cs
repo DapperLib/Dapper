@@ -2644,7 +2644,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 		/// <summary>
 		/// Dictionary of supported features index by connection type name
 		/// </summary>
-		private static readonly Dictionary<string, FeatureSupport> FeatureList = new Dictionary<string, FeatureSupport>() {
+		private static readonly Dictionary<string, FeatureSupport> FeatureList = new Dictionary<string, FeatureSupport>(StringComparer.InvariantCultureIgnoreCase) {
 				{"sqlserverconnection", new FeatureSupport { Arrays = false}},
 				{"npgsqlconnection", new FeatureSupport {Arrays = true}}
 		};
@@ -2654,7 +2654,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 		/// </summary>
 		public static FeatureSupport Get(IDbConnection connection)
 		{
-			string name = connection.GetType().Name.ToLower();
+			string name = connection.GetType().Name;
 			FeatureSupport features;
 			return FeatureList.TryGetValue(name, out features) ? features : FeatureList.Values.First();
 		}
