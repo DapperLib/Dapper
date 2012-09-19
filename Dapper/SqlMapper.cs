@@ -242,6 +242,9 @@ namespace Dapper
                     _queryCache.Remove(key);
             }
         }
+        /// <summary>
+        /// Purge the query cache 
+        /// </summary>
         public static void PurgeQueryCache()
         {
             lock (_queryCache)
