@@ -810,8 +810,10 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 
             using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
             {
-                using (var reader = cmd.ExecuteReader())
+                IDataReader reader = null;
+                try
                 {
+                    reader = cmd.ExecuteReader();
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
                     if (tuple.Func == null || tuple.Hash != hash)
@@ -826,7 +828,14 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                     {
                         yield return (T)func(reader);
                     }
-                    
+                }
+                finally
+                {
+                    if (reader != null)
+                    {
+                        if (!reader.IsClosed) cmd.Cancel();
+                        reader.Dispose();
+                    }
                 }
             }
         }
@@ -2347,6 +2356,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (reader != null)
                 {
+                    if (!reader.IsClosed && command != null) command.Cancel();
                     reader.Dispose();
                     reader = null;
                 }
