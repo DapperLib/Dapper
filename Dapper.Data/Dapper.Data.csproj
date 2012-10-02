@@ -8,7 +8,7 @@
     <ProjectGuid>{3A954E44-AB51-4ED4-B0EE-FB7B65A3A101}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>System</RootNamespace>
+    <RootNamespace>Dapper</RootNamespace>
     <AssemblyName>Dapper.Data</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
