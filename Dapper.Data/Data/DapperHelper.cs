@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Dapper;
 
-namespace System.Data
+namespace Dapper.Data
 {
 
 	/// <summary>
