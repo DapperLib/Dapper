@@ -829,11 +829,24 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                         yield return (T)func(reader);
                     }
                 }
+//#if DEBUG
+//				catch(Exception ex)
+//				{
+//					Debug.WriteLine(ex.ToString());
+//					throw;
+//				}
+//#endif
                 finally
                 {
                     if (reader != null)
                     {
-                        if (!reader.IsClosed) cmd.Cancel();
+                        if (!reader.IsClosed)
+                        {
+	                        try
+	                        { cmd.Cancel(); }
+	                        catch (NotSupportedException)
+	                        { }
+                        }
                         reader.Dispose();
                     }
                 }
