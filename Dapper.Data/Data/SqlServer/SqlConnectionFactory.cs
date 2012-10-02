@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 
-namespace System.Data.SqlServer
+namespace Dapper.Data.SqlClient
 {
 	/// <summary>
 	/// Default implementation of SQL Server Connection Factory 
@@ -28,7 +25,7 @@ namespace System.Data.SqlServer
 
 		public IDbConnection Create()
 		{
-			return new SqlClient.SqlConnection(ConnectionString);
+			return new System.Data.SqlClient.SqlConnection(ConnectionString);
 		}
 
 		public IDbConnection CreateAndOpen()
@@ -38,7 +35,7 @@ namespace System.Data.SqlServer
 			return con;
 		}
 
-		private class SqlConnectionBuilder : ConnectionStringBuilder
+		protected class SqlConnectionBuilder : ConnectionStringBuilder
 		{
 			private SqlConnectionBuilder()
 			{

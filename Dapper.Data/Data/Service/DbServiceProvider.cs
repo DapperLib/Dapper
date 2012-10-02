@@ -19,7 +19,7 @@ namespace Dapper.Data.Service
 	/// </summary>
 	public abstract class DbServiceProvider : DbContext, IDbServiceProvider
 	{
-		readonly ConcurrentDictionary<Type, IDbService> services
+		readonly ConcurrentDictionary<Type, IDbService> _services
 			= new ConcurrentDictionary<Type, IDbService>();
 
 		protected DbServiceProvider(IDbConnectionFactory connectionFactory) : base(connectionFactory)
@@ -30,7 +30,7 @@ namespace Dapper.Data.Service
 		/// </summary>
 		protected void RegisterService<T>(T service) where T : IDbService
 		{
-			services.TryAdd(service.GetType(), service);
+			_services.TryAdd(service.GetType(), service);
 		}
 
 		/// <summary>
@@ -38,7 +38,7 @@ namespace Dapper.Data.Service
 		/// </summary>
 		public T For<T>() where T : IDbService
 		{
-			return (T)services[typeof(T)];
+			return (T)_services[typeof(T)];
 		}
 	}
 }
