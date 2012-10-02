@@ -1,0 +1,236 @@
+﻿<#@ template debug="true" hostSpecific="true" language="C#" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="Microsoft.VisualStudio.OLE.Interop" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.Interop" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.Interop.8.0" #>
+<#@ include file="EF.Utility.CS.ttinclude"#>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="Microsoft.VisualStudio.Shell" #>
+<#@ import namespace="Microsoft.VisualStudio.Shell.Interop" #>
+<#@ import namespace="Microsoft.VisualStudio.TextTemplating" #>
+
+<#
+	// insert your template code here the tempalte code will be syntaxhighlighted 
+	// and you will have intellisense for all namespaces in the full edition
+	var code = new CodeGenerationTools(this);
+	string namespaceName = code.VsNamespaceSuggestion();
+#>
+// This is the output code from your template
+// you only get syntax-highlighting here - not intellisense
+<#
+	foreach(string file in Directory.GetFiles(Path.GetDirectoryName(Host.TemplateFile), "*.xsd"))
+	{
+		using(DataSet ds = new System.Data.DataSet())
+		{
+			ds.ReadXmlSchema(file);
+			foreach (DataTable table in ds.Tables)
+			{
+#>
+using System;
+using System.ComponentModel;
+
+namespace <#=code.EscapeNamespace(namespaceName)#> {
+<#
+				CreateClass(table);
+#>
+}				
+<#
+				SaveOutput(table.TableName + ".cs");
+			}
+		}
+	}	
+#>
+
+<#+
+	void CreateClass(DataTable table)
+	{
+#>
+	public partial class <#= table.TableName #>
+	{
+<#+	
+		foreach(DataColumn c in table.Columns)
+		{
+			CreateProperty(c);
+		}
+#>
+	}
+<#+
+	}
+	
+	void CreateProperty(DataColumn column)
+	{
+		var columnName = column.ColumnName;
+		var displayName = column.Caption;
+		var returnType = column.DataType.Name;
+		switch(returnType)
+		{
+			case "Int16":
+				returnType = "short";
+				break;
+			case "Int32":
+				returnType = "int";
+				break;
+			case "Int64":
+				returnType = "long";
+				break;
+			case "Boolean":
+				returnType = "bool";
+				break;
+			case "DateTime":
+				break;
+			default:
+				returnType = returnType.ToLower();
+				break;
+		}
+		if(column.AllowDBNull && column.DataType.IsValueType)
+		{ returnType += "?"; }
+		
+#>
+		[DisplayName("<#=displayName#>")]
+		public virtual <#=returnType#> <#=columnName#>
+		{ get; set; }
+<#+
+	}
+#>
+
+<#+
+    List<string> __savedOutputs = new List<string>();
+    Engine __engine = new Engine();
+
+    void DeleteOldOutputs()
+    {
+        var templateProjectItem = __getTemplateProjectItem();
+        foreach (EnvDTE.ProjectItem childProjectItem in templateProjectItem.ProjectItems)
+        {
+            if (!__savedOutputs.Contains(childProjectItem.Name))
+			{ childProjectItem.Delete(); }
+        }
+    }
+
+    void ProcessTemplate(string templateFileName, string outputFileName)
+    {
+        var templateDirectory = Path.GetDirectoryName(Host.TemplateFile);
+        var outputFilePath = Path.Combine(templateDirectory, outputFileName);
+
+        var template = File.ReadAllText(Host.ResolvePath(templateFileName));
+        var output = __engine.ProcessTemplate(template, Host);
+        File.WriteAllText(outputFilePath, output);
+
+        var templateProjectItem = __getTemplateProjectItem();
+        templateProjectItem.ProjectItems.AddFromFile(outputFilePath);
+
+        __savedOutputs.Add(outputFileName);
+    }
+
+    void SaveOutput(string outputFileName)
+    {
+        var templateDirectory = Path.GetDirectoryName(Host.TemplateFile);
+        var outputFilePath = Path.Combine(templateDirectory, outputFileName);
+
+        File.WriteAllText(outputFilePath, this.GenerationEnvironment.ToString());
+        this.GenerationEnvironment = new StringBuilder();
+
+        var templateProjectItem = __getTemplateProjectItem();
+        templateProjectItem.ProjectItems.AddFromFile(outputFilePath);
+
+        __savedOutputs.Add(outputFileName);
+    }
+
+    EnvDTE.ProjectItem __getTemplateProjectItem()
+    {
+        var dteProject = __getTemplateProject();
+
+        var vsProject = __dteProjectToVsProject(dteProject);
+
+        int iFound = 0;
+        uint itemId = 0;
+        var pdwPriority = new VSDOCUMENTPRIORITY[1];
+        int result = vsProject.IsDocumentInProject(Host.TemplateFile, out iFound, pdwPriority, out itemId);
+        if (result != VSConstants.S_OK)
+		{throw new Exception("Unexpected error calling IVsProject.IsDocumentInProject");}
+        if (iFound == 0)
+		{throw new Exception("Cannot retrieve ProjectItem for template file");}
+        if (itemId == 0)
+		{throw new Exception("Cannot retrieve ProjectItem for template file");}
+
+        Microsoft.VisualStudio.OLE.Interop.IServiceProvider itemContext = null;
+        result = vsProject.GetItemContext(itemId, out itemContext);
+        if (result != VSConstants.S_OK)
+		{throw new Exception("Unexpected error calling IVsProject.GetItemContext");}
+        if (itemContext == null)
+		{throw new Exception("IVsProject.GetItemContext returned null");}
+    
+        var itemContextService = new ServiceProvider(itemContext);
+        var templateItem = (EnvDTE.ProjectItem)itemContextService.GetService(typeof(EnvDTE.ProjectItem));
+        Debug.Assert(templateItem != null, "itemContextService.GetService returned null");
+
+        return templateItem;
+    }
+
+    EnvDTE.Project __getTemplateProject()
+    {
+        var hostServiceProvider = (IServiceProvider)Host;
+        if (hostServiceProvider == null)
+		{ throw new Exception("Host property returned unexpected value (null)"); }
+
+        var dte = (EnvDTE.DTE)hostServiceProvider.GetService(typeof(EnvDTE.DTE));
+        if (dte == null)
+		{ throw new Exception("Unable to retrieve EnvDTE.DTE"); }
+
+        var activeSolutionProjects = (Array)dte.ActiveSolutionProjects;
+        if (activeSolutionProjects == null)
+		{ throw new Exception("DTE.ActiveSolutionProjects returned null"); }
+
+        var dteProject = (EnvDTE.Project)activeSolutionProjects.GetValue(0);
+        if (dteProject == null)
+		{ throw new Exception("DTE.ActiveSolutionProjects[0] returned null"); }
+
+        return dteProject;
+    }
+
+    static IVsProject __dteProjectToVsProject(EnvDTE.Project project)
+    {
+        if (project == null) 
+		{ throw new ArgumentNullException("project"); }
+            
+        string projectGuid = null;        
+
+        // DTE does not expose the project GUID that exists at in the msbuild project file.        
+        // Cannot use MSBuild object model because it uses a static instance of the Engine,         
+        // and using the Project will cause it to be unloaded from the engine when the         
+        // GC collects the variable that we declare.       
+        using (XmlReader projectReader = XmlReader.Create(project.FileName))
+        {
+            projectReader.MoveToContent();
+            object nodeName = projectReader.NameTable.Add("ProjectGuid");
+            while (projectReader.Read())
+            {
+                if (Object.Equals(projectReader.LocalName, nodeName))
+                {
+                    projectGuid = (string)projectReader.ReadElementContentAsString(); 
+                    break;
+                }
+            }
+        }
+        if (string.IsNullOrEmpty(projectGuid))
+            throw new Exception("Unable to find ProjectGuid element in the project file");
+
+        var dteServiceProvider = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)project.DTE;
+        var serviceProvider = new ServiceProvider(dteServiceProvider); 
+        var vsHierarchy = VsShellUtilities.GetHierarchy(serviceProvider, new Guid(projectGuid));
+            
+        var vsProject = (IVsProject)vsHierarchy;
+        if (vsProject == null)
+		{ throw new ArgumentException("Project is not a VS project."); }
+        return vsProject;
+    }
+#>
