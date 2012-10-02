@@ -70,6 +70,9 @@ namespace Dapper.Data
 	/// </summary>
 	public abstract class DbContext : IDbContext
 	{
+		protected DbContext(string connectionName)
+			: this(new DbConnectionFactory(connectionName))
+		{}
 
 		protected DbContext(IDbConnectionFactory connectionFactory)
 		{

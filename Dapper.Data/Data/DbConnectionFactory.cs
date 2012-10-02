@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Configuration;
+﻿using System.Configuration;
 
 namespace System.Data.Common
 {
@@ -14,13 +12,18 @@ namespace System.Data.Common
 	/// Default implementation of ConnectionFactory
 	/// used by DbContext
 	/// </summary>
-	public abstract class DbConnectionFactory : IDbConnectionFactory
+	public class DbConnectionFactory : IDbConnectionFactory
 	{
 		readonly DbProviderFactory _factory;
 		readonly string _conectionString;
 
-		protected DbConnectionFactory(string connectionStringName)
-			: this(ConfigurationManager.ConnectionStrings.GetByName(connectionStringName))
+		/// <summary>
+		/// connectionStringName: 
+		///		connection string name defined under connections section of the config file.
+		/// The connection element must have propper DbProviderFactory defined
+		/// </summary>
+		public DbConnectionFactory(string connectionName)
+			: this(ConfigurationManager.ConnectionStrings.GetByName(connectionName))
 		{}
 
 		protected DbConnectionFactory(ConnectionStringSettings connectionSetting)
