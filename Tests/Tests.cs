@@ -1916,6 +1916,16 @@ Order by p.Id";
             item.D.Equals(true);
         }
 
+        public void Test_AddDynamicParametersRepeatedShouldWork()
+        {
+            var args = new DynamicParameters();
+            args.AddDynamicParams(new { Foo = 123 });
+            args.AddDynamicParams(new { Foo = 123 });
+            int i = connection.Query<int>("select @Foo", args).Single();
+            i.IsEqualTo(123);
+        }
+
+
         public class ParameterWithIndexer
         {
             public int A { get; set; }
