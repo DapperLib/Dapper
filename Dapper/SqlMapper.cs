@@ -408,7 +408,7 @@ namespace Dapper
         }
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
-        private static DbType LookupDbType(Type type, string name)
+        internal static DbType LookupDbType(Type type, string name)
         {
             DbType dbType;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
@@ -1394,7 +1394,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// Internal use only
         /// </summary>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("This method is for internal usage only", true)]
+        [Obsolete("This method is for internal usage only", false)]
         public static void PackListParameters(IDbCommand command, string namePrefix, object value)
         {
             // initially we tried TVP, however it performs quite poorly.
@@ -2572,41 +2572,58 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
             foreach (var param in parameters.Values)
             {
-                string name = Clean(param.Name);
-                bool add = !command.Parameters.Contains(name);
-                IDbDataParameter p;
-                if(add)
-                {
-                    p = command.CreateParameter();
-                    p.ParameterName = name;
-                } else
-                {
-                    p = (IDbDataParameter)command.Parameters[name];
-                }
+                var dbType = param.DbType;
                 var val = param.Value;
-                p.Value = val ?? DBNull.Value;
-                p.Direction = param.ParameterDirection;
-                var s = val as string;
-                if (s != null)
+                string name = Clean(param.Name);
+
+                if (dbType == null && val != null) dbType = SqlMapper.LookupDbType(val.GetType(), name);
+
+                if (dbType == DbType.Xml)
+                { // actually represents "in" lists
+#pragma warning disable 612, 618
+                    SqlMapper.PackListParameters(command, name, val);
+#pragma warning restore 612, 618
+                }
+                else
                 {
-                    if (s.Length <= 4000)
+
+                    bool add = !command.Parameters.Contains(name);
+                    IDbDataParameter p;
+                    if (add)
                     {
-                        p.Size = 4000;
+                        p = command.CreateParameter();
+                        p.ParameterName = name;
                     }
+                    else
+                    {
+                        p = (IDbDataParameter)command.Parameters[name];
+                    }
+
+                    p.Value = val ?? DBNull.Value;
+                    p.Direction = param.ParameterDirection;
+                    var s = val as string;
+                    if (s != null)
+                    {
+                        if (s.Length <= 4000)
+                        {
+                            p.Size = 4000;
+                        }
+                    }
+                    if (param.Size != null)
+                    {
+                        p.Size = param.Size.Value;
+                    }
+                    if (dbType != null)
+                    {
+                        p.DbType = dbType.Value;
+                    }
+                    if (add)
+                    {
+                        command.Parameters.Add(p);
+                    }
+                    param.AttachedParam = p;
                 }
-                if (param.Size != null)
-                {
-                    p.Size = param.Size.Value;
-                }
-                if (param.DbType != null)
-                {
-                    p.DbType = param.DbType.Value;
-                }
-                if (add)
-                {
-                    command.Parameters.Add(p);
-                }
-                param.AttachedParam = p;
+                
             }
         }
 

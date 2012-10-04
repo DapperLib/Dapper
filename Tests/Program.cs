@@ -122,7 +122,12 @@ end
                 {
                     method.Invoke(tester, null);
                     Console.WriteLine(" - OK!");
-                } catch (Exception ex)
+                } catch(TargetInvocationException tie)
+                {
+                    fail++;
+                    Console.WriteLine(" - " + tie.InnerException.Message);
+                    
+                }catch (Exception ex)
                 {
                     fail++;
                     Console.WriteLine(" - " + ex.Message);

@@ -1598,6 +1598,34 @@ Order by p.Id";
             result[2].IsEqualTo(3);
         }
 
+        public void TestAppendingAListAsDictionary()
+        {
+            DynamicParameters p = new DynamicParameters();
+            var list = new int[] { 1, 2, 3 };
+            var args = new Dictionary<string, object>();
+            args.Add("ids", list);
+            p.AddDynamicParams(args);
+
+            var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @ids", p).ToList();
+
+            result[0].IsEqualTo(1);
+            result[1].IsEqualTo(2);
+            result[2].IsEqualTo(3);
+        }
+
+        public void TestAppendingAListByName()
+        {
+            DynamicParameters p = new DynamicParameters();
+            var list = new int[] { 1, 2, 3 };
+            p.Add("ids", list);
+
+            var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @ids", p).ToList();
+
+            result[0].IsEqualTo(1);
+            result[1].IsEqualTo(2);
+            result[2].IsEqualTo(3);
+        }
+
         public void TestUniqueIdentifier()
         {
             var guid = Guid.NewGuid();
