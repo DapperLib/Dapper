@@ -1041,7 +1041,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             Func<Type, int> nextSplit = type =>
             {
-                var currentSplit = splits[splitIndex];
+                var currentSplit = splits[splitIndex].Trim();
                 if (splits.Length > splitIndex + 1)
                 {
                     splitIndex++;
