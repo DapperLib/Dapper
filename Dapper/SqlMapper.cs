@@ -23,12 +23,12 @@ namespace Dapper
     /// <summary>
     /// Dapper, a light weight object mapper for ADO.NET
     /// </summary>
-    public static partial class SqlMapper
+    static partial class SqlMapper
     {
         /// <summary>
         /// Implement this interface to pass an arbitrary db specific set of parameters to Dapper
         /// </summary>
-        public interface IDynamicParameters
+        public partial interface IDynamicParameters
         {
             /// <summary>
             /// Add all the parameters needed to the command just before it executes
@@ -134,7 +134,7 @@ namespace Dapper
         /// and strictly append-only; you cannot change existing values. All key matches are on **REFERENCE**
         /// equality. The type is fully thread-safe.
         /// </summary>
-        class Link<TKey, TValue> where TKey : class
+        partial class Link<TKey, TValue> where TKey : class
         {
             public static bool TryGet(Link<TKey, TValue> link, TKey key, out TValue value)
             {
@@ -178,7 +178,7 @@ namespace Dapper
             public TValue Value { get; private set; }
             public Link<TKey, TValue> Tail { get; private set; }
         }
-        class CacheInfo
+        partial class CacheInfo
         {
             public DeserializerState Deserializer { get; set; }
             public Func<IDataReader, object>[] OtherDeserializers { get; set; }
@@ -438,7 +438,7 @@ namespace Dapper
         /// <summary>
         /// Identity of a cached query in Dapper, used for extensability
         /// </summary>
-        public class Identity : IEquatable<Identity>
+        public partial class Identity : IEquatable<Identity>
         {
             internal Identity ForGrid(Type primaryType, int gridIndex)
             {
@@ -948,7 +948,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 #endif
-        class DontMap { }
+        partial class DontMap { }
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
             this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
@@ -1165,7 +1165,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         }
 #if !CSHARP30
-        private class FastExpando : System.Dynamic.DynamicObject, IDictionary<string, object>
+        private partial class FastExpando : System.Dynamic.DynamicObject, IDictionary<string, object>
         {
             IDictionary<string, object> data;
 
@@ -2213,7 +2213,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <summary>
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query 
         /// </summary>
-        public class GridReader : IDisposable
+        public partial class GridReader : IDisposable
         {
             private IDataReader reader;
             private IDbCommand command;
@@ -2414,14 +2414,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
     /// <summary>
     /// A bag of parameters that can be passed to the Dapper Query and Execute methods
     /// </summary>
-    public class DynamicParameters : SqlMapper.IDynamicParameters
+    partial class DynamicParameters : SqlMapper.IDynamicParameters
     {
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
 
         Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
         List<object> templates;
 
-        class ParamInfo
+        partial class ParamInfo
         {
             public string Name { get; set; }
             public object Value { get; set; }
@@ -2663,7 +2663,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
     /// </summary>
-    public sealed class DbString
+    sealed partial class DbString
     {
         /// <summary>
         /// Create a new DbString
@@ -2715,7 +2715,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 	/// <summary>
 	/// Handles variances in features per DBMS
 	/// </summary>
-	public class FeatureSupport
+	partial class FeatureSupport
 	{
 		/// <summary>
 		/// Dictionary of supported features index by connection type name
@@ -2744,7 +2744,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// Represents simple memeber map for one of target parameter or property or field to source DataReader column
     /// </summary>
-    public sealed class SimpleMemberMap : SqlMapper.IMemberMap
+    sealed partial class SimpleMemberMap : SqlMapper.IMemberMap
     {
         private readonly string _columnName;
         private readonly PropertyInfo _property;
@@ -2858,7 +2858,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// Represents default type mapping strategy used by Dapper
     /// </summary>
-    public sealed class DefaultTypeMap : SqlMapper.ITypeMap
+    sealed partial class DefaultTypeMap : SqlMapper.ITypeMap
     {
         private readonly List<FieldInfo> _fields;
         private readonly List<PropertyInfo> _properties;
@@ -2976,7 +2976,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// Implements custom property mapping by user provided criteria (usually presence of some custom attribute with column to member mapping)
     /// </summary>
-    public sealed class CustomPropertyTypeMap : SqlMapper.ITypeMap
+    sealed partial class CustomPropertyTypeMap : SqlMapper.ITypeMap
     {
         private readonly Type _type;
         private readonly Func<Type, string, PropertyInfo> _propertySelector;
@@ -3032,5 +3032,45 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
     }
 
+    // Define DAPPER_MAKE_PRIVATE if you reference Dapper by source
+    // and you like to make the Dapper types private (in order to avoid
+    // conflicts with other projects that also reference Dapper by source)
+#if !DAPPER_MAKE_PRIVATE
+
+    public partial class SqlMapper
+    {
+    }
+
+    public partial class DynamicParameters
+    {
+        
+    }
+
+    public partial class DbString
+    {
+        
+    }
+
+    public partial class SimpleMemberMap
+    {
+        
+    }
+    
+    public partial class DefaultTypeMap
+    {
+        
+    }
+
+    public partial class CustomPropertyTypeMap
+    {
+        
+    }
+
+	public partial class FeatureSupport
+	{
+	    
+	}
+
+#endif
 
 }
