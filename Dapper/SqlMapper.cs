@@ -833,7 +833,8 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 {
                     if (reader != null)
                     {
-                        if (!reader.IsClosed) cmd.Cancel();
+                        if (!reader.IsClosed) try { cmd.Cancel(); }
+                            catch { /* don't spol the existing exception */ }
                         reader.Dispose();
                     }
                 }
