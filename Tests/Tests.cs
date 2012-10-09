@@ -2015,6 +2015,87 @@ end");
           public bool Active { get; set; }
         }
 
+        SqlConnection GetClosedConnection()
+        {
+            var conn = new SqlConnection(connection.ConnectionString);
+            if (conn.State != ConnectionState.Closed) throw new InvalidOperationException("should be closed!");
+            return conn;
+        }
+        public void ExecuteFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                conn.Execute("-- nop");
+                conn.State.IsEqualTo(ConnectionState.Closed);
+            }
+        }
+        public void ExecuteInvalidFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                try
+                {
+                    conn.Execute("nop");
+                    false.IsEqualTo(true); // shouldn't have got here
+                }
+                catch
+                {
+                    conn.State.IsEqualTo(ConnectionState.Closed);
+                }
+            }
+        }
+        public void QueryFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                var i = conn.Query<int>("select 1").Single();
+                conn.State.IsEqualTo(ConnectionState.Closed);
+                i.IsEqualTo(1);
+            }
+        }
+        public void QueryInvalidFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                try
+                {
+                    conn.Query<int>("select gibberish").Single();
+                    false.IsEqualTo(true); // shouldn't have got here
+                }
+                catch
+                {
+                    conn.State.IsEqualTo(ConnectionState.Closed);
+                }
+            }
+        }
+        public void QueryMultipleFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                using (var multi = conn.QueryMultiple("select 1; select 'abc';"))
+                {
+                    multi.Read<int>().Single().IsEqualTo(1);
+                    multi.Read<string>().Single().IsEqualTo("abc");
+                }
+                conn.State.IsEqualTo(ConnectionState.Closed);
+            }
+        }
+        public void QueryMultipleInvalidFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                try
+                {
+                    conn.QueryMultiple("select gibberish");
+                    false.IsEqualTo(true); // shouldn't have got here
+                }
+                catch
+                {
+                    conn.State.IsEqualTo(ConnectionState.Closed);
+                }
+            }
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;

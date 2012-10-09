@@ -786,16 +786,28 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 
             IDbCommand cmd = null;
             IDataReader reader = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
+                if (wasClosed) cnn.Open();
                 cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
-                reader = cmd.ExecuteReader();
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+                                   // with the CloseConnection flag, so the reader will deal with the connection; we
+                                   // still need something in the "finally" to ensure that broken SQL still results
+                                   // in the connection closing itself
                 return new GridReader(cmd, reader, identity);
             }
             catch
             {
-                if (reader != null) reader.Dispose();
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) try { cmd.Cancel(); }
+                        catch { /* don't spol the existing exception */ }
+                    reader.Dispose();
+                }
                 if (cmd != null) cmd.Dispose();
+                if (wasClosed) cnn.Close();
                 throw;
             }
         }
@@ -808,36 +820,45 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             var identity = new Identity(sql, commandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity);
 
-            using (var cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType))
+            IDbCommand cmd = null;
+            IDataReader reader = null;
+
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
             {
-                IDataReader reader = null;
-                try
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+                
+                if (wasClosed) cnn.Open();
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+                                   // with the CloseConnection flag, so the reader will deal with the connection; we
+                                   // still need something in the "finally" to ensure that broken SQL still results
+                                   // in the connection closing itself
+                var tuple = info.Deserializer;
+                int hash = GetColumnHash(reader);
+                if (tuple.Func == null || tuple.Hash != hash)
                 {
-                    reader = cmd.ExecuteReader();
-                    var tuple = info.Deserializer;
-                    int hash = GetColumnHash(reader);
-                    if (tuple.Func == null || tuple.Hash != hash)
-                    {
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
-                        SetQueryCache(identity, info);
-                    }
-
-                    var func = tuple.Func;
-
-                    while (reader.Read())
-                    {
-                        yield return (T)func(reader);
-                    }
+                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
+                    SetQueryCache(identity, info);
                 }
-                finally
+
+                var func = tuple.Func;
+
+                while (reader.Read())
                 {
-                    if (reader != null)
-                    {
-                        if (!reader.IsClosed) try { cmd.Cancel(); }
-                            catch { /* don't spol the existing exception */ }
-                        reader.Dispose();
-                    }
+                    yield return (T)func(reader);
                 }
+            }
+            finally
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) try { cmd.Cancel(); }
+                        catch { /* don't spol the existing exception */ }
+                    reader.Dispose();
+                }
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
             }
         }
 
@@ -1671,9 +1692,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         private static int ExecuteCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
         {
-            using (var cmd = SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType))
+            IDbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
             {
+                cmd = SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType);
+                if (wasClosed) cnn.Open();
                 return cmd.ExecuteNonQuery();
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
             }
         }
 
