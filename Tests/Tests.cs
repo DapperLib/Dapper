@@ -2096,6 +2096,31 @@ end");
             }
         }
 
+        public void TestMultiSelectWithSomeEmptyGrids()
+        {
+            using (var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 4;"))
+            {
+                var one = reader.Read<int>().ToArray();
+                var two = reader.Read<int>().ToArray();
+                var three = reader.Read<int>().ToArray();
+                var four = reader.Read<int>().ToArray();
+                try { // only returned four grids; expect a fifth read to fail
+                    reader.Read<int>();
+                    throw new InvalidOperationException("this should not have worked!");
+                }
+                catch (ObjectDisposedException ex) { // expected; success
+                    ex.Message.IsEqualTo("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.");
+                }
+
+                one.Length.IsEqualTo(1);
+                one[0].IsEqualTo(1);
+                two.Length.IsEqualTo(0);
+                three.Length.IsEqualTo(0);
+                four.Length.IsEqualTo(1);
+                four[0].IsEqualTo(4);
+            }
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;

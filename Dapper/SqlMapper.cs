@@ -2280,7 +2280,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             /// </summary>
             public IEnumerable<T> Read<T>()
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().Name);
+                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
                 var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
                 CacheInfo cache = GetCacheInfo(typedIdentity);
@@ -2298,7 +2298,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(object func, string splitOn)
             {
-
                 var identity = this.identity.ForGrid(typeof(TReturn), new Type[] { 
                     typeof(TFirst), 
                     typeof(TSecond),
@@ -2413,12 +2412,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                 }
             }
-            private int gridIndex;
+            private int gridIndex, readCount;
             private bool consumed;
             private void NextResult()
             {
                 if (reader.NextResult())
                 {
+                    readCount++;
                     gridIndex++;
                     consumed = false;
                 }
