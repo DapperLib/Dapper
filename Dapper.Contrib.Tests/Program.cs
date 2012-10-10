@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlServerCe;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Npgsql;
 
 namespace Dapper.Contrib.Tests
 {
@@ -13,39 +15,27 @@ namespace Dapper.Contrib.Tests
     {
         static void Main(string[] args)
         {
-            Setup();
-            RunTests();
+            //Test SqlCe Database.
+            RunTests(new SqlCeTests());
+
+            //If postgresql is set up, uncomment this section.  To run this on windows, try http://www.postgresql.org/download/windows/
+            //This assumes you already have a database called test, and a test user with permissions on that database.
+            //RunTests(new PostgresqlTests());
+
+            Console.WriteLine("All tests complete!  Press any key to exit.");
+            Console.ReadKey();
         }
 
-        private static void Setup()
+        private static void RunTests(Tests tester)
         {
-            var projLoc = Assembly.GetAssembly(typeof(Program)).Location;
-            var projFolder = Path.GetDirectoryName(projLoc);
+            Console.WriteLine("Now testing: " + tester.GetType().Name);
 
-            if (File.Exists(projFolder + "\\Test.sdf"))
-                File.Delete(projFolder + "\\Test.sdf");
-            var connectionString = "Data Source = " + projFolder + "\\Test.sdf;";
-            var engine = new SqlCeEngine(connectionString);
-            engine.CreateDatabase();
-            using (var connection = new SqlCeConnection(connectionString))
-            {
-                connection.Open();
-                connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");
-                connection.Execute(@" create table Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
-            }
-            Console.WriteLine("Created database");
-        }
-
-        private static void RunTests()
-        {
-            var tester = new Tests();
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 Console.Write("Running " + method.Name);
                 method.Invoke(tester, null);
                 Console.WriteLine(" - OK!");
             }
-            Console.ReadKey();
         }
 
     }

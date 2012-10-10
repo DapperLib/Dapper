@@ -126,7 +126,9 @@ namespace Dapper.Contrib.Extensions
 
                 foreach (var property in TypePropertiesCache(type))
                 {
-                    var val = res[property.Name];
+                    object val;
+					if (!res.TryGetValue(property.Name, out val))
+						val = res[property.Name.ToLower()];
                     property.SetValue(obj, val, null);
                 }
 
@@ -163,39 +165,41 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
+        /// <param name="useDefaultForKeyValues">By default true.  If set to false, the key values will be explicitly defined instead of relying on a 'DEFAULT' value.</param>
         /// <returns>Identity of inserted entity</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null, bool useDefaultForKeyValues = true) where T : class
         {
-            
+
             var type = typeof(T);
 
             var name = GetTableName(type);
 
             var sbColumnList = new StringBuilder(null);
 
-			var allProperties = TypePropertiesCache(type);
+            var properties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
-            var allPropertiesExceptKey = allProperties.Except(keyProperties);
+            if (useDefaultForKeyValues)
+                properties = properties.Except(keyProperties);
 
-            for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
+            for (var i = 0; i < properties.Count(); i++)
             {
-                var property = allPropertiesExceptKey.ElementAt(i);
-				sbColumnList.Append(property.Name);
-                if (i < allPropertiesExceptKey.Count() - 1)
-					sbColumnList.Append(", ");
+                var property = properties.ElementAt(i);
+                sbColumnList.Append(property.Name);
+                if (i < properties.Count() - 1)
+                    sbColumnList.Append(", ");
             }
 
-			var sbParameterList = new StringBuilder(null);
-			for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
+            var sbParameterList = new StringBuilder(null);
+            for (var i = 0; i < properties.Count(); i++)
             {
-                var property = allPropertiesExceptKey.ElementAt(i);
+                var property = properties.ElementAt(i);
                 sbParameterList.AppendFormat("@{0}", property.Name);
-                if (i < allPropertiesExceptKey.Count() - 1)
+                if (i < properties.Count() - 1)
                     sbParameterList.Append(", ");
             }
-			ISqlAdapter adapter = GetFormatter(connection);
-			int id = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(), sbParameterList.ToString(),  keyProperties, entityToInsert);
-			return id;
+            ISqlAdapter adapter = GetFormatter(connection);
+            long id = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(), sbParameterList.ToString(), keyProperties, entityToInsert);
+            return id;
         }
 
         /// <summary>
