@@ -792,11 +792,13 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 if (wasClosed) cnn.Open();
                 cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, (object)param, commandTimeout, commandType);
                 reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                
+                var result = new GridReader(cmd, reader, identity);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
-                                   // with the CloseConnection flag, so the reader will deal with the connection; we
-                                   // still need something in the "finally" to ensure that broken SQL still results
-                                   // in the connection closing itself
-                return new GridReader(cmd, reader, identity);
+                // with the CloseConnection flag, so the reader will deal with the connection; we
+                // still need something in the "finally" to ensure that broken SQL still results
+                // in the connection closing itself
+                return result;
             }
             catch
             {
@@ -848,6 +850,10 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 {
                     yield return (T)func(reader);
                 }
+                // happy path; close the reader cleanly - no
+                // need for "Cancel" etc
+                reader.Dispose();
+                reader = null;
             }
             finally
             {
@@ -2418,6 +2424,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 else
                 {
+                    // happy path; close the reader cleanly - no
+                    // need for "Cancel" etc
+                    reader.Dispose();
+                    reader = null;
+
                     Dispose();
                 }
 
