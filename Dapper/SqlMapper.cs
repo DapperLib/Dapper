@@ -828,6 +828,8 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                     {
                         yield return (T)func(reader);
                     }
+                    reader.Close();
+                    reader = null;
                 }
                 finally
                 {
