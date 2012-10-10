@@ -7,6 +7,7 @@ using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
 using System;
 using Dapper;
+using Npgsql;
 
 
 namespace Dapper.Contrib.Tests
@@ -33,17 +34,21 @@ namespace Dapper.Contrib.Tests
         public string Name { get; set; }
     }
 
-    public class Tests
+    [Table("Houses")]
+    public class Houses
     {
-        private IDbConnection GetOpenConnection()
-        {
-            var projLoc = Assembly.GetAssembly(GetType()).Location;
-            var projFolder = Path.GetDirectoryName(projLoc);
+        [Key]
+        public int Id { get; set; }
+        public int Number { get; set; }
+        public string Road { get; set; }
+    }
 
-            var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
-            connection.Open();
-            return connection;
-        }
+
+    public abstract class Tests
+    {
+        protected abstract IDbConnection GetOpenConnection();
+        protected abstract string ConnectionString { get; }
+        public abstract void SetUpTests();
 
         public void TableName()
         {
@@ -52,9 +57,9 @@ namespace Dapper.Contrib.Tests
                 // tests against "Automobiles" table (Table attribute)
                 connection.Insert(new Car {Name = "Volvo"});
                 connection.Get<Car>(1).Name.IsEqualTo("Volvo");
-                connection.Update(new Car() {Id = 1, Name = "Saab"}).IsEqualTo(true);
+                connection.Update(new Car {Id = 1, Name = "Saab"}).IsEqualTo(true);
                 connection.Get<Car>(1).Name.IsEqualTo("Saab");
-                connection.Delete(new Car() {Id = 1}).IsEqualTo(true);
+                connection.Delete(new Car {Id = 1}).IsEqualTo(true);
                 connection.Get<Car>(1).IsNull();
             }
         }
@@ -115,6 +120,41 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void InsertAndUpdateExplicitKey()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                if (SqlMapperExtensions.GetFormatter(connection) is PostgresAdapter)
+                {
+                    //Create the object using a defined primary key (instead of DEFAULT).
+                    connection.Get<Houses>(99).IsNull();
+                    Houses user = new Houses {Id = 99, Number = 43, Road = "House St"};
+                    bool gotException = false;
+                    try
+                    {
+                        connection.Insert(user); //This should fail, as the primary key will be excluded from the query.
+                    }
+                    catch (NpgsqlException)
+                    {
+                        gotException = true;
+                    }
+                    catch (Exception)
+                    {
+                    }
+                    gotException.IsEqualTo(true);
+                    int id = (int)connection.Insert(user, useDefaultForKeyValues: false); //No key returned by db due to lack of identity.
+                    user.Id.IsEqualTo(id);
+
+                    //Update the item.
+                    user.Number = 44;
+                    connection.Update(user);
+
+                    //Ensure that the new item was updated using the primary key.
+                    user.Number.IsEqualTo(connection.Query<Houses>("SELECT * FROM houses WHERE Id = :id", new {id = 99}).First().Number);
+                }
+            }
+        }
+
         public void BuilderSelectClause()
         {
             using (var connection = GetOpenConnection())
@@ -148,7 +188,7 @@ namespace Dapper.Contrib.Tests
         public void BuilderTemplateWOComposition()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new {age = 5});
+            var template = builder.AddTemplate("SELECT COUNT(*) AS count FROM Users WHERE Age = @age", new {age = 5});
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");
@@ -156,8 +196,8 @@ namespace Dapper.Contrib.Tests
             using (var connection = GetOpenConnection())
             {
                 connection.Insert(new User { Age = 5, Name = "Testy McTestington" });
-
-                if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
+                var v= connection.Query(template.RawSql, template.Parameters).First();
+                if (Convert.ToInt32(v.count) != 1)
                     throw new Exception("Query failed");
             }
         }

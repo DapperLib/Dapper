@@ -42,6 +42,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mono.Security">
+      <HintPath>..\packages\Npgsql.2.0.11\lib\Net40\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Npgsql">
+      <HintPath>..\packages\Npgsql.2.0.11\lib\Net40\Npgsql.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
@@ -56,8 +62,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assert.cs" />
+    <Compile Include="PostgresqlTests.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SqlCeTests.cs" />
     <Compile Include="Tests.cs" />
   </ItemGroup>
   <ItemGroup>
