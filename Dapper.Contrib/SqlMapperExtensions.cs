@@ -126,7 +126,9 @@ namespace Dapper.Contrib.Extensions
 
                 foreach (var property in TypePropertiesCache(type))
                 {
-                    var val = res[property.Name];
+                    object val;
+                    if (!res.TryGetValue(property.Name, out val))
+                        val = res[property.Name.ToLower()];
                     property.SetValue(obj, val, null);
                 }
 
