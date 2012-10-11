@@ -13,6 +13,7 @@ namespace Dapper.Contrib.Tests
     {
         private readonly string _assemblyLocation;
         private readonly string _projFolder;
+        private const string DatabaseFilename = "Test.sdf";
         private bool _setUp;
 
         public SqlCeTests()
@@ -32,7 +33,7 @@ namespace Dapper.Contrib.Tests
         {
             get
             {
-                return "Data Source = " + _projFolder + "\\Test.sdf;";
+                return string.Format("Data Source = {0}\\{1};", _projFolder, DatabaseFilename);
             }
         }
 
@@ -41,9 +42,10 @@ namespace Dapper.Contrib.Tests
             if (_setUp)
                 return;
 
-            if (File.Exists(_projFolder + "\\Test.sdf"))
-                File.Delete(_projFolder + "\\Test.sdf");
-            var connectionString = "Data Source = " + _projFolder + "\\Test.sdf;";
+            string fullPath = Path.Combine(_projFolder, DatabaseFilename);
+            if (File.Exists(fullPath))
+                File.Delete(fullPath);
+            var connectionString = ConnectionString;
             var engine = new SqlCeEngine(connectionString);
             engine.CreateDatabase();
 
@@ -52,7 +54,6 @@ namespace Dapper.Contrib.Tests
                 connection.Open();
                 connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
-                connection.Execute(@" create table Houses (Id int not null, Number int not null, Road nvarchar(100) not null) ");
             }
             _setUp = true;
         }
