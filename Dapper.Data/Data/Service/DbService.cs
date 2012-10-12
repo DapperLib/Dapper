@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace Dapper.Data.Service
 {
 	public interface IDbService
@@ -11,10 +13,7 @@ namespace Dapper.Data.Service
 		public IDbContext Db
 		{ get; private set; }
 
-
 		protected DbService(IDbContext db)
 		{ Db = db; }
 	}
-
-
 }

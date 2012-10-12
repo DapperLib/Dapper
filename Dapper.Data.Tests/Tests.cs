@@ -12,11 +12,16 @@ using Dapper;
 namespace Dapper.Data.Tests
 {
 
-    public class User
+	public class User : SqlMapper.IDynamicParameters
     {
         public string Name { get; set; }
         public int Age { get; set; }
-    }
+
+		public void AddParameters(IDbCommand command, SqlMapper.Identity identity)
+		{
+			throw new NotImplementedException();
+		}
+	}
 
     public class Car
     {

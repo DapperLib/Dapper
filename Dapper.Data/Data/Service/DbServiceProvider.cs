@@ -4,9 +4,11 @@ using System.Data.Common;
 
 namespace Dapper.Data.Service
 {
-	public interface IDbServiceProvider
+	public interface IDbServiceProvider: IServiceProvider
 	{
+		[Obsolete("Please use GetService instead")]
 		T For<T>() where T : IDbService;
+		T GetService<T>() where T : IDbService;
 	}
 
 	/// <summary>
@@ -22,23 +24,46 @@ namespace Dapper.Data.Service
 		readonly ConcurrentDictionary<Type, IDbService> _services
 			= new ConcurrentDictionary<Type, IDbService>();
 
+		protected DbServiceProvider(string connectionName)
+			: base(connectionName)
+		{ }
+
 		protected DbServiceProvider(IDbConnectionFactory connectionFactory) : base(connectionFactory)
 		{ }
 
 		/// <summary>
 		/// registeres new service
 		/// </summary>
-		protected void RegisterService<T>(T service) where T : IDbService
+		protected void RegisterService<T>(Type constract, T service) where T : IDbService
 		{
-			_services.TryAdd(service.GetType(), service);
+			_services.TryAdd(constract, service);
 		}
 
 		/// <summary>
 		/// use this to retreave the service
 		/// </summary>
+		[Obsolete("Please use GetService instead")]
 		public T For<T>() where T : IDbService
 		{
-			return (T)_services[typeof(T)];
+			return GetService<T>();
+		}
+
+		/// <summary>
+		/// used to retreave the service instance
+		/// </summary>
+		public T GetService<T>() where T : IDbService
+		{
+			return (T)GetService(typeof(T));
+		}
+
+		object IServiceProvider.GetService(Type serviceType)
+		{
+			return GetService(serviceType);
+		}
+
+		private object GetService(Type serviceType)
+		{
+			return _services[serviceType];
 		}
 	}
 }
