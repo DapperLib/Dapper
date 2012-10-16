@@ -427,13 +427,13 @@ namespace Dapper
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
-                // use xml to denote its a list, hacky but will work on any DB
-                return DbType.Xml;
+                return DynamicParameters.EnumerableMultiParameter;
             }
 
 
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
+
 
         /// <summary>
         /// Identity of a cached query in Dapper, used for extensability
@@ -1541,7 +1541,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     continue;
                 }
                 DbType dbType = LookupDbType(prop.PropertyType, prop.Name);
-                if (dbType == DbType.Xml)
+                if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
                     // this actually represents special handling for list types;
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [command]
@@ -2458,6 +2458,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
     /// </summary>
     partial class DynamicParameters : SqlMapper.IDynamicParameters
     {
+        internal const DbType EnumerableMultiParameter = (DbType)(-1);
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
 
         Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
@@ -2620,8 +2621,8 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
                 if (dbType == null && val != null) dbType = SqlMapper.LookupDbType(val.GetType(), name);
 
-                if (dbType == DbType.Xml)
-                { // actually represents "in" lists
+                if (dbType == DynamicParameters.EnumerableMultiParameter)
+                {
 #pragma warning disable 612, 618
                     SqlMapper.PackListParameters(command, name, val);
 #pragma warning restore 612, 618
