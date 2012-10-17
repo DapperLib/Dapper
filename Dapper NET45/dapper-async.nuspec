@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper-Async</id>
-    <version>1.02</version>
+    <version>1.03</version>
     <title>Dapper dot net async</title>
     <authors>Sam Saffron,Marc Gravell,Brandon Kaid</authors>
     <owners>Sam Saffron,Marc Gravell,Brandon Kaid</owners>
@@ -19,6 +19,7 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.5" />
     </frameworkAssemblies>
 	<releaseNotes>
+      * 1.03 - Added two more multi-mapper type parameters.
       * 1.02 - Added async versions of Query methods that do multi-mapping like QueryAsync&lt;TFirst, TSecond, TReturn&gt;
 	  * 1.01 - Updated code to use ExecuteReaderAsync on more generic DbCommand instead of SqlCommand.
 	  * 1.0 - Initial release.
