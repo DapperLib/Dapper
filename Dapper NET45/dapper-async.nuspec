@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata schemaVersion="2">
+    <id>Dapper-Async</id>
+    <version>1.03</version>
+    <title>Dapper dot net async</title>
+    <authors>Sam Saffron,Marc Gravell,Brandon Kaid</authors>
+    <owners>Sam Saffron,Marc Gravell,Brandon Kaid</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/bkaid/dapper-dot-net</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A fork of Dapper with additional QueryAsync methods using .NET Framework 4.5's Task-Based Asynchronous Pattern.</description>
+    <summary>Dapper QueryAsync methods</summary>
+    <tags>Dapper Async Task await</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core"/>
+      <frameworkAssembly assemblyName="System"/>
+      <frameworkAssembly assemblyName="System.Data"/>
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.5" />
+    </frameworkAssemblies>
+	<releaseNotes>
+      * 1.03 - Added two more multi-mapper type parameters.
+      * 1.02 - Added async versions of Query methods that do multi-mapping like QueryAsync&lt;TFirst, TSecond, TReturn&gt;
+	  * 1.01 - Updated code to use ExecuteReaderAsync on more generic DbCommand instead of SqlCommand.
+	  * 1.0 - Initial release.
+	</releaseNotes>
+  </metadata>
+  <files>
+    <file src="bin\Release\Dapper.dll" target="lib\net45" />
+    <file src="bin\Release\Dapper.pdb" target="lib\net45" />
+  </files>
+</package>
