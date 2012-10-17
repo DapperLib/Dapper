@@ -20,6 +20,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper NET45", "Dapper NET45\Dapper NET45.csproj", "{EDD52209-45E8-42BA-81C1-D39FA1F07646}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperTests NET45", "DapperTests NET45\DapperTests NET45.csproj", "{B7B69EE5-0E0D-4218-88DF-79E7D2355D26}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E043638B-9516-477C-A75A-254DD55D4113}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

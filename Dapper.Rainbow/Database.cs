@@ -24,7 +24,7 @@ namespace Dapper
     /// <typeparam name="TDatabase"></typeparam>
     public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
-        public class Table<T>
+        public class Table<T, TId>
         {
             internal Database<TDatabase> database;
             internal string tableName;
@@ -68,7 +68,7 @@ namespace Dapper
             /// <param name="id"></param>
             /// <param name="data"></param>
             /// <returns></returns>
-            public int Update(int id, dynamic data)
+            public int Update(TId id, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
 
@@ -88,7 +88,7 @@ namespace Dapper
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public bool Delete(int id)
+            public bool Delete(TId id)
             {
                 return database.Execute("delete " + TableName + " where Id = @id", new { id }) > 0;
             }
@@ -98,7 +98,7 @@ namespace Dapper
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public T Get(int id)
+            public T Get(TId id)
             {
                 return database.Query<T>("select * from " + TableName + " where Id = @id", new { id }).FirstOrDefault();
             }
@@ -135,6 +135,13 @@ namespace Dapper
                 return paramNames;
             }
         }
+
+		public class Table<T> : Table<T, int> {
+			public Table(Database<TDatabase> database, string likelyTableName)
+				: base(database, likelyTableName)
+			{
+			}
+		}
 
         DbConnection connection;
         int commandTimeout;

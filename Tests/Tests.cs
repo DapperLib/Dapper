@@ -1103,6 +1103,25 @@ end");
 
         }
 
+        public void TestMultiMappingWithSplitOnSpaceBetweenCommas()
+        {
+            var sql = @"select 
+                        1 as PersonId, 'bob' as Name, 
+                        2 as AddressId, 'abc street' as Name, 1 as PersonId,
+                        3 as Id, 'fred' as Name
+                        ";
+            var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address, Extra>>
+                (sql, (p, a, e) => Tuple.Create(p, a, e), splitOn: "AddressId, Id").First();
+
+            personWithAddress.Item1.PersonId.IsEqualTo(1);
+            personWithAddress.Item1.Name.IsEqualTo("bob");
+            personWithAddress.Item2.AddressId.IsEqualTo(2);
+            personWithAddress.Item2.Name.IsEqualTo("abc street");
+            personWithAddress.Item2.PersonId.IsEqualTo(1);
+            personWithAddress.Item3.Id.IsEqualTo(3);
+            personWithAddress.Item3.Name.IsEqualTo("fred");
+
+        }
 
         public void TestFastExpandoSupportsIDictionary()
         {
@@ -1598,6 +1617,34 @@ Order by p.Id";
             result[2].IsEqualTo(3);
         }
 
+        public void TestAppendingAListAsDictionary()
+        {
+            DynamicParameters p = new DynamicParameters();
+            var list = new int[] { 1, 2, 3 };
+            var args = new Dictionary<string, object>();
+            args.Add("ids", list);
+            p.AddDynamicParams(args);
+
+            var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @ids", p).ToList();
+
+            result[0].IsEqualTo(1);
+            result[1].IsEqualTo(2);
+            result[2].IsEqualTo(3);
+        }
+
+        public void TestAppendingAListByName()
+        {
+            DynamicParameters p = new DynamicParameters();
+            var list = new int[] { 1, 2, 3 };
+            p.Add("ids", list);
+
+            var result = connection.Query<int>("select * from (select 1 A union all select 2 union all select 3) X where A in @ids", p).ToList();
+
+            result[0].IsEqualTo(1);
+            result[1].IsEqualTo(2);
+            result[2].IsEqualTo(3);
+        }
+
         public void TestUniqueIdentifier()
         {
             var guid = Guid.NewGuid();
@@ -1618,16 +1665,10 @@ Order by p.Id";
         }
 
 
-        public void TestFailInASaneWayWithWrongStructColumnTypes()
+        public void WorkDespiteHavingWrongStructColumnTypes()
         {
-            try
-            {
-                connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
-                throw new Exception("Should not have got here");
-            } catch(DataException ex)
-            {
-                ex.Message.IsEqualTo("Error parsing column 0 (Value=1 - Int64)");
-            }
+            var hazInt = connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
+            hazInt.Value.Equals(1);
         }
 
 
@@ -1894,6 +1935,190 @@ Order by p.Id";
 
             [Description("A")]
             public string B { get; set; }
+        }
+
+        public class WrongTypes
+        {
+            public int A { get; set; }
+            public double B { get; set; }
+            public long C { get; set; }
+            public bool D { get; set; }
+        }
+        
+        public void TestWrongTypes_WithRightTypes()
+        {
+            var item = connection.Query<WrongTypes>("select 1 as A, cast(2.0 as float) as B, cast(3 as bigint) as C, cast(1 as bit) as D").Single();
+            item.A.Equals(1);
+            item.B.Equals(2.0);
+            item.C.Equals(3L);
+            item.D.Equals(true);
+        }
+        
+        public void TestWrongTypes_WithWrongTypes()
+        {
+            var item = connection.Query<WrongTypes>("select cast(1.0 as float) as A, 2 as B, 3 as C, cast(1 as bigint) as D").Single();
+            item.A.Equals(1);
+            item.B.Equals(2.0);
+            item.C.Equals(3L);
+            item.D.Equals(true);
+        }
+
+        public void Test_AddDynamicParametersRepeatedShouldWork()
+        {
+            var args = new DynamicParameters();
+            args.AddDynamicParams(new { Foo = 123 });
+            args.AddDynamicParams(new { Foo = 123 });
+            int i = connection.Query<int>("select @Foo", args).Single();
+            i.IsEqualTo(123);
+        }
+
+
+        public class ParameterWithIndexer
+        {
+            public int A { get; set; }
+            public virtual string this[string columnName]
+            {
+                get { return null; }
+                set { }
+            }
+        }
+
+        public void TestParameterWithIndexer()
+        {
+            connection.Execute(@"create proc #TestProcWithIndexer 
+	@A int
+as 
+begin
+	select @A
+end");
+            var item = connection.Query<int>("#TestProcWithIndexer", new ParameterWithIndexer(), commandType: CommandType.StoredProcedure).Single();
+        }
+
+        public void Issue_40_AutomaticBoolConversion()
+        {
+            var user = connection.Query<Issue40_User>("select UserId=1,Email='abc',Password='changeme',Active=cast(1 as tinyint)").Single();
+            user.Active.IsTrue();
+            user.UserID.IsEqualTo(1);
+            user.Email.IsEqualTo("abc");
+            user.Password.IsEqualTo("changeme");
+        }
+
+        public class Issue40_User
+        {
+          public Issue40_User()
+          {
+             Email = Password = String.Empty;
+          }
+          public int UserID { get; set; }
+          public string Email { get; set; }
+          public string Password { get; set; }
+          public bool Active { get; set; }
+        }
+
+        SqlConnection GetClosedConnection()
+        {
+            var conn = new SqlConnection(connection.ConnectionString);
+            if (conn.State != ConnectionState.Closed) throw new InvalidOperationException("should be closed!");
+            return conn;
+        }
+        public void ExecuteFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                conn.Execute("-- nop");
+                conn.State.IsEqualTo(ConnectionState.Closed);
+            }
+        }
+        public void ExecuteInvalidFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                try
+                {
+                    conn.Execute("nop");
+                    false.IsEqualTo(true); // shouldn't have got here
+                }
+                catch
+                {
+                    conn.State.IsEqualTo(ConnectionState.Closed);
+                }
+            }
+        }
+        public void QueryFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                var i = conn.Query<int>("select 1").Single();
+                conn.State.IsEqualTo(ConnectionState.Closed);
+                i.IsEqualTo(1);
+            }
+        }
+        public void QueryInvalidFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                try
+                {
+                    conn.Query<int>("select gibberish").Single();
+                    false.IsEqualTo(true); // shouldn't have got here
+                }
+                catch
+                {
+                    conn.State.IsEqualTo(ConnectionState.Closed);
+                }
+            }
+        }
+        public void QueryMultipleFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                using (var multi = conn.QueryMultiple("select 1; select 'abc';"))
+                {
+                    multi.Read<int>().Single().IsEqualTo(1);
+                    multi.Read<string>().Single().IsEqualTo("abc");
+                }
+                conn.State.IsEqualTo(ConnectionState.Closed);
+            }
+        }
+        public void QueryMultipleInvalidFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                try
+                {
+                    conn.QueryMultiple("select gibberish");
+                    false.IsEqualTo(true); // shouldn't have got here
+                }
+                catch
+                {
+                    conn.State.IsEqualTo(ConnectionState.Closed);
+                }
+            }
+        }
+
+        public void TestMultiSelectWithSomeEmptyGrids()
+        {
+            using (var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 4;"))
+            {
+                var one = reader.Read<int>().ToArray();
+                var two = reader.Read<int>().ToArray();
+                var three = reader.Read<int>().ToArray();
+                var four = reader.Read<int>().ToArray();
+                try { // only returned four grids; expect a fifth read to fail
+                    reader.Read<int>();
+                    throw new InvalidOperationException("this should not have worked!");
+                }
+                catch (ObjectDisposedException ex) { // expected; success
+                    ex.Message.IsEqualTo("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.");
+                }
+
+                one.Length.IsEqualTo(1);
+                one[0].IsEqualTo(1);
+                two.Length.IsEqualTo(0);
+                three.Length.IsEqualTo(0);
+                four.Length.IsEqualTo(1);
+                four[0].IsEqualTo(4);
+            }
         }
 
         class TransactedConnection : IDbConnection
