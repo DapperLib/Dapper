@@ -11,6 +11,7 @@ using System.Collections;
 using System.Reflection;
 using System.Dynamic;
 using System.ComponentModel;
+using Microsoft.CSharp.RuntimeBinder;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -2118,6 +2119,23 @@ end");
                 three.Length.IsEqualTo(0);
                 four.Length.IsEqualTo(1);
                 four[0].IsEqualTo(4);
+            }
+        }
+        [ActiveTest]
+        public void TestDynamicMutation()
+        {
+            var obj = connection.Query("select 1 as [a], 2 as [b], 3 as [c]").Single();
+            ((int)obj.a).IsEqualTo(1);
+            IDictionary<string,object> dict = obj;
+            dict.Remove("a");
+            try
+            {
+                ((int)obj.a).IsEqualTo(1);
+                throw new InvalidOperationException("should have thrown");
+            }
+            catch (RuntimeBinderException)
+            {
+                // pass
             }
         }
 

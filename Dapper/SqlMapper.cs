@@ -1222,7 +1222,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             void IDictionary<string, object>.Add(string key, object value)
             {
-                throw new NotImplementedException();
+                data.Add(key, value);
             }
 
             bool IDictionary<string, object>.ContainsKey(string key)
@@ -1237,7 +1237,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             bool IDictionary<string, object>.Remove(string key)
             {
-                throw new NotImplementedException();
+                return data.Remove(key);
             }
 
             bool IDictionary<string, object>.TryGetValue(string key, out object value)
@@ -1258,10 +1258,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 set
                 {
-                    if (!data.ContainsKey(key)) 
-                    {
-	                    throw new NotImplementedException();
-                    }
                     data[key] = value;
                 }
             }
@@ -1272,12 +1268,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
             {
-                throw new NotImplementedException();
+                data.Add(item);
             }
 
             void ICollection<KeyValuePair<string, object>>.Clear()
             {
-                throw new NotImplementedException();
+                data.Clear();
             }
 
             bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
@@ -1302,7 +1298,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
             {
-                throw new NotImplementedException();
+                return data.Remove(item);
             }
 
             #endregion
@@ -3060,7 +3056,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <returns></returns>
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <summary>
