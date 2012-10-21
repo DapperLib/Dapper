@@ -728,7 +728,7 @@ Order by p.Id
             connection.Execute("drop table #Users drop table #Posts");
 
         }
-
+  
         public void TestMultiMapDynamic()
         {
             var createSql = @"

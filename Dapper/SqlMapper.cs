@@ -5,6 +5,7 @@
  Note: to build on C# 3.0 + .NET 3.5, include the CSHARP30 compiler symbol (and yes,
  I know the difference between language and runtime versions; this is a compromise).
  */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+
 
 namespace Dapper
 {
@@ -713,7 +715,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// </summary>
         public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return Query<FastExpando>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
+            return Query<DapperRow>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
         }
 #else
         /// <summary>
@@ -1174,9 +1176,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #if !CSHARP30
             // dynamic is passed in as Object ... by c# design
             if (type == typeof(object)
-                || type == typeof(FastExpando))
+                || type == typeof(DapperRow))
             {
-                return GetDynamicDeserializer(reader, startBound, length, returnNullIfFirstMissing);
+                return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
 #else
             if(type.IsAssignableFrom(typeof(Dictionary<string,object>)))
@@ -1193,131 +1195,304 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return GetStructDeserializer(type, underlyingType ?? type, startBound);
 
         }
-#if !CSHARP30
-        private partial class FastExpando : System.Dynamic.DynamicObject, IDictionary<string, object>
-        {
-            IDictionary<string, object> data;
 
-            public static FastExpando Attach(IDictionary<string, object> data)
+#if !CSHARP30
+        sealed partial class DapperTable
+        {
+            string[] fieldNames;
+            readonly Dictionary<string, int> fieldNameLookup;
+
+            internal string[] FieldNames { get { return fieldNames; } }
+
+            public DapperTable(string[] fieldNames)
             {
-                return new FastExpando { data = data };
+                if (fieldNames == null) throw new ArgumentNullException("fieldNames");
+                this.fieldNames = fieldNames;
+
+                fieldNameLookup = new Dictionary<string, int>(fieldNames.Length, StringComparer.Ordinal);
+                // if there are dups, we want the **first** key to be the "winner" - so iterate backwards
+                for (int i = fieldNames.Length - 1; i >= 0; i--)
+                {
+                    string key = fieldNames[i];
+                    if (key != null)
+                    {
+                        // in case of dups, keep the *last* key, arbitrarily; avoids a check
+                        fieldNameLookup[key] = i;
+                    }
+                }
             }
 
-            public override bool TrySetMember(System.Dynamic.SetMemberBinder binder, object value)
+            internal int IndexOfName(string name)
             {
-                data[binder.Name] = value;
+                int result;
+                return (name != null && fieldNameLookup.TryGetValue(name, out result)) ? result : -1;
+            }
+            internal int AddField(string name)
+            {
+                if (name == null) throw new ArgumentNullException("name");
+                if (fieldNameLookup.ContainsKey(name)) throw new InvalidOperationException("Field already exists: " + name);
+                int oldLen = fieldNames.Length;
+                Array.Resize(ref fieldNames, oldLen + 1); // yes, this is sub-optimal, but this is not the expected common case
+                fieldNameLookup[name] = oldLen;
+                return oldLen;
+            }
+
+
+            internal bool FieldExists(string key)
+            {
+                return key != null && fieldNameLookup.ContainsKey(key);
+            }
+
+            public int FieldCount { get { return fieldNames.Length; } }
+        }
+
+        sealed partial class DapperRowMetaObject : System.Dynamic.DynamicMetaObject
+        {
+            static readonly MethodInfo getValueMethod = typeof(IDictionary<string, object>).GetProperty("Item").GetGetMethod();
+            static readonly MethodInfo setValueMethod = typeof(DapperRow).GetMethod("SetValue");
+
+            public DapperRowMetaObject(
+                System.Linq.Expressions.Expression expression,
+                System.Dynamic.BindingRestrictions restrictions
+                )
+                : base(expression, restrictions)
+            {
+            }
+
+            public DapperRowMetaObject(
+                System.Linq.Expressions.Expression expression,
+                System.Dynamic.BindingRestrictions restrictions,
+                object value
+                )
+                : base(expression, restrictions, value)
+            {
+            }
+
+            System.Dynamic.DynamicMetaObject CallMethod(
+                MethodInfo method,
+                System.Linq.Expressions.Expression[] parameters
+                )
+            {
+                var callMethod = new System.Dynamic.DynamicMetaObject(
+                    System.Linq.Expressions.Expression.Call(
+                        System.Linq.Expressions.Expression.Convert(Expression, LimitType),
+                        method,
+                        parameters),
+                    System.Dynamic.BindingRestrictions.GetTypeRestriction(Expression, LimitType)
+                    );
+                return callMethod;
+            }
+
+            public override System.Dynamic.DynamicMetaObject BindGetMember(System.Dynamic.GetMemberBinder binder)
+            {
+                var parameters = new System.Linq.Expressions.Expression[]
+                                     {
+                                         System.Linq.Expressions.Expression.Constant(binder.Name)
+                                     };
+
+                var callMethod = CallMethod(getValueMethod, parameters);
+
+                return callMethod;
+            }
+
+            public override System.Dynamic.DynamicMetaObject BindSetMember(System.Dynamic.SetMemberBinder binder, System.Dynamic.DynamicMetaObject value)
+            {
+                var parameters = new System.Linq.Expressions.Expression[]
+                                     {
+                                         System.Linq.Expressions.Expression.Constant(binder.Name),
+                                         value.Expression,
+                                     };
+
+                var callMethod = CallMethod(setValueMethod, parameters);
+
+                return callMethod;
+            }
+        }
+
+        sealed partial class DapperRow
+            : System.Dynamic.IDynamicMetaObjectProvider
+            , IDictionary<string, object>
+        {
+            readonly DapperTable table;
+            object[] values;
+
+            public DapperRow(DapperTable table, object[] values)
+            {
+                if (table == null) throw new ArgumentNullException("table");
+                if (values == null) throw new ArgumentNullException("values");
+                this.table = table;
+                this.values = values;
+            }
+
+            int ICollection<KeyValuePair<string,object>>.Count
+            {
+                get { return table.FieldCount; }
+            }
+
+            public bool TryGetValue(string name, out object value)
+            {
+                var index = table.IndexOfName(name);
+                if (index < 0)
+                { // doesn't exist
+                    value = null;
+                    return false;
+                }
+                // exists, **even if** we don't have a value; consider table rows heterogeneous
+                value = index < values.Length ? values[index] : null;
                 return true;
             }
 
-            public override bool TryGetMember(System.Dynamic.GetMemberBinder binder, out object result)
+            /* public object SetValue(string name, object value)
             {
-                return data.TryGetValue(binder.Name, out result);
-            }
-
-            public override IEnumerable<string> GetDynamicMemberNames()
-            {
-                return data.Keys;
-            }
-
-            #region IDictionary<string,object> Members
-
-            void IDictionary<string, object>.Add(string key, object value)
-            {
-                data.Add(key, value);
-            }
-
-            bool IDictionary<string, object>.ContainsKey(string key)
-            {
-                return data.ContainsKey(key);
-            }
-
-            ICollection<string> IDictionary<string, object>.Keys
-            {
-                get { return data.Keys; }
-            }
-
-            bool IDictionary<string, object>.Remove(string key)
-            {
-                return data.Remove(key);
-            }
-
-            bool IDictionary<string, object>.TryGetValue(string key, out object value)
-            {
-                return data.TryGetValue(key, out value);
-            }
-
-            ICollection<object> IDictionary<string, object>.Values
-            {
-                get { return data.Values; }
-            }
-
-            object IDictionary<string, object>.this[string key]
-            {
-                get
+                var index = Table.IndexOfName(name);
+                if (index == -1)
                 {
-                    return data[key];
+                    if (m_additionalValues == null)
+                    {
+                        m_additionalValues = new Dictionary<string, object>();
+                    }
+
+                    m_additionalValues[name ?? ""] = value;
+                    return value;
                 }
-                set
+
+                return SetFieldValueImpl(index, value);
+            }*/
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder("{DapperRow");
+
+                foreach (var kv in this)
                 {
-                    data[key] = value;
+                    var value = kv.Value;
+                    sb.Append(", ");
+                    sb.Append(kv.Key);
+                    if (value != null)
+                    {
+                        sb.Append(" = '");
+                        sb.Append(kv.Value);
+                        sb.Append('\'');
+                    }
+                    else
+                    {
+                        sb.Append(" = NULL");
+                    }
+                }
+
+                sb.Append('}');
+                return sb.ToString();
+            }
+
+            public System.Dynamic.DynamicMetaObject GetMetaObject(System.Linq.Expressions.Expression parameter)
+            {
+                return new DapperRowMetaObject(parameter, System.Dynamic.BindingRestrictions.Empty, this);
+            }
+
+            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            {
+                var names = table.FieldNames;
+                for (var i = 0; i < names.Length; i++)
+                {
+                    object value = i < values.Length ? values[i] : null;
+                    yield return new KeyValuePair<string, object>(names[i], value);
                 }
             }
 
-            #endregion
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
 
-            #region ICollection<KeyValuePair<string,object>> Members
+            #region Implementation of ICollection<KeyValuePair<string,object>>
 
             void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
             {
-                data.Add(item);
+                IDictionary<string, object> dic = this;
+                dic.Add(item.Key, item.Value);
             }
 
             void ICollection<KeyValuePair<string, object>>.Clear()
-            {
-                data.Clear();
+            { // removes values for **this row**, but doesn't change the fundamental table
+                values = new object[0];
             }
 
             bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
             {
-                return data.Contains(item);
+                object value;
+                return TryGetValue(item.Key, out value) && Equals(value, item.Value);
             }
 
             void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
             {
-                data.CopyTo(array, arrayIndex);
-            }
-
-            int ICollection<KeyValuePair<string, object>>.Count
-            {
-                get { return data.Count; }
-            }
-
-            bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-            {
-                get { return true; }
+                foreach (var kv in this)
+                {
+                    array[arrayIndex++] = kv; // if they didn't leave enough space; not our fault
+                }
             }
 
             bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
             {
-                return data.Remove(item);
+                IDictionary<string, object> dic = this;
+                return dic.Remove(item.Key);
+            }
+
+            bool ICollection<KeyValuePair<string, object>>.IsReadOnly
+            {
+                get { return false; }
             }
 
             #endregion
 
-            #region IEnumerable<KeyValuePair<string,object>> Members
+            #region Implementation of IDictionary<string,object>
 
-            IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
+            bool IDictionary<string, object>.ContainsKey(string key)
             {
-                return data.GetEnumerator();
+                return table.FieldExists(key);
             }
 
-            #endregion
-
-            #region IEnumerable Members
-
-            IEnumerator IEnumerable.GetEnumerator()
+            void IDictionary<string, object>.Add(string key, object value)
             {
-                return data.GetEnumerator();
+                IDictionary<string, object> dic = this;
+                dic[key] = value;
+            }
+
+            bool IDictionary<string, object>.Remove(string key)
+            {
+                int index = table.IndexOfName(key);
+                if(index >= 0 && index < values.Length) values[index] = null;
+                return index >= 0;                
+            }
+
+            object IDictionary<string, object>.this[string key]
+            {
+                get { object val; TryGetValue(key, out val); return val; }
+                set { SetValue(key, value); }
+            }
+            public object SetValue(string key, object value)
+            {
+                if (key == null) throw new ArgumentNullException("key");
+                int index = table.IndexOfName(key);
+                if (index < 0)
+                {
+                    index = table.AddField(key);
+                }
+                if (values.Length <= index)
+                {   // we'll assume they're doing lots of things, and
+                    // grow it to the full width of the table
+                    Array.Resize(ref values, table.FieldCount);
+                }
+                return values[index] = value;              
+            }
+
+            ICollection<string> IDictionary<string, object>.Keys
+            {
+                get { return this.Select(kv => kv.Key).ToArray(); }
+            }
+
+            ICollection<object> IDictionary<string, object>.Values
+            {
+                get { return this.Select(kv => kv.Value).ToArray(); }
             }
 
             #endregion
@@ -1325,11 +1500,64 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
 
 #if !CSHARP30
-        private static Func<IDataReader, object> GetDynamicDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
-#else
-        private static Func<IDataReader, object> GetDictionaryDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
-#endif
+        internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
+        {
+            var fieldCount = reader.FieldCount;
+            if (length == -1)
+            {
+                length = fieldCount - startBound;
+            }
 
+            if (fieldCount <= startBound)
+            {
+                throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+            }
+
+            var effectiveFieldCount = fieldCount - startBound;
+
+            DapperTable table = null;
+
+            return
+                r =>
+                {
+                    if (table == null)
+                    {
+                        string[] names = new string[effectiveFieldCount];
+                        for (int i = 0; i < effectiveFieldCount; i++)
+                        {
+                            names[i] = reader.GetName(i + startBound);
+                        }
+                        table = new DapperTable(names);
+                    }
+
+                    var values = new object[effectiveFieldCount];
+
+                    if (returnNullIfFirstMissing)
+                    {
+                        values[0] = r.GetValue(startBound);
+                        if (values[0] is DBNull)
+                        {
+                            return null;
+                        }
+                    }
+
+                    if (startBound == 0)
+                    {
+                        r.GetValues(values);
+                    }
+                    else
+                    {
+                        var begin = returnNullIfFirstMissing ? 1 : 0;
+                        for (var iter = begin; iter < effectiveFieldCount; ++iter)
+                        {
+                            values[iter] = r.GetValue(iter + startBound);
+                        }
+                    }
+                    return new DapperRow(table, values);
+                };
+        }
+#else
+        internal static Func<IDataReader, object> GetDictionaryDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
             var fieldCount = reader.FieldCount;
             if (length == -1)
@@ -1356,15 +1584,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                              return null;
                          }
                      }
-#if !CSHARP30
-                     //we know this is an object so it will not box
-                     return FastExpando.Attach(row);
-#else
                      return row;
-#endif
                  };
         }
-
+#endif
         /// <summary>
         /// Internal use only
         /// </summary>
@@ -2268,7 +2491,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// </summary>
             public IEnumerable<dynamic> Read()
             {
-                return Read<FastExpando>();
+                return Read<DapperRow>();
             }
 
 #endif
