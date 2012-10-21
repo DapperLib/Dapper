@@ -1214,11 +1214,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 for (int i = fieldNames.Length - 1; i >= 0; i--)
                 {
                     string key = fieldNames[i];
-                    if (key != null)
-                    {
-                        // in case of dups, keep the *last* key, arbitrarily; avoids a check
-                        fieldNameLookup[key] = i;
-                    }
+                    if (key != null) fieldNameLookup[key] = i;
                 }
             }
 
