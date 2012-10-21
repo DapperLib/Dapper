@@ -2121,7 +2121,7 @@ end");
                 four[0].IsEqualTo(4);
             }
         }
-        [ActiveTest]
+
         public void TestDynamicMutation()
         {
             var obj = connection.Query("select 1 as [a], 2 as [b], 3 as [c]").Single();
