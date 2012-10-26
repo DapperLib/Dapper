@@ -2,6 +2,7 @@
 using System.Linq;
 using Dapper;
 using SqlMapper;
+using System.Data;
 
 namespace DapperTests_NET35
 {
@@ -38,6 +39,19 @@ namespace DapperTests_NET35
 
             ((int)rows[1]["B"])
                 .IsEqualTo(4);
+        }
+
+        public void TestMultiple()
+        {
+            using (var grid = connection.QueryMultiple("select 1; select 2; select 3", null, CommandType.Text))
+            {
+                int i = grid.Read<int>().Single();
+                int j = grid.Read<int>().Single();
+                int k = grid.Read<int>().Single();
+                i.Equals(1);
+                j.Equals(2);
+                k.Equals(3);
+            }
         }
 
     }
