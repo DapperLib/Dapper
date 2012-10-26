@@ -728,7 +728,55 @@ Order by p.Id
             connection.Execute("drop table #Users drop table #Posts");
 
         }
-  
+
+        public void TestQueryMultipleBuffered()
+        {
+            using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))
+            {
+                var a = grid.Read<int>();
+                var b = grid.Read<int>();
+                var c = grid.Read<int>();
+                var d = grid.Read<int>();
+
+                a.Single().Equals(1);
+                b.Single().Equals(2);
+                c.Single().Equals(3);
+                d.Single().Equals(4);
+            }
+        }
+
+        public void TestQueryMultipleNonBufferedIncorrectOrder()
+        {
+            using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))
+            {
+                var a = grid.Read<int>(false);
+                try
+                {
+                    var b = grid.Read<int>(false);
+                    throw new InvalidOperationException(); // should have thrown
+                }
+                catch (InvalidOperationException)
+                {
+                    // that's expected
+                }
+                
+            }
+        }
+        public void TestQueryMultipleNonBufferedCcorrectOrder()
+        {
+            using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))
+            {
+                var a = grid.Read<int>(false).Single();
+                var b = grid.Read<int>(false).Single();
+                var c = grid.Read<int>(false).Single();
+                var d = grid.Read<int>(false).Single();
+
+                a.Equals(1);
+                b.Equals(2);
+                c.Equals(3);
+                d.Equals(4);
+            }
+        }
         public void TestMultiMapDynamic()
         {
             var createSql = @"

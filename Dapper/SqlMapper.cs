@@ -780,7 +780,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30  
             this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+            this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -808,7 +808,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 if (reader != null)
                 {
                     if (!reader.IsClosed) try { cmd.Cancel(); }
-                        catch { /* don't spol the existing exception */ }
+                        catch { /* don't spoil the existing exception */ }
                     reader.Dispose();
                 }
                 if (cmd != null) cmd.Dispose();
@@ -863,7 +863,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 if (reader != null)
                 {
                     if (!reader.IsClosed) try { cmd.Cancel(); }
-                        catch { /* don't spol the existing exception */ }
+                        catch { /* don't spoil the existing exception */ }
                     reader.Dispose();
                 }
                 if (wasClosed) cnn.Close();
@@ -2488,20 +2488,32 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// <summary>
             /// Read the next grid of results, returned as a dynamic object
             /// </summary>
-            public IEnumerable<dynamic> Read()
+            public IEnumerable<dynamic> Read(bool buffered = true)
             {
-                return Read<DapperRow>();
+                return Read<DapperRow>(buffered);
             }
-
 #endif
 
+#if CSHARP30
             /// <summary>
             /// Read the next grid of results
             /// </summary>
             public IEnumerable<T> Read<T>()
             {
+                return Read<T>(true);
+            }
+#endif
+            /// <summary>
+            /// Read the next grid of results
+            /// </summary>
+#if CSHARP30
+            public IEnumerable<T> Read<T>(bool buffered)
+#else
+            public IEnumerable<T> Read<T>(bool buffered = true)
+#endif
+            {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (consumed) throw new InvalidOperationException("Each grid can only be iterated once");
+                if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
                 CacheInfo cache = GetCacheInfo(typedIdentity);
                 var deserializer = cache.Deserializer;
@@ -2513,7 +2525,8 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     cache.Deserializer = deserializer;
                 }
                 consumed = true;
-                return ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
+                var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
+                return buffered ? result.ToList() : result;
             }
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(object func, string splitOn)
@@ -2538,79 +2551,83 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 }
             }
 
+#if CSHARP30
             /// <summary>
             /// Read multiple objects from a single recordset on the grid
             /// </summary>
-            /// <typeparam name="TFirst"></typeparam>
-            /// <typeparam name="TSecond"></typeparam>
-            /// <typeparam name="TReturn"></typeparam>
-            /// <param name="func"></param>
-            /// <param name="splitOn"></param>
-            /// <returns></returns>
-#if CSHARP30  
             public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn)
+            {
+                return Read<TFirst, TSecond, TReturn>(func, splitOn, true);
+            }
+#endif
+            /// <summary>
+            /// Read multiple objects from a single recordset on the grid
+            /// </summary>
+#if CSHARP30  
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn, bool buffered)
 #else
-            public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn = "id")
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn = "id", bool buffered = true)
 #endif
             {
-                return MultiReadInternal<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
+                var result = MultiReadInternal<TFirst, TSecond, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
+                return buffered ? result.ToList() : result;
             }
 
+#if CSHARP30
             /// <summary>
             /// Read multiple objects from a single recordset on the grid
             /// </summary>
-            /// <typeparam name="TFirst"></typeparam>
-            /// <typeparam name="TSecond"></typeparam>
-            /// <typeparam name="TThird"></typeparam>
-            /// <typeparam name="TReturn"></typeparam>
-            /// <param name="func"></param>
-            /// <param name="splitOn"></param>
-            /// <returns></returns>
-#if CSHARP30  
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn)
+            {
+                return Read<TFirst, TSecond, TThird, TReturn>(func, splitOn, true);
+            }
+#endif
+            /// <summary>
+            /// Read multiple objects from a single recordset on the grid
+            /// </summary>
+#if CSHARP30  
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn, bool buffered)
 #else
-            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn = "id")
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn = "id", bool buffered = true)
 #endif
             {
-                return MultiReadInternal<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(func, splitOn);
+                var result = MultiReadInternal<TFirst, TSecond, TThird, DontMap, DontMap, TReturn>(func, splitOn);
+                return buffered ? result.ToList() : result;
             }
+
+#if CSHARP30
+            /// <summary>
+            /// Read multiple objects from a single record set on the grid
+            /// </summary>
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn)
+            {
+                return Read<TFirst, TSecond, TThird, TFourth, TReturn>(func, splitOn, true);
+            }
+#endif
 
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
-            /// <typeparam name="TFirst"></typeparam>
-            /// <typeparam name="TSecond"></typeparam>
-            /// <typeparam name="TThird"></typeparam>
-            /// <typeparam name="TFourth"></typeparam>
-            /// <typeparam name="TReturn"></typeparam>
-            /// <param name="func"></param>
-            /// <param name="splitOn"></param>
-            /// <returns></returns>
 #if CSHARP30  
-            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn)
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn, bool buffered)
 #else
-            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn = "id")
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn = "id", bool buffered = true)
 #endif
             {
-                return MultiReadInternal<TFirst, TSecond, TThird, TFourth, DontMap, TReturn>(func, splitOn);
+                var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, DontMap, TReturn>(func, splitOn);
+                return buffered ? result.ToList() : result;
             }
+
+
 
 #if !CSHARP30
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
-            /// <typeparam name="TFirst"></typeparam>
-            /// <typeparam name="TSecond"></typeparam>
-            /// <typeparam name="TThird"></typeparam>
-            /// <typeparam name="TFourth"></typeparam>
-            /// <typeparam name="TFifth"></typeparam>
-            /// <typeparam name="TReturn"></typeparam>
-            /// <param name="func"></param>
-            /// <param name="splitOn"></param>
-            /// <returns></returns>
-            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> func, string splitOn = "id")
+            public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
-                return MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(func, splitOn);
+                var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(func, splitOn);
+                return buffered ? result.ToList() : result;
             }
 #endif
 
