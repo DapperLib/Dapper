@@ -2127,7 +2127,18 @@ end");
             var obj = connection.Query("select 1 as [a], 2 as [b], 3 as [c]").Single();
             ((int)obj.a).IsEqualTo(1);
             IDictionary<string,object> dict = obj;
-            dict.Remove("a");
+            Assert.Equals(3, dict.Count);
+            Assert.IsTrue(dict.Remove("a"));
+            Assert.IsFalse(dict.Remove("d"));
+            Assert.Equals(2, dict.Count);
+            dict.Add("d", 4);
+            Assert.Equals(3, dict.Count);
+            Assert.Equals("b,c,d", string.Join(",", dict.Keys.OrderBy(x => x)));
+            Assert.Equals("2,3,4", string.Join(",", dict.OrderBy(x => x.Key).Select(x => x.Value)));
+
+            Assert.Equals(2, (int)obj.b);
+            Assert.Equals(3, (int)obj.c);
+            Assert.Equals(4, (int)obj.d);
             try
             {
                 ((int)obj.a).IsEqualTo(1);

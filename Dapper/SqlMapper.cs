@@ -1319,10 +1319,22 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 this.table = table;
                 this.values = values;
             }
-
-            int ICollection<KeyValuePair<string,object>>.Count
+            private sealed class DeadValue
             {
-                get { return table.FieldCount; }
+                public static readonly DeadValue Default = new DeadValue();
+                private DeadValue() { }
+            }
+            int ICollection<KeyValuePair<string, object>>.Count
+            {
+                get
+                {
+                    int count = 0;
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        if (!(values[i] is DeadValue)) count++;
+                    }
+                    return count;
+                }
             }
 
             public bool TryGetValue(string name, out object value)
@@ -1335,40 +1347,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 // exists, **even if** we don't have a value; consider table rows heterogeneous
                 value = index < values.Length ? values[index] : null;
+                if (value is DeadValue)
+                { // pretend it isn't here
+                    value = null;
+                    return false;
+                }
                 return true;
             }
-
-            /* public object SetValue(string name, object value)
-            {
-                var index = Table.IndexOfName(name);
-                if (index == -1)
-                {
-                    if (m_additionalValues == null)
-                    {
-                        m_additionalValues = new Dictionary<string, object>();
-                    }
-
-                    m_additionalValues[name ?? ""] = value;
-                    return value;
-                }
-
-                return SetFieldValueImpl(index, value);
-            }*/
 
             public override string ToString()
             {
                 var sb = new StringBuilder("{DapperRow");
-
                 foreach (var kv in this)
                 {
                     var value = kv.Value;
-                    sb.Append(", ");
-                    sb.Append(kv.Key);
+                    sb.Append(", ").Append(kv.Key);
                     if (value != null)
                     {
-                        sb.Append(" = '");
-                        sb.Append(kv.Value);
-                        sb.Append('\'');
+                        sb.Append(" = '").Append(kv.Value).Append('\'');
                     }
                     else
                     {
@@ -1376,11 +1372,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                 }
 
-                sb.Append('}');
-                return sb.ToString();
+                return sb.Append('}').ToString();
             }
 
-            public System.Dynamic.DynamicMetaObject GetMetaObject(System.Linq.Expressions.Expression parameter)
+            System.Dynamic.DynamicMetaObject System.Dynamic.IDynamicMetaObjectProvider.GetMetaObject(
+                System.Linq.Expressions.Expression parameter)
             {
                 return new DapperRowMetaObject(parameter, System.Dynamic.BindingRestrictions.Empty, this);
             }
@@ -1391,7 +1387,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 for (var i = 0; i < names.Length; i++)
                 {
                     object value = i < values.Length ? values[i] : null;
-                    yield return new KeyValuePair<string, object>(names[i], value);
+                    if (!(value is DeadValue))
+                    {
+                        yield return new KeyValuePair<string, object>(names[i], value);
+                    }
                 }
             }
 
@@ -1410,7 +1409,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             void ICollection<KeyValuePair<string, object>>.Clear()
             { // removes values for **this row**, but doesn't change the fundamental table
-                values = new object[0];
+                for (int i = 0; i < values.Length; i++)
+                    values[i] = DeadValue.Default;
             }
 
             bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
@@ -1444,7 +1444,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             bool IDictionary<string, object>.ContainsKey(string key)
             {
-                return table.FieldExists(key);
+                int index = table.IndexOfName(key);
+                if (index < 0 || index >= values.Length || values[index] is DeadValue) return false;
+                return true;
             }
 
             void IDictionary<string, object>.Add(string key, object value)
@@ -1456,8 +1458,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             bool IDictionary<string, object>.Remove(string key)
             {
                 int index = table.IndexOfName(key);
-                if(index >= 0 && index < values.Length) values[index] = null;
-                return index >= 0;                
+                if (index < 0 || index >= values.Length || values[index] is DeadValue) return false;
+                values[index] = DeadValue.Default;
+                return true;
             }
 
             object IDictionary<string, object>.this[string key]
@@ -1478,7 +1481,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     // grow it to the full width of the table
                     Array.Resize(ref values, table.FieldCount);
                 }
-                return values[index] = value;              
+                return values[index] = value;
             }
 
             ICollection<string> IDictionary<string, object>.Keys
