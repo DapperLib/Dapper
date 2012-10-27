@@ -1229,14 +1229,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (fieldNameLookup.ContainsKey(name)) throw new InvalidOperationException("Field already exists: " + name);
                 int oldLen = fieldNames.Length;
                 Array.Resize(ref fieldNames, oldLen + 1); // yes, this is sub-optimal, but this is not the expected common case
+                fieldNames[oldLen] = name;
                 fieldNameLookup[name] = oldLen;
                 return oldLen;
-            }
-
-
-            internal bool FieldExists(string key)
-            {
-                return key != null && fieldNameLookup.ContainsKey(key);
             }
 
             public int FieldCount { get { return fieldNames.Length; } }
@@ -1244,9 +1239,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         sealed partial class DapperRowMetaObject : System.Dynamic.DynamicMetaObject
         {
-            static readonly MethodInfo getValueMethod = typeof(IDictionary<string, object>).GetProperty("Item").GetGetMethod();
-            static readonly MethodInfo setValueMethod = typeof(DapperRow).GetMethod("SetValue");
+            static MethodInfo GetMethod<T>(System.Linq.Expressions.Expression<Action<T>> expression)
+            {
+                return ((System.Linq.Expressions.MethodCallExpression)expression.Body).Method;
+            }
 
+            static readonly MethodInfo getValueMethod = GetMethod<DapperRow>(row => row.GetValue(default(string)));
+            static readonly MethodInfo setValueMethod = GetMethod<DapperRow>(row => row.SetValue(default(string), default(object)));
+                                       
             public DapperRowMetaObject(
                 System.Linq.Expressions.Expression expression,
                 System.Dynamic.BindingRestrictions restrictions
@@ -1311,6 +1311,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             readonly DapperTable table;
             object[] values;
+            int count;
 
             public DapperRow(DapperTable table, object[] values)
             {
@@ -1318,21 +1319,32 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (values == null) throw new ArgumentNullException("values");
                 this.table = table;
                 this.values = values;
+
+                count = values.Length;
+
+                ValidateCount();
             }
             private sealed class DeadValue
             {
                 public static readonly DeadValue Default = new DeadValue();
                 private DeadValue() { }
             }
+
+            [Conditional("DEBUG")]
+            void ValidateCount ()
+            {
+                int count = 0;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    if (!(values[i] is DeadValue)) count++;
+                }
+                Debug.Assert(count == this.count);
+            }
+
             int ICollection<KeyValuePair<string, object>>.Count
             {
                 get
                 {
-                    int count = 0;
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        if (!(values[i] is DeadValue)) count++;
-                    }
                     return count;
                 }
             }
@@ -1411,6 +1423,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             { // removes values for **this row**, but doesn't change the fundamental table
                 for (int i = 0; i < values.Length; i++)
                     values[i] = DeadValue.Default;
+                count = 0;
+
+                ValidateCount();
             }
 
             bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
@@ -1452,6 +1467,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             void IDictionary<string, object>.Add(string key, object value)
             {
                 IDictionary<string, object> dic = this;
+                if (dic.ContainsKey(key))
+                {
+                    throw new ArgumentException("Duplicate key added", "key");
+                }
                 dic[key] = value;
             }
 
@@ -1459,15 +1478,31 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 int index = table.IndexOfName(key);
                 if (index < 0 || index >= values.Length || values[index] is DeadValue) return false;
-                values[index] = DeadValue.Default;
+                var oldValue = values[index];
+                if (!(oldValue is DeadValue))
+                {
+                    values[index] = DeadValue.Default;
+                    --count;
+                }
+
+                ValidateCount();
+
                 return true;
             }
 
             object IDictionary<string, object>.this[string key]
             {
-                get { object val; TryGetValue(key, out val); return val; }
+                get { return GetValue(key); }
                 set { SetValue(key, value); }
             }
+
+            public object GetValue(string key)
+            {
+                object val;
+                TryGetValue(key, out val);
+                return val;
+            }
+
             public object SetValue(string key, object value)
             {
                 if (key == null) throw new ArgumentNullException("key");
@@ -1476,12 +1511,32 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     index = table.AddField(key);
                 }
-                if (values.Length <= index)
+                var oldLength = values.Length;
+                if (oldLength <= index)
                 {   // we'll assume they're doing lots of things, and
                     // grow it to the full width of the table
                     Array.Resize(ref values, table.FieldCount);
+                    for (var innerIndex = oldLength; innerIndex < values.Length; ++innerIndex)
+                    {
+                        values[innerIndex] = DeadValue.Default;
+                    }
                 }
-                return values[index] = value;
+
+                var oldValue = values[index];
+                if (oldValue is DeadValue && !(value is DeadValue))
+                {
+                    ++count;
+                }
+                else if (!(oldValue is DeadValue) && value is DeadValue)
+                {
+                    --count;
+                }
+
+                values[index] = value;
+
+                ValidateCount();
+
+                return value;
             }
 
             ICollection<string> IDictionary<string, object>.Keys
