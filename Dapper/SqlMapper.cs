@@ -2033,6 +2033,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     il.Emit(OpCodes.Ldc_I4_0); // stack is now [typed-value][0]
                     il.Emit(OpCodes.Ceq); // stack is now [0 or 1]
+                    il.Emit(OpCodes.Ldc_I4_0); // stack is now [0 or 1][0]
+                    il.Emit(OpCodes.Ceq); // stack is now [0 or 1]
                 }
             }
             else

@@ -1732,6 +1732,12 @@ Order by p.Id";
             val.IsEqualTo(1);
         }
 
+        public void TestWrongBooleanResultGetsConverted()
+        {
+            var val = connection.Query<bool>("select 1").Single();
+            val.IsTrue();
+        }
+
         public void TestWrongNullablePrimitiveResultNullResultWorks()
         {
             connection.Execute(@"CREATE TABLE #TestNull(Id int)");
