@@ -1720,6 +1720,27 @@ Order by p.Id";
             hazInt.Value.Equals(1);
         }
 
+        public void TestWrongPrimitiveResultGetsConverted()
+        {
+            var val = connection.Query<int>("select cast(1 as bigint)").Single();
+            val.IsEqualTo(1);
+        }
+
+        public void TestWrongNullablePrimitiveResultGetsConverted()
+        {
+            var val = connection.Query<int?>("select cast(1 as bigint)").Single();
+            val.IsEqualTo(1);
+        }
+
+        public void TestWrongNullablePrimitiveResultNullResultWorks()
+        {
+            connection.Execute(@"CREATE TABLE #TestNull(Id int)");
+
+            var val = connection.Query<byte?>("select sum(id) from #TestNull").Single();
+            val.IsNull();
+
+            connection.Execute(@"DROP TABLE #TestNull");
+        }
 
         public void TestProcWithOutParameter()
         {

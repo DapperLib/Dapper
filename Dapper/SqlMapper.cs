@@ -1192,7 +1192,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer(type, underlyingType ?? type, startBound);
+            return GetStructDeserializer(type, reader, startBound);
 
         }
 
@@ -1932,7 +1932,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-        private static Func<IDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index)
+        private static Func<IDataReader, object> GetStructDeserializer(Type type, IDataReader reader, int index)
         {
             // no point using special per-type handling here; it boils down to the same, plus not all are supported anyway (see: SqlDataReader.GetChar - not supported!)
 #pragma warning disable 618
@@ -1950,19 +1950,117 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #pragma warning restore 618
 
-            if (effectiveType.IsEnum)
+            var unboxType = Nullable.GetUnderlyingType(type) ?? type;
+
+            if (unboxType.IsEnum)
             {   // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
                 return r =>
                 {
                     var val = r.GetValue(index);
-                    return val is DBNull ? null : Enum.ToObject(effectiveType, val);
+                    return val is DBNull ? null : Enum.ToObject(unboxType, val);
                 };
             }
-            return r =>
+
+
+            Type dataType = reader.GetFieldType(index);
+            TypeCode dataTypeCode = Type.GetTypeCode(dataType), unboxTypeCode = Type.GetTypeCode(unboxType);
+
+            if (dataType == unboxType || dataTypeCode == unboxTypeCode)
             {
-                var val = r.GetValue(index);
-                return val is DBNull ? null : val;
-            };
+                return r =>
+                {
+                    var val = r.GetValue(index);
+                    return val is DBNull ? null : val;
+                };
+            }
+
+            var dm = new DynamicMethod(string.Format("Deserialize{0}", Guid.NewGuid()), typeof(object), new[] { typeof(IDataReader) }, true);
+            var il = dm.GetILGenerator();
+            Label end = il.DefineLabel(), box = il.DefineLabel(), whenNull = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0); // stack is now [reader]
+            EmitInt32(il, index); // stack is now [reader][index]
+            il.Emit(OpCodes.Callvirt, getItem); // stack is now [value]
+            il.Emit(OpCodes.Dup); // stack is now [value][value]
+            il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [value][DBNull or null]
+            il.Emit(OpCodes.Brtrue_S, whenNull); // stack is now [value]
+
+            bool handled = true;
+            OpCode opCode = default(OpCode);
+
+            if (dataTypeCode == TypeCode.Decimal || unboxTypeCode == TypeCode.Decimal)
+            {
+                handled = false;
+            }
+            else
+            {
+                switch (unboxTypeCode)
+                {
+                    case TypeCode.Byte:
+                        opCode = OpCodes.Conv_Ovf_I1_Un; break;
+                    case TypeCode.SByte:
+                        opCode = OpCodes.Conv_Ovf_I1; break;
+                    case TypeCode.UInt16:
+                        opCode = OpCodes.Conv_Ovf_I2_Un; break;
+                    case TypeCode.Int16:
+                        opCode = OpCodes.Conv_Ovf_I2; break;
+                    case TypeCode.UInt32:
+                        opCode = OpCodes.Conv_Ovf_I4_Un; break;
+                    case TypeCode.Boolean: // boolean is basically an int, at least at this level
+                    case TypeCode.Int32:
+                        opCode = OpCodes.Conv_Ovf_I4; break;
+                    case TypeCode.UInt64:
+                        opCode = OpCodes.Conv_Ovf_I8_Un; break;
+                    case TypeCode.Int64:
+                        opCode = OpCodes.Conv_Ovf_I8; break;
+                    case TypeCode.Single:
+                        opCode = OpCodes.Conv_R4; break;
+                    case TypeCode.Double:
+                        opCode = OpCodes.Conv_R8; break;
+                    default:
+                        handled = false;
+                        break;
+                }
+            }
+
+            if (handled)
+            {
+                // unbox, then convert to expected type
+                il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [data-typed-value]
+                il.Emit(opCode); // stack is now [typed-value]
+
+                if (unboxTypeCode == TypeCode.Boolean)
+                {
+                    il.Emit(OpCodes.Ldc_I4_0); // stack is now [typed-value][0]
+                    il.Emit(OpCodes.Ceq); // stack is now [0 or 1]
+                }
+            }
+            else
+            {
+                // use flexible conversion
+                il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [value][member-type-token]
+                il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [value][member-type]
+                il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [boxed-member-type-value]
+                il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [typed-value]
+            }
+
+            il.Emit(OpCodes.Br_S, box);
+            il.MarkLabel(whenNull); // stack is now [value]
+            il.Emit(OpCodes.Pop); // stack is now empty
+            il.Emit(OpCodes.Ldnull); // stack is now [null]
+            il.Emit(OpCodes.Br_S, end);
+            il.MarkLabel(box);
+
+            if (unboxType.IsValueType)
+            {
+                // boxed int will convert to int? on the cast, etc, so no special handling
+                il.Emit(OpCodes.Box, unboxType); // stack is now [boxed-value]
+            }
+
+            il.MarkLabel(end); // stack is now [value]
+            il.Emit(OpCodes.Ret);
+
+            return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader, object>));
         }
 
         static readonly MethodInfo
