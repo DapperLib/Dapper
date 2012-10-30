@@ -1585,7 +1585,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         string[] names = new string[effectiveFieldCount];
                         for (int i = 0; i < effectiveFieldCount; i++)
                         {
-                            names[i] = reader.GetName(i + startBound);
+                            names[i] = r.GetName(i + startBound);
                         }
                         table = new DapperTable(names);
                     }
