@@ -73,7 +73,7 @@ namespace Dapper
                 List<string> paramNames = GetParamNames((object)data);
 
                 var builder = new StringBuilder();
-                builder.Append("update [").Append(TableName).Append("] set ");
+                builder.Append("update ").Append(TableName).Append(" set ");
                 builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p => p + "= @" + p)));
                 builder.Append("where Id = @Id");
 
@@ -90,7 +90,7 @@ namespace Dapper
             /// <returns></returns>
             public bool Delete(TId id)
             {
-                return database.Execute("delete " + TableName + " where Id = @id", new { id }) > 0;
+                return database.Execute("delete from " + TableName + " where Id = @id", new { id }) > 0;
             }
 
             /// <summary>
@@ -103,7 +103,7 @@ namespace Dapper
                 return database.Query<T>("select * from " + TableName + " where Id = @id", new { id }).FirstOrDefault();
             }
 
-            public T First()
+            public virtual T First()
             {
                 return database.Query<T>("select top 1 * from " + TableName).FirstOrDefault();
             }
