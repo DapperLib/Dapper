@@ -2253,6 +2253,24 @@ end");
             }
         }
 
+		public void TestDapperTableMetadataRetrieval()
+		{
+			// Test for a bug found in CS 51509960 where the following sequence would result in an InvalidOperationException being
+			// thrown due to an attempt to access a disposed of DataReader:
+			//
+			// - Perform a dynamic query that yields no results
+			// - Add data to the source of that query
+			// - Perform a the same query again
+			connection.Execute("CREATE TABLE #sut (value varchar(10) NOT NULL PRIMARY KEY)");
+			connection.Query("SELECT value FROM #sut").IsSequenceEqualTo(Enumerable.Empty<dynamic>());
+			
+			connection.Execute("INSERT INTO #sut (value) VALUES ('test')").IsEqualTo(1);
+			var result = connection.Query("SELECT value FROM #sut");
+			
+			var first = result.First();
+			((string)first.value).IsEqualTo("test");
+		}
+
 #if POSTGRESQL
 
         class Cat
