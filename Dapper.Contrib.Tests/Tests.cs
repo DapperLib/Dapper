@@ -33,6 +33,14 @@ namespace Dapper.Contrib.Tests
         public string Name { get; set; }
     }
 
+    [Table("Results")]
+    public class Result
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int Order { get; set; }
+    }
+
     public class Tests
     {
         private IDbConnection GetOpenConnection()
@@ -75,7 +83,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
-                connection.Get<IUser>(3).IsNull();
+                connection.Get<User>(3).IsNull();
 
                 var id = connection.Insert(new User {Name = "Adam", Age = 10});
 
@@ -160,6 +168,18 @@ namespace Dapper.Contrib.Tests
                 if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
                     throw new Exception("Query failed");
             }
+        }
+
+        public void InsertFieldWithReservedName()
+        {
+            using (var conneciton = GetOpenConnection())
+            {
+                var id = conneciton.Insert(new Result() { Name = "Adam", Order = 1 });
+
+                var result = conneciton.Get<Result>(id);
+                result.Order.IsEqualTo(1);
+            }
+
         }
     }
 }
