@@ -180,7 +180,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
             {
                 var property = allPropertiesExceptKey.ElementAt(i);
-				sbColumnList.Append(property.Name);
+				sbColumnList.AppendFormat("[{0}]", property.Name);
                 if (i < allPropertiesExceptKey.Count() - 1)
 					sbColumnList.Append(", ");
             }
