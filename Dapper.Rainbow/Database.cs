@@ -73,7 +73,7 @@ namespace Dapper
                 List<string> paramNames = GetParamNames((object)data);
 
                 var builder = new StringBuilder();
-                builder.Append("update [").Append(TableName).Append("] set ");
+                builder.Append("update ").Append(TableName).Append(" set ");
                 builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p => p + "= @" + p)));
                 builder.Append("where Id = @Id");
 
@@ -247,7 +247,7 @@ namespace Dapper
                 name = likelyTableName;
                 if (!TableExists(name))
                 {
-                    name = typeof(T).Name;
+                    name = "[" + typeof(T).Name + "]";
                 }
 
                 tableNameMap[typeof(T)] = name;
@@ -257,7 +257,26 @@ namespace Dapper
 
         private bool TableExists(string name)
         {
-            return connection.Query("select 1 from INFORMATION_SCHEMA.TABLES where TABLE_NAME = @name", new { name }, transaction: transaction).Count() == 1;
+            string schemaName = null;
+
+            name = name.Replace("[", "");
+            name = name.Replace("]", "");
+
+            if(name.Contains("."))
+            {
+                var parts = name.Split('.');
+                if (parts.Count() == 2)
+                {
+                    schemaName = parts[0];
+                    name = parts[1];
+                }
+            }
+
+            var builder = new StringBuilder("select 1 from INFORMATION_SCHEMA.TABLES where ");
+            if (!String.IsNullOrEmpty(schemaName)) builder.Append("TABLE_SCHEMA = @schemaName AND ");
+            builder.Append("TABLE_NAME = @name");
+
+            return connection.Query(builder.ToString(), new { schemaName, name }, transaction: transaction).Count() == 1;
         }
 
         public int Execute(string sql, dynamic param = null)
