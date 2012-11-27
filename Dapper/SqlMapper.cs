@@ -410,13 +410,18 @@ namespace Dapper
             typeMap[typeof(Object)] = DbType.Object;
         }
 
+        public static void AddTypeMap(Type type, DbType dbType)
+        {
+            typeMap[type] = dbType;
+        }
+
         internal const string LinqBinary = "System.Data.Linq.Binary";
         internal static DbType LookupDbType(Type type, string name)
         {
             DbType dbType;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
             if (nullUnderlyingType != null) type = nullUnderlyingType;
-            if (type.IsEnum)
+            if (type.IsEnum && !typeMap.ContainsKey(type))
             {
                 type = Enum.GetUnderlyingType(type);
             }
