@@ -90,7 +90,7 @@ namespace Dapper
             /// <returns></returns>
             public bool Delete(TId id)
             {
-                return database.Execute("delete " + TableName + " where Id = @id", new { id }) > 0;
+                return database.Execute("delete from " + TableName + " where Id = @id", new { id }) > 0;
             }
 
             /// <summary>
@@ -103,7 +103,7 @@ namespace Dapper
                 return database.Query<T>("select * from " + TableName + " where Id = @id", new { id }).FirstOrDefault();
             }
 
-            public T First()
+            public virtual T First()
             {
                 return database.Query<T>("select top 1 * from " + TableName).FirstOrDefault();
             }
