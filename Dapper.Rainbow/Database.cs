@@ -54,6 +54,7 @@ namespace Dapper
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
+                paramNames.Remove("Id");
 
                 string cols = string.Join(",", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
