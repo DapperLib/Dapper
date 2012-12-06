@@ -10,7 +10,7 @@ namespace SqlMapper
 
         public static void IsEqualTo<T>(this T obj, T other)
         {
-            if (!obj.Equals(other))
+            if (!Equals(obj, other))
             {
                 throw new ApplicationException(string.Format("{0} should be equals to {1}", obj, other));
             }
@@ -18,7 +18,7 @@ namespace SqlMapper
 
         public static void IsSequenceEqualTo<T>(this IEnumerable<T> obj, IEnumerable<T> other)
         {
-            if (!obj.SequenceEqual(other))
+            if (!(obj ?? new T[0]).SequenceEqual(other ?? new T[0]))
             {
                 throw new ApplicationException(string.Format("{0} should be equals to {1}", obj, other));
             }
@@ -48,5 +48,12 @@ namespace SqlMapper
             }
         }
 
+        public static void IsNotNull(this object obj)
+        {
+            if (obj == null)
+            {
+                throw new ApplicationException("Expected not null");
+            }
+        }
     }
 }

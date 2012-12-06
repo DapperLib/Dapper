@@ -24,8 +24,8 @@ namespace Dapper
     /// <typeparam name="TDatabase"></typeparam>
     public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
-        public class Table<T>
-        { 
+        public class Table<T, TId>
+        {
             internal Database<TDatabase> database;
             internal string tableName;
             internal string likelyTableName;
@@ -54,6 +54,7 @@ namespace Dapper
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
+                paramNames.Remove("Id");
 
                 string cols = string.Join(",", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
@@ -68,12 +69,12 @@ namespace Dapper
             /// <param name="id"></param>
             /// <param name="data"></param>
             /// <returns></returns>
-            public int Update(int id, dynamic data)
+            public int Update(TId id, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
 
                 var builder = new StringBuilder();
-                builder.Append("update [").Append(TableName).Append("] set ");
+                builder.Append("update ").Append(TableName).Append(" set ");
                 builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p => p + "= @" + p)));
                 builder.Append("where Id = @Id");
 
@@ -88,9 +89,9 @@ namespace Dapper
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public bool Delete(int id)
+            public bool Delete(TId id)
             {
-                return database.Execute("delete " + TableName + " where Id = @id", new { id }) > 0;
+                return database.Execute("delete from " + TableName + " where Id = @id", new { id }) > 0;
             }
 
             /// <summary>
@@ -98,12 +99,12 @@ namespace Dapper
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public T Get(int id)
+            public T Get(TId id)
             {
                 return database.Query<T>("select * from " + TableName + " where Id = @id", new { id }).FirstOrDefault();
             }
 
-            public T First()
+            public virtual T First()
             {
                 return database.Query<T>("select top 1 * from " + TableName).FirstOrDefault();
             }
@@ -114,6 +115,7 @@ namespace Dapper
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
+
             internal static List<string> GetParamNames(object o)
             {
                 if (o is DynamicParameters)
@@ -134,6 +136,13 @@ namespace Dapper
                 return paramNames;
             }
         }
+
+		public class Table<T> : Table<T, int> {
+			public Table(Database<TDatabase> database, string likelyTableName)
+				: base(database, likelyTableName)
+			{
+			}
+		}
 
         DbConnection connection;
         int commandTimeout;
@@ -239,7 +248,7 @@ namespace Dapper
                 name = likelyTableName;
                 if (!TableExists(name))
                 {
-                    name = typeof(T).Name;
+                    name = "[" + typeof(T).Name + "]";
                 }
 
                 tableNameMap[typeof(T)] = name;
@@ -249,7 +258,26 @@ namespace Dapper
 
         private bool TableExists(string name)
         {
-            return connection.Query("select 1 from INFORMATION_SCHEMA.TABLES where TABLE_NAME = @name", new { name }, transaction: transaction).Count() == 1;
+            string schemaName = null;
+
+            name = name.Replace("[", "");
+            name = name.Replace("]", "");
+
+            if(name.Contains("."))
+            {
+                var parts = name.Split('.');
+                if (parts.Count() == 2)
+                {
+                    schemaName = parts[0];
+                    name = parts[1];
+                }
+            }
+
+            var builder = new StringBuilder("select 1 from INFORMATION_SCHEMA.TABLES where ");
+            if (!String.IsNullOrEmpty(schemaName)) builder.Append("TABLE_SCHEMA = @schemaName AND ");
+            builder.Append("TABLE_NAME = @name");
+
+            return connection.Query(builder.ToString(), new { schemaName, name }, transaction: transaction).Count() == 1;
         }
 
         public int Execute(string sql, dynamic param = null)

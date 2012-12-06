@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Reflection;
-
+using System.Linq;
 namespace SqlMapper
 {
     [ServiceStack.DataAnnotations.Alias("Posts")]
@@ -112,14 +112,22 @@ end
         {
             var tester = new Tests();
             int fail = 0;
-            foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            MethodInfo[] methods = typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var activeTests = methods.Where(m => Attribute.IsDefined(m, typeof(ActiveTestAttribute))).ToArray();
+            if (activeTests.Length != 0) methods = activeTests;
+            foreach (var method in methods)
             {
                 Console.Write("Running " + method.Name);
                 try
                 {
                     method.Invoke(tester, null);
                     Console.WriteLine(" - OK!");
-                } catch (Exception ex)
+                } catch(TargetInvocationException tie)
+                {
+                    fail++;
+                    Console.WriteLine(" - " + tie.InnerException.Message);
+                    
+                }catch (Exception ex)
                 {
                     fail++;
                     Console.WriteLine(" - " + ex.Message);
@@ -136,4 +144,8 @@ end
             }
         }
     }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public sealed class ActiveTestAttribute : Attribute {}
+
 }

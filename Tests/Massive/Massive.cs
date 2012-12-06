@@ -115,7 +115,9 @@ namespace Massive
     public class DynamicModel
     {
         DbProviderFactory _factory;
+#pragma warning disable 0649
         string _connectionString;
+#pragma warning restore 0649
 
         public DynamicModel(string connectionStringName = "", string tableName = "", string primaryKeyField = "")
         {

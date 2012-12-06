@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.10</version>
+    <version>1.12.1</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,10 +19,14 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.12.1 - Minor deploy glitch (should now include intellisense files!)
+      * 1.12 - Better automatic type-mapping (int vs long, float vs double, etc)
+      *        Fixed: bug with indexer properties
+      * 1.11 - Custom type-map support
       * 1.10 - Fixed: error-handling could lose original exception if reader closed
-      * 1.9 - Added: Better schema change detection
-      *       Fixed: Enum support for T in Query-of-T
-      *       Added: Dictionary support for parameters
+      * 1.9 - Added: better schema change detection
+      *       Fixed: enum support for T in Query-of-T
+      *       Added: dictionary support for parameters
       * 1.8 - Started release notes
       *       Important: Dapper is now shipping as a DLL which will work on .net 3.5 or .net 4.0,
       *          This improves the debugging experience as you no longer break into dapper when SQL fails.
@@ -32,7 +36,9 @@
   <files>
     <file src="bin\Release\Dapper.dll" target="lib\net40" />
     <file src="bin\Release\Dapper.pdb" target="lib\net40" />
+    <file src="bin\Release\Dapper.xml" target="lib\net40" />
     <file src="..\Dapper NET35\bin\Release\Dapper.dll" target="lib\net35" />
     <file src="..\Dapper NET35\bin\Release\Dapper.pdb" target="lib\net35" />
+    <file src="..\Dapper NET35\bin\Release\Dapper.xml" target="lib\net35" />
   </files>
 </package>
