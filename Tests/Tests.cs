@@ -1,4 +1,4 @@
-﻿//#define POSTGRESQL // uncomment to run postgres tests
+//#define POSTGRESQL // uncomment to run postgres tests
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -230,7 +230,7 @@ namespace SqlMapper
         }
 
         // http://stackoverflow.com/q/8593871
-        public void TestAbstractInheritance() 
+        public void TestAbstractInheritance()
         {
             var order = connection.Query<AbstractInheritance.ConcreteOrder>("select 1 Internal,2 Protected,3 [Public],4 Concrete").First();
 
@@ -278,7 +278,7 @@ namespace SqlMapper
 #pragma warning restore 0649
             public int Age { get; set; }
             public TrapEnum Trap { get; set; }
-        
+
         }
 
         public void TestStructs()
@@ -809,6 +809,158 @@ Order by p.Id";
             ((object)data[2].Owner).IsNull();
 
             connection.Execute("drop table #Users drop table #Posts");
+        }
+
+        class Team
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public Player Goalkeeper { get; set; }
+            public Player Defender1 { get; set; }
+            public Player Defender2 { get; set; }
+            public Player Defender3 { get; set; }
+            public Player Defender4 { get; set; }
+            public Player Winger1 { get; set; }
+            public Player Winger2 { get; set; }
+            public Player Midfielder1 { get; set; }
+            public Player Midfielder2 { get; set; }
+            public Player Striker1 { get; set; }
+            public Player Striker2 { get; set; }
+        }
+
+        class Player
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+
+        public void TestUnlimitedMultiMap()
+        {
+            var createSql =
+@"create table #Team (Id int, Name varchar(20), GoalkeeperId int, Defender1Id int, Defender2Id int, Defender3Id int, Defender4Id int, Winger1Id int, Winger2Id int, Midfielder1Id int, Midfielder2Id int, Striker1Id int, Striker2Id int)
+create table #Player (Id int, Name varchar(20))
+
+insert #Player values(1, 'Joe')
+insert #Player values(2, 'Bill')
+insert #Player values(3, 'Mark')
+insert #Player values(4, 'John')
+insert #Player values(5, 'Andy')
+insert #Player values(6, 'Sam')
+insert #Player values(7, 'Bob')
+insert #Player values(8, 'Roy')
+insert #Player values(9, 'Dave')
+insert #Player values(10, 'Pete')
+insert #Player values(11, 'Jim')
+
+insert #Team values(1, 'Dapper United', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)";
+
+            connection.Execute(createSql);
+
+            var sql =
+@"select t.*, p1.*, p2.*, p3.*, p4.*, p5.*, p6.*, p7.*, p8.*, p9.*, p10.*, p11.* from #Team t 
+inner join #Player p1 on p1.Id = t.GoalkeeperId
+inner join #Player p2 on p2.Id = t.Defender1Id
+inner join #Player p3 on p3.Id = t.Defender2Id
+inner join #Player p4 on p4.Id = t.Defender3Id
+inner join #Player p5 on p5.Id = t.Defender4Id
+inner join #Player p6 on p6.Id = t.Winger1Id
+inner join #Player p7 on p7.Id = t.Winger2Id
+inner join #Player p8 on p8.Id = t.Midfielder1Id
+inner join #Player p9 on p9.Id = t.Midfielder2Id
+inner join #Player p10 on p10.Id = t.Striker1Id
+inner join #Player p11 on p11.Id = t.Striker2Id";
+
+            try
+            {
+                var data = connection.Query<Team, Team>(
+                    sql,
+                    new Type[] { typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player) },
+                    (team, players) =>
+                    {
+                        team.Goalkeeper = (Player)players[0];
+                        team.Defender1 = (Player)players[1];
+                        team.Defender2 = (Player)players[2];
+                        team.Defender3 = (Player)players[3];
+                        team.Defender4 = (Player)players[4];
+                        team.Winger1 = (Player)players[5];
+                        team.Winger2 = (Player)players[6];
+                        team.Midfielder1 = (Player)players[7];
+                        team.Midfielder2 = (Player)players[8];
+                        team.Striker1 = (Player)players[9];
+                        team.Striker2 = (Player)players[10];
+                        return team;
+                    }
+                ).ToList();
+            }
+            finally
+            {
+                connection.Execute("drop table #Team drop table #Player");
+            }
+        }
+
+        public void TestUnlimitedMultiMapGridReader()
+        {
+            var createSql =
+@"create table #Team (Id int, Name varchar(20), GoalkeeperId int, Defender1Id int, Defender2Id int, Defender3Id int, Defender4Id int, Winger1Id int, Winger2Id int, Midfielder1Id int, Midfielder2Id int, Striker1Id int, Striker2Id int)
+create table #Player (Id int, Name varchar(20))
+
+insert #Player values(1, 'Joe')
+insert #Player values(2, 'Bill')
+insert #Player values(3, 'Mark')
+insert #Player values(4, 'John')
+insert #Player values(5, 'Andy')
+insert #Player values(6, 'Sam')
+insert #Player values(7, 'Bob')
+insert #Player values(8, 'Roy')
+insert #Player values(9, 'Dave')
+insert #Player values(10, 'Pete')
+insert #Player values(11, 'Jim')
+
+insert #Team values(1, 'Dapper United', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)";
+
+            connection.Execute(createSql);
+
+            var sql =
+@"select t.*, p1.*, p2.*, p3.*, p4.*, p5.*, p6.*, p7.*, p8.*, p9.*, p10.*, p11.* from #Team t 
+inner join #Player p1 on p1.Id = t.GoalkeeperId
+inner join #Player p2 on p2.Id = t.Defender1Id
+inner join #Player p3 on p3.Id = t.Defender2Id
+inner join #Player p4 on p4.Id = t.Defender3Id
+inner join #Player p5 on p5.Id = t.Defender4Id
+inner join #Player p6 on p6.Id = t.Winger1Id
+inner join #Player p7 on p7.Id = t.Winger2Id
+inner join #Player p8 on p8.Id = t.Midfielder1Id
+inner join #Player p9 on p9.Id = t.Midfielder2Id
+inner join #Player p10 on p10.Id = t.Striker1Id
+inner join #Player p11 on p11.Id = t.Striker2Id";
+
+            try
+            {
+                var grid = connection.QueryMultiple(sql);
+
+                var data = grid.Read<Team, Team>(
+                    new Type[] { typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player), typeof(Player) },
+                    (team, players) =>
+                    {
+                        team.Goalkeeper = (Player)players[0];
+                        team.Defender1 = (Player)players[1];
+                        team.Defender2 = (Player)players[2];
+                        team.Defender3 = (Player)players[3];
+                        team.Defender4 = (Player)players[4];
+                        team.Winger1 = (Player)players[5];
+                        team.Winger2 = (Player)players[6];
+                        team.Midfielder1 = (Player)players[7];
+                        team.Midfielder2 = (Player)players[8];
+                        team.Striker1 = (Player)players[9];
+                        team.Striker2 = (Player)players[10];
+                        return team;
+                    }
+                ).ToList();
+            }
+            finally
+            {
+                connection.Execute("drop table #Team drop table #Player");
+            }
         }
 
         class Product
@@ -1917,7 +2069,7 @@ Order by p.Id";
         {
             try
             {
-                
+
                 connection.Execute("create table #ResultsChange (X int);create table #ResultsChange2 (Y int);insert #ResultsChange (X) values(1);insert #ResultsChange2 (Y) values(1);");
 
                 var obj1 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
@@ -1942,7 +2094,8 @@ Order by p.Id";
                 obj4.X.IsEqualTo(1);
                 obj4.Y.IsEqualTo(1);
                 obj4.Z.IsEqualTo(2);
-            } finally
+            }
+            finally
             {
                 connection.Execute("drop table #ResultsChange;drop table #ResultsChange2;");
             }
