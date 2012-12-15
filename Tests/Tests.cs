@@ -1112,6 +1112,35 @@ end");
             ((int)obj.f).IsEqualTo(10);
         }
 
+        public void TestDefaultDbStringDbType()
+        {
+            var origDefaultStringDbType = DbString.DefaultStringDbType;
+            try
+            {
+                DbString.DefaultStringDbType = DbType.AnsiString;
+                var a = new DbString { Value = "abcde" };
+                var b = new DbString { Value = "abcde", IsAnsi = false };
+                a.IsAnsi.IsTrue();
+                b.IsAnsi.IsFalse();
+
+                var exceptionThrow = false;
+                try
+                {
+                    DbString.DefaultStringDbType = DbType.Int32;
+                }
+                catch
+                {
+                    exceptionThrow = true;
+                }
+                exceptionThrow.IsTrue();
+                
+            }
+            finally
+            {
+                DbString.DefaultStringDbType = origDefaultStringDbType;
+            }
+        }
+
         class Person
         {
             public int PersonId { get; set; }
