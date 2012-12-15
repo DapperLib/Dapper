@@ -2949,10 +2949,34 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// </summary>
     sealed partial class DbString
     {
+        static DbString()
+        {
+            DefaultStringDbType = DbType.String;
+        }
+
+        private static DbType _defaultStringDbType;
+        /// <summary>
+        /// Default value for IsAnsi. Set to either DbType.String (the default) or DbType.AnsiString.
+        /// </summary>
+        public static DbType DefaultStringDbType
+        {
+            get { return _defaultStringDbType; }
+            set
+            {
+                if (value != DbType.AnsiString && value != DbType.String)
+                    throw new ArgumentException("Invalid value. Must be either DbType.AnsiString or DbType.String");
+                _defaultStringDbType = value;
+            }
+        }
+
         /// <summary>
         /// Create a new DbString
         /// </summary>
-        public DbString() { Length = -1; }
+        public DbString()
+        {
+            Length = -1;
+            IsAnsi = DefaultStringDbType == DbType.AnsiString;
+        }
         /// <summary>
         /// Ansi vs Unicode 
         /// </summary>
