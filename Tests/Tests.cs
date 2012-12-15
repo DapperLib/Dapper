@@ -1123,16 +1123,16 @@ end");
                 a.IsAnsi.IsTrue();
                 b.IsAnsi.IsFalse();
 
-                var exceptionThrow = false;
+                var exceptionThrown = false;
                 try
                 {
                     DbString.DefaultStringDbType = DbType.Int32;
                 }
                 catch
                 {
-                    exceptionThrow = true;
+                    exceptionThrown = true;
                 }
-                exceptionThrow.IsTrue();
+                exceptionThrown.IsTrue();
                 
             }
             finally
