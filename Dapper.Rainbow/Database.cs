@@ -129,7 +129,9 @@ namespace Dapper
                     paramNames = new List<string>();
                     foreach (var prop in o.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public))
                     {
-                        paramNames.Add(prop.Name);
+                        //filters out complex types because those are not going to be inserted or updated directly
+                        if (IsSimpleType(prop.PropertyType))
+                            paramNames.Add(prop.Name);
                     }
                     paramNameCache[o.GetType()] = paramNames;
                 }
@@ -320,6 +322,31 @@ namespace Dapper
             return SqlMapper.QueryMultiple(connection, sql, param, transaction, commandTimeout, commandType);
         }
 
+        private static bool IsSimpleType(Type propertyType)
+        {
+            var simpleTypes = new List<Type>
+                                  {
+                                      typeof(byte),
+                                      typeof(sbyte),
+                                      typeof(short),
+                                      typeof(ushort),
+                                      typeof(int),
+                                      typeof(uint),
+                                      typeof(long),
+                                      typeof(ulong),
+                                      typeof(float),
+                                      typeof(double),
+                                      typeof(decimal),
+                                      typeof(bool),
+                                      typeof(string),
+                                      typeof(char),
+                                      typeof(Guid),
+                                      typeof(DateTime),
+                                      typeof(DateTimeOffset),
+                                      typeof(byte[])
+                                  };
+            return simpleTypes.Contains(propertyType);
+        }
 
         public void Dispose()
         {
