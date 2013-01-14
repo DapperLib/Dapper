@@ -1001,11 +1001,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
 
+	    bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
                 if (reader == null)
                 {
                     ownedCommand = SetupCommand(cnn, transaction, sql, cinfo.ParamReader, (object)param, commandTimeout, commandType);
+                    if (wasClosed) cnn.Open();
+                    
                     ownedReader = ownedCommand.ExecuteReader();
                     reader = ownedReader;
                 }
