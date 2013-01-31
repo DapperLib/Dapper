@@ -117,6 +117,207 @@ namespace SqlMapper
             mult.B.IsEqualTo("Dapper");
         }
 
+        public class PropertyMappedColumns
+        {
+            public int MappedInt { get; set; }
+            public string MappedString { get; set; }
+        }
+
+        public class AlternativePropertyMappedColumns
+        {
+            public int AlternativeMappedInt { get; set; }
+            public string AlternativeMappedString { get; set; }
+        }
+
+        public class FieldMappedColumns
+        {
+            public int mappedInt;
+            public string mappedString;
+        }
+
+        public class ConstructorMappedColumns
+        {
+            public int MappedInt { get; private set; }
+            public string MappedString { get; private set; }
+
+            public ConstructorMappedColumns(int mappedInt, string mappedString)
+            {
+                MappedInt = mappedInt;
+                MappedString = mappedString;
+            }
+        }
+
+        public void TestMappingWithColumnBind()
+        {
+            var timesIntMapperCalled = 0;
+            var timesConstructorCalled = 0;
+
+            Dapper.SqlMapper.ConstructorBind += (sender, args) =>
+                {
+                    IEnumerable<Dapper.SqlMapper.ColumnBindArgs> columns = args.Columns;
+                    Type targetType = args.TargetType;
+
+                    if (targetType != typeof (ConstructorMappedColumns))
+                    {
+                        return;
+                    }
+
+                    timesConstructorCalled++;
+
+                    args.Constructor = targetType.GetConstructor(columns.Select(c => c.ColumnType).ToArray());
+                };
+
+            Dapper.SqlMapper.ColumnBind += (sender, args) =>
+                {
+                    var columnName = args.ColumnName;
+                    var columnIndex = args.ColumnIndex;
+                    var targetType = args.TargetType;
+                    var columnType = args.ColumnType;
+
+                    if (targetType != typeof (PropertyMappedColumns))
+                    {
+                        return;
+                    }
+
+                    PropertyInfo property = null;
+
+                    if (columnName.Equals("unmappedInt", StringComparison.OrdinalIgnoreCase) &&
+                        columnType == typeof (int))
+                    {
+                        property = targetType.GetProperty("MappedInt");
+                        timesIntMapperCalled++;
+                    }
+                    else if (columnIndex == 1 && columnType == typeof (string))
+                    {
+                        property = targetType.GetProperty("MappedString");
+                    }
+
+                    args.Member = property == null ? null : new SimpleMemberMap(columnName, property);
+                };
+
+            // Add a second bind with the same column names to a different type to ensure proper caching
+            Dapper.SqlMapper.ColumnBind += (sender, args) =>
+                {
+                    var columnName = args.ColumnName;
+                    var columnIndex = args.ColumnIndex;
+                    var targetType = args.TargetType;
+                    var columnType = args.ColumnType;
+
+                    if (targetType != typeof(AlternativePropertyMappedColumns))
+                    {
+                        return;
+                    }
+
+                    PropertyInfo property = null;
+
+                    if (columnName.Equals("unmappedInt", StringComparison.OrdinalIgnoreCase) &&
+                        columnType == typeof(int))
+                    {
+                        property = targetType.GetProperty("AlternativeMappedInt");
+                    }
+                    else if (columnIndex == 1 && columnType == typeof(string))
+                    {
+                        property = targetType.GetProperty("AlternativeMappedString");
+                    }
+
+                    args.Member = property == null ? null : new SimpleMemberMap(columnName, property);
+
+                };
+
+            Dapper.SqlMapper.ColumnBind += (sender, args) =>
+                {
+                    var columnName = args.ColumnName;
+                    var columnIndex = args.ColumnIndex;
+                    var targetType = args.TargetType;
+                    var columnType = args.ColumnType;
+
+                    if (targetType != typeof(FieldMappedColumns))
+                    {
+                        return;
+                    }
+
+                    FieldInfo field = null;
+
+                    if (columnName.Equals("unmappedInt", StringComparison.OrdinalIgnoreCase) &&
+                        columnType == typeof(int))
+                    {
+                        field = targetType.GetField("mappedInt");
+                    }
+                    else if (columnIndex == 1 && columnType == typeof(string))
+                    {
+                        field = targetType.GetField("mappedString");
+                    }
+
+                    args.Member = field == null ? null : new SimpleMemberMap(columnName, field);
+                };
+
+            Dapper.SqlMapper.ColumnBind += (sender, args) =>
+                {
+                    var columnName = args.ColumnName;
+                    var columnIndex = args.ColumnIndex;
+                    var targetType = args.TargetType;
+                    var columnType = args.ColumnType;
+
+                    if (targetType != typeof(ConstructorMappedColumns))
+                    {
+                        return;
+                    }
+
+                    ParameterInfo parameter = null;
+
+                    var constructor =
+                        targetType.GetConstructor(new[] {typeof (int), typeof (string)});
+
+                    if (constructor == null)
+                    {
+                        return;
+                    }
+
+                    if (columnName.Equals("unmappedInt", StringComparison.OrdinalIgnoreCase) &&
+                        columnType == typeof(int))
+                    {
+                       parameter = constructor.GetParameters().FirstOrDefault(p => p.Name.Equals("mappedInt"));
+                    }
+                    else if (columnIndex == 1 && columnType == typeof(string))
+                    {
+                        parameter = constructor.GetParameters().FirstOrDefault(p => p.Name.Equals("mappedString"));
+                    }
+
+                    args.Member = parameter == null ? null : new SimpleMemberMap(columnName, parameter);
+                };
+
+            PropertyMappedColumns propertyMappedColumns =
+                connection.Query<PropertyMappedColumns>("select 0 unmappedInt, 'Dapper' unmappedString").First();
+
+            AlternativePropertyMappedColumns alternativePropertyMappedColumns =
+                connection.Query<AlternativePropertyMappedColumns>("select 0 unmappedInt, 'Dapper' unmappedString").First();
+
+            FieldMappedColumns fieldMappedColumns =
+                connection.Query<FieldMappedColumns>("select 0 unmappedInt, 'Dapper' unmappedString").First();
+
+            ConstructorMappedColumns constructorMappedColumns =
+                connection.Query<ConstructorMappedColumns>("select 0 unmappedInt, 'Dapper' unmappedString").First();
+
+            propertyMappedColumns.MappedInt.IsEqualTo(0);
+            propertyMappedColumns.MappedString.IsEqualTo("Dapper");
+
+            alternativePropertyMappedColumns.AlternativeMappedInt.IsEqualTo(0);
+            alternativePropertyMappedColumns.AlternativeMappedString.IsEqualTo("Dapper");
+
+            fieldMappedColumns.mappedInt.IsEqualTo(0);
+            fieldMappedColumns.mappedString.IsEqualTo("Dapper");
+
+            constructorMappedColumns.MappedInt.IsEqualTo(0);
+            constructorMappedColumns.MappedString.IsEqualTo("Dapper");
+            
+            //Ensure caching is working
+            var foo = connection.Query<PropertyMappedColumns>("select 0 unmappedInt").First();
+            var bar = connection.Query<ConstructorMappedColumns>("select 0 unmappedInt, 'Dapper' unmappedString").First();
+
+            timesIntMapperCalled.IsEqualTo(1);
+            timesConstructorCalled.IsEqualTo(1);
+        }
+
         class ConstructorsWithAccessModifiers
         {
             private ConstructorsWithAccessModifiers()
@@ -2197,6 +2398,7 @@ end");
                 // pass
             }
         }
+
 
         class TransactedConnection : IDbConnection
         {
