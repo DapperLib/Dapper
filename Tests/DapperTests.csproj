@@ -244,7 +244,7 @@
       <Name>Dapper.Contrib</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dapper\Dapper.csproj">
-      <Project>{DAF737E1-05B5-4189-A5AA-DAC6233B64D7}</Project>
+      <Project>{daf737e1-05b5-4189-a5aa-dac6233b64d7}</Project>
       <Name>Dapper</Name>
     </ProjectReference>
   </ItemGroup>

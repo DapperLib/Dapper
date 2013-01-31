@@ -223,6 +223,212 @@ namespace Dapper
             var handler = QueryCachePurged;
             if (handler != null) handler(null, EventArgs.Empty);
         }
+
+        /// <summary>
+        /// Information to determine a custom binding when the returned column name doesn't match the target C# accessor
+        /// </summary>
+        public class ColumnBindArgs : IEquatable<ColumnBindArgs>
+        {
+            /// <summary>
+            /// Numeric index (0 based) of the returned column
+            /// </summary>
+            public int ColumnIndex { get; internal set; }
+
+
+            /// <summary>
+            /// Name of the returned column
+            /// </summary>
+            public string ColumnName { get; internal set; }
+
+
+            /// <summary>
+            /// C# type of the returned column
+            /// </summary>
+            public Type ColumnType { get; internal set; }
+
+            /// <summary>
+            /// Type of the target object
+            /// </summary>
+            public Type TargetType { get; internal set; }
+
+
+            /// <summary>
+            /// The Member used to set the value on the target object. Should be set by the event handler
+            /// </summary>
+            public IMemberMap Member { get; set; }
+
+            /// <summary>
+            /// Indicates whether the current object is equal to another object of the same type.
+            /// </summary>
+            /// <returns>
+            /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+            /// </returns>
+            /// <param name="other">An object to compare with this object.</param>
+            public bool Equals(ColumnBindArgs other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return ColumnIndex == other.ColumnIndex && string.Equals(ColumnName, other.ColumnName) && ColumnType.Equals(other.ColumnType) && TargetType.Equals(other.TargetType);
+            }
+
+            /// <summary>
+            /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
+            /// </summary>
+            /// <returns>
+            /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
+            /// </returns>
+            /// <param name="obj">The object to compare with the current object. </param><filterpriority>2</filterpriority>
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((ColumnBindArgs) obj);
+            }
+
+            /// <summary>
+            /// Serves as a hash function for a particular type. 
+            /// </summary>
+            /// <returns>
+            /// A hash code for the current <see cref="T:System.Object"/>.
+            /// </returns>
+            /// <filterpriority>2</filterpriority>
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hashCode = ColumnIndex;
+                    hashCode = (hashCode*397) ^ ColumnName.GetHashCode();
+                    hashCode = (hashCode*397) ^ ColumnType.GetHashCode();
+                    hashCode = (hashCode*397) ^ TargetType.GetHashCode();
+                    return hashCode;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Information to determine a custom constructor when the returned column names don't match the parameter names of any of the constructors 
+        /// </summary>
+        public class ConstructorBindArgs : IEquatable<ConstructorBindArgs>
+        {
+            /// <summary>
+            /// Type of the target object
+            /// </summary>
+            public Type TargetType { get; internal set; }
+
+            /// <summary>
+            /// Enumerable of arguments for binding columns
+            /// </summary>
+            public IEnumerable<ColumnBindArgs> Columns { get; set; }
+
+            /// <summary>
+            /// The constructor used to create the object. This should be set by the event handler.
+            /// </summary>
+            public ConstructorInfo Constructor { get; set; }
+
+            /// <summary>
+            /// Indicates whether the current object is equal to another object of the same type.
+            /// </summary>
+            /// <returns>
+            /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+            /// </returns>
+            /// <param name="other">An object to compare with this object.</param>
+            public bool Equals(ConstructorBindArgs other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Equals(Columns, other.Columns) && Equals(TargetType, other.TargetType);
+            }
+
+            /// <summary>
+            /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
+            /// </summary>
+            /// <returns>
+            /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
+            /// </returns>
+            /// <param name="obj">The object to compare with the current object. </param><filterpriority>2</filterpriority>
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((ConstructorBindArgs) obj);
+            }
+
+            /// <summary>
+            /// Serves as a hash function for a particular type. 
+            /// </summary>
+            /// <returns>
+            /// A hash code for the current <see cref="T:System.Object"/>.
+            /// </returns>
+            /// <filterpriority>2</filterpriority>
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return ((Columns != null ? Columns.GetHashCode() : 0)*397) ^ (TargetType != null ? TargetType.GetHashCode() : 0);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Event handler to handle a custom bind when the target does not match the name of the returned column
+        /// </summary>
+        /// <param name="sender">Object that triggered the event</param>
+        /// <param name="args">ColumnBindArgs containing information about the returned column</param>
+        public delegate void ColumnBindHandler(object sender, ColumnBindArgs args);
+
+        /// <summary>
+        /// Event handler to handle a custom bind when the parameters of the target constructor do not match the name of the returned columns
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        public delegate void ConstructorBindHandler(object sender, ConstructorBindArgs args);
+
+        /// <summary>
+        /// Event invoked on initial attempt to bind a column. Will only be invoked once per column.
+        /// </summary>
+        public static event ColumnBindHandler ColumnBind;
+
+        /// <summary>
+        /// Event invokted on initial attempt to bind a constructor. Will only be invoked once per type/list of columns pair.
+        /// </summary>
+        public static event ConstructorBindHandler ConstructorBind;
+
+        private static readonly IDictionary<ColumnBindArgs, IMemberMap> ColumnBindings = new Dictionary<ColumnBindArgs, IMemberMap>(); 
+        private static readonly IDictionary<ConstructorBindArgs, ConstructorInfo> ConstructorBindings = new Dictionary<ConstructorBindArgs, ConstructorInfo>(); 
+
+        internal static IMemberMap BindColumn(object sender, ColumnBindArgs args)
+        {
+            IMemberMap boundMemberMap = null;
+
+            if (ColumnBind != null && !ColumnBindings.TryGetValue(args, out boundMemberMap))
+            {
+                ColumnBind(sender, args);
+
+                boundMemberMap = args.Member;
+                ColumnBindings.Add(args, boundMemberMap);
+            }
+
+            return boundMemberMap;
+        }
+
+        internal static ConstructorInfo BindConstructor(object sender, ConstructorBindArgs args)
+        {
+            ConstructorInfo constructor = null;
+
+            if (ConstructorBind != null && !ConstructorBindings.TryGetValue(args, out constructor))
+            {
+                ConstructorBind(sender, args);
+
+                constructor = args.Constructor;
+                ConstructorBindings.Add(args, constructor);
+            }
+
+            return constructor;
+        }
+
 #if CSHARP30
         private static readonly Dictionary<Identity, CacheInfo> _queryCache = new Dictionary<Identity, CacheInfo>();
         // note: conflicts between readers and writers are so short-lived that it isn't worth the overhead of
@@ -410,6 +616,11 @@ namespace Dapper
             typeMap[typeof(Object)] = DbType.Object;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="dbType"></param>
         public static void AddTypeMap(Type type, DbType dbType)
         {
             typeMap[type] = dbType;
@@ -2074,6 +2285,17 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             ConstructorInfo specializedConstructor = null;
 
+            var columnBindArgsList = new List<ColumnBindArgs>();
+
+            var types = new Type[length];
+            for (int i = startBound; i < startBound + length; i++)
+            {
+                var fieldType = reader.GetFieldType(i);
+                types[i - startBound] = fieldType;
+                columnBindArgsList.Add(new ColumnBindArgs{ColumnIndex = i-startBound, ColumnName = names[i-startBound], ColumnType = fieldType, TargetType = type});
+            }
+
+
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -2081,12 +2303,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             else
             {
-                var types = new Type[length];
-                for (int i = startBound; i < startBound + length; i++)
-                {
-                    types[i - startBound] = reader.GetFieldType(i);
-                }
-
+               
                 if (type.IsValueType)
                 {
                     il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -2094,7 +2311,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 }
                 else
                 {
-                    var ctor = typeMap.FindConstructor(names, types);
+                    var ctor = BindConstructor(null, new ConstructorBindArgs{TargetType = type, Columns = columnBindArgsList}) ??typeMap.FindConstructor(names, types);
                     if (ctor == null)
                     {
                         string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
@@ -2122,8 +2339,8 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
 
             var members = (specializedConstructor != null
-                ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList();
+                ? names.Select(n => BindColumn(null, columnBindArgsList.First(c => c.ColumnName.Equals(n, StringComparison.OrdinalIgnoreCase))) ?? typeMap.GetConstructorParameter(specializedConstructor, n))
+                : names.Select(n => BindColumn(null, columnBindArgsList.First(c => c.ColumnName.Equals(n, StringComparison.OrdinalIgnoreCase))) ?? typeMap.GetMember(n))).ToList();
 
             // stack is now [target]
 
