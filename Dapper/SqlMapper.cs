@@ -1362,6 +1362,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     value = null;
                     return false;
                 }
+
+                if (value == DBNull.Value)
+                {
+                    value = null;
+                }
+
                 return true;
             }
 
