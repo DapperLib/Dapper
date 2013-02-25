@@ -410,6 +410,11 @@ namespace Dapper
             typeMap[typeof(Object)] = DbType.Object;
         }
 
+        /// <summary>
+        /// Adds new or overrides default mapping between CLR type and database type.
+        /// </summary>
+        /// <param name="type">The CLR type.</param>
+        /// <param name="dbType">The database type.</param>
         public static void AddTypeMap(Type type, DbType dbType)
         {
             typeMap[type] = dbType;
