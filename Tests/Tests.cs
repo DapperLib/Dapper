@@ -477,6 +477,17 @@ namespace SqlMapper
                 .IsEqualTo(4);
         }
 
+        public void TestExpandWithNullableFields()
+        {
+            var row = connection.Query("select null A, 2 B").Single();
+            
+            ((int?)row.A)
+                .IsNull();
+
+            ((int?)row.B)
+                .IsEqualTo(2);
+        }
+
         public void TestStringList()
         {
             connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new[] { "a", "b", "c" } })
