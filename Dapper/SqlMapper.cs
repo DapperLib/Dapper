@@ -410,6 +410,11 @@ namespace Dapper
             typeMap[typeof(Object)] = DbType.Object;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="dbType"></param>
         public static void AddTypeMap(Type type, DbType dbType)
         {
             typeMap[type] = dbType;
@@ -1911,7 +1916,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (commandTimeout.HasValue)
                 cmd.CommandTimeout = commandTimeout.Value;
             if (commandType.HasValue)
+            {
                 cmd.CommandType = commandType.Value;
+            }
+            else
+            {
+                if (sql.Split(' ').Length == 1)
+                    cmd.CommandType = CommandType.StoredProcedure;
+            }
             if (paramReader != null)
             {
                 paramReader(cmd, obj);
