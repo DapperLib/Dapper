@@ -409,7 +409,9 @@ namespace Dapper
             typeMap[typeof(TimeSpan?)] = DbType.Time;
             typeMap[typeof(Object)] = DbType.Object;
         }
-
+        /// <summary>
+        /// Configire the specified type to be mapped to a given db-type
+        /// </summary>
         public static void AddTypeMap(Type type, DbType dbType)
         {
             typeMap[type] = dbType;

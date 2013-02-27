@@ -1,4 +1,4 @@
-﻿using System;
+ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Linq;
@@ -120,7 +120,7 @@ namespace SqlMapper
 			var entityContext5 = new EntityFramework.tempdbEntities1();
 			entityContext5.Connection.Open();
 			entityContext5.Posts.MergeOption = System.Data.Objects.MergeOption.NoTracking;
-			tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework No Tracking");
+			tests.Add(id => entityContext5.Posts.First(p => p.Id == id), "Entity framework No Tracking");
 
             var mapperConnection = Program.GetOpenConnection();
             tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
@@ -128,7 +128,7 @@ namespace SqlMapper
 
             var mapperConnection2 = Program.GetOpenConnection();
             tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
-            tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (non-buffered)");
+            tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dynamic Mapper Query (non-buffered)");
 
             // dapper.contrib
             var mapperConnection3 = Program.GetOpenConnection();
