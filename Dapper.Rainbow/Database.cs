@@ -129,7 +129,12 @@ namespace Dapper
                     paramNames = new List<string>();
                     foreach (var prop in o.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public))
                     {
-                        paramNames.Add(prop.Name);
+                        var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
+                        var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
+                        if (attr==null || (attr != null && !attr.Value))
+                        {
+                            paramNames.Add(prop.Name);
+                        }                        
                     }
                     paramNameCache[o.GetType()] = paramNames;
                 }
