@@ -573,7 +573,8 @@ namespace Dapper
 
             private static bool ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(string connectionString1, string connectionString2)
             {
-                return ConnectionStringIsMultitenantDBFuncs
+                return connectionString1 == connectionString2 || 
+                     ConnectionStringIsMultitenantDBFuncs
                    .Any<Func<string, bool>>(func => func(connectionString1) && func(connectionString2));
             }
         }
