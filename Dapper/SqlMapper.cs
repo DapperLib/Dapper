@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Data.SqlClient;
 
 
 namespace Dapper
@@ -494,7 +495,6 @@ namespace Dapper
                             hashCode = hashCode * 23 + (t == null ? 0 : t.GetHashCode());
                         }
                     }
-                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
                     hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
             }
@@ -554,8 +554,41 @@ namespace Dapper
                     type == other.type &&
                     sql == other.sql &&
                     commandType == other.commandType &&
-                    connectionString == other.connectionString &&
+                    ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(connectionString, other.connectionString) &&
                     parametersType == other.parametersType;
+            }
+
+            private static ICollection<Regex> MultitenantDBNameRegexes = new List<Regex>();
+            /// <summary>
+            /// Add regexes that represents the pattern of DBNames given to Multitenant DBs. 
+            /// This allows dapper to cache shared queries amongst multitenant dbs as compared to once per db, even though the query is the same accross all multitenant dbs.
+            /// </summary>
+            /// <param name="regexes"></param>
+            /// <returns></returns>
+            public static void AddMultitenantDBNameRegexes(IEnumerable<Regex> regexes)
+            {
+                foreach (Regex regex in regexes)
+                    if (!MultitenantDBNameRegexes.Contains<Regex>(regex))
+                        MultitenantDBNameRegexes.Add(regex);
+            }
+
+            private static bool ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(string connectionString1, string connectionString2)
+            {
+                if (string.Equals(connectionString1, connectionString2))
+                    return true;
+                var cs1 = new SqlConnectionStringBuilder(connectionString1);
+                var cs2 = new SqlConnectionStringBuilder(connectionString2);
+                if (IsSameMultiTenantDBName(cs1.InitialCatalog, cs2.InitialCatalog))
+                    cs2.InitialCatalog = cs1.InitialCatalog;
+                return cs1.EquivalentTo(cs2);
+            }
+
+            private static bool IsSameMultiTenantDBName(string dbName1, string dbName2)
+            {
+                foreach (Regex regex in MultitenantDBNameRegexes)
+                    if (regex.IsMatch(dbName1) && regex.IsMatch(dbName2))
+                        return true;
+                return false;
             }
         }
 
