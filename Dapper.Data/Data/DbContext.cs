@@ -7,61 +7,52 @@ using System.Data;
 
 namespace Dapper.Data
 {
+    public interface IDbCommand
+    {
+        int Execute(
+            string sql,
+            object param = null,
+            CommandType? commandType = null
+        );
+
+        IEnumerable<T> Query<T>(
+            string sql,
+            object param = null,
+            CommandType? commandType = null
+        );
+
+        IEnumerable<dynamic> Query(
+            string sql,
+            object param = null,
+            CommandType? commandType = null
+        );        
+    }
 	/// <summary>
 	/// Default behavior exposed by DbContext helps with injection
 	/// </summary>
-	public interface IDbContext
+    public interface IDbContext : IDbCommand
 	{
 		void Batch(Action<ISession> action);
 		TResult Batch<TResult>(Func<ISession, TResult> func);
-
-		int Execute(
-			string sql,
-			object param = null,
-			CommandType? commandType = null
-		);
-
-		IEnumerable<T> Query<T>(
-			string sql,
-			object param = null,
-			CommandType? commandType = null
-		);
-
-		IEnumerable<dynamic> Query(
-			string sql,
-			object param = null,
-			CommandType? commandType = null
-		);
 	}
 
 	/// <summary>
 	/// Interface to help with transaction managment
 	/// </summary>
-	public interface ISession
+    public interface ISession : IDbCommand
 	{
 		void BeginTransaction();
         void BeginTransaction(IsolationLevel il);
         void CommitTransaction();
 		void RollbackTransaction();
 
-		int Execute(
-			string sql,
-			object param = null,
-			CommandType? commandType = null
-		);
+        IDbConnection Connection { get; }
 
-		IEnumerable<T> Query<T>(
-			string sql,
-			object param = null,
-			CommandType? commandType = null
-		);
-
-		IEnumerable<dynamic> Query(
-			string sql,
-			object param = null,
-			CommandType? commandType = null
-		);
-	}
+        IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null);
+        IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null);
+        IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null);
+        IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null);
+    }
 
 	/// <summary>
 	/// Light weight DbContext implementation based on dapper
@@ -165,7 +156,29 @@ namespace Dapper.Data
 				_transaction = null;
 			}
 
-			public int Execute(string sql, object param = null, CommandType? commandType = null)
+            public IDbConnection Connection { get { return _connection; } }
+
+		    public IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null)
+		    {
+                return _connection.Query(sql, map, param, _transaction, buffered, splitOn, 0, commandType);
+		    }
+
+		    public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null)
+		    {
+                return _connection.Query(sql, map, param, _transaction, buffered, splitOn, 0, commandType);
+		    }
+
+		    public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null)
+		    {
+                return _connection.Query(sql, map, param, _transaction, buffered, splitOn, 0, commandType);
+		    }
+
+		    public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", CommandType? commandType = null)
+		    {
+                return _connection.Query(sql, map, param, _transaction, buffered, splitOn, 0, commandType);
+		    }
+
+		    public int Execute(string sql, object param = null, CommandType? commandType = null)
 			{
 				return _connection.Execute(sql, param, commandType, _transaction);
 			}

@@ -21,7 +21,12 @@ namespace Dapper.Data.Tests
 		{
 			throw new NotImplementedException();
 		}
-	}
+
+        public void AddParameters(System.Data.IDbCommand command, SqlMapper.Identity identity)
+        {
+            throw new NotImplementedException();
+        }
+    }
 
     public class Car
     {
