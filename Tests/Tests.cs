@@ -2271,6 +2271,28 @@ end");
 			((string)first.value).IsEqualTo("test");
 		}
 
+        public void Test_ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual_WhereConnectionStringsAreEqual()
+        {
+            Dapper.SqlMapper.Identity.ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual("Hello", "Hello")
+                .IsEqualTo<bool>(true);
+        }
+
+   
+        public void Test_ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual_WhereConnectionStringsMatchPattern()
+        {
+            Func<string, bool> stringIsSize4 = str => str.Length == 4;
+            Dapper.SqlMapper.Identity.AddIsMultitenantDBForConnectionStringFuncs(new List<Func<string, bool>> { stringIsSize4 });
+            Dapper.SqlMapper.Identity.ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual("abcd", "dcba")
+                .IsTrue();
+
+        }
+
+        public void Test_ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual_WhereConnectionStringsDontMatchAndAreNotEqual()
+        {
+            Dapper.SqlMapper.Identity.ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual("no", "dcba")
+                .IsFalse();
+        }
+
 #if POSTGRESQL
 
         class Cat

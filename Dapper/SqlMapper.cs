@@ -571,7 +571,13 @@ namespace Dapper
                     .ForEach(func => ConnectionStringIsMultitenantDBFuncs.Add(func));
             }
 
-            private static bool ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(string connectionString1, string connectionString2)
+            /// <summary>
+            /// Checks to see if two connectionStrings are equal if multitenant db connectionStrings from the same set are considered equal.
+            /// </summary>
+            /// <param name="connectionString1"></param>
+            /// <param name="connectionString2"></param>
+            /// <returns></returns>
+            public static bool ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(string connectionString1, string connectionString2)
             {
                 return connectionString1 == connectionString2 || 
                      ConnectionStringIsMultitenantDBFuncs
