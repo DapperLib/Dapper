@@ -553,22 +553,21 @@ namespace Dapper
                     type == other.type &&
                     sql == other.sql &&
                     commandType == other.commandType &&
-                    ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(connectionString, other.connectionString) &&
+                    AreBothConnectionStringsFromTheSameMultitenantDB(connectionString, other.connectionString) &&
                     parametersType == other.parametersType;
             }
 
             private static ICollection<Func<string,bool>> ConnectionStringIsMultitenantDBFuncs = new List<Func<string,bool>>();
             /// <summary>
-            /// Add functions that detect if a connectionString represents a multitenantDB.
+            /// Add function that detects if a connectionString represents a multitenantDB.
             /// This allows dapper to cache shared queries amongst multitenant dbs as compared to once per db, even though the query is the same accross all multitenant dbs.
             /// </summary>
-            /// <param name="connectionStringIsMultitenantDBFuncs">Functions that check to see if a connectionString is a part of a set of multitenant DBs</param>
+            /// <param name="connectionStringIsMultitenantDBFunc">Function that checks to see if a connectionString is a part of a set of multitenant DBs</param>
             /// <returns></returns>
-            public static void AddIsMultitenantDBForConnectionStringFuncs(IEnumerable<Func<string, bool>> connectionStringIsMultitenantDBFuncs)
+            public static void AddFuncToCheckIfConnectionStringIsMultitenantDB(Func<string, bool> connectionStringIsMultitenantDBFunc)
             {
-                connectionStringIsMultitenantDBFuncs
-                    .Where<Func<string, bool>>(func => !ConnectionStringIsMultitenantDBFuncs.Contains<Func<string, bool>>(func)).ToList<Func<string,bool>>()
-                    .ForEach(func => ConnectionStringIsMultitenantDBFuncs.Add(func));
+                if(!ConnectionStringIsMultitenantDBFuncs.Contains(connectionStringIsMultitenantDBFunc))
+                    ConnectionStringIsMultitenantDBFuncs.Add(connectionStringIsMultitenantDBFunc);
             }
 
             /// <summary>
@@ -577,11 +576,10 @@ namespace Dapper
             /// <param name="connectionString1"></param>
             /// <param name="connectionString2"></param>
             /// <returns></returns>
-            public static bool ConnectionStringsAreEqualWhereMultitenantDBsAreConsideredEqual(string connectionString1, string connectionString2)
+            public static bool AreBothConnectionStringsFromTheSameMultitenantDB(string connectionString1, string connectionString2)
             {
                 return connectionString1 == connectionString2 || 
-                     ConnectionStringIsMultitenantDBFuncs
-                   .Any<Func<string, bool>>(func => func(connectionString1) && func(connectionString2));
+                     ConnectionStringIsMultitenantDBFuncs.Any(func => func(connectionString1) && func(connectionString2));
             }
         }
 
