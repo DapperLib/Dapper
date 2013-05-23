@@ -555,6 +555,8 @@ namespace SqlMapper
 
             public int _priv;
             private int Priv { set { _priv = value; } }
+
+            private int PrivGet { get { return _priv;} }
         }
 
         public void TestSetInternal()
@@ -567,6 +569,17 @@ namespace SqlMapper
             connection.Query<TestObj>("select 10 as [Priv]").First()._priv.IsEqualTo(10);
         }
 
+
+        public void TestExpandWithNullableFields()
+        {
+            var row = connection.Query("select null A, 2 B").Single();
+            
+            ((int?)row.A)
+                .IsNull();
+
+            ((int?)row.B)
+                .IsEqualTo(2);
+        }
         public void TestEnumeration()
         {
             var en = connection.Query<int>("select 1 as one union all select 2 as one", buffered: false);

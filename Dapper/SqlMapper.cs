@@ -1550,13 +1550,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     if (startBound == 0)
                     {
                         r.GetValues(values);
+                        for (int i = 0; i < values.Length; i++)
+                            if (values[i] is DBNull) values[i] = null;
                     }
                     else
                     {
                         var begin = returnNullIfFirstMissing ? 1 : 0;
                         for (var iter = begin; iter < effectiveFieldCount; ++iter)
                         {
-                            values[iter] = r.GetValue(iter + startBound);
+                            object obj = r.GetValue(iter + startBound);
+                            values[iter] = obj is DBNull ? null : obj;
                         }
                     }
                     return new DapperRow(table, values);
