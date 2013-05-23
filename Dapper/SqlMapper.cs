@@ -41,6 +41,19 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Implement this interface to pass an arbitrary db specific parameter to Dapper
+        /// </summary>
+        public interface ICustomQueryParameter
+        {
+            /// <summary>
+            /// Add the parameter needed to the command before it executes
+            /// </summary>
+            /// <param name="command">The raw command prior to execution</param>
+            /// <param name="name">Parameter name</param>
+            void AddParameter(IDbCommand command, string name);
+        }
+
+        /// <summary>
         /// Implement this interface to change default mapping of reader columns to type memebers
         /// </summary>
         public interface ITypeMap
@@ -1774,13 +1787,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         continue;
                     }
                 }
-                if (prop.PropertyType == typeof(DbString))
+                if (typeof(ICustomQueryParameter).IsAssignableFrom(prop.PropertyType))
                 {
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [typed-param]
                     il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [dbstring]
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [dbstring] [command]
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [dbstring] [command] [name]
-                    il.EmitCall(OpCodes.Callvirt, typeof(DbString).GetMethod("AddParameter"), null); // stack is now [parameters]
+                    il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod("AddParameter"), null); // stack is now [parameters]
                     continue;
                 }
                 DbType dbType = LookupDbType(prop.PropertyType, prop.Name);
@@ -2980,7 +2993,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
     /// </summary>
-    sealed partial class DbString
+    sealed partial class DbString : Dapper.SqlMapper.ICustomQueryParameter
     {
         /// <summary>
         /// Create a new DbString
