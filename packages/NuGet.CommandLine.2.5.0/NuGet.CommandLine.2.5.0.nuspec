@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>NuGet.CommandLine</id>
+    <version>2.5.0</version>
+    <title>NuGet.CommandLine</title>
+    <authors>Outercurve Foundation</authors>
+    <owners>Outercurve Foundation</owners>
+    <licenseUrl>http://nuget.codeplex.com/license</licenseUrl>
+    <projectUrl>http://nuget.codeplex.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>NuGet Command Line Tool</description>
+    <releaseNotes />
+    <copyright>Copyright 2013 Microsoft. NuGet is made possible by the Outercurve Foundation’s open source project.</copyright>
+    <language />
+  </metadata>
+</package>

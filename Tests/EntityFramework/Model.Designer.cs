@@ -8,15 +8,15 @@
 //------------------------------------------------------------------------------
 
 using System;
+using System.ComponentModel;
+using System.Data.EntityClient;
 using System.Data.Objects;
 using System.Data.Objects.DataClasses;
-using System.Data.EntityClient;
-using System.ComponentModel;
-using System.Xml.Serialization;
+using System.Linq;
 using System.Runtime.Serialization;
+using System.Xml.Serialization;
 
 [assembly: EdmSchemaAttribute()]
-
 namespace SqlMapper.EntityFramework
 {
     #region Contexts
@@ -82,6 +82,7 @@ namespace SqlMapper.EntityFramework
         private ObjectSet<Post> _Posts;
 
         #endregion
+
         #region AddTo Methods
     
         /// <summary>
@@ -93,11 +94,11 @@ namespace SqlMapper.EntityFramework
         }
 
         #endregion
+
     }
-    
 
     #endregion
-    
+
     #region Entities
     
     /// <summary>
@@ -128,7 +129,8 @@ namespace SqlMapper.EntityFramework
         }
 
         #endregion
-        #region Primitive Properties
+
+        #region Simple Properties
     
         /// <summary>
         /// No Metadata Documentation available.
@@ -147,7 +149,7 @@ namespace SqlMapper.EntityFramework
                 {
                     OnIdChanging(value);
                     ReportPropertyChanging("Id");
-                    _Id = StructuralObject.SetValidValue(value);
+                    _Id = StructuralObject.SetValidValue(value, "Id");
                     ReportPropertyChanged("Id");
                     OnIdChanged();
                 }
@@ -172,7 +174,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnTextChanging(value);
                 ReportPropertyChanging("Text");
-                _Text = StructuralObject.SetValidValue(value, false);
+                _Text = StructuralObject.SetValidValue(value, false, "Text");
                 ReportPropertyChanged("Text");
                 OnTextChanged();
             }
@@ -196,7 +198,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCreationDateChanging(value);
                 ReportPropertyChanging("CreationDate");
-                _CreationDate = StructuralObject.SetValidValue(value);
+                _CreationDate = StructuralObject.SetValidValue(value, "CreationDate");
                 ReportPropertyChanged("CreationDate");
                 OnCreationDateChanged();
             }
@@ -220,7 +222,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnLastChangeDateChanging(value);
                 ReportPropertyChanging("LastChangeDate");
-                _LastChangeDate = StructuralObject.SetValidValue(value);
+                _LastChangeDate = StructuralObject.SetValidValue(value, "LastChangeDate");
                 ReportPropertyChanged("LastChangeDate");
                 OnLastChangeDateChanged();
             }
@@ -244,7 +246,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter1Changing(value);
                 ReportPropertyChanging("Counter1");
-                _Counter1 = StructuralObject.SetValidValue(value);
+                _Counter1 = StructuralObject.SetValidValue(value, "Counter1");
                 ReportPropertyChanged("Counter1");
                 OnCounter1Changed();
             }
@@ -268,7 +270,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter2Changing(value);
                 ReportPropertyChanging("Counter2");
-                _Counter2 = StructuralObject.SetValidValue(value);
+                _Counter2 = StructuralObject.SetValidValue(value, "Counter2");
                 ReportPropertyChanged("Counter2");
                 OnCounter2Changed();
             }
@@ -292,7 +294,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter3Changing(value);
                 ReportPropertyChanging("Counter3");
-                _Counter3 = StructuralObject.SetValidValue(value);
+                _Counter3 = StructuralObject.SetValidValue(value, "Counter3");
                 ReportPropertyChanged("Counter3");
                 OnCounter3Changed();
             }
@@ -316,7 +318,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter4Changing(value);
                 ReportPropertyChanging("Counter4");
-                _Counter4 = StructuralObject.SetValidValue(value);
+                _Counter4 = StructuralObject.SetValidValue(value, "Counter4");
                 ReportPropertyChanged("Counter4");
                 OnCounter4Changed();
             }
@@ -340,7 +342,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter5Changing(value);
                 ReportPropertyChanging("Counter5");
-                _Counter5 = StructuralObject.SetValidValue(value);
+                _Counter5 = StructuralObject.SetValidValue(value, "Counter5");
                 ReportPropertyChanged("Counter5");
                 OnCounter5Changed();
             }
@@ -364,7 +366,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter6Changing(value);
                 ReportPropertyChanging("Counter6");
-                _Counter6 = StructuralObject.SetValidValue(value);
+                _Counter6 = StructuralObject.SetValidValue(value, "Counter6");
                 ReportPropertyChanged("Counter6");
                 OnCounter6Changed();
             }
@@ -388,7 +390,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter7Changing(value);
                 ReportPropertyChanging("Counter7");
-                _Counter7 = StructuralObject.SetValidValue(value);
+                _Counter7 = StructuralObject.SetValidValue(value, "Counter7");
                 ReportPropertyChanged("Counter7");
                 OnCounter7Changed();
             }
@@ -412,7 +414,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter8Changing(value);
                 ReportPropertyChanging("Counter8");
-                _Counter8 = StructuralObject.SetValidValue(value);
+                _Counter8 = StructuralObject.SetValidValue(value, "Counter8");
                 ReportPropertyChanged("Counter8");
                 OnCounter8Changed();
             }
@@ -436,7 +438,7 @@ namespace SqlMapper.EntityFramework
             {
                 OnCounter9Changing(value);
                 ReportPropertyChanging("Counter9");
-                _Counter9 = StructuralObject.SetValidValue(value);
+                _Counter9 = StructuralObject.SetValidValue(value, "Counter9");
                 ReportPropertyChanged("Counter9");
                 OnCounter9Changed();
             }
@@ -446,9 +448,9 @@ namespace SqlMapper.EntityFramework
         partial void OnCounter9Changed();
 
         #endregion
-    
+
     }
 
     #endregion
-    
+
 }

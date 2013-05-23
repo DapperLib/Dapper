@@ -35,11 +35,16 @@
     </releaseNotes>
   </metadata>
   <files>
-    <file src="bin\Release\Dapper.dll" target="lib\net40" />
-    <file src="bin\Release\Dapper.pdb" target="lib\net40" />
-    <file src="bin\Release\Dapper.xml" target="lib\net40" />
-    <file src="..\Dapper NET35\bin\Release\Dapper.dll" target="lib\net35" />
-    <file src="..\Dapper NET35\bin\Release\Dapper.pdb" target="lib\net35" />
-    <file src="..\Dapper NET35\bin\Release\Dapper.xml" target="lib\net35" />
+    <file src="Dapper NET45\bin\Release\Dapper.dll" target="lib\net45" />
+    <file src="Dapper NET45\bin\Release\Dapper.pdb" target="lib\net45" />
+    <file src="Dapper NET45\bin\Release\Dapper.xml" target="lib\net45" />
+    
+    <file src="Dapper NET40\bin\Release\Dapper.dll" target="lib\net40" />
+    <file src="Dapper NET40\bin\Release\Dapper.pdb" target="lib\net40" />
+    <file src="Dapper NET40\bin\Release\Dapper.xml" target="lib\net40" />
+    
+    <file src="Dapper NET35\bin\Release\Dapper.dll" target="lib\net35" />
+    <file src="Dapper NET35\bin\Release\Dapper.pdb" target="lib\net35" />
+    <file src="Dapper NET35\bin\Release\Dapper.xml" target="lib\net35" />
   </files>
 </package>
