@@ -494,7 +494,6 @@ namespace Dapper
                             hashCode = hashCode * 23 + (t == null ? 0 : t.GetHashCode());
                         }
                     }
-                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
                     hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
             }
@@ -554,8 +553,33 @@ namespace Dapper
                     type == other.type &&
                     sql == other.sql &&
                     commandType == other.commandType &&
-                    connectionString == other.connectionString &&
+                    AreBothConnectionStringsFromTheSameMultitenantDB(connectionString, other.connectionString) &&
                     parametersType == other.parametersType;
+            }
+
+            private static ICollection<Func<string,bool>> ConnectionStringIsMultitenantDBFuncs = new List<Func<string,bool>>();
+            /// <summary>
+            /// Add function that detects if a connectionString represents a multitenantDB.
+            /// This allows dapper to cache shared queries amongst multitenant dbs as compared to once per db, even though the query is the same accross all multitenant dbs.
+            /// </summary>
+            /// <param name="connectionStringIsMultitenantDBFunc">Function that checks to see if a connectionString is a part of a set of multitenant DBs</param>
+            /// <returns></returns>
+            public static void AddFuncToCheckIfConnectionStringIsMultitenantDB(Func<string, bool> connectionStringIsMultitenantDBFunc)
+            {
+                if(!ConnectionStringIsMultitenantDBFuncs.Contains(connectionStringIsMultitenantDBFunc))
+                    ConnectionStringIsMultitenantDBFuncs.Add(connectionStringIsMultitenantDBFunc);
+            }
+
+            /// <summary>
+            /// Checks to see if two connectionStrings are equal if multitenant db connectionStrings from the same set are considered equal.
+            /// </summary>
+            /// <param name="connectionString1"></param>
+            /// <param name="connectionString2"></param>
+            /// <returns></returns>
+            public static bool AreBothConnectionStringsFromTheSameMultitenantDB(string connectionString1, string connectionString2)
+            {
+                return connectionString1 == connectionString2 || 
+                     ConnectionStringIsMultitenantDBFuncs.Any(func => func(connectionString1) && func(connectionString2));
             }
         }
 
