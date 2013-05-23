@@ -2211,6 +2211,41 @@ end");
             }
         }
 
+        public void TestIssue131()
+        {
+            var results = connection.Query<dynamic, int, dynamic>(
+                "SELECT 1 Id, 'Mr' Title, 'John' Surname, 4 AddressCount",
+                (person, addressCount) =>
+                {
+                    return person;
+                },
+                splitOn: "AddressCount"
+            ).FirstOrDefault();
+
+            var asDict = (IDictionary<string, object>)results;
+
+            asDict.ContainsKey("Id").IsEqualTo(true);
+            asDict.ContainsKey("Title").IsEqualTo(true);
+            asDict.ContainsKey("Surname").IsEqualTo(true);
+            asDict.ContainsKey("AddressCount").IsEqualTo(false);
+        }
+
+        // see http://stackoverflow.com/questions/13127886/dapper-returns-null-for-singleordefaultdatediff
+        public void TestNullFromInt_NoRows()
+        {
+            var result = connection.Query<int>( // case with rows
+             "select DATEDIFF(day, GETUTCDATE(), @date)", new { date = DateTime.UtcNow.AddDays(20) })
+             .SingleOrDefault();
+            result.IsEqualTo(20);
+
+            result = connection.Query<int>( // case without rows
+                "select DATEDIFF(day, GETUTCDATE(), @date) where 1 = 0", new { date = DateTime.UtcNow.AddDays(20) })
+                .SingleOrDefault();
+            result.IsEqualTo(0); // zero rows; default of int over zero rows is zero
+
+
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;

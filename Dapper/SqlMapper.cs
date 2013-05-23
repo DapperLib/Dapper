@@ -494,7 +494,7 @@ namespace Dapper
                             hashCode = hashCode * 23 + (t == null ? 0 : t.GetHashCode());
                         }
                     }
-                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionString.GetHashCode());
+                    hashCode = hashCode * 23 + (connectionString == null ? 0 : SqlMapper.connectionStringComparer.GetHashCode(connectionString));
                     hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
                 }
             }
@@ -554,7 +554,7 @@ namespace Dapper
                     type == other.type &&
                     sql == other.sql &&
                     commandType == other.commandType &&
-                    connectionString == other.connectionString &&
+                    SqlMapper.connectionStringComparer.Equals(connectionString, other.connectionString) &&
                     parametersType == other.parametersType;
             }
         }
@@ -898,7 +898,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30  
             this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1519,7 +1519,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
             }
 
-            var effectiveFieldCount = fieldCount - startBound;
+            var effectiveFieldCount = Math.Min(fieldCount - startBound, length);
 
             DapperTable table = null;
 
@@ -2476,6 +2476,20 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     break;
             }
         }
+
+
+        /// <summary>
+        /// How should connection strings be compared for equivalence? Defaults to StringComparer.Ordinal.
+        /// Providing a custom implementation can be useful for allowing multi-tenancy databases with identical
+        /// schema to share startegies. Note that usual equivalence rules apply: any equivalent connection strings
+        /// <b>MUST</b> yield the same hash-code.
+        /// </summary>
+        public static IEqualityComparer<string> ConnectionStringComparer
+        {
+            get { return connectionStringComparer; }
+            set { connectionStringComparer = value ?? StringComparer.Ordinal; }
+        }
+        private static IEqualityComparer<string> connectionStringComparer = StringComparer.Ordinal;
 
         /// <summary>
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query 
