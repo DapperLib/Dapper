@@ -1236,6 +1236,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (fieldNameLookup.ContainsKey(name)) throw new InvalidOperationException("Field already exists: " + name);
                 int oldLen = fieldNames.Length;
                 Array.Resize(ref fieldNames, oldLen + 1); // yes, this is sub-optimal, but this is not the expected common case
+                fieldNames[oldLen] = name;
                 fieldNameLookup[name] = oldLen;
                 return oldLen;
             }
@@ -1287,6 +1288,19 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 
             public override System.Dynamic.DynamicMetaObject BindGetMember(System.Dynamic.GetMemberBinder binder)
+            {
+                var parameters = new System.Linq.Expressions.Expression[]
+                                     {
+                                         System.Linq.Expressions.Expression.Constant(binder.Name)
+                                     };
+
+                var callMethod = CallMethod(getValueMethod, parameters);
+
+                return callMethod;
+            }
+
+            // Needed for Visual basic dynamic support
+            public override System.Dynamic.DynamicMetaObject BindInvokeMember(System.Dynamic.InvokeMemberBinder binder, System.Dynamic.DynamicMetaObject[] args)
             {
                 var parameters = new System.Linq.Expressions.Expression[]
                                      {
