@@ -2186,6 +2186,38 @@ end");
                 conn.State.IsEqualTo(ConnectionState.Closed);
             }
         }
+        class Multi1
+        {
+            public int Id { get; set; }
+        }
+        class Multi2
+        {
+            public int Id { get; set; }
+        }
+        public void QueryMultimapFromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                conn.State.IsEqualTo(ConnectionState.Closed);
+                var i = conn.Query<Multi1, Multi2, int>("select 2 as [Id], 3 as [Id]", (x, y) => x.Id + y.Id).Single();
+                conn.State.IsEqualTo(ConnectionState.Closed);
+                i.IsEqualTo(5);
+            }
+        }
+        public void QueryMultiple2FromClosed()
+        {
+            using (var conn = GetClosedConnection())
+            {
+                conn.State.IsEqualTo(ConnectionState.Closed);
+                using (var multi = conn.QueryMultiple("select 1 select 2 select 3"))
+                {
+                    multi.Read<int>().Single().IsEqualTo(1);
+                    multi.Read<int>().Single().IsEqualTo(2);
+                    // not reading 3 is intentional here
+                }
+                conn.State.IsEqualTo(ConnectionState.Closed);
+            }
+        }
         public void ExecuteInvalidFromClosed()
         {
             using (var conn = GetClosedConnection())
