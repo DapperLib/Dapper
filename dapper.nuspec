@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.12.1.1</version>
+    <version>1.13</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,19 +19,22 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
-      * 1.12.1.1 - Added support for Table Valued Parameters as part of anonymous objects
+      * 1.13   - Added support for Table Valued Parameters as part of anonymous objects
+      *        - Added support for async
+      *        - Added support for sharing strategies between databases
+      *        - Rewrote dynamic implementation
       * 1.12.1 - Minor deploy glitch (should now include intellisense files!)
-      * 1.12 - Better automatic type-mapping (int vs long, float vs double, etc)
-      *        Fixed: bug with indexer properties
-      * 1.11 - Custom type-map support
-      * 1.10 - Fixed: error-handling could lose original exception if reader closed
-      * 1.9 - Added: better schema change detection
-      *       Fixed: enum support for T in Query-of-T
-      *       Added: dictionary support for parameters
-      * 1.8 - Started release notes
-      *       Important: Dapper is now shipping as a DLL which will work on .net 3.5 or .net 4.0,
+      * 1.12   - Better automatic type-mapping (int vs long, float vs double, etc)
+      *          Fixed: bug with indexer properties
+      * 1.11   - Custom type-map support
+      * 1.10   - Fixed: error-handling could lose original exception if reader closed
+      * 1.9    - Added: better schema change detection
+      *          Fixed: enum support for T in Query-of-T
+      *          Added: dictionary support for parameters
+      * 1.8    - Started release notes
+      *          Important: Dapper is now shipping as a DLL which will work on .net 3.5 or .net 4.0,
       *          This improves the debugging experience as you no longer break into dapper when SQL fails.
-      *       Added: ParameterNames on DynamicParameters
+      *          Added: ParameterNames on DynamicParameters
     </releaseNotes>
   </metadata>
   <files>

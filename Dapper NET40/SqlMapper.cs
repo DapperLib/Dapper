@@ -1281,7 +1281,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
 #if !CSHARP30
-        sealed partial class DapperTable
+        private sealed partial class DapperTable
         {
             string[] fieldNames;
             readonly Dictionary<string, int> fieldNameLookup;
@@ -1403,7 +1403,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-        sealed partial class DapperRow
+        private sealed partial class DapperRow
             : System.Dynamic.IDynamicMetaObjectProvider
             , IDictionary<string, object>
         {
