@@ -1073,7 +1073,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
 
-            bool wasClosed = cnn.State == ConnectionState.Closed;
+            bool wasClosed = cnn != null && cnn.State == ConnectionState.Closed;
             try
             {
                 if (reader == null)
