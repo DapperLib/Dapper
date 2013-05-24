@@ -1327,7 +1327,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         sealed partial class DapperRowMetaObject : System.Dynamic.DynamicMetaObject
         {
             static readonly MethodInfo getValueMethod = typeof(IDictionary<string, object>).GetProperty("Item").GetGetMethod();
-            static readonly MethodInfo setValueMethod = typeof(DapperRow).GetMethod("SetValue");
+            static readonly MethodInfo setValueMethod = typeof(DapperRow).GetMethod("SetValue", new Type[] { typeof(string), typeof(object) });
 
             public DapperRowMetaObject(
                 System.Linq.Expressions.Expression expression,
@@ -1546,8 +1546,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             void IDictionary<string, object>.Add(string key, object value)
             {
-                IDictionary<string, object> dic = this;
-                dic[key] = value;
+                SetValue(key, value, true);
             }
 
             bool IDictionary<string, object>.Remove(string key)
@@ -1561,9 +1560,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             object IDictionary<string, object>.this[string key]
             {
                 get { object val; TryGetValue(key, out val); return val; }
-                set { SetValue(key, value); }
+                set { SetValue(key, value, false); }
             }
+
             public object SetValue(string key, object value)
+            {
+                return SetValue(key, value, false);
+            }
+            private object SetValue(string key, object value, bool isAdd)
             {
                 if (key == null) throw new ArgumentNullException("key");
                 int index = table.IndexOfName(key);
@@ -1571,10 +1575,21 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     index = table.AddField(key);
                 }
-                if (values.Length <= index)
-                {   // we'll assume they're doing lots of things, and
+                else if (isAdd && index < values.Length && !(values[index] is DeadValue))
+                {
+                    // then semantically, this value already exists
+                    throw new ArgumentException("An item with the same key has already been added", "key");
+                }
+                int oldLength = values.Length;
+                if (oldLength <= index)
+                {
+                    // we'll assume they're doing lots of things, and
                     // grow it to the full width of the table
                     Array.Resize(ref values, table.FieldCount);
+                    for (int i = oldLength; i < values.Length; i++)
+                    {
+                        values[i] = DeadValue.Default;
+                    }
                 }
                 return values[index] = value;
             }

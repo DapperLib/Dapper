@@ -378,6 +378,40 @@ namespace SqlMapper
                 .IsSequenceEqualTo(new[] { "a", "b" });
         }
 
+        // see http://stackoverflow.com/questions/16726709/string-format-with-sql-wildcard-causing-dapper-query-to-break
+        public void CheckComplexConcat()
+        {
+            string end_wildcard = @"
+SELECT * FROM #users16726709
+WHERE (first_name LIKE CONCAT(@search_term, '%') OR last_name LIKE CONCAT(@search_term, '%'));";
+
+            string both_wildcards = @"
+SELECT * FROM #users16726709
+WHERE (first_name LIKE CONCAT('%', @search_term, '%') OR last_name LIKE CONCAT('%', @search_term, '%'));";
+
+            string formatted = @"
+SELECT * FROM #users16726709
+WHERE (first_name LIKE {0} OR last_name LIKE {0});";
+
+            string use_end_only = @"CONCAT(@search_term, '%')";
+            string use_both = @"CONCAT('%', @search_term, '%')";
+
+            // if true, slower query due to not being able to use indices, but will allow searching inside strings 
+            bool allow_start_wildcards = false;
+
+            string query = String.Format(formatted, allow_start_wildcards ? use_both : use_end_only);
+            string term = "F"; // the term the user searched for
+
+            connection.Execute(@"create table #users16726709 (first_name varchar(200), last_name varchar(200))
+insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('Tony','Farcus') insert #users16726709 values ('Albert','Tenof')");
+
+            // Using Dapper
+            connection.Query(end_wildcard, new { search_term = term }).Count().IsEqualTo(2);
+            connection.Query(both_wildcards, new { search_term = term }).Count().IsEqualTo(3);
+            connection.Query(query, new { search_term = term }).Count().IsEqualTo(2);
+
+        }
+
         enum EnumParam : short
         {
             None, A, B
