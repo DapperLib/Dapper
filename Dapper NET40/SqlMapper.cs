@@ -626,7 +626,7 @@ namespace Dapper
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IEnumerable<object> Query<T>(this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction)
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction)
         {
             return Query(cnn, type, sql, param, transaction, true, null, null);
         }
@@ -637,7 +637,7 @@ namespace Dapper
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IEnumerable<object> Query<T>(this IDbConnection cnn, Type type, string sql, object param, CommandType commandType)
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param, CommandType commandType)
         {
             return Query(cnn, type, sql, param, null, true, null, commandType);
         }
@@ -648,7 +648,7 @@ namespace Dapper
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IEnumerable<object> Query<T>(this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction, CommandType commandType)
         {
             return Query(cnn, type, sql, param, transaction, true, null, commandType);
         }
