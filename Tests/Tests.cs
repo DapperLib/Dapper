@@ -382,6 +382,14 @@ namespace SqlMapper
         // see http://stackoverflow.com/questions/16726709/string-format-with-sql-wildcard-causing-dapper-query-to-break
         public void CheckComplexConcat()
         {
+            var version = connection.Query<string>("SELECT SERVERPROPERTY('ProductVersion')").First();
+
+            if (int.Parse(version.Substring(0, version.IndexOf('.'))) < 11) {
+                Console.Write(" - SKIPPED (SQL Server isn't new enough!)");
+                
+                return;
+            }
+
             string end_wildcard = @"
 SELECT * FROM #users16726709
 WHERE (first_name LIKE CONCAT(@search_term, '%') OR last_name LIKE CONCAT(@search_term, '%'));";
