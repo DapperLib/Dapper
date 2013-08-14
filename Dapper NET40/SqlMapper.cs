@@ -1610,7 +1610,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             #endregion
         }
 #endif
-
+        private const string MultiMapSplitExceptionMessage = "When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id";
 #if !CSHARP30
         internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
@@ -1622,7 +1622,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             if (fieldCount <= startBound)
             {
-                throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+                throw new ArgumentException(MultiMapSplitExceptionMessage, "splitOn");
             }
 
             var effectiveFieldCount = Math.Min(fieldCount - startBound, length);
@@ -1682,7 +1682,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             if (fieldCount <= startBound)
             {
-                throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+                throw new ArgumentException(MultiMapSplitExceptionMessage, "splitOn");
             }
 
             return
@@ -1828,7 +1828,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
         {
-            return parameters.Where(p => Regex.IsMatch(sql, "[@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline));
+            return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline));
         }
 
         /// <summary>
@@ -1861,7 +1861,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (filterParams)
                 {
                     if (identity.sql.IndexOf("@" + prop.Name, StringComparison.InvariantCultureIgnoreCase) < 0
-                        && identity.sql.IndexOf(":" + prop.Name, StringComparison.InvariantCultureIgnoreCase) < 0)
+                        && identity.sql.IndexOf(":" + prop.Name, StringComparison.InvariantCultureIgnoreCase) < 0
+                        && identity.sql.IndexOf("?" + prop.Name, StringComparison.InvariantCultureIgnoreCase) < 0)
                     { // can't see the parameter in the text (even in a comment, etc) - burn it with fire
                         continue;
                     }
@@ -2174,7 +2175,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             if (reader.FieldCount <= startBound)
             {
-                throw new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+                throw new ArgumentException(MultiMapSplitExceptionMessage, "splitOn");
             }
 
             var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
@@ -2372,7 +2373,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                                 }
                                 else
                                 { // use flexible conversion
-                                    il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][value][member-type-token]
+                                    il.Emit(OpCodes.Ldtoken, Nullable.GetUnderlyingType(unboxType) ?? unboxType); // stack is now [target][target][value][member-type-token]
                                     il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
                                     il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
                                     il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]

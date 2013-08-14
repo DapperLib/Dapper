@@ -2387,6 +2387,48 @@ end");
             asDict.ContainsKey("Surname").IsEqualTo(true);
             asDict.ContainsKey("AddressCount").IsEqualTo(false);
         }
+        // see http://stackoverflow.com/questions/16955357/issue-about-dapper
+        public void TestSplitWithMissingMembers()
+        {
+            var result = connection.Query<Topic, Profile, Topic>(
+            @"select 123 as ID, 'abc' as Title,
+                     cast('01 Feb 2013' as datetime) as CreateDate,
+                     'ghi' as Name, 'def' as Phone",
+            (T, P) => { T.Author = P; return T; },
+            null, null, true, "ID,Name").Single();
+
+            result.ID.Equals(123);
+            result.Title.Equals("abc");
+            result.CreateDate.Equals(new DateTime(2013, 2, 1));
+            result.Name.IsNull();
+            result.Content.IsNull();
+
+            result.Author.Phone.Equals("def");
+            result.Author.Name.Equals("ghi");
+            result.Author.ID.Equals(0);
+            result.Author.Address.IsNull();
+        }
+        public class Profile
+        {
+            public int ID { get; set; }
+            public string Name { get; set; }
+            public string Phone { get; set; }
+            public string Address { get; set; }
+            //public ExtraInfo Extra { get; set; }
+        }
+
+        public class Topic
+        {
+            public int ID { get; set; }
+            public string Title { get; set; }
+            public DateTime CreateDate { get; set; }
+            public string Content { get; set; }
+            public int UID { get; set; }
+            public int TestColum { get; set; }
+            public string Name { get; set; }
+            public Profile Author { get; set; }
+            //public Attachment Attach { get; set; }
+        }
 
         // see http://stackoverflow.com/questions/13127886/dapper-returns-null-for-singleordefaultdatediff
         public void TestNullFromInt_NoRows()
@@ -2476,6 +2518,73 @@ end");
 			var first = result.First();
 			((string)first.value).IsEqualTo("test");
 		}
+
+        public void TestIssue17648290()
+        {
+            var p = new DynamicParameters();
+            int code = 1, getMessageControlId = 2;
+            p.Add("@Code", code);
+            p.Add("@MessageControlId", getMessageControlId);
+            p.Add("@SuccessCode", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            p.Add("@ErrorDescription", dbType: DbType.String, direction: ParameterDirection.Output, size: 255);
+            connection.Execute(@"CREATE PROCEDURE #up_MessageProcessed_get
+        @Code varchar(10),
+        @MessageControlID varchar(22),
+        @SuccessCode int OUTPUT,
+        @ErrorDescription varchar(255) OUTPUT
+        AS
+
+        BEGIN
+
+        Select 2 as MessageProcessID, 38349348 as StartNum, 3874900 as EndNum, GETDATE() as StartDate, GETDATE() as EndDate
+        SET @SuccessCode = 0
+        SET @ErrorDescription = 'Completed successfully'
+        END");
+            var result = connection.Query(sql: "#up_MessageProcessed_get", param: p, commandType: CommandType.StoredProcedure);
+            var row = result.Single();
+            ((int)row.MessageProcessID).IsEqualTo(2);
+            ((int)row.StartNum).IsEqualTo(38349348);
+            ((int)row.EndNum).IsEqualTo(3874900);
+            DateTime startDate = row.StartDate, endDate = row.EndDate;
+            p.Get<int>("SuccessCode").IsEqualTo(0);
+            p.Get<string>("ErrorDescription").IsEqualTo("Completed successfully");
+        }
+
+        public void TestDoubleDecimalConversions_SO18228523_RightWay()
+        {
+            var row = connection.Query<HasDoubleDecimal>(
+                "select cast(1 as float) as A, cast(2 as float) as B, cast(3 as decimal) as C, cast(4 as decimal) as D").Single();
+            row.A.Equals(1.0);
+            row.B.Equals(2.0);
+            row.C.Equals(3.0M);
+            row.D.Equals(4.0M);
+        }
+        public void TestDoubleDecimalConversions_SO18228523_WrongWay()
+        {
+            var row = connection.Query<HasDoubleDecimal>(
+                "select cast(1 as decimal) as A, cast(2 as decimal) as B, cast(3 as float) as C, cast(4 as float) as D").Single();
+            row.A.Equals(1.0);
+            row.B.Equals(2.0);
+            row.C.Equals(3.0M);
+            row.D.Equals(4.0M);
+        }
+        public void TestDoubleDecimalConversions_SO18228523_Nulls()
+        {
+            var row = connection.Query<HasDoubleDecimal>(
+                "select cast(null as decimal) as A, cast(null as decimal) as B, cast(null as float) as C, cast(null as float) as D").Single();
+            row.A.Equals(0.0);
+            row.B.IsNull();
+            row.C.Equals(0.0M);
+            row.D.IsNull();
+        }
+
+        class HasDoubleDecimal
+        {
+            public double A { get; set; }
+            public double? B { get; set; }
+            public decimal C { get; set; }
+            public decimal? D { get; set; }
+        }
 
 #if POSTGRESQL
 
