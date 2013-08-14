@@ -2322,61 +2322,74 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                             else
                             {
                                 // not a direct match; need to tweak the unbox
-                                bool handled = true;
-                                OpCode opCode = default(OpCode);
-                                if (dataTypeCode == TypeCode.Decimal || unboxTypeCode == TypeCode.Decimal)
-                                {   // no IL level conversions to/from decimal; I guess we could use the static operators, but
-                                    // this feels an edge-case
-                                    handled = false;
+                                MethodInfo op;
+                                if ((op = GetOperator(dataType, nullUnderlyingType ?? unboxType)) != null)
+                                { // this is handy for things like decimal <===> double
+                                    il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
+                                    il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
                                 }
                                 else
                                 {
-                                    switch (unboxTypeCode)
+                                    bool handled = true;
+                                    OpCode opCode = default(OpCode);
+                                    if (dataTypeCode == TypeCode.Decimal || unboxTypeCode == TypeCode.Decimal)
+                                    {   // no IL level conversions to/from decimal; I guess we could use the static operators, but
+                                        // this feels an edge-case
+                                        handled = false;
+                                    }
+                                    else
                                     {
-                                        case TypeCode.Byte:
-                                            opCode = OpCodes.Conv_Ovf_I1_Un; break;
-                                        case TypeCode.SByte:
-                                            opCode = OpCodes.Conv_Ovf_I1; break;
-                                        case TypeCode.UInt16:
-                                            opCode = OpCodes.Conv_Ovf_I2_Un; break;
-                                        case TypeCode.Int16:
-                                            opCode = OpCodes.Conv_Ovf_I2; break;
-                                        case TypeCode.UInt32:
-                                            opCode = OpCodes.Conv_Ovf_I4_Un; break;
-                                        case TypeCode.Boolean: // boolean is basically an int, at least at this level
-                                        case TypeCode.Int32:
-                                            opCode = OpCodes.Conv_Ovf_I4; break;
-                                        case TypeCode.UInt64:
-                                            opCode = OpCodes.Conv_Ovf_I8_Un; break;
-                                        case TypeCode.Int64:
-                                            opCode = OpCodes.Conv_Ovf_I8; break;
-                                        case TypeCode.Single:
-                                            opCode = OpCodes.Conv_R4; break;
-                                        case TypeCode.Double:
-                                            opCode = OpCodes.Conv_R8; break;
-                                        default:
-                                            handled = false;
-                                            break;
+                                        switch (unboxTypeCode)
+                                        {
+                                            case TypeCode.Byte:
+                                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
+                                            case TypeCode.SByte:
+                                                opCode = OpCodes.Conv_Ovf_I1; break;
+                                            case TypeCode.UInt16:
+                                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
+                                            case TypeCode.Int16:
+                                                opCode = OpCodes.Conv_Ovf_I2; break;
+                                            case TypeCode.UInt32:
+                                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
+                                            case TypeCode.Boolean: // boolean is basically an int, at least at this level
+                                            case TypeCode.Int32:
+                                                opCode = OpCodes.Conv_Ovf_I4; break;
+                                            case TypeCode.UInt64:
+                                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
+                                            case TypeCode.Int64:
+                                                opCode = OpCodes.Conv_Ovf_I8; break;
+                                            case TypeCode.Single:
+                                                opCode = OpCodes.Conv_R4; break;
+                                            case TypeCode.Double:
+                                                opCode = OpCodes.Conv_R8; break;
+                                            default:
+                                                handled = false;
+                                                break;
+                                        }
+                                    }
+                                    if (handled)
+                                    { // unbox as the data-type, then use IL-level convert
+                                        il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
+                                        il.Emit(opCode); // stack is now [target][target][typed-value]
+                                        if (unboxTypeCode == TypeCode.Boolean)
+                                        { // compare to zero; I checked "csc" - this is the trick it uses; nice
+                                            il.Emit(OpCodes.Ldc_I4_0);
+                                            il.Emit(OpCodes.Ceq);
+                                            il.Emit(OpCodes.Ldc_I4_0);
+                                            il.Emit(OpCodes.Ceq);
+                                        }
+                                    }
+                                    else
+                                    { // use flexible conversion
+                                        il.Emit(OpCodes.Ldtoken, nullUnderlyingType ?? unboxType); // stack is now [target][target][value][member-type-token]
+                                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
+                                        il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
+                                        il.Emit(OpCodes.Unbox_Any, nullUnderlyingType ?? unboxType); // stack is now [target][target][typed-value]
                                     }
                                 }
-                                if (handled)
-                                { // unbox as the data-type, then use IL-level convert
-                                    il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
-                                    il.Emit(opCode); // stack is now [target][target][typed-value]
-                                    if (unboxTypeCode == TypeCode.Boolean)
-                                    { // compare to zero; I checked "csc" - this is the trick it uses; nice
-                                        il.Emit(OpCodes.Ldc_I4_0);
-                                        il.Emit(OpCodes.Ceq);
-                                        il.Emit(OpCodes.Ldc_I4_0);
-                                        il.Emit(OpCodes.Ceq);
-                                    }
-                                }
-                                else
-                                { // use flexible conversion
-                                    il.Emit(OpCodes.Ldtoken, Nullable.GetUnderlyingType(unboxType) ?? unboxType); // stack is now [target][target][value][member-type-token]
-                                    il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
-                                    il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
-                                    il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+                                if (nullUnderlyingType != null)
+                                {
+                                    il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
                                 }
 
                             }
@@ -2467,6 +2480,27 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             il.Emit(OpCodes.Ret);
 
             return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader, object>));
+        }
+        static MethodInfo GetOperator(Type from, Type to)
+        {
+            if (to == null) return null;
+            MethodInfo[] fromMethods, toMethods;
+            return ResolveOperator(fromMethods = from.GetMethods(BindingFlags.Static | BindingFlags.Public), from, to, "op_Implicit")
+                ?? ResolveOperator(toMethods = to.GetMethods(BindingFlags.Static | BindingFlags.Public), from, to, "op_Implicit")
+                ?? ResolveOperator(fromMethods, from, to, "op_Explicit")
+                ?? ResolveOperator(toMethods, from, to, "op_Explicit");
+            
+        }
+        static MethodInfo ResolveOperator(MethodInfo[] methods, Type from, Type to, string name)
+        {
+            for (int i = 0; i < methods.Length; i++)
+            {
+                if (methods[i].Name != name || methods[i].ReturnType != to) continue;
+                var args = methods[i].GetParameters();
+                if (args.Length != 1 || args[0].ParameterType != from) continue;
+                return methods[i];
+            }
+            return null;
         }
 
         private static void LoadLocal(ILGenerator il, int index)
