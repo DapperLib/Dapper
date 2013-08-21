@@ -63,7 +63,7 @@ namespace Dapper.Contrib.Extensions
                 return pis;
             }
 
-            var properties = type.GetProperties().Where(IsWriteable);
+            var properties = type.GetProperties().Where(IsWriteable).ToArray();
             TypeProperties[type.TypeHandle] = properties;
             return properties;
         }
