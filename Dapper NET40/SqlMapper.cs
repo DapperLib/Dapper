@@ -264,7 +264,7 @@ namespace Dapper
         {
             lock (_queryCache)
             {
-                 _queryCache.Clear();
+                _queryCache.Clear();
             }
             OnQueryCachePurged();
         }
@@ -656,7 +656,7 @@ namespace Dapper
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
-        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, IDbTransaction transaction) 
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
         {
             return QueryMultiple(cnn, sql, param, transaction, null, null);
         }
@@ -664,7 +664,7 @@ namespace Dapper
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
-        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, CommandType commandType) 
+        public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param, CommandType commandType)
         {
             return QueryMultiple(cnn, sql, param, null, null, commandType);
         }
@@ -683,7 +683,7 @@ namespace Dapper
         /// <returns>Number of rows affected</returns>
         public static int Execute(
 #if CSHARP30
-            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
 this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
@@ -741,35 +741,40 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param) {
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param)
+        {
             return Query(cnn, sql, param, null, true, null, null);
         }
 
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction) {
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
+        {
             return Query(cnn, sql, param, transaction, true, null, null);
         }
 
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, CommandType? commandType) {
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, CommandType? commandType)
+        {
             return Query(cnn, sql, param, null, true, null, commandType);
         }
 
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType? commandType) {
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType? commandType)
+        {
             return Query(cnn, sql, param, transaction, true, null, commandType);
         }
 
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<IDictionary<string,object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType) {
+        public static IEnumerable<IDictionary<string, object>> Query(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType)
+        {
             return Query<IDictionary<string, object>>(cnn, sql, param, transaction, buffered, commandTimeout, commandType);
         }
 #endif
@@ -783,7 +788,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// </returns>
         public static IEnumerable<T> Query<T>(
 #if CSHARP30
-            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType
 #else
 this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
 #endif
@@ -797,8 +802,8 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
         public static GridReader QueryMultiple(
-#if CSHARP30  
-            this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
             this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
@@ -908,8 +913,8 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <param name="commandType">Is it a stored proc or a batch?</param>
         /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(
-#if CSHARP30  
-            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
+#if CSHARP30
+this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
 this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
@@ -937,7 +942,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic 
         /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(
 #if CSHARP30
-            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
+this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
 this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
@@ -966,7 +971,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, 
         /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(
 #if CSHARP30
-            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
+this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
 this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
@@ -1064,7 +1069,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return buffered ? results.ToList() : results;
         }
 
-         
+
         static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, string splitOn, int? commandTimeout, CommandType? commandType, IDataReader reader, Identity identity)
         {
             identity = identity ?? new Identity(sql, commandType, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
@@ -1247,7 +1252,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
                     else
                     {
-                        info.ParamReader = CreateParamInfoGenerator(identity, false);
+                        info.ParamReader = CreateParamInfoGenerator(identity, false, true);
                     }
                 }
                 SetQueryCache(identity, info);
@@ -1265,7 +1270,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
 #else
-            if(type.IsAssignableFrom(typeof(Dictionary<string,object>)))
+            if (type.IsAssignableFrom(typeof(Dictionary<string, object>)))
             {
                 return GetDictionaryDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
@@ -1497,7 +1502,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return GetEnumerator();
             }
 
-            #region Implementation of ICollection<KeyValuePair<string,object>>
+        #region Implementation of ICollection<KeyValuePair<string,object>>
 
             void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
             {
@@ -1538,7 +1543,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             #endregion
 
-            #region Implementation of IDictionary<string,object>
+        #region Implementation of IDictionary<string,object>
 
             bool IDictionary<string, object>.ContainsKey(string key)
             {
@@ -1831,13 +1836,22 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline));
         }
 
+
+        // look for ? / @ / : *by itself*
+        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9_])[?@:](?![a-zA-Z0-9_])", RegexOptions.Compiled);
+        
         /// <summary>
         /// Internal use only
         /// </summary>
-        public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates)
+        public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused)
         {
             Type type = identity.parametersType;
-            bool filterParams = identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
+            
+            bool filterParams = false;
+            if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
+            {
+                filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
+            }
             var dm = new DynamicMethod(string.Format("ParamInfo{0}", Guid.NewGuid()), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();
@@ -1851,11 +1865,63 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.Emit(OpCodes.Ldarg_0); // stack is now [command]
             il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetProperty("Parameters").GetGetMethod(), null); // stack is now [parameters]
 
-            IEnumerable<PropertyInfo> props = type.GetProperties().Where(p => p.GetIndexParameters().Length == 0).OrderBy(p => p.Name);
+            var propsArr = type.GetProperties().Where(p => p.GetIndexParameters().Length == 0).ToArray();
+            var ctors = type.GetConstructors();
+            ParameterInfo[] ctorParams;
+            IEnumerable<PropertyInfo> props = null;
+            // try to detect tuple patterns, e.g. anon-types, and use that to choose the order
+            // otherwise: alphabetical
+            if (ctors.Length == 1 && propsArr.Length == (ctorParams = ctors[0].GetParameters()).Length)
+            {
+                // check if reflection was kind enough to put everything in the right order for us
+                bool ok = true;
+                for (int i = 0; i < propsArr.Length; i++)
+                {
+                    if (!string.Equals(propsArr[i].Name, ctorParams[i].Name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+                if(ok)
+                {
+                    // pre-sorted; the reflection gods have smiled upon us
+                    props = propsArr;
+                }
+                else { // might still all be accounted for; check the hard way
+                    var positionByName = new Dictionary<string,int>(StringComparer.InvariantCultureIgnoreCase);
+                    foreach(var param in ctorParams)
+                    {
+                        positionByName[param.Name] = param.Position;
+                    }
+                    if (positionByName.Count == propsArr.Length)
+                    {
+                        int[] positions = new int[propsArr.Length];
+                        ok = true;
+                        for (int i = 0; i < propsArr.Length; i++)
+                        {
+                            int pos;
+                            if (!positionByName.TryGetValue(propsArr[i].Name, out pos))
+                            {
+                                ok = false;
+                                break;
+                            }
+                            positions[i] = pos;
+                        }
+                        if (ok)
+                        {
+                            Array.Sort(positions, propsArr);
+                            props = propsArr;
+                        }
+                    }
+                }
+            }
+            if(props == null) props = propsArr.OrderBy(x => x.Name);
             if (filterParams)
             {
                 props = FilterParameters(props, identity.sql);
             }
+
             foreach (var prop in props)
             {
                 if (filterParams)
@@ -2154,7 +2220,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <returns></returns>
         public static Func<IDataReader, object> GetTypeDeserializer(
 #if CSHARP30
-            Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
+Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing
 #else
 Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
 #endif
@@ -2489,7 +2555,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 ?? ResolveOperator(toMethods = to.GetMethods(BindingFlags.Static | BindingFlags.Public), from, to, "op_Implicit")
                 ?? ResolveOperator(fromMethods, from, to, "op_Explicit")
                 ?? ResolveOperator(toMethods, from, to, "op_Explicit");
-            
+
         }
         static MethodInfo ResolveOperator(MethodInfo[] methods, Type from, Type to, string name)
         {
@@ -2730,7 +2796,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// <summary>
             /// Read multiple objects from a single recordset on the grid
             /// </summary>
-#if CSHARP30  
+#if CSHARP30
             public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn, bool buffered)
 #else
             public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn = "id", bool buffered = true)
@@ -2752,7 +2818,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// <summary>
             /// Read multiple objects from a single recordset on the grid
             /// </summary>
-#if CSHARP30  
+#if CSHARP30
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn, bool buffered)
 #else
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn = "id", bool buffered = true)
@@ -2775,7 +2841,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
-#if CSHARP30  
+#if CSHARP30
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn, bool buffered)
 #else
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn = "id", bool buffered = true)
@@ -2896,7 +2962,10 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// <summary>
         /// construct a dynamic parameter bag
         /// </summary>
-        public DynamicParameters() { }
+        public DynamicParameters()
+        {
+            RemoveUnused = true;
+        }
 
         /// <summary>
         /// construct a dynamic parameter bag
@@ -2904,6 +2973,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// <param name="template">can be an anonymous type or a DynamicParameters bag</param>
         public DynamicParameters(object template)
         {
+            RemoveUnused = true;
             AddDynamicParams(template);
         }
 
@@ -2914,7 +2984,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// <param name="param"></param>
         public void AddDynamicParams(
 #if CSHARP30
-            object param
+object param
 #else
 dynamic param
 #endif
@@ -2976,7 +3046,7 @@ dynamic param
         /// <param name="size"></param>
         public void Add(
 #if CSHARP30
-            string name, object value, DbType? dbType, ParameterDirection? direction, int? size
+string name, object value, DbType? dbType, ParameterDirection? direction, int? size
 #else
 string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null
 #endif
@@ -3006,6 +3076,11 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
 
         /// <summary>
+        /// If true, the command-text is inspected and only values that are clearly used are included on the connection
+        /// </summary>
+        public bool RemoveUnused { get; set; }
+
+        /// <summary>
         /// Add all the parameters needed to the command just before it executes
         /// </summary>
         /// <param name="command">The raw command prior to execution</param>
@@ -3023,7 +3098,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         if (!paramReaderCache.TryGetValue(newIdent, out appender))
                         {
-                            appender = SqlMapper.CreateParamInfoGenerator(newIdent, true);
+                            appender = SqlMapper.CreateParamInfoGenerator(newIdent, true, RemoveUnused);
                             paramReaderCache[newIdent] = appender;
                         }
                     }

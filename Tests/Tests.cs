@@ -67,7 +67,7 @@ namespace SqlMapper
         }
 
         public void TestMultiMapWithConstructor()
-        { 
+        {
             var createSql = @"
                 create table #Users (Id int, Name varchar(20))
                 create table #Posts (Id int, OwnerId int, Content varchar(20))
@@ -79,20 +79,25 @@ namespace SqlMapper
                 insert #Posts values(2, 99, 'Sams Post2')
                 insert #Posts values(3, null, 'no ones post')";
             connection.Execute(createSql);
-            string sql = @"select * from #Posts p 
+            try
+            {
+                string sql = @"select * from #Posts p 
                            left join #Users u on u.Id = p.OwnerId 
                            Order by p.Id";
-            PostWithConstructor[] data = connection.Query<PostWithConstructor, UserWithConstructor, PostWithConstructor>(sql, (post, user) => { post.Owner = user; return post;}).ToArray();
-            var p = data.First();
+                PostWithConstructor[] data = connection.Query<PostWithConstructor, UserWithConstructor, PostWithConstructor>(sql, (post, user) => { post.Owner = user; return post; }).ToArray();
+                var p = data.First();
 
-            p.FullContent.IsEqualTo("Sams Post1");
-            p.Ident.IsEqualTo(1);
-            p.Owner.FullName.IsEqualTo("Sam");
-            p.Owner.Ident.IsEqualTo(99);
+                p.FullContent.IsEqualTo("Sams Post1");
+                p.Ident.IsEqualTo(1);
+                p.Owner.FullName.IsEqualTo("Sam");
+                p.Owner.Ident.IsEqualTo(99);
 
-            data[2].Owner.IsNull();
-
-            connection.Execute("drop table #Users drop table #Posts");
+                data[2].Owner.IsNull();
+            }
+            finally
+            {
+                connection.Execute("drop table #Users drop table #Posts");
+            }
         }
 
 
@@ -159,7 +164,7 @@ namespace SqlMapper
         public void TestNoDefaultConstructor()
         {
             var guid = Guid.NewGuid();
-            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, 'Dapper' s1, G1 = @id", new { Id = guid }).First();
+            NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, 'Dapper' s1, G1 = @id", new { id = guid }).First();
             nodef.A.IsEqualTo(0);
             nodef.B.IsEqualTo(null);
             nodef.F.IsEqualTo(0);
@@ -231,7 +236,7 @@ namespace SqlMapper
         }
 
         // http://stackoverflow.com/q/8593871
-        public void TestAbstractInheritance() 
+        public void TestAbstractInheritance()
         {
             var order = connection.Query<AbstractInheritance.ConcreteOrder>("select 1 Internal,2 Protected,3 [Public],4 Concrete").First();
 
@@ -279,7 +284,7 @@ namespace SqlMapper
 #pragma warning restore 0649
             public int Age { get; set; }
             public TrapEnum Trap { get; set; }
-        
+
         }
 
         public void TestStructs()
@@ -315,35 +320,46 @@ namespace SqlMapper
         public void TestSchemaChanged()
         {
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
-            var d = connection.Query<Dog>("select * from #dog").Single();
-            d.Name.IsEqualTo("Alf");
-            d.Age.IsEqualTo(1);
-            connection.Execute("alter table #dog drop column Name");
-            d = connection.Query<Dog>("select * from #dog").Single();
-            d.Name.IsNull();
-            d.Age.IsEqualTo(1);
-            connection.Execute("drop table #dog");
+            try
+            {
+                var d = connection.Query<Dog>("select * from #dog").Single();
+                d.Name.IsEqualTo("Alf");
+                d.Age.IsEqualTo(1);
+                connection.Execute("alter table #dog drop column Name");
+                d = connection.Query<Dog>("select * from #dog").Single();
+                d.Name.IsNull();
+                d.Age.IsEqualTo(1);
+            }
+            finally
+            {
+                connection.Execute("drop table #dog");
+            }
         }
 
         public void TestSchemaChangedMultiMap()
         {
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
-            var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+            try
+            {
+                var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
 
-            tuple.Item1.Name.IsEqualTo("Alf");
-            tuple.Item1.Age.IsEqualTo(1);
-            tuple.Item2.Name.IsEqualTo("Alf");
-            tuple.Item2.Age.IsEqualTo(1);
+                tuple.Item1.Name.IsEqualTo("Alf");
+                tuple.Item1.Age.IsEqualTo(1);
+                tuple.Item2.Name.IsEqualTo("Alf");
+                tuple.Item2.Age.IsEqualTo(1);
 
-            connection.Execute("alter table #dog drop column Name");
-            tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+                connection.Execute("alter table #dog drop column Name");
+                tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
 
-            tuple.Item1.Name.IsNull();
-            tuple.Item1.Age.IsEqualTo(1);
-            tuple.Item2.Name.IsNull();
-            tuple.Item2.Age.IsEqualTo(1);
-
-            connection.Execute("drop table #dog");
+                tuple.Item1.Name.IsNull();
+                tuple.Item1.Age.IsEqualTo(1);
+                tuple.Item2.Name.IsNull();
+                tuple.Item2.Age.IsEqualTo(1);
+            }
+            finally
+            {
+                connection.Execute("drop table #dog");
+            }
         }
 
         public void TestReadMultipleIntegersWithSplitOnAny()
@@ -404,7 +420,7 @@ WHERE (first_name LIKE {0} OR last_name LIKE {0});";
             string term = "F"; // the term the user searched for
 
             connection.Execute(@"create table #users16726709 (first_name varchar(200), last_name varchar(200))
-insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('Tony','Farcus') insert #users16726709 values ('Albert','Tenof')");
+insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('Tony','Farcus') insert #users16726709 values ('Albert','TenoF')");
 
             // Using Dapper
             connection.Query(end_wildcard, new { search_term = term }).Count().IsEqualTo(2);
@@ -462,7 +478,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         public void TestExtraFields()
         {
             var guid = Guid.NewGuid();
-            var dog = connection.Query<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { Id = guid });
+            var dog = connection.Query<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { id = guid });
 
             dog.Count()
                .IsEqualTo(1);
@@ -474,6 +490,20 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
                 .IsEqualTo(guid);
         }
 
+        // see http://stackoverflow.com/q/18847510/23354
+        public void TestOleDbParameters()
+        {
+            using (var conn = new System.Data.OleDb.OleDbConnection(Program.OleDbConnectionString))
+            {
+                var row = conn.Query("select Id = ?, Age = ?",
+                    new { foo = 12, bar = 23 } // these names DO NOT MATTER!!!
+                ).Single();
+                int age = row.Age;
+                int id = row.Id;
+                age.IsEqualTo(23);
+                id.IsEqualTo(12);
+            }
+        }
 
         public void TestStrongType()
         {
@@ -542,10 +572,17 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         public void TestExecuteMultipleCommand()
         {
             connection.Execute("create table #t(i int)");
-            int tally = connection.Execute(@"insert #t (i) values(@a)", new[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
-            int sum = connection.Query<int>("select sum(i) from #t drop table #t").First();
-            tally.IsEqualTo(4);
-            sum.IsEqualTo(10);
+            try
+            {
+                int tally = connection.Execute(@"insert #t (i) values(@a)", new[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
+                int sum = connection.Query<int>("select sum(i) from #t").First();
+                tally.IsEqualTo(4);
+                sum.IsEqualTo(10);
+            }
+            finally
+            {
+                connection.Execute("drop table #t");
+            }
         }
 
         class Student
@@ -557,14 +594,21 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         public void TestExecuteMultipleCommandStrongType()
         {
             connection.Execute("create table #t(Name nvarchar(max), Age int)");
-            int tally = connection.Execute(@"insert #t (Name,Age) values(@Name, @Age)", new List<Student> 
+            try
+            {
+                int tally = connection.Execute(@"insert #t (Name,Age) values(@Name, @Age)", new List<Student> 
             {
                 new Student{Age = 1, Name = "sam"},
                 new Student{Age = 2, Name = "bob"}
             });
-            int sum = connection.Query<int>("select sum(Age) from #t drop table #t").First();
-            tally.IsEqualTo(2);
-            sum.IsEqualTo(3);
+                int sum = connection.Query<int>("select sum(Age) from #t").First();
+                tally.IsEqualTo(2);
+                sum.IsEqualTo(3);
+            }
+            finally
+            {
+                connection.Execute("drop table #t");
+            }
         }
 
         public void TestExecuteMultipleCommandObjectArray()
@@ -591,7 +635,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             public int _priv;
             private int Priv { set { _priv = value; } }
 
-            private int PrivGet { get { return _priv;} }
+            private int PrivGet { get { return _priv; } }
         }
 
         public void TestSetInternal()
@@ -608,7 +652,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         public void TestExpandWithNullableFields()
         {
             var row = connection.Query("select null A, 2 B").Single();
-            
+
             ((int?)row.A)
                 .IsNull();
 
@@ -712,23 +756,27 @@ select * from @bar", new { foo }).Single();
                 insert #Posts values(3, null, 'no ones post')
 ";
             connection.Execute(createSql);
-
-            var sql =
-@"select * from #Posts p 
+            try
+            {
+                var sql =
+    @"select * from #Posts p 
 left join #Users u on u.Id = p.OwnerId 
 Order by p.Id";
 
-            var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
-            var p = data.First();
+                var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
+                var p = data.First();
 
-            p.Content.IsEqualTo("Sams Post1");
-            p.Id.IsEqualTo(1);
-            p.Owner.Name.IsEqualTo("Sam");
-            p.Owner.Id.IsEqualTo(99);
+                p.Content.IsEqualTo("Sams Post1");
+                p.Id.IsEqualTo(1);
+                p.Owner.Name.IsEqualTo("Sam");
+                p.Owner.Id.IsEqualTo(99);
 
-            data[2].Owner.IsNull();
-
-            connection.Execute("drop table #Users drop table #Posts");
+                data[2].Owner.IsNull();
+            }
+            finally
+            {
+                connection.Execute("drop table #Users drop table #Posts");
+            }
         }
 
 
@@ -807,7 +855,7 @@ Order by p.Id
                 {
                     // that's expected
                 }
-                
+
             }
         }
         public void TestQueryMultipleNonBufferedCcorrectOrder()
@@ -1592,26 +1640,30 @@ end");
 
                 insert #Comments values(1, 1, 'Comment 1')";
             connection.Execute(createSql);
-
-            var sql = @"SELECT p.* FROM #Posts p
+            try
+            {
+                var sql = @"SELECT p.* FROM #Posts p
 
 select p.*, u.Id, u.Name + '0' Name, c.Id, c.CommentData from #Posts p 
 left join #Users u on u.Id = p.OwnerId 
-left join #Comments c on c.postId = p.Id
+left join #Comments c on c.PostId = p.Id
 where p.Id = 1
 Order by p.Id";
 
-            var grid = connection.QueryMultiple(sql);
+                var grid = connection.QueryMultiple(sql);
 
-            var post1 = grid.Read<Post>().ToList();
+                var post1 = grid.Read<Post>().ToList();
 
-            var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault();
+                var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault();
 
-            post2.Comment.Id.IsEqualTo(1);
-            post2.Owner.Id.IsEqualTo(99);
+                post2.Comment.Id.IsEqualTo(1);
+                post2.Owner.Id.IsEqualTo(99);
 
-
-            connection.Execute("drop table #Users drop table #Posts drop table #Comments");
+            }
+            finally
+            {
+                connection.Execute("drop table #Users drop table #Posts drop table #Comments");
+            }
         }
 
         public class DbParams : Dapper.SqlMapper.IDynamicParameters, IEnumerable<IDbDataParameter>
@@ -1656,24 +1708,28 @@ Order by p.Id";
                 insert #Posts values(1, 99, 'Sams Post1')
                 insert #Posts values(2, 99, 'Sams Post2')
                 insert #Posts values(3, null, 'no ones post')";
+            try
+            {
+                connection.Execute(createSql);
 
-            connection.Execute(createSql);
-
-            var sql = @"SELECT * FROM #Users ORDER BY Id
+                var sql = @"SELECT * FROM #Users ORDER BY Id
                         SELECT * FROM #Posts ORDER BY Id DESC";
 
-            var grid = connection.QueryMultiple(sql);
+                var grid = connection.QueryMultiple(sql);
 
-            var users = grid.Read().ToList();
-            var posts = grid.Read().ToList();
+                var users = grid.Read().ToList();
+                var posts = grid.Read().ToList();
 
-            users.Count.IsEqualTo(2);
-            posts.Count.IsEqualTo(3);
+                users.Count.IsEqualTo(2);
+                posts.Count.IsEqualTo(3);
 
-            ((int)users.First().Id).IsEqualTo(2);
-            ((int)posts.First().Id).IsEqualTo(3);
-
-            connection.Execute("drop table #Users drop table #Posts");
+                ((int)users.First().Id).IsEqualTo(2);
+                ((int)posts.First().Id).IsEqualTo(3);
+            }
+            finally
+            {
+                connection.Execute("drop table #Users drop table #Posts");
+            }
         }
 
         public void TestDynamicParamNullSupport()
@@ -2056,7 +2112,7 @@ Order by p.Id";
         {
             try
             {
-                
+
                 connection.Execute("create table #ResultsChange (X int);create table #ResultsChange2 (Y int);insert #ResultsChange (X) values(1);insert #ResultsChange2 (Y) values(1);");
 
                 var obj1 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
@@ -2081,7 +2137,8 @@ Order by p.Id";
                 obj4.X.IsEqualTo(1);
                 obj4.Y.IsEqualTo(1);
                 obj4.Z.IsEqualTo(2);
-            } finally
+            }
+            finally
             {
                 connection.Execute("drop table #ResultsChange;drop table #ResultsChange2;");
             }
@@ -2101,7 +2158,7 @@ Order by p.Id";
             item.B.IsEqualTo("BVal");
 
             // custom mapping
-            var map = new CustomPropertyTypeMap(typeof(TypeWithMapping), 
+            var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
                 (type, columnName) => type.GetProperties().Where(prop => prop.GetCustomAttributes(false).OfType<DescriptionAttribute>().Any(attr => attr.Description == columnName)).FirstOrDefault());
             Dapper.SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
 
@@ -2132,7 +2189,7 @@ Order by p.Id";
             public long C { get; set; }
             public bool D { get; set; }
         }
-        
+
         public void TestWrongTypes_WithRightTypes()
         {
             var item = connection.Query<WrongTypes>("select 1 as A, cast(2.0 as float) as B, cast(3 as bigint) as C, cast(1 as bit) as D").Single();
@@ -2141,7 +2198,7 @@ Order by p.Id";
             item.C.Equals(3L);
             item.D.Equals(true);
         }
-        
+
         public void TestWrongTypes_WithWrongTypes()
         {
             var item = connection.Query<WrongTypes>("select cast(1.0 as float) as A, 2 as B, 3 as C, cast(1 as bigint) as D").Single();
@@ -2193,14 +2250,14 @@ end");
 
         public class Issue40_User
         {
-          public Issue40_User()
-          {
-             Email = Password = String.Empty;
-          }
-          public int UserID { get; set; }
-          public string Email { get; set; }
-          public string Password { get; set; }
-          public bool Active { get; set; }
+            public Issue40_User()
+            {
+                Email = Password = String.Empty;
+            }
+            public int UserID { get; set; }
+            public string Email { get; set; }
+            public string Password { get; set; }
+            public bool Active { get; set; }
         }
 
         SqlConnection GetClosedConnection()
@@ -2324,11 +2381,13 @@ end");
                 var two = reader.Read<int>().ToArray();
                 var three = reader.Read<int>().ToArray();
                 var four = reader.Read<int>().ToArray();
-                try { // only returned four grids; expect a fifth read to fail
+                try
+                { // only returned four grids; expect a fifth read to fail
                     reader.Read<int>();
                     throw new InvalidOperationException("this should not have worked!");
                 }
-                catch (ObjectDisposedException ex) { // expected; success
+                catch (ObjectDisposedException ex)
+                { // expected; success
                     ex.Message.IsEqualTo("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.");
                 }
 
@@ -2345,7 +2404,7 @@ end");
         {
             var obj = connection.Query("select 1 as [a], 2 as [b], 3 as [c]").Single();
             ((int)obj.a).IsEqualTo(1);
-            IDictionary<string,object> dict = obj;
+            IDictionary<string, object> dict = obj;
             Assert.Equals(3, dict.Count);
             Assert.IsTrue(dict.Remove("a"));
             Assert.IsFalse(dict.Remove("d"));
@@ -2501,30 +2560,30 @@ end");
             }
         }
 
-		public void TestDapperTableMetadataRetrieval()
-		{
-			// Test for a bug found in CS 51509960 where the following sequence would result in an InvalidOperationException being
-			// thrown due to an attempt to access a disposed of DataReader:
-			//
-			// - Perform a dynamic query that yields no results
-			// - Add data to the source of that query
-			// - Perform a the same query again
-			connection.Execute("CREATE TABLE #sut (value varchar(10) NOT NULL PRIMARY KEY)");
-			connection.Query("SELECT value FROM #sut").IsSequenceEqualTo(Enumerable.Empty<dynamic>());
-			
-			connection.Execute("INSERT INTO #sut (value) VALUES ('test')").IsEqualTo(1);
-			var result = connection.Query("SELECT value FROM #sut");
-			
-			var first = result.First();
-			((string)first.value).IsEqualTo("test");
-		}
+        public void TestDapperTableMetadataRetrieval()
+        {
+            // Test for a bug found in CS 51509960 where the following sequence would result in an InvalidOperationException being
+            // thrown due to an attempt to access a disposed of DataReader:
+            //
+            // - Perform a dynamic query that yields no results
+            // - Add data to the source of that query
+            // - Perform a the same query again
+            connection.Execute("CREATE TABLE #sut (value varchar(10) NOT NULL PRIMARY KEY)");
+            connection.Query("SELECT value FROM #sut").IsSequenceEqualTo(Enumerable.Empty<dynamic>());
+
+            connection.Execute("INSERT INTO #sut (value) VALUES ('test')").IsEqualTo(1);
+            var result = connection.Query("SELECT value FROM #sut");
+
+            var first = result.First();
+            ((string)first.value).IsEqualTo("test");
+        }
 
         public void TestIssue17648290()
         {
             var p = new DynamicParameters();
             int code = 1, getMessageControlId = 2;
             p.Add("@Code", code);
-            p.Add("@MessageControlId", getMessageControlId);
+            p.Add("@MessageControlID", getMessageControlId);
             p.Add("@SuccessCode", dbType: DbType.Int32, direction: ParameterDirection.Output);
             p.Add("@ErrorDescription", dbType: DbType.String, direction: ParameterDirection.Output, size: 255);
             connection.Execute(@"CREATE PROCEDURE #up_MessageProcessed_get

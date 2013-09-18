@@ -28,11 +28,12 @@ namespace SqlMapper
     class Program
     {
 
-        public static readonly string connectionString = "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
+        public const string ConnectionString = "Data Source=.;Initial Catalog=tempdb;Integrated Security=True",
+            OleDbConnectionString = "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
         public static SqlConnection GetOpenConnection()
         {
-            var connection = new SqlConnection(connectionString);
+            var connection = new SqlConnection(ConnectionString);
             connection.Open();
             return connection;
         }

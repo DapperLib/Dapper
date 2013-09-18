@@ -78,7 +78,7 @@ namespace SqlMapper
 		{
 			public override string ConnectionString
 			{
-				get { return Program.connectionString; }
+				get { return Program.ConnectionString; }
 			}
 
 			public override void Log(Soma.Core.PreparedStatement preparedStatement)
@@ -134,17 +134,17 @@ namespace SqlMapper
             var mapperConnection3 = Program.GetOpenConnection();
             tests.Add(id => mapperConnection2.Get<Post>(id), "Dapper.Cotrib");
 
-            var massiveModel = new DynamicModel(Program.connectionString);
+            var massiveModel = new DynamicModel(Program.ConnectionString);
             var massiveConnection = Program.GetOpenConnection();
             tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
 
 			// PetaPoco test with all default options
-			var petapoco = new PetaPoco.Database(Program.connectionString, "System.Data.SqlClient");
+			var petapoco = new PetaPoco.Database(Program.ConnectionString, "System.Data.SqlClient");
 			petapoco.OpenSharedConnection();
 			tests.Add(id => petapoco.Fetch<Post>("SELECT * from Posts where Id=@0", id), "PetaPoco (Normal)");
 
 			// PetaPoco with some "smart" functionality disabled
-			var petapocoFast = new PetaPoco.Database(Program.connectionString, "System.Data.SqlClient");
+			var petapocoFast = new PetaPoco.Database(Program.ConnectionString, "System.Data.SqlClient");
 			petapocoFast.OpenSharedConnection();
 			petapocoFast.EnableAutoSelect = false;
 			petapocoFast.EnableNamedParams = false;
@@ -188,7 +188,7 @@ namespace SqlMapper
 			tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
 
             // Simple.Data
-            var sdb = Simple.Data.Database.OpenConnection(Program.connectionString);
+            var sdb = Simple.Data.Database.OpenConnection(Program.ConnectionString);
             tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
 
 			// Soma
