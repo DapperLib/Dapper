@@ -2637,6 +2637,20 @@ end");
             row.D.IsNull();
         }
 
+        public void TestProcedureWithTimeParameter()
+        {
+            var p = new DynamicParameters();
+            p.Add("a", TimeSpan.FromHours(10), dbType: DbType.Time);
+
+            connection.Execute(@"CREATE PROCEDURE #TestProcWithTimeParameter
+    @a TIME
+    AS 
+    BEGIN
+    SELECT @a
+    END");
+            connection.Query<TimeSpan>("#TestProcWithTimeParameter", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(new TimeSpan(10, 0, 0));
+        }
+
         class HasDoubleDecimal
         {
             public double A { get; set; }
