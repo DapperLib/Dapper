@@ -3,7 +3,7 @@ Dapper - a simple object mapper for .Net
 
 Features
 --------
-Dapper is a [single file](https://github.com/SamSaffron/dapper-dot-net/blob/master/Dapper/SqlMapper.cs) you can drop in to your project that will extend your IDbConnection interface.
+Dapper is a [single file](https://github.com/SamSaffron/dapper-dot-net/blob/master/Dapper%20NET40/SqlMapper.cs) you can drop in to your project that will extend your IDbConnection interface.
 
 It provides 3 helpers:
 
