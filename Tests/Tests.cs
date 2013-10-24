@@ -13,6 +13,8 @@ using System.Dynamic;
 using System.ComponentModel;
 using Microsoft.CSharp.RuntimeBinder;
 using System.Data.Common;
+using System.Globalization;
+using System.Threading;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -2635,6 +2637,16 @@ end");
             row.B.IsNull();
             row.C.Equals(0.0M);
             row.D.IsNull();
+        }
+
+        public void TestParameterInclusionNotSensitiveToCurrentCulture()
+        {
+            CultureInfo current = Thread.CurrentThread.CurrentCulture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+
+            connection.Query<int>("select @pid", new { PId = 1 }).Single();
+
+            Thread.CurrentThread.CurrentCulture = current;
         }
 
         class HasDoubleDecimal
