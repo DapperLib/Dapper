@@ -676,6 +676,70 @@ namespace Dapper
         {
             return QueryMultiple(cnn, sql, param, transaction, null, commandType);
         }
+
+        /// <summary>
+        /// Execute a query, returning a DataSet with the results
+        /// </summary>
+        public static DataSet QueryDataSet(this IDbConnection cnn, string sql, object param)
+        {
+            return QueryDataSet(cnn, sql, param, null, null, null);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataSet with the results
+        /// </summary>
+        public static DataSet QueryDataSet(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
+        {
+            return QueryDataSet(cnn, sql, param, transaction, null, null);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataSet with the results
+        /// </summary>
+        public static DataSet QueryDataSet(this IDbConnection cnn, string sql, object param, CommandType commandType)
+        {
+            return QueryDataSet(cnn, sql, param, null, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataSet with the results
+        /// </summary>
+        public static DataSet QueryDataSet(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return QueryDataSet(cnn, sql, param, transaction, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataTable with the results
+        /// </summary>
+        public static DataTable QueryDataTable(this IDbConnection cnn, string sql, object param)
+        {
+            return QueryDataTable(cnn, sql, param, null, null, null);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataTable with the results
+        /// </summary>
+        public static DataTable QueryDataTable(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
+        {
+            return QueryDataTable(cnn, sql, param, transaction, null, null);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataTable with the results
+        /// </summary>
+        public static DataTable QueryDataTable(this IDbConnection cnn, string sql, object param, CommandType commandType)
+        {
+            return QueryDataTable(cnn, sql, param, null, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataTable with the results
+        /// </summary>
+        public static DataTable QueryDataTable(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return QueryDataTable(cnn, sql, param, transaction, null, commandType);
+        }
 #endif
         /// <summary>
         /// Execute parameterized SQL  
@@ -840,6 +904,123 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 if (wasClosed) cnn.Close();
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataSet with the results
+        /// </summary>
+        public static DataSet QueryDataSet(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var identity = new Identity(sql, commandType, cnn, null, param == null ? null : param.GetType(), null);
+            var info = GetCacheInfo(identity);
+
+            IDbCommand cmd = null;
+            IDataReader reader = null;
+            DataSet ds = null;
+
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+
+                if (wasClosed) cnn.Open();
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+                // with the CloseConnection flag, so the reader will deal with the connection; we
+                // still need something in the "finally" to ensure that broken SQL still results
+                // in the connection closing itself
+
+                while (reader.IsClosed == false && reader.FieldCount > 0)
+                {
+                    // Only create the DataSet if there are results to return
+                    ds = ds ?? new DataSet();
+
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+
+                    ds.Tables.Add(dt);
+                }
+
+                // happy path; close the reader cleanly - no
+                // need for "Cancel" etc
+                reader.Dispose();
+                reader = null;
+            }
+            finally
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) try { cmd.Cancel(); }
+                        catch { /* don't spoil the existing exception */ }
+                    reader.Dispose();
+                }
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+
+            return ds;
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataTable with the results
+        /// </summary>
+        public static DataTable QueryDataTable(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var identity = new Identity(sql, commandType, cnn, null, param == null ? null : param.GetType(), null);
+            var info = GetCacheInfo(identity);
+
+            IDbCommand cmd = null;
+            IDataReader reader = null;
+            DataTable dt = null;
+
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+
+                if (wasClosed) cnn.Open();
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SingleResult : CommandBehavior.SingleResult);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+                // with the CloseConnection flag, so the reader will deal with the connection; we
+                // still need something in the "finally" to ensure that broken SQL still results
+                // in the connection closing itself
+
+                if (reader.FieldCount > 0)
+                {
+                    dt = new DataTable();
+                    dt.Load(reader);
+                }
+
+                // happy path; close the reader cleanly - no
+                // need for "Cancel" etc
+                reader.Dispose();
+                reader = null;
+            }
+            finally
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) try { cmd.Cancel(); }
+                        catch { /* don't spoil the existing exception */ }
+                    reader.Dispose();
+                }
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+
+            return dt;
         }
 
         /// <summary>
@@ -2114,6 +2295,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (cmd != null) cmd.Dispose();
             }
         }
+
 
         private static Func<IDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index)
         {
