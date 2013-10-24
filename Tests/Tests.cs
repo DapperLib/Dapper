@@ -2645,6 +2645,61 @@ end");
             public decimal? D { get; set; }
         }
 
+        public void TestDataSet_Populate()
+        {
+            DataSet ds = connection.QueryDataSet("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new[] { 1, 2, 3 } });
+
+            ds.IsNotNull();
+            ds.Tables.Count.IsEqualTo(1);
+
+            DataTable dt = ds.Tables[0];
+
+            dt.Rows.Count.IsEqualTo(3);
+            dt.Rows[0]["Id"].IsEqualTo(1);
+            dt.Rows[1]["Id"].IsEqualTo(2);
+            dt.Rows[2]["Id"].IsEqualTo(3);
+        }
+
+        public void TestDataSet_MultipleResultSets()
+        {
+            DataSet ds = connection.QueryDataSet("select @Count as Count; select @Name as Name;", new { Count = 1, Name = "foo" });
+
+            ds.IsNotNull();
+            ds.Tables.Count.IsEqualTo(2);
+
+            DataTable dt = ds.Tables[0];
+            dt.Rows.Count.IsEqualTo(1);
+            dt.Rows[0]["Count"].IsEqualTo(1);
+
+            dt = ds.Tables[1];
+            dt.Rows.Count.IsEqualTo(1);
+            dt.Rows[0]["Name"].IsEqualTo("foo");
+        }
+
+        public void TestDataSet_NoResultSets()
+        {
+            DataSet ds = connection.QueryDataSet("print 'no selects';");
+            ds.IsNull();
+        }
+
+        public void TestDataTable_Populate()
+        {
+            DataTable dt = connection.QueryDataTable("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new[] { 1, 2, 3 } });
+
+            dt.IsNotNull();
+            dt.Rows.Count.IsEqualTo(3);
+            dt.Rows[0]["Id"].IsEqualTo(1);
+            dt.Rows[1]["Id"].IsEqualTo(2);
+            dt.Rows[2]["Id"].IsEqualTo(3);
+        }
+
+        public void TestDataSet_NoResults()
+        {
+            DataTable dt = connection.QueryDataTable("print 'no selects';");
+            dt.IsNull();
+        }
+
+
 #if POSTGRESQL
 
         class Cat

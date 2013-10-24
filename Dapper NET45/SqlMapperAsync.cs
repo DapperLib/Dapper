@@ -165,6 +165,71 @@ namespace Dapper
             return MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
+        /// <summary>
+        /// Execute a query, returning a DataSet with the results
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static async Task<DataSet> QueryDataSetAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            var identity = new Identity(sql, commandType, cnn, null, param == null ? null : param.GetType(), null);
+            var info = GetCacheInfo(identity);
+            var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                DataSet ds = null;
+
+                while (reader.IsClosed == false && reader.FieldCount > 0)
+                {
+                    // Only create the DataSet if there are results to return
+                    ds = ds ?? new DataSet();
+
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+
+                    ds.Tables.Add(dt);
+                }
+
+                return ds;
+            }
+        }
+
+        /// <summary>
+        /// Execute a query, returning a DataTable with the results
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static async Task<DataTable> QueryDataTableAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            var identity = new Identity(sql, commandType, cnn, null, param == null ? null : param.GetType(), null);
+            var info = GetCacheInfo(identity);
+            var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+
+            using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult))
+            {
+                DataTable dt = null;
+
+                if (reader.FieldCount > 0)
+                {
+                    dt = new DataTable();
+                    dt.Load(reader);
+                }
+
+                return dt;
+            }
+        }
+
         static async Task<IEnumerable<TReturn>> MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, object map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
             var identity = new Identity(sql, commandType, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
