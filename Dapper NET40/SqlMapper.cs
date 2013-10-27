@@ -3112,14 +3112,19 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 var dbType = param.DbType;
                 var val = param.Value;
                 string name = Clean(param.Name);
+                var isCustomQueryParameter = typeof(SqlMapper.ICustomQueryParameter).IsAssignableFrom(val.GetType());
 
-                if (dbType == null && val != null) dbType = SqlMapper.LookupDbType(val.GetType(), name);
+                if (dbType == null && val != null && !isCustomQueryParameter) dbType = SqlMapper.LookupDbType(val.GetType(), name);
 
                 if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
 #pragma warning disable 612, 618
                     SqlMapper.PackListParameters(command, name, val);
 #pragma warning restore 612, 618
+                }
+                else if (isCustomQueryParameter)
+                {
+                    ((SqlMapper.ICustomQueryParameter)val).AddParameter(command, name);
                 }
                 else
                 {
