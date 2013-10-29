@@ -453,6 +453,12 @@ namespace Dapper
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
+            /******** TVP Fix Starts***********************/
+            if (type == typeof(DataTable))
+            {
+                return DbType.Object;
+            }
+            /******** TVP Fix Ends***********************/
 
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
@@ -3150,10 +3156,17 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         p.Size = param.Size.Value;
                     }
+
+                    /******** TVP Fix Starts***********************/
                     if (dbType != null)
                     {
-                        p.DbType = dbType.Value;
+                        if (param.Value == null || (param.Value != null && param.Value.GetType() != typeof(DataTable)))
+                        {
+                            p.DbType = dbType.Value;
+                        }
                     }
+                    /******** TVP Fix Ends***********************/
+
                     if (add)
                     {
                         command.Parameters.Add(p);
