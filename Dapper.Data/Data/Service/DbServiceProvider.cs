@@ -36,7 +36,7 @@ namespace Dapper.Data.Service
 		/// </summary>
 		protected void RegisterService<T>(Type constract, T service) where T : IDbService
 		{
-			_services.TryAdd(constract, service);
+			_services[constract] = service;
 		}
 
 		/// <summary>
