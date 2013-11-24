@@ -29,11 +29,13 @@ namespace Dapper
 
             public string ResolveClauses(DynamicParameters p)
             {
-                foreach (var item in this)
+                var sql = string.Join(joiner, this.Select(c =>
                 {
-                    p.AddDynamicParams(item.Parameters);
-                }
-                return prefix + string.Join(joiner, this.Select(c => c.Sql)) + postfix;
+                    p.AddDynamicParams(c.Parameters);
+                    return c.Sql;
+                }));
+
+                return prefix + sql + postfix;
             }
         }
 
