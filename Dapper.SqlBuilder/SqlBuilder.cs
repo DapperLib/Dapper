@@ -52,7 +52,7 @@ namespace Dapper
             }
 
             static System.Text.RegularExpressions.Regex regex =
-                new System.Text.RegularExpressions.Regex(@"\/\*\*.+?\*\*\/", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+                new System.Text.RegularExpressions.Regex(@"{{2}.+?}{2}", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
 
             void ResolveSql()
             {
@@ -64,7 +64,7 @@ namespace Dapper
 
                     foreach (var pair in builder.data)
                     {
-                        rawSql = rawSql.Replace("/**" + pair.Key + "**/", pair.Value.ResolveClauses(p));
+                        rawSql = rawSql.Replace("{{" + pair.Key + "}}", pair.Value.ResolveClauses(p));
                     }
                     parameters = p;
 
