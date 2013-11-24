@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Dapper
 {
@@ -54,7 +52,7 @@ namespace Dapper
             }
 
             static System.Text.RegularExpressions.Regex regex =
-                new System.Text.RegularExpressions.Regex(@"\/\*\*.+\*\*\/", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+                new System.Text.RegularExpressions.Regex(@"\/\*\*.+?\*\*\/", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
 
             void ResolveSql()
             {
@@ -84,10 +82,6 @@ namespace Dapper
             public object Parameters { get { ResolveSql(); return parameters; } }
         }
 
-
-        public SqlBuilder()
-        {
-        }
 
         public Template AddTemplate(string sql, dynamic parameters = null)
         {
