@@ -23,6 +23,7 @@ namespace Dapper.Contrib.Extensions
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+		private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>(); 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
@@ -30,7 +31,19 @@ namespace Dapper.Contrib.Extensions
 																							{"sqlconnection", new SqlServerAdapter()},
 																							{"npgsqlconnection", new PostgresAdapter()}
 																						};
+		private static IEnumerable<PropertyInfo> ComputedPropertiesCache(Type type)
+		{
+			IEnumerable<PropertyInfo> pi;
+			if (ComputedProperties.TryGetValue(type.TypeHandle, out pi))
+			{
+				return pi;
+			}
 
+			var computedProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ComputedAttribute)).ToList();
+
+			ComputedProperties[type.TypeHandle] = computedProperties;
+			return computedProperties;
+		}
         private static IEnumerable<PropertyInfo> KeyPropertiesCache(Type type)
         {
 
@@ -175,22 +188,23 @@ namespace Dapper.Contrib.Extensions
 
 			var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
-            var allPropertiesExceptKey = allProperties.Except(keyProperties);
+			var computedProperties = ComputedPropertiesCache(type);
+			var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties));
 
-            for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
+            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
             {
-                var property = allPropertiesExceptKey.ElementAt(i);
+                var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
 				sbColumnList.AppendFormat("[{0}]", property.Name);
-                if (i < allPropertiesExceptKey.Count() - 1)
+                if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
 					sbColumnList.Append(", ");
             }
 
 			var sbParameterList = new StringBuilder(null);
-			for (var i = 0; i < allPropertiesExceptKey.Count(); i++)
+			for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
             {
-                var property = allPropertiesExceptKey.ElementAt(i);
+                var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
                 sbParameterList.AppendFormat("@{0}", property.Name);
-                if (i < allPropertiesExceptKey.Count() - 1)
+                if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbParameterList.Append(", ");
             }
 			ISqlAdapter adapter = GetFormatter(connection);
@@ -471,6 +485,11 @@ namespace Dapper.Contrib.Extensions
 			Write = write;
         }
         public bool Write { get; private set; }
+	}
+
+	[AttributeUsage(AttributeTargets.Property)]
+	public class ComputedAttribute : Attribute
+	{
 	}
 }
 
