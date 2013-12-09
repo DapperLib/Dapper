@@ -63,9 +63,9 @@ namespace Dapper
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <param name="commandType"></param>
         /// <returns></returns>
-        public static async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
-            return await MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
+            return MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
         /// <summary>
@@ -110,9 +110,9 @@ namespace Dapper
         /// <param name="commandTimeout"></param>
         /// <param name="commandType"></param>
         /// <returns></returns>
-        public static async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
-            return await MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
+            return MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace Dapper
             var identity = new Identity(sql, commandType, cnn, typeof(TFirst), (object)param == null ? null : ((object)param).GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
             var info = GetCacheInfo(identity);
             var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
-            using (var reader = await cmd.ExecuteReaderAsync())
+            using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
             {
                 var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, null, map, null, null, splitOn, null, null, reader, identity);
                 return buffered ? results.ToList() : results;
@@ -218,7 +218,7 @@ namespace Dapper
           try {
             if (wasClosed) cnn.Open();
             cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
-            reader = await cmd.ExecuteReaderAsync(commandBehavior);
+            reader = await cmd.ExecuteReaderAsync(commandBehavior).ConfigureAwait(false);
 
             var result = new GridReader(cmd, reader, identity);
             wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
@@ -229,7 +229,8 @@ namespace Dapper
           }
           catch {
             if (reader != null) {
-              if (!reader.IsClosed) try { cmd.Cancel(); }
+              if (!reader.IsClosed)
+                try { cmd.Cancel(); }
                 catch { /* don't spoil the existing exception */ }
               reader.Dispose();
             }
@@ -245,7 +246,7 @@ namespace Dapper
           try {
             cmd = (DbCommand)SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType);
             if (wasClosed) cnn.Open();
-            return await cmd.ExecuteNonQueryAsync();
+            return await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
           }
           finally {
             if (wasClosed) cnn.Close();
@@ -284,7 +285,7 @@ namespace Dapper
                 cmdTasks.Add(cmd.ExecuteNonQueryAsync());
               }
               foreach (var cmdTask in cmdTasks)
-                total += await cmdTask;
+                total += await cmdTask.ConfigureAwait(false);
             }
             return total;
           }
@@ -294,7 +295,8 @@ namespace Dapper
             identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
             info = GetCacheInfo(identity);
           }
-          return await ExecuteCommandAsync(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
+          return await ExecuteCommandAsync(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType)
+            .ConfigureAwait(false);
         }
 
     }
