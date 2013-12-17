@@ -1789,7 +1789,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         count++;
                         var listParam = command.CreateParameter();
                         listParam.ParameterName = namePrefix + count;
-                        listParam.Value = item ?? DBNull.Value;
                         if (isString)
                         {
                             listParam.Size = 4000;
@@ -1805,6 +1804,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                         else
                         {
+                            listParam.Value = item ?? DBNull.Value;
                             command.Parameters.Add(listParam);
                         }
                     }
