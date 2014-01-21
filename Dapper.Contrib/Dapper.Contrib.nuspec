@@ -17,6 +17,7 @@
       <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
       <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
       <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.ComponentModel.DataAnnotations" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
   </metadata>
