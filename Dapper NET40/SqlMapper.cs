@@ -610,6 +610,50 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Executes a query, returning the data as objects using the Type information from 'type'.
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param)
+        {
+            return Query(cnn, type, sql, param, null, true, null, null);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data as objects using the Type information from 'type'.
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction)
+        {
+            return Query(cnn, type, sql, param, transaction, true, null, null);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data as objects using the Type information from 'type'.
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param, CommandType commandType)
+        {
+            return Query(cnn, type, sql, param, null, true, null, commandType);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<object> Query(this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return Query(cnn, type, sql, param, transaction, true, null, commandType);
+        }
+        
+        /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
@@ -799,6 +843,27 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         }
 
         /// <summary>
+        /// Executes a query, returning the data as objects using the input Type.
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<object> Query(
+#if CSHARP30
+            this IDbConnection cnn, Type type, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, Type type, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var data = QueryInternal(cnn, type, sql, param as object, transaction, commandTimeout, commandType);
+            return buffered ? data.ToList() : data;
+        }
+
+
+
+        /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
         public static GridReader QueryMultiple(
@@ -845,9 +910,9 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         /// <summary>
         /// Return a typed list of objects, reader is closed after the call
         /// </summary>
-        private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
+        private static IEnumerable<object> QueryInternal(this IDbConnection cnn, Type targetType, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
         {
-            var identity = new Identity(sql, commandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
+            var identity = new Identity(sql, commandType, cnn, targetType, param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity);
 
             IDbCommand cmd = null;
@@ -868,7 +933,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 int hash = GetColumnHash(reader);
                 if (tuple.Func == null || tuple.Hash != hash)
                 {
-                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
+                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(targetType, reader, 0, -1, false));
                     SetQueryCache(identity, info);
                 }
 
@@ -876,7 +941,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 
                 while (reader.Read())
                 {
-                    yield return (T)func(reader);
+                    yield return func(reader);
                 }
                 // happy path; close the reader cleanly - no
                 // need for "Cancel" etc
@@ -894,6 +959,14 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Return a typed list of objects, reader is closed after the call
+        /// </summary>
+        private static IEnumerable<T> QueryInternal<T>(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType)
+        {
+            return QueryInternal(cnn, typeof(T), sql, param, transaction, commandTimeout, commandType).Select(item => (T)item);
         }
 
         /// <summary>
