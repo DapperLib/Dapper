@@ -729,6 +729,56 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
             return ExecuteCommand(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Execute parameterized SQL and return selected or output records
+        /// </summary>
+        /// <returns>Selected or Output records</returns>
+        public static IEnumerable<T> ExecuteWithOutput<T>(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var multiExec = (object)param as IEnumerable;
+            if (multiExec == null || multiExec is string)
+            {
+                multiExec = new List<object>{param};
+            }
+            Identity identity = null;
+            CacheInfo info = null;
+            var results = new List<T>();
+
+            using (var cmd = SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+            {
+                string masterSql = null;
+                var isFirst = true;
+                foreach (var obj in multiExec)
+                {
+                    if (isFirst)
+                    {
+                        masterSql = cmd.CommandText;
+                        isFirst = false;
+                        identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
+                        info = GetCacheInfo(identity);
+                    }
+                    else
+                    {
+                        cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                        cmd.Parameters.Clear(); // current code is Add-tastic
+                    }
+                    info.ParamReader(cmd, obj);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        results.AddRange(ExecuteReader<T>(reader, identity, info));
+                    }
+                }
+            }
+            return results;
+        }
+
 #if !CSHARP30
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
@@ -2112,6 +2162,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
+            }
+        }
+
+        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Identity identity, CacheInfo info)
+        {
+            var tuple = info.Deserializer;
+            int hash = GetColumnHash(reader);
+            if (tuple.Func == null || tuple.Hash != hash)
+            {
+                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
+                SetQueryCache(identity, info);
+            }
+
+            var func = tuple.Func;
+
+            while (reader.Read())
+            {
+                yield return (T)func(reader);
             }
         }
 

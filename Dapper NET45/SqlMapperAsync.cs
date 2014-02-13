@@ -176,23 +176,5 @@ namespace Dapper
                 return buffered ? results.ToList() : results;
             }
         }
-
-        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Identity identity, CacheInfo info)
-        {
-            var tuple = info.Deserializer;
-            int hash = GetColumnHash(reader);
-            if (tuple.Func == null || tuple.Hash != hash)
-            {
-                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
-                SetQueryCache(identity, info);
-            }
-
-            var func = tuple.Func;
-
-            while (reader.Read())
-            {
-                yield return (T)func(reader);
-            }
-        }
     }
 }

@@ -620,6 +620,76 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             sum.IsEqualTo(10);
         }
 
+        public void TestExecuteWithOutputOnAnonymousObject()
+        {
+            connection.Execute("create table #ewo(id uniqueidentifier default newid(), i int not null)");
+            try
+            {
+                var output = connection.ExecuteWithOutput<OutputObj1>(@"insert #ewo(i) output inserted.* values(@i)", new{ i = 123 }).Single();
+                (output.Id == Guid.Empty).IsFalse();
+                output.i.IsEqualTo(123);
+            }
+            finally
+            {
+                connection.Execute("drop table #ewo");
+            }
+        }
+
+        public void TestExecuteWithOutputOnTypedObject()
+        {
+            connection.Execute("create table #ewo(id uniqueidentifier default newid(), i int not null)");
+            try
+            {
+                var output = connection.ExecuteWithOutput<OutputObj1>(@"insert #ewo(i) output inserted.* values(@i)", new OutputObj1 { i = 123 }).Single();
+                (output.Id == Guid.Empty).IsFalse();
+                output.i.IsEqualTo(123);
+            }
+            finally
+            {
+                connection.Execute("drop table #ewo");
+            }
+        }
+
+        public void TestExecuteWithOutputOnAnonymousIEnumerable()
+        {
+            connection.Execute("create table #ewo(id uniqueidentifier default newid(), i int not null)");
+            try
+            {
+                var output = connection.ExecuteWithOutput<OutputObj1>(
+                    @"insert #ewo(i) output inserted.* values(@i)",
+                    Enumerable.Range(1, 100).Select(i => new {i})
+                    );
+                new HashSet<Guid>(output.Select(o => o.Id)).Count().IsEqualTo(100);
+            }
+            finally
+            {
+                connection.Execute("drop table #ewo");
+            }
+        }
+
+        public void TestExecuteWithOutputOnTypedIEnumerable()
+        {
+            connection.Execute("create table #ewo(id uniqueidentifier default newid(), i int not null)");
+            try
+            {
+                var output = connection.ExecuteWithOutput<OutputObj1>(
+                    @"insert #ewo(i) output inserted.* values(@i)",
+                    Enumerable.Range(1, 100).Select(i => new OutputObj1{ i = i })
+                    );
+                new HashSet<Guid>(output.Select(o => o.Id)).Count().IsEqualTo(100);
+            }
+            finally
+            {
+                connection.Execute("drop table #ewo");
+            }
+        }
+
+        class OutputObj1
+        {
+            public Guid Id { get; set; }
+            public int i { get; set; }
+        }
+
         public void TestMassiveStrings()
         {
             var str = new string('X', 20000);
