@@ -208,50 +208,56 @@ namespace Dapper
         /// <returns></returns>
         public static async Task<GridReader> QueryMultipleAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-          var identity = new Identity(sql, commandType, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
-          var info = GetCacheInfo(identity);
+            var identity = new Identity(sql, commandType, cnn, typeof(GridReader), (object)param == null ? null : ((object)param).GetType(), null);
+            var info = GetCacheInfo(identity);
 
-          DbCommand cmd = null;
-          IDataReader reader = null;
-          var wasClosed = cnn.State == ConnectionState.Closed;
-          var commandBehavior = wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default;
-          try {
-            if (wasClosed) cnn.Open();
-            cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
-            reader = await cmd.ExecuteReaderAsync(commandBehavior).ConfigureAwait(false);
+            DbCommand cmd = null;
+            IDataReader reader = null;
+            var wasClosed = cnn.State == ConnectionState.Closed;
+            var commandBehavior = wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default;
+            try
+            {
+                if (wasClosed) cnn.Open();
+                cmd = SetupCommand(cnn, transaction, sql, info.ParamReader, param, commandTimeout, commandType);
+                reader = await cmd.ExecuteReaderAsync(commandBehavior).ConfigureAwait(false);
 
-            var result = new GridReader(cmd, reader, identity);
-            wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
-            // with the CloseConnection flag, so the reader will deal with the connection; we
-            // still need something in the "finally" to ensure that broken SQL still results
-            // in the connection closing itself
-            return result;
-          }
-          catch {
-            if (reader != null) {
-              if (!reader.IsClosed)
-                try { cmd.Cancel(); }
-                catch { /* don't spoil the existing exception */ }
-              reader.Dispose();
+                var result = new GridReader(cmd, reader, identity);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+                // with the CloseConnection flag, so the reader will deal with the connection; we
+                // still need something in the "finally" to ensure that broken SQL still results
+                // in the connection closing itself
+                return result;
             }
-            if (cmd != null) cmd.Dispose();
-            if (wasClosed) cnn.Close();
-            throw;
-          }
+            catch
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed)
+                        try { cmd.Cancel(); }
+                        catch { /* don't spoil the existing exception */ }
+                    reader.Dispose();
+                }
+                if (cmd != null) cmd.Dispose();
+                if (wasClosed) cnn.Close();
+                throw;
+            }
         }
 
-        static async Task<int> ExecuteCommandAsync(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType) {
-          DbCommand cmd = null;
-          bool wasClosed = cnn.State == ConnectionState.Closed;
-          try {
-            cmd = (DbCommand)SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType);
-            if (wasClosed) cnn.Open();
-            return await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-          }
-          finally {
-            if (wasClosed) cnn.Close();
-            if (cmd != null) cmd.Dispose();
-          }
+        static async Task<int> ExecuteCommandAsync(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        {
+            DbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                cmd = (DbCommand)SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType);
+                if (wasClosed) cnn.Open();
+                return await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
         }
 
         /// <summary>
@@ -260,43 +266,40 @@ namespace Dapper
         /// <returns>Number of rows affected</returns>
         public static async Task<int> ExecuteAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-          IEnumerable multiExec = (object)param as IEnumerable;
-          Identity identity;
-          CacheInfo info = null;
-          if (multiExec != null && !(multiExec is string)) {
-            bool isFirst = true;
-            int total = 0;
-            using (var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType)) {
-
-              string masterSql = null;
-              var cmdTasks = new List<Task<int>>();
-              foreach (var obj in multiExec) {
-                if (isFirst) {
-                  masterSql = cmd.CommandText;
-                  isFirst = false;
-                  identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
-                  info = GetCacheInfo(identity);
+            IEnumerable multiExec = (object)param as IEnumerable;
+            CacheInfo info = null;
+            if (multiExec != null && !(multiExec is string))
+            {
+                bool isFirst = true;
+                int total = 0;
+                var cmdTasks = new List<Task<int>>();
+                foreach (var obj in multiExec)
+                {
+                    using (var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+                    {
+                        if (isFirst)
+                        {
+                            isFirst = false;
+                            var identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
+                            info = GetCacheInfo(identity);
+                        }
+                        info.ParamReader(cmd, obj);
+                        cmdTasks.Add(cmd.ExecuteNonQueryAsync());
+                    }
                 }
-                else {
-                  cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
-                  cmd.Parameters.Clear(); // current code is Add-tastic
-                }
-                info.ParamReader(cmd, obj);
-                cmdTasks.Add(cmd.ExecuteNonQueryAsync());
-              }
-              foreach (var cmdTask in cmdTasks)
-                total += await cmdTask.ConfigureAwait(false);
+                foreach (var cmdTask in cmdTasks)
+                    total += await cmdTask.ConfigureAwait(false);
+                return total;
             }
-            return total;
-          }
 
-          // nice and simple
-          if ((object)param != null) {
-            identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
-            info = GetCacheInfo(identity);
-          }
-          return await ExecuteCommandAsync(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType)
-            .ConfigureAwait(false);
+            // nice and simple
+            if ((object)param != null)
+            {
+                var identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+                info = GetCacheInfo(identity);
+            }
+            return await ExecuteCommandAsync(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType)
+              .ConfigureAwait(false);
         }
 
     }
