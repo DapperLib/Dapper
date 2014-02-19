@@ -270,22 +270,34 @@ namespace Dapper
             CacheInfo info = null;
             if (multiExec != null && !(multiExec is string))
             {
-                bool isFirst = true;
+                DbCommand firstCommand = null;
                 int total = 0;
                 var cmdTasks = new List<Task<int>>();
                 foreach (var obj in multiExec)
                 {
-                    using (var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+                    DbCommand cmd;
+                    if (firstCommand == null)
                     {
-                        if (isFirst)
-                        {
-                            isFirst = false;
-                            var identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
-                            info = GetCacheInfo(identity);
-                        }
-                        info.ParamReader(cmd, obj);
-                        cmdTasks.Add(cmd.ExecuteNonQueryAsync());
+                        firstCommand = cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType);
+                        var identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
+                        info = GetCacheInfo(identity);
                     }
+                    else
+                    {
+                        // Clone the first command
+                        cmd = (DbCommand)cnn.CreateCommand();
+                        cmd.CommandText = firstCommand.CommandText;
+                        cmd.CommandType = firstCommand.CommandType;
+                        cmd.CommandTimeout = firstCommand.CommandTimeout;
+                        cmd.Transaction = firstCommand.Transaction;
+                    }
+                    info.ParamReader(cmd, obj);
+
+                    var resultTask = cmd.ExecuteNonQueryAsync().ContinueWith(et => {
+                        cmd.Dispose();
+                        return et.Result;
+                    }, TaskContinuationOptions.ExecuteSynchronously);
+                    cmdTasks.Add(resultTask);
                 }
                 foreach (var cmdTask in cmdTasks)
                     total += await cmdTask.ConfigureAwait(false);
