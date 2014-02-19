@@ -22,166 +22,7 @@ using System.Diagnostics;
 
 namespace Dapper
 {
-    #if !CSHARP30
-    /// <summary>
-    /// Interface for the SqlMapper class
-    /// </summary>
-    public interface ISqlMapper
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="cnn"></param>
-        /// <param name="sql"></param>
-        /// <param name="param"></param>
-        /// <param name="transaction"></param>
-        /// <param name="buffered"></param>
-        /// <param name="commandTimeout"></param>
-        /// <param name="commandType"></param>
-        /// <returns></returns>
-        IEnumerable<dynamic> Query(
-            IDbConnection cnn,
-            string sql,
-            dynamic param = null,
-            IDbTransaction transaction = null,
-            bool buffered = true,
-            int? commandTimeout = null,
-            CommandType? commandType = null);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="cnn"></param>
-        /// <param name="sql"></param>
-        /// <param name="param"></param>
-        /// <param name="transaction"></param>
-        /// <param name="buffered"></param>
-        /// <param name="commandTimeout"></param>
-        /// <param name="commandType"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        IEnumerable<T> Query<T>(
-            IDbConnection cnn,
-            string sql,
-            dynamic param = null,
-            IDbTransaction transaction = null,
-            bool buffered = true,
-            int? commandTimeout = null,
-            CommandType? commandType = null);
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="cnn"></param>
-            /// <param name="sql"></param>
-            /// <param name="param"></param>
-            /// <param name="transaction"></param>
-            /// <param name="commandTimeout"></param>
-            /// <param name="commandType"></param>
-            /// <returns></returns>
-            IGridReader QueryMultiple(
-                IDbConnection cnn,
-                string sql,
-                dynamic param = null,
-                IDbTransaction transaction = null,
-                int? commandTimeout = null,
-                CommandType? commandType = null);
-    }
-
-    /// <summary>
-    /// A non static wrapper to enable testability of the SqlMapper functionality 
-    /// </summary>
-    public class SqlMapperWrapper : ISqlMapper
-    {
-        /// <summary>
-        /// Executes a query, returning the data typed as per T
-        /// </summary>
-        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
-        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
-        /// </returns>
-        public IEnumerable<dynamic> Query(
-            IDbConnection cnn, 
-            string sql, 
-            dynamic param = null, 
-            IDbTransaction transaction = null,
-            bool buffered = true, 
-            int? commandTimeout = null, 
-            CommandType? commandType = null)
-        {
-            return SqlMapper.Query<dynamic>(
-                cnn,
-                sql,
-                param,
-                transaction,
-                buffered,
-                commandTimeout,
-                commandType);
-        }
-
-        /// <summary>
-        /// Executes a query, returning the data typed as per T
-        /// </summary>
-        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
-        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
-        /// </returns>
-        public IEnumerable<T> Query<T>(
-            IDbConnection cnn, 
-            string sql, 
-            dynamic param = null, 
-            IDbTransaction transaction = null,
-            bool buffered = true, 
-            int? commandTimeout = null, 
-            CommandType? commandType = null)
-        {
-            return SqlMapper.Query<T>(
-                cnn,
-                sql,
-                param,
-                transaction,
-                buffered,
-                commandTimeout);
-        }
-
-        /// <summary>
-        /// Execute a command that returns multiple result sets, and access each in turn
-        /// </summary>
-        public IGridReader QueryMultiple(
-            IDbConnection cnn,
-            string sql,
-            dynamic param = null,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
-            CommandType? commandType = null)
-        {
-            return SqlMapper.QueryMultiple(
-                cnn,
-                sql,
-                param,
-                transaction,
-                commandTimeout,
-                commandType);
-        }
-
-    }
-
-    /// <summary>
-    /// Interface to expose the grid reader class via the wrapper
-    /// </summary>
-    public interface IGridReader
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="buffered"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        IEnumerable<T> Read<T>(bool buffered = true);
-    }
-#endif
-
-    /// <summary>
+   /// <summary>
     /// Dapper, a light weight object mapper for ADO.NET
     /// </summary>
     static partial class SqlMapper
@@ -3772,4 +3613,191 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
 #endif
 
+#if !CSHARP30
+    /// <summary>
+    /// Interface for the SqlMapper class
+    /// </summary>
+    public interface ISqlMapper
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        IEnumerable<dynamic> Query(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        IEnumerable<T> Query<T>(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        IGridReader QueryMultiple(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        int Execute(
+            IDbConnection cnn, 
+            string sql, 
+            dynamic param = null, 
+            IDbTransaction transaction = null,
+            int? commandTimeout = null, 
+            CommandType? commandType = null);
+    }
+
+    /// <summary>
+    /// A non static wrapper to enable testability of the SqlMapper functionality 
+    /// </summary>
+    public class SqlMapperWrapper : ISqlMapper
+    {
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public IEnumerable<dynamic> Query(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Query<dynamic>(
+                cnn,
+                sql,
+                param,
+                transaction,
+                buffered,
+                commandTimeout,
+                commandType);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public IEnumerable<T> Query<T>(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Query<T>(
+                cnn,
+                sql,
+                param,
+                transaction,
+                buffered,
+                commandTimeout);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public IGridReader QueryMultiple(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.QueryMultiple(
+                cnn,
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public int Execute(
+            IDbConnection cnn, 
+            string sql, 
+            dynamic param = null, 
+            IDbTransaction transaction = null,
+            int? commandTimeout = null, 
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Execute(
+                cnn,
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType);
+        }
+    }
+
+    /// <summary>
+    /// Interface to expose the grid reader class via the wrapper
+    /// </summary>
+    public interface IGridReader
+    {
+        /// <summary>
+        /// Read the next grid of results
+        /// </summary>
+        IEnumerable<T> Read<T>(bool buffered = true);
+    }
+#endif
 }
