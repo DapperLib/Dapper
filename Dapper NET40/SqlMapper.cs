@@ -3658,6 +3658,18 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             IDbTransaction transaction = null,
             int? commandTimeout = null,
             CommandType? commandType = null);
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        int Execute(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
     }
 
     /// <summary>
@@ -3736,6 +3748,26 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 commandType);
         }
 
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public int Execute(
+            IDbConnection cnn,
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Execute(
+                cnn,
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType);
+        }
     }
 
     /// <summary>

@@ -332,6 +332,53 @@ Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString 
 
 On Sql Server it is crucial to use the unicode when querying unicode and ansi when querying non unicode.
 
+Testability
+-----------
+Dapper allows you to unit test your data access code via a simple wrapper class over the static SqlMapper class. Exposing only interfaces allowing you to fully mock.
+Your data access class can depend upon the ISqlMapper interface rather than the static SqlMapper class.
+
+```csharp
+public class Repository<T>
+{
+	private ISqlMapper _sqlMapper;
+	
+	public Respository(ISqlMapper sqlMapper)
+	{
+		_sqlMapper = sqlMapper;
+	}
+
+	public IEnumerable<T> Get()
+	{
+		return _sqlMapper.Query<T>("dbo.uspGet...", etc...);
+	}
+	
+	public void Create(T entity)
+	{
+		...etc...
+	}
+}
+```
+For the wrapper QueryMultiple an IGridReader will be returned. 
+Also IDynamicParameters can be used for more complex parameter construction along with IDynamicParametersFactory 
+
+For dependency resolution ISqlMapper is implemented by the SqlMapperWrapper class...
+```csharp
+///castle windsor example
+
+    public class RepositoryInstaller : IWindsorInstaller
+    {
+        public void Install(IWindsorContainer container, IConfigurationStore store)
+        {
+            container.Register(
+                Component
+                    .For<IDbConnection>()
+                    .ImplementedBy<SqlConnection>()
+                    .DependsOn(Dependency.OnValue<string>(Properties.Settings.Default.SqlConnectionString)),
+                Component
+                    .For<ISqlMapper>()
+                    .ImplementedBy<SqlMapperWrapper>(),
+```
+
 Limitations and caveats
 ---------------------
 Dapper caches information about every query it runs, this allow it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a ConcurrentDictionary object. The objects it stores are never flushed. If you are generating SQL strings on the fly without using parameters it is possible you will hit memory issues. We may convert the dictionaries to an LRU Cache.
