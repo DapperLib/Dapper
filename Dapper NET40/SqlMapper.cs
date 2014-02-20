@@ -3624,7 +3624,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
         IEnumerable<dynamic> Query(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3640,7 +3639,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         IEnumerable<T> Query<T>(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3652,7 +3650,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
         IGridReader QueryMultiple(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3664,7 +3661,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// </summary>
         /// <returns>Number of rows affected</returns>
         int Execute(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3677,6 +3673,16 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// </summary>
     public class SqlMapperWrapper : ISqlMapper
     {
+        private readonly IDbConnection _connection;
+
+        /// <summary>
+        /// Create instance of wrapper
+        /// </summary>
+        public SqlMapperWrapper(IDbConnection connection)
+        {
+            _connection = connection;
+        }
+
         /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
@@ -3685,7 +3691,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public IEnumerable<dynamic> Query(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3694,7 +3699,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             CommandType? commandType = null)
         {
             return SqlMapper.Query<dynamic>(
-                cnn,
+                _connection,
                 sql,
                 param,
                 transaction,
@@ -3711,7 +3716,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public IEnumerable<T> Query<T>(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3720,7 +3724,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             CommandType? commandType = null)
         {
             return SqlMapper.Query<T>(
-                cnn,
+                _connection,
                 sql,
                 param,
                 transaction,
@@ -3732,7 +3736,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
         public IGridReader QueryMultiple(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3740,7 +3743,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             CommandType? commandType = null)
         {
             return SqlMapper.QueryMultiple(
-                cnn,
+                _connection,
                 sql,
                 param,
                 transaction,
@@ -3753,7 +3756,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// </summary>
         /// <returns>Number of rows affected</returns>
         public int Execute(
-            IDbConnection cnn,
             string sql,
             dynamic param = null,
             IDbTransaction transaction = null,
@@ -3761,7 +3763,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             CommandType? commandType = null)
         {
             return SqlMapper.Execute(
-                cnn,
+                _connection,
                 sql,
                 param,
                 transaction,
