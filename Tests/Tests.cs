@@ -2505,6 +2505,24 @@ end");
 
         }
 
+        public void TestChangingDefaultStringTypeMappingToAnsiString()
+        {
+            var sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
+            var param = new {testParam = "TestString"};
+
+            var result01 = connection.Query<string>(sql, param).FirstOrDefault();
+            result01.IsEqualTo("nvarchar");
+
+            Dapper.SqlMapper.PurgeQueryCache();
+
+            Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+            var result02 = connection.Query<string>(sql, param).FirstOrDefault();
+            result02.IsEqualTo("varchar");
+
+            Dapper.SqlMapper.PurgeQueryCache();
+            Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;

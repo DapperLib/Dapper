@@ -2002,7 +2002,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 if (checkForNull)
                 {
-                    if (dbType == DbType.String && !haveInt32Arg1)
+                    if ((dbType == DbType.String || dbType == DbType.AnsiString) && !haveInt32Arg1)
                     {
                         il.DeclareLocal(typeof(int));
                         haveInt32Arg1 = true;
@@ -2010,12 +2010,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     // relative stack: [boxed value]
                     il.Emit(OpCodes.Dup);// relative stack: [boxed value] [boxed value]
                     Label notNull = il.DefineLabel();
-                    Label? allDone = dbType == DbType.String ? il.DefineLabel() : (Label?)null;
+                    Label? allDone = (dbType == DbType.String || dbType == DbType.AnsiString) ? il.DefineLabel() : (Label?)null;
                     il.Emit(OpCodes.Brtrue_S, notNull);
                     // relative stack [boxed value = null]
                     il.Emit(OpCodes.Pop); // relative stack empty
                     il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField("Value")); // relative stack [DBNull]
-                    if (dbType == DbType.String)
+                    if (dbType == DbType.String || dbType == DbType.AnsiString)
                     {
                         EmitInt32(il, 0);
                         il.Emit(OpCodes.Stloc_1);
