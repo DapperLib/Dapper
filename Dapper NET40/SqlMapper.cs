@@ -17,8 +17,6 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
-
 
 namespace Dapper
 {
@@ -2702,6 +2700,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query 
         /// </summary>
         public partial class GridReader : IDisposable
+#if !CSHARP30
+            ,IGridReader
+#endif
         {
             private IDataReader reader;
             private IDbCommand command;
@@ -2942,6 +2943,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
     /// A bag of parameters that can be passed to the Dapper Query and Execute methods
     /// </summary>
     partial class DynamicParameters : SqlMapper.IDynamicParameters
+#if !CSHARP30        
+        , IDynamicParameters
+#endif
     {
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
@@ -3200,7 +3204,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
     /// </summary>
-    sealed partial class DbString : Dapper.SqlMapper.ICustomQueryParameter
+    sealed partial class DbString : SqlMapper.ICustomQueryParameter
     {
         /// <summary>
         /// Create a new DbString
@@ -3608,6 +3612,209 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
     }
 
+#endif
+
+#if !CSHARP30
+    /// <summary>
+    /// Interface for the SqlMapper class
+    /// </summary>
+    public interface ISqlMapper
+    {
+        /// <summary>
+        /// Return a list of dynamic objects, reader is closed after the call
+        /// </summary>
+        IEnumerable<dynamic> Query(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        IEnumerable<T> Query<T>(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        IGridReader QueryMultiple(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        int Execute(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null);
+    }
+
+    /// <summary>
+    /// A non static wrapper to enable testability of the SqlMapper functionality 
+    /// </summary>
+    public class SqlMapperWrapper : ISqlMapper
+    {
+        private readonly IDbConnection _connection;
+
+        /// <summary>
+        /// Create instance of wrapper
+        /// </summary>
+        public SqlMapperWrapper(IDbConnection connection)
+        {
+            _connection = connection;
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public IEnumerable<dynamic> Query(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Query<dynamic>(
+                _connection,
+                sql,
+                param,
+                transaction,
+                buffered,
+                commandTimeout,
+                commandType);
+        }
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public IEnumerable<T> Query<T>(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            bool buffered = true,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Query<T>(
+                _connection,
+                sql,
+                param,
+                transaction,
+                buffered,
+                commandTimeout);
+        }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public IGridReader QueryMultiple(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.QueryMultiple(
+                _connection,
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public int Execute(
+            string sql,
+            dynamic param = null,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandType? commandType = null)
+        {
+            return SqlMapper.Execute(
+                _connection,
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType);
+        }
+    }
+
+    /// <summary>
+    /// Interface to expose the grid reader class via the wrapper
+    /// </summary>
+    public interface IGridReader
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        IEnumerable<T> Read<T>(bool buffered = true);
+    }
+
+    /// <summary>
+    /// Interface to expose the dynamic parameters class
+    /// </summary>
+    public interface IDynamicParameters
+    {
+        /// <summary>
+        /// Append a whole object full of params to the dynamic
+        /// EG: AddDynamicParams(new {A = 1, B = 2}) // will add property A and B to the dynamic
+        /// </summary>
+        void AddDynamicParams(dynamic param);
+
+        /// <summary>
+        /// Add a parameter to this dynamic parameter list
+        /// </summary>
+        void Add(
+            string name,
+            object value = null,
+            DbType? dbType = null,
+            ParameterDirection? direction = null,
+            int? size = null);
+    }
+
+    /// <summary>
+    /// Interface for a parameters factory
+    /// </summary>
+    public interface IDynamicParametersFactory
+    {
+        /// <summary>
+        /// Creates an instance IDynamicParameters
+        /// </summary>
+        IDynamicParameters Create();
+    }
 #endif
 
 }
