@@ -314,5 +314,40 @@ namespace Dapper
               .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Execute parameterized SQL where the parameter is an IEnumerable.
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static async Task<int> ExecuteAsyncSerialized(this IDbConnection cnn, string sql, IEnumerable multiExec, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            CacheInfo info = null;
+            bool isFirst = true;
+            int total = 0;
+
+            using (var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
+            {
+                string masterSql = null;
+                foreach (var obj in multiExec)
+                {
+                    if (isFirst)
+                    {
+                        masterSql = cmd.CommandText;
+                        isFirst = false;
+                        var identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
+                        info = GetCacheInfo(identity);
+                    }
+                    else
+                    {
+                        cmd.CommandText = masterSql;
+                        cmd.Parameters.Clear();
+                    }
+                    info.ParamReader(cmd, obj);
+
+                    total += await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+
+            return total;
+        }
     }
 }
