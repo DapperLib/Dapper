@@ -261,64 +261,51 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Execute parameterized SQL  
+        /// Execute parameterized SQL where the parameter is an IEnumerable.
         /// </summary>
         /// <returns>Number of rows affected</returns>
-        public static async Task<int> ExecuteAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        public static async Task<int> MultiExecuteAsync(this IDbConnection cnn, string sql, IEnumerable param, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            IEnumerable multiExec = (object)param as IEnumerable;
             CacheInfo info = null;
-            if (multiExec != null && !(multiExec is string))
+            DbCommand firstCommand = null;
+            int total = 0;
+            var cmdTasks = new List<Task<int>>();
+            foreach (var obj in param)
             {
-                DbCommand firstCommand = null;
-                int total = 0;
-                var cmdTasks = new List<Task<int>>();
-                foreach (var obj in multiExec)
+                DbCommand cmd;
+                if (firstCommand == null)
                 {
-                    DbCommand cmd;
-                    if (firstCommand == null)
-                    {
-                        firstCommand = cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType);
-                        var identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
-                        info = GetCacheInfo(identity);
-                    }
-                    else
-                    {
-                        // Clone the first command
-                        cmd = (DbCommand)cnn.CreateCommand();
-                        cmd.CommandText = firstCommand.CommandText;
-                        cmd.CommandType = firstCommand.CommandType;
-                        cmd.CommandTimeout = firstCommand.CommandTimeout;
-                        cmd.Transaction = firstCommand.Transaction;
-                    }
-                    info.ParamReader(cmd, obj);
-
-                    var resultTask = cmd.ExecuteNonQueryAsync().ContinueWith(et => {
-                        cmd.Dispose();
-                        return et.Result;
-                    }, TaskContinuationOptions.ExecuteSynchronously);
-                    cmdTasks.Add(resultTask);
+                    firstCommand = cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType);
+                    var identity = new Identity(sql, cmd.CommandType, cnn, null, obj.GetType(), null);
+                    info = GetCacheInfo(identity);
                 }
-                foreach (var cmdTask in cmdTasks)
-                    total += await cmdTask.ConfigureAwait(false);
-                return total;
-            }
+                else
+                {
+                    // Clone the first command
+                    cmd = (DbCommand)cnn.CreateCommand();
+                    cmd.CommandText = firstCommand.CommandText;
+                    cmd.CommandType = firstCommand.CommandType;
+                    cmd.CommandTimeout = firstCommand.CommandTimeout;
+                    cmd.Transaction = firstCommand.Transaction;
+                }
+                info.ParamReader(cmd, obj);
 
-            // nice and simple
-            if ((object)param != null)
-            {
-                var identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
-                info = GetCacheInfo(identity);
+                var resultTask = cmd.ExecuteNonQueryAsync().ContinueWith(et => {
+                    cmd.Dispose();
+                    return et.Result;
+                }, TaskContinuationOptions.ExecuteSynchronously);
+                cmdTasks.Add(resultTask);
             }
-            return await ExecuteCommandAsync(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType)
-              .ConfigureAwait(false);
+            foreach (var cmdTask in cmdTasks)
+                total += await cmdTask.ConfigureAwait(false);
+            return total;
         }
 
         /// <summary>
         /// Execute parameterized SQL where the parameter is an IEnumerable.
         /// </summary>
         /// <returns>Number of rows affected</returns>
-        public static async Task<int> ExecuteAsyncSerialized(this IDbConnection cnn, string sql, IEnumerable multiExec, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        public static async Task<int> MultiExecuteAsyncSerialized(this IDbConnection cnn, string sql, IEnumerable param, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             CacheInfo info = null;
             bool isFirst = true;
@@ -327,7 +314,7 @@ namespace Dapper
             using (var cmd = (DbCommand)SetupCommand(cnn, transaction, sql, null, null, commandTimeout, commandType))
             {
                 string masterSql = null;
-                foreach (var obj in multiExec)
+                foreach (var obj in param)
                 {
                     if (isFirst)
                     {
@@ -348,6 +335,31 @@ namespace Dapper
             }
 
             return total;
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static Task<int> ExecuteAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null, bool serialized = false)
+        {
+            IEnumerable multiExec = (object)param as IEnumerable;
+            if (multiExec != null && !(multiExec is string))
+            {
+                if (serialized)
+                    return MultiExecuteAsyncSerialized(cnn, sql, multiExec, transaction, commandTimeout, commandType);
+                else
+                    return MultiExecuteAsync(cnn, sql, multiExec, transaction, commandTimeout, commandType); 
+            }
+
+            // nice and simple
+            CacheInfo info = null;
+            if ((object)param != null)
+            {
+                var identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+                info = GetCacheInfo(identity);
+            }
+            return ExecuteCommandAsync(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
         }
     }
 }
