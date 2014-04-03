@@ -452,6 +452,10 @@ namespace Dapper
             {
                 return DynamicParameters.EnumerableMultiParameter;
             }
+            if (type.FullName == "System.Data.Entity.Spatial.DbGeography" || type.FullName == "Microsoft.SqlServer.Types.SqlGeography")
+            {
+                return DynamicParameters.SqlGeographyParameter;
+            }
 
 
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
@@ -805,7 +809,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-            this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1502,7 +1506,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return GetEnumerator();
             }
 
-        #region Implementation of ICollection<KeyValuePair<string,object>>
+            #region Implementation of ICollection<KeyValuePair<string,object>>
 
             void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
             {
@@ -1543,7 +1547,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             #endregion
 
-        #region Implementation of IDictionary<string,object>
+            #region Implementation of IDictionary<string,object>
 
             bool IDictionary<string, object>.ContainsKey(string key)
             {
@@ -1759,6 +1763,33 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="namePrefix"></param>
+        /// <param name="value"></param>
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("This method is for internal usage only", false)]
+        public static void PackSqlGeographyParameter(IDbCommand command, string namePrefix, object value)
+        {
+            var parameter = (System.Data.SqlClient.SqlParameter)command.CreateParameter();
+
+            parameter.ParameterName = namePrefix;
+            parameter.UdtTypeName = "Geography";
+            if (value != null)
+            {
+                if (value.GetType().FullName == "System.Data.Entity.Spatial.DbGeography")
+                    parameter.Value = Microsoft.SqlServer.Types.SqlGeography.Parse(new System.Data.SqlTypes.SqlString((value as dynamic).AsText()));
+                else
+                    parameter.Value = value;
+            }
+            else
+                parameter.Value = DBNull.Value;
+
+            command.Parameters.Add(parameter);
+        }
+
+        /// <summary>
         /// Internal use only
         /// </summary>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
@@ -1839,14 +1870,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         // look for ? / @ / : *by itself*
         static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9_])[?@:](?![a-zA-Z0-9_])", RegexOptions.Compiled);
-        
+
         /// <summary>
         /// Internal use only
         /// </summary>
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused)
         {
             Type type = identity.parametersType;
-            
+
             bool filterParams = false;
             if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
             {
@@ -1883,14 +1914,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         break;
                     }
                 }
-                if(ok)
+                if (ok)
                 {
                     // pre-sorted; the reflection gods have smiled upon us
                     props = propsArr;
                 }
-                else { // might still all be accounted for; check the hard way
-                    var positionByName = new Dictionary<string,int>(StringComparer.InvariantCultureIgnoreCase);
-                    foreach(var param in ctorParams)
+                else
+                { // might still all be accounted for; check the hard way
+                    var positionByName = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
+                    foreach (var param in ctorParams)
                     {
                         positionByName[param.Name] = param.Position;
                     }
@@ -1916,7 +1948,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                 }
             }
-            if(props == null) props = propsArr.OrderBy(x => x.Name);
+            if (props == null) props = propsArr.OrderBy(x => x.Name);
             if (filterParams)
             {
                 props = FilterParameters(props, identity.sql);
@@ -1955,6 +1987,16 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [command] [name] [boxed-value]
                     }
                     il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("PackListParameters"), null); // stack is [parameters]
+                    continue;
+                }
+                if (dbType == DynamicParameters.SqlGeographyParameter)
+                {
+                    // this actually represents special handling for list types;
+                    il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [command]
+                    il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [command] [name]
+                    il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [command] [name] [typed-param]
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [command] [name] [typed-value]
+                    il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("PackSqlGeographyParameter"), null); // stack is [parameters]
                     continue;
                 }
                 il.Emit(OpCodes.Dup); // stack is now [parameters] [parameters]
@@ -2944,6 +2986,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
     partial class DynamicParameters : SqlMapper.IDynamicParameters
     {
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
+        internal const DbType SqlGeographyParameter = (DbType)(-2);
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
 
         Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
