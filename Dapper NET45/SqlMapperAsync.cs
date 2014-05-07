@@ -342,5 +342,71 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 throw;
             }
         }
+
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="DataSet"/>.
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// <![CDATA[
+        /// DataTable table = new DataTable("MyTable");
+        /// using (var reader = ExecuteReader(cnn, sql, param))
+        /// {
+        ///     table.Load(reader);
+        /// }
+        /// ]]>
+        /// </code>
+        /// </example>
+        public static Task<IDataReader> ExecuteReaderAsync(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            return ExecuteReaderImplAsync(cnn, command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="DataSet"/>.
+        /// </remarks>
+        public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteReaderImplAsync(cnn, command);
+        }
+
+        private static async Task<IDataReader> ExecuteReaderImplAsync(IDbConnection cnn, CommandDefinition command)
+        {
+            Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
+
+            DbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                var reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default, command.CancellationToken).ConfigureAwait(false);
+                wasClosed = false;
+                return reader;
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+        }
     }
 }

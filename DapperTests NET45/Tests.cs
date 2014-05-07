@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Dapper;
 using SqlMapper;
+using System.Data;
 
 namespace DapperTests_NET45
 {
@@ -115,6 +116,35 @@ namespace DapperTests_NET45
                     multi.Read<int>().Single().IsEqualTo(1);
                     multi.Read<int>().Single().IsEqualTo(2);
                 }
+            }
+        }
+
+        public void ExecuteReaderOpenAsync()
+        {
+            using (var conn = Program.GetOpenConnection())
+            {
+                var dt = new DataTable();
+                dt.Load(conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").Result);
+                dt.Columns.Count.IsEqualTo(2);
+                dt.Columns[0].ColumnName.IsEqualTo("three");
+                dt.Columns[1].ColumnName.IsEqualTo("four");
+                dt.Rows.Count.IsEqualTo(1);
+                ((int)dt.Rows[0][0]).IsEqualTo(3);
+                ((int)dt.Rows[0][1]).IsEqualTo(4);
+            }
+        }
+        public void ExecuteReaderClosedAsync()
+        {
+            using (var conn = Program.GetClosedConnection())
+            {
+                var dt = new DataTable();
+                dt.Load(conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").Result);
+                dt.Columns.Count.IsEqualTo(2);
+                dt.Columns[0].ColumnName.IsEqualTo("three");
+                dt.Columns[1].ColumnName.IsEqualTo("four");
+                dt.Rows.Count.IsEqualTo(1);
+                ((int)dt.Rows[0][0]).IsEqualTo(3);
+                ((int)dt.Rows[0][1]).IsEqualTo(4);
             }
         }
 

@@ -885,6 +885,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <remarks>
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
         /// or <see cref="DataSet"/>.
+        /// </remarks>
         /// <example>
         /// <code>
         /// <![CDATA[
@@ -896,7 +897,6 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// ]]>
         /// </code>
         /// </example>
-        /// </remarks>
         public static IDataReader ExecuteReader(
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
@@ -905,21 +905,21 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #endif
 )
         {
-            IEnumerable multiExec = (object)param as IEnumerable;
-            Identity identity;
-            CacheInfo info = null;
-            if (multiExec != null && !(multiExec is string))
-            {
-                throw new NotSupportedException("MultiExec is not supported by ExecuteReader");
-            }
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            return ExecuteReaderImpl(cnn, ref command);
+        }
 
-            // nice and simple
-            if ((object)param != null)
-            {
-                identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
-                info = GetCacheInfo(identity);
-            }
-            return ExecuteReaderCommand(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="DataSet"/>.
+        /// </remarks>
+        public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteReaderImpl(cnn, ref command);
         }
 
 #if !CSHARP30
@@ -1285,7 +1285,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
             this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered);
             var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null);
             return buffered ? results.ToList() : results;
         }
@@ -2317,13 +2317,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
-        private static IDataReader ExecuteReaderCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command)
         {
+            Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
+
             IDbCommand cmd = null;
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                cmd = SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType);
+                cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
                 var reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
                 wasClosed = false;
@@ -2334,6 +2336,27 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
             }
+        }
+
+        private static Action<IDbCommand, object> GetParameterReader(IDbConnection cnn, ref CommandDefinition command)
+        {
+            object param = command.Parameters;
+            IEnumerable multiExec = (object)param as IEnumerable;
+            Identity identity;
+            CacheInfo info = null;
+            if (multiExec != null && !(multiExec is string))
+            {
+                throw new NotSupportedException("MultiExec is not supported by ExecuteReader");
+            }
+
+            // nice and simple
+            if (param != null)
+            {
+                identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
+                info = GetCacheInfo(identity);
+            }
+            var paramReader = info == null ? null : info.ParamReader;
+            return paramReader;
         }
 
         private static Func<IDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index)
@@ -3325,7 +3348,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 var dbType = param.DbType;
                 var val = param.Value;
                 string name = Clean(param.Name);
-                var isCustomQueryParameter = typeof(SqlMapper.ICustomQueryParameter).IsAssignableFrom(val.GetType());
+                var isCustomQueryParameter = val is SqlMapper.ICustomQueryParameter;
 
                 if (dbType == null && val != null && !isCustomQueryParameter) dbType = SqlMapper.LookupDbType(val.GetType(), name);
 
