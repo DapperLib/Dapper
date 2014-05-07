@@ -2875,14 +2875,21 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 if (reader != null && index >= 0 && index < reader.FieldCount)
                 {
                     name = reader.GetName(index);
-                    object val = reader.GetValue(index);
-                    if (val == null || val is DBNull)
+                    try
                     {
-                        value = "<null>";
+                        object val = reader.GetValue(index); // if there throw an exception, then I got one message, but Which column?
+                        if (val == null || val is DBNull)
+                        {
+                            value = "<null>";
+                        }
+                        else
+                        {
+                            value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
+                        }
                     }
-                    else
+                    catch (Exception valEx)
                     {
-                        value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
+                        value = valEx.Message;
                     }
                 }
                 toThrow = new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name, value), ex);
