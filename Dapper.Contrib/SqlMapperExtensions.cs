@@ -295,6 +295,23 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+
+        /// <summary>
+        /// Delete all entities in the table related to the type T.
+        /// </summary>
+        /// <typeparam name="T">Type of entity</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <returns>true if deleted, false if none found</returns>
+        public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            var type = typeof(T);
+            var name = GetTableName(type);
+            var statement = String.Format("delete from {0}", name);
+            var deleted = connection.Execute(statement, null, transaction: transaction, commandTimeout: commandTimeout);
+            return deleted > 0;
+        }
+
+
 		public static ISqlAdapter GetFormatter(IDbConnection connection)
 		{
 			string name = connection.GetType().Name.ToLower();
