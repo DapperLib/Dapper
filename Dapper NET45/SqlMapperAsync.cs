@@ -33,8 +33,8 @@ namespace Dapper
             {
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync();
-                    using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken))
+                    if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                    using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false))
                     {
                         return ExecuteReader<T>(reader, identity, info).ToList();
                     }
@@ -67,8 +67,8 @@ namespace Dapper
             {
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync();
-                    return await cmd.ExecuteNonQueryAsync(command.CancellationToken);
+                    if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                    return await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -256,9 +256,9 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync();
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken))
+                using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false))
                 {
                     var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), map, splitOn, reader, identity);
                     return command.Buffered ? results.ToList() : results;
@@ -315,9 +315,9 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync();
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
-                reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default, command.CancellationToken);
+                reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default, command.CancellationToken).ConfigureAwait(false);
 
                 var result = new GridReader(cmd, reader, identity);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
