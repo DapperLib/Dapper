@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Reflection;
 
 namespace DapperTests_NET45
@@ -21,14 +22,29 @@ namespace DapperTests_NET45
             connection.Open();
             return connection;
         }
+        public static SqlConnection GetClosedConnection()
+        {
+            return new SqlConnection(connectionString);
+        }
         private static void RunTests()
         {
             var tester = new Tests();
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 Console.Write("Running " + method.Name);
-                method.Invoke(tester, null);
-                Console.WriteLine(" - OK!");
+                try
+                {
+                    method.Invoke(tester, null);
+                    Console.WriteLine(" - OK!");
+                } catch(TargetInvocationException ex)
+                {
+                    var inner = ex.InnerException;
+                    if(inner is AggregateException && ((AggregateException)inner).InnerExceptions.Count == 1)
+                    {
+                        inner = ((AggregateException)inner).InnerExceptions.Single();
+                    }
+                    Console.WriteLine(" - ERR: " + inner.Message);
+                }
             }
         }
     }

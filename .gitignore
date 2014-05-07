@@ -8,3 +8,4 @@ NuGet.exe
 *.user
 *.nupkg
 .docstats
+*.ide/

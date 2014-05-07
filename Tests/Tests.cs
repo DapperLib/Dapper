@@ -659,6 +659,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             ((int?)row.B)
                 .IsEqualTo(2);
         }
+
         public void TestEnumeration()
         {
             var en = connection.Query<int>("select 1 as one union all select 2 as one", buffered: false);
@@ -678,7 +679,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             while (i.MoveNext())
             { }
 
-            // should not exception, since enumertated
+            // should not exception, since enumerated
             en = connection.Query<int>("select 1 as one", buffered: false);
 
             gotException.IsTrue();
