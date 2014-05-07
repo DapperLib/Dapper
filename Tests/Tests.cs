@@ -2656,11 +2656,30 @@ end");
         public void TestParameterInclusionNotSensitiveToCurrentCulture()
         {
             CultureInfo current = Thread.CurrentThread.CurrentCulture;
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
-            connection.Query<int>("select @pid", new { PId = 1 }).Single();
+                connection.Query<int>("select @pid", new { PId = 1 }).Single();
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = current;
+            }
+        }
 
-            Thread.CurrentThread.CurrentCulture = current;
+        public void TestProcedureWithTimeParameter()
+        {
+            var p = new DynamicParameters();
+            p.Add("a", TimeSpan.FromHours(10), dbType: DbType.Time);
+
+            connection.Execute(@"CREATE PROCEDURE #TestProcWithTimeParameter
+    @a TIME
+    AS 
+    BEGIN
+    SELECT @a
+    END");
+            connection.Query<TimeSpan>("#TestProcWithTimeParameter", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(new TimeSpan(10, 0, 0));
         }
 
         class HasDoubleDecimal

@@ -3389,7 +3389,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         p.Size = param.Size.Value;
                     }
-                    if (dbType != null)
+                    if (dbType != null && p.DbType != dbType)
                     {
                         p.DbType = dbType.Value;
                     }
