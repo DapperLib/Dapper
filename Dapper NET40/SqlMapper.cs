@@ -2384,28 +2384,20 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     types[i - startBound] = reader.GetFieldType(i);
                 }
 
-                if (type.IsValueType)
+                var ctor = typeMap.FindConstructor(names, types);
+                if (ctor == null)
                 {
-                    il.Emit(OpCodes.Ldloca_S, (byte)1);
-                    il.Emit(OpCodes.Initobj, type);
+                    string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                    throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
+                }
+
+                if (ctor.GetParameters().Length == 0)
+                {
+                    il.Emit(OpCodes.Newobj, ctor);
+                    il.Emit(OpCodes.Stloc_1);
                 }
                 else
-                {
-                    var ctor = typeMap.FindConstructor(names, types);
-                    if (ctor == null)
-                    {
-                        string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
-                        throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
-                    }
-
-                    if (ctor.GetParameters().Length == 0)
-                    {
-                        il.Emit(OpCodes.Newobj, ctor);
-                        il.Emit(OpCodes.Stloc_1);
-                    }
-                    else
-                        specializedConstructor = ctor;
-                }
+                    specializedConstructor = ctor;
             }
 
             il.BeginExceptionBlock();
