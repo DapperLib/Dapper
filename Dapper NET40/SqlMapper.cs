@@ -706,6 +706,42 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        public static IDataReader ExecuteReader(this IDbConnection cnn, string sql, object param)
+        {
+            return ExecuteReader(cnn, sql, param, null, null, null);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        public static IDataReader ExecuteReader(this IDbConnection cnn, string sql, object param, IDbTransaction transaction)
+        {
+            return ExecuteReader(cnn, sql, param, transaction, null, null);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        public static IDataReader ExecuteReader(this IDbConnection cnn, string sql, object param, CommandType commandType)
+        {
+            return ExecuteReader(cnn, sql, param, null, null, commandType);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        public static IDataReader ExecuteReader(this IDbConnection cnn, string sql, object param, IDbTransaction transaction, CommandType commandType)
+        {
+            return ExecuteReader(cnn, sql, param, transaction, null, commandType);
+        }
+
+        /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
@@ -773,6 +809,8 @@ namespace Dapper
             return QueryMultiple(cnn, sql, param, transaction, null, commandType);
         }
 #endif
+
+
         /// <summary>
         /// Execute parameterized SQL  
         /// </summary>
@@ -839,6 +877,51 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
             return ExecuteCommand(cnn, ref command, param == null ? null : info.ParamReader);
         }
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="DataSet"/>.
+        /// <example>
+        /// <code>
+        /// <![CDATA[
+        /// DataTable table = new DataTable("MyTable");
+        /// using (var reader = ExecuteReader(cnn, sql, param))
+        /// {
+        ///     table.Load(reader);
+        /// }
+        /// ]]>
+        /// </code>
+        /// </example>
+        /// </remarks>
+        public static IDataReader ExecuteReader(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            IEnumerable multiExec = (object)param as IEnumerable;
+            Identity identity;
+            CacheInfo info = null;
+            if (multiExec != null && !(multiExec is string))
+            {
+                throw new NotSupportedException("MultiExec is not supported by ExecuteReader");
+            }
+
+            // nice and simple
+            if ((object)param != null)
+            {
+                identity = new Identity(sql, commandType, cnn, null, (object)param == null ? null : ((object)param).GetType(), null);
+                info = GetCacheInfo(identity);
+            }
+            return ExecuteReaderCommand(cnn, transaction, sql, (object)param == null ? null : info.ParamReader, (object)param, commandTimeout, commandType);
+        }
+
 #if !CSHARP30
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
@@ -2226,6 +2309,25 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
                 return cmd.ExecuteNonQuery();
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+        }
+
+        private static IDataReader ExecuteReaderCommand(IDbConnection cnn, IDbTransaction transaction, string sql, Action<IDbCommand, object> paramReader, object obj, int? commandTimeout, CommandType? commandType)
+        {
+            IDbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                cmd = SetupCommand(cnn, transaction, sql, paramReader, obj, commandTimeout, commandType);
+                if (wasClosed) cnn.Open();
+                var reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                wasClosed = false;
+                return reader;
             }
             finally
             {
