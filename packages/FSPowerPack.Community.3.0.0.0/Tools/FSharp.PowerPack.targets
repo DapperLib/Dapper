@@ -1,0 +1,84 @@
+<!--
+***********************************************************************************************
+FSharp.PowerPack.targets
+
+WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
+		  created a backup copy.  Incorrect changes to this file will make it
+		  impossible to load or build your projects from the command-line or the IDE.
+
+PowerPack build rules.
+
+Copyright (C) Microsoft Corporation. Apache 2.0 License.
+***********************************************************************************************
+-->
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<UsingTask TaskName="FsLex" AssemblyFile="FSharp.PowerPack.Build.Tasks.dll"/>
+	<UsingTask TaskName="FsYacc" AssemblyFile="FSharp.PowerPack.Build.Tasks.dll"/>
+	<PropertyGroup>
+		<CompileDependsOn>CallFsLex;CallFsYacc;$(CompileDependsOn)</CompileDependsOn>
+	</PropertyGroup>
+
+	<!-- Build FsLex files. -->
+	<Target
+		Name="CallFsLex"
+		Inputs="@(FsLex)"
+		Outputs="@(FsLex->'$(FsLexOutputFolder)%(Filename).fs')"
+		Condition="'@(FsLex)'!=''">
+
+		<!-- Create the output directory -->
+		<MakeDir Directories="$(FsLexOutputFolder)"/>
+		<!-- Call FsLex -->
+		<FsLex
+			InputFile="%(FsLex.Identity)"
+			OutputFile="$(FsLexOutputFolder)%(FsLex.Filename).fs"
+			ToolPath="$(FsLexToolPath)"
+			ToolExe="$(FsLexToolExe)"
+			OtherFlags="%(FsLex.OtherFlags)"
+			Unicode="$(FsLexUnicode)">
+			<!-- Track outputs for 'Clean' -->
+			<Output TaskParameter="OutputFile" ItemName="FileWrites"/>
+		</FsLex>
+    <!-- Make sure it will get cleaned  -->
+    <CreateItem Include="$(FsLexOutputFolder)%(FsLex.Filename).fs">
+      <Output TaskParameter="Include" ItemName="FileWrites"/>
+    </CreateItem>
+  </Target>
+
+	<!-- Build FsYacc files. -->
+	<Target
+		Name="CallFsYacc"
+		Inputs="@(FsYacc)"
+		Outputs="@(FsYacc->'$(FsYaccOutputFolder)%(Filename).fs')"
+		Condition="'@(FsYacc)'!=''">
+
+		<!-- Create the output directory -->
+		<MakeDir Directories="$(FsYaccOutputFolder)"/>
+		<!-- Call FsYacc -->
+		<FsYacc
+			InputFile="%(FsYacc.Identity)"
+			OutputFile="$(FsYaccOutputFolder)%(FsYacc.Filename).fs"
+			Open="%(FsYacc.Open)"
+			Module="%(FsYacc.Module)"
+			OtherFlags="%(FsYacc.OtherFlags)"
+			ToolPath="$(FsYaccToolPath)"
+			ToolExe="$(FsYaccToolExe)">
+			<!-- Track outputs for 'Clean' -->
+			<Output TaskParameter="OutputFile" ItemName="FileWrites"/>
+    </FsYacc>
+    <!-- Make sure it will get cleaned  -->
+    <CreateItem Include="$(FsYaccOutputFolder)%(FsYacc.Filename).fs">
+      <Output TaskParameter="Include" ItemName="FileWrites"/>
+    </CreateItem>
+  </Target>
+	<ItemGroup>
+       <AvailableItemName Include="FsLex">
+           <Visible>false</Visible>
+       </AvailableItemName>
+       <AvailableItemName Include="FsYacc">
+           <Visible>false</Visible>
+       </AvailableItemName>
+    </ItemGroup>
+</Project>
+
+

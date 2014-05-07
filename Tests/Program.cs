@@ -8,7 +8,7 @@ namespace SqlMapper
 {
     [ServiceStack.DataAnnotations.Alias("Posts")]
 	[Soma.Core.Table(Name = "Posts")]
-    class Post
+    public class Post
     {
 		[Soma.Core.Id(Soma.Core.IdKind.Identity)]
         public int Id { get; set; }
