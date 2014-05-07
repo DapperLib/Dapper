@@ -29,7 +29,8 @@ namespace Dapper.Contrib.Extensions
 
 		private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary = new Dictionary<string, ISqlAdapter>() {
 																							{"sqlconnection", new SqlServerAdapter()},
-																							{"npgsqlconnection", new PostgresAdapter()}
+																							{"npgsqlconnection", new PostgresAdapter()},
+																							{"sqliteconnection", new SQLiteAdapter()}
 																						};
 		private static IEnumerable<PropertyInfo> ComputedPropertiesCache(Type type)
 		{
@@ -551,4 +552,23 @@ public class PostgresAdapter : ISqlAdapter
 		}
 		return id;
 	}
+}
+
+public class SQLiteAdapter : ISqlAdapter
+{
+	public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+	{
+		string cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+
+		connection.Execute(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+
+		var r = connection.Query("select last_insert_rowid() id", transaction: transaction, commandTimeout: commandTimeout);
+		int id = (int)r.First().id;
+		if (keyProperties.Any())
+			keyProperties.First().SetValue(entityToInsert, id, null);
+		return id;
+	}
+
+
+
 }
