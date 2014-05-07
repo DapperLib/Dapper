@@ -773,6 +773,23 @@ namespace Dapper
             return QueryMultiple(cnn, sql, param, transaction, null, commandType);
         }
 #endif
+
+        /// <summary>
+        /// Execute parameterized SQL  
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static int Execute(
+#if CSHARP30
+            this IDbTransaction transaction, string sql, object param, int? commandTimeout, CommandType? commandType
+#else
+this IDbTransaction transaction, string sql, dynamic param = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+			return transaction.Connection.Execute(sql, (object)param, transaction, commandTimeout, commandType);
+		}
+
+
         /// <summary>
         /// Execute parameterized SQL  
         /// </summary>
@@ -923,6 +940,25 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         }
 
 
+
+        /// <summary>
+        /// Executes a query, returning the data typed as per T using this transaction
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<T> Query<T>(
+#if CSHARP30
+            this IDbTransaction transaction, string sql, object param, bool buffered, int? commandTimeout, CommandType? commandType
+#else
+this IDbTransaction transaction, string sql, dynamic param = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var data = QueryInternal<T>(transaction.Connection, sql, param as object, transaction, commandTimeout, commandType);
+            return buffered ? data.ToList() : data;
+        }
 
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
