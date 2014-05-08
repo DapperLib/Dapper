@@ -2670,10 +2670,14 @@ end");
         }
         public void LiteralReplacement()
         {
-            connection.Execute("create table #literal1 (id int not null)");
-            connection.Execute("insert #literal1 (id) values ({=id})", new { id = 123 });
+            connection.Execute("create table #literal1 (id int not null, foo int not null)");
+            connection.Execute("insert #literal1 (id,foo) values ({=id}, @foo)", new { id = 123, foo = 456});
+            var rows = new[] { new { id = 1, foo = 2 }, new { id = 3, foo = 4 } };
+            connection.Execute("insert #literal1 (id,foo) values ({=id}, @foo)", rows);
             var count = connection.Query<int>("select count(1) from #literal1 where id={=foo}", new { foo = 123 }).Single();
             count.IsEqualTo(1);
+            int sum = connection.Query<int>("select sum(id) + sum(foo) from #literal1").Single();
+            sum.IsEqualTo(123 + 456 + 1 + 2 + 3 + 4);
         }
         public void LiteralReplacementDynamic()
         {
@@ -2687,6 +2691,7 @@ end");
             var count = connection.Query<int>("select count(1) from #literal2 where id={=foo}", args).Single();
             count.IsEqualTo(1);
         }
+
 
         public void TestProcedureWithTimeParameter()
         {

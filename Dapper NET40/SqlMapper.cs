@@ -855,27 +855,34 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             {
                 bool isFirst = true;
                 int total = 0;
-                using (var cmd = command.SetupCommand(cnn, null))
+                bool wasClosed = cnn.State == ConnectionState.Closed;
+                try
                 {
-
-                    string masterSql = null;
-                    foreach (var obj in multiExec)
+                    if (wasClosed) cnn.Open();
+                    using (var cmd = command.SetupCommand(cnn, null))
                     {
-                        if (isFirst)
+                        string masterSql = null;
+                        foreach (var obj in multiExec)
                         {
-                            masterSql = cmd.CommandText;
-                            isFirst = false;
-                            identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                            info = GetCacheInfo(identity, obj);
+                            if (isFirst)
+                            {
+                                masterSql = cmd.CommandText;
+                                isFirst = false;
+                                identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
+                                info = GetCacheInfo(identity, obj);
+                            }
+                            else
+                            {
+                                cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                                cmd.Parameters.Clear(); // current code is Add-tastic
+                            }
+                            info.ParamReader(cmd, obj);
+                            total += cmd.ExecuteNonQuery();
                         }
-                        else
-                        {
-                            cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
-                            cmd.Parameters.Clear(); // current code is Add-tastic
-                        }
-                        info.ParamReader(cmd, obj);
-                        total += cmd.ExecuteNonQuery();
                     }
+                } finally
+                {
+                    if (wasClosed) cnn.Close();
                 }
                 return total;
             }

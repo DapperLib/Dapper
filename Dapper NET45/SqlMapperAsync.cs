@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -57,9 +58,58 @@ namespace Dapper
         /// <summary>
         /// Execute a command asynchronously using .NET 4.5 Task.
         /// </summary>
-        public static async Task<int> ExecuteAsync(this IDbConnection cnn, CommandDefinition command)
+        public static Task<int> ExecuteAsync(this IDbConnection cnn, CommandDefinition command)
         {
             object param = command.Parameters;
+            IEnumerable multiExec = param as IEnumerable;
+            if (multiExec != null && !(param is string))
+            {
+                return ExecuteMultiImplAsync(cnn, command, multiExec);
+            }
+            else
+            {
+                return ExecuteImplAsync(cnn, command, param);
+            }
+        }
+        private static async Task<int> ExecuteMultiImplAsync(IDbConnection cnn, CommandDefinition command, IEnumerable multiExec)
+        {
+            bool isFirst = true;
+            int total = 0;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync();
+                using (var cmd = (DbCommand)command.SetupCommand(cnn, null))
+                {
+                    string masterSql = null;
+                    CacheInfo info = null;
+                    foreach (var obj in multiExec)
+                    {
+                        if (isFirst)
+                        {
+                            masterSql = cmd.CommandText;
+                            isFirst = false;
+                            var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
+                            info = GetCacheInfo(identity, obj);
+                        }
+                        else
+                        {
+                            cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                            cmd.Parameters.Clear(); // current code is Add-tastic
+                        }
+                        info.ParamReader(cmd, obj);
+                        total += await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+            }
+            return total;
+        }
+        private static async Task<int> ExecuteImplAsync(IDbConnection cnn, CommandDefinition command, object param)
+        {
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity, param);
             bool wasClosed = cnn.State == ConnectionState.Closed;

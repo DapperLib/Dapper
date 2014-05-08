@@ -98,9 +98,9 @@ namespace DapperTests_NET45
 
         public void TestMultiAsync()
         {
-            using(var conn = Program.GetOpenConnection())
+            using (var conn = Program.GetOpenConnection())
             {
-                using(Dapper.SqlMapper.GridReader multi = conn.QueryMultipleAsync("select 1; select 2").Result)
+                using (Dapper.SqlMapper.GridReader multi = conn.QueryMultipleAsync("select 1; select 2").Result)
                 {
                     multi.Read<int>().Single().IsEqualTo(1);
                     multi.Read<int>().Single().IsEqualTo(2);
@@ -146,6 +146,49 @@ namespace DapperTests_NET45
                 ((int)dt.Rows[0][0]).IsEqualTo(3);
                 ((int)dt.Rows[0][1]).IsEqualTo(4);
             }
+        }
+
+        public void LiteralReplacementOpen()
+        {
+            using (var conn = Program.GetOpenConnection()) LiteralReplacement(conn);
+        }
+        public void LiteralReplacementClosed()
+        {
+            using (var conn = Program.GetClosedConnection()) LiteralReplacement(conn);
+        }
+        private void LiteralReplacement(IDbConnection connection)
+        {
+            try { connection.ExecuteAsync("drop table literal1").Wait(); } catch { }
+            connection.ExecuteAsync("create table literal1 (id int not null, foo int not null)").Wait();
+            connection.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", new { id = 123, foo = 456 }).Wait();
+            var rows = new[] { new { id = 1, foo = 2 }, new { id = 3, foo = 4 } };
+            connection.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", rows).Wait();
+            var count = connection.QueryAsync<int>("select count(1) from literal1 where id={=foo}", new { foo = 123 }).Result.Single();
+            count.IsEqualTo(1);
+            int sum = connection.QueryAsync<int>("select sum(id) + sum(foo) from literal1").Result.Single();
+            sum.IsEqualTo(123 + 456 + 1 + 2 + 3 + 4);
+        }
+
+        public void LiteralReplacementDynamicOpen()
+        {
+            using (var conn = Program.GetOpenConnection()) LiteralReplacementDynamic(conn);
+        }
+        public void LiteralReplacementDynamicClosed()
+        {
+            using (var conn = Program.GetClosedConnection()) LiteralReplacementDynamic(conn);
+        }
+        private void LiteralReplacementDynamic(IDbConnection connection)
+        {
+            var args = new DynamicParameters();
+            args.Add("id", 123);
+            try { connection.ExecuteAsync("drop table literal2").Wait(); } catch { }
+            connection.ExecuteAsync("create table literal2 (id int not null)").Wait();
+            connection.ExecuteAsync("insert literal2 (id) values ({=id})", args).Wait();
+
+            args = new DynamicParameters();
+            args.Add("foo", 123);
+            var count = connection.QueryAsync<int>("select count(1) from literal2 where id={=foo}", args).Result.Single();
+            count.IsEqualTo(1);
         }
 
         class Product
