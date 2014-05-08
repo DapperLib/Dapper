@@ -2692,6 +2692,32 @@ end");
             count.IsEqualTo(1);
         }
 
+        enum AnEnum
+        {
+            A = 2,
+            B = 1
+        }
+        public void LiteralReplacementEnumAndString()
+        {
+            var args = new { x = AnEnum.B, y = 123.45M };
+            var row = connection.Query("select {=x} as x,{=y} as y", args).Single();
+            AnEnum x = (AnEnum)(int)row.x;
+            decimal y = row.y;
+            x.Equals(AnEnum.B);
+            y.Equals(123.45M);
+        }
+        public void LiteralReplacementDynamicEnumAndString()
+        {
+            var args = new DynamicParameters();
+            args.Add("x", AnEnum.B);
+            args.Add("y", 123.45M);
+            var row = connection.Query("select {=x} as x,{=y} as y", args).Single();
+            AnEnum x = (AnEnum)(int)row.x;
+            decimal y = row.y;
+            x.Equals(AnEnum.B);
+            y.Equals(123.45M);
+        }
+
 
         public void TestProcedureWithTimeParameter()
         {

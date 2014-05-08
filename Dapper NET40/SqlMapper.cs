@@ -2115,25 +2115,62 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var tokens = GetLiteralTokens(command.CommandText);
             if (tokens.Count != 0) ReplaceLiterals(parameters, command, tokens);
         }
+
+        internal static readonly MethodInfo format = typeof(SqlMapper).GetMethod("Format", BindingFlags.Public | BindingFlags.Static);
+        /// <summary>
+        /// Convert numeric values to their string form for SQL literal purposes
+        /// </summary>
+        [Obsolete("This is intended for internal usage only")]
+        public static string Format(object value)
+        {
+            if (value == null)
+            {
+                return "null";
+            }
+            else
+            {
+                switch (Type.GetTypeCode(value.GetType()))
+                {
+                    case TypeCode.DBNull:
+                        return "null";
+                    case TypeCode.Boolean:
+                        return ((bool)value) ? "1" : "0";
+                    case TypeCode.Byte:
+                        return ((byte)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.SByte:
+                        return ((sbyte)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.UInt16:
+                        return ((ushort)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Int16:
+                        return ((short)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.UInt32:
+                        return ((uint)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Int32:
+                        return ((int)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.UInt64:
+                        return ((ulong)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Int64:
+                        return ((long)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Single:
+                        return ((float)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Double:
+                        return ((double)value).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Decimal:
+                        return ((decimal)value).ToString(CultureInfo.InvariantCulture);
+                    default:
+                        throw new NotSupportedException(value.GetType().Name);
+                }
+            }
+        }
         internal static void ReplaceLiterals(IParameterLookup parameters, IDbCommand command, IList<LiteralToken> tokens)
         {
             var sql = command.CommandText;
             foreach (var token in tokens)
             {
                 object value = parameters[token.Member];
-                string text;
-                if (value == null)
-                {
-                    text = "";
-                }
-                else if (value is string)
-                {
-                    text = (string)value;
-                }
-                else
-                {
-                    text = Convert.ToString(value, CultureInfo.InvariantCulture);
-                }
+#pragma warning disable 0618
+                string text = Format(value);
+#pragma warning restore 0618
                 sql = sql.Replace(token.Token, text);
             }
             command.CommandText = sql;
@@ -2424,19 +2461,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         il.Emit(OpCodes.Ldloc_0); // command, sql, typed parameter
                         il.EmitCall(OpCodes.Callvirt, prop.GetGetMethod(), null); // command, sql, typed value
                         Type propType = prop.PropertyType;
-                        if (propType == typeof(string))
+                        var typeCode = Type.GetTypeCode(propType);
+                        switch (typeCode)
                         {
-                            // do nothing
-                        }
-                        else
-                        {
-                            var convert = GetToString(propType);
-                            if (convert == null || convert.ReturnType != typeof(string)) throw new InvalidOperationException("No suitable ToString method for literal replacement of: " + literal.Token);
-
-                            if (propType.IsValueType)
-                            {
+                            case TypeCode.Boolean:
+                            case TypeCode.Byte:
+                            case TypeCode.SByte:
+                            case TypeCode.UInt16:
+                            case TypeCode.Int16:
+                            case TypeCode.UInt32:
+                            case TypeCode.Int32:
+                            case TypeCode.UInt64:
+                            case TypeCode.Int64:
+                            case TypeCode.Single:
+                            case TypeCode.Double:
+                            case TypeCode.Decimal:
                                 // neeed to stloc, ldloca, call
                                 // re-use existing locals (both the last known, and via a dictionary)
+                                var convert = GetToString(typeCode);
                                 if (local == null || local.LocalType != propType)
                                 {
                                     if (locals == null)
@@ -2458,13 +2500,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                                 il.Emit(OpCodes.Ldloca, local); // command, sql, ref-to-value
                                 il.EmitCall(OpCodes.Call, InvariantCulture, null); // command, sql, ref-to-value, culture
                                 il.EmitCall(OpCodes.Call, convert, null); // command, sql, string value
-                            }
-                            else
-                            {
-                                il.EmitCall(OpCodes.Call, InvariantCulture, null); // command, sql, typed value, culture
-                                il.EmitCall(OpCodes.Callvirt, convert, null); // command, sql, string value
-                            }
-                            
+                                break;
+                            default:
+                                if (propType.IsValueType) il.Emit(OpCodes.Box, propType); // command, sql, object value
+                                il.EmitCall(OpCodes.Call, format, null); // command, sql, string value
+                                break;
+
                         }
                         il.EmitCall(OpCodes.Callvirt, StringReplace, null);
                     }
@@ -2475,25 +2516,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             il.Emit(OpCodes.Ret);
             return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
         }
-        static readonly Hashtable toStrings = new Hashtable();
-        static readonly object NullSentinel = new object();
-        static MethodInfo GetToString(Type type)
+        static readonly Dictionary<TypeCode, MethodInfo> toStrings = new[]
         {
-            if (type == null) return null;
-            var obj = toStrings[type];
-            if(obj == null)
-            {
-                lock(toStrings)
-                {
-                    obj = toStrings[type];
-                    if(obj == null)
-                    {
-                        obj = type.GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IFormatProvider) }, null);
-                        toStrings[type] = obj ?? NullSentinel;
-                    }
-                }
-            }
-            return obj as MethodInfo;
+            typeof(bool), typeof(sbyte), typeof(byte), typeof(ushort), typeof(short),
+            typeof(uint), typeof(int), typeof(ulong), typeof(long), typeof(float), typeof(double), typeof(decimal)
+        }.ToDictionary(x => Type.GetTypeCode(x), x => x.GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IFormatProvider) }, null));
+        static MethodInfo GetToString(TypeCode typeCode)
+        {
+            MethodInfo method;
+            return toStrings.TryGetValue(typeCode, out method) ? method : null;
         }
         static readonly MethodInfo StringReplace = typeof(string).GetMethod("Replace", BindingFlags.Instance | BindingFlags.Public, null, new Type[] { typeof(string), typeof(string) }, null),
             InvariantCulture = typeof(CultureInfo).GetProperty("InvariantCulture", BindingFlags.Public | BindingFlags.Static).GetGetMethod();
