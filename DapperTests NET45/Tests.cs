@@ -191,6 +191,22 @@ namespace DapperTests_NET45
             count.IsEqualTo(1);
         }
 
+        public void LiteralIn()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                connection.ExecuteAsync("create table #literalin(id int not null);").Wait();
+                connection.ExecuteAsync("insert #literalin (id) values (@id)", new[] {
+                    new { id = 1 },
+                    new { id = 2 },
+                    new { id = 3 },
+                }).Wait();
+                var count = connection.QueryAsync<int>("select count(1) from #literalin where id in {=ids}",
+                    new { ids = new[] { 1, 3, 4 } }).Result.Single();
+                count.IsEqualTo(2);
+            }
+        }
+
         class Product
         {
             public int Id { get; set; }

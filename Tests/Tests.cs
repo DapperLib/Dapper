@@ -2718,6 +2718,19 @@ end");
             y.Equals(123.45M);
         }
 
+        public void LiteralIn()
+        {
+            connection.Execute("create table #literalin(id int not null);");
+            connection.Execute("insert #literalin (id) values (@id)", new[] {
+                new { id = 1 },
+                new { id = 2 },
+                new { id = 3 },
+            });
+            var count = connection.Query<int>("select count(1) from #literalin where id in {=ids}",
+                new { ids = new[] { 1, 3, 4 } }).Single();
+            count.IsEqualTo(2);
+        }
+
 
         public void TestProcedureWithTimeParameter()
         {

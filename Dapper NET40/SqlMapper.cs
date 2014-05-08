@@ -22,6 +22,26 @@ using System.Globalization;
 
 namespace Dapper
 {
+
+    /// <summary>
+    /// Additional state flags that control command behaviour
+    /// </summary>
+    [Flags]
+    public enum CommandFlags
+    {
+        /// <summary>
+        /// No additonal flags
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Should data be buffered before returning?
+        /// </summary>
+        Buffered = 1,
+        /// <summary>
+        /// Can async queries be pipelined?
+        /// </summary>
+        Pipelined = 2,
+    }
     /// <summary>
     /// Represents the key aspects of a sql operation
     /// </summary>
@@ -32,7 +52,7 @@ namespace Dapper
         private readonly IDbTransaction transaction;
         private readonly int? commandTimeout;
         private readonly CommandType? commandType;
-        private readonly bool buffered;
+        private readonly CommandFlags flags;
 
 
 
@@ -60,17 +80,27 @@ namespace Dapper
         /// <summary>
         /// Should data be buffered before returning?
         /// </summary>
-        public bool Buffered { get { return buffered; } }
+        public bool Buffered { get { return (flags & CommandFlags.Buffered) != 0; } }
+
+        /// <summary>
+        /// Additional state flags against this command
+        /// </summary>
+        public CommandFlags Flags {  get { return flags; } }
+
+        /// <summary>
+        /// Can async queries be pipelined?
+        /// </summary>
+        public bool Pipelined { get { return (flags & CommandFlags.Pipelined) != 0; } }
 
         /// <summary>
         /// Initialize the command definition
         /// </summary>
 #if CSHARP30
         public CommandDefinition(string commandText, object parameters, IDbTransaction transaction, int? commandTimeout,
-            CommandType? commandType, bool buffered)
+            CommandType? commandType, CommandFlags flags)
 #else
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
-            CommandType? commandType = null, bool buffered = true
+            CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
 #if ASYNC
             , CancellationToken cancellationToken = default(CancellationToken)
 #endif
@@ -82,7 +112,7 @@ namespace Dapper
             this.transaction = transaction;
             this.commandTimeout = commandTimeout;
             this.commandType = commandType;
-            this.buffered = buffered;
+            this.flags = flags;
 #if ASYNC
             this.cancellationToken = cancellationToken;
 #endif
@@ -95,6 +125,7 @@ namespace Dapper
         /// </summary>
         public CancellationToken CancellationToken { get { return cancellationToken; } }
 #endif
+
 
         internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
@@ -834,7 +865,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #endif
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteImpl(cnn, ref command);
         }
         /// <summary>
@@ -923,7 +954,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #endif
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteReaderImpl(cnn, ref command);
         }
 
@@ -1005,7 +1036,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #endif
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var data = QueryImpl<T>(cnn, command);
             return command.Buffered ? data.ToList() : data;
         }
@@ -1036,7 +1067,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 #endif
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return QueryMultipleImpl(cnn, ref command);
         }
         /// <summary>
@@ -1303,11 +1334,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
             this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null);
             return buffered ? results.ToList() : results;
         }
-
 
         static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity)
         {
@@ -2158,10 +2188,30 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     case TypeCode.Decimal:
                         return ((decimal)value).ToString(CultureInfo.InvariantCulture);
                     default:
+                        if(value is IEnumerable && !(value is string))
+                        {
+                            var sb = new StringBuilder();
+                            bool first = true;
+                            foreach (object subval in (IEnumerable)value)
+                            {
+                                sb.Append(first ? '(' : ',').Append(Format(subval));
+                                first = false;
+                            }
+                            if(first)
+                            {
+                                return "(select null where 1=0)";
+                            }
+                            else
+                            {
+                                return sb.Append(')').ToString();
+                            }
+                        }
                         throw new NotSupportedException(value.GetType().Name);
                 }
             }
         }
+
+
         internal static void ReplaceLiterals(IParameterLookup parameters, IDbCommand command, IList<LiteralToken> tokens)
         {
             var sql = command.CommandText;
@@ -2741,8 +2791,8 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 var ctor = typeMap.FindConstructor(names, types);
                 if (ctor == null)
                 {
-                    string proposedTypes = "(" + String.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
-                    throw new InvalidOperationException(String.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
+                    string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                    throw new InvalidOperationException(string.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
                 }
 
                 if (ctor.GetParameters().Length == 0)

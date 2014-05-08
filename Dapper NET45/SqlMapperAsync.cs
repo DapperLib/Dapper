@@ -18,7 +18,7 @@ namespace Dapper
         /// </summary>
         public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return QueryAsync<T>(cnn, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true, default(CancellationToken)));
+            return QueryAsync<T>(cnn, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Dapper
         /// </summary>
         public static Task<int> ExecuteAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return ExecuteAsync(cnn, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true, default(CancellationToken)));
+            return ExecuteAsync(cnn, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered, default(CancellationToken)), map, splitOn);
+                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
         }
 
         /// <summary>
@@ -185,7 +185,7 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered, default(CancellationToken)), map, splitOn);
+                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
         }
 
         /// <summary>
@@ -226,7 +226,7 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered, default(CancellationToken)), map, splitOn);
+                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
         }
 
         /// <summary>
@@ -253,7 +253,7 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered, default(CancellationToken)), map, splitOn);
+                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
         }
 
         /// <summary>
@@ -270,7 +270,7 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered, default(CancellationToken)), map, splitOn);
+                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
         }
 
         /// <summary>
@@ -287,7 +287,7 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn,
-                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered, default(CancellationToken)), map, splitOn);
+                new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
         }
 
         /// <summary>
@@ -348,7 +348,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 #endif
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return QueryMultipleAsync(cnn, command);
         }
         /// <summary>
@@ -421,7 +421,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #endif
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, true);
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteReaderImplAsync(cnn, command);
         }
 
