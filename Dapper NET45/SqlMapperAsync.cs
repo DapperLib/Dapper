@@ -27,7 +27,7 @@ namespace Dapper
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity);
+            var info = GetCacheInfo(identity, param);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
             {
@@ -61,7 +61,7 @@ namespace Dapper
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity);
+            var info = GetCacheInfo(identity, param);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
             {
@@ -252,7 +252,7 @@ namespace Dapper
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            var info = GetCacheInfo(identity);
+            var info = GetCacheInfo(identity, param);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
@@ -308,7 +308,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             Identity identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            CacheInfo info = GetCacheInfo(identity);
+            CacheInfo info = GetCacheInfo(identity, param);
 
             DbCommand cmd = null;
             IDataReader reader = null;

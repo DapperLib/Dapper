@@ -18,7 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
-
+using System.Globalization;
 
 namespace Dapper
 {
@@ -165,6 +165,17 @@ namespace Dapper
             /// <param name="command">The raw command prior to execution</param>
             /// <param name="identity">Information about the query</param>
             void AddParameters(IDbCommand command, Identity identity);
+        }
+
+        /// <summary>
+        /// Extends IDynamicParameters providing by-name lookup of parameter values
+        /// </summary>
+        public interface IParameterLookup : IDynamicParameters
+        {
+            /// <summary>
+            /// Get the value of the specified parameter (return null if not found)
+            /// </summary>
+            object this[string name] { get; }
         }
 
         /// <summary>
@@ -855,7 +866,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                             masterSql = cmd.CommandText;
                             isFirst = false;
                             identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                            info = GetCacheInfo(identity);
+                            info = GetCacheInfo(identity, obj);
                         }
                         else
                         {
@@ -873,7 +884,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             if (param != null)
             {
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
-                info = GetCacheInfo(identity);
+                info = GetCacheInfo(identity, param);
             }
             return ExecuteCommand(cnn, ref command, param == null ? null : info.ParamReader);
         }
@@ -1032,7 +1043,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             Identity identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            CacheInfo info = GetCacheInfo(identity);
+            CacheInfo info = GetCacheInfo(identity, param);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
@@ -1068,7 +1079,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity);
+            var info = GetCacheInfo(identity, param);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
@@ -1295,7 +1306,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             object param = command.Parameters;
             identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            CacheInfo cinfo = GetCacheInfo(identity);
+            CacheInfo cinfo = GetCacheInfo(identity, param);
 
             IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
@@ -1450,7 +1461,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return deserializers.ToArray();
         }
 
-        private static CacheInfo GetCacheInfo(Identity identity)
+        private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
@@ -1458,12 +1469,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 info = new CacheInfo();
                 if (identity.parametersType != null)
                 {
-                    if (typeof(IDynamicParameters).IsAssignableFrom(identity.parametersType))
+                    if (exampleParameters is IDynamicParameters)
                     {
-                        info.ParamReader = (cmd, obj) => { (obj as IDynamicParameters).AddParameters(cmd, identity); };
+                        info.ParamReader = (cmd, obj) => { ((IDynamicParameters)obj).AddParameters(cmd, identity); };
                     }
 #if !CSHARP30
-                    else if (typeof(IEnumerable<KeyValuePair<string, object>>).IsAssignableFrom(identity.parametersType) && typeof(System.Dynamic.IDynamicMetaObjectProvider).IsAssignableFrom(identity.parametersType))
+                    // special-case dictionary && `dynamic`
+                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>> && exampleParameters is System.Dynamic.IDynamicMetaObjectProvider)
                     {
                         info.ParamReader = (cmd, obj) =>
                         {
@@ -1474,7 +1486,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endif
                     else
                     {
-                        info.ParamReader = CreateParamInfoGenerator(identity, false, true);
+                        var literals = GetLiteralTokens(identity.sql);
+                        info.ParamReader = CreateParamInfoGenerator(identity, false, true, literals);
                     }
                 }
                 SetQueryCache(identity, info);
@@ -2060,12 +2073,93 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
 
         // look for ? / @ / : *by itself*
-        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9_])[?@:](?![a-zA-Z0-9_])", RegexOptions.Compiled);
+        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9_])[?@:](?![a-zA-Z0-9_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+            literalTokens = new Regex(@"\{=([a-zA-Z0-9_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         
+        /// <summary>
+        /// Represents a placeholder for a value that should be replaced as a literal value in the resulting sql
+        /// </summary>
+        internal struct LiteralToken
+        {
+            private readonly string token, member;
+            /// <summary>
+            /// The text in the original command that should be replaced
+            /// </summary>
+            public string Token { get { return token; } }
+
+            /// <summary>
+            /// The name of the member referred to by the token
+            /// </summary>
+            public string Member { get { return member; } }
+            internal LiteralToken(string token, string member)
+            {
+                this.token = token;
+                this.member = member;
+            }
+
+            internal static readonly IList<LiteralToken> None = new LiteralToken[0];
+        }
+
+        /// <summary>
+        /// Replace all literal tokens with their text form
+        /// </summary>
+        public static void ReplaceLiterals(this IParameterLookup parameters, IDbCommand command)
+        {
+            var tokens = GetLiteralTokens(command.CommandText);
+            if (tokens.Count != 0) ReplaceLiterals(parameters, command, tokens);
+        }
+        internal static void ReplaceLiterals(IParameterLookup parameters, IDbCommand command, IList<LiteralToken> tokens)
+        {
+            var sql = command.CommandText;
+            foreach (var token in tokens)
+            {
+                object value = parameters[token.Member];
+                string text;
+                if (value == null)
+                {
+                    text = "";
+                }
+                else if (value is string)
+                {
+                    text = (string)value;
+                }
+                else
+                {
+                    text = Convert.ToString(value, CultureInfo.InvariantCulture);
+                }
+                sql = sql.Replace(token.Token, text);
+            }
+            command.CommandText = sql;
+        }
+
+        internal static IList<LiteralToken> GetLiteralTokens(string sql)
+        {
+            if (string.IsNullOrEmpty(sql)) return LiteralToken.None;
+            if (!literalTokens.IsMatch(sql)) return LiteralToken.None;
+
+            var matches = literalTokens.Matches(sql);
+            var found = new HashSet<string>(StringComparer.InvariantCulture);
+            List<LiteralToken> list = new List<LiteralToken>(matches.Count);
+            foreach(Match match in matches)
+            {
+                string token = match.Value;
+                if(found.Add(match.Value))
+                {
+                    list.Add(new LiteralToken(token, match.Groups[1].Value));
+                }
+            }
+            return list.Count == 0 ? LiteralToken.None : list;
+        }
+
         /// <summary>
         /// Internal use only
         /// </summary>
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused)
+        {
+            return CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
+        }
+
+        internal static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
             Type type = identity.parametersType;
             
@@ -2285,11 +2379,117 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.Emit(OpCodes.Pop); // IList.Add returns the new index (int); we don't care
                 }
             }
+
             // stack is currently [parameters]
             il.Emit(OpCodes.Pop); // stack is now empty
+
+            if(literals.Count != 0 && propsArr != null)
+            {
+                il.Emit(OpCodes.Ldarg_0); // command
+                il.Emit(OpCodes.Ldarg_0); // command, command
+                var cmdText = typeof(IDbCommand).GetProperty("CommandText");
+                il.EmitCall(OpCodes.Callvirt, cmdText.GetGetMethod(), null); // command, sql
+                Dictionary<Type, LocalBuilder> locals = null;
+                LocalBuilder local = null;
+                foreach (var literal in literals)
+                {
+                    // find the best member, preferring case-sensitive
+                    PropertyInfo exact = null, fallback = null;
+                    string huntName = literal.Member;
+                    for(int i = 0; i < propsArr.Length;i++)
+                    {
+                        string thisName = propsArr[i].Name;
+                        if(string.Equals(thisName, huntName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            fallback = propsArr[i];
+                            if(string.Equals(thisName, huntName, StringComparison.InvariantCulture))
+                            {
+                                exact = fallback;
+                                break;
+                            }
+                        }
+                    }
+                    var prop = exact ?? fallback;
+
+                    if(prop != null)
+                    {
+                        il.Emit(OpCodes.Ldstr, literal.Token);
+                        il.Emit(OpCodes.Ldloc_0); // command, sql, typed parameter
+                        il.EmitCall(OpCodes.Callvirt, prop.GetGetMethod(), null); // command, sql, typed value
+                        Type propType = prop.PropertyType;
+                        if (propType == typeof(string))
+                        {
+                            // do nothing
+                        }
+                        else
+                        {
+                            var convert = GetToString(propType);
+                            if (convert == null || convert.ReturnType != typeof(string)) throw new InvalidOperationException("No suitable ToString method for literal replacement of: " + literal.Token);
+
+                            if (propType.IsValueType)
+                            {
+                                // neeed to stloc, ldloca, call
+                                // re-use existing locals (both the last known, and via a dictionary)
+                                if (local == null || local.LocalType != propType)
+                                {
+                                    if (locals == null)
+                                    {
+                                        locals = new Dictionary<Type, LocalBuilder>();
+                                        local = null;
+                                    }
+                                    else
+                                    {
+                                        if (!locals.TryGetValue(propType, out local)) local = null;
+                                    }
+                                    if (local == null)
+                                    {
+                                        local = il.DeclareLocal(propType);
+                                        locals.Add(propType, local);
+                                    }
+                                }
+                                il.Emit(OpCodes.Stloc, local); // command, sql
+                                il.Emit(OpCodes.Ldloca, local); // command, sql, ref-to-value
+                                il.EmitCall(OpCodes.Call, InvariantCulture, null); // command, sql, ref-to-value, culture
+                                il.EmitCall(OpCodes.Call, convert, null); // command, sql, string value
+                            }
+                            else
+                            {
+                                il.EmitCall(OpCodes.Call, InvariantCulture, null); // command, sql, typed value, culture
+                                il.EmitCall(OpCodes.Callvirt, convert, null); // command, sql, string value
+                            }
+                            
+                        }
+                        il.EmitCall(OpCodes.Callvirt, StringReplace, null);
+                    }
+                }
+                il.EmitCall(OpCodes.Callvirt, cmdText.GetSetMethod(), null); // empty
+            }
+
             il.Emit(OpCodes.Ret);
             return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
         }
+        static readonly Hashtable toStrings = new Hashtable();
+        static readonly object NullSentinel = new object();
+        static MethodInfo GetToString(Type type)
+        {
+            if (type == null) return null;
+            var obj = toStrings[type];
+            if(obj == null)
+            {
+                lock(toStrings)
+                {
+                    obj = toStrings[type];
+                    if(obj == null)
+                    {
+                        obj = type.GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IFormatProvider) }, null);
+                        toStrings[type] = obj ?? NullSentinel;
+                    }
+                }
+            }
+            return obj as MethodInfo;
+        }
+        static readonly MethodInfo StringReplace = typeof(string).GetMethod("Replace", BindingFlags.Instance | BindingFlags.Public, null, new Type[] { typeof(string), typeof(string) }, null),
+            InvariantCulture = typeof(CultureInfo).GetProperty("InvariantCulture", BindingFlags.Public | BindingFlags.Static).GetGetMethod();
 
         private static int ExecuteCommand(IDbConnection cnn, ref CommandDefinition command, Action<IDbCommand, object> paramReader)
         {
@@ -2344,7 +2544,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (param != null)
             {
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
-                info = GetCacheInfo(identity);
+                info = GetCacheInfo(identity, param);
             }
             var paramReader = info == null ? null : info.ParamReader;
             return paramReader;
@@ -2980,7 +3180,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
@@ -3175,13 +3375,22 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
     /// <summary>
     /// A bag of parameters that can be passed to the Dapper Query and Execute methods
     /// </summary>
-    partial class DynamicParameters : SqlMapper.IDynamicParameters
+    partial class DynamicParameters : SqlMapper.IDynamicParameters, SqlMapper.IParameterLookup
     {
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
 
         Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
         List<object> templates;
+
+        object SqlMapper.IParameterLookup.this[string member]
+        {
+            get
+            {
+                ParamInfo param;
+                return parameters.TryGetValue(member, out param) ? param.Value : null;
+            }
+        }
 
         partial class ParamInfo
         {
@@ -3321,6 +3530,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <param name="identity">Information about the query</param>
         protected void AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
+            var literals = SqlMapper.GetLiteralTokens(identity.sql);
             if (templates != null)
             {
                 foreach (var template in templates)
@@ -3332,7 +3542,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         if (!paramReaderCache.TryGetValue(newIdent, out appender))
                         {
-                            appender = SqlMapper.CreateParamInfoGenerator(newIdent, true, RemoveUnused);
+                            appender = SqlMapper.CreateParamInfoGenerator(newIdent, true, RemoveUnused, literals);
                             paramReaderCache[newIdent] = appender;
                         }
                     }
@@ -3399,8 +3609,9 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     }
                     param.AttachedParam = p;
                 }
-
             }
+            // note: most non-priveleged implementations would use: this.ReplaceLiterals(command);
+            if(literals.Count != 0) SqlMapper.ReplaceLiterals(this, command, literals);
         }
 
         /// <summary>

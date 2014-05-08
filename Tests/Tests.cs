@@ -1696,6 +1696,7 @@ Order by p.Id";
             {
                 foreach (IDbDataParameter parameter in parameters)
                     command.Parameters.Add(parameter);
+
             }
         }
         public void TestCustomParameters()
@@ -2666,6 +2667,25 @@ end");
             {
                 Thread.CurrentThread.CurrentCulture = current;
             }
+        }
+        public void LiteralReplacement()
+        {
+            connection.Execute("create table #literal1 (id int not null)");
+            connection.Execute("insert #literal1 (id) values ({=id})", new { id = 123 });
+            var count = connection.Query<int>("select count(1) from #literal1 where id={=foo}", new { foo = 123 }).Single();
+            count.IsEqualTo(1);
+        }
+        public void LiteralReplacementDynamic()
+        {
+            var args = new DynamicParameters();
+            args.Add("id", 123);
+            connection.Execute("create table #literal2 (id int not null)");
+            connection.Execute("insert #literal2 (id) values ({=id})", args);
+
+            args = new DynamicParameters();
+            args.Add("foo", 123);
+            var count = connection.Query<int>("select count(1) from #literal2 where id={=foo}", args).Single();
+            count.IsEqualTo(1);
         }
 
         public void TestProcedureWithTimeParameter()
