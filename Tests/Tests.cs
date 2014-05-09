@@ -2746,6 +2746,16 @@ end");
             connection.Query<TimeSpan>("#TestProcWithTimeParameter", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(new TimeSpan(10, 0, 0));
         }
 
+        public void DbString()
+        {
+            var a = connection.Query<int>("select datalength(@x)",
+                new { x = new DbString { Value = "abc", IsAnsi = true } }).Single();
+            var b = connection.Query<int>("select datalength(@x)",
+                new { x = new DbString { Value = "abc", IsAnsi = false } }).Single();
+            a.IsEqualTo(3);
+            b.IsEqualTo(6);
+        }
+
         class HasDoubleDecimal
         {
             public double A { get; set; }

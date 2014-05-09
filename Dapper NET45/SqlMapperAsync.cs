@@ -78,7 +78,7 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync();
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, null))
                 {
                     string masterSql = null;
@@ -98,7 +98,7 @@ namespace Dapper
                             cmd.Parameters.Clear(); // current code is Add-tastic
                         }
                         info.ParamReader(cmd, obj);
-                        total += await cmd.ExecuteNonQueryAsync();
+                        total += await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
             }
