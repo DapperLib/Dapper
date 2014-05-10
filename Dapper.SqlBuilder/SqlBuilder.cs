@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Dapper
 {
@@ -31,11 +29,13 @@ namespace Dapper
 
             public string ResolveClauses(DynamicParameters p)
             {
-                foreach (var item in this)
+                var sql = string.Join(joiner, this.Select(c =>
                 {
-                    p.AddDynamicParams(item.Parameters);
-                }
-                return prefix + string.Join(joiner, this.Select(c => c.Sql)) + postfix;
+                    p.AddDynamicParams(c.Parameters);
+                    return c.Sql;
+                }));
+
+                return prefix + sql + postfix;
             }
         }
 
@@ -54,7 +54,7 @@ namespace Dapper
             }
 
             static System.Text.RegularExpressions.Regex regex =
-                new System.Text.RegularExpressions.Regex(@"\/\*\*.+\*\*\/", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+                new System.Text.RegularExpressions.Regex(@"{{2}.+?}{2}", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
 
             void ResolveSql()
             {
@@ -66,7 +66,7 @@ namespace Dapper
 
                     foreach (var pair in builder.data)
                     {
-                        rawSql = rawSql.Replace("/**" + pair.Key + "**/", pair.Value.ResolveClauses(p));
+                        rawSql = rawSql.Replace("{{" + pair.Key + "}}", pair.Value.ResolveClauses(p));
                     }
                     parameters = p;
 
@@ -84,10 +84,6 @@ namespace Dapper
             public object Parameters { get { ResolveSql(); return parameters; } }
         }
 
-
-        public SqlBuilder()
-        {
-        }
 
         public Template AddTemplate(string sql, dynamic parameters = null)
         {
