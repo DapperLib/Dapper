@@ -2081,10 +2081,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                     }
 
-                    var regexIncludingUnkown = @"([?@:]" + Regex.Escape(namePrefix) + @")(\s*(?i)unknown(?-i))?";
+                    var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(\s+(?i)unknown(?-i))?";
                     if (count == 0)
                     {
-                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnkown, match =>
+                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
                         {
                             var variableName = match.Groups[1].Value;
                             if (match.Groups[2].Success)
@@ -2104,7 +2104,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     else
                     {
-                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnkown, match =>
+                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
                         {
                             var variableName = match.Groups[1].Value;
                             if (match.Groups[2].Success)
