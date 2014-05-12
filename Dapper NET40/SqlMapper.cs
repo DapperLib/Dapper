@@ -2081,21 +2081,53 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                     }
 
+                    var regexIncludingUnkown = @"([?@:]" + Regex.Escape(namePrefix) + @")(\s*(?i)unknown(?-i))?";
                     if (count == 0)
                     {
-                        command.CommandText = Regex.Replace(command.CommandText, @"[?@:]" + Regex.Escape(namePrefix), "(SELECT NULL WHERE 1 = 0)");
+                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnkown, match =>
+                        {
+                            var variableName = match.Groups[1].Value;
+                            if (match.Groups[2].Success)
+                            {
+                                // looks like an optimize hint; leave it alone!
+                                return match.Value;
+                            }
+                            else
+                            {
+                                return "(SELECT " + variableName + " WHERE 1 = 0)";
+                            };
+                        });                        
+                        var dummyParam = command.CreateParameter();
+                        dummyParam.ParameterName = namePrefix;
+                        dummyParam.Value = DBNull.Value;
+                        command.Parameters.Add(dummyParam);
                     }
                     else
                     {
-                        command.CommandText = Regex.Replace(command.CommandText, @"[?@:]" + Regex.Escape(namePrefix), match =>
+                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnkown, match =>
                         {
-                            var grp = match.Value;
-                            var sb = new StringBuilder("(").Append(grp).Append(1);
-                            for (int i = 2; i <= count; i++)
+                            var variableName = match.Groups[1].Value;
+                            if (match.Groups[2].Success)
                             {
-                                sb.Append(',').Append(grp).Append(i);
+                                // looks like an optimize hint; expand it
+                                var suffix = match.Groups[2].Value;
+                                
+                                var sb = new StringBuilder(variableName).Append(1).Append(suffix);
+                                for (int i = 2; i <= count; i++)
+                                {
+                                    sb.Append(',').Append(variableName).Append(i).Append(suffix);
+                                }
+                                return sb.ToString();
                             }
-                            return sb.Append(')').ToString();
+                            else
+                            {
+                                var sb = new StringBuilder("(").Append(variableName).Append(1);
+                                for (int i = 2; i <= count; i++)
+                                {
+                                    sb.Append(',').Append(variableName).Append(i);
+                                }
+                                return sb.Append(')').ToString();
+                            }
                         });
                     }
                 }

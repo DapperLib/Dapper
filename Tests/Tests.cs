@@ -2731,6 +2731,28 @@ end");
             count.IsEqualTo(2);
         }
 
+        public void ParameterizedInWithOptimizeHint()
+        {
+            const string sql = @"
+select count(1)
+from(
+    select 1 as x
+    union all select 2
+    union all select 5) y
+where y.x in @vals
+option (optimize for (@vals unKnoWn))";
+            int count = connection.Query<int>(sql, new { vals = new[] { 1, 2, 3, 4 } }).Single();
+            count.IsEqualTo(2);
+
+            count = connection.Query<int>(sql, new { vals = new[] { 1 } }).Single();
+            count.IsEqualTo(1);
+
+            count = connection.Query<int>(sql, new { vals = new int[0] }).Single();
+            count.IsEqualTo(0);
+        }
+
+
+
 
         public void TestProcedureWithTimeParameter()
         {
