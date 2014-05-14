@@ -71,6 +71,7 @@ namespace Dapper
                 return ExecuteImplAsync(cnn, command, param);
             }
         }
+       
         private static async Task<int> ExecuteMultiImplAsync(IDbConnection cnn, CommandDefinition command, IEnumerable multiExec)
         {
             bool isFirst = true;
@@ -79,26 +80,57 @@ namespace Dapper
             try
             {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
-                using (var cmd = (DbCommand)command.SetupCommand(cnn, null))
+                
+                CacheInfo info = null;
+                if ((command.Flags & CommandFlags.Pipelined) != 0)
                 {
-                    string masterSql = null;
-                    CacheInfo info = null;
+                    const int MAX_PENDING = 100;
+                    var pending = new Queue<Task<int>>(MAX_PENDING);
                     foreach (var obj in multiExec)
                     {
+                        var cmd = (DbCommand)command.SetupCommand(cnn, null);
                         if (isFirst)
                         {
-                            masterSql = cmd.CommandText;
                             isFirst = false;
                             var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
                             info = GetCacheInfo(identity, obj);
                         }
-                        else
-                        {
-                            cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
-                            cmd.Parameters.Clear(); // current code is Add-tastic
-                        }
                         info.ParamReader(cmd, obj);
-                        total += await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                        var task = cmd.ExecuteNonQueryAsync(command.CancellationToken);
+                        pending.Enqueue(task);
+                        if(pending.Count == MAX_PENDING)
+                        {
+                            total += await pending.Dequeue().ConfigureAwait(false);
+                        }
+                    }
+                    while(pending.Count != 0)
+                    {
+                        total += await pending.Dequeue().ConfigureAwait(false);
+                    }
+                    return total;
+                }
+                else
+                {
+                    using (var cmd = (DbCommand)command.SetupCommand(cnn, null))
+                    {
+                        string masterSql = null;
+                        foreach (var obj in multiExec)
+                        {
+                            if (isFirst)
+                            {
+                                masterSql = cmd.CommandText;
+                                isFirst = false;
+                                var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
+                                info = GetCacheInfo(identity, obj);
+                            }
+                            else
+                            {
+                                cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                                cmd.Parameters.Clear(); // current code is Add-tastic
+                            }
+                            info.ParamReader(cmd, obj);
+                            total += await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
+                        }
                     }
                 }
             }

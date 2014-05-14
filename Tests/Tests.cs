@@ -2697,25 +2697,46 @@ end");
             A = 2,
             B = 1
         }
+        enum AnotherEnum : byte
+        {
+            A = 2,
+            B = 1
+        }
         public void LiteralReplacementEnumAndString()
         {
-            var args = new { x = AnEnum.B, y = 123.45M };
-            var row = connection.Query("select {=x} as x,{=y} as y", args).Single();
+            var args = new { x = AnEnum.B, y = 123.45M, z = AnotherEnum.A };
+            var row = connection.Query("select {=x} as x,{=y} as y,cast({=z} as tinyint) as z", args).Single();
             AnEnum x = (AnEnum)(int)row.x;
             decimal y = row.y;
+            AnotherEnum z = (AnotherEnum)(byte)row.z;
             x.Equals(AnEnum.B);
             y.Equals(123.45M);
+            z.Equals(AnotherEnum.A);
         }
         public void LiteralReplacementDynamicEnumAndString()
         {
             var args = new DynamicParameters();
             args.Add("x", AnEnum.B);
             args.Add("y", 123.45M);
-            var row = connection.Query("select {=x} as x,{=y} as y", args).Single();
+            args.Add("z", AnotherEnum.A);
+            var row = connection.Query("select {=x} as x,{=y} as y,cast({=z} as tinyint) as z", args).Single();
             AnEnum x = (AnEnum)(int)row.x;
             decimal y = row.y;
+            AnotherEnum z = (AnotherEnum)(byte)row.z;
             x.Equals(AnEnum.B);
             y.Equals(123.45M);
+            z.Equals(AnotherEnum.A);
+        }
+
+        public void LiteralReplacementWithIn()
+        {
+            var data = connection.Query<MyRow>("select @x where 1 in @ids and 1 ={=a}",
+                new { x = 1, ids = new[] { 1, 2, 3 }, a = 1 }).ToList();
+        }
+
+        class MyRow
+        {
+            public int x { get; set; }
         }
 
         public void LiteralIn()

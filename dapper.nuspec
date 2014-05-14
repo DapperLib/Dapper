@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.23</version>
+    <version>1.24</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,6 +19,7 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.24    - Implement pipelined async multi-exec, when flag is specified (only - requires MARS etc)
       * 1.23    - Improved support for optimize hints (@foo unknown) with list expansions
       * 1.22    - Literal support now extends to enumerable types (for "in" etc usage); move to command-flags model for "buffered" etc
       * 1.21    - Limit literals to numeric types; for enums, use value not name

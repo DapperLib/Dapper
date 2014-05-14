@@ -2,6 +2,7 @@
 using Dapper;
 using SqlMapper;
 using System.Data;
+using System.Diagnostics;
 
 namespace DapperTests_NET45
 {
@@ -207,6 +208,26 @@ namespace DapperTests_NET45
             }
         }
 
+
+        public void RunSequentialVersusParallel()
+        {
+
+            var ids = Enumerable.Range(1, 2000).Select(id => new { id }).ToArray();
+            using (var connection = Program.GetOpenConnection(true))
+            {
+                connection.ExecuteAsync(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None)).Wait();
+
+                var watch = Stopwatch.StartNew();
+                connection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.None)).Wait();
+                watch.Stop();
+                System.Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
+
+                watch = Stopwatch.StartNew();
+                connection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined)).Wait();
+                watch.Stop();
+                System.Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
+            }
+        }
         class Product
         {
             public int Id { get; set; }
