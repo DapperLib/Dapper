@@ -884,6 +884,13 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             CacheInfo info = null;
             if (multiExec != null && !(multiExec is string))
             {
+#if ASYNC
+                if((command.Flags & CommandFlags.Pipelined) != 0)
+                {
+                    // this includes all the code for concurrent/overlapped query
+                    return ExecuteMultiImplAsync(cnn, command, multiExec).Result;
+                }
+#endif
                 bool isFirst = true;
                 int total = 0;
                 bool wasClosed = cnn.State == ConnectionState.Closed;

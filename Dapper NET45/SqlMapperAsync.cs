@@ -72,6 +72,16 @@ namespace Dapper
             }
         }
        
+        private struct AsyncExecState
+        {
+            public readonly DbCommand Command;
+            public readonly Task<int> Task;
+            public AsyncExecState(DbCommand command, Task<int> task)
+            {
+                this.Command = command;
+                this.Task = task;
+            }
+        }
         private static async Task<int> ExecuteMultiImplAsync(IDbConnection cnn, CommandDefinition command, IEnumerable multiExec)
         {
             bool isFirst = true;
@@ -82,30 +92,55 @@ namespace Dapper
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 
                 CacheInfo info = null;
+                string masterSql = null;
                 if ((command.Flags & CommandFlags.Pipelined) != 0)
                 {
                     const int MAX_PENDING = 100;
-                    var pending = new Queue<Task<int>>(MAX_PENDING);
-                    foreach (var obj in multiExec)
+                    var pending = new Queue<AsyncExecState>(MAX_PENDING);
+                    DbCommand cmd = null;
+                    try
                     {
-                        var cmd = (DbCommand)command.SetupCommand(cnn, null);
-                        if (isFirst)
+                        foreach (var obj in multiExec)
                         {
-                            isFirst = false;
-                            var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                            info = GetCacheInfo(identity, obj);
+                            if (isFirst)
+                            {
+                                isFirst = false;
+                                cmd = (DbCommand)command.SetupCommand(cnn, null);
+                                masterSql = cmd.CommandText;
+                                var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
+                                info = GetCacheInfo(identity, obj);
+                            } else if(pending.Count >= MAX_PENDING)
+                            {
+                                var recycled = pending.Dequeue();
+                                total += await recycled.Task.ConfigureAwait(false);
+                                cmd = recycled.Command;
+                                cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                                cmd.Parameters.Clear(); // current code is Add-tastic
+                            }
+                            else
+                            {
+                                cmd = (DbCommand)command.SetupCommand(cnn, null);
+                            }
+                            info.ParamReader(cmd, obj);
+
+                            var task = cmd.ExecuteNonQueryAsync(command.CancellationToken);
+                            pending.Enqueue(new AsyncExecState(cmd, task));
+                            cmd = null; // note the using in the finally: this avoids a double-dispose
                         }
-                        info.ParamReader(cmd, obj);
-                        var task = cmd.ExecuteNonQueryAsync(command.CancellationToken);
-                        pending.Enqueue(task);
-                        if(pending.Count == MAX_PENDING)
+                        while (pending.Count != 0)
                         {
-                            total += await pending.Dequeue().ConfigureAwait(false);
+                            var pair = pending.Dequeue();
+                            using (pair.Command) { } // dispose commands
+                            total += await pair.Task.ConfigureAwait(false);
                         }
-                    }
-                    while(pending.Count != 0)
+                    } finally
                     {
-                        total += await pending.Dequeue().ConfigureAwait(false);
+                        // this only has interesting work to do if there are failures
+                        using (cmd) { } // dispose commands
+                        while (pending.Count != 0)
+                        { // dispose tasks even in failure
+                            using (pending.Dequeue().Command) { } // dispose commands
+                        }
                     }
                     return total;
                 }
@@ -113,7 +148,6 @@ namespace Dapper
                 {
                     using (var cmd = (DbCommand)command.SetupCommand(cnn, null))
                     {
-                        string masterSql = null;
                         foreach (var obj in multiExec)
                         {
                             if (isFirst)
