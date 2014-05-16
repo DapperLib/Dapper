@@ -598,7 +598,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             connection.Execute("create table #t(Name nvarchar(max), Age int)");
             try
             {
-                int tally = connection.Execute(@"insert #t (Name,Age) values(@Name, @Age)", new List<Student> 
+                int tally = connection.Execute(@"insert #t (Name,Age) values(@Name, @Age)", new List<Student>
             {
                 new Student{Age = 1, Name = "sam"},
                 new Student{Age = 2, Name = "bob"}
@@ -980,7 +980,7 @@ Order by p.Id";
 
         }
 
-        
+
         public void ExecuteReader()
         {
             var dt = new DataTable();
@@ -1208,14 +1208,14 @@ end");
         {
             var obj = connection.Query("select datalength(@a) as a, datalength(@b) as b, datalength(@c) as c, datalength(@d) as d, datalength(@e) as e, datalength(@f) as f",
                 new
-                {
-                    a = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true },
-                    b = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = false },
-                    c = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true },
-                    d = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false },
-                    e = new DbString { Value = "abcde", IsAnsi = true },
-                    f = new DbString { Value = "abcde", IsAnsi = false },
-                }).First();
+            {
+                a = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true },
+                b = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = false },
+                c = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true },
+                d = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false },
+                e = new DbString { Value = "abcde", IsAnsi = true },
+                f = new DbString { Value = "abcde", IsAnsi = false },
+            }).First();
             ((int)obj.a).IsEqualTo(10);
             ((int)obj.b).IsEqualTo(20);
             ((int)obj.c).IsEqualTo(5);
@@ -1518,15 +1518,15 @@ end");
             var lookup = new Dictionary<int, Parent>();
             var parents = connection.Query<Parent, Child, Parent>(@"select 1 as [Id], 1 as [Id] union all select 1,2 union all select 2,3 union all select 1,4 union all select 3,5",
                 (parent, child) =>
+            {
+                Parent found;
+                if (!lookup.TryGetValue(parent.Id, out found))
                 {
-                    Parent found;
-                    if (!lookup.TryGetValue(parent.Id, out found))
-                    {
-                        lookup.Add(parent.Id, found = parent);
-                    }
-                    found.Children.Add(child);
-                    return found;
-                }).Distinct().ToDictionary(p => p.Id);
+                    lookup.Add(parent.Id, found = parent);
+                }
+                found.Children.Add(child);
+                return found;
+            }).Distinct().ToDictionary(p => p.Id);
             parents.Count().IsEqualTo(3);
             parents[1].Children.Select(c => c.Id).SequenceEqual(new[] { 1, 2, 4 }).IsTrue();
             parents[2].Children.Select(c => c.Id).SequenceEqual(new[] { 3 }).IsTrue();
@@ -2450,9 +2450,9 @@ end");
             var results = connection.Query<dynamic, int, dynamic>(
                 "SELECT 1 Id, 'Mr' Title, 'John' Surname, 4 AddressCount",
                 (person, addressCount) =>
-                {
-                    return person;
-                },
+            {
+                return person;
+            },
                 splitOn: "AddressCount"
             ).FirstOrDefault();
 
@@ -2671,7 +2671,7 @@ end");
         public void LiteralReplacement()
         {
             connection.Execute("create table #literal1 (id int not null, foo int not null)");
-            connection.Execute("insert #literal1 (id,foo) values ({=id}, @foo)", new { id = 123, foo = 456});
+            connection.Execute("insert #literal1 (id,foo) values ({=id}, @foo)", new { id = 123, foo = 456 });
             var rows = new[] { new { id = 1, foo = 2 }, new { id = 3, foo = 4 } };
             connection.Execute("insert #literal1 (id,foo) values ({=id}, @foo)", rows);
             var count = connection.Query<int>("select count(1) from #literal1 where id={=foo}", new { foo = 123 }).Single();
@@ -2797,6 +2797,21 @@ option (optimize for (@vals unKnoWn))";
                 new { x = new DbString { Value = "abc", IsAnsi = false } }).Single();
             a.IsEqualTo(3);
             b.IsEqualTo(6);
+        }
+
+        class HasInt32
+        {
+            public int Value { get; set; }
+        }
+        // http://stackoverflow.com/q/23696254/23354
+        public void DownwardIntegerConversion()
+        {
+            const string sql = "select cast(42 as bigint) as Value";
+            int i = connection.Query<HasInt32>(sql).Single().Value;
+            Assert.IsEqualTo(42, i);
+
+            i = connection.Query<int>(sql).Single();
+            Assert.IsEqualTo(42, i);
         }
 
         class HasDoubleDecimal

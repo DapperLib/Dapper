@@ -1152,7 +1152,12 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 
                 while (reader.Read())
                 {
-                    yield return (T)func(reader);
+                    object val = func(reader);
+                    if (val == null || val is T) {
+                        yield return (T)val;
+                    } else {
+                        yield return (T)Convert.ChangeType(val, typeof(T));
+                    }
                 }
                 // happy path; close the reader cleanly - no
                 // need for "Cancel" etc
