@@ -2835,6 +2835,15 @@ option (optimize for (@vals unKnoWn))";
 
             count = connection.Query<int>("select count(1) from @ids", new { ids = table.AsTableValuedParameter("MyTVPType") }).First();
             count.IsEqualTo(3);
+
+            try
+            {
+                connection.Query<int>("select count(1) from @ids", new { ids = table.AsTableValuedParameter() }).First();
+                throw new InvalidOperationException();
+            } catch(Exception ex)
+            {
+                ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
+            }
         }
 
 #if POSTGRESQL

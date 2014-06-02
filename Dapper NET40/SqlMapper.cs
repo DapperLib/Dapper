@@ -3813,9 +3813,18 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
         void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
         {
-            var param = new System.Data.SqlClient.SqlParameter(name, SqlDbType.Structured);
+            var param = command.CreateParameter();
+            param.ParameterName = name;
             param.Value = (object)table ?? DBNull.Value;
-            if (!string.IsNullOrEmpty(typeName)) param.TypeName = typeName;
+            if (!string.IsNullOrEmpty(typeName))
+            {
+                var sqlParam = param as System.Data.SqlClient.SqlParameter;
+                if (sqlParam != null)
+                {
+                    sqlParam.TypeName = typeName;
+                    sqlParam.SqlDbType = SqlDbType.Structured;
+                }
+            }
             command.Parameters.Add(param);
         }
     }
