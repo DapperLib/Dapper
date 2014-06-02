@@ -1284,6 +1284,38 @@ end");
 
         }
 
+        public void TestMultiMappingWithNonReturnedProperty()
+        {
+            var sql = @"select 
+                            1 as PostId, 'Title' as Title,
+                            2 as BlogId, 'Blog' as Title";
+            var postWithBlog = connection.Query<Post_DupeProp, Blog_DupeProp, Post_DupeProp>(sql,
+                (p, b) =>
+                {
+                    p.Blog = b;
+                    return p;
+                }, splitOn: "BlogId").First();
+
+            postWithBlog.PostId.IsEqualTo(1);
+            postWithBlog.Title.IsEqualTo("Title");
+            postWithBlog.Blog.BlogId.IsEqualTo(2);
+            postWithBlog.Blog.Title.IsEqualTo("Blog");
+        }
+
+        class Post_DupeProp
+        {
+            public int PostId { get; set; }
+            public string Title { get; set; }
+            public int BlogId { get; set; }
+            public Blog_DupeProp Blog { get; set; } 
+        }
+
+        class Blog_DupeProp
+        {
+            public int BlogId { get; set; }
+            public string Title { get; set; }
+        }
+
         public void TestFastExpandoSupportsIDictionary()
         {
             var row = connection.Query("select 1 A, 'two' B").First() as IDictionary<string, object>;
