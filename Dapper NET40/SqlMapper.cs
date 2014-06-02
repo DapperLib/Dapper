@@ -558,7 +558,7 @@ namespace Dapper
             typeMap[typeof(DateTime?)] = DbType.DateTime;
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
             typeMap[typeof(TimeSpan?)] = DbType.Time;
-            typeMap[typeof(Object)] = DbType.Object;
+            typeMap[typeof(object)] = DbType.Object;
         }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
@@ -3502,6 +3502,18 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 }
             }
         }
+
+        /// <summary>
+        /// Used to pass a DataTable as a TableValuedParameter
+        /// </summary>
+        public static ICustomQueryParameter AsTableValuedParameter(this DataTable table, string typeName
+#if !CSHARP30
+            = null
+#endif
+            )
+        {
+            return new TableValuedParameter(table, typeName);
+        }
     }
 
     /// <summary>
@@ -3779,6 +3791,34 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
     }
 
+    /// <summary>
+    /// Used to pass a DataTable as a TableValuedParameter
+    /// </summary>
+    sealed partial class TableValuedParameter : Dapper.SqlMapper.ICustomQueryParameter
+    {
+        private readonly DataTable table;
+        private readonly string typeName;
+
+        /// <summary>
+        /// Create a new instance of TableValuedParameter
+        /// </summary>
+        public TableValuedParameter(DataTable table) : this(table, null) { }
+        /// <summary>
+        /// Create a new instance of TableValuedParameter
+        /// </summary>
+        public TableValuedParameter(DataTable table, string typeName)
+        {
+            this.table = table;
+            this.typeName = typeName;
+        }
+        void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
+        {
+            var param = new System.Data.SqlClient.SqlParameter(name, SqlDbType.Structured);
+            param.Value = (object)table ?? DBNull.Value;
+            if (!string.IsNullOrEmpty(typeName)) param.TypeName = typeName;
+            command.Parameters.Add(param);
+        }
+    }
     /// <summary>
     /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
     /// </summary>
@@ -4170,6 +4210,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
     }
 
+    
     public partial class SimpleMemberMap
     {
 
