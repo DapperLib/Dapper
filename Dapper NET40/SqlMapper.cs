@@ -2850,6 +2850,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             ConstructorInfo specializedConstructor = null;
 
+            bool supportInitialize = false;
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
@@ -2874,6 +2875,12 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 {
                     il.Emit(OpCodes.Newobj, ctor);
                     il.Emit(OpCodes.Stloc_1);
+                    supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
+                    if(supportInitialize)
+                    {
+                        il.Emit(OpCodes.Ldloc_1);
+                        il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("BeginInit"), null);
+                    }
                 }
                 else
                     specializedConstructor = ctor;
@@ -3120,6 +3127,11 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
+                if (supportInitialize)
+                {
+                    il.Emit(OpCodes.Ldloc_1);
+                    il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("EndInit"), null);
+                }
             }
             il.MarkLabel(allDone);
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception

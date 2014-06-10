@@ -2878,6 +2878,29 @@ option (optimize for (@vals unKnoWn))";
             }
         }
 
+        public void SupportInit()
+        {
+            var obj = connection.Query<WithInit>("select 'abc' as Value").Single();
+            obj.Value.Equals("abc");
+            obj.Flags.Equals(31);
+        }
+
+        class WithInit : ISupportInitialize
+        {
+            public string Value { get; set; }
+            public int Flags { get;set; }
+
+            void ISupportInitialize.BeginInit()
+            {
+                Flags += 1;
+            }
+
+            void ISupportInitialize.EndInit()
+            {
+                Flags += 30;
+            }
+        }
+
 #if POSTGRESQL
 
         class Cat
