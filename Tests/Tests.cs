@@ -2288,6 +2288,26 @@ end");
             var item = connection.Query<int>("#TestProcWithIndexer", new ParameterWithIndexer(), commandType: CommandType.StoredProcedure).Single();
         }
 
+        public class MultipleParametersWithIndexerDeclaringType
+        {
+            public object this[object field] { get { return null; } set { } }
+            public object this[object field, int index] { get { return null; } set { } }
+            public int B { get; set; }
+        }
+
+        public class MultipleParametersWithIndexer : MultipleParametersWithIndexerDeclaringType
+        {
+            public int A { get; set; }
+        }
+
+        public void TestMultipleParametersWithIndexer()
+        {
+            var order = connection.Query<MultipleParametersWithIndexer>("select 1 A,2 B").First();
+
+            order.A.IsEqualTo(1);
+            order.B.IsEqualTo(2);
+        }
+
         public void Issue_40_AutomaticBoolConversion()
         {
             var user = connection.Query<Issue40_User>("select UserId=1,Email='abc',Password='changeme',Active=cast(1 as tinyint)").Single();

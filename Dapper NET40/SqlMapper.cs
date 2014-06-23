@@ -4093,7 +4093,13 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         {
             return propertyInfo.DeclaringType == type ?
                 propertyInfo.GetSetMethod(true) :
-                propertyInfo.DeclaringType.GetProperty(propertyInfo.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetSetMethod(true);
+                propertyInfo.DeclaringType.GetProperty(
+                   propertyInfo.Name,
+                   BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                   Type.DefaultBinder,
+                   propertyInfo.PropertyType,
+                   propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
+                   null).GetSetMethod(true);
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)
