@@ -15,6 +15,8 @@ using Microsoft.CSharp.RuntimeBinder;
 using System.Data.Common;
 using System.Globalization;
 using System.Threading;
+using System.Data.Entity.Spatial;
+using Microsoft.SqlServer.Types;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -2883,6 +2885,68 @@ option (optimize for (@vals unKnoWn))";
             var obj = connection.Query<WithInit>("select 'abc' as Value").Single();
             obj.Value.Equals("abc");
             obj.Flags.Equals(31);
+        }
+
+        public void GuidIn_SO_24177902()
+        {
+            // invent and populate
+            Guid a = Guid.NewGuid(), b = Guid.NewGuid(), c = Guid.NewGuid(), d = Guid.NewGuid();
+            connection.Execute("create table #foo (i int, g uniqueidentifier)");
+            connection.Execute("insert #foo(i,g) values(@i,@g)",
+                new[] { new { i = 1, g = a }, new { i = 2, g = b },
+                new { i = 3, g = c },new { i = 4, g = d }});
+
+            // check that rows 2&3 yield guids b&c
+            var guids = connection.Query<Guid>("select g from #foo where i in (2,3)").ToArray();
+            guids.Length.Equals(2);
+            guids.Contains(a).Equals(false);
+            guids.Contains(b).Equals(true);
+            guids.Contains(c).Equals(true);
+            guids.Contains(d).Equals(false);
+
+            // in query on the guids
+            var rows = connection.Query("select * from #foo where g in @guids order by i", new { guids })
+                .Select(row => new { i = (int)row.i, g = (Guid)row.g }).ToArray();
+            rows.Length.Equals(2);
+            rows[0].i.Equals(2);
+            rows[0].g.Equals(b);
+            rows[1].i.Equals(3);
+            rows[1].g.Equals(c);
+        }
+
+        class HazGeo
+        {
+            public int Id { get;set; }
+            public DbGeography Geo { get; set; }
+        }
+        public void DBGeography_SO24405645_SO24402424()
+        {
+            global::Dapper.SqlMapper.AddTypeHandler(typeof(DbGeography), new GeographyMapper());
+            connection.Execute("create table #Geo (id int, geo geography)");
+
+            var obj = new HazGeo
+            {
+                Id = 1,
+                Geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326)
+            };
+            connection.Execute("insert #Geo(id, geo) values (@Id, @Geo)", obj);
+            var row = connection.Query<HazGeo>("select * from #Geo where id=1").SingleOrDefault();
+            row.IsNotNull();
+            row.Id.IsEqualTo(1);
+            row.Geo.IsNotNull();
+        }
+
+        class GeographyMapper : Dapper.SqlMapper.TypeHandler<DbGeography>
+        {
+            public override void SetValue(IDbDataParameter parameter, DbGeography value)
+            {
+                parameter.Value = value == null ? (object)DBNull.Value : (object)SqlGeography.Parse(value.AsText());
+                ((SqlParameter)parameter).UdtTypeName = "GEOGRAPHY";
+            }
+            public override DbGeography Parse(object value)
+            {
+                return (value == null || value is DBNull) ? null : DbGeography.FromText(value.ToString());
+            }
         }
 
         class WithInit : ISupportInitialize
