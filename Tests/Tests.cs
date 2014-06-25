@@ -2941,7 +2941,10 @@ option (optimize for (@vals unKnoWn))";
             public override void SetValue(IDbDataParameter parameter, DbGeography value)
             {
                 parameter.Value = value == null ? (object)DBNull.Value : (object)SqlGeography.Parse(value.AsText());
-                ((SqlParameter)parameter).UdtTypeName = "GEOGRAPHY";
+                if(parameter is SqlParameter)
+                {
+                    ((SqlParameter)parameter).UdtTypeName = "GEOGRAPHY";
+                }                
             }
             public override DbGeography Parse(object value)
             {
