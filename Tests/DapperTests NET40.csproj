@@ -68,10 +68,6 @@
     <Reference Include="LinFu.DynamicProxy">
       <HintPath>NHibernate\LinFu.DynamicProxy.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.Types.dll</HintPath>
-    </Reference>
     <Reference Include="Mono.Security">
       <HintPath>..\packages\Npgsql.2.0.11\lib\Net40\Mono.Security.dll</HintPath>
     </Reference>
@@ -244,13 +240,17 @@
     <Folder Include="Simple.Data\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dapper NET45\Dapper NET45.csproj">
-      <Project>{0fff5bc7-0a4b-4d87-835e-4fad70937507}</Project>
-      <Name>Dapper NET45</Name>
+    <ProjectReference Include="..\Dapper NET40\Dapper NET40.csproj">
+      <Project>{daf737e1-05b5-4189-a5aa-dac6233b64d7}</Project>
+      <Name>Dapper NET40</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj">
       <Project>{C2FC4DF5-C8D1-4EA8-8E0C-85A3793EB0BB}</Project>
       <Name>Dapper.Contrib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dapper.EntityFramework NET40\Dapper.EntityFramework NET40.csproj">
+      <Project>{2544dfba-7f64-4003-9c36-d8337f770a36}</Project>
+      <Name>Dapper.EntityFramework NET40</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

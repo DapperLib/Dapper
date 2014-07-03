@@ -16,7 +16,6 @@ using System.Data.Common;
 using System.Globalization;
 using System.Threading;
 using System.Data.Entity.Spatial;
-using Microsoft.SqlServer.Types;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -2970,7 +2969,8 @@ option (optimize for (@vals unKnoWn))";
         }
         public void DBGeography_SO24405645_SO24402424()
         {
-            global::Dapper.SqlMapper.AddTypeHandler(typeof(DbGeography), new GeographyMapper());
+            Dapper.EntityFramework.Handlers.Register();
+
             connection.Execute("create table #Geo (id int, geo geography)");
 
             var obj = new HazGeo
@@ -2983,22 +2983,6 @@ option (optimize for (@vals unKnoWn))";
             row.IsNotNull();
             row.Id.IsEqualTo(1);
             row.Geo.IsNotNull();
-        }
-
-        class GeographyMapper : Dapper.SqlMapper.TypeHandler<DbGeography>
-        {
-            public override void SetValue(IDbDataParameter parameter, DbGeography value)
-            {
-                parameter.Value = value == null ? (object)DBNull.Value : (object)SqlGeography.Parse(value.AsText());
-                if(parameter is SqlParameter)
-                {
-                    ((SqlParameter)parameter).UdtTypeName = "GEOGRAPHY";
-                }                
-            }
-            public override DbGeography Parse(object value)
-            {
-                return (value == null || value is DBNull) ? null : DbGeography.FromText(value.ToString());
-            }
         }
 
         class WithInit : ISupportInitialize

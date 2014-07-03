@@ -22,6 +22,8 @@ using System.Globalization;
 
 namespace Dapper
 {
+    [AssemblyNeutral, AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+    internal sealed class AssemblyNeutralAttribute : Attribute { }
 
     /// <summary>
     /// Additional state flags that control command behaviour
@@ -211,6 +213,7 @@ namespace Dapper
         /// <summary>
         /// Implement this interface to pass an arbitrary db specific parameter to Dapper
         /// </summary>
+        [AssemblyNeutral]
         public interface ICustomQueryParameter
         {
             /// <summary>
@@ -224,6 +227,7 @@ namespace Dapper
         /// <summary>
         /// Implement this interface to perform custom type-based parameter handling and value parsing
         /// </summary>
+        [AssemblyNeutral]
         public interface ITypeHandler
         {
             /// <summary>
@@ -638,7 +642,13 @@ namespace Dapper
 #pragma warning restore 618
             if (handler == null) typeHandlers.Remove(type);
             else typeHandlers[type] = handler;
-
+        }
+        /// <summary>
+        /// Configire the specified type to be processed by a custom handler
+        /// </summary>
+        public static void AddTypeHandler<T>(TypeHandler<T> handler)
+        {
+            AddTypeHandler(typeof(T), handler);
         }
 
         /// <summary>
