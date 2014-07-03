@@ -4002,6 +4002,16 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             this.table = table;
             this.typeName = typeName;
         }
+        static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
+        static TableValuedParameter()
+        {
+            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public);
+            if(prop != null && prop.PropertyType == typeof(string) && prop.CanWrite)
+            {
+                setTypeName = (Action<System.Data.SqlClient.SqlParameter, string>)
+                    Delegate.CreateDelegate(typeof(Action<System.Data.SqlClient.SqlParameter, string>), prop.GetSetMethod());
+            }
+        }
         void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
         {
             var param = command.CreateParameter();
@@ -4012,7 +4022,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 var sqlParam = param as System.Data.SqlClient.SqlParameter;
                 if (sqlParam != null)
                 {
-                    sqlParam.TypeName = typeName;
+                    if (setTypeName != null) setTypeName(sqlParam, typeName);
                     sqlParam.SqlDbType = SqlDbType.Structured;
                 }
             }
