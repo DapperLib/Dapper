@@ -29,7 +29,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E757192C-9411-458D-8815-8DAB34E12D03}"
 	ProjectSection(SolutionItems) = preProject
 		Dapper.EntityFramework.nuspec = Dapper.EntityFramework.nuspec
-		dapper.nuspec = dapper.nuspec
+		Dapper.nuspec = Dapper.nuspec
 		License.txt = License.txt
 	EndProjectSection
 EndProject
