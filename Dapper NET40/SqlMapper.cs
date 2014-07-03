@@ -177,7 +177,6 @@ namespace Dapper
             SqlMapper.Link<Type, Action<IDbCommand, bool>>.TryAdd(ref bindByNameCache, commandType, ref action);
             return action;
         }
-
     }
 
     /// <summary>
@@ -617,6 +616,8 @@ namespace Dapper
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
             typeMap[typeof(TimeSpan?)] = DbType.Time;
             typeMap[typeof(object)] = DbType.Object;
+
+            AddTypeHandler(typeof(DataTable), new DataTableHandler());
         }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
@@ -3438,6 +3439,11 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
 
         /// <summary>
+        /// Key used to indicate the type name associated with a DataTable
+        /// </summary>
+        private const string DataTableTypeNameKey = "dapper:TypeName";
+
+        /// <summary>
         /// How should connection strings be compared for equivalence? Defaults to StringComparer.Ordinal.
         /// Providing a custom implementation can be useful for allowing multi-tenancy databases with identical
         /// schema to share startegies. Note that usual equivalence rules apply: any equivalent connection strings
@@ -3449,6 +3455,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             set { connectionStringComparer = value ?? StringComparer.Ordinal; }
         }
         private static IEqualityComparer<string> connectionStringComparer = StringComparer.Ordinal;
+
 
         /// <summary>
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query 
@@ -3699,6 +3706,28 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             )
         {
             return new TableValuedParameter(table, typeName);
+        }
+
+        /// <summary>
+        /// Associate a DataTable with a type name
+        /// </summary>
+        public static void SetTypeName(this DataTable table, string typeName)
+        {
+            if (table != null)
+            {
+                if (string.IsNullOrEmpty(typeName))
+                    table.ExtendedProperties.Remove(DataTableTypeNameKey);
+                else
+                    table.ExtendedProperties[DataTableTypeNameKey] = typeName;
+            }
+        }
+
+        /// <summary>
+        /// Fetch the type name associated with a DataTable
+        /// </summary>
+        public static string GetTypeName(this DataTable table)
+        {
+            return table == null ? null : table.ExtendedProperties[DataTableTypeNameKey] as string;
         }
     }
 
@@ -3982,6 +4011,19 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
     }
 
+    sealed class DataTableHandler : Dapper.SqlMapper.ITypeHandler
+    {
+        public object Parse(Type destinationType, object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetValue(IDbDataParameter parameter, object value)
+        {
+            TableValuedParameter.Set(parameter, value as DataTable, null);
+        }
+    }
+
     /// <summary>
     /// Used to pass a DataTable as a TableValuedParameter
     /// </summary>
@@ -4016,17 +4058,25 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         {
             var param = command.CreateParameter();
             param.ParameterName = name;
-            param.Value = (object)table ?? DBNull.Value;
+            Set(param, table, typeName);
+            command.Parameters.Add(param);
+        }
+        internal static void Set(IDbDataParameter parameter, DataTable table, string typeName)
+        {
+            parameter.Value = (object)table ?? DBNull.Value;
+            if (string.IsNullOrEmpty(typeName) && table != null)
+            {
+                typeName = SqlMapper.GetTypeName(table);
+            }
             if (!string.IsNullOrEmpty(typeName))
             {
-                var sqlParam = param as System.Data.SqlClient.SqlParameter;
+                var sqlParam = parameter as System.Data.SqlClient.SqlParameter;
                 if (sqlParam != null)
                 {
                     if (setTypeName != null) setTypeName(sqlParam, typeName);
                     sqlParam.SqlDbType = SqlDbType.Structured;
                 }
             }
-            command.Parameters.Add(param);
         }
     }
     /// <summary>
