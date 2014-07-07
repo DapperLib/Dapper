@@ -3,6 +3,7 @@ using Dapper;
 using SqlMapper;
 using System.Data;
 using System.Diagnostics;
+using System;
 
 namespace DapperTests_NET45
 {
@@ -264,6 +265,31 @@ namespace DapperTests_NET45
         class BasicType
         {
             public string Value { get; set; }
+        }
+
+
+        public void TypeBasedViaType()
+        {
+            Type type = GetSomeType();
+
+            using (var connection = Program.GetOpenConnection(true))
+            {
+                dynamic actual = connection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).Result.FirstOrDefault();
+                ((object)actual).GetType().IsEqualTo(type);
+                int a = actual.A;
+                string b = actual.B;
+                a.IsEqualTo(123);
+                b.IsEqualTo("abc");
+            }
+        }
+        static Type GetSomeType()
+        {
+            return typeof(SomeType);
+        }
+        public class SomeType
+        {
+            public int A { get; set; }
+            public string B { get; set; }
         }
     }
 }

@@ -2985,6 +2985,66 @@ option (optimize for (@vals unKnoWn))";
             row.Geo.IsNotNull();
         }
 
+        public void TypeBasedViaDynamic()
+        {
+            Type type = GetSomeType();
+
+            dynamic template = Activator.CreateInstance(type);
+            dynamic actual = CheetViaDynamic(template, "select @A as [A], @B as [B]", new { A = 123, B = "abc" });
+            ((object)actual).GetType().IsEqualTo(type);
+            int a = actual.A;
+            string b = actual.B;
+            a.IsEqualTo(123);
+            b.IsEqualTo("abc");
+        }
+        public void TypeBasedViaType()
+        {
+            Type type = GetSomeType();
+
+            dynamic actual = connection.Query(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).FirstOrDefault();
+            ((object)actual).GetType().IsEqualTo(type);
+            int a = actual.A;
+            string b = actual.B;
+            a.IsEqualTo(123);
+            b.IsEqualTo("abc");
+        }
+        public void TypeBasedViaTypeMulti()
+        {
+            Type type = GetSomeType();
+
+            dynamic first, second;
+            using(var multi = connection.QueryMultiple("select @A as [A], @B as [B]; select @C as [A], @D as [B]",
+                new { A = 123, B = "abc", C = 456, D = "def" }))
+            {
+                first = multi.Read(type).Single();
+                second = multi.Read(type).Single();
+            }
+            ((object)first).GetType().IsEqualTo(type);
+            int a = first.A;
+            string b = first.B;
+            a.IsEqualTo(123);
+            b.IsEqualTo("abc");
+
+            ((object)second).GetType().IsEqualTo(type);
+            a = second.A;
+            b = second.B;
+            a.IsEqualTo(456);
+            b.IsEqualTo("def");
+        }
+        T CheetViaDynamic<T>(T template, string query, object args)
+        {
+            return connection.Query<T>(query, args).SingleOrDefault();
+        }
+        static Type GetSomeType()
+        {
+            return typeof(SomeType);
+        }
+        public class SomeType
+        {
+            public int A { get;set; }
+            public string B { get;set; }
+        }
+
         class WithInit : ISupportInitialize
         {
             public string Value { get; set; }

@@ -18,16 +18,38 @@ namespace Dapper
         /// </summary>
         public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return QueryAsync<T>(cnn, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
+            return QueryAsync<T>(cnn, typeof(T), new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
         }
 
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
-        public static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            if (type == null) throw new ArgumentNullException("type");
+            return QueryAsync<object>(cnn, type, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
+        }
+
+        /// <summary>
+        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// </summary>
+        public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryAsync<T>(cnn, typeof(T), command);
+        }
+
+        /// <summary>
+        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// </summary>
+        public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, CommandDefinition command)
+        {
+            return QueryAsync<object>(cnn, type, command);
+        }
+
+        private static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(T), param == null ? null : param.GetType(), null);
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity, param);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
@@ -37,7 +59,7 @@ namespace Dapper
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                     using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false))
                     {
-                        return ExecuteReader<T>(reader, identity, info).ToList();
+                        return ExecuteReader<T>(reader, effectiveType, identity, info).ToList();
                     }
                 }
                 finally
@@ -385,13 +407,13 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Identity identity, CacheInfo info)
+        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Type effectiveType, Identity identity, CacheInfo info)
         {
             var tuple = info.Deserializer;
             int hash = GetColumnHash(reader);
             if (tuple.Func == null || tuple.Hash != hash)
             {
-                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
+                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                 SetQueryCache(identity, info);
             }
 
