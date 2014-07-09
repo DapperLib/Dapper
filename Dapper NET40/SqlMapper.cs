@@ -4011,20 +4011,32 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     }
                     p.Direction = param.ParameterDirection;
                     var s = val as string;
-                    if (s != null)
+                    try
                     {
-                        if (s.Length <= 4000)
+                        if (s != null)
                         {
-                            p.Size = 4000;
+                            if (s.Length <= 4000)
+                            {
+                                p.Size = 4000;
+                            }
+                        }
+                        if (param.Size != null)
+                        {
+                            p.Size = param.Size.Value;
                         }
                     }
-                    if (param.Size != null)
-                    {
-                        p.Size = param.Size.Value;
+                    catch (NotSupportedException)
+                    {// set Size is not supported
                     }
-                    if (dbType != null && p.DbType != dbType)
+                    try
                     {
-                        p.DbType = dbType.Value;
+                        if (dbType != null && p.DbType != dbType)
+                        {
+                            p.DbType = dbType.Value;
+                        }
+                    }
+                    catch (NotSupportedException)
+                    {// get DbType is not supported
                     }
                     if (add)
                     {
