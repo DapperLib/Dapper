@@ -3127,7 +3127,7 @@ option (optimize for (@vals unKnoWn))";
                 conn.Open();
                 IDbTransaction transaction = conn.BeginTransaction();
                 conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
-                conn.Execute("insert tcat(breed, name) values(:breed, :name) ", Cats);
+                conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", Cats);
 
                 var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new[] { 1, 3, 5 } });
                 r.Count().IsEqualTo(3);
