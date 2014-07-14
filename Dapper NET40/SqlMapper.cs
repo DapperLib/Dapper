@@ -1741,10 +1741,20 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary ||
                 (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
             {
+                ITypeHandler handler;
+                if (typeHandlers.TryGetValue(type, out handler))
+                {
+                    return GetHandlerDeserializer(handler, type, startBound);
+                }
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
             return GetStructDeserializer(type, underlyingType ?? type, startBound);
 
+        }
+        static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
+        {
+            return (IDataReader reader) =>
+                handler.Parse(type, reader.GetValue(startBound));
         }
 
 #if !CSHARP30
@@ -3145,9 +3155,10 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         {
                             Type dataType = reader.GetFieldType(index);
                             TypeCode dataTypeCode = Type.GetTypeCode(dataType), unboxTypeCode = Type.GetTypeCode(unboxType);
-                            if (dataType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                            bool hasTypeHandler;
+                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || dataType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
                             {
-                                if (typeHandlers.ContainsKey(unboxType))
+                                if (hasTypeHandler)
                                 {
 #pragma warning disable 618
                                     il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod("Parse"), null); // stack is now [target][target][typed-value]

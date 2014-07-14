@@ -3098,6 +3098,54 @@ option (optimize for (@vals unKnoWn))";
             public string TaxInvoiceNumber { get { return fTaxInvoiceNumber; } set { fTaxInvoiceNumber = value; } }
         }
 
+        public class RatingValueHandler : Dapper.SqlMapper.TypeHandler<RatingValue>
+        {
+            private RatingValueHandler() { }
+            public static readonly RatingValueHandler Default = new RatingValueHandler();
+            public override RatingValue Parse(object value)
+            {
+                if (value is Int32)
+                    return new RatingValue() { Value = (Int32)value };
+
+                throw new FormatException("Invalid conversion to RatingValue");
+            }
+
+            public override void SetValue(System.Data.IDbDataParameter parameter, RatingValue value)
+            {
+                // ... null, range checks etc ...
+                parameter.DbType = System.Data.DbType.Int32;
+                parameter.Value = value.Value;
+            }
+        }
+        public class RatingValue
+        {
+            public Int32 Value { get; set; }
+            // ... some other properties etc ...
+        }
+
+        public class MyResult
+        {
+            public String CategoryName { get; set; }
+            public RatingValue CategoryRating { get; set; }
+        }
+
+        public void SO24740733_TestCustomValueHandler()
+        {
+            Dapper.SqlMapper.AddTypeHandler(RatingValueHandler.Default);
+            var foo = connection.Query<MyResult>("SELECT 'Foo' AS CategoryName, 200 AS CategoryRating").Single();
+
+            foo.CategoryName.IsEqualTo("Foo");
+            foo.CategoryRating.Value.IsEqualTo(200);
+        }
+
+        public void SO24740733_TestCustomValueSingleColumn()
+        {
+            Dapper.SqlMapper.AddTypeHandler(RatingValueHandler.Default);
+            var foo = connection.Query<RatingValue>("SELECT 200 AS CategoryRating").Single();
+
+            foo.Value.IsEqualTo(200);
+        }
+
 #if POSTGRESQL
 
         class Cat
