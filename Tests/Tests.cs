@@ -3061,6 +3061,43 @@ option (optimize for (@vals unKnoWn))";
             }
         }
 
+        public void SO24607639_NullableBools()
+        {
+            var obj = connection.Query<HazBools>(
+                @"declare @vals table (A bit null, B bit null, C bit null);
+                insert @vals (A,B,C) values (1,0,null);
+                select * from @vals").Single();
+            obj.IsNotNull();
+            obj.A.Value.IsEqualTo(true);
+            obj.B.Value.IsEqualTo(false);
+            obj.C.IsNull();
+        }
+        class HazBools
+        {
+            public bool? A { get; set; }
+            public bool? B { get; set; }
+            public bool? C { get; set; }
+        }
+
+        public void SO24605346_ProcsAndStrings()
+        {
+            connection.Execute(@"create proc #GetPracticeRebateOrderByInvoiceNumber @TaxInvoiceNumber nvarchar(20) as
+                select @TaxInvoiceNumber as [fTaxInvoiceNumber]");
+            string InvoiceNumber = "INV0000000028PPN";
+            var result = connection.Query<PracticeRebateOrders>("#GetPracticeRebateOrderByInvoiceNumber", new
+            {
+                TaxInvoiceNumber = InvoiceNumber
+            }, commandType: CommandType.StoredProcedure).FirstOrDefault();
+
+            result.TaxInvoiceNumber.IsEqualTo("INV0000000028PPN");
+        }
+        class PracticeRebateOrders
+        {
+            public string fTaxInvoiceNumber;
+            [System.Xml.Serialization.XmlElementAttribute(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
+            public string TaxInvoiceNumber { get { return fTaxInvoiceNumber; } set { fTaxInvoiceNumber = value; } }
+        }
+
 #if POSTGRESQL
 
         class Cat

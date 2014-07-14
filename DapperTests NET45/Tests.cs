@@ -282,6 +282,7 @@ namespace DapperTests_NET45
                 b.IsEqualTo("abc");
             }
         }
+
         static Type GetSomeType()
         {
             return typeof(SomeType);
