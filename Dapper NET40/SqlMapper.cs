@@ -4002,30 +4002,35 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         p = (IDbDataParameter)command.Parameters[name];
                     }
+
+                    p.Direction = param.ParameterDirection;
                     if (handler == null)
                     {
                         p.Value = val ?? DBNull.Value;
-                    } else
+                        if (dbType != null && p.DbType != dbType)
+                        {
+                            p.DbType = dbType.Value;
+                        }
+                        var s = val as string;
+                        if (s != null)
+                        {
+                            if (s.Length <= 4000)
+                            {
+                                p.Size = 4000;
+                            }
+                        }
+                        if (param.Size != null)
+                        {
+                            p.Size = param.Size.Value;
+                        }                        
+                    }
+                    else
                     {
+                        if (dbType != null) p.DbType = dbType.Value;
+                        if (param.Size != null) p.Size = param.Size.Value;
                         handler.SetValue(p, val ?? DBNull.Value);
                     }
-                    p.Direction = param.ParameterDirection;
-                    var s = val as string;
-                    if (s != null)
-                    {
-                        if (s.Length <= 4000)
-                        {
-                            p.Size = 4000;
-                        }
-                    }
-                    if (param.Size != null)
-                    {
-                        p.Size = param.Size.Value;
-                    }
-                    if (dbType != null && p.DbType != dbType)
-                    {
-                        p.DbType = dbType.Value;
-                    }
+
                     if (add)
                     {
                         command.Parameters.Add(p);
