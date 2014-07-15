@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.26</version>
+    <version>1.27</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,6 +19,7 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.27    - Fixes for type-handler parse; ensure type-handlers get last dibs on configuring parameters
       * 1.26    - New type handler API for extension support
       * 1.25    - Command recycling and disposing during pipelined async multi-exec; enable pipeline (via sync-over-async) for sync API
       * 1.24    - Implement pipelined async multi-exec, when flag is specified (only - requires MARS etc)
