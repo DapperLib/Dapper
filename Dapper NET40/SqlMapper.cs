@@ -4457,14 +4457,40 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetMember(string columnName)
         {
-            var property = _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+            SqlMapper.IMemberMap m = this.GetMember(columnName, columnName);
+
+            if (m != null)
+                return m;
+
+            //work around for databases that make it difficult to use camel case in column names such as DB2
+            if (columnName.Contains("_"))
+            {
+                string c = columnName.Replace("_", string.Empty);
+                m = this.GetMember(c, columnName);
+
+                if (m != null)
+                    return m;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets member mapping for columnName by looking for a member named searchColumnName
+        /// </summary>
+        /// <param name="searchColumnName">The column name to search for</param>
+        /// <param name="columnName">DataReader column name</param>
+        /// <returns>Mapping implementation</returns>
+        private SqlMapper.IMemberMap GetMember(string searchColumnName, string columnName)
+        {
+            var property = _properties.FirstOrDefault(p => string.Equals(p.Name, searchColumnName, StringComparison.Ordinal))
+               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, searchColumnName, StringComparison.OrdinalIgnoreCase));
 
             if (property != null)
                 return new SimpleMemberMap(columnName, property);
 
-            var field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+            var field = _fields.FirstOrDefault(p => string.Equals(p.Name, searchColumnName, StringComparison.Ordinal))
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, searchColumnName, StringComparison.OrdinalIgnoreCase));
 
             if (field != null)
                 return new SimpleMemberMap(columnName, field);
