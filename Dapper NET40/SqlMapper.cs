@@ -3728,6 +3728,13 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             private int gridIndex, readCount;
             private bool consumed;
+            public bool IsConsumed
+            {
+                get
+                {
+                    return consumed;
+                }
+            }
             private void NextResult()
             {
                 if (reader.NextResult())
