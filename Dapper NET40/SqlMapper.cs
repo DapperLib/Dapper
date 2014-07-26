@@ -637,12 +637,19 @@ namespace Dapper
         public static void AddTypeHandler(Type type, ITypeHandler handler)
         {
             if (type == null) throw new ArgumentNullException("type");
-#pragma warning disable 618
-            typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
-#pragma warning restore 618
-            if (handler == null) typeHandlers.Remove(type);
-            else typeHandlers[type] = handler;
+            AddTypeHandlerImpl(type, handler);
+
+            if (type.IsValueType)
+            {
+                var isNullable = Nullable.GetUnderlyingType(type) != null;
+                if (!isNullable)
+                {
+                    var nullableType = typeof(Nullable<>).MakeGenericType(type);
+                    AddTypeHandlerImpl(nullableType, handler);
+                }
+            }
         }
+
         /// <summary>
         /// Configire the specified type to be processed by a custom handler
         /// </summary>
@@ -650,6 +657,16 @@ namespace Dapper
         {
             AddTypeHandler(typeof(T), handler);
         }
+
+        private static void AddTypeHandlerImpl(Type type, ITypeHandler handler)
+        {
+#pragma warning disable 618
+            typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+#pragma warning restore 618
+            if (handler == null) typeHandlers.Remove(type);
+            else typeHandlers[type] = handler;
+        }
+
 
         /// <summary>
         /// Not intended for direct usage
