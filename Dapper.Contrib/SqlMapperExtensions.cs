@@ -240,7 +240,8 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("update {0} set ", name);
 
             var allProperties = TypePropertiesCache(type);
-            var nonIdProps = allProperties.Where(a => !keyProperties.Contains(a));
+            var computedProperties = ComputedPropertiesCache(type);
+            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties));
 
             for (var i = 0; i < nonIdProps.Count(); i++)
             {
