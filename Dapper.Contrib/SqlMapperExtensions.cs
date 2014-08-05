@@ -11,6 +11,8 @@ using System.Threading;
 using System.Runtime.CompilerServices;
 using Dapper;
 
+#pragma warning disable 1573, 1591 // xml comments
+
 namespace Dapper.Contrib.Extensions
 {
 
