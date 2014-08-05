@@ -3161,6 +3161,29 @@ option (optimize for (@vals unKnoWn))";
             b.IsEqualTo("4");
         }
 
+        public void Issue22_ExecuteScalar()
+        {
+            int i = connection.ExecuteScalar<int>("select 123");
+            i.IsEqualTo(123);
+
+            i = connection.ExecuteScalar<int>("select cast(123 as bigint)");
+            i.IsEqualTo(123);
+
+            long j = connection.ExecuteScalar<long>("select 123");
+            j.IsEqualTo(123L);
+
+            j = connection.ExecuteScalar<long>("select cast(123 as bigint)");
+            j.IsEqualTo(123L);
+
+            int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
+            k.IsNull();
+
+            Dapper.EntityFramework.Handlers.Register();
+            var geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326);
+            var geo2 = connection.ExecuteScalar<DbGeography>("select @geo", new { geo });
+            geo2.IsNotNull();
+        }
+
 #if POSTGRESQL
 
         class Cat

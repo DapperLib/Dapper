@@ -1010,6 +1010,58 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         {
             return ExecuteImpl(cnn, ref command);
         }
+
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static object ExecuteScalar(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImpl<object>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static T ExecuteScalar<T>(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImpl<T>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static object ExecuteScalar(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteScalarImpl<object>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static T ExecuteScalar<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteScalarImpl<T>(cnn, ref command);
+        }
+
         private static int ExecuteImpl(this IDbConnection cnn, ref CommandDefinition command)
         {
             object param = command.Parameters;
@@ -1067,12 +1119,6 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             }
             return ExecuteCommand(cnn, ref command, param == null ? null : info.ParamReader);
         }
-
-        private static CacheInfo GetCacheInfo(Identity identity, object obj, object addToCache)
-        {
-            throw new NotImplementedException();
-        }
-
 
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>
@@ -1304,7 +1350,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 if (tuple.Func == null || tuple.Hash != hash)
                 {
                     tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                    SetQueryCache(identity, info);
+                    if(command.AddToCache) SetQueryCache(identity, info);
                 }
 
                 var func = tuple.Func;
@@ -1318,7 +1364,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                     } else if (val == null || val is T) {
                         yield return (T)val;
                     } else {
-                        yield return (T)Convert.ChangeType(val, effectiveType);
+                        yield return (T)Convert.ChangeType(val, effectiveType, CultureInfo.InvariantCulture);
                     }
                 }
                 // happy path; close the reader cleanly - no
@@ -1541,7 +1587,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     var deserializers = GenerateDeserializers(new Type[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) }, splitOn, reader);
                     deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
                     otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
-                    SetQueryCache(identity, cinfo);
+                    if(command.AddToCache) SetQueryCache(identity, cinfo);
                 }
 
                 Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
@@ -1764,7 +1810,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
             return GetStructDeserializer(type, underlyingType ?? type, startBound);
-
         }
         static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
         {
@@ -2854,6 +2899,33 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
+        private static T ExecuteScalarImpl<T>(IDbConnection cnn, ref CommandDefinition command)
+        {
+            Action<IDbCommand, object> paramReader = null;
+            object param = command.Parameters;
+            if (param != null)
+            {
+                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
+                paramReader = GetCacheInfo(identity, command.Parameters, command.AddToCache).ParamReader;
+            }
+
+            IDbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            object result;
+            try
+            {
+                cmd = command.SetupCommand(cnn, paramReader);
+                if (wasClosed) cnn.Open();
+                result =cmd.ExecuteScalar();
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+            return Parse<T>(result);
+        }
+
         private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
@@ -2936,6 +3008,23 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 var val = r.GetValue(index);
                 return val is DBNull ? null : val;
             };
+        }
+
+        private static T Parse<T>(object value)
+        {
+            if (value == null || value is DBNull) return default(T);
+            if (value is T) return (T)value;
+            var type = typeof(T);
+            if (type.IsEnum)
+            {
+                return (T)Enum.ToObject(type, value);
+            }
+            ITypeHandler handler;
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return (T)handler.Parse(type, value);
+            }
+            return (T)Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
         }
 
         static readonly MethodInfo

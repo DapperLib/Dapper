@@ -59,7 +59,7 @@ namespace Dapper
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                     using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false))
                     {
-                        return ExecuteReader<T>(reader, effectiveType, identity, info).ToList();
+                        return ExecuteReader<T>(reader, effectiveType, identity, info, command.AddToCache).ToList();
                     }
                 }
                 finally
@@ -407,14 +407,14 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Type effectiveType, Identity identity, CacheInfo info)
+        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Type effectiveType, Identity identity, CacheInfo info, bool addToCache)
         {
             var tuple = info.Deserializer;
             int hash = GetColumnHash(reader);
             if (tuple.Func == null || tuple.Hash != hash)
             {
                 tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                SetQueryCache(identity, info);
+                if(addToCache) SetQueryCache(identity, info);
             }
 
             var func = tuple.Func;
@@ -545,6 +545,83 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
             }
+        }
+
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static Task<object> ExecuteScalarAsync(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImplAsync<object>(cnn, command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static Task<T> ExecuteScalarAsync<T>(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImplAsync<T>(cnn, command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static Task<object> ExecuteScalarAsync(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteScalarImplAsync<object>(cnn, command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static Task<T> ExecuteScalarAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteScalarImplAsync<T>(cnn, command);
+        }
+        private async static Task<T> ExecuteScalarImplAsync<T>(IDbConnection cnn, CommandDefinition command)
+        {
+            Action<IDbCommand, object> paramReader = null;
+            object param = command.Parameters;
+            if (param != null)
+            {
+                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
+                paramReader = GetCacheInfo(identity, command.Parameters, command.AddToCache).ParamReader;
+            }
+
+            DbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            object result;
+            try
+            {
+                cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                result = await cmd.ExecuteScalarAsync(command.CancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+            return Parse<T>(result);
         }
     }
 }
