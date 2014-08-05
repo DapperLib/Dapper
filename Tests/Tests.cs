@@ -3202,6 +3202,34 @@ option (optimize for (@vals unKnoWn))";
             geo2.IsNotNull();
         }
 
+        public void Issue142_FailsNamedStatus()
+        {
+            var row1 = connection.Query<Issue142_Status>("select @Status as [Status]", new { Status = StatusType.Started }).Single();
+            row1.Status.IsEqualTo(StatusType.Started);
+
+            var row2 = connection.Query<Issue142_StatusType>("select @Status as [Status]", new { Status = Status.Started }).Single();
+            row2.Status.IsEqualTo(Status.Started);
+        }
+
+        public class Issue142_Status
+        {
+            public StatusType Status { get; set; }
+        }
+        public class Issue142_StatusType
+        {
+            public Status Status { get; set; }
+        }
+
+        public enum StatusType : byte
+        {
+            NotStarted = 1, Started = 2, Finished = 3
+        }
+        public enum Status : byte
+        {
+            NotStarted = 1, Started = 2, Finished = 3
+        }
+
+
 #if POSTGRESQL
 
         class Cat
