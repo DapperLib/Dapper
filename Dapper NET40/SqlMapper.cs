@@ -3891,6 +3891,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             private int gridIndex, readCount;
             private bool consumed;
+            /// <summary>
+            /// Has the underlying reader been consumed?
+            /// </summary>
             public bool IsConsumed
             {
                 get
