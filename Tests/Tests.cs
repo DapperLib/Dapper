@@ -3146,6 +3146,21 @@ option (optimize for (@vals unKnoWn))";
             foo.Value.IsEqualTo(200);
         }
 
+        public void Issue130_IConvertible()
+        {
+            dynamic row = connection.Query("select 1 as [a], '2' as [b]").Single();
+            int a = row.a;
+            string b = row.b;
+            a.IsEqualTo(1);
+            b.IsEqualTo("2");
+
+            row = connection.Query<dynamic>("select 3 as [a], '4' as [b]").Single();
+            a = row.a;
+            b = row.b;
+            a.IsEqualTo(3);
+            b.IsEqualTo("4");
+        }
+
 #if POSTGRESQL
 
         class Cat

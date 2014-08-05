@@ -1299,7 +1299,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                     object val = func(reader);
                     if (effectiveType == typeof(object))
                     {
-                        yield return (T)Convert.ChangeType(val, effectiveType);
+                        yield return (T)(object)val;
                     } else if (val == null || val is T) {
                         yield return (T)val;
                     } else {
