@@ -632,6 +632,15 @@ namespace Dapper
 
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
         }
+
+        /// <summary>
+        /// Clear the registered type handlers
+        /// </summary>
+        public static void ResetTypeHandlers()
+        {
+            typeHandlers = new Dictionary<Type, ITypeHandler>();
+            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
+        }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
         /// </summary>
@@ -663,6 +672,22 @@ namespace Dapper
         {
             if (type == null) throw new ArgumentNullException("type");
 
+            Type secondary = null;
+            if(type.IsValueType)
+            {
+                var underlying = Nullable.GetUnderlyingType(type);
+                if(underlying == null)
+                {
+                    secondary = typeof(Nullable<>).MakeGenericType(type); // the Nullable<T>
+                    // type is already the T
+                }
+                else
+                {
+                    secondary = type; // the Nullable<T>
+                    type = underlying; // the T
+                }
+            }
+
             var snapshot = typeHandlers;
             ITypeHandler oldValue;
             if (snapshot.TryGetValue(type, out oldValue) && handler == oldValue) return; // nothing to do
@@ -671,9 +696,21 @@ namespace Dapper
 
 #pragma warning disable 618
             typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+            if(secondary != null)
+            {
+                typeof(TypeHandlerCache<>).MakeGenericType(secondary).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+            }
 #pragma warning restore 618
-            if (handler == null) newCopy.Remove(type);
-            else newCopy[type] = handler;
+            if (handler == null)
+            {
+                newCopy.Remove(type);
+                if (secondary != null) newCopy.Remove(secondary);
+            }
+            else
+            {
+                newCopy[type] = handler;
+                if(secondary != null) newCopy[secondary] = handler;
+            }
             typeHandlers = newCopy;
         }
 

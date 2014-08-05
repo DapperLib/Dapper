@@ -3230,6 +3230,60 @@ option (optimize for (@vals unKnoWn))";
         }
 
 
+
+        public void Issue136_ValueTypeHandlers()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(typeof(LocalDate), LocalDateHandler.Default);
+            var param = new LocalDateResult
+            {
+                NotNullable = new LocalDate { Year = 2014, Month = 7, Day = 25 },
+                NullableNotNull = new LocalDate { Year = 2014, Month = 7, Day = 26 },
+                NullableIsNull = null,
+            };
+
+            var result = connection.Query<LocalDateResult>("SELECT @NotNullable AS NotNullable, @NullableNotNull AS NullableNotNull, @NullableIsNull AS NullableIsNull", param).Single();
+
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(typeof(LocalDate?), LocalDateHandler.Default);
+            result = connection.Query<LocalDateResult>("SELECT @NotNullable AS NotNullable, @NullableNotNull AS NullableNotNull, @NullableIsNull AS NullableIsNull", param).Single();
+        }
+        public class LocalDateHandler : Dapper.SqlMapper.TypeHandler<LocalDate>
+        {
+            private LocalDateHandler() { }
+
+            // Make the field type ITypeHandler to ensure it cannot be used with SqlMapper.AddTypeHandler<T>(TypeHandler<T>)
+            // by mistake.
+            public static readonly Dapper.SqlMapper.ITypeHandler Default = new LocalDateHandler();
+
+            public override LocalDate Parse(object value)
+            {
+                var date = (DateTime)value;
+                return new LocalDate { Year = date.Year, Month = date.Month, Day = date.Day };
+            }
+
+            public override void SetValue(IDbDataParameter parameter, LocalDate value)
+            {
+                parameter.DbType = DbType.DateTime;
+                parameter.Value = new DateTime(value.Year, value.Month, value.Day);
+            }
+        }
+
+        public struct LocalDate
+        {
+            public int Year { get; set; }
+            public int Month { get; set; }
+            public int Day { get; set; }
+        }
+
+        public class LocalDateResult
+        {
+            public LocalDate NotNullable { get; set; }
+            public LocalDate? NullableNotNull { get; set; }
+            public LocalDate? NullableIsNull { get; set; }
+        }
+
+
 #if POSTGRESQL
 
         class Cat
