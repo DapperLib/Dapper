@@ -587,7 +587,7 @@ namespace Dapper
 #endif
 
 
-        static readonly Dictionary<Type, DbType> typeMap;
+        static Dictionary<Type, DbType> typeMap;
 
         static SqlMapper()
         {
@@ -630,14 +630,22 @@ namespace Dapper
             typeMap[typeof(TimeSpan?)] = DbType.Time;
             typeMap[typeof(object)] = DbType.Object;
 
-            AddTypeHandler(typeof(DataTable), new DataTableHandler());
+            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
         }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
         /// </summary>
         public static void AddTypeMap(Type type, DbType dbType)
         {
-            typeMap[type] = dbType;
+            // use clone, mutate, replace to avoid threading issues
+            var snapshot = typeMap;
+
+            DbType oldValue;
+            if (snapshot.TryGetValue(type, out oldValue) && oldValue == dbType) return; // nothing to do
+
+            var newCopy = new Dictionary<Type, DbType>(snapshot);
+            newCopy[type] = dbType;
+            typeMap = newCopy;
         }
 
         /// <summary>
@@ -645,19 +653,36 @@ namespace Dapper
         /// </summary>
         public static void AddTypeHandler(Type type, ITypeHandler handler)
         {
+            AddTypeHandlerImpl(type, handler, true);
+        }
+
+        /// <summary>
+        /// Configire the specified type to be processed by a custom handler
+        /// </summary>
+        public static void AddTypeHandlerImpl(Type type, ITypeHandler handler, bool clone)
+        {
             if (type == null) throw new ArgumentNullException("type");
+
+            var snapshot = typeHandlers;
+            ITypeHandler oldValue;
+            if (snapshot.TryGetValue(type, out oldValue) && handler == oldValue) return; // nothing to do
+
+            var newCopy = clone ? new Dictionary<Type, ITypeHandler>(snapshot) : snapshot;
+
 #pragma warning disable 618
             typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
 #pragma warning restore 618
-            if (handler == null) typeHandlers.Remove(type);
-            else typeHandlers[type] = handler;
+            if (handler == null) newCopy.Remove(type);
+            else newCopy[type] = handler;
+            typeHandlers = newCopy;
         }
+
         /// <summary>
         /// Configire the specified type to be processed by a custom handler
         /// </summary>
         public static void AddTypeHandler<T>(TypeHandler<T> handler)
         {
-            AddTypeHandler(typeof(T), handler);
+            AddTypeHandlerImpl(typeof(T), handler, true);
         }
 
         /// <summary>
@@ -696,7 +721,7 @@ namespace Dapper
             private static ITypeHandler handler;
         }
 
-        private static readonly Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
+        private static Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
         internal static DbType LookupDbType(Type type, string name, out ITypeHandler handler)
