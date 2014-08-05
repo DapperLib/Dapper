@@ -50,7 +50,7 @@ namespace Dapper
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity, param);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
             {
@@ -130,7 +130,7 @@ namespace Dapper
                                 cmd = (DbCommand)command.SetupCommand(cnn, null);
                                 masterSql = cmd.CommandText;
                                 var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                                info = GetCacheInfo(identity, obj);
+                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             } else if(pending.Count >= MAX_PENDING)
                             {
                                 var recycled = pending.Dequeue();
@@ -177,7 +177,7 @@ namespace Dapper
                                 masterSql = cmd.CommandText;
                                 isFirst = false;
                                 var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                                info = GetCacheInfo(identity, obj);
+                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             else
                             {
@@ -199,7 +199,7 @@ namespace Dapper
         private static async Task<int> ExecuteImplAsync(IDbConnection cnn, CommandDefinition command, object param)
         {
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity, param);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
             {
@@ -390,7 +390,7 @@ namespace Dapper
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            var info = GetCacheInfo(identity, param);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
@@ -446,7 +446,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             Identity identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            CacheInfo info = GetCacheInfo(identity, param);
+            CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             DbCommand cmd = null;
             IDataReader reader = null;

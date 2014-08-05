@@ -43,6 +43,10 @@ namespace Dapper
         /// Can async queries be pipelined?
         /// </summary>
         Pipelined = 2,
+        /// <summary>
+        /// Should the plan cache be bypassed?
+        /// </summary>
+        NoCache = 4
     }
     /// <summary>
     /// Represents the key aspects of a sql operation
@@ -83,6 +87,11 @@ namespace Dapper
         /// Should data be buffered before returning?
         /// </summary>
         public bool Buffered { get { return (flags & CommandFlags.Buffered) != 0; } }
+
+        /// <summary>
+        /// Should the plan for this query be cached?
+        /// </summary>
+        internal bool AddToCache {  get { return (flags & CommandFlags.NoCache) == 0; } }
 
         /// <summary>
         /// Additional state flags against this command
@@ -1032,7 +1041,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                                 masterSql = cmd.CommandText;
                                 isFirst = false;
                                 identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                                info = GetCacheInfo(identity, obj);
+                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             else
                             {
@@ -1054,10 +1063,16 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             if (param != null)
             {
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
-                info = GetCacheInfo(identity, param);
+                info = GetCacheInfo(identity, param, command.AddToCache);
             }
             return ExecuteCommand(cnn, ref command, param == null ? null : info.ParamReader);
         }
+
+        private static CacheInfo GetCacheInfo(Identity identity, object obj, object addToCache)
+        {
+            throw new NotImplementedException();
+        }
+
 
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>
@@ -1232,7 +1247,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             Identity identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            CacheInfo info = GetCacheInfo(identity, param);
+            CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
@@ -1268,7 +1283,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity, param);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
@@ -1502,7 +1517,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             object param = command.Parameters;
             identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            CacheInfo cinfo = GetCacheInfo(identity, param);
+            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
@@ -1688,7 +1703,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             throw new ArgumentException(MultiMapSplitExceptionMessage);
         }
 
-        private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters)
+        private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters, bool addToCache)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
@@ -1717,7 +1732,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         info.ParamReader = CreateParamInfoGenerator(identity, false, true, literals);
                     }
                 }
-                SetQueryCache(identity, info);
+                if(addToCache) SetQueryCache(identity, info);
             }
             return info;
         }
@@ -2875,7 +2890,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (param != null)
             {
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
-                info = GetCacheInfo(identity, param);
+                info = GetCacheInfo(identity, param, command.AddToCache);
             }
             var paramReader = info == null ? null : info.ParamReader;
             return paramReader;
@@ -3548,7 +3563,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
@@ -3575,7 +3590,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
