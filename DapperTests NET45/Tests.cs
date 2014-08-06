@@ -292,5 +292,26 @@ namespace DapperTests_NET45
             public int A { get; set; }
             public string B { get; set; }
         }
+
+        public void Issue22_ExecuteScalar()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                int i = connection.ExecuteScalarAsync<int>("select 123").Result;
+                i.IsEqualTo(123);
+
+                i = connection.ExecuteScalarAsync<int>("select cast(123 as bigint)").Result;
+                i.IsEqualTo(123);
+
+                long j = connection.ExecuteScalarAsync<long>("select 123").Result;
+                j.IsEqualTo(123L);
+
+                j = connection.ExecuteScalarAsync<long>("select cast(123 as bigint)").Result;
+                j.IsEqualTo(123L);
+
+                int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
+                k.IsNull();
+            }
+        }
     }
 }

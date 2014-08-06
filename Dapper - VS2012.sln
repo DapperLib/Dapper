@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperTests NET40", "Tests\DapperTests NET40.csproj", "{A2A80512-11F4-4028-A995-505463632C84}"
 EndProject
@@ -28,6 +28,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper NET45", "Dapper NET4
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E757192C-9411-458D-8815-8DAB34E12D03}"
 	ProjectSection(SolutionItems) = preProject
+		Dapper.Contrib.nuspec = Dapper.Contrib.nuspec
 		Dapper.EntityFramework.nuspec = Dapper.EntityFramework.nuspec
 		Dapper.nuspec = Dapper.nuspec
 		License.txt = License.txt
@@ -38,6 +39,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET45", "Dapper.EntityFramework NET45\Dapper.EntityFramework NET45.csproj", "{C4FF57CD-F033-40D3-892C-EE5290BA3999}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET40", "Dapper.EntityFramework NET40\Dapper.EntityFramework NET40.csproj", "{2544DFBA-7F64-4003-9C36-D8337F770A36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib NET45", "Dapper.Contrib NET45\Dapper.Contrib NET45.csproj", "{302EC82F-A81B-48C5-B653-B5C75D2BD103}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -169,6 +172,16 @@ Global
 		{2544DFBA-7F64-4003-9C36-D8337F770A36}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{2544DFBA-7F64-4003-9C36-D8337F770A36}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{2544DFBA-7F64-4003-9C36-D8337F770A36}.Release|x86.ActiveCfg = Release|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Any CPU.Build.0 = Release|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
