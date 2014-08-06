@@ -2673,6 +2673,24 @@ end");
 
         }
 
+        public void TestChangingDefaultStringTypeMappingToAnsiString()
+        {
+            var sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
+            var param = new {testParam = "TestString"};
+
+            var result01 = connection.Query<string>(sql, param).FirstOrDefault();
+            result01.IsEqualTo("nvarchar");
+
+            Dapper.SqlMapper.PurgeQueryCache();
+
+            Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+            var result02 = connection.Query<string>(sql, param).FirstOrDefault();
+            result02.IsEqualTo("varchar");
+
+            Dapper.SqlMapper.PurgeQueryCache();
+            Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+        }
+
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
@@ -3243,6 +3261,306 @@ option (optimize for (@vals unKnoWn))";
 
             foo.Value.IsEqualTo(200);
         }
+
+        public void Issue130_IConvertible()
+        {
+            dynamic row = connection.Query("select 1 as [a], '2' as [b]").Single();
+            int a = row.a;
+            string b = row.b;
+            a.IsEqualTo(1);
+            b.IsEqualTo("2");
+
+            row = connection.Query<dynamic>("select 3 as [a], '4' as [b]").Single();
+            a = row.a;
+            b = row.b;
+            a.IsEqualTo(3);
+            b.IsEqualTo("4");
+        }
+
+        public void Issue22_ExecuteScalar()
+        {
+            int i = connection.ExecuteScalar<int>("select 123");
+            i.IsEqualTo(123);
+
+            i = connection.ExecuteScalar<int>("select cast(123 as bigint)");
+            i.IsEqualTo(123);
+
+            long j = connection.ExecuteScalar<long>("select 123");
+            j.IsEqualTo(123L);
+
+            j = connection.ExecuteScalar<long>("select cast(123 as bigint)");
+            j.IsEqualTo(123L);
+
+            int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
+            k.IsNull();
+
+            Dapper.EntityFramework.Handlers.Register();
+            var geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326);
+            var geo2 = connection.ExecuteScalar<DbGeography>("select @geo", new { geo });
+            geo2.IsNotNull();
+        }
+
+        public void Issue142_FailsNamedStatus()
+        {
+            var row1 = connection.Query<Issue142_Status>("select @Status as [Status]", new { Status = StatusType.Started }).Single();
+            row1.Status.IsEqualTo(StatusType.Started);
+
+            var row2 = connection.Query<Issue142_StatusType>("select @Status as [Status]", new { Status = Status.Started }).Single();
+            row2.Status.IsEqualTo(Status.Started);
+        }
+
+        public class Issue142_Status
+        {
+            public StatusType Status { get; set; }
+        }
+        public class Issue142_StatusType
+        {
+            public Status Status { get; set; }
+        }
+
+        public enum StatusType : byte
+        {
+            NotStarted = 1, Started = 2, Finished = 3
+        }
+        public enum Status : byte
+        {
+            NotStarted = 1, Started = 2, Finished = 3
+        }
+
+
+
+        public void Issue136_ValueTypeHandlers()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(typeof(LocalDate), LocalDateHandler.Default);
+            var param = new LocalDateResult
+            {
+                NotNullable = new LocalDate { Year = 2014, Month = 7, Day = 25 },
+                NullableNotNull = new LocalDate { Year = 2014, Month = 7, Day = 26 },
+                NullableIsNull = null,
+            };
+
+            var result = connection.Query<LocalDateResult>("SELECT @NotNullable AS NotNullable, @NullableNotNull AS NullableNotNull, @NullableIsNull AS NullableIsNull", param).Single();
+
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(typeof(LocalDate?), LocalDateHandler.Default);
+            result = connection.Query<LocalDateResult>("SELECT @NotNullable AS NotNullable, @NullableNotNull AS NullableNotNull, @NullableIsNull AS NullableIsNull", param).Single();
+        }
+        public class LocalDateHandler : Dapper.SqlMapper.TypeHandler<LocalDate>
+        {
+            private LocalDateHandler() { }
+
+            // Make the field type ITypeHandler to ensure it cannot be used with SqlMapper.AddTypeHandler<T>(TypeHandler<T>)
+            // by mistake.
+            public static readonly Dapper.SqlMapper.ITypeHandler Default = new LocalDateHandler();
+
+            public override LocalDate Parse(object value)
+            {
+                var date = (DateTime)value;
+                return new LocalDate { Year = date.Year, Month = date.Month, Day = date.Day };
+            }
+
+            public override void SetValue(IDbDataParameter parameter, LocalDate value)
+            {
+                parameter.DbType = DbType.DateTime;
+                parameter.Value = new DateTime(value.Year, value.Month, value.Day);
+            }
+        }
+
+        public struct LocalDate
+        {
+            public int Year { get; set; }
+            public int Month { get; set; }
+            public int Day { get; set; }
+        }
+
+        public class LocalDateResult
+        {
+            public LocalDate NotNullable { get; set; }
+            public LocalDate? NullableNotNull { get; set; }
+            public LocalDate? NullableIsNull { get; set; }
+        }
+
+        public class LotsOfNumerics {
+            public enum E_Byte : byte { A = 0, B = 1 }
+            public enum E_SByte : sbyte { A = 0, B = 1 }
+            public enum E_Short : short { A = 0, B = 1 }
+            public enum E_UShort : ushort { A = 0, B = 1 }
+            public enum E_Int : int { A = 0, B = 1 }
+            public enum E_UInt : uint { A = 0, B = 1 }
+            public enum E_Long : long { A = 0, B = 1 }
+            public enum E_ULong : ulong { A = 0, B = 1 }
+
+            public E_Byte P_Byte { get; set; }
+            public E_SByte P_SByte { get; set; }
+            public E_Short P_Short { get; set; }
+            public E_UShort P_UShort { get; set; }
+            public E_Int P_Int { get; set; }
+            public E_UInt P_UInt { get; set; }
+            public E_Long P_Long { get; set; }
+            public E_ULong P_ULong { get; set; }
+
+            public bool N_Bool { get; set; }
+            public byte N_Byte { get; set; }
+            public sbyte N_SByte { get; set; }
+            public short N_Short { get; set; }
+            public ushort N_UShort { get; set; }
+            public int N_Int { get; set; }
+            public uint N_UInt { get; set; }
+            public long N_Long { get; set; }
+            public ulong N_ULong { get; set; }
+
+            public float N_Float { get; set; }
+            public double N_Double { get; set; }
+            public decimal N_Decimal { get; set; }
+
+            public E_Byte? N_P_Byte { get; set; }
+            public E_SByte? N_P_SByte { get; set; }
+            public E_Short? N_P_Short { get; set; }
+            public E_UShort? N_P_UShort { get; set; }
+            public E_Int? N_P_Int { get; set; }
+            public E_UInt? N_P_UInt { get; set; }
+            public E_Long? N_P_Long { get; set; }
+            public E_ULong? N_P_ULong { get; set; }
+
+            public bool? N_N_Bool { get; set; }
+            public byte? N_N_Byte { get; set; }
+            public sbyte? N_N_SByte { get; set; }
+            public short? N_N_Short { get; set; }
+            public ushort? N_N_UShort { get; set; }
+            public int? N_N_Int { get; set; }
+            public uint? N_N_UInt { get; set; }
+            public long? N_N_Long { get; set; }
+            public ulong? N_N_ULong { get; set; }
+
+            public float? N_N_Float { get; set; }
+            public double? N_N_Double { get; set; }
+            public decimal? N_N_Decimal { get; set; }
+        }
+
+        public void TestBigIntForEverythingWorks_SqlLite()
+        {
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<long>("bigint");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<int>("int");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<byte>("tinyint");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<short>("smallint");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<bool>("bit");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<float>("float(24)");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<double>("float(53)");
+        }
+        private void TestBigIntForEverythingWorks_SqlLite_ByDataType<T>(string dbType)
+        {
+            using(var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
+            {
+                reader.Read().IsTrue();
+                reader.GetFieldType(0).Equals(typeof(T));
+                reader.Read().IsFalse();
+                reader.NextResult().IsFalse();
+            }
+            
+            string sql = "select " + string.Join(",", typeof(LotsOfNumerics).GetProperties().Select(
+                x => "cast (1 as " + dbType + ") as [" + x.Name + "]"));
+            var row = connection.Query<LotsOfNumerics>(sql).Single();
+
+            row.N_Bool.IsTrue();
+            row.N_SByte.IsEqualTo((sbyte)1);
+            row.N_Byte.IsEqualTo((byte)1);
+            row.N_Int.IsEqualTo((int)1);
+            row.N_UInt.IsEqualTo((uint)1);
+            row.N_Short.IsEqualTo((short)1);
+            row.N_UShort.IsEqualTo((ushort)1);
+            row.N_Long.IsEqualTo((long)1);
+            row.N_ULong.IsEqualTo((ulong)1);
+            row.N_Float.IsEqualTo((float)1);
+            row.N_Double.IsEqualTo((double)1);
+            row.N_Decimal.IsEqualTo((decimal)1);
+
+            row.P_Byte.IsEqualTo(LotsOfNumerics.E_Byte.B);
+            row.P_SByte.IsEqualTo(LotsOfNumerics.E_SByte.B);
+            row.P_Short.IsEqualTo(LotsOfNumerics.E_Short.B);
+            row.P_UShort.IsEqualTo(LotsOfNumerics.E_UShort.B);
+            row.P_Int.IsEqualTo(LotsOfNumerics.E_Int.B);
+            row.P_UInt.IsEqualTo(LotsOfNumerics.E_UInt.B);
+            row.P_Long.IsEqualTo(LotsOfNumerics.E_Long.B);
+            row.P_ULong.IsEqualTo(LotsOfNumerics.E_ULong.B);
+
+            row.N_N_Bool.Value.IsTrue();
+            row.N_N_SByte.Value.IsEqualTo((sbyte)1);
+            row.N_N_Byte.Value.IsEqualTo((byte)1);
+            row.N_N_Int.Value.IsEqualTo((int)1);
+            row.N_N_UInt.Value.IsEqualTo((uint)1);
+            row.N_N_Short.Value.IsEqualTo((short)1);
+            row.N_N_UShort.Value.IsEqualTo((ushort)1);
+            row.N_N_Long.Value.IsEqualTo((long)1);
+            row.N_N_ULong.Value.IsEqualTo((ulong)1);
+            row.N_N_Float.Value.IsEqualTo((float)1);
+            row.N_N_Double.Value.IsEqualTo((double)1);
+            row.N_N_Decimal.IsEqualTo((decimal)1);
+
+            row.N_P_Byte.Value.IsEqualTo(LotsOfNumerics.E_Byte.B);
+            row.N_P_SByte.Value.IsEqualTo(LotsOfNumerics.E_SByte.B);
+            row.N_P_Short.Value.IsEqualTo(LotsOfNumerics.E_Short.B);
+            row.N_P_UShort.Value.IsEqualTo(LotsOfNumerics.E_UShort.B);
+            row.N_P_Int.Value.IsEqualTo(LotsOfNumerics.E_Int.B);
+            row.N_P_UInt.Value.IsEqualTo(LotsOfNumerics.E_UInt.B);
+            row.N_P_Long.Value.IsEqualTo(LotsOfNumerics.E_Long.B);
+            row.N_P_ULong.Value.IsEqualTo(LotsOfNumerics.E_ULong.B);
+
+            TestBigIntForEverythingWorks<bool>(true, dbType);
+            TestBigIntForEverythingWorks<sbyte>((sbyte)1, dbType);
+            TestBigIntForEverythingWorks<byte>((byte)1, dbType);
+            TestBigIntForEverythingWorks<int>((int)1, dbType);
+            TestBigIntForEverythingWorks<uint>((uint)1, dbType);
+            TestBigIntForEverythingWorks<short>((short)1, dbType);
+            TestBigIntForEverythingWorks<ushort>((ushort)1, dbType);
+            TestBigIntForEverythingWorks<long>((long)1, dbType);
+            TestBigIntForEverythingWorks<ulong>((ulong)1, dbType);
+            TestBigIntForEverythingWorks<float>((float)1, dbType);
+            TestBigIntForEverythingWorks<double>((double)1, dbType);
+            TestBigIntForEverythingWorks<decimal>((decimal)1, dbType);
+
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_ULong.B, dbType);
+
+            TestBigIntForEverythingWorks<bool?>(true, dbType);
+            TestBigIntForEverythingWorks<sbyte?>((sbyte)1, dbType);
+            TestBigIntForEverythingWorks<byte?>((byte)1, dbType);
+            TestBigIntForEverythingWorks<int?>((int)1, dbType);
+            TestBigIntForEverythingWorks<uint?>((uint)1, dbType);
+            TestBigIntForEverythingWorks<short?>((short)1, dbType);
+            TestBigIntForEverythingWorks<ushort?>((ushort)1, dbType);
+            TestBigIntForEverythingWorks<long?>((long)1, dbType);
+            TestBigIntForEverythingWorks<ulong?>((ulong)1, dbType);
+            TestBigIntForEverythingWorks<float?>((float)1, dbType);
+            TestBigIntForEverythingWorks<double?>((double)1, dbType);
+            TestBigIntForEverythingWorks<decimal?>((decimal)1, dbType);
+
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Byte?>(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_SByte?>(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Int?>(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_UInt?>(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Short?>(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_UShort?>(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Long?>(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_ULong?>(LotsOfNumerics.E_ULong.B, dbType);
+        }
+
+        private void TestBigIntForEverythingWorks<T>(T expected, string dbType)
+        {
+            var query = connection.Query<T>("select cast(1 as " + dbType + ")").Single();
+            query.IsEqualTo(expected);
+
+            var scalar = connection.ExecuteScalar<T>("select cast(1 as " + dbType + ")");
+            scalar.IsEqualTo(expected);
+        }
+
+
 
 #if POSTGRESQL
 

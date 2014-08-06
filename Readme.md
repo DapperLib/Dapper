@@ -352,6 +352,6 @@ Who is using this?
 ---------------------
 Dapper is in production use at:
 
-[Stack Overflow](http://stackoverflow.com/), [xpfest.com](http://www.xapfest.com/), [helpdesk](http://www.jitbit.com/helpdesk-software/)
+[Stack Overflow](http://stackoverflow.com/), [helpdesk](http://www.jitbit.com/helpdesk-software/)
 
 (if you would like to be listed here let me know)

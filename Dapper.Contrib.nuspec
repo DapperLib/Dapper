@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Dapper.Contrib</id>
+    <version>1.1</version>
+    <authors>Sam Saffron,Johan Danforth</authors>
+    <owners>Sam Saffron,Johan Danforth</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A collection of create,insert,update,delete helpers for dapper.net</description>
+    <tags>orm sql micro-orm</tags>
+    <dependencies>
+      <dependency id="Dapper" version="1.27" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="Dapper.Contrib NET45\bin\Release\Dapper.Contrib.*" target="lib\net45" />
+    <file src="Dapper.Contrib\bin\Release\Dapper.Contrib.*" target="lib\net40" />
+  </files>
+</package>

@@ -43,6 +43,10 @@ namespace Dapper
         /// Can async queries be pipelined?
         /// </summary>
         Pipelined = 2,
+        /// <summary>
+        /// Should the plan cache be bypassed?
+        /// </summary>
+        NoCache = 4
     }
     /// <summary>
     /// Represents the key aspects of a sql operation
@@ -83,6 +87,11 @@ namespace Dapper
         /// Should data be buffered before returning?
         /// </summary>
         public bool Buffered { get { return (flags & CommandFlags.Buffered) != 0; } }
+
+        /// <summary>
+        /// Should the plan for this query be cached?
+        /// </summary>
+        internal bool AddToCache {  get { return (flags & CommandFlags.NoCache) == 0; } }
 
         /// <summary>
         /// Additional state flags against this command
@@ -132,8 +141,8 @@ namespace Dapper
         internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
             var cmd = cnn.CreateCommand();
-            var bindByName = GetBindByName(cmd.GetType());
-            if (bindByName != null) bindByName(cmd, true);
+            var init = GetInit(cmd.GetType());
+            if (init != null) init(cmd);
             if (transaction != null)
                 cmd.Transaction = transaction;
             cmd.CommandText = commandText;
@@ -148,36 +157,57 @@ namespace Dapper
             return cmd;
         }
 
-        static SqlMapper.Link<Type, Action<IDbCommand, bool>> bindByNameCache;
-        static Action<IDbCommand, bool> GetBindByName(Type commandType)
+        static SqlMapper.Link<Type, Action<IDbCommand>> commandInitCache;
+        static Action<IDbCommand> GetInit(Type commandType)
         {
             if (commandType == null) return null; // GIGO
-            Action<IDbCommand, bool> action;
-            if (SqlMapper.Link<Type, Action<IDbCommand, bool>>.TryGet(bindByNameCache, commandType, out action))
+            Action<IDbCommand> action;
+            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out action))
             {
                 return action;
             }
-            var prop = commandType.GetProperty("BindByName", BindingFlags.Public | BindingFlags.Instance);
+            var bindByName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+            var initialLongFetchSize = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+
             action = null;
-            ParameterInfo[] indexers;
-            MethodInfo setter;
-            if (prop != null && prop.CanWrite && prop.PropertyType == typeof(bool)
-                && ((indexers = prop.GetIndexParameters()) == null || indexers.Length == 0)
-                && (setter = prop.GetSetMethod()) != null
-                )
+            if (bindByName != null || initialLongFetchSize != null)
             {
-                var method = new DynamicMethod(commandType.Name + "_BindByName", null, new Type[] { typeof(IDbCommand), typeof(bool) });
+                var method = new DynamicMethod(commandType.Name + "_init", null, new Type[] { typeof(IDbCommand) });
                 var il = method.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Castclass, commandType);
-                il.Emit(OpCodes.Ldarg_1);
-                il.EmitCall(OpCodes.Callvirt, setter, null);
+
+                if (bindByName != null)
+                {
+                    // .BindByName = true
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Castclass, commandType);
+                    il.Emit(OpCodes.Ldc_I4_1);
+                    il.EmitCall(OpCodes.Callvirt, bindByName, null);
+                }
+                if (initialLongFetchSize != null)
+                {
+                    // .InitialLONGFetchSize = -1
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Castclass, commandType);
+                    il.Emit(OpCodes.Ldc_I4_M1);
+                    il.EmitCall(OpCodes.Callvirt, initialLongFetchSize, null);
+                }
                 il.Emit(OpCodes.Ret);
-                action = (Action<IDbCommand, bool>)method.CreateDelegate(typeof(Action<IDbCommand, bool>));
+                action = (Action<IDbCommand>)method.CreateDelegate(typeof(Action<IDbCommand>));
             }
             // cache it            
-            SqlMapper.Link<Type, Action<IDbCommand, bool>>.TryAdd(ref bindByNameCache, commandType, ref action);
+            SqlMapper.Link<Type, Action<IDbCommand>>.TryAdd(ref commandInitCache, commandType, ref action);
             return action;
+        }
+        static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+        {
+            var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            ParameterInfo[] indexers;
+            if (prop != null && prop.CanWrite && prop.PropertyType == expectedType
+                && ((indexers = prop.GetIndexParameters()) == null || indexers.Length == 0))
+            {
+                return prop.GetSetMethod();
+            }
+            return null;
         }
     }
 
@@ -578,7 +608,7 @@ namespace Dapper
 #endif
 
 
-        static readonly Dictionary<Type, DbType> typeMap;
+        static Dictionary<Type, DbType> typeMap;
 
         static SqlMapper()
         {
@@ -621,14 +651,31 @@ namespace Dapper
             typeMap[typeof(TimeSpan?)] = DbType.Time;
             typeMap[typeof(object)] = DbType.Object;
 
-            AddTypeHandler(typeof(DataTable), new DataTableHandler());
+            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
+        }
+
+        /// <summary>
+        /// Clear the registered type handlers
+        /// </summary>
+        public static void ResetTypeHandlers()
+        {
+            typeHandlers = new Dictionary<Type, ITypeHandler>();
+            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
         }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
         /// </summary>
         public static void AddTypeMap(Type type, DbType dbType)
         {
-            typeMap[type] = dbType;
+            // use clone, mutate, replace to avoid threading issues
+            var snapshot = typeMap;
+
+            DbType oldValue;
+            if (snapshot.TryGetValue(type, out oldValue) && oldValue == dbType) return; // nothing to do
+
+            var newCopy = new Dictionary<Type, DbType>(snapshot);
+            newCopy[type] = dbType;
+            typeMap = newCopy;
         }
 
         /// <summary>
@@ -636,19 +683,64 @@ namespace Dapper
         /// </summary>
         public static void AddTypeHandler(Type type, ITypeHandler handler)
         {
+            AddTypeHandlerImpl(type, handler, true);
+        }
+
+        /// <summary>
+        /// Configire the specified type to be processed by a custom handler
+        /// </summary>
+        public static void AddTypeHandlerImpl(Type type, ITypeHandler handler, bool clone)
+        {
             if (type == null) throw new ArgumentNullException("type");
+
+            Type secondary = null;
+            if(type.IsValueType)
+            {
+                var underlying = Nullable.GetUnderlyingType(type);
+                if(underlying == null)
+                {
+                    secondary = typeof(Nullable<>).MakeGenericType(type); // the Nullable<T>
+                    // type is already the T
+                }
+                else
+                {
+                    secondary = type; // the Nullable<T>
+                    type = underlying; // the T
+                }
+            }
+
+            var snapshot = typeHandlers;
+            ITypeHandler oldValue;
+            if (snapshot.TryGetValue(type, out oldValue) && handler == oldValue) return; // nothing to do
+
+            var newCopy = clone ? new Dictionary<Type, ITypeHandler>(snapshot) : snapshot;
+
 #pragma warning disable 618
             typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+            if(secondary != null)
+            {
+                typeof(TypeHandlerCache<>).MakeGenericType(secondary).GetMethod("SetHandler", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+            }
 #pragma warning restore 618
-            if (handler == null) typeHandlers.Remove(type);
-            else typeHandlers[type] = handler;
+            if (handler == null)
+            {
+                newCopy.Remove(type);
+                if (secondary != null) newCopy.Remove(secondary);
+            }
+            else
+            {
+                newCopy[type] = handler;
+                if(secondary != null) newCopy[secondary] = handler;
+            }
+            typeHandlers = newCopy;
         }
+
         /// <summary>
         /// Configire the specified type to be processed by a custom handler
         /// </summary>
         public static void AddTypeHandler<T>(TypeHandler<T> handler)
         {
-            AddTypeHandler(typeof(T), handler);
+            AddTypeHandlerImpl(typeof(T), handler, true);
         }
 
         /// <summary>
@@ -687,7 +779,7 @@ namespace Dapper
             private static ITypeHandler handler;
         }
 
-        private static readonly Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
+        private static Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
         internal static DbType LookupDbType(Type type, string name, out ITypeHandler handler)
@@ -1001,6 +1093,58 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         {
             return ExecuteImpl(cnn, ref command);
         }
+
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static object ExecuteScalar(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImpl<object>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static T ExecuteScalar<T>(
+#if CSHARP30
+this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
+#else
+this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+#endif
+)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImpl<T>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static object ExecuteScalar(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteScalarImpl<object>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static T ExecuteScalar<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return ExecuteScalarImpl<T>(cnn, ref command);
+        }
+
         private static int ExecuteImpl(this IDbConnection cnn, ref CommandDefinition command)
         {
             object param = command.Parameters;
@@ -1032,7 +1176,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                                 masterSql = cmd.CommandText;
                                 isFirst = false;
                                 identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
-                                info = GetCacheInfo(identity, obj);
+                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             else
                             {
@@ -1054,7 +1198,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             if (param != null)
             {
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
-                info = GetCacheInfo(identity, param);
+                info = GetCacheInfo(identity, param, command.AddToCache);
             }
             return ExecuteCommand(cnn, ref command, param == null ? null : info.ParamReader);
         }
@@ -1232,7 +1376,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             Identity identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param == null ? null : param.GetType(), null);
-            CacheInfo info = GetCacheInfo(identity, param);
+            CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
@@ -1268,7 +1412,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param == null ? null : param.GetType(), null);
-            var info = GetCacheInfo(identity, param);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
             IDataReader reader = null;
@@ -1288,22 +1432,21 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 int hash = GetColumnHash(reader);
                 if (tuple.Func == null || tuple.Hash != hash)
                 {
+                    if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
+                        yield break;
                     tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                    SetQueryCache(identity, info);
+                    if(command.AddToCache) SetQueryCache(identity, info);
                 }
 
                 var func = tuple.Func;
-
+                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 while (reader.Read())
                 {
                     object val = func(reader);
-                    if (effectiveType == typeof(object))
-                    {
-                        yield return (T)Convert.ChangeType(val, effectiveType);
-                    } else if (val == null || val is T) {
+					if (val == null || val is T) {
                         yield return (T)val;
                     } else {
-                        yield return (T)Convert.ChangeType(val, effectiveType);
+                        yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
                 }
                 // happy path; close the reader cleanly - no
@@ -1524,7 +1667,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             object param = command.Parameters;
             identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            CacheInfo cinfo = GetCacheInfo(identity, param);
+            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
@@ -1548,7 +1691,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     var deserializers = GenerateDeserializers(new Type[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) }, splitOn, reader);
                     deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
                     otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
-                    SetQueryCache(identity, cinfo);
+                    if(command.AddToCache) SetQueryCache(identity, cinfo);
                 }
 
                 Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
@@ -1792,7 +1935,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             throw new ArgumentException(MultiMapSplitExceptionMessage);
         }
 
-        private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters)
+        private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters, bool addToCache)
         {
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
@@ -1821,7 +1964,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         info.ParamReader = CreateParamInfoGenerator(identity, false, true, literals);
                     }
                 }
-                SetQueryCache(identity, info);
+                if(addToCache) SetQueryCache(identity, info);
             }
             return info;
         }
@@ -1853,7 +1996,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
             return GetStructDeserializer(type, underlyingType ?? type, startBound);
-
         }
         static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
         {
@@ -2740,7 +2882,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 if (checkForNull)
                 {
-                    if (dbType == DbType.String && !haveInt32Arg1)
+                    if ((dbType == DbType.String || dbType == DbType.AnsiString) && !haveInt32Arg1)
                     {
                         il.DeclareLocal(typeof(int));
                         haveInt32Arg1 = true;
@@ -2748,12 +2890,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     // relative stack: [boxed value]
                     il.Emit(OpCodes.Dup);// relative stack: [boxed value] [boxed value]
                     Label notNull = il.DefineLabel();
-                    Label? allDone = dbType == DbType.String ? il.DefineLabel() : (Label?)null;
+                    Label? allDone = (dbType == DbType.String || dbType == DbType.AnsiString) ? il.DefineLabel() : (Label?)null;
                     il.Emit(OpCodes.Brtrue_S, notNull);
                     // relative stack [boxed value = null]
                     il.Emit(OpCodes.Pop); // relative stack empty
                     il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField("Value")); // relative stack [DBNull]
-                    if (dbType == DbType.String)
+                    if (dbType == DbType.String || dbType == DbType.AnsiString)
                     {
                         EmitInt32(il, 0);
                         il.Emit(OpCodes.Stloc_1);
@@ -2943,6 +3085,33 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
         }
 
+        private static T ExecuteScalarImpl<T>(IDbConnection cnn, ref CommandDefinition command)
+        {
+            Action<IDbCommand, object> paramReader = null;
+            object param = command.Parameters;
+            if (param != null)
+            {
+                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
+                paramReader = GetCacheInfo(identity, command.Parameters, command.AddToCache).ParamReader;
+            }
+
+            IDbCommand cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            object result;
+            try
+            {
+                cmd = command.SetupCommand(cnn, paramReader);
+                if (wasClosed) cnn.Open();
+                result =cmd.ExecuteScalar();
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+            return Parse<T>(result);
+        }
+
         private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
@@ -2979,7 +3148,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (param != null)
             {
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
-                info = GetCacheInfo(identity, param);
+                info = GetCacheInfo(identity, param, command.AddToCache);
             }
             var paramReader = info == null ? null : info.ParamReader;
             return paramReader;
@@ -3008,6 +3177,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return r =>
                 {
                     var val = r.GetValue(index);
+                    if(val is float || val is double || val is decimal)
+                    {
+                        val = Convert.ChangeType(val, Enum.GetUnderlyingType(effectiveType), CultureInfo.InvariantCulture);
+                    }
                     return val is DBNull ? null : Enum.ToObject(effectiveType, val);
                 };
             }
@@ -3025,6 +3198,28 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 var val = r.GetValue(index);
                 return val is DBNull ? null : val;
             };
+        }
+
+        private static T Parse<T>(object value)
+        {
+            if (value == null || value is DBNull) return default(T);
+            if (value is T) return (T)value;
+            var type = typeof(T);
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            if (type.IsEnum)
+            {
+                if (value is float || value is double || value is decimal)
+                {
+                    value = Convert.ChangeType(value, Enum.GetUnderlyingType(type), CultureInfo.InvariantCulture);
+                }
+                return (T)Enum.ToObject(type, value);
+            }
+            ITypeHandler handler;
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return (T)handler.Parse(type, value);
+            }
+            return (T)Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
         }
 
         static readonly MethodInfo
@@ -3200,7 +3395,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
-
+                    Type colType = reader.GetFieldType(index);
                     Type memberType = item.MemberType;
 
                     if (memberType == typeof(char) || memberType == typeof(char?))
@@ -3221,33 +3416,30 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
                         if (unboxType.IsEnum)
                         {
-                            if (enumDeclareLocal == -1)
+                            Type numericType = Enum.GetUnderlyingType(unboxType);
+                            if(colType == typeof(string))
                             {
-                                enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
+                                if (enumDeclareLocal == -1)
+                                {
+                                    enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
+                                }
+                                il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [target][target][string]
+                                StoreLocal(il, enumDeclareLocal); // stack is now [target][target]
+                                il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
+                                il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
+                                il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
+                                il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
+                                il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
+                                il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                             }
-
-                            Label isNotString = il.DefineLabel();
-                            il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
-                            il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
-                            il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
-                            StoreLocal(il, enumDeclareLocal); // stack is now [target][target][value-as-object][string or null]
-                            il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
-
-                            il.Emit(OpCodes.Pop); // stack is now [target][target]
-
-                            il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
-                            il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
-                            il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
-                            il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
-                            il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
-
-                            il.MarkLabel(isNotString);
-
-                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+                            else
+                            {
+                                FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
+                            }
 
                             if (nullUnderlyingType != null)
                             {
-                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][enum-value]
+                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
                             }
                         }
                         else if (memberType.FullName == LinqBinary)
@@ -3257,10 +3449,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         }
                         else
                         {
-                            Type dataType = reader.GetFieldType(index);
-                            TypeCode dataTypeCode = Type.GetTypeCode(dataType), unboxTypeCode = Type.GetTypeCode(unboxType);
+                            TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
                             bool hasTypeHandler;
-                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || dataType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
                             {
                                 if (hasTypeHandler)
                                 {
@@ -3276,71 +3467,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                             else
                             {
                                 // not a direct match; need to tweak the unbox
-                                MethodInfo op;
-                                if ((op = GetOperator(dataType, nullUnderlyingType ?? unboxType)) != null)
-                                { // this is handy for things like decimal <===> double
-                                    il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
-                                    il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
-                                }
-                                else
-                                {
-                                    bool handled = true;
-                                    OpCode opCode = default(OpCode);
-                                    if (dataTypeCode == TypeCode.Decimal || unboxTypeCode == TypeCode.Decimal)
-                                    {   // no IL level conversions to/from decimal; I guess we could use the static operators, but
-                                        // this feels an edge-case
-                                        handled = false;
-                                    }
-                                    else
-                                    {
-                                        switch (unboxTypeCode)
-                                        {
-                                            case TypeCode.Byte:
-                                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
-                                            case TypeCode.SByte:
-                                                opCode = OpCodes.Conv_Ovf_I1; break;
-                                            case TypeCode.UInt16:
-                                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
-                                            case TypeCode.Int16:
-                                                opCode = OpCodes.Conv_Ovf_I2; break;
-                                            case TypeCode.UInt32:
-                                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
-                                            case TypeCode.Boolean: // boolean is basically an int, at least at this level
-                                            case TypeCode.Int32:
-                                                opCode = OpCodes.Conv_Ovf_I4; break;
-                                            case TypeCode.UInt64:
-                                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
-                                            case TypeCode.Int64:
-                                                opCode = OpCodes.Conv_Ovf_I8; break;
-                                            case TypeCode.Single:
-                                                opCode = OpCodes.Conv_R4; break;
-                                            case TypeCode.Double:
-                                                opCode = OpCodes.Conv_R8; break;
-                                            default:
-                                                handled = false;
-                                                break;
-                                        }
-                                    }
-                                    if (handled)
-                                    { // unbox as the data-type, then use IL-level convert
-                                        il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
-                                        il.Emit(opCode); // stack is now [target][target][typed-value]
-                                        if (unboxTypeCode == TypeCode.Boolean)
-                                        { // compare to zero; I checked "csc" - this is the trick it uses; nice
-                                            il.Emit(OpCodes.Ldc_I4_0);
-                                            il.Emit(OpCodes.Ceq);
-                                            il.Emit(OpCodes.Ldc_I4_0);
-                                            il.Emit(OpCodes.Ceq);
-                                        }
-                                    }
-                                    else
-                                    { // use flexible conversion
-                                        il.Emit(OpCodes.Ldtoken, nullUnderlyingType ?? unboxType); // stack is now [target][target][value][member-type-token]
-                                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
-                                        il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
-                                        il.Emit(OpCodes.Unbox_Any, nullUnderlyingType ?? unboxType); // stack is now [target][target][typed-value]
-                                    }
-                                }
+                                FlexibleConvertBoxedFromHeadOfStack(il, colType, nullUnderlyingType ?? unboxType, null);
                                 if (nullUnderlyingType != null)
                                 {
                                     il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
@@ -3440,6 +3567,89 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader, object>));
         }
+
+        private static void FlexibleConvertBoxedFromHeadOfStack(ILGenerator il, Type from, Type to, Type via)
+        {
+            MethodInfo op;
+            if(from == (via ?? to))
+            {
+                il.Emit(OpCodes.Unbox_Any, to); // stack is now [target][target][typed-value]
+            }
+            else if ((op = GetOperator(from,to)) != null)
+            {
+                // this is handy for things like decimal <===> double
+                il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][data-typed-value]
+                il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
+            }
+            else
+            {
+                bool handled = false;
+                OpCode opCode = default(OpCode);
+                switch (Type.GetTypeCode(from))
+                {
+                    case TypeCode.Boolean:
+                    case TypeCode.Byte:
+                    case TypeCode.SByte:
+                    case TypeCode.Int16:
+                    case TypeCode.UInt16:
+                    case TypeCode.Int32:
+                    case TypeCode.UInt32:
+                    case TypeCode.Int64:
+                    case TypeCode.UInt64:
+                    case TypeCode.Single:
+                    case TypeCode.Double:
+                        handled = true;
+                        switch (Type.GetTypeCode(via ?? to))
+                        {
+                            case TypeCode.Byte:
+                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
+                            case TypeCode.SByte:
+                                opCode = OpCodes.Conv_Ovf_I1; break;
+                            case TypeCode.UInt16:
+                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
+                            case TypeCode.Int16:
+                                opCode = OpCodes.Conv_Ovf_I2; break;
+                            case TypeCode.UInt32:
+                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
+                            case TypeCode.Boolean: // boolean is basically an int, at least at this level
+                            case TypeCode.Int32:
+                                opCode = OpCodes.Conv_Ovf_I4; break;
+                            case TypeCode.UInt64:
+                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
+                            case TypeCode.Int64:
+                                opCode = OpCodes.Conv_Ovf_I8; break;
+                            case TypeCode.Single:
+                                opCode = OpCodes.Conv_R4; break;
+                            case TypeCode.Double:
+                                opCode = OpCodes.Conv_R8; break;
+                            default:
+                                handled = false;
+                                break;
+                        }
+                        break;
+                }
+                if (handled)
+                {
+                    il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][col-typed-value]
+                    il.Emit(opCode); // stack is now [target][target][typed-value]
+                    if (to == typeof(bool))
+                    { // compare to zero; I checked "csc" - this is the trick it uses; nice
+                        il.Emit(OpCodes.Ldc_I4_0);
+                        il.Emit(OpCodes.Ceq);
+                        il.Emit(OpCodes.Ldc_I4_0);
+                        il.Emit(OpCodes.Ceq);
+                    }
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldtoken, via ?? to); // stack is now [target][target][value][member-type-token]
+                    il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
+                    il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
+                    il.Emit(OpCodes.Unbox_Any, to); // stack is now [target][target][typed-value]
+                }
+            }            
+        }
+
         static MethodInfo GetOperator(Type from, Type to)
         {
             if (to == null) return null;
@@ -3652,7 +3862,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
@@ -3679,7 +3889,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
@@ -3832,6 +4042,16 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             private int gridIndex, readCount;
             private bool consumed;
+            /// <summary>
+            /// Has the underlying reader been consumed?
+            /// </summary>
+            public bool IsConsumed
+            {
+                get
+                {
+                    return consumed;
+                }
+            }
             private void NextResult()
             {
                 if (reader.NextResult())
@@ -4562,13 +4782,17 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         public SqlMapper.IMemberMap GetMember(string columnName)
         {
             var property = _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
+               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
+               ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
 
             if (property != null)
                 return new SimpleMemberMap(columnName, property);
 
             var field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
 
             if (field != null)
                 return new SimpleMemberMap(columnName, field);
