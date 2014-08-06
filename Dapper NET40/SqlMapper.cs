@@ -3052,6 +3052,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 return r =>
                 {
                     var val = r.GetValue(index);
+                    if(val is float || val is double || val is decimal)
+                    {
+                        val = Convert.ChangeType(val, Enum.GetUnderlyingType(effectiveType), CultureInfo.InvariantCulture);
+                    }
                     return val is DBNull ? null : Enum.ToObject(effectiveType, val);
                 };
             }
@@ -3078,6 +3082,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var type = typeof(T);
             if (type.IsEnum)
             {
+                if (value is float || value is double || value is decimal)
+                {
+                    value = Convert.ChangeType(value, Enum.GetUnderlyingType(type), CultureInfo.InvariantCulture);
+                }
                 return (T)Enum.ToObject(type, value);
             }
             ITypeHandler handler;
@@ -3261,7 +3269,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
-
+                    Type colType = reader.GetFieldType(index);
                     Type memberType = item.MemberType;
 
                     if (memberType == typeof(char) || memberType == typeof(char?))
@@ -3282,33 +3290,30 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
                         if (unboxType.IsEnum)
                         {
-                            if (enumDeclareLocal == -1)
+                            Type numericType = Enum.GetUnderlyingType(unboxType);
+                            if(colType == typeof(string))
                             {
-                                enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
+                                if (enumDeclareLocal == -1)
+                                {
+                                    enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
+                                }
+                                il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [target][target][string]
+                                StoreLocal(il, enumDeclareLocal); // stack is now [target][target]
+                                il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
+                                il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
+                                il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
+                                il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
+                                il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
+                                il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                             }
-
-                            Label isNotString = il.DefineLabel();
-                            il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
-                            il.Emit(OpCodes.Isinst, typeof(string)); // stack is now [target][target][value-as-object][string or null]
-                            il.Emit(OpCodes.Dup);// stack is now [target][target][value-as-object][string or null][string or null]
-                            StoreLocal(il, enumDeclareLocal); // stack is now [target][target][value-as-object][string or null]
-                            il.Emit(OpCodes.Brfalse_S, isNotString); // stack is now [target][target][value-as-object]
-
-                            il.Emit(OpCodes.Pop); // stack is now [target][target]
-
-                            il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
-                            il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
-                            il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
-                            il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
-                            il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
-
-                            il.MarkLabel(isNotString);
-
-                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
+                            else
+                            {
+                                FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
+                            }
 
                             if (nullUnderlyingType != null)
                             {
-                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][enum-value]
+                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
                             }
                         }
                         else if (memberType.FullName == LinqBinary)
@@ -3318,10 +3323,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         }
                         else
                         {
-                            Type dataType = reader.GetFieldType(index);
-                            TypeCode dataTypeCode = Type.GetTypeCode(dataType), unboxTypeCode = Type.GetTypeCode(unboxType);
+                            TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
                             bool hasTypeHandler;
-                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || dataType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
                             {
                                 if (hasTypeHandler)
                                 {
@@ -3337,71 +3341,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                             else
                             {
                                 // not a direct match; need to tweak the unbox
-                                MethodInfo op;
-                                if ((op = GetOperator(dataType, nullUnderlyingType ?? unboxType)) != null)
-                                { // this is handy for things like decimal <===> double
-                                    il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
-                                    il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
-                                }
-                                else
-                                {
-                                    bool handled = true;
-                                    OpCode opCode = default(OpCode);
-                                    if (dataTypeCode == TypeCode.Decimal || unboxTypeCode == TypeCode.Decimal)
-                                    {   // no IL level conversions to/from decimal; I guess we could use the static operators, but
-                                        // this feels an edge-case
-                                        handled = false;
-                                    }
-                                    else
-                                    {
-                                        switch (unboxTypeCode)
-                                        {
-                                            case TypeCode.Byte:
-                                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
-                                            case TypeCode.SByte:
-                                                opCode = OpCodes.Conv_Ovf_I1; break;
-                                            case TypeCode.UInt16:
-                                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
-                                            case TypeCode.Int16:
-                                                opCode = OpCodes.Conv_Ovf_I2; break;
-                                            case TypeCode.UInt32:
-                                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
-                                            case TypeCode.Boolean: // boolean is basically an int, at least at this level
-                                            case TypeCode.Int32:
-                                                opCode = OpCodes.Conv_Ovf_I4; break;
-                                            case TypeCode.UInt64:
-                                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
-                                            case TypeCode.Int64:
-                                                opCode = OpCodes.Conv_Ovf_I8; break;
-                                            case TypeCode.Single:
-                                                opCode = OpCodes.Conv_R4; break;
-                                            case TypeCode.Double:
-                                                opCode = OpCodes.Conv_R8; break;
-                                            default:
-                                                handled = false;
-                                                break;
-                                        }
-                                    }
-                                    if (handled)
-                                    { // unbox as the data-type, then use IL-level convert
-                                        il.Emit(OpCodes.Unbox_Any, dataType); // stack is now [target][target][data-typed-value]
-                                        il.Emit(opCode); // stack is now [target][target][typed-value]
-                                        if (unboxTypeCode == TypeCode.Boolean)
-                                        { // compare to zero; I checked "csc" - this is the trick it uses; nice
-                                            il.Emit(OpCodes.Ldc_I4_0);
-                                            il.Emit(OpCodes.Ceq);
-                                            il.Emit(OpCodes.Ldc_I4_0);
-                                            il.Emit(OpCodes.Ceq);
-                                        }
-                                    }
-                                    else
-                                    { // use flexible conversion
-                                        il.Emit(OpCodes.Ldtoken, nullUnderlyingType ?? unboxType); // stack is now [target][target][value][member-type-token]
-                                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
-                                        il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
-                                        il.Emit(OpCodes.Unbox_Any, nullUnderlyingType ?? unboxType); // stack is now [target][target][typed-value]
-                                    }
-                                }
+                                FlexibleConvertBoxedFromHeadOfStack(il, colType, nullUnderlyingType ?? unboxType, null);
                                 if (nullUnderlyingType != null)
                                 {
                                     il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
@@ -3501,6 +3441,89 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader, object>));
         }
+
+        private static void FlexibleConvertBoxedFromHeadOfStack(ILGenerator il, Type from, Type to, Type via)
+        {
+            MethodInfo op;
+            if(from == (via ?? to))
+            {
+                il.Emit(OpCodes.Unbox_Any, to); // stack is now [target][target][typed-value]
+            }
+            else if ((op = GetOperator(from,to)) != null)
+            {
+                // this is handy for things like decimal <===> double
+                il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][data-typed-value]
+                il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
+            }
+            else
+            {
+                bool handled = false;
+                OpCode opCode = default(OpCode);
+                switch (Type.GetTypeCode(from))
+                {
+                    case TypeCode.Boolean:
+                    case TypeCode.Byte:
+                    case TypeCode.SByte:
+                    case TypeCode.Int16:
+                    case TypeCode.UInt16:
+                    case TypeCode.Int32:
+                    case TypeCode.UInt32:
+                    case TypeCode.Int64:
+                    case TypeCode.UInt64:
+                    case TypeCode.Single:
+                    case TypeCode.Double:
+                        handled = true;
+                        switch (Type.GetTypeCode(via ?? to))
+                        {
+                            case TypeCode.Byte:
+                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
+                            case TypeCode.SByte:
+                                opCode = OpCodes.Conv_Ovf_I1; break;
+                            case TypeCode.UInt16:
+                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
+                            case TypeCode.Int16:
+                                opCode = OpCodes.Conv_Ovf_I2; break;
+                            case TypeCode.UInt32:
+                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
+                            case TypeCode.Boolean: // boolean is basically an int, at least at this level
+                            case TypeCode.Int32:
+                                opCode = OpCodes.Conv_Ovf_I4; break;
+                            case TypeCode.UInt64:
+                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
+                            case TypeCode.Int64:
+                                opCode = OpCodes.Conv_Ovf_I8; break;
+                            case TypeCode.Single:
+                                opCode = OpCodes.Conv_R4; break;
+                            case TypeCode.Double:
+                                opCode = OpCodes.Conv_R8; break;
+                            default:
+                                handled = false;
+                                break;
+                        }
+                        break;
+                }
+                if (handled)
+                {
+                    il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][col-typed-value]
+                    il.Emit(opCode); // stack is now [target][target][typed-value]
+                    if (to == typeof(bool))
+                    { // compare to zero; I checked "csc" - this is the trick it uses; nice
+                        il.Emit(OpCodes.Ldc_I4_0);
+                        il.Emit(OpCodes.Ceq);
+                        il.Emit(OpCodes.Ldc_I4_0);
+                        il.Emit(OpCodes.Ceq);
+                    }
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldtoken, via ?? to); // stack is now [target][target][value][member-type-token]
+                    il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null); // stack is now [target][target][value][member-type]
+                    il.EmitCall(OpCodes.Call, typeof(Convert).GetMethod("ChangeType", new Type[] { typeof(object), typeof(Type) }), null); // stack is now [target][target][boxed-member-type-value]
+                    il.Emit(OpCodes.Unbox_Any, to); // stack is now [target][target][typed-value]
+                }
+            }            
+        }
+
         static MethodInfo GetOperator(Type from, Type to)
         {
             if (to == null) return null;

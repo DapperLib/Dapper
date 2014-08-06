@@ -3283,6 +3283,120 @@ option (optimize for (@vals unKnoWn))";
             public LocalDate? NullableIsNull { get; set; }
         }
 
+        public class LotsOfNumerics {
+            public enum E_Byte : byte { A = 0, B = 1 }
+            public enum E_SByte : sbyte { A = 0, B = 1 }
+            public enum E_Short : short { A = 0, B = 1 }
+            public enum E_UShort : ushort { A = 0, B = 1 }
+            public enum E_Int : int { A = 0, B = 1 }
+            public enum E_UInt : uint { A = 0, B = 1 }
+            public enum E_Long : long { A = 0, B = 1 }
+            public enum E_ULong : ulong { A = 0, B = 1 }
+
+            public E_Byte P_Byte { get; set; }
+            public E_SByte P_SByte { get; set; }
+            public E_Short P_Short { get; set; }
+            public E_UShort P_UShort { get; set; }
+            public E_Int P_Int { get; set; }
+            public E_UInt P_UInt { get; set; }
+            public E_Long P_Long { get; set; }
+            public E_ULong P_ULong { get; set; }
+
+            public bool N_Bool { get; set; }
+            public byte N_Byte { get; set; }
+            public sbyte N_SByte { get; set; }
+            public short N_Short { get; set; }
+            public ushort N_UShort { get; set; }
+            public int N_Int { get; set; }
+            public uint N_UInt { get; set; }
+            public long N_Long { get; set; }
+            public ulong N_ULong { get; set; }
+
+            public float N_Float { get; set; }
+            public double N_Double { get; set; }
+            public decimal N_Decimal { get; set; }
+        }
+
+        public void TestBigIntForEverythingWorks_SqlLite()
+        {
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<long>("bigint");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<int>("int");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<byte>("tinyint");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<short>("smallint");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<bool>("bit");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<float>("float(24)");
+            TestBigIntForEverythingWorks_SqlLite_ByDataType<double>("float(53)");
+        }
+        private void TestBigIntForEverythingWorks_SqlLite_ByDataType<T>(string dbType)
+        {
+            using(var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
+            {
+                reader.Read().IsTrue();
+                reader.GetFieldType(0).Equals(typeof(T));
+                reader.Read().IsFalse();
+                reader.NextResult().IsFalse();
+            }
+            
+            string sql = "select " + string.Join(",", typeof(LotsOfNumerics).GetProperties().Select(
+                x => "cast (1 as " + dbType + ") as [" + x.Name + "]"));
+            var row = connection.Query<LotsOfNumerics>(sql).Single();
+
+            row.N_Bool.IsTrue();
+            row.N_SByte.IsEqualTo((sbyte)1);
+            row.N_Byte.IsEqualTo((byte)1);
+            row.N_Int.IsEqualTo((int)1);
+            row.N_UInt.IsEqualTo((uint)1);
+            row.N_Short.IsEqualTo((short)1);
+            row.N_UShort.IsEqualTo((ushort)1);
+            row.N_Long.IsEqualTo((long)1);
+            row.N_ULong.IsEqualTo((ulong)1);
+            row.N_Float.IsEqualTo((float)1);
+            row.N_Double.IsEqualTo((double)1);
+            row.N_Decimal.IsEqualTo((decimal)1);
+
+            row.P_Byte.IsEqualTo(LotsOfNumerics.E_Byte.B);
+            row.P_SByte.IsEqualTo(LotsOfNumerics.E_SByte.B);
+            row.P_Short.IsEqualTo(LotsOfNumerics.E_Short.B);
+            row.P_UShort.IsEqualTo(LotsOfNumerics.E_UShort.B);
+            row.P_Int.IsEqualTo(LotsOfNumerics.E_Int.B);
+            row.P_UInt.IsEqualTo(LotsOfNumerics.E_UInt.B);
+            row.P_Long.IsEqualTo(LotsOfNumerics.E_Long.B);
+            row.P_ULong.IsEqualTo(LotsOfNumerics.E_ULong.B);
+
+            TestBigIntForEverythingWorks<bool>(true, dbType);
+            TestBigIntForEverythingWorks<sbyte>((sbyte)1, dbType);
+            TestBigIntForEverythingWorks<byte>((byte)1, dbType);
+            TestBigIntForEverythingWorks<int>((int)1, dbType);
+            TestBigIntForEverythingWorks<uint>((uint)1, dbType);
+            TestBigIntForEverythingWorks<short>((short)1, dbType);
+            TestBigIntForEverythingWorks<ushort>((ushort)1, dbType);
+            TestBigIntForEverythingWorks<long>((long)1, dbType);
+            TestBigIntForEverythingWorks<ulong>((ulong)1, dbType);
+            TestBigIntForEverythingWorks<float>((float)1, dbType);
+            TestBigIntForEverythingWorks<double>((double)1, dbType);
+            TestBigIntForEverythingWorks<decimal>((decimal)1, dbType);
+
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_ULong.B, dbType);
+        }
+
+        private void TestBigIntForEverythingWorks<T>(T expected, string dbType)
+        {
+            var query = connection.Query<T>("select cast(1 as " + dbType + ")").Single();
+            query.IsEqualTo(expected);
+
+            var scalar = connection.ExecuteScalar<T>("select cast(1 as " + dbType + ")");
+            scalar.IsEqualTo(expected);
+        }
+
+
 
 #if POSTGRESQL
 
