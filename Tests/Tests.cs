@@ -3315,6 +3315,29 @@ option (optimize for (@vals unKnoWn))";
             public float N_Float { get; set; }
             public double N_Double { get; set; }
             public decimal N_Decimal { get; set; }
+
+            public E_Byte? N_P_Byte { get; set; }
+            public E_SByte? N_P_SByte { get; set; }
+            public E_Short? N_P_Short { get; set; }
+            public E_UShort? N_P_UShort { get; set; }
+            public E_Int? N_P_Int { get; set; }
+            public E_UInt? N_P_UInt { get; set; }
+            public E_Long? N_P_Long { get; set; }
+            public E_ULong? N_P_ULong { get; set; }
+
+            public bool? N_N_Bool { get; set; }
+            public byte? N_N_Byte { get; set; }
+            public sbyte? N_N_SByte { get; set; }
+            public short? N_N_Short { get; set; }
+            public ushort? N_N_UShort { get; set; }
+            public int? N_N_Int { get; set; }
+            public uint? N_N_UInt { get; set; }
+            public long? N_N_Long { get; set; }
+            public ulong? N_N_ULong { get; set; }
+
+            public float? N_N_Float { get; set; }
+            public double? N_N_Double { get; set; }
+            public decimal? N_N_Decimal { get; set; }
         }
 
         public void TestBigIntForEverythingWorks_SqlLite()
@@ -3363,6 +3386,28 @@ option (optimize for (@vals unKnoWn))";
             row.P_Long.IsEqualTo(LotsOfNumerics.E_Long.B);
             row.P_ULong.IsEqualTo(LotsOfNumerics.E_ULong.B);
 
+            row.N_N_Bool.Value.IsTrue();
+            row.N_N_SByte.Value.IsEqualTo((sbyte)1);
+            row.N_N_Byte.Value.IsEqualTo((byte)1);
+            row.N_N_Int.Value.IsEqualTo((int)1);
+            row.N_N_UInt.Value.IsEqualTo((uint)1);
+            row.N_N_Short.Value.IsEqualTo((short)1);
+            row.N_N_UShort.Value.IsEqualTo((ushort)1);
+            row.N_N_Long.Value.IsEqualTo((long)1);
+            row.N_N_ULong.Value.IsEqualTo((ulong)1);
+            row.N_N_Float.Value.IsEqualTo((float)1);
+            row.N_N_Double.Value.IsEqualTo((double)1);
+            row.N_N_Decimal.IsEqualTo((decimal)1);
+
+            row.N_P_Byte.Value.IsEqualTo(LotsOfNumerics.E_Byte.B);
+            row.N_P_SByte.Value.IsEqualTo(LotsOfNumerics.E_SByte.B);
+            row.N_P_Short.Value.IsEqualTo(LotsOfNumerics.E_Short.B);
+            row.N_P_UShort.Value.IsEqualTo(LotsOfNumerics.E_UShort.B);
+            row.N_P_Int.Value.IsEqualTo(LotsOfNumerics.E_Int.B);
+            row.N_P_UInt.Value.IsEqualTo(LotsOfNumerics.E_UInt.B);
+            row.N_P_Long.Value.IsEqualTo(LotsOfNumerics.E_Long.B);
+            row.N_P_ULong.Value.IsEqualTo(LotsOfNumerics.E_ULong.B);
+
             TestBigIntForEverythingWorks<bool>(true, dbType);
             TestBigIntForEverythingWorks<sbyte>((sbyte)1, dbType);
             TestBigIntForEverythingWorks<byte>((byte)1, dbType);
@@ -3381,10 +3426,31 @@ option (optimize for (@vals unKnoWn))";
             TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
             TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
             TestBigIntForEverythingWorks(LotsOfNumerics.E_Short.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorks(LotsOfNumerics.E_UShort.B, dbType);
             TestBigIntForEverythingWorks(LotsOfNumerics.E_Long.B, dbType);
             TestBigIntForEverythingWorks(LotsOfNumerics.E_ULong.B, dbType);
+
+            TestBigIntForEverythingWorks<bool?>(true, dbType);
+            TestBigIntForEverythingWorks<sbyte?>((sbyte)1, dbType);
+            TestBigIntForEverythingWorks<byte?>((byte)1, dbType);
+            TestBigIntForEverythingWorks<int?>((int)1, dbType);
+            TestBigIntForEverythingWorks<uint?>((uint)1, dbType);
+            TestBigIntForEverythingWorks<short?>((short)1, dbType);
+            TestBigIntForEverythingWorks<ushort?>((ushort)1, dbType);
+            TestBigIntForEverythingWorks<long?>((long)1, dbType);
+            TestBigIntForEverythingWorks<ulong?>((ulong)1, dbType);
+            TestBigIntForEverythingWorks<float?>((float)1, dbType);
+            TestBigIntForEverythingWorks<double?>((double)1, dbType);
+            TestBigIntForEverythingWorks<decimal?>((decimal)1, dbType);
+
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Byte?>(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_SByte?>(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Int?>(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_UInt?>(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Short?>(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_UShort?>(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_Long?>(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorks<LotsOfNumerics.E_ULong?>(LotsOfNumerics.E_ULong.B, dbType);
         }
 
         private void TestBigIntForEverythingWorks<T>(T expected, string dbType)

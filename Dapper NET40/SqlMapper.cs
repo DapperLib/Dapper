@@ -1418,14 +1418,14 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 }
 
                 var func = tuple.Func;
-
+                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 while (reader.Read())
                 {
                     object val = func(reader);
 					if (val == null || val is T) {
                         yield return (T)val;
                     } else {
-                        yield return (T)Convert.ChangeType(val, effectiveType, CultureInfo.InvariantCulture);
+                        yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
                 }
                 // happy path; close the reader cleanly - no
@@ -3080,6 +3080,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (value == null || value is DBNull) return default(T);
             if (value is T) return (T)value;
             var type = typeof(T);
+            type = Nullable.GetUnderlyingType(type) ?? type;
             if (type.IsEnum)
             {
                 if (value is float || value is double || value is decimal)
