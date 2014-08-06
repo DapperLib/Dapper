@@ -437,7 +437,7 @@ namespace Dapper
 
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, types[0], param == null ? null : param.GetType(), types);
-            var info = GetCacheInfo(identity, param);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
