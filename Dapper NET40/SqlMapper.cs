@@ -141,8 +141,8 @@ namespace Dapper
         internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
             var cmd = cnn.CreateCommand();
-            var bindByName = GetBindByName(cmd.GetType());
-            if (bindByName != null) bindByName(cmd, true);
+            var init = GetInit(cmd.GetType());
+            if (init != null) init(cmd);
             if (transaction != null)
                 cmd.Transaction = transaction;
             cmd.CommandText = commandText;
@@ -157,36 +157,57 @@ namespace Dapper
             return cmd;
         }
 
-        static SqlMapper.Link<Type, Action<IDbCommand, bool>> bindByNameCache;
-        static Action<IDbCommand, bool> GetBindByName(Type commandType)
+        static SqlMapper.Link<Type, Action<IDbCommand>> commandInitCache;
+        static Action<IDbCommand> GetInit(Type commandType)
         {
             if (commandType == null) return null; // GIGO
-            Action<IDbCommand, bool> action;
-            if (SqlMapper.Link<Type, Action<IDbCommand, bool>>.TryGet(bindByNameCache, commandType, out action))
+            Action<IDbCommand> action;
+            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out action))
             {
                 return action;
             }
-            var prop = commandType.GetProperty("BindByName", BindingFlags.Public | BindingFlags.Instance);
+            var bindByName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+            var initialLongFetchSize = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+
             action = null;
-            ParameterInfo[] indexers;
-            MethodInfo setter;
-            if (prop != null && prop.CanWrite && prop.PropertyType == typeof(bool)
-                && ((indexers = prop.GetIndexParameters()) == null || indexers.Length == 0)
-                && (setter = prop.GetSetMethod()) != null
-                )
+            if (bindByName != null || initialLongFetchSize != null)
             {
-                var method = new DynamicMethod(commandType.Name + "_BindByName", null, new Type[] { typeof(IDbCommand), typeof(bool) });
+                var method = new DynamicMethod(commandType.Name + "_init", null, new Type[] { typeof(IDbCommand) });
                 var il = method.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Castclass, commandType);
-                il.Emit(OpCodes.Ldarg_1);
-                il.EmitCall(OpCodes.Callvirt, setter, null);
+
+                if (bindByName != null)
+                {
+                    // .BindByName = true
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Castclass, commandType);
+                    il.Emit(OpCodes.Ldc_I4_1);
+                    il.EmitCall(OpCodes.Callvirt, bindByName, null);
+                }
+                if (initialLongFetchSize != null)
+                {
+                    // .InitialLONGFetchSize = -1
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Castclass, commandType);
+                    il.Emit(OpCodes.Ldc_I4_M1);
+                    il.EmitCall(OpCodes.Callvirt, initialLongFetchSize, null);
+                }
                 il.Emit(OpCodes.Ret);
-                action = (Action<IDbCommand, bool>)method.CreateDelegate(typeof(Action<IDbCommand, bool>));
+                action = (Action<IDbCommand>)method.CreateDelegate(typeof(Action<IDbCommand>));
             }
             // cache it            
-            SqlMapper.Link<Type, Action<IDbCommand, bool>>.TryAdd(ref bindByNameCache, commandType, ref action);
+            SqlMapper.Link<Type, Action<IDbCommand>>.TryAdd(ref commandInitCache, commandType, ref action);
             return action;
+        }
+        static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+        {
+            var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            ParameterInfo[] indexers;
+            if (prop != null && prop.CanWrite && prop.PropertyType == expectedType
+                && ((indexers = prop.GetIndexParameters()) == null || indexers.Length == 0))
+            {
+                return prop.GetSetMethod();
+            }
+            return null;
         }
     }
 
