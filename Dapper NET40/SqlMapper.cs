@@ -1411,6 +1411,8 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 int hash = GetColumnHash(reader);
                 if (tuple.Func == null || tuple.Hash != hash)
                 {
+                    if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
+                        yield break;
                     tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if(command.AddToCache) SetQueryCache(identity, info);
                 }
