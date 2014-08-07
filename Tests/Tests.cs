@@ -3463,6 +3463,24 @@ option (optimize for (@vals unKnoWn))";
         }
 
 
+        public void SO25069578_DynamicParams_Procs()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("foo", "bar");
+            // parameters = new DynamicParameters(parameters);
+            try { connection.Execute("drop proc SO25069578"); } catch { }
+            connection.Execute("create proc SO25069578 @foo nvarchar(max) as select @foo as [X]");
+            var tran = connection.BeginTransaction(); // gist used transaction; behaves the same either way, though
+            var row = connection.Query<HazX>("SO25069578", parameters,
+                commandType: CommandType.StoredProcedure, transaction: tran).Single();
+            tran.Rollback();
+            row.X.IsEqualTo("bar");
+        }
+        public class HazX
+        {
+            public string X { get; set; }
+        }
+
 
 #if POSTGRESQL
 
