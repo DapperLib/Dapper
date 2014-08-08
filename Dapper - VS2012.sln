@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.30324.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperTests NET40", "Tests\DapperTests NET40.csproj", "{A2A80512-11F4-4028-A995-505463632C84}"
 EndProject
@@ -41,6 +41,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET40", "Dapper.EntityFramework NET40\Dapper.EntityFramework NET40.csproj", "{2544DFBA-7F64-4003-9C36-D8337F770A36}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib NET45", "Dapper.Contrib NET45\Dapper.Contrib NET45.csproj", "{302EC82F-A81B-48C5-B653-B5C75D2BD103}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib.Tests NET45", "Dapper.Contrib.Tests NET45\Dapper.Contrib.Tests NET45.csproj", "{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -182,6 +184,16 @@ Global
 		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|x86.ActiveCfg = Release|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
