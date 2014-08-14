@@ -1292,10 +1292,10 @@ end");
                             2 as BlogId, 'Blog' as Title";
             var postWithBlog = connection.Query<Post_DupeProp, Blog_DupeProp, Post_DupeProp>(sql,
                 (p, b) =>
-                {
-                    p.Blog = b;
-                    return p;
-                }, splitOn: "BlogId").First();
+            {
+                p.Blog = b;
+                return p;
+            }, splitOn: "BlogId").First();
 
             postWithBlog.PostId.IsEqualTo(1);
             postWithBlog.Title.IsEqualTo("Title");
@@ -1308,7 +1308,7 @@ end");
             public int PostId { get; set; }
             public string Title { get; set; }
             public int BlogId { get; set; }
-            public Blog_DupeProp Blog { get; set; } 
+            public Blog_DupeProp Blog { get; set; }
         }
 
         class Blog_DupeProp
@@ -2578,7 +2578,7 @@ end");
         public void TestChangingDefaultStringTypeMappingToAnsiString()
         {
             var sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
-            var param = new {testParam = "TestString"};
+            var param = new { testParam = "TestString" };
 
             var result01 = connection.Query<string>(sql, param).FirstOrDefault();
             result01.IsEqualTo("nvarchar");
@@ -2913,7 +2913,7 @@ option (optimize for (@vals unKnoWn))";
             {
                 connection.Query<int>("select count(1) from @ids", new { ids = table.AsTableValuedParameter() }).First();
                 throw new InvalidOperationException();
-            } catch(Exception ex)
+            } catch (Exception ex)
             {
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
@@ -2922,7 +2922,7 @@ option (optimize for (@vals unKnoWn))";
         public void DataTableParametersWithExtendedProperty()
         {
             try { connection.Execute("drop proc #DataTableParameters"); } catch { }
-            try { connection.Execute("drop table #DataTableParameters"); } catch { }            
+            try { connection.Execute("drop table #DataTableParameters"); } catch { }
             try { connection.Execute("drop type MyTVPType"); } catch { }
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
@@ -2982,7 +2982,7 @@ option (optimize for (@vals unKnoWn))";
 
         class HazGeo
         {
-            public int Id { get;set; }
+            public int Id { get; set; }
             public DbGeography Geo { get; set; }
         }
         public void DBGeography_SO24405645_SO24402424()
@@ -3031,7 +3031,7 @@ option (optimize for (@vals unKnoWn))";
             Type type = GetSomeType();
 
             dynamic first, second;
-            using(var multi = connection.QueryMultiple("select @A as [A], @B as [B]; select @C as [A], @D as [B]",
+            using (var multi = connection.QueryMultiple("select @A as [A], @B as [B]; select @C as [A], @D as [B]",
                 new { A = 123, B = "abc", C = 456, D = "def" }))
             {
                 first = multi.Read(type).Single();
@@ -3059,14 +3059,14 @@ option (optimize for (@vals unKnoWn))";
         }
         public class SomeType
         {
-            public int A { get;set; }
-            public string B { get;set; }
+            public int A { get; set; }
+            public string B { get; set; }
         }
 
         class WithInit : ISupportInitialize
         {
             public string Value { get; set; }
-            public int Flags { get;set; }
+            public int Flags { get; set; }
 
             void ISupportInitialize.BeginInit()
             {
@@ -3352,14 +3352,14 @@ option (optimize for (@vals unKnoWn))";
         }
         private void TestBigIntForEverythingWorks_SqlLite_ByDataType<T>(string dbType)
         {
-            using(var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
+            using (var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
             {
                 reader.Read().IsTrue();
                 reader.GetFieldType(0).Equals(typeof(T));
                 reader.Read().IsFalse();
                 reader.NextResult().IsFalse();
             }
-            
+
             string sql = "select " + string.Join(",", typeof(LotsOfNumerics).GetProperties().Select(
                 x => "cast (1 as " + dbType + ") as [" + x.Name + "]"));
             var row = connection.Query<LotsOfNumerics>(sql).Single();
@@ -3481,6 +3481,29 @@ option (optimize for (@vals unKnoWn))";
             public string X { get; set; }
         }
 
+
+        public void SO25297173_DynamicIn()
+        {
+            var query = @"
+declare @table table(value int not null);
+insert @table values(1);
+insert @table values(2);
+insert @table values(3);
+insert @table values(4);
+insert @table values(5);
+insert @table values(6);
+insert @table values(7);
+SELECT value FROM @table WHERE value IN @myIds";
+            var queryParams = new Dictionary<string, object> {
+                { "myIds", new [] { 5, 6 } }
+            };
+            
+            var dynamicParams = new DynamicParameters(queryParams);
+            List<int> result = connection.Query<int>(query, dynamicParams).ToList();
+            result.Count.IsEqualTo(2);
+            result.Contains(5).IsTrue();
+            result.Contains(6).IsTrue();
+        }
 
 #if POSTGRESQL
 

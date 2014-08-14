@@ -4435,28 +4435,27 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// </summary>
     partial class FeatureSupport
     {
-        /// <summary>
-        /// Dictionary of supported features index by connection type name
-        /// </summary>
-        private static readonly Dictionary<string, FeatureSupport> FeatureList = new Dictionary<string, FeatureSupport>(StringComparer.InvariantCultureIgnoreCase) {
-				{"sqlserverconnection", new FeatureSupport { Arrays = false}},
-				{"npgsqlconnection", new FeatureSupport {Arrays = true}}
-		};
+        private static readonly FeatureSupport
+            @default = new FeatureSupport(false),
+            postgres = new FeatureSupport(true);
 
         /// <summary>
         /// Gets the featureset based on the passed connection
         /// </summary>
         public static FeatureSupport Get(IDbConnection connection)
         {
-            string name = connection.GetType().Name;
-            FeatureSupport features;
-            return FeatureList.TryGetValue(name, out features) ? features : FeatureList.Values.First();
+            string name = connection == null ? null : connection.GetType().Name;
+            if (string.Equals(name, "npgsqlconnection", StringComparison.InvariantCultureIgnoreCase)) return postgres;
+            return @default;
         }
-
+        private FeatureSupport(bool arrays)
+        {
+            Arrays = arrays;
+        }
         /// <summary>
         /// True if the db supports array columns e.g. Postgresql
         /// </summary>
-        public bool Arrays { get; set; }
+        public bool Arrays { get; private set; }
     }
 
     /// <summary>
