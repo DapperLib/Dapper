@@ -13,6 +13,23 @@ namespace Dapper
 
     public static partial class SqlMapper
     {
+
+        /// <summary>
+        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// </summary>
+        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QueryAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
+        }
+
+        /// <summary>
+        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// </summary>
+        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryAsync<dynamic>(cnn, typeof(DapperRow), command);
+        }
+
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
@@ -52,19 +69,49 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param == null ? null : param.GetType(), null);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
+            var cancel = command.CancellationToken;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
             {
+                DbDataReader reader = null;
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
-                    using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false))
+                    if (wasClosed) await ((DbConnection)cnn).OpenAsync(cancel).ConfigureAwait(false);
+                    reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, cancel).ConfigureAwait(false);
+                    
+                    var tuple = info.Deserializer;
+                    int hash = GetColumnHash(reader);
+                    if (tuple.Func == null || tuple.Hash != hash)
                     {
-                        return ExecuteReader<T>(reader, effectiveType, identity, info, command.AddToCache).ToList();
+                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        if (command.AddToCache) SetQueryCache(identity, info);
                     }
+
+                    var func = tuple.Func;
+
+                    if (command.Buffered)
+                    {
+                        List<T> buffer = new List<T>();
+                        while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                        {
+                            buffer.Add((T)func(reader));
+                        }
+                        return buffer;
+                    }
+                    else
+                    {
+                        // can't use ReadAsync / cancellation; but this will have to do
+                        wasClosed = false; // don't close if handing back an open reader; rely on the command-behavior
+                        var deferred = ExecuteReaderSync<T>(reader, func);
+                        reader = null; // to prevent it being disposed before the caller gets to see it
+                        return deferred;
+                    }
+                    
                 }
                 finally
                 {
+                    using (reader) { } // dispose if non-null
                     if (wasClosed) cnn.Close();
+                    
                 }
             }
         }
@@ -111,7 +158,7 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 
                 CacheInfo info = null;
                 string masterSql = null;
@@ -205,7 +252,7 @@ namespace Dapper
             {
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                    if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                     return await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
                 }
                 finally
@@ -394,10 +441,11 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false))
+                using (var reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false))
                 {
+                    if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                     var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), map, splitOn, reader, identity);
                     return command.Buffered ? results.ToList() : results;
                 }
@@ -407,18 +455,8 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReader<T>(IDataReader reader, Type effectiveType, Identity identity, CacheInfo info, bool addToCache)
+        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader,object> func)
         {
-            var tuple = info.Deserializer;
-            int hash = GetColumnHash(reader);
-            if (tuple.Func == null || tuple.Hash != hash)
-            {
-                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                if(addToCache) SetQueryCache(identity, info);
-            }
-
-            var func = tuple.Func;
-
             while (reader.Read())
             {
                 yield return (T)func(reader);
@@ -439,6 +477,107 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return QueryMultipleAsync(cnn, command);
         }
+
+        partial class GridReader
+        {
+            CancellationToken cancel;
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, CancellationToken cancel) : this(command, reader, identity)
+            {
+                this.cancel = cancel;
+            }
+
+            /// <summary>
+            /// Read the next grid of results, returned as a dynamic object
+            /// </summary>
+            public Task<IEnumerable<dynamic>> ReadAsync(bool buffered = true)
+            {
+                return ReadAsyncImpl<dynamic>(typeof(DapperRow), buffered);
+            }
+
+            /// <summary>
+            /// Read the next grid of results
+            /// </summary>
+            public Task<IEnumerable<object>> ReadAsync(Type type, bool buffered = true)
+            {
+                if (type == null) throw new ArgumentNullException("type");
+                return ReadAsyncImpl<object>(type, buffered);
+            }
+            /// <summary>
+            /// Read the next grid of results
+            /// </summary>
+            public Task<IEnumerable<T>> ReadAsync<T>(bool buffered = true)
+            {
+                return ReadAsyncImpl<T>(typeof(T), buffered);
+            }
+
+            private async Task NextResultAsync()
+            {
+                if (await ((DbDataReader)reader).NextResultAsync(cancel).ConfigureAwait(false))
+                {
+                    readCount++;
+                    gridIndex++;
+                    consumed = false;
+                }
+                else
+                {
+                    // happy path; close the reader cleanly - no
+                    // need for "Cancel" etc
+                    reader.Dispose();
+                    reader = null;
+
+                    Dispose();
+                }
+            }
+
+            private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
+            {
+                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                var typedIdentity = identity.ForGrid(type, gridIndex);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
+                var deserializer = cache.Deserializer;
+
+                int hash = GetColumnHash(reader);
+                if (deserializer.Func == null || deserializer.Hash != hash)
+                {
+                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                    cache.Deserializer = deserializer;
+                }
+                consumed = true;
+                if (buffered && this.reader is DbDataReader)
+                {
+                    return ReadBufferedAsync<T>(gridIndex, deserializer.Func, typedIdentity);
+                }
+                else
+                {
+                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
+                    if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
+                    return Task.FromResult(result);
+                }
+            }
+
+            private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)
+            {
+                try
+                {
+                    var reader = (DbDataReader)this.reader;
+                    List<T> buffer = new List<T>();
+                    while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    {
+                        buffer.Add((T)deserializer(reader));
+                    }
+                    return buffer;
+                }
+                finally // finally so that First etc progresses things even when multiple rows
+                {
+                    if (index == gridIndex)
+                    {
+                        await NextResultAsync().ConfigureAwait(false);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
@@ -453,11 +592,11 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
-                reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default, command.CancellationToken).ConfigureAwait(false);
+                reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
-                var result = new GridReader(cmd, reader, identity);
+                var result = new GridReader(cmd, reader, identity, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -535,8 +674,8 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             try
             {
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
-                var reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default, command.CancellationToken).ConfigureAwait(false);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
+                var reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 return reader;
             }
@@ -613,7 +752,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             try
             {
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 result = await cmd.ExecuteScalarAsync(command.CancellationToken).ConfigureAwait(false);
             }
             finally

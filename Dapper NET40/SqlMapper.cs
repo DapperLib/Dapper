@@ -1231,7 +1231,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 )
         {
             var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            return ExecuteReaderImpl(cnn, ref command);
+            return ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default);
         }
 
         /// <summary>
@@ -1244,7 +1244,19 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// </remarks>
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
-            return ExecuteReaderImpl(cnn, ref command);
+            return ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default);
+        }
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="DataSet"/>.
+        /// </remarks>
+        public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
+        {
+            return ExecuteReaderImpl(cnn, ref command, commandBehavior);
         }
 
 #if !CSHARP30
@@ -1385,7 +1397,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             {
                 if (wasClosed) cnn.Open();
                 cmd = command.SetupCommand(cnn, info.ParamReader);
-                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
 
                 var result = new GridReader(cmd, reader, identity);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
@@ -1423,7 +1435,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -1657,7 +1669,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ownedCommand.ExecuteReader();
+                    ownedReader = ownedCommand.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
                     reader = ownedReader;
                 }
                 DeserializerState deserializer = default(DeserializerState);
@@ -3008,7 +3020,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return Parse<T>(result);
         }
 
-        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command)
+        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command, CommandBehavior commandBehavior)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
 
@@ -3018,8 +3030,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
-                var reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection : CommandBehavior.Default);
-                wasClosed = false;
+                if (wasClosed) commandBehavior |= CommandBehavior.CloseConnection;
+                var reader = cmd.ExecuteReader(commandBehavior);
+                wasClosed = false; // don't dispose before giving it to them!
                 return reader;
             }
             finally
@@ -3733,7 +3746,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// </summary>
             public IEnumerable<dynamic> Read(bool buffered = true)
             {
-                return Read<DapperRow>(buffered);
+                return ReadImpl<dynamic>(typeof(DapperRow), buffered);
             }
 #endif
 
@@ -3755,21 +3768,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             public IEnumerable<T> Read<T>(bool buffered = true)
 #endif
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
-                var typedIdentity = identity.ForGrid(typeof(T), gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
-                var deserializer = cache.Deserializer;
-
-                int hash = GetColumnHash(reader);
-                if (deserializer.Func == null || deserializer.Hash != hash)
-                {
-                    deserializer = new DeserializerState(hash, GetDeserializer(typeof(T), reader, 0, -1, false));
-                    cache.Deserializer = deserializer;
-                }
-                consumed = true;
-                var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
-                return buffered ? result.ToList() : result;
+                return ReadImpl<T>(typeof(T), buffered);
             }
 
             /// <summary>
@@ -3782,6 +3781,11 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 #endif
             {
                 if (type == null) throw new ArgumentNullException("type");
+                return ReadImpl<object>(type, buffered);
+            }
+
+            private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
+            {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
@@ -3795,9 +3799,10 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     cache.Deserializer = deserializer;
                 }
                 consumed = true;
-                var result = ReadDeferred<object>(gridIndex, deserializer.Func, typedIdentity);
+                var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
                 return buffered ? result.ToList() : result;
             }
+
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Delegate func, string splitOn)
             {
@@ -3965,7 +3970,6 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
                     Dispose();
                 }
-
             }
             /// <summary>
             /// Dispose the grid, closing and disposing both the underlying reader and command.

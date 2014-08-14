@@ -4,6 +4,9 @@ using SqlMapper;
 using System.Data;
 using System.Diagnostics;
 using System;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Data.SqlClient;
 
 namespace DapperTests_NET45
 {
@@ -18,6 +21,35 @@ namespace DapperTests_NET45
                 arr.IsSequenceEqualTo(new[] { "abc", "def" });
             }
         }
+        public void TestBasicStringUsageAsyncNonBuffered()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var query = connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags:  CommandFlags.None));
+                var arr = query.Result.ToArray();
+                arr.IsSequenceEqualTo(new[] { "abc", "def" });
+            }
+        }
+
+        public void TestLongOperationWithCancellation()
+        {
+            using(var connection = Program.GetClosedConnection())
+            {
+                CancellationTokenSource cancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var task = connection.QueryAsync<int>(new CommandDefinition("waitfor delay '00:00:10';select 1", cancellationToken: cancel.Token));
+                try
+                {
+                    if (!task.Wait(TimeSpan.FromSeconds(7)))
+                    {
+                        throw new TimeoutException(); // should have cancelled
+                    }
+                }
+                catch (AggregateException agg)
+                {
+                    (agg.InnerException is SqlException).IsTrue();
+                }
+            }
+        }
 
         public void TestBasicStringUsageClosedAsync()
         {
@@ -26,6 +58,16 @@ namespace DapperTests_NET45
                 var query = connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
                 var arr = query.Result.ToArray();
                 arr.IsSequenceEqualTo(new[] { "abc", "def" });
+            }
+        }
+
+        public void TestQueryDynamicAsync()
+        {
+            using (var connection = Program.GetClosedConnection())
+            {
+                var row = connection.QueryAsync("select 'abc' as [Value]").Result.Single();
+                string value = row.Value;
+                value.IsEqualTo("abc");
             }
         }
 
@@ -104,8 +146,8 @@ namespace DapperTests_NET45
             {
                 using (Dapper.SqlMapper.GridReader multi = conn.QueryMultipleAsync("select 1; select 2").Result)
                 {
-                    multi.Read<int>().Single().IsEqualTo(1);
-                    multi.Read<int>().Single().IsEqualTo(2);
+                    multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
+                    multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
                 }
             }
         }
@@ -115,8 +157,8 @@ namespace DapperTests_NET45
             {
                 using (Dapper.SqlMapper.GridReader multi = conn.QueryMultipleAsync("select 1; select 2").Result)
                 {
-                    multi.Read<int>().Single().IsEqualTo(1);
-                    multi.Read<int>().Single().IsEqualTo(2);
+                    multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
+                    multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
                 }
             }
         }
