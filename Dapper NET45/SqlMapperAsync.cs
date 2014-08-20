@@ -558,23 +558,27 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 
             private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)
             {
-                try
-                {
+                //try
+                //{
                     var reader = (DbDataReader)this.reader;
                     List<T> buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         buffer.Add((T)deserializer(reader));
                     }
-                    return buffer;
-                }
-                finally // finally so that First etc progresses things even when multiple rows
-                {
-                    if (index == gridIndex)
+                    if (index == gridIndex) // need to do this outside of the finally pre-C#6
                     {
                         await NextResultAsync().ConfigureAwait(false);
                     }
-                }
+                    return buffer;
+                //}
+                //finally // finally so that First etc progresses things even when multiple rows
+                //{
+                //    if (index == gridIndex)
+                //    {
+                //        await NextResultAsync().ConfigureAwait(false);
+                //    }
+                //}
             }
         }
 
