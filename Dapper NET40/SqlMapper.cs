@@ -2394,96 +2394,92 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             // initially we tried TVP, however it performs quite poorly.
             // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
 
-            var list = value as IEnumerable;
-            var count = 0;
-
-            if (list != null)
+            if (FeatureSupport.Get(command.Connection).Arrays)
             {
-                if (FeatureSupport.Get(command.Connection).Arrays)
+                var arrayParm = command.CreateParameter();
+                arrayParm.Value = value ?? DBNull.Value;
+                arrayParm.ParameterName = namePrefix;
+                command.Parameters.Add(arrayParm);
+            }
+            else
+            {
+                var list = value as IEnumerable;
+                var count = 0;
+                bool isString = value is IEnumerable<string>;
+                bool isDbString = value is IEnumerable<DbString>;
+                foreach (var item in list)
                 {
-                    var arrayParm = command.CreateParameter();
-                    arrayParm.Value = list;
-                    arrayParm.ParameterName = namePrefix;
-                    command.Parameters.Add(arrayParm);
-                }
-                else
-                {
-                    bool isString = value is IEnumerable<string>;
-                    bool isDbString = value is IEnumerable<DbString>;
-                    foreach (var item in list)
+                    count++;
+                    var listParam = command.CreateParameter();
+                    listParam.ParameterName = namePrefix + count;
+                    listParam.Value = item ?? DBNull.Value;
+                    if (isString)
                     {
-                        count++;
-                        var listParam = command.CreateParameter();
-                        listParam.ParameterName = namePrefix + count;
-                        listParam.Value = item ?? DBNull.Value;
-                        if (isString)
+                        listParam.Size = 4000;
+                        if (item != null && ((string)item).Length > 4000)
                         {
-                            listParam.Size = 4000;
-                            if (item != null && ((string)item).Length > 4000)
-                            {
-                                listParam.Size = -1;
-                            }
-                        }
-                        if (isDbString && item as DbString != null)
-                        {
-                            var str = item as DbString;
-                            str.AddParameter(command, listParam.ParameterName);
-                        }
-                        else
-                        {
-                            command.Parameters.Add(listParam);
+                            listParam.Size = -1;
                         }
                     }
-
-                    var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(\s+(?i)unknown(?-i))?";
-                    if (count == 0)
+                    if (isDbString && item as DbString != null)
                     {
-                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
-                        {
-                            var variableName = match.Groups[1].Value;
-                            if (match.Groups[2].Success)
-                            {
-                                // looks like an optimize hint; leave it alone!
-                                return match.Value;
-                            }
-                            else
-                            {
-                                return "(SELECT " + variableName + " WHERE 1 = 0)";
-                            }
-                        });                        
-                        var dummyParam = command.CreateParameter();
-                        dummyParam.ParameterName = namePrefix;
-                        dummyParam.Value = DBNull.Value;
-                        command.Parameters.Add(dummyParam);
+                        var str = item as DbString;
+                        str.AddParameter(command, listParam.ParameterName);
                     }
                     else
                     {
-                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
-                        {
-                            var variableName = match.Groups[1].Value;
-                            if (match.Groups[2].Success)
-                            {
-                                // looks like an optimize hint; expand it
-                                var suffix = match.Groups[2].Value;
-                                
-                                var sb = new StringBuilder(variableName).Append(1).Append(suffix);
-                                for (int i = 2; i <= count; i++)
-                                {
-                                    sb.Append(',').Append(variableName).Append(i).Append(suffix);
-                                }
-                                return sb.ToString();
-                            }
-                            else
-                            {
-                                var sb = new StringBuilder("(").Append(variableName).Append(1);
-                                for (int i = 2; i <= count; i++)
-                                {
-                                    sb.Append(',').Append(variableName).Append(i);
-                                }
-                                return sb.Append(')').ToString();
-                            }
-                        });
+                        command.Parameters.Add(listParam);
                     }
+                }
+
+                var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(\s+(?i)unknown(?-i))?";
+                if (count == 0)
+                {
+                    command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                    {
+                        var variableName = match.Groups[1].Value;
+                        if (match.Groups[2].Success)
+                        {
+                            // looks like an optimize hint; leave it alone!
+                            return match.Value;
+                        }
+                        else
+                        {
+                            return "(SELECT " + variableName + " WHERE 1 = 0)";
+                        }
+                    });                        
+                    var dummyParam = command.CreateParameter();
+                    dummyParam.ParameterName = namePrefix;
+                    dummyParam.Value = DBNull.Value;
+                    command.Parameters.Add(dummyParam);
+                }
+                else
+                {
+                    command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                    {
+                        var variableName = match.Groups[1].Value;
+                        if (match.Groups[2].Success)
+                        {
+                            // looks like an optimize hint; expand it
+                            var suffix = match.Groups[2].Value;
+                                
+                            var sb = new StringBuilder(variableName).Append(1).Append(suffix);
+                            for (int i = 2; i <= count; i++)
+                            {
+                                sb.Append(',').Append(variableName).Append(i).Append(suffix);
+                            }
+                            return sb.ToString();
+                        }
+                        else
+                        {
+                            var sb = new StringBuilder("(").Append(variableName).Append(1);
+                            for (int i = 2; i <= count; i++)
+                            {
+                                sb.Append(',').Append(variableName).Append(i);
+                            }
+                            return sb.Append(')').ToString();
+                        }
+                    });
                 }
             }
 
