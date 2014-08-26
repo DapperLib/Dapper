@@ -3476,6 +3476,23 @@ option (optimize for (@vals unKnoWn))";
             tran.Rollback();
             row.X.IsEqualTo("bar");
         }
+
+        public void Issue149_TypeMismatch_SequentialAccess()
+        {
+            string error;
+            Guid guid = Guid.Parse("cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e");
+            try
+            {
+                var result = connection.Query<Issue149_Person>(@"select @guid as Id", new { guid }).First();
+                error = null;
+            } catch(Exception ex)
+            {
+                error = ex.Message;
+            }
+            error.IsEqualTo("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)");
+        }
+        public class Issue149_Person { public string Id { get; set; } }
+        
         public class HazX
         {
             public string X { get; set; }

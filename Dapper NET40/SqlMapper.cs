@@ -3285,7 +3285,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             bool first = true;
             var allDone = il.DefineLabel();
-            int enumDeclareLocal = -1;
+            int enumDeclareLocal = -1, valueCopyLocal = il.DeclareLocal(typeof(object)).LocalIndex;
             foreach (var item in members)
             {
                 if (item != null)
@@ -3300,6 +3300,8 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
+                    il.Emit(OpCodes.Dup); // stack is now [target][target][value-as-object][value-as-object]
+                    StoreLocal(il, valueCopyLocal);
                     Type colType = reader.GetFieldType(index);
                     Type memberType = item.MemberType;
 
@@ -3332,7 +3334,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                                 StoreLocal(il, enumDeclareLocal); // stack is now [target][target]
                                 il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
                                 il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);// stack is now [target][target][enum-type]
-                                il.Emit(OpCodes.Ldloc_2); // stack is now [target][target][enum-type][string]
+                                LoadLocal(il, enumDeclareLocal); // stack is now [target][target][enum-type][string]
                                 il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
                                 il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
                                 il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
@@ -3460,6 +3462,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception
             il.Emit(OpCodes.Ldloc_0); // stack is Exception, index
             il.Emit(OpCodes.Ldarg_0); // stack is Exception, index, reader
+            LoadLocal(il, valueCopyLocal); // stack is Exception, index, reader, value
             il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod("ThrowDataException"), null);
             il.EndExceptionBlock();
 
@@ -3635,36 +3638,33 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// <summary>
         /// Throws a data exception, only used internally
         /// </summary>
-        /// <param name="ex"></param>
-        /// <param name="index"></param>
-        /// <param name="reader"></param>
-        public static void ThrowDataException(Exception ex, int index, IDataReader reader)
+        [Obsolete("Intended for internal use only")]
+        public static void ThrowDataException(Exception ex, int index, IDataReader reader, object value)
         {
             Exception toThrow;
             try
             {
-                string name = "(n/a)", value = "(n/a)";
+                string name = "(n/a)", formattedValue = "(n/a)";
                 if (reader != null && index >= 0 && index < reader.FieldCount)
                 {
                     name = reader.GetName(index);
                     try
                     {
-                        object val = reader.GetValue(index); // if there throw an exception, then I got one message, but Which column?
-                        if (val == null || val is DBNull)
+                        if (value == null || value is DBNull)
                         {
-                            value = "<null>";
+                            formattedValue = "<null>";
                         }
                         else
                         {
-                            value = Convert.ToString(val) + " - " + Type.GetTypeCode(val.GetType());
+                            formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
                         }
                     }
                     catch (Exception valEx)
                     {
-                        value = valEx.Message;
+                        formattedValue = valEx.Message;
                     }
                 }
-                toThrow = new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name, value), ex);
+                toThrow = new DataException(string.Format("Error parsing column {0} ({1}={2})", index, name, formattedValue), ex);
             }
             catch
             { // throw the **original** exception, wrapped as DataException

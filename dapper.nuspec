@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.30</version>
+    <version>1.31</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,6 +19,7 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.31    - Fix issue with error message when there is a column/type mismatch
       * 1.30    - Better async cancellation
       * 1.29    - Make underscore name matching optional (opt-in) - this can be a breaking change for some people
       * 1.28    - Much better numeric type conversion; fix for large oracle strings; map Foo_Bar to FooBar (etc); ExecuteScalar added; stability fixes
