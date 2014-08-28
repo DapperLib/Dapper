@@ -60,9 +60,6 @@
     <Compile Include="..\Dapper.EntityFramework NET45\Handlers.cs">
       <Link>Handlers.cs</Link>
     </Compile>
-    <Compile Include="..\Dapper.EntityFramework NET45\SqlGeographyHandler.cs">
-      <Link>SqlGeographyHandler.cs</Link>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlServerTypes\Loader.cs" />
   </ItemGroup>

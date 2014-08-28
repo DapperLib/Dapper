@@ -1,6 +1,4 @@
-﻿using Microsoft.SqlServer.Types;
-
-namespace Dapper.EntityFramework
+﻿namespace Dapper.EntityFramework
 {
     /// <summary>
     /// Acts on behalf of all type-handlers in this package
@@ -13,7 +11,6 @@ namespace Dapper.EntityFramework
         public static void Register()
         {
             SqlMapper.AddTypeHandler(DbGeographyHandler.Default);
-            SqlMapper.AddTypeHandler(SqlGeographyHandler.Default);
         }
     }
 }

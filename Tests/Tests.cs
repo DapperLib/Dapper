@@ -3012,8 +3012,7 @@ option (optimize for (@vals unKnoWn))";
 
         public void SqlGeography_SO25538154()
         {
-            Dapper.EntityFramework.Handlers.Register();
-
+            Dapper.SqlMapper.ResetTypeHandlers();
             connection.Execute("create table #SqlGeo (id int, geo geography)");
 
             var obj = new HazSqlGeo
@@ -3022,7 +3021,7 @@ option (optimize for (@vals unKnoWn))";
                 Geo = SqlGeography.STLineFromText(new SqlChars(new SqlString("LINESTRING(-122.360 47.656, -122.343 47.656 )")), 4326)
             };
             connection.Execute("insert #SqlGeo(id, geo) values (@Id, @Geo)", obj);
-            var row = connection.Query<HazGeo>("select * from #SqlGeo where id=1").SingleOrDefault();
+            var row = connection.Query<HazSqlGeo>("select * from #SqlGeo where id=1").SingleOrDefault();
             row.IsNotNull();
             row.Id.IsEqualTo(1);
             row.Geo.IsNotNull();
