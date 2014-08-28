@@ -3033,6 +3033,23 @@ option (optimize for (@vals unKnoWn))";
             row.Geometry.IsNotNull();
         }
 
+        public void SqlHierarchyId_SO18888911()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            var row = connection.Query<HazSqlHierarchy>("select 3 as [Id], hierarchyid::Parse('/1/2/3/') as [Path]").Single();
+            row.Id.Equals(3);
+            row.Path.IsNotNull();
+
+            var val = connection.Query<SqlHierarchyId>("select @Path", row).Single();
+            val.IsNotNull();
+        }
+
+        public class HazSqlHierarchy
+        {
+            public int Id { get; set; }
+            public SqlHierarchyId Path { get; set; }
+        }
+
         public void TypeBasedViaDynamic()
         {
             Type type = GetSomeType();

@@ -847,6 +847,9 @@ namespace Dapper
                 case "Microsoft.SqlServer.Types.SqlGeometry":
                     AddTypeHandler(type, handler = new UdtTypeHandler("GEOMETRY"));
                     return DbType.Object;
+                case "Microsoft.SqlServer.Types.SqlHierarchyId":
+                    AddTypeHandler(type, handler = new UdtTypeHandler("HIERARCHYID"));
+                    return DbType.Object;
             }
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
