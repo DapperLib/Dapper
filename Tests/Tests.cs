@@ -16,6 +16,8 @@ using System.Data.Common;
 using System.Globalization;
 using System.Threading;
 using System.Data.Entity.Spatial;
+using Microsoft.SqlServer.Types;
+using System.Data.SqlTypes;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -2985,6 +2987,11 @@ option (optimize for (@vals unKnoWn))";
             public int Id { get; set; }
             public DbGeography Geo { get; set; }
         }
+        class HazSqlGeo
+        {
+            public int Id { get; set; }
+            public SqlGeography Geo { get; set; }
+        }
         public void DBGeography_SO24405645_SO24402424()
         {
             Dapper.EntityFramework.Handlers.Register();
@@ -2998,6 +3005,24 @@ option (optimize for (@vals unKnoWn))";
             };
             connection.Execute("insert #Geo(id, geo) values (@Id, @Geo)", obj);
             var row = connection.Query<HazGeo>("select * from #Geo where id=1").SingleOrDefault();
+            row.IsNotNull();
+            row.Id.IsEqualTo(1);
+            row.Geo.IsNotNull();
+        }
+
+        public void SqlGeography_SO25538154()
+        {
+            Dapper.EntityFramework.Handlers.Register();
+
+            connection.Execute("create table #SqlGeo (id int, geo geography)");
+
+            var obj = new HazSqlGeo
+            {
+                Id = 1,
+                Geo = SqlGeography.STLineFromText(new SqlChars(new SqlString("LINESTRING(-122.360 47.656, -122.343 47.656 )")), 4326)
+            };
+            connection.Execute("insert #SqlGeo(id, geo) values (@Id, @Geo)", obj);
+            var row = connection.Query<HazGeo>("select * from #SqlGeo where id=1").SingleOrDefault();
             row.IsNotNull();
             row.Id.IsEqualTo(1);
             row.Geo.IsNotNull();
