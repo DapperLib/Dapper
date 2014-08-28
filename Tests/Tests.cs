@@ -2986,45 +2986,51 @@ option (optimize for (@vals unKnoWn))";
         {
             public int Id { get; set; }
             public DbGeography Geo { get; set; }
+            public DbGeometry Geometry { get; set; }
         }
         class HazSqlGeo
         {
             public int Id { get; set; }
             public SqlGeography Geo { get; set; }
+            public SqlGeometry Geometry { get; set; }
         }
         public void DBGeography_SO24405645_SO24402424()
         {
             Dapper.EntityFramework.Handlers.Register();
 
-            connection.Execute("create table #Geo (id int, geo geography)");
+            connection.Execute("create table #Geo (id int, geo geography, geometry geometry)");
 
             var obj = new HazGeo
             {
                 Id = 1,
-                Geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326)
+                Geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326),
+                Geometry = DbGeometry.LineFromText("LINESTRING (100 100, 20 180, 180 180)", 0)
             };
-            connection.Execute("insert #Geo(id, geo) values (@Id, @Geo)", obj);
+            connection.Execute("insert #Geo(id, geo, geometry) values (@Id, @Geo, @Geometry)", obj);
             var row = connection.Query<HazGeo>("select * from #Geo where id=1").SingleOrDefault();
             row.IsNotNull();
             row.Id.IsEqualTo(1);
             row.Geo.IsNotNull();
+            row.Geometry.IsNotNull();
         }
 
         public void SqlGeography_SO25538154()
         {
             Dapper.SqlMapper.ResetTypeHandlers();
-            connection.Execute("create table #SqlGeo (id int, geo geography)");
+            connection.Execute("create table #SqlGeo (id int, geo geography, geometry geometry)");
 
             var obj = new HazSqlGeo
             {
                 Id = 1,
-                Geo = SqlGeography.STLineFromText(new SqlChars(new SqlString("LINESTRING(-122.360 47.656, -122.343 47.656 )")), 4326)
+                Geo = SqlGeography.STLineFromText(new SqlChars(new SqlString("LINESTRING(-122.360 47.656, -122.343 47.656 )")), 4326),
+                Geometry = SqlGeometry.STLineFromText(new SqlChars(new SqlString("LINESTRING (100 100, 20 180, 180 180)")), 0)
             };
-            connection.Execute("insert #SqlGeo(id, geo) values (@Id, @Geo)", obj);
+            connection.Execute("insert #SqlGeo(id, geo, geometry) values (@Id, @Geo, @Geometry)", obj);
             var row = connection.Query<HazSqlGeo>("select * from #SqlGeo where id=1").SingleOrDefault();
             row.IsNotNull();
             row.Id.IsEqualTo(1);
             row.Geo.IsNotNull();
+            row.Geometry.IsNotNull();
         }
 
         public void TypeBasedViaDynamic()

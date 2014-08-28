@@ -839,11 +839,14 @@ namespace Dapper
             {
                 return DbType.Object;
             }
-            if(type.FullName == "Microsoft.SqlServer.Types.SqlGeography")
+            switch (type.FullName)
             {
-                handler = new UdtTypeHandler("GEOGRAPHY");
-                AddTypeHandler(type, handler);
-                return DbType.Object;
+                case "Microsoft.SqlServer.Types.SqlGeography":
+                    AddTypeHandler(type, handler = new UdtTypeHandler("GEOGRAPHY"));
+                    return DbType.Object;
+                case "Microsoft.SqlServer.Types.SqlGeometry":
+                    AddTypeHandler(type, handler = new UdtTypeHandler("GEOMETRY"));
+                    return DbType.Object;
             }
             throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
         }
