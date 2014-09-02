@@ -16,6 +16,8 @@ using System.Data.Common;
 using System.Globalization;
 using System.Threading;
 using System.Data.Entity.Spatial;
+using Microsoft.SqlServer.Types;
+using System.Data.SqlTypes;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -1390,10 +1392,10 @@ end");
                             2 as BlogId, 'Blog' as Title";
             var postWithBlog = connection.Query<Post_DupeProp, Blog_DupeProp, Post_DupeProp>(sql,
                 (p, b) =>
-                {
-                    p.Blog = b;
-                    return p;
-                }, splitOn: "BlogId").First();
+            {
+                p.Blog = b;
+                return p;
+            }, splitOn: "BlogId").First();
 
             postWithBlog.PostId.IsEqualTo(1);
             postWithBlog.Title.IsEqualTo("Title");
@@ -1406,7 +1408,7 @@ end");
             public int PostId { get; set; }
             public string Title { get; set; }
             public int BlogId { get; set; }
-            public Blog_DupeProp Blog { get; set; } 
+            public Blog_DupeProp Blog { get; set; }
         }
 
         class Blog_DupeProp
@@ -2676,7 +2678,7 @@ end");
         public void TestChangingDefaultStringTypeMappingToAnsiString()
         {
             var sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
-            var param = new {testParam = "TestString"};
+            var param = new { testParam = "TestString" };
 
             var result01 = connection.Query<string>(sql, param).FirstOrDefault();
             result01.IsEqualTo("nvarchar");
@@ -3011,7 +3013,7 @@ option (optimize for (@vals unKnoWn))";
             {
                 connection.Query<int>("select count(1) from @ids", new { ids = table.AsTableValuedParameter() }).First();
                 throw new InvalidOperationException();
-            } catch(Exception ex)
+            } catch (Exception ex)
             {
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
@@ -3020,7 +3022,7 @@ option (optimize for (@vals unKnoWn))";
         public void DataTableParametersWithExtendedProperty()
         {
             try { connection.Execute("drop proc #DataTableParameters"); } catch { }
-            try { connection.Execute("drop table #DataTableParameters"); } catch { }            
+            try { connection.Execute("drop table #DataTableParameters"); } catch { }
             try { connection.Execute("drop type MyTVPType"); } catch { }
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
@@ -3080,25 +3082,70 @@ option (optimize for (@vals unKnoWn))";
 
         class HazGeo
         {
-            public int Id { get;set; }
+            public int Id { get; set; }
             public DbGeography Geo { get; set; }
+            public DbGeometry Geometry { get; set; }
+        }
+        class HazSqlGeo
+        {
+            public int Id { get; set; }
+            public SqlGeography Geo { get; set; }
+            public SqlGeometry Geometry { get; set; }
         }
         public void DBGeography_SO24405645_SO24402424()
         {
             Dapper.EntityFramework.Handlers.Register();
 
-            connection.Execute("create table #Geo (id int, geo geography)");
+            connection.Execute("create table #Geo (id int, geo geography, geometry geometry)");
 
             var obj = new HazGeo
             {
                 Id = 1,
-                Geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326)
+                Geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326),
+                Geometry = DbGeometry.LineFromText("LINESTRING (100 100, 20 180, 180 180)", 0)
             };
-            connection.Execute("insert #Geo(id, geo) values (@Id, @Geo)", obj);
+            connection.Execute("insert #Geo(id, geo, geometry) values (@Id, @Geo, @Geometry)", obj);
             var row = connection.Query<HazGeo>("select * from #Geo where id=1").SingleOrDefault();
             row.IsNotNull();
             row.Id.IsEqualTo(1);
             row.Geo.IsNotNull();
+            row.Geometry.IsNotNull();
+        }
+
+        public void SqlGeography_SO25538154()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            connection.Execute("create table #SqlGeo (id int, geo geography, geometry geometry)");
+
+            var obj = new HazSqlGeo
+            {
+                Id = 1,
+                Geo = SqlGeography.STLineFromText(new SqlChars(new SqlString("LINESTRING(-122.360 47.656, -122.343 47.656 )")), 4326),
+                Geometry = SqlGeometry.STLineFromText(new SqlChars(new SqlString("LINESTRING (100 100, 20 180, 180 180)")), 0)
+            };
+            connection.Execute("insert #SqlGeo(id, geo, geometry) values (@Id, @Geo, @Geometry)", obj);
+            var row = connection.Query<HazSqlGeo>("select * from #SqlGeo where id=1").SingleOrDefault();
+            row.IsNotNull();
+            row.Id.IsEqualTo(1);
+            row.Geo.IsNotNull();
+            row.Geometry.IsNotNull();
+        }
+
+        public void SqlHierarchyId_SO18888911()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            var row = connection.Query<HazSqlHierarchy>("select 3 as [Id], hierarchyid::Parse('/1/2/3/') as [Path]").Single();
+            row.Id.Equals(3);
+            row.Path.IsNotNull();
+
+            var val = connection.Query<SqlHierarchyId>("select @Path", row).Single();
+            val.IsNotNull();
+        }
+
+        public class HazSqlHierarchy
+        {
+            public int Id { get; set; }
+            public SqlHierarchyId Path { get; set; }
         }
 
         public void TypeBasedViaDynamic()
@@ -3129,7 +3176,7 @@ option (optimize for (@vals unKnoWn))";
             Type type = GetSomeType();
 
             dynamic first, second;
-            using(var multi = connection.QueryMultiple("select @A as [A], @B as [B]; select @C as [A], @D as [B]",
+            using (var multi = connection.QueryMultiple("select @A as [A], @B as [B]; select @C as [A], @D as [B]",
                 new { A = 123, B = "abc", C = 456, D = "def" }))
             {
                 first = multi.Read(type).Single();
@@ -3157,14 +3204,14 @@ option (optimize for (@vals unKnoWn))";
         }
         public class SomeType
         {
-            public int A { get;set; }
-            public string B { get;set; }
+            public int A { get; set; }
+            public string B { get; set; }
         }
 
         class WithInit : ISupportInitialize
         {
             public string Value { get; set; }
-            public int Flags { get;set; }
+            public int Flags { get; set; }
 
             void ISupportInitialize.BeginInit()
             {
@@ -3450,14 +3497,14 @@ option (optimize for (@vals unKnoWn))";
         }
         private void TestBigIntForEverythingWorks_SqlLite_ByDataType<T>(string dbType)
         {
-            using(var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
+            using (var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
             {
                 reader.Read().IsTrue();
                 reader.GetFieldType(0).Equals(typeof(T));
                 reader.Read().IsFalse();
                 reader.NextResult().IsFalse();
             }
-            
+
             string sql = "select " + string.Join(",", typeof(LotsOfNumerics).GetProperties().Select(
                 x => "cast (1 as " + dbType + ") as [" + x.Name + "]"));
             var row = connection.Query<LotsOfNumerics>(sql).Single();
@@ -3561,6 +3608,64 @@ option (optimize for (@vals unKnoWn))";
         }
 
 
+        public void SO25069578_DynamicParams_Procs()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("foo", "bar");
+            // parameters = new DynamicParameters(parameters);
+            try { connection.Execute("drop proc SO25069578"); } catch { }
+            connection.Execute("create proc SO25069578 @foo nvarchar(max) as select @foo as [X]");
+            var tran = connection.BeginTransaction(); // gist used transaction; behaves the same either way, though
+            var row = connection.Query<HazX>("SO25069578", parameters,
+                commandType: CommandType.StoredProcedure, transaction: tran).Single();
+            tran.Rollback();
+            row.X.IsEqualTo("bar");
+        }
+
+        public void Issue149_TypeMismatch_SequentialAccess()
+        {
+            string error;
+            Guid guid = Guid.Parse("cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e");
+            try
+            {
+                var result = connection.Query<Issue149_Person>(@"select @guid as Id", new { guid }).First();
+                error = null;
+            } catch(Exception ex)
+            {
+                error = ex.Message;
+            }
+            error.IsEqualTo("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)");
+        }
+        public class Issue149_Person { public string Id { get; set; } }
+        
+        public class HazX
+        {
+            public string X { get; set; }
+        }
+
+
+        public void SO25297173_DynamicIn()
+        {
+            var query = @"
+declare @table table(value int not null);
+insert @table values(1);
+insert @table values(2);
+insert @table values(3);
+insert @table values(4);
+insert @table values(5);
+insert @table values(6);
+insert @table values(7);
+SELECT value FROM @table WHERE value IN @myIds";
+            var queryParams = new Dictionary<string, object> {
+                { "myIds", new [] { 5, 6 } }
+            };
+            
+            var dynamicParams = new DynamicParameters(queryParams);
+            List<int> result = connection.Query<int>(query, dynamicParams).ToList();
+            result.Count.IsEqualTo(2);
+            result.Contains(5).IsTrue();
+            result.Contains(6).IsTrue();
+        }
 
 #if POSTGRESQL
 

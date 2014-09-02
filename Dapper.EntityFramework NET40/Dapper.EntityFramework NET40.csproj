@@ -57,10 +57,15 @@
     <Compile Include="..\Dapper.EntityFramework NET45\DbGeographyHandler.cs">
       <Link>DbGeographyHandler.cs</Link>
     </Compile>
+    <Compile Include="..\Dapper.EntityFramework NET45\DbGeometryHandler.cs">
+      <Link>DbGeometryHandler.cs</Link>
+    </Compile>
     <Compile Include="..\Dapper.EntityFramework NET45\Handlers.cs">
       <Link>Handlers.cs</Link>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\Dapper.EntityFramework NET45\Properties\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="SqlServerTypes\Loader.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +96,9 @@
       <Project>{daf737e1-05b5-4189-a5aa-dac6233b64d7}</Project>
       <Name>Dapper NET40</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
