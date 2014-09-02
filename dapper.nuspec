@@ -7,7 +7,7 @@
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <projectUrl>https://github.com/StackExchange/dapper-dot-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..</description>
     <summary>A high performance Micro-ORM</summary>
