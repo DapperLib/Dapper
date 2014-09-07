@@ -22,9 +22,9 @@ namespace Dapper
     /// A container for a database, assumes all the tables have an Id column named Id
     /// </summary>
     /// <typeparam name="TDatabase"></typeparam>
-    public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
+    public abstract partial class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
-        public class Table<T, TId>
+        public partial class Table<T, TId>
         {
             internal Database<TDatabase> database;
             internal string tableName;
