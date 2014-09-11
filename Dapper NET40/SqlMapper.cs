@@ -2533,7 +2533,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
 
         // look for ? / @ / : *by itself*
-        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9_])[?@:](?![a-zA-Z0-9_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9@_])[?@:](?![a-zA-Z0-9@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
             literalTokens = new Regex(@"\{=([a-zA-Z0-9_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         
         /// <summary>
