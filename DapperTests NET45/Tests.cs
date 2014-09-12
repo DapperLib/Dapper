@@ -361,8 +361,6 @@ namespace DapperTests_NET45
             using (var connection = Program.GetOpenConnection())
             {
                 var id = connection.QueryAsync<int>(@"
-                    create table #atescaping(id int not null);
-                    insert into #atescaping (id) values (1)
                     declare @@Name int
                     select @@Name = @Id+1
                     select @@Name
