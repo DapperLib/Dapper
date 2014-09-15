@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{302EC82F-A81B-48C5-B653-B5C75D2BD103}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Dapper.Contrib</RootNamespace>
-    <AssemblyName>Dapper.Contrib</AssemblyName>
+    <RootNamespace>Dapper.Contrib.Tests_NET45</RootNamespace>
+    <AssemblyName>Dapper.Contrib.Tests NET45</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -20,20 +21,20 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Dapper.Contrib.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Dapper.Contrib.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -41,18 +42,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Dapper.Contrib\Properties\AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="SqlMapperExtensions.cs" />
+    <Compile Include="Assert.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tests.cs" />
+    <Compile Include="TestsAsync.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper NET45\Dapper NET45.csproj">
       <Project>{0fff5bc7-0a4b-4d87-835e-4fad70937507}</Project>
       <Name>Dapper NET45</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dapper.Contrib NET45\Dapper.Contrib NET45.csproj">
+      <Project>{302ec82f-a81b-48c5-b653-b5c75d2bd103}</Project>
+      <Name>Dapper.Contrib NET45</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj">
+      <Project>{bf782ef1-2b0f-42fa-9dd0-928454a94c6d}</Project>
+      <Name>Dapper.SqlBuilder</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
