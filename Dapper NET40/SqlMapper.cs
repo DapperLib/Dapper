@@ -4397,16 +4397,22 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 // DynamicParameters until now.
                 foreach (IDbDataParameter param in command.Parameters)
                 {
-                    parameters.Add(param.ParameterName, new ParamInfo
-                    {
-                        AttachedParam = param,
-                        CameFromTemplate = true,
-                        DbType = param.DbType,
-                        Name = param.ParameterName,
-                        ParameterDirection = param.Direction,
-                        Size = param.Size,
-                        Value = param.Value
-                    });
+                    // If someone makes a DynamicParameters with a template,
+                    // then explicitly adds a parameter of a matching name,
+                    // it will already exist in 'parameters'.
+                    if (!parameters.ContainsKey(param.ParameterName)) 
+                    { 
+                        parameters.Add(param.ParameterName, new ParamInfo
+                        {
+                            AttachedParam = param,
+                            CameFromTemplate = true,
+                            DbType = param.DbType,
+                            Name = param.ParameterName,
+                            ParameterDirection = param.Direction,
+                            Size = param.Size,
+                            Value = param.Value
+                        });
+                    }
                 }
 
                 // Now that the parameters are added to the command, let's place our output callbacks
