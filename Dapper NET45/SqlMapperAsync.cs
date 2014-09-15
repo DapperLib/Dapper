@@ -96,7 +96,7 @@ namespace Dapper
                             buffer.Add((T)func(reader));
                         }
                         while (await reader.NextResultAsync().ConfigureAwait(false)) { }
-                        command.FireOutputCallbacks();
+                        command.OnCompleted();
                         return buffer;
                     }
                     else
@@ -238,7 +238,7 @@ namespace Dapper
                     }
                 }
 
-                command.FireOutputCallbacks();
+                command.OnCompleted();
             }
             finally
             {
@@ -257,7 +257,7 @@ namespace Dapper
                 {
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                     var result = await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
-                    command.FireOutputCallbacks();
+                    command.OnCompleted();
                     return result;
                 }
                 finally
@@ -514,8 +514,8 @@ namespace Dapper
                     yield return (T)func(reader);
                 }
                 while (reader.NextResult()) { }
-                if (parameters is DynamicParameters)
-                    ((DynamicParameters)parameters).FireOutputCallbacks();
+                if (parameters is SqlMapper.IParameterCallbacks)
+                    ((SqlMapper.IParameterCallbacks)parameters).OnCompleted();
             }
         }
 
@@ -580,7 +580,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-                    if (dynamicParams != null) dynamicParams.FireOutputCallbacks();
+                    if (callbacks != null) callbacks.OnCompleted();
                     Dispose();
                 }
             }
@@ -814,7 +814,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 result = await cmd.ExecuteScalarAsync(command.CancellationToken).ConfigureAwait(false);
-                command.FireOutputCallbacks();
+                command.OnCompleted();
             }
             finally
             {

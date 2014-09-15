@@ -73,11 +73,11 @@ namespace Dapper
         private readonly CommandFlags flags;
 
 
-        internal void FireOutputCallbacks()
+        internal void OnCompleted()
         {
-            if (parameters is DynamicParameters)
+            if (parameters is SqlMapper.IParameterCallbacks)
             {
-                ((DynamicParameters)parameters).FireOutputCallbacks();
+                ((SqlMapper.IParameterCallbacks)parameters).OnCompleted();
             }
         }
         /// <summary>
@@ -261,6 +261,17 @@ namespace Dapper
             /// Get the value of the specified parameter (return null if not found)
             /// </summary>
             object this[string name] { get; }
+        }
+
+        /// <summary>
+        /// Extends IDynamicParameters with facitilies for executing callbacks after commands have completed
+        /// </summary>
+        public partial interface IParameterCallbacks : IDynamicParameters
+        {
+            /// <summary>
+            /// Invoked when the command has executed
+            /// </summary>
+            void OnCompleted();
         }
 
         /// <summary>
@@ -1251,7 +1262,7 @@ this IDbConnection cnn, string sql, object param = null, IDbTransaction transact
                             total += cmd.ExecuteNonQuery();
                         }
                     }
-                    command.FireOutputCallbacks();
+                    command.OnCompleted();
                 } finally
                 {
                     if (wasClosed) cnn.Close();
@@ -1532,7 +1543,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 reader.Dispose();
                 reader = null;
 
-                command.FireOutputCallbacks();
+                command.OnCompleted();
             }
             finally
             {
@@ -1785,7 +1796,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     if(finalize)
                     {
                         while (reader.NextResult()) { }
-                        command.FireOutputCallbacks();
+                        command.OnCompleted();
                     }                    
                 }
             }
@@ -1856,7 +1867,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     if (finalize)
                     {
                         while (reader.NextResult()) { }
-                        command.FireOutputCallbacks();
+                        command.OnCompleted();
                     }
                 }
             }
@@ -3163,7 +3174,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
                 int result = cmd.ExecuteNonQuery();
-                command.FireOutputCallbacks();
+                command.OnCompleted();
                 return result;
             }
             finally
@@ -3191,7 +3202,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
                 result =cmd.ExecuteScalar();
-                command.FireOutputCallbacks();
+                command.OnCompleted();
             }
             finally
             {
@@ -3915,12 +3926,12 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             private IDbCommand command;
             private Identity identity;
 
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, SqlMapper.IParameterCallbacks callbacks)
             {
                 this.command = command;
                 this.reader = reader;
                 this.identity = identity;
-                this.dynamicParams = dynamicParams;
+                this.callbacks = callbacks;
             }
 
 #if !CSHARP30
@@ -4127,7 +4138,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             private int gridIndex, readCount;
             private bool consumed;
-            private DynamicParameters dynamicParams;
+            private SqlMapper.IParameterCallbacks callbacks;
 
             /// <summary>
             /// Has the underlying reader been consumed?
@@ -4153,7 +4164,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-                    if (dynamicParams != null) dynamicParams.FireOutputCallbacks();
+                    if (callbacks != null) callbacks.OnCompleted();
                     Dispose();
                 }
             }
@@ -4214,7 +4225,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
     /// <summary>
     /// A bag of parameters that can be passed to the Dapper Query and Execute methods
     /// </summary>
-    partial class DynamicParameters : SqlMapper.IDynamicParameters, SqlMapper.IParameterLookup
+    partial class DynamicParameters : SqlMapper.IDynamicParameters, SqlMapper.IParameterLookup, SqlMapper.IParameterCallbacks
     {
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
@@ -4707,7 +4718,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             public static readonly Hashtable Cache = new Hashtable();
         }
 
-        internal void FireOutputCallbacks()
+        void SqlMapper.IParameterCallbacks.OnCompleted()
         {
             foreach (var param in (from p in parameters select p.Value))
             {
