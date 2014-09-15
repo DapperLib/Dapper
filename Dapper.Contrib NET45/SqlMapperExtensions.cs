@@ -194,7 +194,7 @@ namespace Dapper.Contrib.Extensions
 
             if (type.IsInterface)
             {
-                var res = (await connection.QueryAsync<dynamic>(sql, dynParms)).FirstOrDefault() as IDictionary<string, object>;
+                var res = (await connection.QueryAsync<dynamic>(sql, dynParms).ConfigureAwait(false)).FirstOrDefault() as IDictionary<string, object>;
 
                 if (res == null)
                     return (T)((object)null);
@@ -211,7 +211,7 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                obj = (await connection.QueryAsync<T>(sql, dynParms, transaction: transaction, commandTimeout: commandTimeout)).FirstOrDefault();
+                obj = (await connection.QueryAsync<T>(sql, dynParms, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false)).FirstOrDefault();
             }
             return obj;
         }
@@ -282,7 +282,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
-        public static async Task<long> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
 
             var type = typeof(T);
@@ -313,8 +313,7 @@ namespace Dapper.Contrib.Extensions
                     sbParameterList.Append(", ");
             }
             ISqlAdapter adapter = GetFormatter(connection);
-            int id = await adapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(), sbParameterList.ToString(), keyProperties, entityToInsert);
-            return id;
+            return adapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(), sbParameterList.ToString(), keyProperties, entityToInsert);
         }
 
         /// <summary>
@@ -411,7 +410,7 @@ namespace Dapper.Contrib.Extensions
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
-            var updated = await connection.ExecuteAsync(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
+            var updated = await connection.ExecuteAsync(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction).ConfigureAwait(false);
             return updated > 0;
         }
 
@@ -479,7 +478,7 @@ namespace Dapper.Contrib.Extensions
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
-            var deleted = await connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction: transaction, commandTimeout: commandTimeout);
+            var deleted = await connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
             return deleted > 0;
         }
 
@@ -510,7 +509,7 @@ namespace Dapper.Contrib.Extensions
             var type = typeof(T);
             var name = GetTableName(type);
             var statement = String.Format("delete from {0}", name);
-            var deleted = await connection.ExecuteAsync(statement, null, transaction: transaction, commandTimeout: commandTimeout);
+            var deleted = await connection.ExecuteAsync(statement, null, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
             return deleted > 0;
         }
 
@@ -740,10 +739,10 @@ public class SqlServerAdapter : ISqlAdapter
     {
         string cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
-        await connection.ExecuteAsync(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+        await connection.ExecuteAsync(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
 
         //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-        var r = await connection.QueryAsync<dynamic>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+        var r = await connection.QueryAsync<dynamic>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
         int id = (int)r.First().id;
         if (keyProperties.Any())
             keyProperties.First().SetValue(entityToInsert, id, null);
@@ -809,7 +808,7 @@ public class PostgresAdapter : ISqlAdapter
             }
         }
 
-        var results = await connection.QueryAsync<dynamic>(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+        var results = await connection.QueryAsync<dynamic>(sb.ToString(), entityToInsert, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
 
         // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
         int id = 0;
@@ -843,9 +842,9 @@ public class SQLiteAdapter : ISqlAdapter
     {
         string cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
-        await connection.ExecuteAsync(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+        await connection.ExecuteAsync(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
 
-        var r = await connection.QueryAsync<dynamic>("select last_insert_rowid() id", transaction: transaction, commandTimeout: commandTimeout);
+        var r = await connection.QueryAsync<dynamic>("select last_insert_rowid() id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
         int id = (int)r.First().id;
         if (keyProperties.Any())
             keyProperties.First().SetValue(entityToInsert, id, null);
