@@ -19,6 +19,7 @@ using System.Threading;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq.Expressions;
 
 namespace Dapper
 {
@@ -2456,8 +2457,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     listParam.Value = item ?? DBNull.Value;
                     if (isString)
                     {
-                        listParam.Size = 4000;
-                        if (item != null && ((string)item).Length > 4000)
+                        listParam.Size = DbString.DefaultLength;
+                        if (item != null && ((string)item).Length > DbString.DefaultLength)
                         {
                             listParam.Size = -1;
                         }
@@ -2851,11 +2852,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         il.Emit(OpCodes.Dup); // [string] [string]
                         il.EmitCall(OpCodes.Callvirt, typeof(string).GetProperty("Length").GetGetMethod(), null); // [string] [length]
-                        EmitInt32(il, 4000); // [string] [length] [4000]
+                        EmitInt32(il, DbString.DefaultLength); // [string] [length] [4000]
                         il.Emit(OpCodes.Cgt); // [string] [0 or 1]
                         Label isLong = il.DefineLabel(), lenDone = il.DefineLabel();
                         il.Emit(OpCodes.Brtrue_S, isLong);
-                        EmitInt32(il, 4000); // [string] [4000]
+                        EmitInt32(il, DbString.DefaultLength); // [string] [4000]
                         il.Emit(OpCodes.Br_S, lenDone);
                         il.MarkLabel(isLong);
                         EmitInt32(il, -1); // [string] [-1]
@@ -3027,6 +3028,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
+
+                if (command.Parameters is DynamicParameters)
+                {
+                    ((DynamicParameters)command.Parameters).FireOutputCallbacks();
+                }
             }
         }
 
@@ -3053,6 +3059,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
+
+                if (command.Parameters is DynamicParameters)
+                {
+                    ((DynamicParameters)command.Parameters).FireOutputCallbacks();
+                }
             }
             return Parse<T>(result);
         }
@@ -3076,6 +3087,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
+
+                if (command.Parameters is DynamicParameters)
+                {
+                    ((DynamicParameters)command.Parameters).FireOutputCallbacks();
+                }
             }
         }
 
@@ -4090,6 +4106,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             public DbType? DbType { get; set; }
             public int? Size { get; set; }
             public IDbDataParameter AttachedParam { get; set; }
+            internal Action<object, DynamicParameters> OutputCallback { get; set; }
+            internal object OutputTarget { get; set; }
+            internal bool CameFromTemplate { get; set; }
         }
 
         /// <summary>
@@ -4221,6 +4240,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         protected void AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
             var literals = SqlMapper.GetLiteralTokens(identity.sql);
+
             if (templates != null)
             {
                 foreach (var template in templates)
@@ -4239,9 +4259,31 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
                     appender(command, template);
                 }
+
+                // The parameters were added to the command, but not the 
+                // DynamicParameters until now.
+                foreach (IDbDataParameter param in command.Parameters)
+                {
+                    parameters.Add(param.ParameterName, new ParamInfo
+                    {
+                        AttachedParam = param,
+                        CameFromTemplate = true,
+                        DbType = param.DbType,
+                        Name = param.ParameterName,
+                        ParameterDirection = param.Direction,
+                        Size = param.Size,
+                        Value = param.Value
+                    });
+                }
+
+                // Now that the parameters are added to the command, let's place our output callbacks
+                foreach (var generator in this.outputCallbacks)
+                {
+                    generator();
+                }
             }
 
-            foreach (var param in parameters.Values)
+            foreach (var param in parameters.Values.Where(p => !p.CameFromTemplate))
             {
                 var dbType = param.DbType;
                 var val = param.Value;
@@ -4286,9 +4328,9 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                         var s = val as string;
                         if (s != null)
                         {
-                            if (s.Length <= 4000)
+                            if (s.Length <= DbString.DefaultLength)
                             {
-                                p.Size = 4000;
+                                p.Size = DbString.DefaultLength;
                             }
                         }
                         if (param.Size != null)
@@ -4310,6 +4352,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     param.AttachedParam = p;
                 }
             }
+
             // note: most non-priveleged implementations would use: this.ReplaceLiterals(command);
             if(literals.Count != 0) SqlMapper.ReplaceLiterals(this, command, literals);
         }
@@ -4344,6 +4387,190 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 return default(T);
             }
             return (T)val;
+        }
+
+        /// <summary>
+        /// Allows you to automatically populate a target property/field from output parameters. It actually
+        /// creates an InputOutput parameter, so you can still pass data in. 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="target">The object whose property/field you wish to populate.</param>
+        /// <param name="expression">A MemberExpression targeting a property/field of the target (or descendant thereof.)</param>
+        /// <param name="dbType"></param>
+        /// <param name="size">The size to set on the parameter. Defaults to 0, or DbString.DefaultLength in case of strings.</param>
+        /// <returns>The DynamicParameters instance</returns>
+#if CSHARP30
+        public DynamicParameters Output<T>(T target, Expression<Func<T, object>> expression, DbType? dbType, int? size)
+#else
+        public DynamicParameters Output<T>(T target, Expression<Func<T, object>> expression, DbType? dbType = null, int? size = null)
+#endif
+        {
+            var failMessage = "Expression must be a property/field chain off of a(n) {0} instance";
+            failMessage = string.Format(failMessage, typeof(T).Name);
+            Action @throw = () => { throw new InvalidOperationException(failMessage); };
+            
+            // Is it even a MemberExpression?
+            var lastMemberAccess = expression.Body as MemberExpression;
+
+            if (lastMemberAccess == null ||
+                (lastMemberAccess.Member.MemberType != MemberTypes.Property &&
+                lastMemberAccess.Member.MemberType != MemberTypes.Field)) 
+            {
+                if (expression.Body.NodeType == ExpressionType.Convert &&
+                    expression.Body.Type == typeof(object) &&
+                    ((UnaryExpression)expression.Body).Operand is MemberExpression)
+                {
+                    // It's got to be unboxed
+                    lastMemberAccess = (MemberExpression)((UnaryExpression)expression.Body).Operand;
+                }
+                else @throw();
+            }
+
+            // Does the chain consist of MemberExpressions leading to a ParameterExpression of type T?
+            MemberExpression diving = lastMemberAccess;
+            ParameterExpression constant = null;
+            // Retain a list of member names and the member expressions so we can rebuild the chain.
+            List<string> names = new List<string>();
+            List<MemberExpression> chain = new List<MemberExpression>();
+
+            do
+            {
+                // Insert the names in the right order so expression 
+                // "Post.Author.Name" becomes parameter "PostAuthorName"
+                names.Insert(0, diving.Member.Name);
+                chain.Insert(0, diving);
+
+                constant = diving.Expression as ParameterExpression;
+                diving = diving.Expression as MemberExpression;
+
+                if (constant != null &&
+                    constant.Type == typeof(T))
+                {
+                    break;
+                }
+                else if (diving == null || 
+                    (diving.Member.MemberType != MemberTypes.Property &&
+                    diving.Member.MemberType != MemberTypes.Field))
+                {
+                    @throw();
+                }
+            } 
+            while (diving != null);
+
+            var dynamicParamName = string.Join(string.Empty, names.ToArray());
+
+            // Before we get all emitty...
+            var lookup = typeof(T).Name + "_" + string.Join("|", names.ToArray());
+            Action<object, DynamicParameters> setter = null;
+            lock (cachedOutputSettersLock)
+            {
+                if (cachedOutputSetters.TryGetValue(lookup, out setter))
+                {
+                    goto MAKECALLBACK;
+                }
+            } 
+
+            // Come on let's build a method, let's build it, let's build it now!
+            var dm = new DynamicMethod(string.Format("ExpressionParam{0}", Guid.NewGuid()), null, new[] { typeof(object), this.GetType() }, true);
+            var il = dm.GetILGenerator();
+
+            il.Emit(OpCodes.Ldarg_0); // [object]
+            il.Emit(OpCodes.Castclass, typeof(T));    // [T]
+
+            // Count - 1 to skip the last member access
+            var i = 0;
+            for (; i < (chain.Count - 1); i++)
+            {
+                var member = chain[0].Member;
+
+                if (member.MemberType == MemberTypes.Property)
+                {
+                    var get = ((PropertyInfo)member).GetGetMethod(true);
+                    il.Emit(OpCodes.Callvirt, get); // [Member{i}]
+                }
+                else // Else it must be a field!
+                {
+                    il.Emit(OpCodes.Ldfld, ((FieldInfo)member)); // [Member{i}]
+                }
+            }
+
+            var paramGetter = this.GetType().GetMethod("Get", new Type[] { typeof(string) }).MakeGenericMethod(lastMemberAccess.Type);
+
+            il.Emit(OpCodes.Ldarg_1); // [target] [DynamicParameters]
+            il.Emit(OpCodes.Ldstr, dynamicParamName); // [target] [DynamicParameters] [ParamName]
+            il.Emit(OpCodes.Callvirt, paramGetter); // [target] [value], it's already typed thanks to generic method
+            
+            // GET READY
+            var lastMember = lastMemberAccess.Member;
+            if (lastMember.MemberType == MemberTypes.Property)
+            {
+                var set = ((PropertyInfo)lastMember).GetSetMethod(true);
+                il.Emit(OpCodes.Callvirt, set); // SET
+            }
+            else
+            {
+                il.Emit(OpCodes.Stfld, ((FieldInfo)lastMember)); // SET
+            }
+
+            il.Emit(OpCodes.Ret); // GO
+
+            setter = (Action<object, DynamicParameters>)dm.CreateDelegate(typeof(Action<object, DynamicParameters>));
+            lock (cachedOutputSettersLock)
+            {
+                if (!cachedOutputSetters.ContainsKey(lookup))
+                {
+                    cachedOutputSetters.Add(lookup, setter);
+                }
+            }
+
+            // Queue the preparation to be fired off when adding parameters to the DbCommand
+            MAKECALLBACK:
+            this.outputCallbacks.Add(() =>
+            {
+                // Finally, prep the parameter and attach the callback to it
+                ParamInfo parameter;
+                var targetMemberType = lastMemberAccess.Type;
+                int sizeToSet = (!size.HasValue && targetMemberType == typeof(string)) ? DbString.DefaultLength : size ?? 0;
+
+                if (this.parameters.TryGetValue(dynamicParamName, out parameter))
+                {
+                    parameter.ParameterDirection = parameter.AttachedParam.Direction = ParameterDirection.InputOutput;
+
+                    if (parameter.AttachedParam.Size == 0)
+                    {
+                        parameter.Size = parameter.AttachedParam.Size = sizeToSet;
+                    }
+                }
+                else
+                {
+                    SqlMapper.ITypeHandler handler;
+                    dbType = (!dbType.HasValue) ? SqlMapper.LookupDbType(targetMemberType, targetMemberType.Name, out handler) : dbType;
+
+                    // CameFromTemplate property would not apply here because this new param
+                    // Still needs to be added to the command
+                    this.Add(dynamicParamName, expression.Compile().Invoke(target), null, ParameterDirection.InputOutput, sizeToSet);
+                }
+
+                parameter = this.parameters[dynamicParamName];
+                parameter.OutputCallback = setter;
+                parameter.OutputTarget = target;
+            });
+
+            return this;
+        }
+
+        private readonly List<Action> outputCallbacks = new List<Action>();
+
+        private readonly Dictionary<string, Action<object, DynamicParameters>> cachedOutputSetters = new Dictionary<string,Action<object,DynamicParameters>>();
+
+        private readonly object cachedOutputSettersLock = new object();
+
+        internal void FireOutputCallbacks()
+        {
+            foreach (var param in (from p in parameters select p.Value))
+            {
+                if (param.OutputCallback != null) param.OutputCallback(param.OutputTarget, this);
+            }
         }
     }
 
@@ -4421,6 +4648,13 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     sealed partial class DbString : Dapper.SqlMapper.ICustomQueryParameter
     {
         /// <summary>
+        /// A value to set the default value of strings
+        /// going through Dapper. Default is 4000, any value larger than this
+        /// field will not have the default value applied.
+        /// </summary>
+        public const int DefaultLength = 4000;
+
+        /// <summary>
         /// Create a new DbString
         /// </summary>
         public DbString() { Length = -1; }
@@ -4454,9 +4688,9 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             var param = command.CreateParameter();
             param.ParameterName = name;
             param.Value = (object)Value ?? DBNull.Value;
-            if (Length == -1 && Value != null && Value.Length <= 4000)
+            if (Length == -1 && Value != null && Value.Length <= DefaultLength)
             {
-                param.Size = 4000;
+                param.Size = DefaultLength;
             }
             else
             {

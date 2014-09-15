@@ -1175,6 +1175,33 @@ Order by p.Id";
 
             p.Get<int>("age").IsEqualTo(11);
         }
+
+        [ActiveTest]
+        public void TestSupportForDynamicParametersOutputExpressions()
+        {
+            var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+            var p = new DynamicParameters(bob);
+            p.Output(bob, b => b.PersonId);
+            p.Output(bob, b => b.Occupation);
+            p.Output(bob, b => b.NumberOfLegs);
+            p.Output(bob, b => b.Address.Name);
+            p.Output(bob, b => b.Address.PersonId);
+
+            connection.Execute(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId", p);
+
+            bob.Occupation.IsEqualTo("grillmaster");
+            bob.PersonId.IsEqualTo(2);
+            bob.NumberOfLegs.IsEqualTo(1);
+            bob.Address.Name.IsEqualTo("bobs burgers");
+            bob.Address.PersonId.IsEqualTo(2);
+        }
+
         public void TestSupportForExpandoObjectParameters()
         {
             dynamic p = new ExpandoObject();
@@ -1231,6 +1258,9 @@ end");
         {
             public int PersonId { get; set; }
             public string Name { get; set; }
+            public string Occupation { get; private set; }
+            public int NumberOfLegs = 2;
+            public Address Address { get; set; }
         }
 
         class Address
