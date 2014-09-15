@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Dapper.Contrib.nuspec = Dapper.Contrib.nuspec
 		Dapper.EntityFramework.nuspec = Dapper.EntityFramework.nuspec
 		Dapper.nuspec = Dapper.nuspec
+		Dapper.Rainbow.nuspec = Dapper.Rainbow.nuspec
 		License.txt = License.txt
 	EndProjectSection
 EndProject
@@ -41,6 +42,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET40", "Dapper.EntityFramework NET40\Dapper.EntityFramework NET40.csproj", "{2544DFBA-7F64-4003-9C36-D8337F770A36}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Contrib NET45", "Dapper.Contrib NET45\Dapper.Contrib NET45.csproj", "{302EC82F-A81B-48C5-B653-B5C75D2BD103}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Rainbow NET45", "Dapper.Rainbow NET45\Dapper.Rainbow NET45.csproj", "{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -182,6 +185,16 @@ Global
 		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{302EC82F-A81B-48C5-B653-B5C75D2BD103}.Release|x86.ActiveCfg = Release|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{DB42428F-3C2B-4C9E-9B7A-5E43B53D6613}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
