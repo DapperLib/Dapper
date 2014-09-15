@@ -19,18 +19,28 @@ using System.Reflection.Emit;
 namespace Dapper
 {
     /// <summary>
+    /// A container for a database, assumes all the tables have an Id column of type int named Id
+    /// </summary>
+    /// <typeparam name="TDatabase">The Dapper.Database implementation type</typeparam>
+    public abstract class Database<TDatabase> : Database<TDatabase, int>
+        where TDatabase : Database<TDatabase>, new()
+    { }
+
+
+    /// <summary>
     /// A container for a database, assumes all the tables have an Id column named Id
     /// </summary>
-    /// <typeparam name="TDatabase"></typeparam>
-    public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
+    /// <typeparam name="TDatabase">The Dapper.Database implementation type</typeparam>
+    /// <typeparam name="TId">The table primary key Id type</typeparam>
+    public abstract class Database<TDatabase, TId> : IDisposable where TDatabase : Database<TDatabase, TId>, new()
     {
-        public class Table<T, TId>
+        public class Table<T>
         {
-            internal Database<TDatabase> database;
+            internal Database<TDatabase, TId> database;
             internal string tableName;
             internal string likelyTableName;
 
-            public Table(Database<TDatabase> database, string likelyTableName)
+            public Table(Database<TDatabase, TId> database, string likelyTableName)
             {
                 this.database = database;
                 this.likelyTableName = likelyTableName;
@@ -141,13 +151,6 @@ namespace Dapper
                 return paramNames;
             }
         }
-
-		public class Table<T> : Table<T, int> {
-			public Table(Database<TDatabase> database, string likelyTableName)
-				: base(database, likelyTableName)
-			{
-			}
-		}
 
         DbConnection connection;
         int commandTimeout;
