@@ -4277,14 +4277,20 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 }
 
                 // Now that the parameters are added to the command, let's place our output callbacks
-                foreach (var generator in this.outputCallbacks)
+                var tmp = outputCallbacks;
+                if (tmp != null)
                 {
-                    generator();
+                    foreach (var generator in tmp)
+                    {
+                        generator();
+                    }
                 }
             }
 
-            foreach (var param in parameters.Values.Where(p => !p.CameFromTemplate))
+            foreach (var param in parameters.Values)
             {
+                if (param.CameFromTemplate) continue;
+
                 var dbType = param.DbType;
                 var val = param.Value;
                 string name = Clean(param.Name);
@@ -4525,7 +4531,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
             // Queue the preparation to be fired off when adding parameters to the DbCommand
             MAKECALLBACK:
-            this.outputCallbacks.Add(() =>
+            (outputCallbacks ?? (outputCallbacks = new List<Action>())).Add(() =>
             {
                 // Finally, prep the parameter and attach the callback to it
                 ParamInfo parameter;
@@ -4559,7 +4565,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             return this;
         }
 
-        private readonly List<Action> outputCallbacks = new List<Action>();
+        private List<Action> outputCallbacks;
 
         private readonly Dictionary<string, Action<object, DynamicParameters>> cachedOutputSetters = new Dictionary<string,Action<object,DynamicParameters>>();
 

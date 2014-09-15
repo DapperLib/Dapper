@@ -1176,7 +1176,6 @@ Order by p.Id";
             p.Get<int>("age").IsEqualTo(11);
         }
 
-        [ActiveTest]
         public void TestSupportForDynamicParametersOutputExpressions()
         {
             var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
