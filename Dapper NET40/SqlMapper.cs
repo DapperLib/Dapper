@@ -52,8 +52,19 @@ namespace Dapper
     /// <summary>
     /// Represents the key aspects of a sql operation
     /// </summary>
-    public  struct CommandDefinition
+    public struct CommandDefinition
     {
+        internal static CommandDefinition ForCallback(object parameters)
+        {
+            if(parameters is DynamicParameters)
+            {
+                return new CommandDefinition(parameters);
+            }
+            else
+            {
+                return default(CommandDefinition);
+            }
+        }
         private readonly string commandText;
         private readonly object parameters;
         private readonly IDbTransaction transaction;
@@ -62,7 +73,13 @@ namespace Dapper
         private readonly CommandFlags flags;
 
 
-
+        internal void FireOutputCallbacks()
+        {
+            if (parameters is DynamicParameters)
+            {
+                ((DynamicParameters)parameters).FireOutputCallbacks();
+            }
+        }
         /// <summary>
         /// The command (sql or a stored-procedure name) to execute
         /// </summary>
@@ -128,6 +145,11 @@ namespace Dapper
 #if ASYNC
             this.cancellationToken = cancellationToken;
 #endif
+        }
+
+        private CommandDefinition(object parameters) : this()
+        {
+            this.parameters = parameters;
         }
 
 #if ASYNC
@@ -1120,7 +1142,7 @@ namespace Dapper
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1145,7 +1167,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1161,7 +1183,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1229,6 +1251,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                             total += cmd.ExecuteNonQuery();
                         }
                     }
+                    command.FireOutputCallbacks();
                 } finally
                 {
                     if (wasClosed) cnn.Close();
@@ -1268,7 +1291,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1305,7 +1328,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
-        public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
         {
             return Query<DapperRow>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
         }
@@ -1362,7 +1385,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, bool buffered, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1412,7 +1435,7 @@ this IDbConnection cnn, Type type, string sql, object param = null, IDbTransacti
 #if CSHARP30
 this IDbConnection cnn, string sql, object param, IDbTransaction transaction, int? commandTimeout, CommandType? commandType
 #else
-            this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+            this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1441,7 +1464,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 cmd = command.SetupCommand(cnn, info.ParamReader);
                 reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
 
-                var result = new GridReader(cmd, reader, identity);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -1503,10 +1526,13 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                         yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
                 }
+                while (reader.NextResult()) { }
                 // happy path; close the reader cleanly - no
                 // need for "Cancel" etc
                 reader.Dispose();
                 reader = null;
+
+                command.FireOutputCallbacks();
             }
             finally
             {
@@ -1541,7 +1567,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 #if CSHARP30
 this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1569,7 +1595,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, dynamic 
 #if CSHARP30
 this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1598,7 +1624,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, 
 #if CSHARP30
 this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType
 #else
-this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 #endif
 )
         {
@@ -1626,7 +1652,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <param name="commandType"></param>
         /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
-            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 )
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
@@ -1653,7 +1679,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <param name="commandType"></param>
         /// <returns></returns>
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(
-            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
 )
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
@@ -1681,7 +1707,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <param name="commandTimeout"></param>
         /// <param name="commandType"></param>
         /// <returns></returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
@@ -1734,6 +1760,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         yield return mapIt(reader);
                     }
+                    command.FireOutputCallbacks();
                 }
             }
             finally
@@ -3022,17 +3049,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
-                return cmd.ExecuteNonQuery();
+                int result = cmd.ExecuteNonQuery();
+                command.FireOutputCallbacks();
+                return result;
             }
             finally
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
-
-                if (command.Parameters is DynamicParameters)
-                {
-                    ((DynamicParameters)command.Parameters).FireOutputCallbacks();
-                }
             }
         }
 
@@ -3054,16 +3078,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
                 result =cmd.ExecuteScalar();
+                command.FireOutputCallbacks();
             }
             finally
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
-
-                if (command.Parameters is DynamicParameters)
-                {
-                    ((DynamicParameters)command.Parameters).FireOutputCallbacks();
-                }
             }
             return Parse<T>(result);
         }
@@ -3081,17 +3101,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (wasClosed) commandBehavior |= CommandBehavior.CloseConnection;
                 var reader = cmd.ExecuteReader(commandBehavior);
                 wasClosed = false; // don't dispose before giving it to them!
+
+                // note: command.FireOutputCallbacks(); would be useless here; parameters come at the **end** of the TDS stream
                 return reader;
             }
             finally
             {
                 if (wasClosed) cnn.Close();
                 if (cmd != null) cmd.Dispose();
-
-                if (command.Parameters is DynamicParameters)
-                {
-                    ((DynamicParameters)command.Parameters).FireOutputCallbacks();
-                }
             }
         }
 
@@ -3785,11 +3802,12 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             private IDbCommand command;
             private Identity identity;
 
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams)
             {
                 this.command = command;
                 this.reader = reader;
                 this.identity = identity;
+                this.dynamicParams = dynamicParams;
             }
 
 #if !CSHARP30
@@ -3996,6 +4014,8 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             private int gridIndex, readCount;
             private bool consumed;
+            private DynamicParameters dynamicParams;
+
             /// <summary>
             /// Has the underlying reader been consumed?
             /// </summary>
@@ -4020,7 +4040,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-
+                    if (dynamicParams != null) dynamicParams.FireOutputCallbacks();
                     Dispose();
                 }
             }
