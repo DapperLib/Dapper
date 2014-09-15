@@ -462,13 +462,16 @@ namespace Dapper
 
         private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader,object> func, object parameters)
         {
-            while (reader.Read())
+            using (reader)
             {
-                yield return (T)func(reader);
+                while (reader.Read())
+                {
+                    yield return (T)func(reader);
+                }
+                while (reader.NextResult()) { }
+                if (parameters is DynamicParameters)
+                    ((DynamicParameters)parameters).FireOutputCallbacks();
             }
-            while (reader.NextResult()) { }
-            if (parameters is DynamicParameters)
-                ((DynamicParameters)parameters).FireOutputCallbacks();
         }
 
         /// <summary>

@@ -3661,6 +3661,29 @@ option (optimize for (@vals unKnoWn))";
             scalar.IsEqualTo(expected);
         }
 
+        public void TestSubsequentQueriesSuccess()
+        {
+            var data0 = connection.Query<Fooz0>("select 1 as [Id] where 1 = 0").ToList();
+            data0.Count().IsEqualTo(0);
+
+            var data1 = connection.Query<Fooz1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).ToList();
+            data1.Count().IsEqualTo(0);
+
+            var data2 = connection.Query<Fooz2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).ToList();
+            data2.Count().IsEqualTo(0);
+
+            data0 = connection.Query<Fooz0>("select 1 as [Id] where 1 = 0").ToList();
+            data0.Count().IsEqualTo(0);
+
+            data1 = connection.Query<Fooz1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).ToList();
+            data1.Count().IsEqualTo(0);
+
+            data2 = connection.Query<Fooz2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).ToList();
+            data2.Count().IsEqualTo(0);
+        }
+        class Fooz0 { public int Id { get; set; } }
+        class Fooz1 { public int Id { get; set; } }
+        class Fooz2 { public int Id { get; set; } }
 
         public void SO25069578_DynamicParams_Procs()
         {
