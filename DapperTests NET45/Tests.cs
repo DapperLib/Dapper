@@ -355,5 +355,199 @@ namespace DapperTests_NET45
                 k.IsNull();
             }
         }
+
+        public void TestSupportForDynamicParametersOutputExpressions()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+                var p = new DynamicParameters(bob);
+                p.Output(bob, b => b.PersonId);
+                p.Output(bob, b => b.Occupation);
+                p.Output(bob, b => b.NumberOfLegs);
+                p.Output(bob, b => b.Address.Name);
+                p.Output(bob, b => b.Address.PersonId);
+
+                connection.ExecuteAsync(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId", p).Wait();
+
+                bob.Occupation.IsEqualTo("grillmaster");
+                bob.PersonId.IsEqualTo(2);
+                bob.NumberOfLegs.IsEqualTo(1);
+                bob.Address.Name.IsEqualTo("bobs burgers");
+                bob.Address.PersonId.IsEqualTo(2);
+            }
+        }
+        public void TestSupportForDynamicParametersOutputExpressions_Scalar()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+                var p = new DynamicParameters(bob);
+                p.Output(bob, b => b.PersonId);
+                p.Output(bob, b => b.Occupation);
+                p.Output(bob, b => b.NumberOfLegs);
+                p.Output(bob, b => b.Address.Name);
+                p.Output(bob, b => b.Address.PersonId);
+
+                var result = (int)connection.ExecuteScalarAsync(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId
+select 42", p).Result;
+
+                bob.Occupation.IsEqualTo("grillmaster");
+                bob.PersonId.IsEqualTo(2);
+                bob.NumberOfLegs.IsEqualTo(1);
+                bob.Address.Name.IsEqualTo("bobs burgers");
+                bob.Address.PersonId.IsEqualTo(2);
+                result.IsEqualTo(42);
+            }
+        }
+        public void TestSupportForDynamicParametersOutputExpressions_Query_Default()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+                var p = new DynamicParameters(bob);
+                p.Output(bob, b => b.PersonId);
+                p.Output(bob, b => b.Occupation);
+                p.Output(bob, b => b.NumberOfLegs);
+                p.Output(bob, b => b.Address.Name);
+                p.Output(bob, b => b.Address.PersonId);
+
+                var result = connection.QueryAsync<int>(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId
+select 42", p).Result.Single();
+
+                bob.Occupation.IsEqualTo("grillmaster");
+                bob.PersonId.IsEqualTo(2);
+                bob.NumberOfLegs.IsEqualTo(1);
+                bob.Address.Name.IsEqualTo("bobs burgers");
+                bob.Address.PersonId.IsEqualTo(2);
+                result.IsEqualTo(42);
+            }
+        }
+        public void TestSupportForDynamicParametersOutputExpressions_Query_Buffered()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+                var p = new DynamicParameters(bob);
+                p.Output(bob, b => b.PersonId);
+                p.Output(bob, b => b.Occupation);
+                p.Output(bob, b => b.NumberOfLegs);
+                p.Output(bob, b => b.Address.Name);
+                p.Output(bob, b => b.Address.PersonId);
+
+                var result = connection.QueryAsync<int>(new CommandDefinition(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId
+select 42", p, flags: CommandFlags.Buffered)).Result.Single();
+
+                bob.Occupation.IsEqualTo("grillmaster");
+                bob.PersonId.IsEqualTo(2);
+                bob.NumberOfLegs.IsEqualTo(1);
+                bob.Address.Name.IsEqualTo("bobs burgers");
+                bob.Address.PersonId.IsEqualTo(2);
+                result.IsEqualTo(42);
+            }
+        }
+        public void TestSupportForDynamicParametersOutputExpressions_Query_NonBuffered()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+                var p = new DynamicParameters(bob);
+                p.Output(bob, b => b.PersonId);
+                p.Output(bob, b => b.Occupation);
+                p.Output(bob, b => b.NumberOfLegs);
+                p.Output(bob, b => b.Address.Name);
+                p.Output(bob, b => b.Address.PersonId);
+
+                var result = connection.QueryAsync<int>(new CommandDefinition(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId
+select 42", p, flags: CommandFlags.None)).Result.Single();
+
+                bob.Occupation.IsEqualTo("grillmaster");
+                bob.PersonId.IsEqualTo(2);
+                bob.NumberOfLegs.IsEqualTo(1);
+                bob.Address.Name.IsEqualTo("bobs burgers");
+                bob.Address.PersonId.IsEqualTo(2);
+                result.IsEqualTo(42);
+            }
+        }
+        public void TestSupportForDynamicParametersOutputExpressions_QueryMultiple()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+                var p = new DynamicParameters(bob);
+                p.Output(bob, b => b.PersonId);
+                p.Output(bob, b => b.Occupation);
+                p.Output(bob, b => b.NumberOfLegs);
+                p.Output(bob, b => b.Address.Name);
+                p.Output(bob, b => b.Address.PersonId);
+
+                int x, y;
+                using(var multi = connection.QueryMultipleAsync(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+select 42
+select 17
+SET @AddressPersonId = @PersonId", p).Result)
+                {
+                    x = multi.ReadAsync<int>().Result.Single();
+                    y = multi.ReadAsync<int>().Result.Single();
+                }
+
+                bob.Occupation.IsEqualTo("grillmaster");
+                bob.PersonId.IsEqualTo(2);
+                bob.NumberOfLegs.IsEqualTo(1);
+                bob.Address.Name.IsEqualTo("bobs burgers");
+                bob.Address.PersonId.IsEqualTo(2);
+                x.IsEqualTo(42);
+                y.IsEqualTo(17);
+            }
+        }
+        class Person
+        {
+            public int PersonId { get; set; }
+            public string Name { get; set; }
+            public string Occupation { get; private set; }
+            public int NumberOfLegs = 2;
+            public Address Address { get; set; }
+        }
+        class Address
+        {
+            public int AddressId { get; set; }
+            public string Name { get; set; }
+            public int PersonId { get; set; }
+        }
     }
 }

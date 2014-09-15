@@ -95,13 +95,15 @@ namespace Dapper
                         {
                             buffer.Add((T)func(reader));
                         }
+                        while (await reader.NextResultAsync().ConfigureAwait(false)) { }
+                        command.FireOutputCallbacks();
                         return buffer;
                     }
                     else
                     {
                         // can't use ReadAsync / cancellation; but this will have to do
                         wasClosed = false; // don't close if handing back an open reader; rely on the command-behavior
-                        var deferred = ExecuteReaderSync<T>(reader, func);
+                        var deferred = ExecuteReaderSync<T>(reader, func, command.Parameters);
                         reader = null; // to prevent it being disposed before the caller gets to see it
                         return deferred;
                     }
@@ -211,7 +213,6 @@ namespace Dapper
                             using (pending.Dequeue().Command) { } // dispose commands
                         }
                     }
-                    return total;
                 }
                 else
                 {
@@ -236,6 +237,8 @@ namespace Dapper
                         }
                     }
                 }
+
+                command.FireOutputCallbacks();
             }
             finally
             {
@@ -253,7 +256,9 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                    return await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
+                    var result = await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
+                    command.FireOutputCallbacks();
+                    return result;
                 }
                 finally
                 {
@@ -446,7 +451,7 @@ namespace Dapper
                 using (var reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), map, splitOn, reader, identity);
+                    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity);
                     return command.Buffered ? results.ToList() : results;
                 }
             } finally
@@ -455,12 +460,15 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader,object> func)
+        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader,object> func, object parameters)
         {
             while (reader.Read())
             {
                 yield return (T)func(reader);
             }
+            while (reader.NextResult()) { }
+            if (parameters is DynamicParameters)
+                ((DynamicParameters)parameters).FireOutputCallbacks();
         }
 
         /// <summary>
@@ -481,7 +489,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         partial class GridReader
         {
             CancellationToken cancel;
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, CancellationToken cancel) : this(command, reader, identity)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, CancellationToken cancel) : this(command, reader, identity, dynamicParams)
             {
                 this.cancel = cancel;
             }
@@ -524,7 +532,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-
+                    if (dynamicParams != null) dynamicParams.FireOutputCallbacks();
                     Dispose();
                 }
             }
@@ -600,7 +608,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
                 reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
-                var result = new GridReader(cmd, reader, identity, command.CancellationToken);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -758,6 +766,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 result = await cmd.ExecuteScalarAsync(command.CancellationToken).ConfigureAwait(false);
+                command.FireOutputCallbacks();
             }
             finally
             {
