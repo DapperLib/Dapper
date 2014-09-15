@@ -535,6 +535,34 @@ SET @AddressPersonId = @PersonId", p).Result)
                 y.IsEqualTo(17);
             }
         }
+
+        public void TestSubsequentQueriesSuccess()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var data0 = connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0").Result.ToList();
+                data0.Count().IsEqualTo(0);
+
+                var data1 = connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags:CommandFlags.Buffered)).Result.ToList();
+                data1.Count().IsEqualTo(0);
+
+                var data2 = connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).Result.ToList();
+                data2.Count().IsEqualTo(0);
+
+                data0 = connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0").Result.ToList();
+                data0.Count().IsEqualTo(0);
+
+                data1 = connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).Result.ToList();
+                data1.Count().IsEqualTo(0);
+
+                data2 = connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).Result.ToList();
+                data2.Count().IsEqualTo(0);
+
+            }
+        }
+        class Foo0 { public int Id { get;set; } }
+        class Foo1 { public int Id { get; set; } }
+        class Foo2 { public int Id { get; set; } }
         class Person
         {
             public int PersonId { get; set; }
