@@ -29,7 +29,7 @@ namespace Dapper
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
                 var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + cols_params + ") select cast(scope_identity() as int)";
 
-                return (await database.QueryAsync<int?>(sql, o)).Single();
+                return (await database.QueryAsync<int?>(sql, o).ConfigureAwait(false)).Single();
             }
 
             /// <summary>
@@ -38,7 +38,7 @@ namespace Dapper
             /// <param name="id"></param>
             /// <param name="data"></param>
             /// <returns></returns>
-            public async Task<int> UpdateAsync(TId id, dynamic data)
+            public Task<int> UpdateAsync(TId id, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
 
@@ -50,7 +50,7 @@ namespace Dapper
                 DynamicParameters parameters = new DynamicParameters(data);
                 parameters.Add("Id", id);
 
-                return await database.ExecuteAsync(builder.ToString(), parameters);
+                return database.ExecuteAsync(builder.ToString(), parameters);
             }
 
             /// <summary>
@@ -60,7 +60,7 @@ namespace Dapper
             /// <returns></returns>
             public async Task<bool> DeleteAsync(TId id)
             {
-                return (await database.ExecuteAsync("delete from " + TableName + " where Id = @id", new { id })) > 0;
+                return (await database.ExecuteAsync("delete from " + TableName + " where Id = @id", new { id }).ConfigureAwait(false)) > 0;
             }
 
             /// <summary>
@@ -70,58 +70,58 @@ namespace Dapper
             /// <returns></returns>
             public async Task<T> GetAsync(TId id)
             {
-                return (await database.QueryAsync<T>("select * from " + TableName + " where Id = @id", new { id })).FirstOrDefault();
+                return (await database.QueryAsync<T>("select * from " + TableName + " where Id = @id", new { id }).ConfigureAwait(false)).FirstOrDefault();
             }
 
             public virtual async Task<T> FirstAsync()
             {
-                return (await database.QueryAsync<T>("select top 1 * from " + TableName)).FirstOrDefault();
+                return (await database.QueryAsync<T>("select top 1 * from " + TableName).ConfigureAwait(false)).FirstOrDefault();
             }
 
-            public async Task<IEnumerable<T>> AllAsync()
+            public Task<IEnumerable<T>> AllAsync()
             {
-                return await database.QueryAsync<T>("select * from " + TableName);
+                return database.QueryAsync<T>("select * from " + TableName);
             }
         }
 
-        public async Task<int> ExecuteAsync(string sql, dynamic param = null)
+        public Task<int> ExecuteAsync(string sql, dynamic param = null)
         {
-            return await connection.ExecuteAsync(sql, param as object, transaction, this.commandTimeout);
+            return connection.ExecuteAsync(sql, param as object, transaction, this.commandTimeout);
         }
 
-        public async Task<IEnumerable<T>> QueryAsync<T>(string sql, dynamic param = null)
+        public Task<IEnumerable<T>> QueryAsync<T>(string sql, dynamic param = null)
         {
-            return await connection.QueryAsync<T>(sql, param as object, transaction, commandTimeout);
+            return connection.QueryAsync<T>(sql, param as object, transaction, commandTimeout);
         }
 
-        public async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return await connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
+            return connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
         }
 
-        public async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return await connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
+            return connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
         }
 
-        public async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return await connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
+            return connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
         }
 
-        public async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
+        public Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return await connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
+            return connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn);
         }
 
-        public async Task<IEnumerable<dynamic>> QueryAsync(string sql, dynamic param = null)
+        public Task<IEnumerable<dynamic>> QueryAsync(string sql, dynamic param = null)
         {
-            return await connection.QueryAsync(sql, param as object, transaction);
+            return connection.QueryAsync(sql, param as object, transaction);
         }
 
-        public async Task<SqlMapper.GridReader> QueryMultipleAsync(string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        public Task<SqlMapper.GridReader> QueryMultipleAsync(string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return await SqlMapper.QueryMultipleAsync(connection, sql, param, transaction, commandTimeout, commandType);
+            return SqlMapper.QueryMultipleAsync(connection, sql, param, transaction, commandTimeout, commandType);
         }
     }
 }
