@@ -25,7 +25,7 @@ namespace DapperTests_NET45
         {
             using (var connection = Program.GetOpenConnection())
             {
-                var query = connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags:  CommandFlags.None));
+                var query = connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags: CommandFlags.None));
                 var arr = query.Result.ToArray();
                 arr.IsSequenceEqualTo(new[] { "abc", "def" });
             }
@@ -33,7 +33,7 @@ namespace DapperTests_NET45
 
         public void TestLongOperationWithCancellation()
         {
-            using(var connection = Program.GetClosedConnection())
+            using (var connection = Program.GetClosedConnection())
             {
                 CancellationTokenSource cancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 var task = connection.QueryAsync<int>(new CommandDefinition("waitfor delay '00:00:10';select 1", cancellationToken: cancel.Token));
@@ -531,7 +531,7 @@ select 42", p, flags: CommandFlags.None)).Result.Single();
                 p.Output(bob, b => b.Address.PersonId);
 
                 int x, y;
-                using(var multi = connection.QueryMultipleAsync(@"
+                using (var multi = connection.QueryMultipleAsync(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
@@ -561,7 +561,7 @@ SET @AddressPersonId = @PersonId", p).Result)
                 var data0 = connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0").Result.ToList();
                 data0.Count().IsEqualTo(0);
 
-                var data1 = connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags:CommandFlags.Buffered)).Result.ToList();
+                var data1 = connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).Result.ToList();
                 data1.Count().IsEqualTo(0);
 
                 var data2 = connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).Result.ToList();
@@ -578,7 +578,7 @@ SET @AddressPersonId = @PersonId", p).Result)
 
             }
         }
-        class Foo0 { public int Id { get;set; } }
+        class Foo0 { public int Id { get; set; } }
         class Foo1 { public int Id { get; set; } }
         class Foo2 { public int Id { get; set; } }
         class Person
@@ -700,7 +700,22 @@ SET @AddressPersonId = @PersonId", p).Result)
                 finally
                 {
                     connection.Execute("drop table #Users drop table #ReviewBoards");
+
                 }
+            }
+        }
+
+        public void TestAtEscaping()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var id = connection.QueryAsync<int>(@"
+                    declare @@Name int
+                    select @@Name = @Id+1
+                    select @@Name
+                    ", new Product { Id = 1 }).Result.Single();
+                id.IsEqualTo(2);
+
             }
         }
     }
