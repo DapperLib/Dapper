@@ -4297,14 +4297,20 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 }
 
                 // Now that the parameters are added to the command, let's place our output callbacks
-                foreach (var generator in this.outputCallbacks)
+                var tmp = outputCallbacks;
+                if (tmp != null)
                 {
-                    generator();
+                    foreach (var generator in tmp)
+                    {
+                        generator();
+                    }
                 }
             }
 
-            foreach (var param in parameters.Values.Where(p => !p.CameFromTemplate))
+            foreach (var param in parameters.Values)
             {
+                if (param.CameFromTemplate) continue;
+
                 var dbType = param.DbType;
                 var val = param.Value;
                 string name = Clean(param.Name);
@@ -4428,13 +4434,13 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             var failMessage = "Expression must be a property/field chain off of a(n) {0} instance";
             failMessage = string.Format(failMessage, typeof(T).Name);
             Action @throw = () => { throw new InvalidOperationException(failMessage); };
-            
+
             // Is it even a MemberExpression?
             var lastMemberAccess = expression.Body as MemberExpression;
 
             if (lastMemberAccess == null ||
                 (lastMemberAccess.Member.MemberType != MemberTypes.Property &&
-                lastMemberAccess.Member.MemberType != MemberTypes.Field)) 
+                lastMemberAccess.Member.MemberType != MemberTypes.Field))
             {
                 if (expression.Body.NodeType == ExpressionType.Convert &&
                     expression.Body.Type == typeof(object) &&
@@ -4468,27 +4474,24 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 {
                     break;
                 }
-                else if (diving == null || 
+                else if (diving == null ||
                     (diving.Member.MemberType != MemberTypes.Property &&
                     diving.Member.MemberType != MemberTypes.Field))
                 {
                     @throw();
                 }
-            } 
+            }
             while (diving != null);
 
             var dynamicParamName = string.Join(string.Empty, names.ToArray());
 
             // Before we get all emitty...
-            var lookup = typeof(T).Name + "_" + string.Join("|", names.ToArray());
-            Action<object, DynamicParameters> setter = null;
-            lock (cachedOutputSettersLock)
-            {
-                if (cachedOutputSetters.TryGetValue(lookup, out setter))
-                {
-                    goto MAKECALLBACK;
-                }
-            } 
+            var lookup = string.Join("|", names.ToArray());
+
+            var cache = CachedOutputSetters<T>.Cache;
+            var setter = (Action<object, DynamicParameters>)cache[lookup];
+
+            if (setter != null) goto MAKECALLBACK;
 
             // Come on let's build a method, let's build it, let's build it now!
             var dm = new DynamicMethod(string.Format("ExpressionParam{0}", Guid.NewGuid()), null, new[] { typeof(object), this.GetType() }, true);
@@ -4535,17 +4538,14 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             il.Emit(OpCodes.Ret); // GO
 
             setter = (Action<object, DynamicParameters>)dm.CreateDelegate(typeof(Action<object, DynamicParameters>));
-            lock (cachedOutputSettersLock)
+            lock (cache)
             {
-                if (!cachedOutputSetters.ContainsKey(lookup))
-                {
-                    cachedOutputSetters.Add(lookup, setter);
-                }
+                cache[lookup] = setter;
             }
 
             // Queue the preparation to be fired off when adding parameters to the DbCommand
             MAKECALLBACK:
-            this.outputCallbacks.Add(() =>
+            (outputCallbacks ?? (outputCallbacks = new List<Action>())).Add(() =>
             {
                 // Finally, prep the parameter and attach the callback to it
                 ParamInfo parameter;
@@ -4579,11 +4579,14 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             return this;
         }
 
-        private readonly List<Action> outputCallbacks = new List<Action>();
+        private List<Action> outputCallbacks;
 
         private readonly Dictionary<string, Action<object, DynamicParameters>> cachedOutputSetters = new Dictionary<string,Action<object,DynamicParameters>>();
 
-        private readonly object cachedOutputSettersLock = new object();
+        internal static class CachedOutputSetters<T>
+        {
+            public static readonly Hashtable Cache = new Hashtable();
+        }
 
         internal void FireOutputCallbacks()
         {
