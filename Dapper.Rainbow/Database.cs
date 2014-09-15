@@ -56,7 +56,7 @@ namespace Dapper
                 List<string> paramNames = GetParamNames(o);
                 paramNames.Remove("Id");
 
-                string cols = string.Join(",", paramNames);
+                string cols = string.Join(",", paramNames.Select(p => "[" + p + "]"));
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
                 var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + cols_params + ") select cast(scope_identity() as int)";
 
@@ -75,7 +75,7 @@ namespace Dapper
 
                 var builder = new StringBuilder();
                 builder.Append("update ").Append(TableName).Append(" set ");
-                builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p => p + "= @" + p)));
+                builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p =>  "[" + p + "] = @" + p)));
                 builder.Append("where Id = @Id");
 
                 DynamicParameters parameters = new DynamicParameters(data);
