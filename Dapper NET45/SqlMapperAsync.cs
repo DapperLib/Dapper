@@ -451,7 +451,7 @@ namespace Dapper
                 using (var reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity);
+                    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;
                 }
             } finally
@@ -460,7 +460,52 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader,object> func, object parameters)
+        /// <summary>
+        /// Perform a multi mapping query with arbitrary input parameters
+        /// </summary>
+        /// <typeparam name="TReturn">The return type</typeparam>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="types">array of types in the recordset</param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <returns></returns>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) 
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken));
+            return MultiMapAsync<TReturn>(cnn, command, types, map, splitOn);
+        }
+
+        private static async Task<IEnumerable<TReturn>> MultiMapAsync<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn) 
+        {
+            if (types.Length < 1) 
+            {
+                throw new ArgumentException("you must provide at least one type to deserialize");
+            }
+
+            object param = command.Parameters;
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, types[0], param == null ? null : param.GetType(), types);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try {
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
+                using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+                using (var reader = await cmd.ExecuteReaderAsync(command.CancellationToken).ConfigureAwait(false)) {
+                    var results = MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
+                    return command.Buffered ? results.ToList() : results;
+                }
+            }
+            finally {
+                if (wasClosed) cnn.Close();
+            }
+        }
+
+        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader, object> func, object parameters)
         {
             using (reader)
             {

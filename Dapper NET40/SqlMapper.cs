@@ -1711,17 +1711,39 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param as object, transaction, buffered, splitOn, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Perform a multi mapping query with arbitrary input parameters
+        /// </summary>
+        /// <typeparam name="TReturn">The return type</typeparam>
+        /// <param name="cnn"></param>
+        /// <param name="sql"></param>
+        /// <param name="types">array of types in the recordset</param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="transaction"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var results = MultiMapImpl<TReturn>(cnn, command, types, map, splitOn, null, null, true);
+            return buffered ? results.ToList() : results;
+        }
 #endif
         partial class DontMap { }
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
             this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
             var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
-            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null);
+            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null, true);
             return buffered ? results.ToList() : results;
         }
 
-        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity)
+        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
         {
             object param = command.Parameters;
             identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
@@ -1760,7 +1782,82 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         yield return mapIt(reader);
                     }
-                    command.FireOutputCallbacks();
+                    if(finalize)
+                    {
+                        while (reader.NextResult()) { }
+                        command.FireOutputCallbacks();
+                    }                    
+                }
+            }
+            finally
+            {
+                try
+                {
+                    if (ownedReader != null)
+                    {
+                        ownedReader.Dispose();
+                    }
+                }
+                finally
+                {
+                    if (ownedCommand != null)
+                    {
+                        ownedCommand.Dispose();
+                    }
+                    if (wasClosed) cnn.Close();
+                }
+            }
+        }
+
+        static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        {
+            if (types.Length < 1)
+            {
+                throw new ArgumentException("you must provide at least one type to deserialize");
+            }
+
+            object param = command.Parameters;
+            identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, types[0], param == null ? null : param.GetType(), types);
+            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
+
+            IDbCommand ownedCommand = null;
+            IDataReader ownedReader = null;
+
+            bool wasClosed = cnn != null && cnn.State == ConnectionState.Closed;
+            try
+            {
+                if (reader == null)
+                {
+                    ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
+                    if (wasClosed) cnn.Open();
+                    ownedReader = ownedCommand.ExecuteReader();
+                    reader = ownedReader;
+                }
+                DeserializerState deserializer = default(DeserializerState);
+                Func<IDataReader, object>[] otherDeserializers = null;
+
+                int hash = GetColumnHash(reader);
+                if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
+                {
+                    var deserializers = GenerateDeserializers(types, splitOn, reader);
+                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
+                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+                    SetQueryCache(identity, cinfo);
+                }
+
+                Func<IDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
+
+                if (mapIt != null)
+                {
+                    while (reader.Read())
+                    {
+                        yield return mapIt(reader);
+                    }
+                    if (finalize)
+                    {
+                        while (reader.NextResult()) { }
+                        command.FireOutputCallbacks();
+                    }
                 }
             }
             finally
@@ -1804,6 +1901,22 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 default:
                     throw new NotSupportedException();
             }
+        }
+
+        private static Func<IDataReader, TReturn> GenerateMapper<TReturn>(int length, Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, Func<object[], TReturn> map)
+        {
+            return r =>
+            {
+                var objects = new object[length];
+                objects[0] = deserializer(r);
+
+                for (var i = 1; i < length; ++i)
+                {
+                    objects[i] = otherDeserializers[i - 1](r);
+                }
+
+                return map(objects);
+            };
         }
 
         private static Func<IDataReader, object>[] GenerateDeserializers(Type[] types, string splitOn, IDataReader reader)
@@ -3888,7 +4001,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 }, gridIndex);
                 try
                 {
-                    foreach (var r in SqlMapper.MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity))
+                    foreach (var r in SqlMapper.MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
