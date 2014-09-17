@@ -395,3 +395,20 @@ public partial class SQLiteAdapter
         return id;
     }
 }
+
+
+public partial class MySqlAdapter : ISqlAdapter
+{
+    public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
+        string cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+
+        await connection.ExecuteAsync(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
+
+        var r = await connection.QueryAsync<dynamic>("select LAST_INSERT_ID() id", transaction: transaction, commandTimeout: commandTimeout);
+        int id = (int)r.First().id;
+        if (keyProperties.Any())
+            keyProperties.First().SetValue(entityToInsert, id, null);
+        return id;
+    }
+}
