@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Dapper
 {
@@ -47,11 +49,6 @@ namespace Dapper
                               })) + postfix
                     : prefix + string.Join(joiner, this.Select(c => c.Sql)) + postfix;
             }
-
-            public void SetPrefix(string value)
-            {
-                prefix = value;
-            }
         }
 
         public class Template
@@ -59,16 +56,13 @@ namespace Dapper
             readonly string sql;
             readonly SqlBuilder builder;
             readonly object initParams;
-            readonly bool hasExistingWhere;
-
             int dataSeq = -1; // Unresolved
 
-            public Template(SqlBuilder builder, string sql, dynamic parameters, bool hasExistingWhere = false)
+            public Template(SqlBuilder builder, string sql, dynamic parameters)
             {
                 this.initParams = parameters;
                 this.sql = sql;
                 this.builder = builder;
-                this.hasExistingWhere = hasExistingWhere;
             }
 
             static System.Text.RegularExpressions.Regex regex =
@@ -84,9 +78,6 @@ namespace Dapper
 
                     foreach (var pair in builder.data)
                     {
-                        if (hasExistingWhere && pair.Key == "where")
-                            pair.Value.SetPrefix(" AND ");
-
                         rawSql = rawSql.Replace("/**" + pair.Key + "**/", pair.Value.ResolveClauses(p));
                     }
                     parameters = p;
@@ -110,9 +101,9 @@ namespace Dapper
         {
         }
 
-        public Template AddTemplate(string sql, dynamic parameters = null, bool hasExistingWhere = false)
+        public Template AddTemplate(string sql, dynamic parameters = null)
         {
-            return new Template(this, sql, parameters, hasExistingWhere);
+            return new Template(this, sql, parameters);
         }
 
         void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool IsInclusive = false)
@@ -132,7 +123,7 @@ namespace Dapper
             AddClause("intersect", sql, parameters, joiner: "\nINTERSECT\n ", prefix: "\n ", postfix: "\n");
             return this;
         }
-
+        
         public SqlBuilder InnerJoin(string sql, dynamic parameters = null)
         {
             AddClause("innerjoin", sql, parameters, joiner: "\nINNER JOIN ", prefix: "\nINNER JOIN ", postfix: "\n");
@@ -162,7 +153,7 @@ namespace Dapper
             AddClause("where", sql, parameters, " AND ", prefix: "WHERE ", postfix: "\n", IsInclusive: true);
             return this;
         }
-
+        
         public SqlBuilder OrderBy(string sql, dynamic parameters = null)
         {
             AddClause("orderby", sql, parameters, " , ", prefix: "ORDER BY ", postfix: "\n");
