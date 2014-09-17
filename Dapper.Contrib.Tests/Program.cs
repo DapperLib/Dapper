@@ -15,6 +15,7 @@ namespace Dapper.Contrib.Tests
         {
             Setup();
             RunTests();
+            RunTestsGeneric();
         }
 
         private static void Setup()
@@ -31,6 +32,8 @@ namespace Dapper.Contrib.Tests
             {
                 connection.Open();
                 connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");
+                connection.Execute(@" create table Persons (Id bigint IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");
+                connection.Execute(@" create table Managers (Id uniqueidentifier not null, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@" create table Results (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, [Order] int not null) ");
             }
@@ -48,6 +51,18 @@ namespace Dapper.Contrib.Tests
             }
 
             Console.WriteLine("(end of tests; press any key)");
+            Console.ReadKey();
+        }
+
+        private static void RunTestsGeneric()
+        {
+            var tester = new TestsGeneric();
+            foreach (var method in typeof(TestsGeneric).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                Console.Write("Running " + method.Name);
+                method.Invoke(tester, null);
+                Console.WriteLine(" - OK!");
+            }
             Console.ReadKey();
         }
 
