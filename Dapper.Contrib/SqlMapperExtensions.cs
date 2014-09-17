@@ -205,7 +205,7 @@ namespace Dapper.Contrib.Extensions
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
             var computedProperties = ComputedPropertiesCache(type);
-            var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties));
+            var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties).Where(k => !IsKeyWriteable(k, false)));
 
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
             {
