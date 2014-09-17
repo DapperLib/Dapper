@@ -114,7 +114,7 @@ namespace Dapper
                 clauses = new Clauses(joiner, prefix, postfix);
                 data[name] = clauses;
             }
-            clauses.Add(new Clause { Sql = sql, Parameters = parameters });
+            clauses.Add(new Clause { Sql = sql, Parameters = parameters, IsInclusive = IsInclusive });
             seq++;
         }
 
