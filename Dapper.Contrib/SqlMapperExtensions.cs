@@ -665,9 +665,10 @@ public class SQLiteAdapter : ISqlAdapter
         connection.Execute(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
 
         var r = connection.Query("select last_insert_rowid() id", transaction: transaction, commandTimeout: commandTimeout);
-        TKey id = r.First().id;
-        if (keyProperties.Any())
-            keyProperties.First().SetValue(entityToInsert, id, null);
+        var o = r.First().id;
+		TKey id = (o == null) ? default(TKey) : (TKey)o;
+		if (keyProperties.Any(k => !Dapper.Contrib.Extensions.SqlMapperExtensions.IsKeyWriteable(k, false)))
+			keyProperties.First().SetValue(entityToInsert, id, null);
         return id;
     }
 
