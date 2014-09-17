@@ -115,6 +115,11 @@ namespace Dapper
             return new Template(this, sql, parameters, hasExistingWhere);
         }
 
+        public Template AddTemplate(string sql, dynamic parameters = null)
+        {
+            return new Template(this, sql, parameters, false);
+        }
+
         void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool IsInclusive = false)
         {
             Clauses clauses;
