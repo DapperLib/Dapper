@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.13</version>
+    <version>1.34</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <projectUrl>https://github.com/StackExchange/dapper-dot-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..</description>
     <summary>A high performance Micro-ORM</summary>
@@ -19,6 +19,24 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.34    - Support for SqlHierarchyId (core)
+      * 1.33    - Support for SqlGeometry (core) and DbGeometry (EF)
+      * 1.32    - Support for SqlGeography in core library
+      * 1.31    - Fix issue with error message when there is a column/type mismatch
+      * 1.30    - Better async cancellation
+      * 1.29    - Make underscore name matching optional (opt-in) - this can be a breaking change for some people
+      * 1.28    - Much better numeric type conversion; fix for large oracle strings; map Foo_Bar to FooBar (etc); ExecuteScalar added; stability fixes
+      * 1.27    - Fixes for type-handler parse; ensure type-handlers get last dibs on configuring parameters
+      * 1.26    - New type handler API for extension support
+      * 1.25    - Command recycling and disposing during pipelined async multi-exec; enable pipeline (via sync-over-async) for sync API
+      * 1.24    - Implement pipelined async multi-exec, when flag is specified (only - requires MARS etc)
+      * 1.23    - Improved support for optimize hints (@foo unknown) with list expansions
+      * 1.22    - Literal support now extends to enumerable types (for "in" etc usage); move to command-flags model for "buffered" etc
+      * 1.21    - Limit literals to numeric types; for enums, use value not name
+      * 1.20    - Improved async support in .NET 4.5 (lots of contributions from users here, including JasonPunyon, kwaclaw, tugberkugurlu, and mgravell);
+      *          Now supports literal replacement via {=foo}; new ExecuteReader method (via JJoe2); support for ICustomQueryParameter
+      *          dictionary members (via Blackjacketmack); culture sensitivity (via tms); fixes for time parameters (via olegKoshmeliuk);
+      *          and a range of additional tweaks, twiddles, fixes and improvements.
       * 1.13   - Added support for Table Valued Parameters as part of anonymous objects
       *        - Added support for async
       *        - Added support for sharing strategies between databases

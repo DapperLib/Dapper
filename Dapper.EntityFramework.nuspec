@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata schemaVersion="2">
+    <id>Dapper.EntityFramework</id>
+    <version>1.33</version>
+    <title>Dapper entity framework type handlers</title>
+    <authors>Marc Gravell</authors>
+    <owners>Marc Gravell</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Extension handlers for entity framework</description>
+    <summary>Adds support for DbGeography, etc</summary>
+    <tags>orm sql micro-orm</tags>
+    <dependencies>
+      <dependency id="EntityFramework" version="6.1.1" />
+      <dependency id="Dapper" version="1.33" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core"/>
+      <frameworkAssembly assemblyName="System"/>
+      <frameworkAssembly assemblyName="System.Data"/>
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+    </frameworkAssemblies>
+    <releaseNotes>
+    </releaseNotes>
+  </metadata>
+  <files>
+    <file src="Dapper.EntityFramework NET45\bin\Release\Dapper.EntityFramework.dll" target="lib\net45" />
+    <file src="Dapper.EntityFramework NET45\bin\Release\Dapper.EntityFramework.pdb" target="lib\net45" />
+    <file src="Dapper.EntityFramework NET45\bin\Release\Dapper.EntityFramework.xml" target="lib\net45" />
+    
+    <file src="Dapper.EntityFramework NET40\bin\Release\Dapper.EntityFramework.dll" target="lib\net40" />
+    <file src="Dapper.EntityFramework NET40\bin\Release\Dapper.EntityFramework.pdb" target="lib\net40" />
+    <file src="Dapper.EntityFramework NET40\bin\Release\Dapper.EntityFramework.xml" target="lib\net40" />
+  </files>
+</package>

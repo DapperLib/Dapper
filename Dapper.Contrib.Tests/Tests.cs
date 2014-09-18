@@ -181,5 +181,18 @@ namespace Dapper.Contrib.Tests
             }
 
         }
+
+        public void DeleteAll()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = connection.Insert(new User() { Name = "Alice", Age = 32 });
+                var id2 = connection.Insert(new User() { Name = "Bob", Age = 33 });
+                connection.DeleteAll<User>();
+                connection.Get<User>(id1).IsNull();
+                connection.Get<User>(id2).IsNull();
+            }
+        }
+
     }
 }

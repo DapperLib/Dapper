@@ -49,6 +49,8 @@ namespace Dapper.Contrib.Tests
                 method.Invoke(tester, null);
                 Console.WriteLine(" - OK!");
             }
+
+            Console.WriteLine("(end of tests; press any key)");
             Console.ReadKey();
         }
 

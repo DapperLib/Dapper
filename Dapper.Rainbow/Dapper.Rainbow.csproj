@@ -41,14 +41,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database.cs" />
+    <Compile Include="IgnorePropertyAttribute.cs" />
     <Compile Include="Snapshotter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlCompactDatabase.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Dapper.Rainbow.nuspec">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper NET40\Dapper NET40.csproj">

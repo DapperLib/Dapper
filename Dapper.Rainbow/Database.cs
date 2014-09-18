@@ -22,9 +22,9 @@ namespace Dapper
     /// A container for a database, assumes all the tables have an Id column named Id
     /// </summary>
     /// <typeparam name="TDatabase"></typeparam>
-    public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
+    public abstract partial class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
-        public class Table<T, TId>
+        public partial class Table<T, TId>
         {
             internal Database<TDatabase> database;
             internal string tableName;
@@ -129,7 +129,12 @@ namespace Dapper
                     paramNames = new List<string>();
                     foreach (var prop in o.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public))
                     {
-                        paramNames.Add(prop.Name);
+                        var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
+                        var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
+                        if (attr==null || (attr != null && !attr.Value))
+                        {
+                            paramNames.Add(prop.Name);
+                        }                        
                     }
                     paramNameCache[o.GetType()] = paramNames;
                 }
