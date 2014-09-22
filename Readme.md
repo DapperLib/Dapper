@@ -342,7 +342,7 @@ Dapper does not manage your connection's lifecycle, it assumes the connection it
 
 Will dapper work with my db provider?
 ---------------------
-Dapper has no DB specific implementation details, it works across all .net ado providers including sqlite, sqlce, firebird, oracle, MySQL and SQL Server
+Dapper has no DB specific implementation details, it works across all .net ado providers including sqlite, sqlce, firebird, oracle, MySQL, PostgreSQL and SQL Server
 
 Do you have a comprehensive list of examples?
 ---------------------
