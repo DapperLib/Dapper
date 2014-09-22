@@ -3842,6 +3842,15 @@ SELECT value FROM @table WHERE value IN @myIds";
             result.Contains(6).IsTrue();
         }
 
+        public void AllowIDictionaryParameters()
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "param1", 0 }
+            };
+
+            connection.Query("SELECT @param1", parameters);
+        }
 #if POSTGRESQL
 
         class Cat

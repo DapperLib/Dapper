@@ -2048,9 +2048,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         info.ParamReader = (cmd, obj) => { ((IDynamicParameters)obj).AddParameters(cmd, identity); };
                     }
-#if !CSHARP30
-                    // special-case dictionary && `dynamic`
-                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>> && exampleParameters is System.Dynamic.IDynamicMetaObjectProvider)
+#if CSHARP30
+                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>>)
+#else
+                    // special-case dictionary and `dynamic`
+                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>> || exampleParameters is System.Dynamic.IDynamicMetaObjectProvider)
+#endif
                     {
                         info.ParamReader = (cmd, obj) =>
                         {
@@ -2058,7 +2061,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             mapped.AddParameters(cmd, identity);
                         };
                     }
-#endif
                     else
                     {
                         var literals = GetLiteralTokens(identity.sql);
