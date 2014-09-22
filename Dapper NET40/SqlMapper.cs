@@ -849,7 +849,7 @@ namespace Dapper
         internal static DbType LookupDbType(Type type, string name, out ITypeHandler handler)
         {
             DbType dbType;
-            handler = null;
+            typeHandlers.TryGetValue(type, out handler);
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
             if (nullUnderlyingType != null) type = nullUnderlyingType;
             if (type.IsEnum && !typeMap.ContainsKey(type))
@@ -869,7 +869,7 @@ namespace Dapper
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
-            if (typeHandlers.TryGetValue(type, out handler))
+            if (handler != null)
             {
                 return DbType.Object;
             }

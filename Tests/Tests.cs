@@ -3842,6 +3842,83 @@ SELECT value FROM @table WHERE value IN @myIds";
             result.Contains(6).IsTrue();
         }
 
+        public void TypeHandlerSetValueCalledForBuiltInSqlTypes()
+        {
+            // Commented out tests are for types that aren't directly supported by SqlDbType
+
+            TypeHandlerSetValueCalledForBuiltInSqlType<byte>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<sbyte>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<short>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<ushort>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<int>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<uint>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<long>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<ulong>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<float>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<double>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<decimal>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<bool>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<string>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<char>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<Guid>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<DateTime>((DateTime)SqlDateTime.MinValue);
+            TypeHandlerSetValueCalledForBuiltInSqlType<DateTimeOffset>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<TimeSpan>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<byte[]>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<byte?>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<sbyte?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<short?>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<ushort?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<int?>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<uint?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<long?>();
+            //TypeHandlerSetValueCalledForBuiltInSqlType<ulong?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<float?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<double?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<decimal?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<bool?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<char?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<Guid?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<DateTime?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<DateTimeOffset?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<TimeSpan?>();
+            TypeHandlerSetValueCalledForBuiltInSqlType<object>();
+        }
+
+        private void TypeHandlerSetValueCalledForBuiltInSqlType<T>(T testValue = default(T))
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+
+            var handler = new TypeHandlerSetValueCalledHandler();
+            
+            // Test that logic still works without handler
+            connection.Query("SELECT @param", new { param = testValue });
+
+            // Now try with handler overriding default logic
+            Dapper.SqlMapper.AddTypeHandler(typeof(T), handler);
+            connection.Query("SELECT @param1", new { param1 = testValue });
+
+            Dapper.SqlMapper.ResetTypeHandlers();
+
+            handler.WasSet.IsTrue();
+        }
+
+        public class TypeHandlerSetValueCalledHandler : Dapper.SqlMapper.ITypeHandler
+        {
+            public bool WasSet = false;
+
+            public object Parse(Type destinationType, object value)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetValue(IDbDataParameter parameter, object value)
+            {
+                WasSet = true;
+                parameter.Value = value;
+            }
+        }
+
 #if POSTGRESQL
 
         class Cat
