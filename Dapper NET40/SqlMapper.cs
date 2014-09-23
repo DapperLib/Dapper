@@ -2095,8 +2095,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (!string.IsNullOrEmpty(param.ParameterName)) parameters[param.ParameterName] = param;
             }
             HashSet<string> consumed = new HashSet<string>(StringComparer.InvariantCulture);
-            cmd.Parameters.Clear();
-
+            bool firstMatch = true;
             cmd.CommandText = pseudoPositional.Replace(cmd.CommandText, match =>
             {
                 string key = match.Groups[1].Value;
@@ -2107,6 +2106,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
                 else if (parameters.TryGetValue(key, out param))
                 {
+                    if(firstMatch)
+                    {
+                        firstMatch = false;
+                        cmd.Parameters.Clear(); // only clear if we are pretty positive that we've found this pattern successfully
+                    }
                     // if found, return the anonymous token "?"
                     cmd.Parameters.Add(param);
                     parameters.Remove(key);
