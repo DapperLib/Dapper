@@ -47,6 +47,9 @@
     <Reference Include="EntityFramework.SqlServer">
       <HintPath>..\packages\EntityFramework.6.1.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="FirebirdSql.Data.FirebirdClient">
+      <HintPath>..\packages\FirebirdSql.Data.FirebirdClient.4.5.1.0\lib\net45\FirebirdSql.Data.FirebirdClient.dll</HintPath>
+    </Reference>
     <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\FSharp.Core.4.0.0\lib\FSharp.Core.dll</HintPath>
@@ -264,6 +267,7 @@
   <ItemGroup>
     <Folder Include="bltoolkit\" />
     <Folder Include="Simple.Data\" />
+    <Folder Include="SqlMapper\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper NET40\Dapper NET40.csproj">

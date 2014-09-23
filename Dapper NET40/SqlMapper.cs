@@ -47,7 +47,7 @@ namespace Dapper
         /// <summary>
         /// Should the plan cache be bypassed?
         /// </summary>
-        NoCache = 4
+        NoCache = 4,
     }
     /// <summary>
     /// Represents the key aspects of a sql operation
@@ -2044,18 +2044,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 info = new CacheInfo();
                 if (identity.parametersType != null)
                 {
+                    Action<IDbCommand, object> reader;
                     if (exampleParameters is IDynamicParameters)
                     {
-                        info.ParamReader = (cmd, obj) => { ((IDynamicParameters)obj).AddParameters(cmd, identity); };
+                        reader = (cmd, obj) => { ((IDynamicParameters)obj).AddParameters(cmd, identity); };
                     }
-#if CSHARP30
                     else if (exampleParameters is IEnumerable<KeyValuePair<string, object>>)
-#else
-                    // special-case dictionary and `dynamic`
-                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>> || exampleParameters is System.Dynamic.IDynamicMetaObjectProvider)
-#endif
                     {
-                        info.ParamReader = (cmd, obj) =>
+                        reader = (cmd, obj) =>
                         {
                             IDynamicParameters mapped = new DynamicParameters(obj);
                             mapped.AddParameters(cmd, identity);
@@ -2064,12 +2060,65 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     else
                     {
                         var literals = GetLiteralTokens(identity.sql);
-                        info.ParamReader = CreateParamInfoGenerator(identity, false, true, literals);
+                        reader = CreateParamInfoGenerator(identity, false, true, literals);
                     }
+                    if((identity.commandType == null || identity.commandType == CommandType.Text) && ShouldPassByPosition(identity.sql))
+                    {
+                        var tail = reader;
+                        var sql = identity.sql;
+                        reader = (cmd, obj) =>
+                        {
+                            tail(cmd, obj);
+                            PassByPosition(cmd);
+                        };
+                    }
+                    info.ParamReader = reader;
                 }
                 if(addToCache) SetQueryCache(identity, info);
             }
             return info;
+        }
+
+        private static bool ShouldPassByPosition(string sql)
+        {
+            return sql != null && sql.IndexOf('?') >= 0 && pseudoPositional.IsMatch(sql);
+        }
+
+        private static void PassByPosition(IDbCommand cmd)
+        {
+            if (cmd.Parameters.Count == 0) return;
+
+            Dictionary<string, IDbDataParameter> parameters = new Dictionary<string, IDbDataParameter>(StringComparer.InvariantCulture);
+            
+            foreach(IDbDataParameter param in cmd.Parameters)
+            {
+                if (!string.IsNullOrEmpty(param.ParameterName)) parameters[param.ParameterName] = param;
+            }
+            HashSet<string> consumed = new HashSet<string>(StringComparer.InvariantCulture);
+            cmd.Parameters.Clear();
+
+            cmd.CommandText = pseudoPositional.Replace(cmd.CommandText, match =>
+            {
+                string key = match.Groups[1].Value;
+                IDbDataParameter param;
+                if (!consumed.Add(key))
+                {
+                    throw new InvalidOperationException("When passing parameters by position, each parameter can only be referenced once");
+                }
+                else if (parameters.TryGetValue(key, out param))
+                {
+                    // if found, return the anonymous token "?"
+                    cmd.Parameters.Add(param);
+                    parameters.Remove(key);
+                    consumed.Add(key);
+                    return "?";
+                }
+                else
+                {
+                    // otherwise, leave alone for simple debugging
+                    return match.Value;
+                }
+            });
         }
 
         private static Func<IDataReader, object> GetDeserializer(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
@@ -2682,14 +2731,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
         private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
         {
-            return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + "([^a-zA-Z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant));
+            return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + "([^a-z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant));
         }
 
-
         // look for ? / @ / : *by itself*
-        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-zA-Z0-9@_])[?@:](?![a-zA-Z0-9@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
-            literalTokens = new Regex(@"\{=([a-zA-Z0-9_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        
+        static readonly Regex smellsLikeOleDb = new Regex(@"(?<![a-z0-9@_])[?@:](?![a-zA-Z0-9@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+            literalTokens = new Regex(@"(?<![a-z0-9_])\{=([a-z0-9_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+            pseudoPositional = new Regex(@"\?([a-z_][a-z0-9_]*)\?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         /// <summary>
         /// Represents a placeholder for a value that should be replaced as a literal value in the resulting sql
         /// </summary>
@@ -4280,13 +4329,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// EG: AddDynamicParams(new {A = 1, B = 2}) // will add property A and B to the dynamic
         /// </summary>
         /// <param name="param"></param>
-        public void AddDynamicParams(
-#if CSHARP30
-object param
-#else
-dynamic param
-#endif
-)
+        public void AddDynamicParams(object param)
         {
             var obj = param as object;
             if (obj != null)
@@ -4304,11 +4347,7 @@ dynamic param
                     {
                         foreach (var kvp in dictionary)
                         {
-#if CSHARP30
                             Add(kvp.Key, kvp.Value, null, null, null);
-#else
-                            Add(kvp.Key, kvp.Value);
-#endif
                         }
                     }
                 }

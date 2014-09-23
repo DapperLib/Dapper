@@ -24,6 +24,10 @@ namespace SqlMapper
             }
         }
 
+        public static void Fail()
+        {
+            throw new ApplicationException("Expectation failed");
+        }
         public static void IsFalse(this bool b)
         {
             if (b)

@@ -18,6 +18,7 @@ using System.Threading;
 using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 using System.Data.SqlTypes;
+using FirebirdSql.Data.FirebirdClient;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -498,7 +499,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         // see http://stackoverflow.com/q/18847510/23354
         public void TestOleDbParameters()
         {
-            using (var conn = new System.Data.OleDb.OleDbConnection(Program.OleDbConnectionString))
+            using (var conn = ConnectViaOledb())
             {
                 var row = conn.Query("select Id = ?, Age = ?",
                     new { foo = 12, bar = 23 } // these names DO NOT MATTER!!!
@@ -508,6 +509,13 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
                 age.IsEqualTo(23);
                 id.IsEqualTo(12);
             }
+        }
+
+        System.Data.OleDb.OleDbConnection ConnectViaOledb()
+        {
+            var conn = new System.Data.OleDb.OleDbConnection(Program.OleDbConnectionString);
+            conn.Open();
+            return conn;
         }
 
         public void TestStrongType()
@@ -3851,6 +3859,131 @@ SELECT value FROM @table WHERE value IN @myIds";
 
             connection.Query("SELECT @param1", parameters);
         }
+
+
+        public void Issue178_SqlServer()
+        {
+            const string sql = @"select count(*) from Issue178";
+            try { connection.Execute("drop table Issue178"); } catch { }
+            try { connection.Execute("create table Issue178(id int not null)"); } catch { }
+            // raw ADO.net
+            var sqlCmd = new SqlCommand(sql, connection);
+            using (IDataReader reader1 = sqlCmd.ExecuteReader())
+            {
+                Assert.IsTrue(reader1.Read());
+                reader1.GetInt32(0).IsEqualTo(0);
+                Assert.IsFalse(reader1.Read());
+                Assert.IsFalse(reader1.NextResult());
+            }
+
+            // dapper
+            using (var reader2 = connection.ExecuteReader(sql))
+            {
+                Assert.IsTrue(reader2.Read());
+                reader2.GetInt32(0).IsEqualTo(0);
+                Assert.IsFalse(reader2.Read());
+                Assert.IsFalse(reader2.NextResult());
+            }
+        }
+
+        public void Issue178_Firebird() // we expect this to fail due to a bug in Firebird; a PR to fix it has been submitted
+        {
+            var cs = @"initial catalog=localhost:database;user id=SYSDBA;password=masterkey";
+
+            using (var connection = new FbConnection(cs))
+            {
+                connection.Open();
+                const string sql = @"select count(*) from Issue178";
+                try { connection.Execute("drop table Issue178"); } catch { }
+                try { connection.Execute("create table Issue178(id int not null)"); } catch { }
+                // raw ADO.net
+                var sqlCmd = new FbCommand(sql, connection);
+                using (IDataReader reader1 = sqlCmd.ExecuteReader())
+                {
+                    Assert.IsTrue(reader1.Read());
+                    reader1.GetInt32(0).IsEqualTo(0);
+                    Assert.IsFalse(reader1.Read());
+                    Assert.IsFalse(reader1.NextResult());
+                }
+
+                // dapper
+                using (var reader2 = connection.ExecuteReader(sql))
+                {
+                    Assert.IsTrue(reader2.Read());
+                    reader2.GetInt32(0).IsEqualTo(0);
+                    Assert.IsFalse(reader2.Read());
+                    Assert.IsFalse(reader2.NextResult());
+                }
+            }
+        }
+
+        public void PseudoPositionalParameters_Simple()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                int value = connection.Query<int>("select ?x? + ?y_2? + ?z?", new { x = 1, y_2 = 3, z = 5, z2 = 24 }).Single();
+                value.IsEqualTo(9);
+            }
+        }
+        public void PseudoPositionalParameters_Dynamic()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                var args = new DynamicParameters();
+                args.Add("x", 1);
+                args.Add("y_2", 3);
+                args.Add("z", 5);
+                args.Add("z2", 24);
+                int value = connection.Query<int>("select ?x? + ?y_2? + ?z?", args).Single();
+                value.IsEqualTo(9);
+            }
+        }
+        public void PseudoPositionalParameters_ReusedParameter()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                try
+                {
+                    int value = connection.Query<int>("select ?x? + ?y_2? + ?x?", new { x = 1, y_2 = 3 }).Single();
+                    Assert.Fail();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ex.Message.IsEqualTo("When passing parameters by position, each parameter can only be referenced once");
+                }
+            }
+        }
+
+        public void PseudoPositionalParameters_ExecSingle()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                var data = new { x = 6 };
+                connection.Execute("create table #named_single(val int not null)");
+                int count = connection.Execute("insert #named_single (val) values (?x?)", data);
+                int sum = (int)connection.ExecuteScalar("select sum(val) from #named_single");
+                count.IsEqualTo(1);
+                sum.IsEqualTo(6);
+            }
+        }
+        public void PseudoPositionalParameters_ExecMulti()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                var data = new[]
+                {
+                    new { x = 1, y = 1 },
+                    new { x = 3, y = 1 },
+                    new { x = 6, y = 1 },
+                };
+                connection.Execute("create table #named_multi(val int not null)");
+                int count = connection.Execute("insert #named_multi (val) values (?x?)", data);
+                int sum = (int)connection.ExecuteScalar("select sum(val) from #named_multi");
+                count.IsEqualTo(3);
+                sum.IsEqualTo(10);
+            }
+        }
+
 #if POSTGRESQL
 
         class Cat
