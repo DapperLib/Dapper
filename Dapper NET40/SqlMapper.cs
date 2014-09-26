@@ -846,7 +846,20 @@ namespace Dapper
         private static Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
-        internal static DbType LookupDbType(Type type, string name, out ITypeHandler handler)
+
+        /// <summary>
+        /// Get the DbType that maps to a given value
+        /// </summary>
+        [Obsolete("This method is for internal use only"), Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        public static DbType GetDbType(object value)
+        {
+            if (value == null || value is DBNull) return DbType.Object;
+
+            ITypeHandler handler;
+            return LookupDbType(value.GetType(), "n/a", false, out handler);
+
+        }
+        internal static DbType LookupDbType(Type type, string name, bool demand, out ITypeHandler handler)
         {
             DbType dbType;
             handler = null;
@@ -885,7 +898,10 @@ namespace Dapper
                     AddTypeHandler(type, handler = new UdtTypeHandler("HIERARCHYID"));
                     return DbType.Object;
             }
-            throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type));
+            if(demand)
+                throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type.FullName));
+            return DbType.Object;
+
         }
 
         /// <summary>
@@ -1999,7 +2015,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             if (startIdx == reader.FieldCount)
             {
-                throw new ArgumentException(MultiMapSplitExceptionMessage);
+                throw MultiMapException(reader);
             }
 
             if (splitOn == "*")
@@ -2033,7 +2049,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 }
             }
 
-            throw new ArgumentException(MultiMapSplitExceptionMessage);
+            throw MultiMapException(reader);
         }
 
         private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters, bool addToCache)
@@ -2489,7 +2505,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 #endregion
         }
 #endif
-        private const string MultiMapSplitExceptionMessage = "When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id";
+        private static Exception MultiMapException(IDataRecord reader)
+        {
+            bool hasFields = false;
+            try {
+                hasFields = reader != null && reader.FieldCount != 0;
+            } catch { }
+            if (hasFields)
+                return new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+            else
+                return new InvalidOperationException("No columns were selected");
+        }
+        
 #if !CSHARP30
         internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
@@ -2501,7 +2528,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             if (fieldCount <= startBound)
             {
-                throw new ArgumentException(MultiMapSplitExceptionMessage, "splitOn");
+                throw MultiMapException(reader);
             }
 
             var effectiveFieldCount = Math.Min(fieldCount - startBound, length);
@@ -2561,7 +2588,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             if (fieldCount <= startBound)
             {
-                throw new ArgumentException(MultiMapSplitExceptionMessage, "splitOn");
+                throw MultiMapException(reader);
             }
 
             return
@@ -2974,7 +3001,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     continue;
                 }
                 ITypeHandler handler;
-                DbType dbType = LookupDbType(prop.PropertyType, prop.Name, out handler);
+                DbType dbType = LookupDbType(prop.PropertyType, prop.Name, true, out handler);
                 if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
                     // this actually represents special handling for list types;
@@ -3011,8 +3038,18 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (dbType != DbType.Time && handler == null) // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
                 {
                     il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
-                    EmitInt32(il, (int)dbType);// stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
-
+                    if (dbType == DbType.Object && prop.PropertyType == typeof(object)) // includes dynamic
+                    {
+                        // look it up from the param value
+                        il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [[parameters]] [parameter] [parameter] [typed-param]
+                        il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [object-value]
+                        il.Emit(OpCodes.Call, typeof(SqlMapper).GetMethod("GetDbType", BindingFlags.Static | BindingFlags.Public)); // stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
+                    }
+                    else
+                    {
+                        // constant value; nice and simple
+                        EmitInt32(il, (int)dbType);// stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
+                    }
                     il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty("DbType").GetSetMethod(), null);// stack is now [parameters] [[parameters]] [parameter]
                 }
 
@@ -3473,7 +3510,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             if (reader.FieldCount <= startBound)
             {
-                throw new ArgumentException(MultiMapSplitExceptionMessage, "splitOn");
+                throw MultiMapException(reader);
             }
 
             var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
@@ -4492,7 +4529,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 var isCustomQueryParameter = val is SqlMapper.ICustomQueryParameter;
 
                 SqlMapper.ITypeHandler handler = null;
-                if (dbType == null && val != null && !isCustomQueryParameter) dbType = SqlMapper.LookupDbType(val.GetType(), name, out handler);
+                if (dbType == null && val != null && !isCustomQueryParameter) dbType = SqlMapper.LookupDbType(val.GetType(), name, true, out handler);
                 if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
 #pragma warning disable 612, 618
@@ -4739,7 +4776,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 else
                 {
                     SqlMapper.ITypeHandler handler;
-                    dbType = (!dbType.HasValue) ? SqlMapper.LookupDbType(targetMemberType, targetMemberType.Name, out handler) : dbType;
+                    dbType = (!dbType.HasValue) ? SqlMapper.LookupDbType(targetMemberType, targetMemberType.Name, true, out handler) : dbType;
 
                     // CameFromTemplate property would not apply here because this new param
                     // Still needs to be added to the command

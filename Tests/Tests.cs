@@ -3984,6 +3984,40 @@ SELECT value FROM @table WHERE value IN @myIds";
             }
         }
 
+        public void QueryBasicWithoutQuery()
+        {
+            int? i = connection.Query<int?>("print 'not a query'").FirstOrDefault();
+            i.IsNull();
+        }
+
+        public void QueryComplexWithoutQuery()
+        {
+            var obj = connection.Query<Foo1>("print 'not a query'").FirstOrDefault();
+            obj.IsNull();
+        }
+
+
+        public void Issue182_BindDynamicObjectParametersAndColumns()
+        {
+            connection.Execute("create table #Dyno ([Id] uniqueidentifier primary key, [Name] nvarchar(50) not null, [Foo] bigint not null);");
+
+            var guid = Guid.NewGuid();
+            var orig = new Dyno { Name = "T Rex", Id = guid, Foo = 123L };
+            var result = connection.Execute("insert into #Dyno ([Id], [Name], [Foo]) values (@Id, @Name, @Foo);", orig);
+
+            var fromDb = connection.Query<Dyno>("select * from #Dyno where Id=@Id", orig).Single();
+            ((Guid)fromDb.Id).IsEqualTo(guid);
+            fromDb.Name.IsEqualTo("T Rex");
+            ((long)fromDb.Foo).IsEqualTo(123L);
+        }
+        public class Dyno
+        {
+            public dynamic Id { get; set; }
+            public string Name { get; set; }
+
+            public object Foo { get;set; }
+        }
+
 #if POSTGRESQL
 
         class Cat
