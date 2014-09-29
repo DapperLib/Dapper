@@ -30,6 +30,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Dapper.Contrib.nuspec = Dapper.Contrib.nuspec
 		Dapper.EntityFramework.nuspec = Dapper.EntityFramework.nuspec
+		Dapper.EntityFramework.StrongName.nuspec = Dapper.EntityFramework.StrongName.nuspec
 		Dapper.nuspec = Dapper.nuspec
 		Dapper.Rainbow.nuspec = Dapper.Rainbow.nuspec
 		Dapper.StrongName.nuspec = Dapper.StrongName.nuspec
@@ -53,6 +54,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper NET40 SNK", "Dapper NET40 SNK\Dapper NET40 SNK.csproj", "{437F12A2-6AB5-43BF-86BA-DD62DE17C2A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper NET45 SNK", "Dapper NET45 SNK\Dapper NET45 SNK.csproj", "{7140725C-8898-4F58-B566-628A80DB4EFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET40 SNK", "Dapper.EntityFramework NET40 SNK\Dapper.EntityFramework NET40 SNK.csproj", "{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET45 SNK", "Dapper.EntityFramework NET45 SNK\Dapper.EntityFramework NET45 SNK.csproj", "{7169A2C1-F57E-4288-B22D-52394DD2EC06}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -244,6 +249,26 @@ Global
 		{7140725C-8898-4F58-B566-628A80DB4EFA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{7140725C-8898-4F58-B566-628A80DB4EFA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{7140725C-8898-4F58-B566-628A80DB4EFA}.Release|x86.ActiveCfg = Release|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{9ABD1B44-8EEB-4CA9-9ED2-A6C462DE4FBF}.Release|x86.ActiveCfg = Release|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7169A2C1-F57E-4288-B22D-52394DD2EC06}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
