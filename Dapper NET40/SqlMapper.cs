@@ -1236,13 +1236,20 @@ this IDbConnection cnn, string sql, object param = null, IDbTransaction transact
             return ExecuteScalarImpl<T>(cnn, ref command);
         }
 
+        private static IEnumerable GetMultiExec(object param)
+        {
+            return (param is IEnumerable
+                && !(param is string || param is IEnumerable<KeyValuePair<string, object>>
+                    )) ? (IEnumerable)param : null;
+        }
+
         private static int ExecuteImpl(this IDbConnection cnn, ref CommandDefinition command)
         {
             object param = command.Parameters;
-            IEnumerable multiExec = param as IEnumerable;
+            IEnumerable multiExec = GetMultiExec(param);
             Identity identity;
             CacheInfo info = null;
-            if (multiExec != null && !(multiExec is string))
+            if (multiExec != null)
             {
 #if ASYNC
                 if((command.Flags & CommandFlags.Pipelined) != 0)
@@ -2845,11 +2852,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     case TypeCode.Decimal:
                         return ((decimal)value).ToString(CultureInfo.InvariantCulture);
                     default:
-                        if(value is IEnumerable && !(value is string))
+                        var multiExec = GetMultiExec(value);
+                        if(multiExec != null)
                         {
                             var sb = new StringBuilder();
                             bool first = true;
-                            foreach (object subval in (IEnumerable)value)
+                            foreach (object subval in multiExec)
                             {
                                 sb.Append(first ? '(' : ',').Append(Format(subval));
                                 first = false;
@@ -3331,10 +3339,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         private static Action<IDbCommand, object> GetParameterReader(IDbConnection cnn, ref CommandDefinition command)
         {
             object param = command.Parameters;
-            IEnumerable multiExec = (object)param as IEnumerable;
+            IEnumerable multiExec = GetMultiExec(param);
             Identity identity;
             CacheInfo info = null;
-            if (multiExec != null && !(multiExec is string))
+            if (multiExec != null)
             {
                 throw new NotSupportedException("MultiExec is not supported by ExecuteReader");
             }

@@ -132,8 +132,8 @@ namespace Dapper
         public static Task<int> ExecuteAsync(this IDbConnection cnn, CommandDefinition command)
         {
             object param = command.Parameters;
-            IEnumerable multiExec = param as IEnumerable;
-            if (multiExec != null && !(param is string))
+            IEnumerable multiExec = GetMultiExec(param);
+            if (multiExec != null)
             {
                 return ExecuteMultiImplAsync(cnn, command, multiExec);
             }

@@ -4018,6 +4018,29 @@ SELECT value FROM @table WHERE value IN @myIds";
             public object Foo { get;set; }
         }
 
+        public void Issue151_ExpandoObjectArgsQuery()
+        {
+            dynamic args = new ExpandoObject();
+            args.Id = 123;
+            args.Name = "abc";
+
+            var row = connection.Query("select @Id as [Id], @Name as [Name]", (object)args).Single();
+            ((int)row.Id).Equals(123);
+            ((string)row.Name).Equals("abc");
+        }
+
+        public void Issue151_ExpandoObjectArgsExec()
+        {
+            dynamic args = new ExpandoObject();
+            args.Id = 123;
+            args.Name = "abc";
+            connection.Execute("create table #issue151 (Id int not null, Name nvarchar(20) not null)");
+            connection.Execute("insert #issue151 values(@Id, @Name)", (object)args).IsEqualTo(1);
+            var row = connection.Query("select Id, Name from #issue151").Single();
+            ((int)row.Id).Equals(123);
+            ((string)row.Name).Equals("abc");
+        }
+
 #if POSTGRESQL
 
         class Cat
