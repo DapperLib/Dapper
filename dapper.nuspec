@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.34</version>
+    <version>1.35</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>
@@ -19,6 +19,9 @@
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
     <releaseNotes>
+      * 1.35    - Fix Issue 151 (Execute should work with ExpandoObject etc); Fix Issue 182 (better support for db-type when using `object` values);
+      *           output expressions / callbacks in dynamic args (via Derek); arbitrary number of types in multi-mapping (via James Holwell);
+      *           fix DbString/Oracle bug (via Mauro Cerutti); new support for **named positional arguments**
       * 1.34    - Support for SqlHierarchyId (core)
       * 1.33    - Support for SqlGeometry (core) and DbGeometry (EF)
       * 1.32    - Support for SqlGeography in core library
