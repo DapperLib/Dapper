@@ -18,12 +18,17 @@ namespace Dapper.Rainbow
             /// Insert a row into the db
             /// </summary>
             /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
+            /// <param name="removeId">Leave true if the database column is an identity or auto incrementing otherwise set to false and the Id property value will be inserted.</param>
             /// <returns></returns>
-            public override int? Insert(dynamic data)
+            public override int? Insert(dynamic data, bool removeId = true)
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
-                paramNames.Remove("Id");
+                
+                if (removeId)
+                {
+                    paramNames.Remove("Id");
+                }
 
                 string cols = string.Join(",", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
