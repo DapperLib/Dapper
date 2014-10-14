@@ -2674,6 +2674,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
         /// <summary>
+        /// Whether packing list parameters round brackets.
+        /// </summary>
+        public static bool PackingListParametersRoundBrackets = true;
+
+        /// <summary>
         /// Internal use only
         /// </summary>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
@@ -2734,7 +2739,9 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                         else
                         {
-                            return "(SELECT " + variableName + " WHERE 1 = 0)";
+                            return PackingListParametersRoundBrackets ?
+                                "(SELECT " + variableName + " WHERE 1 = 0)" :
+                                "SELECT " + variableName + " WHERE 1 = 0";
                         }
                     });                        
                     var dummyParam = command.CreateParameter();
@@ -2761,12 +2768,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         }
                         else
                         {
-                            var sb = new StringBuilder("(").Append(variableName).Append(1);
+                            var sb = new StringBuilder();
+                            if (PackingListParametersRoundBrackets) sb.Append('(');
+                            sb.Append(variableName).Append(1);
                             for (int i = 2; i <= count; i++)
                             {
                                 sb.Append(',').Append(variableName).Append(i);
                             }
-                            return sb.Append(')').ToString();
+                            if (PackingListParametersRoundBrackets) sb.Append(')');
+                            return sb.ToString();
                         }
                     });
                 }
