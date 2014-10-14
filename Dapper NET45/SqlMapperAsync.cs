@@ -17,6 +17,7 @@ namespace Dapper
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             return QueryAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
@@ -25,6 +26,7 @@ namespace Dapper
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, CommandDefinition command)
         {
             return QueryAsync<dynamic>(cnn, typeof(DapperRow), command);
@@ -545,6 +547,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             /// <summary>
             /// Read the next grid of results, returned as a dynamic object
             /// </summary>
+            /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             public Task<IEnumerable<dynamic>> ReadAsync(bool buffered = true)
             {
                 return ReadAsyncImpl<dynamic>(typeof(DapperRow), buffered);

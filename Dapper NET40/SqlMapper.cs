@@ -160,7 +160,6 @@ namespace Dapper
         public CancellationToken CancellationToken { get { return cancellationToken; } }
 #endif
 
-
         internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
             var cmd = cnn.CreateCommand();
@@ -1330,7 +1329,9 @@ this IDbConnection cnn, string sql, object param = null, IDbTransaction transact
 )
         {
             var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            return ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default);
+            IDbCommand dbcmd;
+            var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out dbcmd);
+            return new WrappedReader(dbcmd, reader);
         }
 
         /// <summary>
@@ -1343,7 +1344,9 @@ this IDbConnection cnn, string sql, object param = null, IDbTransaction transact
         /// </remarks>
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
-            return ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default);
+            IDbCommand dbcmd;
+            var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out dbcmd);
+            return new WrappedReader(dbcmd, reader);
         }
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>
@@ -1355,13 +1358,16 @@ this IDbConnection cnn, string sql, object param = null, IDbTransaction transact
         /// </remarks>
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
-            return ExecuteReaderImpl(cnn, ref command, commandBehavior);
+            IDbCommand dbcmd;
+            var reader = ExecuteReaderImpl(cnn, ref command, commandBehavior, out dbcmd);
+            return new WrappedReader(dbcmd, reader);
         }
 
 #if !CSHARP30
         /// <summary>
         /// Return a list of dynamic objects, reader is closed after the call
         /// </summary>
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
         {
             return Query<DapperRow>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
@@ -1499,6 +1505,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters);
+                cmd = null; // now owned by result
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -3312,12 +3319,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return Parse<T>(result);
         }
 
-        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command, CommandBehavior commandBehavior)
+        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command, CommandBehavior commandBehavior, out IDbCommand cmd)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
-
-            IDbCommand cmd = null;
-            bool wasClosed = cnn.State == ConnectionState.Closed;
+            cmd = null;
+            bool wasClosed = cnn.State == ConnectionState.Closed, disposeCommand = true;
             try
             {
                 cmd = command.SetupCommand(cnn, paramReader);
@@ -3325,14 +3331,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 if (wasClosed) commandBehavior |= CommandBehavior.CloseConnection;
                 var reader = cmd.ExecuteReader(commandBehavior);
                 wasClosed = false; // don't dispose before giving it to them!
-
+                disposeCommand = false;
                 // note: command.FireOutputCallbacks(); would be useless here; parameters come at the **end** of the TDS stream
                 return reader;
             }
             finally
             {
                 if (wasClosed) cnn.Close();
-                if (cmd != null) cmd.Dispose();
+                if (cmd != null && disposeCommand) cmd.Dispose();
             }
         }
 
@@ -4039,6 +4045,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             /// <summary>
             /// Read the next grid of results, returned as a dynamic object
             /// </summary>
+            /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             public IEnumerable<dynamic> Read(bool buffered = true)
             {
                 return ReadImpl<dynamic>(typeof(DapperRow), buffered);
@@ -5285,6 +5292,221 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             var prop = _propertySelector(_type, columnName);
             return prop != null ? new SimpleMemberMap(columnName, prop) : null;
         }
+    }
+
+    internal class WrappedReader : IDataReader, IWrappedDataReader
+    {
+        private IDataReader reader;
+        private IDbCommand cmd;
+
+        public IDataReader Reader
+        {
+            get
+            {
+                var tmp = reader;
+                if (tmp == null) throw new ObjectDisposedException(GetType().Name);
+                return tmp;
+            }
+        }
+        IDbCommand IWrappedDataReader.Command
+        {
+            get
+            {
+                var tmp = cmd;
+                if (tmp == null) throw new ObjectDisposedException(GetType().Name);
+                return tmp;
+            }
+        }
+        public WrappedReader(IDbCommand cmd, IDataReader reader)
+        {
+            this.cmd = cmd;
+            this.reader = reader;
+        }
+
+        void IDataReader.Close()
+        {
+            if(reader != null) reader.Close();
+        }
+
+        int IDataReader.Depth
+        {
+            get { return Reader.Depth; }
+        }
+
+        DataTable IDataReader.GetSchemaTable()
+        {
+            return Reader.GetSchemaTable();
+        }
+
+        bool IDataReader.IsClosed
+        {
+            get { return reader == null ? true : reader.IsClosed; }
+        }
+
+        bool IDataReader.NextResult()
+        {
+            return Reader.NextResult();
+        }
+
+        bool IDataReader.Read()
+        {
+            return Reader.Read();
+        }
+
+        int IDataReader.RecordsAffected
+        {
+            get { return Reader.RecordsAffected; }
+        }
+
+        void IDisposable.Dispose()
+        {
+            if (reader != null) reader.Close();
+            if (reader != null) reader.Dispose();
+            reader = null;
+            if (cmd != null) cmd.Dispose();
+            cmd = null;
+        }
+
+        int IDataRecord.FieldCount
+        {
+            get { return Reader.FieldCount; }
+        }
+
+        bool IDataRecord.GetBoolean(int i)
+        {
+            return Reader.GetBoolean(i);
+        }
+
+        byte IDataRecord.GetByte(int i)
+        {
+            return Reader.GetByte(i);
+        }
+
+        long IDataRecord.GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        {
+            return Reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
+        }
+
+        char IDataRecord.GetChar(int i)
+        {
+            return Reader.GetChar(i);
+        }
+
+        long IDataRecord.GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        {
+            return Reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
+        }
+
+        IDataReader IDataRecord.GetData(int i)
+        {
+            return Reader.GetData(i);
+        }
+
+        string IDataRecord.GetDataTypeName(int i)
+        {
+            return Reader.GetDataTypeName(i);
+        }
+
+        DateTime IDataRecord.GetDateTime(int i)
+        {
+            return Reader.GetDateTime(i);
+        }
+
+        decimal IDataRecord.GetDecimal(int i)
+        {
+            return Reader.GetDecimal(i);
+        }
+
+        double IDataRecord.GetDouble(int i)
+        {
+            return Reader.GetDouble(i);
+        }
+
+        Type IDataRecord.GetFieldType(int i)
+        {
+            return Reader.GetFieldType(i);
+        }
+
+        float IDataRecord.GetFloat(int i)
+        {
+            return Reader.GetFloat(i);
+        }
+
+        Guid IDataRecord.GetGuid(int i)
+        {
+            return Reader.GetGuid(i);
+        }
+
+        short IDataRecord.GetInt16(int i)
+        {
+            return Reader.GetInt16(i);
+        }
+
+        int IDataRecord.GetInt32(int i)
+        {
+            return Reader.GetInt32(i);
+        }
+
+        long IDataRecord.GetInt64(int i)
+        {
+            return Reader.GetInt64(i);
+        }
+
+        string IDataRecord.GetName(int i)
+        {
+            return Reader.GetName(i);
+        }
+
+        int IDataRecord.GetOrdinal(string name)
+        {
+            return Reader.GetOrdinal(name);
+        }
+
+        string IDataRecord.GetString(int i)
+        {
+            return Reader.GetString(i);
+        }
+
+        object IDataRecord.GetValue(int i)
+        {
+            return Reader.GetValue(i);
+        }
+
+        int IDataRecord.GetValues(object[] values)
+        {
+            return Reader.GetValues(values);
+        }
+
+        bool IDataRecord.IsDBNull(int i)
+        {
+            return Reader.IsDBNull(i);
+        }
+
+        object IDataRecord.this[string name]
+        {
+            get { return Reader[name]; }
+        }
+
+        object IDataRecord.this[int i]
+        {
+            get { return Reader[i]; }
+        }
+    }
+
+    /// <summary>
+    /// Describes a reader that controls the lifetime of both a command and a reader,
+    /// exposing the downstream command/reader as properties.
+    /// </summary>
+    public interface IWrappedDataReader : IDataReader
+    {
+        /// <summary>
+        /// Obtain the underlying reader
+        /// </summary>
+        IDataReader Reader { get; }
+        /// <summary>
+        /// Obtain the underlying command
+        /// </summary>
+        IDbCommand Command { get; }
     }
 
     // Define DAPPER_MAKE_PRIVATE if you reference Dapper by source

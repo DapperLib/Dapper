@@ -3895,13 +3895,14 @@ SELECT value FROM @table WHERE value IN @myIds";
                 connection.Open();
                 const string sql = @"select count(*) from Issue178";
                 try { connection.Execute("drop table Issue178"); } catch { }
-                try { connection.Execute("create table Issue178(id int not null)"); } catch { }
+                connection.Execute("create table Issue178(id int not null)");
+                connection.Execute("insert into Issue178(id) values(42)");
                 // raw ADO.net
-                var sqlCmd = new FbCommand(sql, connection);
+                using (var sqlCmd = new FbCommand(sql, connection))
                 using (IDataReader reader1 = sqlCmd.ExecuteReader())
                 {
                     Assert.IsTrue(reader1.Read());
-                    reader1.GetInt32(0).IsEqualTo(0);
+                    reader1.GetInt32(0).IsEqualTo(1);
                     Assert.IsFalse(reader1.Read());
                     Assert.IsFalse(reader1.NextResult());
                 }
@@ -3910,10 +3911,13 @@ SELECT value FROM @table WHERE value IN @myIds";
                 using (var reader2 = connection.ExecuteReader(sql))
                 {
                     Assert.IsTrue(reader2.Read());
-                    reader2.GetInt32(0).IsEqualTo(0);
+                    reader2.GetInt32(0).IsEqualTo(1);
                     Assert.IsFalse(reader2.Read());
                     Assert.IsFalse(reader2.NextResult());
                 }
+
+                var count = connection.Query<int>(sql).Single();
+                count.IsEqualTo(1);
             }
         }
 
