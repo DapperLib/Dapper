@@ -2714,7 +2714,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                 }
 
-                var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(\s+(?i)unknown(?-i))?";
+                var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(?!\w)(\s+(?i)unknown(?-i))?";
                 if (count == 0)
                 {
                     command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>

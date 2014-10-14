@@ -705,6 +705,24 @@ SET @AddressPersonId = @PersonId", p).Result)
             }
         }
 
+        public void Issue157_ClosedReaderAsync()
+        {
+            using(var conn = Program.GetOpenConnection())
+            {
+                var args = new { x = 42 };
+                const string sql = @"select 123 as [A], 'abc' as [B] where @x=42";
+                var row = conn.QueryAsync<SomeType>(new CommandDefinition(
+                    sql, args, flags:CommandFlags.None)).Result.Single();
+                row.IsNotNull();
+                row.A.IsEqualTo(123);
+                row.B.IsEqualTo("abc");
+
+                args = new { x = 5 };
+                conn.QueryAsync<SomeType>(new CommandDefinition(
+                    sql, args, flags: CommandFlags.None)).Result.Any().IsFalse();
+            }
+        }
+
         public void TestAtEscaping()
         {
             using (var connection = Program.GetOpenConnection())

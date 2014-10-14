@@ -4041,6 +4041,31 @@ SELECT value FROM @table WHERE value IN @myIds";
             ((string)row.Name).Equals("abc");
         }
 
+        public void Issue192_InParameterWorksWithSimilarNames()
+        {
+            var rows = connection.Query(@"
+declare @Issue192 table (
+    Field INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    Field_1 INT NOT NULL);
+insert @Issue192(Field_1) values (1), (2), (3);
+SELECT * FROM @Issue192 WHERE Field IN @Field AND Field_1 IN @Field_1",
+    new { Field = new[] { 1, 2 }, Field_1 = new[] { 2, 3 } }).Single();
+            ((int)rows.Field).IsEqualTo(2);
+            ((int)rows.Field_1).IsEqualTo(2);
+        }
+
+        public void Issue192_InParameterWorksWithSimilarNamesWithUnicode()
+        {
+            var rows = connection.Query(@"
+declare @Issue192 table (
+    Field INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    Field_1 INT NOT NULL);
+insert @Issue192(Field_1) values (1), (2), (3);
+SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
+    new { µ = new[] { 1, 2 }, µµ = new[] { 2, 3 } }).Single();
+            ((int)rows.Field).IsEqualTo(2);
+            ((int)rows.Field_1).IsEqualTo(2);
+        }
 #if POSTGRESQL
 
         class Cat
