@@ -3178,7 +3178,23 @@ option (optimize for (@vals unKnoWn))";
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
         }
+        public void SO26468710_InWithTVPs()
+        {
+            // this is just to make it re-runnable; normally you only do this once
+            try { connection.Execute("drop type MyIdList"); } catch { }
+            connection.Execute("create type MyIdList as table(id int);");
 
+            DataTable ids = new DataTable {
+                Columns = {{"id", typeof(int)}},
+                Rows = {{1},{3},{5}}
+            };
+            ids.SetTypeName("MyIdList");
+            int sum = connection.Query<int>(@"
+            declare @tmp table(id int not null);
+            insert @tmp (id) values(1), (2), (3), (4), (5), (6), (7);
+            select * from @tmp t inner join @ids i on i.id = t.id", new { ids }).Sum();
+            sum.IsEqualTo(9);
+        }
         public void DataTableParametersWithExtendedProperty()
         {
             try { connection.Execute("drop proc #DataTableParameters"); } catch { }

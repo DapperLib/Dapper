@@ -2364,7 +2364,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             public override string ToString()
             {
-                var sb = new StringBuilder("{DapperRow");
+                var sb = GetStringBuilder().Append("{DapperRow");
                 foreach (var kv in this)
                 {
                     var value = kv.Value;
@@ -2379,7 +2379,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                 }
 
-                return sb.Append('}').ToString();
+                return sb.Append('}').__ToStringRecycle();
             }
 
             System.Dynamic.DynamicMetaObject System.Dynamic.IDynamicMetaObjectProvider.GetMetaObject(
@@ -2752,21 +2752,21 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             // looks like an optimize hint; expand it
                             var suffix = match.Groups[2].Value;
                                 
-                            var sb = new StringBuilder(variableName).Append(1).Append(suffix);
+                            var sb = GetStringBuilder().Append(variableName).Append(1).Append(suffix);
                             for (int i = 2; i <= count; i++)
                             {
                                 sb.Append(',').Append(variableName).Append(i).Append(suffix);
                             }
-                            return sb.ToString();
+                            return sb.__ToStringRecycle();
                         }
                         else
                         {
-                            var sb = new StringBuilder("(").Append(variableName).Append(1);
+                            var sb = GetStringBuilder().Append('(').Append(variableName).Append(1);
                             for (int i = 2; i <= count; i++)
                             {
                                 sb.Append(',').Append(variableName).Append(i);
                             }
-                            return sb.Append(')').ToString();
+                            return sb.Append(')').__ToStringRecycle();
                         }
                     });
                 }
@@ -2862,12 +2862,20 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         var multiExec = GetMultiExec(value);
                         if(multiExec != null)
                         {
-                            var sb = new StringBuilder();
+                            StringBuilder sb = null;
                             bool first = true;
                             foreach (object subval in multiExec)
                             {
-                                sb.Append(first ? '(' : ',').Append(Format(subval));
-                                first = false;
+                                if(first)
+                                {
+                                    sb = GetStringBuilder().Append('(');
+                                    first = false;
+                                }
+                                else
+                                {
+                                    sb.Append(',');
+                                }
+                                sb.Append(Format(subval));
                             }
                             if(first)
                             {
@@ -2875,7 +2883,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             }
                             else
                             {
-                                return sb.Append(')').ToString();
+                                return sb.Append(')').__ToStringRecycle();
                             }
                         }
                         throw new NotSupportedException(value.GetType().Name);
@@ -4326,6 +4334,33 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         public static string GetTypeName(this DataTable table)
         {
             return table == null ? null : table.ExtendedProperties[DataTableTypeNameKey] as string;
+        }
+
+
+        // one per thread
+        [ThreadStatic]
+        private static StringBuilder perThreadStringBuilderCache;
+        private static StringBuilder GetStringBuilder()
+        {
+            var tmp = perThreadStringBuilderCache;
+            if (tmp != null)
+            {
+                perThreadStringBuilderCache = null;
+                tmp.Length = 0;
+                return tmp;
+            }
+            return new StringBuilder();
+        }
+
+        private static string __ToStringRecycle(this StringBuilder obj)
+        {
+            if (obj == null) return "";
+            var s = obj.ToString();
+            if(perThreadStringBuilderCache == null)
+            {
+                perThreadStringBuilderCache = obj;
+            }
+            return s;
         }
     }
 
