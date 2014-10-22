@@ -4899,7 +4899,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     }
 
     /// <summary>
-    /// Used to pass a DataTable as a SqlDataRecordListTVPParameter
+    /// Used to pass a List<SqlDataRecord> as a SqlDataRecordListTVPParameter
     /// </summary>
     sealed partial class SqlDataRecordListTVPParameter : Dapper.SqlMapper.ICustomQueryParameter
     {
