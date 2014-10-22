@@ -715,6 +715,7 @@ namespace Dapper
             typeMap[typeof(object)] = DbType.Object;
 
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
+            AddTypeHandlerImpl(typeof(List<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), false);
         }
 
         /// <summary>
@@ -724,6 +725,7 @@ namespace Dapper
         {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
+            AddTypeHandlerImpl(typeof(List<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), true);
         }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
@@ -4336,7 +4338,18 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             return table == null ? null : table.ExtendedProperties[DataTableTypeNameKey] as string;
         }
 
-
+        /// <summary>
+        /// Used to pass a List<SqlDataRecord> as a TableValuedParameter
+        /// </summary>
+        public static ICustomQueryParameter AsTableValuedParameter(this List<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName
+#if !CSHARP30
+            = null
+#endif
+            )
+        {
+            return new SqlDataRecordListTVPParameter(list, typeName);
+        }
+		
         // one per thread
         [ThreadStatic]
         private static StringBuilder perThreadStringBuilderCache;
@@ -4580,15 +4593,15 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
                 SqlMapper.ITypeHandler handler = null;
                 if (dbType == null && val != null && !isCustomQueryParameter) dbType = SqlMapper.LookupDbType(val.GetType(), name, true, out handler);
-                if (dbType == DynamicParameters.EnumerableMultiParameter)
+                if (isCustomQueryParameter)
+                {
+                    ((SqlMapper.ICustomQueryParameter)val).AddParameter(command, name);
+                }
+                else if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
 #pragma warning disable 612, 618
                     SqlMapper.PackListParameters(command, name, val);
 #pragma warning restore 612, 618
-                }
-                else if (isCustomQueryParameter)
-                {
-                    ((SqlMapper.ICustomQueryParameter)val).AddParameter(command, name);
                 }
                 else
                 {
@@ -4869,6 +4882,63 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         public void SetValue(IDbDataParameter parameter, object value)
         {
             TableValuedParameter.Set(parameter, value as DataTable, null);
+        }
+    }
+
+    sealed class SqlDataRecordHandler : Dapper.SqlMapper.ITypeHandler
+    {
+        public object Parse(Type destinationType, object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetValue(IDbDataParameter parameter, object value)
+        {
+            SqlDataRecordListTVPParameter.Set(parameter, value as List<Microsoft.SqlServer.Server.SqlDataRecord>, null);
+        }
+    }
+
+    /// <summary>
+    /// Used to pass a DataTable as a SqlDataRecordListTVPParameter
+    /// </summary>
+    sealed partial class SqlDataRecordListTVPParameter : Dapper.SqlMapper.ICustomQueryParameter
+    {
+        private readonly List<Microsoft.SqlServer.Server.SqlDataRecord> data;
+        private readonly string typeName;
+        /// <summary>
+        /// Create a new instance of SqlDataRecordListTVPParameter
+        /// </summary>
+        public SqlDataRecordListTVPParameter(List<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
+        {
+            this.data = data;
+            this.typeName = typeName;
+        }
+        static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
+        static SqlDataRecordListTVPParameter()
+        {
+            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public);
+            if(prop != null && prop.PropertyType == typeof(string) && prop.CanWrite)
+            {
+                setTypeName = (Action<System.Data.SqlClient.SqlParameter, string>)
+                    Delegate.CreateDelegate(typeof(Action<System.Data.SqlClient.SqlParameter, string>), prop.GetSetMethod());
+            }
+        }
+        void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
+        {
+            var param = command.CreateParameter();
+            param.ParameterName = name;
+            Set(param, data, typeName);
+            command.Parameters.Add(param);
+        }
+        internal static void Set(IDbDataParameter parameter, List<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
+        {
+            parameter.Value = (object)data ?? DBNull.Value;
+            var sqlParam = parameter as System.Data.SqlClient.SqlParameter;
+            if (sqlParam != null)
+            {
+                sqlParam.SqlDbType = SqlDbType.Structured;
+                sqlParam.TypeName = typeName;
+            }
         }
     }
 
