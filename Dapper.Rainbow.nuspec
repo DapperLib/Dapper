@@ -28,7 +28,7 @@
     <copyright>Copyright Sam Saffron 2012</copyright>
     <tags>orm dapper micro-orm</tags>
     <dependencies>
-      <dependency id="Dapper" version="1.36" />
+      <dependency id="Dapper" version="1.37" />
     </dependencies>
   </metadata>
   <files>
