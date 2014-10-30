@@ -390,6 +390,15 @@ namespace Dapper
             ConstructorInfo FindConstructor(string[] names, Type[] types);
 
             /// <summary>
+            /// Returns a constructor which should *always* be used.
+            /// 
+            /// Parameters will be default values, nulls for reference types and zero'd for value types.
+            /// 
+            /// Use this class to force object creation away from parameterless constructors you dn't control.
+            /// </summary>
+            ConstructorInfo FindExplicitConstructor();
+
+            /// <summary>
             /// Gets mapping for constructor parameter
             /// </summary>
             /// <param name="constructor">Constructor to resolve</param>
@@ -3557,26 +3566,67 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     types[i - startBound] = reader.GetFieldType(i);
                 }
 
-                var ctor = typeMap.FindConstructor(names, types);
-                if (ctor == null)
+                var explicitConstr = typeMap.FindExplicitConstructor();
+                if (explicitConstr != null)
                 {
-                    string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
-                    throw new InvalidOperationException(string.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
-                }
+                    var structLocals = new Dictionary<Type, LocalBuilder>();
 
-                if (ctor.GetParameters().Length == 0)
-                {
-                    il.Emit(OpCodes.Newobj, ctor);
+                    var consPs = explicitConstr.GetParameters();
+                    foreach(var p in consPs)
+                    {
+                        if(!p.ParameterType.IsValueType)
+                        {
+                            il.Emit(OpCodes.Ldnull);
+                        }
+                        else
+                        {
+                            LocalBuilder loc;
+                            if(!structLocals.TryGetValue(p.ParameterType, out loc))
+                            {
+                                structLocals[p.ParameterType] = loc = il.DeclareLocal(p.ParameterType);
+                            }
+
+                            il.Emit(OpCodes.Ldloca, (short)loc.LocalIndex);
+                            il.Emit(OpCodes.Initobj, p.ParameterType);
+                            il.Emit(OpCodes.Ldloca, (short)loc.LocalIndex);
+                            il.Emit(OpCodes.Ldobj, p.ParameterType);
+                        }
+                    }
+
+                    il.Emit(OpCodes.Newobj, explicitConstr);
                     il.Emit(OpCodes.Stloc_1);
                     supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
-                    if(supportInitialize)
+                    if (supportInitialize)
                     {
                         il.Emit(OpCodes.Ldloc_1);
                         il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("BeginInit"), null);
                     }
                 }
                 else
-                    specializedConstructor = ctor;
+                {
+                    var ctor = typeMap.FindConstructor(names, types);
+                    if (ctor == null)
+                    {
+                        string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                        throw new InvalidOperationException(string.Format("A parameterless default constructor or one matching signature {0} is required for {1} materialization", proposedTypes, type.FullName));
+                    }
+
+                    if (ctor.GetParameters().Length == 0)
+                    {
+                        il.Emit(OpCodes.Newobj, ctor);
+                        il.Emit(OpCodes.Stloc_1);
+                        supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
+                        if (supportInitialize)
+                        {
+                            il.Emit(OpCodes.Ldloc_1);
+                            il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("BeginInit"), null);
+                        }
+                    }
+                    else
+                    {
+                        specializedConstructor = ctor;
+                    }
+                }
             }
 
             il.BeginExceptionBlock();
@@ -5217,6 +5267,22 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
 
         /// <summary>
+        /// Returns the constructor, if any, that has the ExplicitConstructorAttribute on it.
+        /// </summary>
+        public ConstructorInfo FindExplicitConstructor()
+        {
+            var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();
+
+            if (withAttr.Count == 1)
+            {
+                return withAttr[0];
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Gets mapping for constructor parameter
         /// </summary>
         /// <param name="constructor">Constructor to resolve</param>
@@ -5304,6 +5370,15 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         public ConstructorInfo FindConstructor(string[] names, Type[] types)
         {
             return _type.GetConstructor(new Type[0]);
+        }
+
+        /// <summary>
+        /// Always returns null
+        /// </summary>
+        /// <returns></returns>
+        public ConstructorInfo FindExplicitConstructor()
+        {
+            return null;
         }
 
         /// <summary>
@@ -5542,6 +5617,15 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// Obtain the underlying command
         /// </summary>
         IDbCommand Command { get; }
+    }
+
+    /// <summary>
+    /// Tell Dapper to use an explicit constructor, passing nulls or 0s for all parameters
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Constructor, AllowMultiple = false)]
+    public sealed class ExplicitConstructorAttribute : Attribute
+    {
+
     }
 
     // Define DAPPER_MAKE_PRIVATE if you reference Dapper by source

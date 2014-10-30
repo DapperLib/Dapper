@@ -4086,6 +4086,43 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
             ((int)rows.Field).IsEqualTo(2);
             ((int)rows.Field_1).IsEqualTo(2);
         }
+
+        class _ExplicitConstructors
+        {
+            public int Field { get; set; }
+            public int Field_1 { get; set; }
+
+            private bool WentThroughProperConstructor;
+
+            public _ExplicitConstructors() { }
+
+            [ExplicitConstructor]
+            public _ExplicitConstructors(string foo, int bar)
+            {
+                WentThroughProperConstructor = true;
+            }
+
+            public bool GetWentThroughProperConstructor()
+            {
+                return WentThroughProperConstructor;
+            }
+        }
+
+        public void ExplicitConstructors()
+        {
+            var rows = connection.Query<_ExplicitConstructors>(@"
+declare @ExplicitConstructors table (
+    Field INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    Field_1 INT NOT NULL);
+insert @ExplicitConstructors(Field_1) values (1);
+SELECT * FROM @ExplicitConstructors"
+).ToList();
+
+            rows.Count.IsEqualTo(1);
+            rows[0].Field.IsEqualTo(1);
+            rows[0].Field_1.IsEqualTo(1);
+            rows[0].GetWentThroughProperConstructor().IsTrue();
+        }
 #if POSTGRESQL
 
         class Cat
