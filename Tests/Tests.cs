@@ -293,6 +293,14 @@ namespace SqlMapper
 
         }
 
+        struct CarWithAllProps
+        {
+            public string Name { get; set; }
+            public int Age { get; set; }
+
+            public Car.TrapEnum Trap { get; set; }
+        }
+
         public void TestStructs()
         {
             var car = connection.Query<Car>("select 'Ford' Name, 21 Age, 2 Trap").First();
@@ -300,6 +308,17 @@ namespace SqlMapper
             car.Age.IsEqualTo(21);
             car.Name.IsEqualTo("Ford");
             ((int)car.Trap).IsEqualTo(2);
+        }
+
+        public void TestStructAsParam()
+        {
+            var car1 = new CarWithAllProps { Name = "Ford", Age = 21, Trap = Car.TrapEnum.B };
+            // note Car has Name as a field; parameters only respect properties at the moment
+            var car2 = connection.Query<CarWithAllProps>("select @Name Name, @Age Age, @Trap Trap", car1).First();
+
+            car2.Name.IsEqualTo(car1.Name);
+            car2.Age.IsEqualTo(car1.Age);
+            car2.Trap.IsEqualTo(car1.Trap);
         }
 
         public void SelectListInt()

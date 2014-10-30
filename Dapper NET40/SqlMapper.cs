@@ -2955,10 +2955,19 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             var il = dm.GetILGenerator();
 
-            il.DeclareLocal(type); // 0
+            bool isStruct = type.IsValueType;
             bool haveInt32Arg1 = false;
             il.Emit(OpCodes.Ldarg_1); // stack is now [untyped-param]
-            il.Emit(OpCodes.Unbox_Any, type); // stack is now [typed-param]
+            if (isStruct)
+            {
+                il.DeclareLocal(type.MakePointerType());
+                il.Emit(OpCodes.Unbox, type); // stack is now [typed-param]
+            }
+            else
+            {
+                il.DeclareLocal(type); // 0
+                il.Emit(OpCodes.Castclass, type); // stack is now [typed-param]
+            }
             il.Emit(OpCodes.Stloc_0);// stack is now empty
 
             il.Emit(OpCodes.Ldarg_0); // stack is now [command]
@@ -3021,12 +3030,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 props = FilterParameters(props, identity.sql);
             }
 
+            var callOpCode = isStruct ? OpCodes.Call : OpCodes.Callvirt;
             foreach (var prop in props)
             {
                 if (typeof(ICustomQueryParameter).IsAssignableFrom(prop.PropertyType))
                 {
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [typed-param]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [custom]
+                    il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [custom]
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [custom] [command]
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [custom] [command] [name]
                     il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod("AddParameter"), null); // stack is now [parameters]
@@ -3040,7 +3050,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [command]
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [command] [name]
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [command] [name] [typed-param]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [command] [name] [typed-value]
+                    il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [command] [name] [typed-value]
                     if (prop.PropertyType.IsValueType)
                     {
                         il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [command] [name] [boxed-value]
@@ -3074,7 +3084,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         // look it up from the param value
                         il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [[parameters]] [parameter] [parameter] [typed-param]
-                        il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [object-value]
+                        il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [object-value]
                         il.Emit(OpCodes.Call, typeof(SqlMapper).GetMethod("GetDbType", BindingFlags.Static | BindingFlags.Public)); // stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
                     }
                     else
@@ -3091,7 +3101,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                 il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
                 il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [[parameters]] [parameter] [parameter] [typed-param]
-                il.Emit(OpCodes.Callvirt, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [typed-value]
+                il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [typed-value]
                 bool checkForNull = true;
                 if (prop.PropertyType.IsValueType)
                 {
@@ -3219,7 +3229,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     {
                         il.Emit(OpCodes.Ldstr, literal.Token);
                         il.Emit(OpCodes.Ldloc_0); // command, sql, typed parameter
-                        il.EmitCall(OpCodes.Callvirt, prop.GetGetMethod(), null); // command, sql, typed value
+                        il.EmitCall(callOpCode, prop.GetGetMethod(), null); // command, sql, typed value
                         Type propType = prop.PropertyType;
                         var typeCode = Type.GetTypeCode(propType);
                         switch (typeCode)
