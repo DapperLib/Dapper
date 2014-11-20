@@ -3496,6 +3496,25 @@ option (optimize for (@vals unKnoWn))";
             foo.CategoryRating.Value.IsEqualTo(200);
         }
 
+        enum SO27024806Enum { Foo, Bar }
+
+        private class SO27024806Class
+        {
+            public SO27024806Class(SO27024806Enum myField)
+            {
+                this.MyField = myField;
+            }
+
+            public SO27024806Enum MyField { get; set; }
+        }
+
+        public void SO27024806_TestVarcharEnumMemberWithExplicitConstructor()
+        {
+            var foo = connection.Query<SO27024806Class>("SELECT 'Foo' AS myField").Single();
+            foo.MyField.IsEqualTo(SO27024806Enum.Foo);
+        }
+
+
         public void SO24740733_TestCustomValueSingleColumn()
         {
             Dapper.SqlMapper.AddTypeHandler(RatingValueHandler.Default);
