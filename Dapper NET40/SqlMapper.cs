@@ -2705,28 +2705,31 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
-                foreach (var item in list)
+                if (list != null)
                 {
-                    count++;
-                    var listParam = command.CreateParameter();
-                    listParam.ParameterName = namePrefix + count;
-                    if (isString)
+                    foreach (var item in list)
                     {
-                        listParam.Size = DbString.DefaultLength;
-                        if (item != null && ((string)item).Length > DbString.DefaultLength)
+                        count++;
+                        var listParam = command.CreateParameter();
+                        listParam.ParameterName = namePrefix + count;
+                        if (isString)
                         {
-                            listParam.Size = -1;
+                            listParam.Size = DbString.DefaultLength;
+                            if (item != null && ((string)item).Length > DbString.DefaultLength)
+                            {
+                                listParam.Size = -1;
+                            }
                         }
-                    }
-                    if (isDbString && item as DbString != null)
-                    {
-                        var str = item as DbString;
-                        str.AddParameter(command, listParam.ParameterName);
-                    }
-                    else
-                    {
-                        listParam.Value = item ?? DBNull.Value;
-                        command.Parameters.Add(listParam);
+                        if (isDbString && item as DbString != null)
+                        {
+                            var str = item as DbString;
+                            str.AddParameter(command, listParam.ParameterName);
+                        }
+                        else
+                        {
+                            listParam.Value = item ?? DBNull.Value;
+                            command.Parameters.Add(listParam);
+                        }
                     }
                 }
 
