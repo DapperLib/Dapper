@@ -305,7 +305,7 @@ Dapper supports fully stored procs:
 
 ```csharp
 var user = cnn.Query<User>("spGetUser", new {Id = 1}, 
-        commandType: CommandType.StoredProcedure).First();}}}
+        commandType: CommandType.StoredProcedure).SingleOrDefault();
 ```
 
 If you want something more fancy, you can do:
