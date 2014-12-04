@@ -323,15 +323,4 @@ namespace SqlMapper
             return null;
         }
     }
-
-    public class TestSusanooDatabaseMananger : Susanoo.DatabaseManager
-    {
-        public TestSusanooDatabaseMananger(string connectionStringName)
-            : base(connectionStringName)
-        {
-            this.OpenConnection();
-        }
-
-
-    }
 }
