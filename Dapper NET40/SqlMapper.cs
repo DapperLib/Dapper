@@ -715,7 +715,7 @@ namespace Dapper
             typeMap[typeof(object)] = DbType.Object;
 
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
-            AddTypeHandlerImpl(typeof(List<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), false);
+            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), false);
         }
 
         /// <summary>
@@ -725,7 +725,7 @@ namespace Dapper
         {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
-            AddTypeHandlerImpl(typeof(List<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), true);
+            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), true);
         }
         /// <summary>
         /// Configire the specified type to be mapped to a given db-type
@@ -4339,9 +4339,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         }
 
         /// <summary>
-        /// Used to pass a List<SqlDataRecord> as a TableValuedParameter
+        /// Used to pass a IEnumerable<SqlDataRecord> as a TableValuedParameter
         /// </summary>
-        public static ICustomQueryParameter AsTableValuedParameter(this List<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName
+        public static ICustomQueryParameter AsTableValuedParameter(this IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName
 #if !CSHARP30
             = null
 #endif
@@ -4894,21 +4894,21 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
         public void SetValue(IDbDataParameter parameter, object value)
         {
-            SqlDataRecordListTVPParameter.Set(parameter, value as List<Microsoft.SqlServer.Server.SqlDataRecord>, null);
+            SqlDataRecordListTVPParameter.Set(parameter, value as IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>, null);
         }
     }
 
     /// <summary>
-    /// Used to pass a List<SqlDataRecord> as a SqlDataRecordListTVPParameter
+    /// Used to pass a IEnumerable<SqlDataRecord> as a SqlDataRecordListTVPParameter
     /// </summary>
     sealed partial class SqlDataRecordListTVPParameter : Dapper.SqlMapper.ICustomQueryParameter
     {
-        private readonly List<Microsoft.SqlServer.Server.SqlDataRecord> data;
+        private readonly IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data;
         private readonly string typeName;
         /// <summary>
         /// Create a new instance of SqlDataRecordListTVPParameter
         /// </summary>
-        public SqlDataRecordListTVPParameter(List<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
+        public SqlDataRecordListTVPParameter(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
         {
             this.data = data;
             this.typeName = typeName;
@@ -4930,7 +4930,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             Set(param, data, typeName);
             command.Parameters.Add(param);
         }
-        internal static void Set(IDbDataParameter parameter, List<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
+        internal static void Set(IDbDataParameter parameter, IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
         {
             parameter.Value = (object)data ?? DBNull.Value;
             var sqlParam = parameter as System.Data.SqlClient.SqlParameter;
