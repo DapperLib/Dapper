@@ -4142,6 +4142,13 @@ SELECT * FROM @ExplicitConstructors"
             rows[0].Field_1.IsEqualTo(1);
             rows[0].GetWentThroughProperConstructor().IsTrue();
         }
+
+        public void Issue220_InParameterCanBeSpecifiedInAnyCase()
+        {
+            connection.Query<int>("select * from (select 1 as Id) as X where Id in @ids", new {Ids = new[] {1}})
+                      .IsSequenceEqualTo(new[] {1});
+        }
+
 #if POSTGRESQL
 
         class Cat
