@@ -679,6 +679,21 @@ namespace Dapper
             return MultiMapAsync(connection, command, types, map, splitOn);
         }
 
+        /// <summary>
+        /// Perform a multi mapping query with arbitrary input parameters
+        /// </summary>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="command"></param>
+        /// <param name="types"></param>
+        /// <param name="map"></param>
+        /// <param name="splitOn"></param>
+        /// <returns></returns>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TReturn>(this IDbConnection connection, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn = "Id")
+        {
+            return MultiMapAsync(connection, command, types, map, splitOn);
+        }
+
         private static async Task<IEnumerable<TReturn>> MultiMapAsync<TReturn>(this IDbConnection connection, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn) 
         {
             if (types.Length < 1) 
