@@ -4329,6 +4329,10 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
             private void NextResult()
             {
+                // this seems insane but its to allow cancelling out of deferred executions.
+                // if you try to read again you'll get the object disposed exception.
+                // however, it seems reasonable to want to dispose of the enumerator.
+                if (reader == null) return;
                 if (reader.NextResult())
                 {
                     readCount++;
