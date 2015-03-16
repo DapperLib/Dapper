@@ -539,7 +539,8 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         partial class GridReader
         {
             CancellationToken cancel;
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, CancellationToken cancel) : this(command, reader, identity, dynamicParams)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
+                : this(command, reader, identity, dynamicParams, addToCache)
             {
                 this.cancel = cancel;
             }
@@ -593,7 +594,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
@@ -659,7 +660,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
                 reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
-                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.CancellationToken);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results

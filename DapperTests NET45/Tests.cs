@@ -309,6 +309,34 @@ namespace DapperTests_NET45
                 System.Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
             }
         }
+
+        public void AssertNoCacheWorksForQueryMultiple()
+        {
+            int a = 123, b = 456;
+            var cmdDef = new CommandDefinition(@"select @a; select @b;", new
+            {
+                a, b
+            }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
+
+            int c, d;
+            Dapper.SqlMapper.PurgeQueryCache();
+            int before = Dapper.SqlMapper.GetCachedSQLCount();
+            using (var sqlConnection = Program.GetOpenConnection(true))
+            {
+                using (var multi = sqlConnection.QueryMultiple(cmdDef))
+                {
+                    c = multi.Read<int>().Single();
+                    d = multi.Read<int>().Single();
+                }
+            }
+            int after = Dapper.SqlMapper.GetCachedSQLCount();
+            before.IsEqualTo(0);
+            after.IsEqualTo(0);
+            c.IsEqualTo(123);
+            d.IsEqualTo(456);
+
+
+        }
         class Product
         {
             public int Id { get; set; }
