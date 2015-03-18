@@ -223,8 +223,9 @@ namespace SqlMapper
                         .Execute(susanooDb, new { Id }).First(), "Susanoo Mapping Static");
 
                 // Soma
-                var somadb = new Soma.Core.Db(new SomaConfig());
-                tests.Add(id => somadb.Find<Post>(id), "Soma");
+                // DISABLED: assembly fail loading FSharp.PowerPack, Version=2.0.0.0
+                // var somadb = new Soma.Core.Db(new SomaConfig());
+                // tests.Add(id => somadb.Find<Post>(id), "Soma");
 
                 //ServiceStack's OrmLite:
                 OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
