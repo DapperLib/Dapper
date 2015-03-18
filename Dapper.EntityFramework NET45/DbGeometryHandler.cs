@@ -29,7 +29,7 @@ namespace Dapper.EntityFramework
             parameter.Value = value == null ? (object)DBNull.Value : (object)SqlGeometry.Parse(value.AsText());
             if (parameter is SqlParameter)
             {
-                ((SqlParameter)parameter).UdtTypeName = "GEOMETRY";
+                ((SqlParameter)parameter).UdtTypeName = "geometry";
             }
         }
         /// <summary>

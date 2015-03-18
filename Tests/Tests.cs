@@ -3006,6 +3006,7 @@ end");
 
         public void TestParameterInclusionNotSensitiveToCurrentCulture()
         {
+            // note this might fail if your database server is case-sensitive
             CultureInfo current = Thread.CurrentThread.CurrentCulture;
             try
             {
@@ -4145,6 +4146,7 @@ SELECT * FROM @ExplicitConstructors"
 
         public void Issue220_InParameterCanBeSpecifiedInAnyCase()
         {
+            // note this might fail if your database server is case-sensitive
             connection.Query<int>("select * from (select 1 as Id) as X where Id in @ids", new {Ids = new[] {1}})
                       .IsSequenceEqualTo(new[] {1});
         }

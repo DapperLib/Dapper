@@ -897,13 +897,13 @@ namespace Dapper
             switch (type.FullName)
             {
                 case "Microsoft.SqlServer.Types.SqlGeography":
-                    AddTypeHandler(type, handler = new UdtTypeHandler("GEOGRAPHY"));
+                    AddTypeHandler(type, handler = new UdtTypeHandler("geography"));
                     return DbType.Object;
                 case "Microsoft.SqlServer.Types.SqlGeometry":
-                    AddTypeHandler(type, handler = new UdtTypeHandler("GEOMETRY"));
+                    AddTypeHandler(type, handler = new UdtTypeHandler("geometry"));
                     return DbType.Object;
                 case "Microsoft.SqlServer.Types.SqlHierarchyId":
-                    AddTypeHandler(type, handler = new UdtTypeHandler("HIERARCHYID"));
+                    AddTypeHandler(type, handler = new UdtTypeHandler("hierarchyid"));
                     return DbType.Object;
             }
             if(demand)
