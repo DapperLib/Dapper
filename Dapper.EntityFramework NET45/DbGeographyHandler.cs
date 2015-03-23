@@ -3,6 +3,7 @@ using System;
 using System.Data;
 using System.Data.Entity.Spatial;
 using System.Data.SqlClient;
+using System.Data.SqlTypes;
 
 namespace Dapper.EntityFramework
 {
@@ -26,7 +27,12 @@ namespace Dapper.EntityFramework
         /// <param name="value">Parameter value</param>
         public override void SetValue(IDbDataParameter parameter, DbGeography value)
         {
-            parameter.Value = value == null ? (object)DBNull.Value : (object)SqlGeography.Parse(value.AsText());
+            object parsed = null;
+            if (value != null)
+            {
+                parsed = SqlGeography.STGeomFromWKB(new SqlBytes(value.AsBinary()), value.CoordinateSystemId);
+            }
+            parameter.Value = parsed ?? DBNull.Value;
             if (parameter is SqlParameter)
             {
                 ((SqlParameter)parameter).UdtTypeName = "geography";
@@ -39,7 +45,13 @@ namespace Dapper.EntityFramework
         /// <returns>The typed value</returns>
         public override DbGeography Parse(object value)
         {
-            return (value == null || value is DBNull) ? null : DbGeography.FromText(value.ToString());
+            if (value == null || value is DBNull) return null;
+            if (value is SqlGeography)
+            {
+                var geo = (SqlGeography)value;
+                return DbGeography.FromBinary(geo.STAsBinary().Value);
+            }
+            return DbGeography.FromText(value.ToString());
         }
     }
 }
