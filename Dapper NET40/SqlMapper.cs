@@ -885,15 +885,16 @@ namespace Dapper
             {
                 return DbType.Binary;
             }
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
-            }
+
             switch (type.FullName)
             {
                 case "Microsoft.SqlServer.Types.SqlGeography":
