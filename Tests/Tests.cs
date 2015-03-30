@@ -1571,10 +1571,10 @@ end");
                             2 as BlogId, 'Blog' as Title";
             var postWithBlog = connection.Query<Post_DupeProp, Blog_DupeProp, Post_DupeProp>(sql,
                 (p, b) =>
-            {
-                p.Blog = b;
-                return p;
-            }, splitOn: "BlogId").First();
+                {
+                    p.Blog = b;
+                    return p;
+                }, splitOn: "BlogId").First();
 
             postWithBlog.PostId.IsEqualTo(1);
             postWithBlog.Title.IsEqualTo("Title");
@@ -1830,15 +1830,15 @@ end");
             var lookup = new Dictionary<int, Parent>();
             var parents = connection.Query<Parent, Child, Parent>(@"select 1 as [Id], 1 as [Id] union all select 1,2 union all select 2,3 union all select 1,4 union all select 3,5",
                 (parent, child) =>
-            {
-                Parent found;
-                if (!lookup.TryGetValue(parent.Id, out found))
                 {
-                    lookup.Add(parent.Id, found = parent);
-                }
-                found.Children.Add(child);
-                return found;
-            }).Distinct().ToDictionary(p => p.Id);
+                    Parent found;
+                    if (!lookup.TryGetValue(parent.Id, out found))
+                    {
+                        lookup.Add(parent.Id, found = parent);
+                    }
+                    found.Children.Add(child);
+                    return found;
+                }).Distinct().ToDictionary(p => p.Id);
             parents.Count().IsEqualTo(3);
             parents[1].Children.Select(c => c.Id).SequenceEqual(new[] { 1, 2, 4 }).IsTrue();
             parents[2].Children.Select(c => c.Id).SequenceEqual(new[] { 3 }).IsTrue();
@@ -2782,9 +2782,9 @@ end");
             var results = connection.Query<dynamic, int, dynamic>(
                 "SELECT 1 Id, 'Mr' Title, 'John' Surname, 4 AddressCount",
                 (person, addressCount) =>
-            {
-                return person;
-            },
+                {
+                    return person;
+                },
                 splitOn: "AddressCount"
             ).FirstOrDefault();
 
@@ -3175,9 +3175,12 @@ option (optimize for (@vals unKnoWn))";
 
         public void DataTableParameters()
         {
-            try { connection.Execute("drop proc #DataTableParameters"); } catch { }
-            try { connection.Execute("drop table #DataTableParameters"); } catch { }
-            try { connection.Execute("drop type MyTVPType"); } catch { }
+            try { connection.Execute("drop proc #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop table #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop type MyTVPType"); }
+            catch { }
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
 
@@ -3193,7 +3196,8 @@ option (optimize for (@vals unKnoWn))";
             {
                 connection.Query<int>("select count(1) from @ids", new { ids = table.AsTableValuedParameter() }).First();
                 throw new InvalidOperationException();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
@@ -3201,12 +3205,14 @@ option (optimize for (@vals unKnoWn))";
         public void SO26468710_InWithTVPs()
         {
             // this is just to make it re-runnable; normally you only do this once
-            try { connection.Execute("drop type MyIdList"); } catch { }
+            try { connection.Execute("drop type MyIdList"); }
+            catch { }
             connection.Execute("create type MyIdList as table(id int);");
 
-            DataTable ids = new DataTable {
-                Columns = {{"id", typeof(int)}},
-                Rows = {{1},{3},{5}}
+            DataTable ids = new DataTable
+            {
+                Columns = { { "id", typeof(int) } },
+                Rows = { { 1 }, { 3 }, { 5 } }
             };
             ids.SetTypeName("MyIdList");
             int sum = connection.Query<int>(@"
@@ -3217,9 +3223,12 @@ option (optimize for (@vals unKnoWn))";
         }
         public void DataTableParametersWithExtendedProperty()
         {
-            try { connection.Execute("drop proc #DataTableParameters"); } catch { }
-            try { connection.Execute("drop table #DataTableParameters"); } catch { }
-            try { connection.Execute("drop type MyTVPType"); } catch { }
+            try { connection.Execute("drop proc #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop table #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop type MyTVPType"); }
+            catch { }
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
 
@@ -3624,7 +3633,8 @@ option (optimize for (@vals unKnoWn))";
             public LocalDate? NullableIsNull { get; set; }
         }
 
-        public class LotsOfNumerics {
+        public class LotsOfNumerics
+        {
             public enum E_Byte : byte { A = 0, B = 1 }
             public enum E_SByte : sbyte { A = 0, B = 1 }
             public enum E_Short : short { A = 0, B = 1 }
@@ -3832,7 +3842,8 @@ option (optimize for (@vals unKnoWn))";
             var parameters = new DynamicParameters();
             parameters.Add("foo", "bar");
             // parameters = new DynamicParameters(parameters);
-            try { connection.Execute("drop proc SO25069578"); } catch { }
+            try { connection.Execute("drop proc SO25069578"); }
+            catch { }
             connection.Execute("create proc SO25069578 @foo nvarchar(max) as select @foo as [X]");
             var tran = connection.BeginTransaction(); // gist used transaction; behaves the same either way, though
             var row = connection.Query<HazX>("SO25069578", parameters,
@@ -3849,14 +3860,15 @@ option (optimize for (@vals unKnoWn))";
             {
                 var result = connection.Query<Issue149_Person>(@"select @guid as Id", new { guid }).First();
                 error = null;
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 error = ex.Message;
             }
             error.IsEqualTo("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)");
         }
         public class Issue149_Person { public string Id { get; set; } }
-        
+
         public class HazX
         {
             public string X { get; set; }
@@ -3878,7 +3890,7 @@ SELECT value FROM @table WHERE value IN @myIds";
             var queryParams = new Dictionary<string, object> {
                 { "myIds", new [] { 5, 6 } }
             };
-            
+
             var dynamicParams = new DynamicParameters(queryParams);
             List<int> result = connection.Query<int>(query, dynamicParams).ToList();
             result.Count.IsEqualTo(2);
@@ -3900,8 +3912,10 @@ SELECT value FROM @table WHERE value IN @myIds";
         public void Issue178_SqlServer()
         {
             const string sql = @"select count(*) from Issue178";
-            try { connection.Execute("drop table Issue178"); } catch { }
-            try { connection.Execute("create table Issue178(id int not null)"); } catch { }
+            try { connection.Execute("drop table Issue178"); }
+            catch { }
+            try { connection.Execute("create table Issue178(id int not null)"); }
+            catch { }
             // raw ADO.net
             var sqlCmd = new SqlCommand(sql, connection);
             using (IDataReader reader1 = sqlCmd.ExecuteReader())
@@ -3930,7 +3944,8 @@ SELECT value FROM @table WHERE value IN @myIds";
             {
                 connection.Open();
                 const string sql = @"select count(*) from Issue178";
-                try { connection.Execute("drop table Issue178"); } catch { }
+                try { connection.Execute("drop table Issue178"); }
+                catch { }
                 connection.Execute("create table Issue178(id int not null)");
                 connection.Execute("insert into Issue178(id) values(42)");
                 // raw ADO.net
@@ -4055,7 +4070,7 @@ SELECT value FROM @table WHERE value IN @myIds";
             public dynamic Id { get; set; }
             public string Name { get; set; }
 
-            public object Foo { get;set; }
+            public object Foo { get; set; }
         }
 
         public void Issue151_ExpandoObjectArgsQuery()
@@ -4147,8 +4162,33 @@ SELECT * FROM @ExplicitConstructors"
         public void Issue220_InParameterCanBeSpecifiedInAnyCase()
         {
             // note this might fail if your database server is case-sensitive
-            connection.Query<int>("select * from (select 1 as Id) as X where Id in @ids", new {Ids = new[] {1}})
-                      .IsSequenceEqualTo(new[] {1});
+            connection.Query<int>("select * from (select 1 as Id) as X where Id in @ids", new { Ids = new[] { 1 } })
+                      .IsSequenceEqualTo(new[] { 1 });
+        }
+
+        public void SO29343103_UtcDates()
+        {
+            const string sql = "select @date";
+            var date = DateTime.UtcNow;
+            var returned = connection.Query<DateTime>(sql, new { date }).Single();
+            var delta = returned - date;
+            Assert.IsTrue(delta.TotalMilliseconds >= -1 && delta.TotalMilliseconds <= 1);
+        }
+
+        public void Issue261_Decimals()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("c", dbType: DbType.Decimal, direction: ParameterDirection.Output, precision: 10, scale: 5);
+            connection.Execute("create proc #Issue261 @c decimal(10,5) OUTPUT as begin set @c=11.884 end");
+            connection.Execute("#Issue261", parameters, commandType: CommandType.StoredProcedure);
+            var c = parameters.Get<Decimal>("c");
+            c.IsEqualTo(11.884M);
+        }
+
+        public void BasicDecimals()
+        {
+            var c = connection.Query<decimal>("select @c", new { c = 11.884M }).Single();
+            c.IsEqualTo(11.884M);
         }
 
 #if POSTGRESQL

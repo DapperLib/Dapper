@@ -4457,6 +4457,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             internal Action<object, DynamicParameters> OutputCallback { get; set; }
             internal object OutputTarget { get; set; }
             internal bool CameFromTemplate { get; set; }
+
+            public byte? Precision { get; set; }
+            public byte? Scale { get; set; }
         }
 
         /// <summary>
@@ -4529,20 +4532,30 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         /// <summary>
         /// Add a parameter to this dynamic parameter list
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
-        /// <param name="dbType"></param>
-        /// <param name="direction"></param>
-        /// <param name="size"></param>
+        public void Add(string name, object value, DbType? dbType, ParameterDirection? direction, int? size)
+        {
+            parameters[Clean(name)] = new ParamInfo() {
+                Name = name, Value = value, ParameterDirection = direction ?? ParameterDirection.Input,
+                DbType = dbType, Size = size
+            };
+        }
+
+        /// <summary>
+        /// Add a parameter to this dynamic parameter list
+        /// </summary>
         public void Add(
 #if CSHARP30
-string name, object value, DbType? dbType, ParameterDirection? direction, int? size
+string name, object value, DbType? dbType, ParameterDirection? direction, int? size, byte? precision, byte? scale
 #else
-string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null
+string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null
 #endif
 )
         {
-            parameters[Clean(name)] = new ParamInfo() { Name = name, Value = value, ParameterDirection = direction ?? ParameterDirection.Input, DbType = dbType, Size = size };
+            parameters[Clean(name)] = new ParamInfo() {
+                Name = name, Value = value, ParameterDirection = direction ?? ParameterDirection.Input,
+                DbType = dbType, Size = size,
+                Precision = precision, Scale = scale
+            };
         }
 
         static string Clean(string name)
@@ -4686,7 +4699,9 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                         if (param.Size != null)
                         {
                             p.Size = param.Size.Value;
-                        }                        
+                        }
+                        if (param.Precision != null) p.Precision = param.Precision.Value;
+                        if (param.Scale != null) p.Scale = param.Scale.Value;
                     }
                     else
                     {
