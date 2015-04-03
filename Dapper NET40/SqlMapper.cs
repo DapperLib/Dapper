@@ -1026,6 +1026,15 @@ namespace Dapper
             }
         }
 
+        /// <summary>
+        /// Obtains the data as a list; if it is *already* a list, the original object is returned without
+        /// any duplication; otherwise, ToList() is invoked.
+        /// </summary>
+        public static List<T> AsList<T>(this IEnumerable<T> source)
+        {
+            return (source == null || source is List<T>) ? (List<T>)source : source.ToList();
+        }
+
 #if CSHARP30
         /// <summary>
         /// Execute parameterized SQL  
@@ -2584,9 +2593,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                     if (startBound == 0)
                     {
-                        r.GetValues(values);
                         for (int i = 0; i < values.Length; i++)
-                            if (values[i] is DBNull) values[i] = null;
+                        {
+                            object val = r.GetValue(i);
+                            values[i] = val is DBNull ? null : val;
+                        }
                     }
                     else
                     {

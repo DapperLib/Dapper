@@ -19,6 +19,7 @@ using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 using System.Data.SqlTypes;
 using FirebirdSql.Data.FirebirdClient;
+using System.Diagnostics;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -4189,6 +4190,16 @@ SELECT * FROM @ExplicitConstructors"
         {
             var c = connection.Query<decimal>("select @c", new { c = 11.884M }).Single();
             c.IsEqualTo(11.884M);
+        }
+
+        public void Issue263_Timeout()
+        {
+            var watch = Stopwatch.StartNew();
+            var i = connection.Query<int>("waitfor delay '00:01:00'; select 42;", commandTimeout: 300, buffered: false).Single();
+            watch.Stop();
+            i.IsEqualTo(42);
+            var minutes = watch.ElapsedMilliseconds / 1000 / 60;
+            Assert.IsTrue(minutes >= 0.95 && minutes <= 1.05);
         }
 
 #if POSTGRESQL
