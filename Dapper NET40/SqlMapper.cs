@@ -1511,6 +1511,18 @@ this IDbConnection cnn, Type type, string sql, object param = null, IDbTransacti
             return command.Buffered ? data.ToList() : data;
         }
 
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>No need to rebind DbParameter collection to DbCommand</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, IDbCommand cmd)
+        {
+            var data = QueryImpl<T>(cnn, cmd, typeof(T));
+            return data.ToList();
+        }
 
 
         /// <summary>
@@ -1609,6 +1621,73 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
 					if (val == null || val is T) {
                         yield return (T)val;
                     } else {
+                        yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                    }
+                }
+                while (reader.NextResult()) { }
+                // happy path; close the reader cleanly - no
+                // need for "Cancel" etc
+                reader.Dispose();
+                reader = null;
+
+                command.OnCompleted();
+            }
+            finally
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) try { cmd.Cancel(); }
+                        catch { /* don't spoil the existing exception */ }
+                    reader.Dispose();
+                }
+                if (wasClosed) cnn.Close();
+                if (cmd != null) cmd.Dispose();
+            }
+        }
+
+        private static IEnumerable<T> QueryImpl<T>(this IDbConnection cnn, IDbCommand cmd, Type effectiveType)
+        {
+            var command = new CommandDefinition(cmd.CommandText, null, null, null, null, CommandFlags.Buffered);
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, null, null);
+
+            CacheInfo info;
+            if (!TryGetQueryCache(identity, out info))
+            {
+                info = new CacheInfo();
+                SetQueryCache(identity, info);
+            }
+            IDataReader reader = null;
+
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                if (wasClosed) cnn.Open();
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+                // with the CloseConnection flag, so the reader will deal with the connection; we
+                // still need something in the "finally" to ensure that broken SQL still results
+                // in the connection closing itself
+                var tuple = info.Deserializer;
+                int hash = GetColumnHash(reader);
+                if (tuple.Func == null || tuple.Hash != hash)
+                {
+                    if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
+                        yield break;
+                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                    if (command.AddToCache) SetQueryCache(identity, info);
+                }
+
+                var func = tuple.Func;
+                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
+                while (reader.Read())
+                {
+                    object val = func(reader);
+                    if (val == null || val is T)
+                    {
+                        yield return (T)val;
+                    }
+                    else
+                    {
                         yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
                 }
