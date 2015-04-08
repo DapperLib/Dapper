@@ -7,8 +7,8 @@
     <ProjectGuid>{B83D86B2-79C0-46AA-B51B-03730256FAAC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Dapper.SqlBuilder_NET45</RootNamespace>
-    <AssemblyName>Dapper.SqlBuilder NET45</AssemblyName>
+    <RootNamespace>Dapper.SqlBuilder</RootNamespace>
+    <AssemblyName>Dapper.SqlBuilder</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
