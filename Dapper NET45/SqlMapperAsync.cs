@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if ASYNC
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -829,3 +830,4 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         }
     }
 }
+#endif
