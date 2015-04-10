@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Dapper.Contrib</id>
-    <version>1.1</version>
+    <version>1.40</version>
     <authors>Sam Saffron,Johan Danforth</authors>
     <owners>Sam Saffron,Johan Danforth</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
@@ -10,8 +10,11 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A collection of create,insert,update,delete helpers for dapper.net</description>
     <tags>orm sql micro-orm</tags>
+    <releaseNotes>
+      * 1.40    - cumulative changes up to dapper 1.40; will track changes more carefully subsequently
+    </releaseNotes>
     <dependencies>
-      <dependency id="Dapper" version="1.27" />
+      <dependency id="Dapper" version="1.40" />
     </dependencies>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />

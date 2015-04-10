@@ -62,10 +62,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.EntityFramework NET4
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.SqlBuilder NET45", "Dapper.SqlBuilder NET45\Dapper.SqlBuilder NET45.csproj", "{B83D86B2-79C0-46AA-B51B-03730256FAAC}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{088D8CC4-E71E-44B6-9B87-4060B043983D}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -286,30 +282,6 @@ Global
 		{B83D86B2-79C0-46AA-B51B-03730256FAAC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{B83D86B2-79C0-46AA-B51B-03730256FAAC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B83D86B2-79C0-46AA-B51B-03730256FAAC}.Release|x86.ActiveCfg = Release|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|x86.Build.0 = Debug|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|x86.ActiveCfg = Release|Any CPU
-		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|x86.Build.0 = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|x86.Build.0 = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|x86.ActiveCfg = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
