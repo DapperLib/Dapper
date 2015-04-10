@@ -1,7 +1,7 @@
 ﻿{
     "version": "1.0.0-*",
     "dependencies": {
-        "Dapper": "1.0.0-*"
+        "Dapper": "1.40-*"
     },
     "commands": {
         "Dapper.DNX.Tests": "Dapper.DNX.Tests"
@@ -14,13 +14,13 @@
                 "System.Data": "4.0.0.0"
             }
         },
-        "net40": {
-            "dependencies": {
-            },
-            "frameworkAssemblies": {
-                "System.Data": "4.0.0.0"
-            }
-        },
+        //"net40": {
+        //    "dependencies": {
+        //    },
+        //    "frameworkAssemblies": {
+        //        "System.Data": "4.0.0.0"
+        //    }
+        //},
         "dnx451": {
             "frameworkAssemblies": {
                 "System.Data": "4.0.0.0"

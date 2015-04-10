@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace Dapper.DNX.Tests
 {
@@ -15,7 +16,17 @@ namespace Dapper.DNX.Tests
                 conn.Open();
                 var row = conn.Query<Foo>("select @a as X", new { a = 123 }).Single();
                 Console.WriteLine(row.X);
+
+                var methods = typeof(Dapper.SqlMapper).GetMethods().Where(x => x.Name == "QueryAsync").ToList();
+
+                //row = conn.QueryAsync<Foo>("select @a as X", new { a = 123 }).Wait().Single();
+                //Console.WriteLine(row.X);
             }
+        }
+        private static async Task<int> WithDelay(int i)
+        {
+            await Task.Delay(100);
+            return i;
         }
         class Foo
         {
