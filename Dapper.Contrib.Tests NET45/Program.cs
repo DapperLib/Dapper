@@ -18,6 +18,7 @@ namespace Dapper.Contrib.Tests_NET45
             RunTests();
             Setup();
             RunAsyncTests();
+            Console.WriteLine("Press any key...");
             Console.ReadKey();
         }
 

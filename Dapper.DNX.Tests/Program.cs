@@ -19,8 +19,8 @@ namespace Dapper.DNX.Tests
 
                 var methods = typeof(Dapper.SqlMapper).GetMethods().Where(x => x.Name == "QueryAsync").ToList();
 
-                //row = conn.QueryAsync<Foo>("select @a as X", new { a = 123 }).Wait().Single();
-                //Console.WriteLine(row.X);
+                row = conn.QueryAsync<Foo>("select @a as X", new { a = 123 }).Result.Single();
+                Console.WriteLine(row.X);
             }
         }
         private static async Task<int> WithDelay(int i)
