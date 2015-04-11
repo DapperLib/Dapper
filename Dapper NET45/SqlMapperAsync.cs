@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,13 +91,28 @@ namespace Dapper
                     }
 
                     var func = tuple.Func;
-
+                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     if (command.Buffered)
                     {
                         List<T> buffer = new List<T>();
                         while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                         {
-                            buffer.Add((T)func(reader));
+                            var value = func(reader);
+                            if (value == null)
+                            {
+                                if (typeof (T).IsValueType)
+                                {
+                                    buffer.Add(default(T));
+                                }
+                            }
+                            if (value is T)
+                            {
+                                buffer.Add((T) value);
+                            }
+                            else
+                            {
+                                buffer.Add((T) Convert.ChangeType(value, convertToType, CultureInfo.InvariantCulture));
+                            }
                         }
                         while (await reader.NextResultAsync().ConfigureAwait(false)) { }
                         command.OnCompleted();
