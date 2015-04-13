@@ -1,18 +1,16 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>Dapper.Contrib</id>
-    <version>1.40</version>
+    <id>Dapper.SqlBuilder</id>
+    <version>1.40.0</version>
     <authors>Sam Saffron,Johan Danforth</authors>
     <owners>Sam Saffron,Johan Danforth</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A collection of create,insert,update,delete helpers for dapper.net</description>
-    <tags>orm sql micro-orm</tags>
-    <releaseNotes>
-      * 1.40    - cumulative changes up to dapper 1.40; will track changes more carefully subsequently
-    </releaseNotes>
+    <title>Dapper SqlBuilder component</title>
+    <description>The Dapper SqlBuilder component to build SQL queries dynamically.</description>
+    <tags>orm sql micro-orm query sql sql-builder</tags>
     <dependencies>
       <dependency id="Dapper" version="1.40" />
     </dependencies>
@@ -24,7 +22,7 @@
     </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="Dapper.Contrib NET45\bin\Release\Dapper.Contrib.*" target="lib\net45" />
-    <file src="Dapper.Contrib\bin\Release\Dapper.Contrib.*" target="lib\net40" />
+    <file src="Dapper.SqlBuilder NET45\bin\Release\Dapper.SqlBuilder.*" target="lib\net45" />
+    <file src="Dapper.SqlBuilder\bin\Release\Dapper.SqlBuilder.*" target="lib\net40" />
   </files>
 </package>

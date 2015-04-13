@@ -1,0 +1,14 @@
+{
+  "locked": false,
+  "version": -9998,
+  "projectFileDependencyGroups": {
+    "": [],
+    ".NETFramework,Version=v4.5": [
+      "framework/System.Data >= 4.0.0.0"
+    ],
+    "DNX,Version=v4.5.1": [
+      "framework/System.Data >= 4.0.0.0"
+    ]
+  },
+  "libraries": {}
+}

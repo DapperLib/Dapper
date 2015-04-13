@@ -1,4 +1,5 @@
 /*.suo
+.vs/
 bin/
 obj/
 /*.user
