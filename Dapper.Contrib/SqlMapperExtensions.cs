@@ -527,7 +527,7 @@ public class SqlServerAdapter : ISqlAdapter
 
 		connection.Execute(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout); 
 
-		//NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
+		//NOTE: would prefer to use SCOPE_IDENTITY but this are not available on SQLCE
 		var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
 		int id = (int)r.First().id;
 		if (keyProperties.Any())
