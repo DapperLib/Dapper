@@ -134,7 +134,7 @@ namespace Dapper.Contrib.Extensions
 
             if (type.IsInterface)
             {
-                var res = connection.Query(sql, dynParms).FirstOrDefault() as IDictionary<string, object>;
+                var res = connection.Query(sql, dynParms).SingleOrDefault() as IDictionary<string, object>;
 
                 if (res == null)
                     return (T)((object)null);
@@ -151,7 +151,7 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                obj = connection.Query<T>(sql, dynParms, transaction: transaction, commandTimeout: commandTimeout).FirstOrDefault();
+                obj = connection.Query<T>(sql, dynParms, transaction: transaction, commandTimeout: commandTimeout).SingleOrDefault();
             }
             return obj;
         }
@@ -194,7 +194,7 @@ namespace Dapper.Contrib.Extensions
 
             if (type.IsInterface)
             {
-                var res = (await connection.QueryAsync<dynamic>(sql, dynParms).ConfigureAwait(false)).FirstOrDefault() as IDictionary<string, object>;
+                var res = (await connection.QueryAsync<dynamic>(sql, dynParms).ConfigureAwait(false)).SingleOrDefault() as IDictionary<string, object>;
 
                 if (res == null)
                     return (T)((object)null);
@@ -211,7 +211,7 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                obj = (await connection.QueryAsync<T>(sql, dynParms, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false)).FirstOrDefault();
+                obj = (await connection.QueryAsync<T>(sql, dynParms, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false)).SingleOrDefault();
             }
             return obj;
         }
