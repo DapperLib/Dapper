@@ -4221,6 +4221,75 @@ SELECT * FROM @ExplicitConstructors"
             Assert.IsTrue(minutes >= 0.95 && minutes <= 1.05);
         }
 
+        public void SO29596645_TvpProperty()
+        {
+            try { connection.Execute("CREATE TYPE SO29596645_ReminderRuleType AS TABLE (id int NOT NULL)"); }
+            catch { }
+            connection.Execute(@"create proc #SO29596645_Proc (@Id int, @Rules SO29596645_ReminderRuleType READONLY)
+                                as begin select @Id + ISNULL((select sum(id) from @Rules), 0); end");
+            var obj = new SO29596645_OrganisationDTO();
+            int val = connection.Query<int>("#SO29596645_Proc", obj.Rules, commandType: CommandType.StoredProcedure).Single();
+
+            // 4 + 9 + 7 = 20
+            val.IsEqualTo(20);
+
+        }
+
+        public void Issue268_ReturnQueryMultiple()
+        {
+            connection.Execute(@"create proc #TestProc268 (@a int, @b int, @c int)as 
+begin
+select @a;
+
+select @b
+
+return @c; 
+end");
+
+
+            var p = new DynamicParameters(new { a = 1, b = 2, c = 3 });
+            p.Add("RetVal", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+            using (var reader = connection.QueryMultiple("#TestProc268", p, commandType: CommandType.StoredProcedure))
+            {
+                reader.Read();
+            }
+            var retVal = p.Get<int>("RetVal");
+            retVal.IsEqualTo(3);
+        }
+
+        class SO29596645_RuleTableValuedParameters : Dapper.SqlMapper.IDynamicParameters {
+            private string parameterName;
+
+            public SO29596645_RuleTableValuedParameters(string parameterName)
+            {
+                this.parameterName = parameterName;
+            }
+
+
+            public void AddParameters(IDbCommand command, Dapper.SqlMapper.Identity identity)
+            {
+                Console.WriteLine("> AddParameters");
+                SqlCommand lazy = (SqlCommand)command;
+                lazy.Parameters.AddWithValue("Id", 7);
+                DataTable table = new DataTable {
+                    Columns = {{"Id", typeof(int)}},
+                    Rows = {{4}, {9}}
+                };
+                lazy.Parameters.AddWithValue("Rules", table);
+                Console.WriteLine("< AddParameters");
+            }
+        }
+        class SO29596645_OrganisationDTO
+        {
+            public SO29596645_RuleTableValuedParameters Rules { get; private set; }
+
+            public SO29596645_OrganisationDTO()
+            {
+                Rules = new SO29596645_RuleTableValuedParameters("@Rules");
+            }
+        }
+
 #if POSTGRESQL
 
         class Cat
