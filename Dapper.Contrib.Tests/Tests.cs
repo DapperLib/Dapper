@@ -3,6 +3,7 @@ using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Transactions;
 using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
 using System;
@@ -54,6 +55,15 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
+        private IDbConnection GetConnection()
+        {
+            var projLoc = Assembly.GetAssembly(GetType()).Location;
+            var projFolder = Path.GetDirectoryName(projLoc);
+
+            var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+            return connection;
+        }
+
         public void TableName()
         {
             using (var connection = GetOpenConnection())
@@ -90,7 +100,7 @@ namespace Dapper.Contrib.Tests
                 connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
 
                 var id = connection.Insert(new User { Name = "Adam", Age = 10 });
-               
+
                 //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
                 user.Name.IsEqualTo("Adam");
@@ -113,6 +123,41 @@ namespace Dapper.Contrib.Tests
                 connection.Query<User>("select * from Users").Count().IsEqualTo(0);
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+            }
+        }
+
+        public void Transactions()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Car { Name = "one car" });   //insert outside transaction
+
+                var tran = connection.BeginTransaction();
+                var car = connection.Get<Car>(id, tran);
+                var orgName = car.Name;
+                car.Name = "Another car";
+                connection.Update(car, tran);
+                tran.Rollback();
+
+                car = connection.Get<Car>(id);  //updates should have been rolled back
+                car.Name.IsEqualTo(orgName);
+            }
+        }
+
+        public void TransactionScope()
+        {
+            using (var connection = GetConnection())
+            {
+                using (var txscope = new TransactionScope())
+                {
+                    connection.Open();  //connection MUST be opened inside the transactionscope
+
+                    var id = connection.Insert(new Car { Name = "one car" });   //inser car within transaction
+
+                    txscope.Dispose();  //rollback
+
+                    connection.Get<Car>(id).IsNull();   //returns null - car with that id should not exist
+                }
             }
         }
 
