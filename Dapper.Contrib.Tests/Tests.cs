@@ -6,7 +6,6 @@ using System.Reflection;
 using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
 using System;
-using Dapper;
 
 
 namespace Dapper.Contrib.Tests
@@ -31,6 +30,8 @@ namespace Dapper.Contrib.Tests
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        [Computed]
+        public string Computed { get; set; }
     }
 
     [Table("Results")]
@@ -58,11 +59,11 @@ namespace Dapper.Contrib.Tests
             using (var connection = GetOpenConnection())
             {
                 // tests against "Automobiles" table (Table attribute)
-                connection.Insert(new Car {Name = "Volvo"});
+                connection.Insert(new Car { Name = "Volvo" }).IsEqualTo(1);
                 connection.Get<Car>(1).Name.IsEqualTo("Volvo");
-                connection.Update(new Car() {Id = 1, Name = "Saab"}).IsEqualTo(true);
+                connection.Update(new Car() { Id = 1, Name = "Saab" }).IsEqualTo(true);
                 connection.Get<Car>(1).Name.IsEqualTo("Saab");
-                connection.Delete(new Car() {Id = 1}).IsEqualTo(true);
+                connection.Delete(new Car() { Id = 1 }).IsEqualTo(true);
                 connection.Get<Car>(1).IsNull();
             }
         }
@@ -85,8 +86,11 @@ namespace Dapper.Contrib.Tests
             {
                 connection.Get<User>(3).IsNull();
 
-                var id = connection.Insert(new User {Name = "Adam", Age = 10});
+                //insert with computed attribute that should be ignored
+                connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
 
+                var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+               
                 //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
                 user.Name.IsEqualTo("Adam");
@@ -156,7 +160,7 @@ namespace Dapper.Contrib.Tests
         public void BuilderTemplateWOComposition()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new {age = 5});
+            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new { age = 5 });
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");
@@ -188,7 +192,7 @@ namespace Dapper.Contrib.Tests
             {
                 var id1 = connection.Insert(new User() { Name = "Alice", Age = 32 });
                 var id2 = connection.Insert(new User() { Name = "Bob", Age = 33 });
-                connection.DeleteAll<User>();
+                connection.DeleteAll<User>().IsTrue();
                 connection.Get<User>(id1).IsNull();
                 connection.Get<User>(id2).IsNull();
             }
