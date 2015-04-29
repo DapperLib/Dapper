@@ -6,6 +6,10 @@
  I know the difference between language and runtime versions; this is a compromise).
  */
 
+#if DNXCORE50
+using IDbDataParameter = System.Data.Common.DbParameter;
+#endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -4630,7 +4634,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     // then explicitly adds a parameter of a matching name,
                     // it will already exist in 'parameters'.
                     if (!parameters.ContainsKey(param.ParameterName)) 
-                    { 
+                    {
                         parameters.Add(param.ParameterName, new ParamInfo
                         {
                             AttachedParam = param,
