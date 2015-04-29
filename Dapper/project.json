@@ -2,7 +2,7 @@
     "authors": [ "Sam Saffron", "Marc Gravell" ],
     "description": "A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..",
     "version": "1.40-*",
-    "code": [ "../Dapper NET40/*.cs", "../Dapper NET45/*.cs" ],
+    "compile": [ "../Dapper NET40/*.cs", "../Dapper NET45/*.cs" ],
     "frameworks": {
         "net45": {
             "compilationOptions": { "define": [ "ASYNC" ] },
@@ -26,7 +26,7 @@
             "frameworkAssemblies": {
                 "System.Data": "4.0.0.0"
             }
-        },
+        }
         //"dnxcore50": {
         //    "dependencies": {
         //        "System.Runtime": "4.0.20-beta-22716"
