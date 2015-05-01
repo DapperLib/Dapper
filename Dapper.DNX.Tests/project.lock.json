@@ -1,9 +1,61 @@
 {
   "locked": false,
-  "version": -9998,
+  "version": -9997,
+  "targets": {
+    ".NETFramework,Version=v4.5": {
+      "Dapper/1.41-alpha": {
+        "frameworkAssemblies": [
+          "System.Data",
+          "mscorlib",
+          "System",
+          "System.Core",
+          "Microsoft.CSharp"
+        ],
+        "compile": [
+          "lib/net45/Dapper.dll"
+        ],
+        "runtime": [
+          "lib/net45/Dapper.dll"
+        ]
+      }
+    },
+    "DNX,Version=v4.5.1": {
+      "Dapper/1.41-alpha": {
+        "frameworkAssemblies": [
+          "System.Data",
+          "mscorlib",
+          "System",
+          "System.Core",
+          "Microsoft.CSharp"
+        ],
+        "compile": [
+          "lib/dnx451/Dapper.dll"
+        ],
+        "runtime": [
+          "lib/dnx451/Dapper.dll"
+        ]
+      }
+    }
+  },
+  "libraries": {
+    "Dapper/1.41-alpha": {
+      "sha512": "dJPrw+E8nGHRydGRUddbjGUxQBR9w4d8ISLD8QM24FsRihEJjjlww+AFb77mK78qGFwkHAnpY2k8oZfpLR61gg==",
+      "files": [
+        "Dapper.1.41-alpha.nupkg",
+        "Dapper.1.41-alpha.nupkg.sha512",
+        "Dapper.nuspec",
+        "lib/dnx451/Dapper.dll",
+        "lib/dnx451/Dapper.xml",
+        "lib/net40/Dapper.dll",
+        "lib/net40/Dapper.xml",
+        "lib/net45/Dapper.dll",
+        "lib/net45/Dapper.xml"
+      ]
+    }
+  },
   "projectFileDependencyGroups": {
     "": [
-      "Dapper >= 1.40-*"
+      "Dapper >= 1.41-*"
     ],
     ".NETFramework,Version=v4.5": [
       "framework/System.Data >= 4.0.0.0"
@@ -11,6 +63,5 @@
     "DNX,Version=v4.5.1": [
       "framework/System.Data >= 4.0.0.0"
     ]
-  },
-  "libraries": {}
+  }
 }
