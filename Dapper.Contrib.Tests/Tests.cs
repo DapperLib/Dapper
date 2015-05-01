@@ -3,10 +3,10 @@ using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Transactions;
 using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
 using System;
-using Dapper;
 
 
 namespace Dapper.Contrib.Tests
@@ -31,6 +31,8 @@ namespace Dapper.Contrib.Tests
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        [Computed]
+        public string Computed { get; set; }
     }
 
     [Table("Results")]
@@ -53,16 +55,25 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
+        private IDbConnection GetConnection()
+        {
+            var projLoc = Assembly.GetAssembly(GetType()).Location;
+            var projFolder = Path.GetDirectoryName(projLoc);
+
+            var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+            return connection;
+        }
+
         public void TableName()
         {
             using (var connection = GetOpenConnection())
             {
                 // tests against "Automobiles" table (Table attribute)
-                connection.Insert(new Car {Name = "Volvo"});
+                connection.Insert(new Car { Name = "Volvo" }).IsEqualTo(1);
                 connection.Get<Car>(1).Name.IsEqualTo("Volvo");
-                connection.Update(new Car() {Id = 1, Name = "Saab"}).IsEqualTo(true);
+                connection.Update(new Car() { Id = 1, Name = "Saab" }).IsEqualTo(true);
                 connection.Get<Car>(1).Name.IsEqualTo("Saab");
-                connection.Delete(new Car() {Id = 1}).IsEqualTo(true);
+                connection.Delete(new Car() { Id = 1 }).IsEqualTo(true);
                 connection.Get<Car>(1).IsNull();
             }
         }
@@ -85,7 +96,10 @@ namespace Dapper.Contrib.Tests
             {
                 connection.Get<User>(3).IsNull();
 
-                var id = connection.Insert(new User {Name = "Adam", Age = 10});
+                //insert with computed attribute that should be ignored
+                connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
+
+                var id = connection.Insert(new User { Name = "Adam", Age = 10 });
 
                 //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
@@ -109,6 +123,41 @@ namespace Dapper.Contrib.Tests
                 connection.Query<User>("select * from Users").Count().IsEqualTo(0);
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+            }
+        }
+
+        public void Transactions()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Car { Name = "one car" });   //insert outside transaction
+
+                var tran = connection.BeginTransaction();
+                var car = connection.Get<Car>(id, tran);
+                var orgName = car.Name;
+                car.Name = "Another car";
+                connection.Update(car, tran);
+                tran.Rollback();
+
+                car = connection.Get<Car>(id);  //updates should have been rolled back
+                car.Name.IsEqualTo(orgName);
+            }
+        }
+
+        public void TransactionScope()
+        {
+            using (var connection = GetConnection())
+            {
+                using (var txscope = new TransactionScope())
+                {
+                    connection.Open();  //connection MUST be opened inside the transactionscope
+
+                    var id = connection.Insert(new Car { Name = "one car" });   //inser car within transaction
+
+                    txscope.Dispose();  //rollback
+
+                    connection.Get<Car>(id).IsNull();   //returns null - car with that id should not exist
+                }
             }
         }
 
@@ -156,7 +205,7 @@ namespace Dapper.Contrib.Tests
         public void BuilderTemplateWOComposition()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new {age = 5});
+            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new { age = 5 });
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");
@@ -188,7 +237,7 @@ namespace Dapper.Contrib.Tests
             {
                 var id1 = connection.Insert(new User() { Name = "Alice", Age = 32 });
                 var id2 = connection.Insert(new User() { Name = "Bob", Age = 33 });
-                connection.DeleteAll<User>();
+                connection.DeleteAll<User>().IsTrue();
                 connection.Get<User>(id1).IsNull();
                 connection.Get<User>(id2).IsNull();
             }

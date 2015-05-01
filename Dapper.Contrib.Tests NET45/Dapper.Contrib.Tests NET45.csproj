@@ -7,8 +7,8 @@
     <ProjectGuid>{7A85178F-4ADC-4E4C-BF08-17FC99488A9A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Dapper.Contrib.Tests_NET45</RootNamespace>
-    <AssemblyName>Dapper.Contrib.Tests NET45</AssemblyName>
+    <RootNamespace>Dapper.Contrib.Tests</RootNamespace>
+    <AssemblyName>Dapper.Contrib.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -35,6 +35,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -42,10 +43,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assert.cs" />
+    <Compile Include="..\Dapper.Contrib.Tests\Assert.cs">
+      <Link>Assert.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper.Contrib.Tests\Tests.cs">
+      <Link>Tests.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tests.cs" />
     <Compile Include="TestsAsync.cs" />
   </ItemGroup>
   <ItemGroup>

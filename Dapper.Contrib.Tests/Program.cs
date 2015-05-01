@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.SqlServerCe;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Dapper.Contrib.Tests
 {
@@ -15,6 +11,8 @@ namespace Dapper.Contrib.Tests
         {
             Setup();
             RunTests();
+                Console.WriteLine("Press any key...");
+            Console.ReadKey();
         }
 
         private static void Setup()
@@ -46,9 +44,6 @@ namespace Dapper.Contrib.Tests
                 method.Invoke(tester, null);
                 Console.WriteLine(" - OK!");
             }
-
-            Console.WriteLine("(end of tests; press any key)");
-            Console.ReadKey();
         }
 
     }

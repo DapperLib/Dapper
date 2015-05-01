@@ -10,7 +10,7 @@ using Dapper;
 using System.Threading.Tasks;
 
 
-namespace Dapper.Contrib.Tests_NET45
+namespace Dapper.Contrib.Tests
 {
     public class TestsAsync
     {
