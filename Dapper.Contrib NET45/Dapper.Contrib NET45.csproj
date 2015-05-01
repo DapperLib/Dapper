@@ -44,10 +44,7 @@
     <Compile Include="..\Dapper.Contrib\Properties\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\Dapper.Contrib\SqlMapperExtensions.cs">
-      <Link>SqlMapperExtensions.cs</Link>
-    </Compile>
-    <Compile Include="SqlMapperExtensionsAsync.cs" />
+    <Compile Include="SqlMapperExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

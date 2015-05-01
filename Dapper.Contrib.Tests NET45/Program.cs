@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlServerCe;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace Dapper.Contrib.Tests
+namespace Dapper.Contrib.Tests_NET45
 {
     class Program
     {
@@ -43,21 +47,50 @@ namespace Dapper.Contrib.Tests
             var tester = new Tests();
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
-                Console.Write("Running " + method.Name);
-                method.Invoke(tester, null);
-                Console.WriteLine(" - OK!");
+                if (method.ReturnType != typeof(Task))
+                {
+                    Console.Write("Running " + method.Name);
+                    method.Invoke(tester, null);
+                    Console.WriteLine(" - OK!");
+                }
             }
         }
 
         private static void RunAsyncTests()
         {
             var tester = new TestsAsync();
-            foreach (var method in typeof(TestsAsync).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            {
-                Console.Write("Running " + method.Name);
-                Task.WaitAll((Task)method.Invoke(tester, null));
-                Console.WriteLine(" - OK!");
-            }
+
+            Console.Write("Running TableNameAsync");
+            Task.WaitAll(tester.TableNameAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running TestSimpleGetAsync");
+            Task.WaitAll(tester.TestSimpleGetAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running InsertGetUpdateAsync");
+            Task.WaitAll(tester.InsertGetUpdateAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running InsertCheckKeyAsync");
+            Task.WaitAll(tester.InsertCheckKeyAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running BuilderSelectClauseAsync");
+            Task.WaitAll(tester.BuilderSelectClauseAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running BuilderTemplateWOCompositionAsync");
+            Task.WaitAll(tester.BuilderTemplateWOCompositionAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running InsertFieldWithReservedNameAsync");
+            Task.WaitAll(tester.InsertFieldWithReservedNameAsync());
+            Console.WriteLine(" - OK!");
+
+            Console.Write("Running DeleteAllAsync");
+            Task.WaitAll(tester.DeleteAllAsync());
+            Console.WriteLine(" - OK!");
         }
     }
 }

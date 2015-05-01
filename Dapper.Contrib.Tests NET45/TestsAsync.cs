@@ -3,13 +3,14 @@ using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
 using System;
+using Dapper;
 using System.Threading.Tasks;
 
-using Dapper.Contrib.Extensions;
 
-namespace Dapper.Contrib.Tests
+namespace Dapper.Contrib.Tests_NET45
 {
     public class TestsAsync
     {

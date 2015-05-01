@@ -9,7 +9,7 @@ using System;
 using Dapper;
 
 
-namespace Dapper.Contrib.Tests
+namespace Dapper.Contrib.Tests_NET45
 {
     public interface IUser
     {
