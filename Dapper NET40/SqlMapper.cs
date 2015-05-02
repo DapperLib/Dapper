@@ -5313,18 +5313,28 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             _properties = GetSettableProps(type);
             _type = type;
         }
-
+#if DNXCORE50
+        static bool IsParameterMatch(ParameterInfo[] x, ParameterInfo[] y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (x == null || y == null) return false;
+            if (x.Length != y.Length) return false;
+            for (int i = 0; i < x.Length; i++)
+                if (x[i].ParameterType != y[i].ParameterType) return false;
+            return true;
+        }
+#endif
         internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
-            return propertyInfo.DeclaringType == type ?
-                propertyInfo.GetSetMethod(true) :
+            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
 #if DNXCORE50
-                propertyInfo.DeclaringType.GetProperty(
-                    propertyInfo.Name, propertyInfo.PropertyType,
-                    propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray()
-                    ).GetSetMethod(true);
+            return propertyInfo.DeclaringType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Single(x => x.Name == propertyInfo.Name
+                        && x.PropertyType == propertyInfo.PropertyType
+                        && IsParameterMatch(x.GetIndexParameters(), propertyInfo.GetIndexParameters())
+                        ).GetSetMethod(true);
 #else
-            propertyInfo.DeclaringType.GetProperty(
+            return propertyInfo.DeclaringType.GetProperty(
                    propertyInfo.Name,
                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                    Type.DefaultBinder,

@@ -139,7 +139,7 @@ end
         private static void RunTests()
         {
             var tester = new Tests();
-            int fail = 0, skip = 0, pass = 0;
+            int fail = 0, skip = 0, pass = 0, frameworkFail = 0;
             MethodInfo[] methods = typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             var activeTests = methods.Where(m => HasAttribute<ActiveTestAttribute>(m)).ToArray();
             if (activeTests.Length != 0) methods = activeTests;
@@ -152,31 +152,49 @@ end
                     skip++;
                     continue;
                 }
+                bool expectFrameworkFail = HasAttribute<FrameworkFail>(method);
+
                 Console.Write("Running " + method.Name);
                 try
                 {
                     method.Invoke(tester, null);
-                    Console.WriteLine(" - OK!");
-                    pass++;
+                    if (expectFrameworkFail)
+                    {
+                        Console.WriteLine(" - was expected to framework-fail, but didn't");
+                        fail++;
+                        failNames.Add(method.Name);
+                    }
+                    else
+                    {
+                        Console.WriteLine(" - OK!");
+                        pass++;
+                    }
                 } catch(TargetInvocationException tie)
                 {
-                    fail++;
                     Console.WriteLine(" - " + tie.InnerException.Message);
-                    failNames.Add(method.Name);
-                    if(tie.InnerException is TypeInitializationException)
+                    if (expectFrameworkFail)
                     {
-                        Console.WriteLine("> " + tie.InnerException.InnerException.Message);
+                        frameworkFail++;
                     }
-                    
+                    else
+                    {
+                        fail++;
+                        failNames.Add(method.Name);
+                        if (tie.InnerException is TypeInitializationException)
+                        {
+                            Console.WriteLine("> " + tie.InnerException.InnerException.Message);
+                        }
+                    }
                 }catch (Exception ex)
                 {
                     fail++;
                     Console.WriteLine(" - " + ex.Message);
+                    failNames.Add(method.Name);
                 }
             }
             Console.WriteLine();
 
-            Console.WriteLine("Passed: {0}, Failed: {1}, Skipped: {2}", pass, fail, skip);
+            Console.WriteLine("Passed: {0}, Failed: {1}, Skipped: {2}, Framework-fail: {3}", pass, fail, skip, frameworkFail);
             if(fail == 0)
             {
                 Console.WriteLine("(all tests successful)");
@@ -196,5 +214,13 @@ end
     public sealed class ActiveTestAttribute : Attribute {}
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class SkipTestAttribute : Attribute { }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public sealed class FrameworkFail : Attribute {
+        public FrameworkFail(string url) {
+            this.Url = url;
+        } 
+        public string Url { get; private set; }
+    }
 
 }

@@ -281,6 +281,7 @@ namespace SqlMapper
             output.ToArray().IsSequenceEqualTo(orig);
         }
 #endif
+
         // http://stackoverflow.com/q/8593871
         public void TestAbstractInheritance()
         {
@@ -3180,6 +3181,22 @@ end");
             A = 2,
             B = 1
         }
+
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1613")]
+#endif
+        public void AdoNetEnumValue()
+        {
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "select @foo";
+                cmd.Parameters.AddWithValue("@foo", AnEnum.B);
+                object value = cmd.ExecuteScalar();
+                AnEnum val = (AnEnum)value;
+                val.IsEqualTo(AnEnum.B);
+            }
+        }
+
         public void LiteralReplacementEnumAndString()
         {
             var args = new { x = AnEnum.B, y = 123.45M, z = AnotherEnum.A };
@@ -3191,6 +3208,9 @@ end");
             y.Equals(123.45M);
             z.Equals(AnotherEnum.A);
         }
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1613")]
+#endif
         public void LiteralReplacementDynamicEnumAndString()
         {
             var args = new DynamicParameters();
@@ -4326,7 +4346,9 @@ SELECT * FROM @ExplicitConstructors"
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -1 && delta.TotalMilliseconds <= 1);
         }
-
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
+#endif
         public void Issue261_Decimals()
         {
             var parameters = new DynamicParameters();
@@ -4336,7 +4358,9 @@ SELECT * FROM @ExplicitConstructors"
             var c = parameters.Get<Decimal>("c");
             c.IsEqualTo(11.884M);
         }
-
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
+#endif
         public void Issue261_Decimals_ADONET_SetViaBaseClass()
         {
             Issue261_Decimals_ADONET(true);
