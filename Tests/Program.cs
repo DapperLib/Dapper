@@ -6,11 +6,15 @@ using System.Collections.Generic;
 
 namespace SqlMapper
 {
+#if EXTERNALS
     [ServiceStack.DataAnnotations.Alias("Posts")]
 	[Soma.Core.Table(Name = "Posts")]
+#endif
     public class Post
     {
+#if EXTERNALS
 		[Soma.Core.Id(Soma.Core.IdKind.Identity)]
+#endif
         public int Id { get; set; }
         public string Text { get; set; }
         public DateTime CreationDate { get; set; }
@@ -42,10 +46,14 @@ namespace SqlMapper
 
         static void RunPerformanceTests()
         {
+#if PERF
             var test = new PerformanceTests();
             const int iterations = 500;
             Console.WriteLine("Running {0} iterations that load up a post entity", iterations);
             test.Run(iterations);
+#else
+            Console.WriteLine("Performance tests have not been built; add the PERF symbol");
+#endif
         }
 
         static void Main()
@@ -53,13 +61,18 @@ namespace SqlMapper
 
 #if DEBUG
             RunTests();
-#else 
+#else
             EnsureDBSetup();
             RunPerformanceTests();
 #endif
-            Console.WriteLine("(end of tests; press any key)");
 
+#if DNXCORE50
+            Console.WriteLine("(end of tests; press return)");
+            Console.ReadLine();
+#else
+            Console.WriteLine("(end of tests; press any key)");
             Console.ReadKey();
+#endif
         }
 
         private static void EnsureDBSetup()
@@ -110,27 +123,46 @@ end
                 cmd.ExecuteNonQuery();
             }
         }
+        private static bool HasAttribute<T>(MemberInfo member) where T : Attribute
+        {
+#if DNXCORE50
+            return member.CustomAttributes.Any(x => x.AttributeType == typeof(T));
+#else
+            return Attribute.IsDefined(member, typeof(T), true);
+#endif
+        }
 
         private static void RunTests()
         {
             var tester = new Tests();
-            int fail = 0;
+            int fail = 0, skip = 0, pass = 0;
             MethodInfo[] methods = typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var activeTests = methods.Where(m => Attribute.IsDefined(m, typeof(ActiveTestAttribute))).ToArray();
+            var activeTests = methods.Where(m => HasAttribute<ActiveTestAttribute>(m)).ToArray();
             if (activeTests.Length != 0) methods = activeTests;
             List<string> failNames = new List<string>();
             foreach (var method in methods)
             {
+                if (HasAttribute<SkipTestAttribute>(method))
+                {
+                    Console.Write("Skipping " + method.Name);
+                    skip++;
+                    continue;
+                }
                 Console.Write("Running " + method.Name);
                 try
                 {
                     method.Invoke(tester, null);
                     Console.WriteLine(" - OK!");
+                    pass++;
                 } catch(TargetInvocationException tie)
                 {
                     fail++;
                     Console.WriteLine(" - " + tie.InnerException.Message);
                     failNames.Add(method.Name);
+                    if(tie.InnerException is TypeInitializationException)
+                    {
+                        Console.WriteLine("> " + tie.InnerException.InnerException.Message);
+                    }
                     
                 }catch (Exception ex)
                 {
@@ -139,13 +171,15 @@ end
                 }
             }
             Console.WriteLine();
+
+            Console.WriteLine("Passed: {0}, Failed: {1}, Skipped: {2}", pass, fail, skip);
             if(fail == 0)
             {
                 Console.WriteLine("(all tests successful)");
             }
             else
             {
-                Console.WriteLine("#### FAILED: {0}", fail);
+                Console.WriteLine("Failures:");
                 foreach(var failName in failNames)
                 {
                     Console.WriteLine(failName);
@@ -156,5 +190,7 @@ end
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class ActiveTestAttribute : Attribute {}
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public sealed class SkipTestAttribute : Attribute { }
 
 }
