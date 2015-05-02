@@ -70,22 +70,6 @@
           "lib/aspnetcore50/System.Data.Common.dll"
         ]
       },
-      "System.Data.SqlClient/4.0.0-beta-22816": {
-        "dependencies": {
-          "System.Data.Common": "4.0.0-beta-22816",
-          "System.Globalization": "4.0.10-beta-22816",
-          "System.IO": "4.0.10-beta-22816",
-          "System.Runtime": "4.0.20-beta-22816",
-          "System.Threading.Tasks": "4.0.10-beta-22816",
-          "System.Xml.ReaderWriter": "4.0.10-beta-22816"
-        },
-        "compile": [
-          "lib/contract/System.Data.SqlClient.dll"
-        ],
-        "runtime": [
-          "lib/aspnetcore50/System.Data.SqlClient.dll"
-        ]
-      },
       "System.Dynamic.Runtime/4.0.10-beta-22816": {
         "dependencies": {
           "System.Linq.Expressions": "4.0.10-beta-22816",
@@ -312,20 +296,6 @@
         "runtime": [
           "lib/aspnetcore50/System.Threading.Tasks.dll"
         ]
-      },
-      "System.Xml.ReaderWriter/4.0.10-beta-22816": {
-        "dependencies": {
-          "System.IO": "4.0.10-beta-22816",
-          "System.Runtime": "4.0.20-beta-22816",
-          "System.Text.Encoding": "4.0.10-beta-22816",
-          "System.Threading.Tasks": "4.0.10-beta-22816"
-        },
-        "compile": [
-          "lib/contract/System.Xml.ReaderWriter.dll"
-        ],
-        "runtime": [
-          "lib/aspnetcore50/System.Xml.ReaderWriter.dll"
-        ]
       }
     }
   },
@@ -380,21 +350,6 @@
         "lib/contract/System.Data.Common.dll",
         "lib/net45/System.Data.Common.dll",
         "lib/portable-wpa81+wp80+win80+net45+aspnetcore50/System.Data.Common.dll"
-      ]
-    },
-    "System.Data.SqlClient/4.0.0-beta-22816": {
-      "sha512": "HyCUhHjJ5iqsO9GtIqoulzPaJL7w9UeYMaazDhMbUQP1Yz2zalNQaFIV3ssFFEPmCVZwjeV+1zagDfoM0KahZQ==",
-      "files": [
-        "License.rtf",
-        "System.Data.SqlClient.4.0.0-beta-22816.nupkg",
-        "System.Data.SqlClient.4.0.0-beta-22816.nupkg.sha512",
-        "System.Data.SqlClient.nuspec",
-        "lib/aspnetcore50/System.Data.SqlClient.dll",
-        "lib/contract/System.Data.SqlClient.dll",
-        "lib/net45/System.Data.SqlClient.dll",
-        "lib/portable-wpa81+wp80+win80+net45+aspnetcore50/System.Data.SqlClient.dll",
-        "native/win7/x64/sni.dll",
-        "native/win7/x86/sni.dll"
       ]
     },
     "System.Dynamic.Runtime/4.0.10-beta-22816": {
@@ -643,19 +598,6 @@
         "lib/net45/System.Threading.Tasks.dll",
         "lib/portable-wpa81+wp80+win80+net45+aspnetcore50/System.Threading.Tasks.dll"
       ]
-    },
-    "System.Xml.ReaderWriter/4.0.10-beta-22816": {
-      "sha512": "G0aLPtC/phTfiJPwe0VA3tB3x8YFQ1dHFuE1xaHNr9eQm/AfBp4Pk+fn3s7ABJDus/T89EtIHQ9C+O6VmqXIQQ==",
-      "files": [
-        "License.rtf",
-        "System.Xml.ReaderWriter.4.0.10-beta-22816.nupkg",
-        "System.Xml.ReaderWriter.4.0.10-beta-22816.nupkg.sha512",
-        "System.Xml.ReaderWriter.nuspec",
-        "lib/aspnetcore50/System.Xml.ReaderWriter.dll",
-        "lib/contract/System.Xml.ReaderWriter.dll",
-        "lib/net45/System.Xml.ReaderWriter.dll",
-        "lib/portable-wpa81+wp80+win80+net45+aspnetcore50/System.Xml.ReaderWriter.dll"
-      ]
     }
   },
   "projectFileDependencyGroups": {
@@ -683,9 +625,9 @@
       "System.Reflection.Emit.Lightweight >= 4.0.0-beta-*",
       "System.Reflection.TypeExtensions >= 4.0.0-beta-*",
       "System.Data.Common >= 4.0.0-beta-*",
-      "System.Data.SqlClient >= 4.0.0-beta-*",
       "System.Runtime.Extensions >= 4.0.10-beta-*",
-      "System.Text.Encoding.CodePages >= 4.0.0-beta-*"
+      "System.Text.Encoding.CodePages >= 4.0.0-beta-*",
+      "System.Globalization >= 4.0.10-beta-*"
     ]
   }
 }
