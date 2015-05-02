@@ -4771,10 +4771,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                                 p.Size = DbString.DefaultLength;
                             }
                         }
-                        if (param.Size != null)
-                        {
-                            p.Size = param.Size.Value;
-                        }
+                        if (param.Size != null) p.Size = param.Size.Value;
                         if (param.Precision != null) p.Precision = param.Precision.Value;
                         if (param.Scale != null) p.Scale = param.Scale.Value;
                     }
@@ -4782,6 +4779,8 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         if (dbType != null) p.DbType = dbType.Value;
                         if (param.Size != null) p.Size = param.Size.Value;
+                        if (param.Precision != null) p.Precision = param.Precision.Value;
+                        if (param.Scale != null) p.Scale = param.Scale.Value;
                         handler.SetValue(p, val ?? DBNull.Value);
                     }
 

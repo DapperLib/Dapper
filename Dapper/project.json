@@ -44,7 +44,7 @@
             }
         },
         "dnxcore50": {
-            "compilationOptions": { "define": [  ], "warningsAsErrors": true },
+            "compilationOptions": { "define": [ ], "warningsAsErrors": true },
             "dependencies": {
                 "System.Text.RegularExpressions": "4.0.10-beta-*",
                 "System.Collections": "4.0.10-beta-*",
