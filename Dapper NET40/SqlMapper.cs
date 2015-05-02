@@ -345,7 +345,7 @@ namespace Dapper
 
             void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
-                parameter.Value = ((object)value) ?? DBNull.Value;
+                parameter.Value = SanitizeParameterValue(value);
                 if (parameter is System.Data.SqlClient.SqlParameter)
                 {
                     ((System.Data.SqlClient.SqlParameter)parameter).UdtTypeName = udtTypeName;
@@ -2745,7 +2745,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (FeatureSupport.Get(command.Connection).Arrays)
             {
                 var arrayParm = command.CreateParameter();
-                arrayParm.Value = value ?? DBNull.Value;
+                arrayParm.Value = SanitizeParameterValue(value);
                 arrayParm.ParameterName = namePrefix;
                 command.Parameters.Add(arrayParm);
             }
@@ -2775,7 +2775,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     else
                     {
-                        listParam.Value = item ?? DBNull.Value;
+                        listParam.Value = SanitizeParameterValue(item);
                         command.Parameters.Add(listParam);
                     }
                 }
@@ -2832,7 +2832,34 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 
         }
-
+        internal static object SanitizeParameterValue(object value)
+        {
+            if (value == null) return DBNull.Value;
+            if (value is Enum)
+            {
+                TypeCode typeCode;
+                if (value is IConvertible)
+                {
+                    typeCode = ((IConvertible)value).GetTypeCode();
+                }
+                else
+                {
+                    typeCode = TypeExtensions.GetTypeCode(Enum.GetUnderlyingType(value.GetType()));
+                }
+                switch (typeCode)
+                {
+                    case TypeCode.Byte: return (byte)value;
+                    case TypeCode.SByte: return (sbyte)value;
+                    case TypeCode.Int16: return (short)value;
+                    case TypeCode.Int32: return (int)value;
+                    case TypeCode.Int64: return (long)value;
+                    case TypeCode.UInt16: return (ushort)value;
+                    case TypeCode.UInt32: return (uint)value;
+                    case TypeCode.UInt64: return (ulong)value;
+                }
+            }
+            return value;
+        }
         private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
         {
             return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + "([^a-z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant));
@@ -4758,7 +4785,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     p.Direction = param.ParameterDirection;
                     if (handler == null)
                     {
-                        p.Value = val ?? DBNull.Value;
+                        p.Value = SqlMapper.SanitizeParameterValue(val);
                         if (dbType != null && p.DbType != dbType)
                         {
                             p.DbType = dbType.Value;
@@ -5073,7 +5100,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
         internal static void Set(IDbDataParameter parameter, DataTable table, string typeName)
         {
-            parameter.Value = (object)table ?? DBNull.Value;
+            parameter.Value = SqlMapper.SanitizeParameterValue(table);
             if (string.IsNullOrEmpty(typeName) && table != null)
             {
                 typeName = SqlMapper.GetTypeName(table);
@@ -5135,7 +5162,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             }
             var param = command.CreateParameter();
             param.ParameterName = name;
-            param.Value = (object)Value ?? DBNull.Value;
+            param.Value = SqlMapper.SanitizeParameterValue(Value);
             if (Length == -1 && Value != null && Value.Length <= DefaultLength)
             {
                 param.Size = DefaultLength;

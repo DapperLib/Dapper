@@ -3208,9 +3208,7 @@ end");
             y.Equals(123.45M);
             z.Equals(AnotherEnum.A);
         }
-#if DNXCORE50
-        [FrameworkFail("https://github.com/dotnet/corefx/issues/1613")]
-#endif
+
         public void LiteralReplacementDynamicEnumAndString()
         {
             var args = new DynamicParameters();
