@@ -5,7 +5,7 @@
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
     "summary": "A high performance Micro-ORM",
     "description": "A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-    "version": "1.41-beta3",
+    "version": "1.41-beta4",
     "compile": [ "../Dapper NET40/*.cs", "../Dapper NET45/*.cs" ],
     "title": "Dapper dot net",
     "tags": [ "orm", "sql", "micro-orm" ],
@@ -44,7 +44,7 @@
             }
         },
         "dnxcore50": {
-            "compilationOptions": { "define": [ ], "warningsAsErrors": true },
+            "compilationOptions": { "define": [ "ASYNC"], "warningsAsErrors": true },
             "dependencies": {
                 "System.Text.RegularExpressions": "4.0.10-beta-*",
                 "System.Collections": "4.0.10-beta-*",

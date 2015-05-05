@@ -37,11 +37,22 @@ namespace SqlMapper
         public const string ConnectionString = "Data Source=.;Initial Catalog=tempdb;Integrated Security=True",
             OleDbConnectionString = "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
-        public static SqlConnection GetOpenConnection()
+        public static SqlConnection GetOpenConnection(bool mars = false)
         {
-            var connection = new SqlConnection(ConnectionString);
+            var cs = ConnectionString;
+            if (mars)
+            {
+                SqlConnectionStringBuilder scsb = new SqlConnectionStringBuilder(cs);
+                scsb.MultipleActiveResultSets = true;
+                cs = scsb.ConnectionString;
+            }
+            var connection = new SqlConnection(cs);
             connection.Open();
             return connection;
+        }
+        public static SqlConnection GetClosedConnection()
+        {
+            return new SqlConnection(ConnectionString);
         }
 
         static void RunPerformanceTests()
@@ -63,8 +74,28 @@ namespace SqlMapper
 #else
             Console.WriteLine(Environment.Version);
 #endif
+
+            int fail = 0, skip = 0, pass = 0, frameworkFail = 0;
+            var failNames = new List<string>();
 #if DEBUG
-            RunTests();
+            RunTests<SqlMapper.Tests>(ref fail, ref skip, ref pass, ref frameworkFail, failNames);
+#if ASYNC
+            RunTests<DapperTests_NET45.Tests>(ref fail, ref skip, ref pass, ref frameworkFail, failNames);
+#endif
+            
+            if (fail == 0)
+            {
+                Console.WriteLine("(all tests successful)");
+            }
+            else
+            {
+                Console.WriteLine("Failures:");
+                foreach (var failName in failNames)
+                {
+                    Console.WriteLine(failName);
+                }
+            }
+            Console.WriteLine("Passed: {0}, Failed: {1}, Skipped: {2}, Framework-fail: {3}", pass, fail, skip, frameworkFail);
 #else
             EnsureDBSetup();
             RunPerformanceTests();
@@ -136,76 +167,66 @@ end
 #endif
         }
 
-        private static void RunTests()
+        private static void RunTests<T>(ref int fail, ref int skip, ref int pass, ref int frameworkFail, List<string> failNames) where T : class, new()
         {
-            var tester = new Tests();
-            int fail = 0, skip = 0, pass = 0, frameworkFail = 0;
-            MethodInfo[] methods = typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var activeTests = methods.Where(m => HasAttribute<ActiveTestAttribute>(m)).ToArray();
-            if (activeTests.Length != 0) methods = activeTests;
-            List<string> failNames = new List<string>();
-            foreach (var method in methods)
+            var tester = new T();
+            using (tester as IDisposable)
             {
-                if (HasAttribute<SkipTestAttribute>(method))
-                {
-                    Console.Write("Skipping " + method.Name);
-                    skip++;
-                    continue;
-                }
-                bool expectFrameworkFail = HasAttribute<FrameworkFail>(method);
 
-                Console.Write("Running " + method.Name);
-                try
+                MethodInfo[] methods = typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                var activeTests = methods.Where(m => HasAttribute<ActiveTestAttribute>(m)).ToArray();
+                if (activeTests.Length != 0) methods = activeTests;
+                foreach (var method in methods)
                 {
-                    method.Invoke(tester, null);
-                    if (expectFrameworkFail)
+                    if (HasAttribute<SkipTestAttribute>(method))
                     {
-                        Console.WriteLine(" - was expected to framework-fail, but didn't");
-                        fail++;
-                        failNames.Add(method.Name);
+                        Console.Write("Skipping " + method.Name);
+                        skip++;
+                        continue;
                     }
-                    else
+                    bool expectFrameworkFail = HasAttribute<FrameworkFail>(method);
+
+                    Console.Write("Running " + method.Name);
+                    try
                     {
-                        Console.WriteLine(" - OK!");
-                        pass++;
-                    }
-                } catch(TargetInvocationException tie)
-                {
-                    Console.WriteLine(" - " + tie.InnerException.Message);
-                    if (expectFrameworkFail)
-                    {
-                        frameworkFail++;
-                    }
-                    else
-                    {
-                        fail++;
-                        failNames.Add(method.Name);
-                        if (tie.InnerException is TypeInitializationException)
+                        method.Invoke(tester, null);
+                        if (expectFrameworkFail)
                         {
-                            Console.WriteLine("> " + tie.InnerException.InnerException.Message);
+                            Console.WriteLine(" - was expected to framework-fail, but didn't");
+                            fail++;
+                            failNames.Add(method.Name);
+                        }
+                        else
+                        {
+                            Console.WriteLine(" - OK!");
+                            pass++;
                         }
                     }
-                }catch (Exception ex)
-                {
-                    fail++;
-                    Console.WriteLine(" - " + ex.Message);
-                    failNames.Add(method.Name);
+                    catch (TargetInvocationException tie)
+                    {
+                        Console.WriteLine(" - " + tie.InnerException.Message);
+                        if (expectFrameworkFail)
+                        {
+                            frameworkFail++;
+                        }
+                        else
+                        {
+                            fail++;
+                            failNames.Add(method.Name);
+                            if (tie.InnerException is TypeInitializationException)
+                            {
+                                Console.WriteLine("> " + tie.InnerException.InnerException.Message);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        fail++;
+                        Console.WriteLine(" - " + ex.Message);
+                        failNames.Add(method.Name);
+                    }
                 }
-            }
-            Console.WriteLine();
-
-            Console.WriteLine("Passed: {0}, Failed: {1}, Skipped: {2}, Framework-fail: {3}", pass, fail, skip, frameworkFail);
-            if(fail == 0)
-            {
-                Console.WriteLine("(all tests successful)");
-            }
-            else
-            {
-                Console.WriteLine("Failures:");
-                foreach(var failName in failNames)
-                {
-                    Console.WriteLine(failName);
-                }
+                Console.WriteLine();
             }
         }
     }

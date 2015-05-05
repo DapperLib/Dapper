@@ -6,7 +6,7 @@
   "commands": {
     "Dapper.DNX.Tests": "Dapper.DNX.Tests"
   },
-  "compile": [ "../Tests/Tests.cs", "../Tests/Program.cs", "../Tests/Assert.cs" ],
+  "compile": [ "../Tests/Tests.cs", "../Tests/Program.cs", "../Tests/Assert.cs", "../DapperTests NET45/Tests.cs" ],
   "compilationOptions": { "define": [ "NOEXTERNALS" ] },
   "frameworks": {
     "net45": {
@@ -36,7 +36,7 @@
 
     },
     "dnxcore50": {
-      "compilationOptions": { "define": [ ], "warningsAsErrors": true },
+      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
       "dependencies": {
         "System.Console": "4.0.0-beta-*",
         "System.Reflection": "4.0.10-beta-*",
