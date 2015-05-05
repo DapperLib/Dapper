@@ -7,7 +7,16 @@
  */
 
 #if DNXCORE50
-using IDbDataParameter = System.Data.Common.DbParameter;
+using IDbDataParameter = global::System.Data.Common.DbParameter;
+using IDataParameter = global::System.Data.Common.DbParameter;
+using IDbTransaction = global::System.Data.Common.DbTransaction;
+using IDbConnection = global::System.Data.Common.DbConnection;
+using IDbCommand = global::System.Data.Common.DbCommand;
+using IDataReader = global::System.Data.Common.DbDataReader;
+using IDataRecord = global::System.Data.Common.DbDataReader;
+using IDataParameterCollection = global::System.Data.Common.DbParameterCollection;
+using DataException = global::System.InvalidOperationException;
+using ApplicationException = global::System.InvalidOperationException;
 #endif
 
 using System;
@@ -24,6 +33,7 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Data.Common;
 
 namespace Dapper
 {
@@ -312,7 +322,7 @@ namespace Dapper
             /// <returns>The typed value</returns>
             object Parse(Type destinationType, object value);
         }
-
+#if !DNXCORE50
         /// <summary>
         /// A type handler for data-types that are supported by the underlying provider, but which need
         /// a well-known UdtTypeName to be specified
@@ -335,13 +345,14 @@ namespace Dapper
 
             void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
-                parameter.Value = ((object)value) ?? DBNull.Value;
+                parameter.Value = SanitizeParameterValue(value);
                 if (parameter is System.Data.SqlClient.SqlParameter)
                 {
                     ((System.Data.SqlClient.SqlParameter)parameter).UdtTypeName = udtTypeName;
                 }
             }
         }
+#endif
 
         /// <summary>
         /// Base-class for simple type-handlers
@@ -726,8 +737,9 @@ namespace Dapper
             typeMap[typeof(DateTimeOffset?)] = DbType.DateTimeOffset;
             typeMap[typeof(TimeSpan?)] = DbType.Time;
             typeMap[typeof(object)] = DbType.Object;
-
+#if !DNXCORE50
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
+#endif
         }
 
         /// <summary>
@@ -736,7 +748,9 @@ namespace Dapper
         public static void ResetTypeHandlers()
         {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
+#if !DNXCORE50
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
+#endif
         }
         /// <summary>
         /// Configure the specified type to be mapped to a given db-type
@@ -770,7 +784,7 @@ namespace Dapper
             if (type == null) throw new ArgumentNullException("type");
 
             Type secondary = null;
-            if(type.IsValueType)
+            if(type.IsValueType())
             {
                 var underlying = Nullable.GetUnderlyingType(type);
                 if(underlying == null)
@@ -823,7 +837,10 @@ namespace Dapper
         /// Not intended for direct usage
         /// </summary>
         [Obsolete("Not intended for direct usage", false)]
-        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+#if !DNXCORE50
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static class TypeHandlerCache<T>
         {
             /// <summary>
@@ -862,7 +879,11 @@ namespace Dapper
         /// <summary>
         /// Get the DbType that maps to a given value
         /// </summary>
-        [Obsolete("This method is for internal use only"), Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("This method is for internal use only")]
+#if !DNXCORE50
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static DbType GetDbType(object value)
         {
             if (value == null || value is DBNull) return DbType.Object;
@@ -877,7 +898,7 @@ namespace Dapper
             handler = null;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
             if (nullUnderlyingType != null) type = nullUnderlyingType;
-            if (type.IsEnum && !typeMap.ContainsKey(type))
+            if (type.IsEnum() && !typeMap.ContainsKey(type))
             {
                 type = Enum.GetUnderlyingType(type);
             }
@@ -898,6 +919,7 @@ namespace Dapper
             {
                 return DbType.Object;
             }
+#if !DNXCORE50
             switch (type.FullName)
             {
                 case "Microsoft.SqlServer.Types.SqlGeography":
@@ -910,6 +932,7 @@ namespace Dapper
                     AddTypeHandler(type, handler = new UdtTypeHandler("hierarchyid"));
                     return DbType.Object;
             }
+#endif
             if(demand)
                 throw new NotSupportedException(string.Format("The member {0} of type {1} cannot be used as a parameter value", name, type.FullName));
             return DbType.Object;
@@ -2140,13 +2163,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             if (cmd.Parameters.Count == 0) return;
 
-            Dictionary<string, IDbDataParameter> parameters = new Dictionary<string, IDbDataParameter>(StringComparer.InvariantCulture);
+            Dictionary<string, IDbDataParameter> parameters = new Dictionary<string, IDbDataParameter>(StringComparer.Ordinal);
             
             foreach(IDbDataParameter param in cmd.Parameters)
             {
                 if (!string.IsNullOrEmpty(param.ParameterName)) parameters[param.ParameterName] = param;
             }
-            HashSet<string> consumed = new HashSet<string>(StringComparer.InvariantCulture);
+            HashSet<string> consumed = new HashSet<string>(StringComparer.Ordinal);
             bool firstMatch = true;
             cmd.CommandText = pseudoPositional.Replace(cmd.CommandText, match =>
             {
@@ -2193,8 +2216,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #endif
             Type underlyingType = null;
-            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary ||
-                (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
+            if (!(typeMap.ContainsKey(type) || type.IsEnum() || type.FullName == LinqBinary ||
+                (type.IsValueType()  && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum())))
             {
                 ITypeHandler handler;
                 if (typeHandlers.TryGetValue(type, out handler))
@@ -2652,7 +2675,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+#if !DNXCORE50
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", false)]
         public static char ReadChar(object value)
         {
@@ -2665,7 +2691,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <summary>
         /// Internal use only
         /// </summary>
-        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+#if !DNXCORE50
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", false)]
         public static char? ReadNullableChar(object value)
         {
@@ -2679,7 +2708,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <summary>
         /// Internal use only
         /// </summary>
-        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+#if !DNXCORE50
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", true)]
         public static IDbDataParameter FindOrAddParameter(IDataParameterCollection parameters, IDbCommand command, string name)
         {
@@ -2700,7 +2732,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <summary>
         /// Internal use only
         /// </summary>
-        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+#if !DNXCORE50
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("This method is for internal usage only", false)]
         public static void PackListParameters(IDbCommand command, string namePrefix, object value)
         {
@@ -2710,7 +2745,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (FeatureSupport.Get(command.Connection).Arrays)
             {
                 var arrayParm = command.CreateParameter();
-                arrayParm.Value = value ?? DBNull.Value;
+                arrayParm.Value = SanitizeParameterValue(value);
                 arrayParm.ParameterName = namePrefix;
                 command.Parameters.Add(arrayParm);
             }
@@ -2740,7 +2775,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     }
                     else
                     {
-                        listParam.Value = item ?? DBNull.Value;
+                        listParam.Value = SanitizeParameterValue(item);
                         command.Parameters.Add(listParam);
                     }
                 }
@@ -2797,7 +2832,34 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 
         }
-
+        internal static object SanitizeParameterValue(object value)
+        {
+            if (value == null) return DBNull.Value;
+            if (value is Enum)
+            {
+                TypeCode typeCode;
+                if (value is IConvertible)
+                {
+                    typeCode = ((IConvertible)value).GetTypeCode();
+                }
+                else
+                {
+                    typeCode = TypeExtensions.GetTypeCode(Enum.GetUnderlyingType(value.GetType()));
+                }
+                switch (typeCode)
+                {
+                    case TypeCode.Byte: return (byte)value;
+                    case TypeCode.SByte: return (sbyte)value;
+                    case TypeCode.Int16: return (short)value;
+                    case TypeCode.Int32: return (int)value;
+                    case TypeCode.Int64: return (long)value;
+                    case TypeCode.UInt16: return (ushort)value;
+                    case TypeCode.UInt32: return (uint)value;
+                    case TypeCode.UInt64: return (ulong)value;
+                }
+            }
+            return value;
+        }
         private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
         {
             return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + "([^a-z0-9_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant));
@@ -2854,10 +2916,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
             else
             {
-                switch (Type.GetTypeCode(value.GetType()))
+                switch (TypeExtensions.GetTypeCode(value.GetType()))
                 {
+#if !DNXCORE50
                     case TypeCode.DBNull:
                         return "null";
+#endif
                     case TypeCode.Boolean:
                         return ((bool)value) ? "1" : "0";
                     case TypeCode.Byte:
@@ -2936,7 +3000,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (!literalTokens.IsMatch(sql)) return LiteralToken.None;
 
             var matches = literalTokens.Matches(sql);
-            var found = new HashSet<string>(StringComparer.InvariantCulture);
+            var found = new HashSet<string>(StringComparer.Ordinal);
             List<LiteralToken> list = new List<LiteralToken>(matches.Count);
             foreach(Match match in matches)
             {
@@ -2970,7 +3034,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
             var il = dm.GetILGenerator();
 
-            bool isStruct = type.IsValueType;
+            bool isStruct = type.IsValueType();
             bool haveInt32Arg1 = false;
             il.Emit(OpCodes.Ldarg_1); // stack is now [untyped-param]
             if (isStruct)
@@ -3000,7 +3064,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 bool ok = true;
                 for (int i = 0; i < propsArr.Length; i++)
                 {
-                    if (!string.Equals(propsArr[i].Name, ctorParams[i].Name, StringComparison.InvariantCultureIgnoreCase))
+                    if (!string.Equals(propsArr[i].Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase))
                     {
                         ok = false;
                         break;
@@ -3012,7 +3076,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     props = propsArr;
                 }
                 else { // might still all be accounted for; check the hard way
-                    var positionByName = new Dictionary<string,int>(StringComparer.InvariantCultureIgnoreCase);
+                    var positionByName = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
                     foreach(var param in ctorParams)
                     {
                         positionByName[param.Name] = param.Position;
@@ -3066,7 +3130,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [command] [name]
                     il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [command] [name] [typed-param]
                     il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [command] [name] [typed-value]
-                    if (prop.PropertyType.IsValueType)
+                    if (prop.PropertyType.IsValueType())
                     {
                         il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [command] [name] [boxed-value]
                     }
@@ -3118,7 +3182,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [[parameters]] [parameter] [parameter] [typed-param]
                 il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [typed-value]
                 bool checkForNull = true;
-                if (prop.PropertyType.IsValueType)
+                if (prop.PropertyType.IsValueType())
                 {
                     il.Emit(OpCodes.Box, prop.PropertyType); // stack is [parameters] [[parameters]] [parameter] [parameter] [boxed-value]
                     if (Nullable.GetUnderlyingType(prop.PropertyType) == null)
@@ -3228,10 +3292,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     for(int i = 0; i < propsArr.Length;i++)
                     {
                         string thisName = propsArr[i].Name;
-                        if(string.Equals(thisName, huntName, StringComparison.InvariantCultureIgnoreCase))
+                        if(string.Equals(thisName, huntName, StringComparison.OrdinalIgnoreCase))
                         {
                             fallback = propsArr[i];
-                            if(string.Equals(thisName, huntName, StringComparison.InvariantCulture))
+                            if(string.Equals(thisName, huntName, StringComparison.Ordinal))
                             {
                                 exact = fallback;
                                 break;
@@ -3246,7 +3310,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         il.Emit(OpCodes.Ldloc_0); // command, sql, typed parameter
                         il.EmitCall(callOpCode, prop.GetGetMethod(), null); // command, sql, typed value
                         Type propType = prop.PropertyType;
-                        var typeCode = Type.GetTypeCode(propType);
+                        var typeCode = TypeExtensions.GetTypeCode(propType);
                         switch (typeCode)
                         {
                             case TypeCode.Boolean:
@@ -3287,7 +3351,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                                 il.EmitCall(OpCodes.Call, convert, null); // command, sql, string value
                                 break;
                             default:
-                                if (propType.IsValueType) il.Emit(OpCodes.Box, propType); // command, sql, object value
+                                if (propType.IsValueType()) il.Emit(OpCodes.Box, propType); // command, sql, object value
                                 il.EmitCall(OpCodes.Call, format, null); // command, sql, string value
                                 break;
 
@@ -3305,13 +3369,13 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             typeof(bool), typeof(sbyte), typeof(byte), typeof(ushort), typeof(short),
             typeof(uint), typeof(int), typeof(ulong), typeof(long), typeof(float), typeof(double), typeof(decimal)
-        }.ToDictionary(x => Type.GetTypeCode(x), x => x.GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IFormatProvider) }, null));
+        }.ToDictionary(x => TypeExtensions.GetTypeCode(x), x => x.GetPublicInstanceMethod("ToString", new[] { typeof(IFormatProvider) }));
         static MethodInfo GetToString(TypeCode typeCode)
         {
             MethodInfo method;
             return toStrings.TryGetValue(typeCode, out method) ? method : null;
         }
-        static readonly MethodInfo StringReplace = typeof(string).GetMethod("Replace", BindingFlags.Instance | BindingFlags.Public, null, new Type[] { typeof(string), typeof(string) }, null),
+        static readonly MethodInfo StringReplace = typeof(string).GetPublicInstanceMethod("Replace", new Type[] { typeof(string), typeof(string) }),
             InvariantCulture = typeof(CultureInfo).GetProperty("InvariantCulture", BindingFlags.Public | BindingFlags.Static).GetGetMethod();
 
         private static int ExecuteCommand(IDbConnection cnn, ref CommandDefinition command, Action<IDbCommand, object> paramReader)
@@ -3423,7 +3487,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             }
 #pragma warning restore 618
 
-            if (effectiveType.IsEnum)
+            if (effectiveType.IsEnum())
             {   // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
                 return r =>
                 {
@@ -3457,7 +3521,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (value is T) return (T)value;
             var type = typeof(T);
             type = Nullable.GetUnderlyingType(type) ?? type;
-            if (type.IsEnum)
+            if (type.IsEnum())
             {
                 if (value is float || value is double || value is decimal)
                 {
@@ -3486,14 +3550,23 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         public static ITypeMap GetTypeMap(Type type)
         {
             if (type == null) throw new ArgumentNullException("type");
+#if DNXCORE50
+            ITypeMap map = null;
+#else
             var map = (ITypeMap)_typeMaps[type];
+#endif
             if (map == null)
             {
                 lock (_typeMaps)
                 {   // double-checked; store this to avoid reflection next time we see this type
                     // since multiple queries commonly use the same domain-entity/DTO/view-model type
+#if DNXCORE50
+                    if (!_typeMaps.TryGetValue(type, out map)) map = null;
+#else
                     map = (ITypeMap)_typeMaps[type];
-                    if (map == null)
+#endif
+
+                        if (map == null)
                     {
                         map = new DefaultTypeMap(type);
                         _typeMaps[type] = map;
@@ -3504,7 +3577,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
         // use Hashtable to get free lockless reading
+#if DNXCORE50
+        private static readonly Dictionary<Type,ITypeMap> _typeMaps = new Dictionary<Type, ITypeMap>();
+#else
         private static readonly Hashtable _typeMaps = new Hashtable();
+#endif
 
         /// <summary>
         /// Set custom mapping for type deserializers
@@ -3577,8 +3654,10 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
             ConstructorInfo specializedConstructor = null;
 
+#if !DNXCORE50
             bool supportInitialize = false;
-            if (type.IsValueType)
+#endif
+            if (type.IsValueType())
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);
                 il.Emit(OpCodes.Initobj, type);
@@ -3599,7 +3678,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     var consPs = explicitConstr.GetParameters();
                     foreach(var p in consPs)
                     {
-                        if(!p.ParameterType.IsValueType)
+                        if(!p.ParameterType.IsValueType())
                         {
                             il.Emit(OpCodes.Ldnull);
                         }
@@ -3620,12 +3699,14 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
 
                     il.Emit(OpCodes.Newobj, explicitConstr);
                     il.Emit(OpCodes.Stloc_1);
+#if !DNXCORE50
                     supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                     if (supportInitialize)
                     {
                         il.Emit(OpCodes.Ldloc_1);
                         il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("BeginInit"), null);
                     }
+#endif
                 }
                 else
                 {
@@ -3640,12 +3721,14 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     {
                         il.Emit(OpCodes.Newobj, ctor);
                         il.Emit(OpCodes.Stloc_1);
+#if !DNXCORE50
                         supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                         if (supportInitialize)
                         {
                             il.Emit(OpCodes.Ldloc_1);
                             il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("BeginInit"), null);
                         }
+#endif
                     }
                     else
                     {
@@ -3655,7 +3738,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
 
             il.BeginExceptionBlock();
-            if (type.IsValueType)
+            if (type.IsValueType())
             {
                 il.Emit(OpCodes.Ldloca_S, (byte)1);// [target]
             }
@@ -3706,9 +3789,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         // unbox nullable enums as the primitive, i.e. byte etc
 
                         var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
-                        var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum ? nullUnderlyingType : memberType;
+                        var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum() ? nullUnderlyingType : memberType;
 
-                        if (unboxType.IsEnum)
+                        if (unboxType.IsEnum())
                         {
                             Type numericType = Enum.GetUnderlyingType(unboxType);
                             if(colType == typeof(string))
@@ -3743,9 +3826,9 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         }
                         else
                         {
-                            TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
+                            TypeCode dataTypeCode = TypeExtensions.GetTypeCode(colType), unboxTypeCode = TypeExtensions.GetTypeCode(unboxType);
                             bool hasTypeHandler;
-                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == TypeExtensions.GetTypeCode(nullUnderlyingType))
                             {
                                 if (hasTypeHandler)
                                 {
@@ -3776,7 +3859,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         // Store the value in the property/field
                         if (item.Property != null)
                         {
-                            if (type.IsValueType)
+                            if (type.IsValueType())
                             {
                                 il.Emit(OpCodes.Call, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
                             }
@@ -3797,7 +3880,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     if (specializedConstructor != null)
                     {
                         il.Emit(OpCodes.Pop);
-                        if (item.MemberType.IsValueType)
+                        if (item.MemberType.IsValueType())
                         {
                             int localIndex = il.DeclareLocal(item.MemberType).LocalIndex;
                             LoadLocalAddress(il, localIndex);
@@ -3828,7 +3911,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 first = false;
                 index += 1;
             }
-            if (type.IsValueType)
+            if (type.IsValueType())
             {
                 il.Emit(OpCodes.Pop);
             }
@@ -3839,11 +3922,13 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
+#if !DNXCORE50
                 if (supportInitialize)
                 {
                     il.Emit(OpCodes.Ldloc_1);
                     il.EmitCall(OpCodes.Callvirt, typeof(ISupportInitialize).GetMethod("EndInit"), null);
                 }
+#endif
             }
             il.MarkLabel(allDone);
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception
@@ -3854,7 +3939,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             il.EndExceptionBlock();
 
             il.Emit(OpCodes.Ldloc_1); // stack is [rval]
-            if (type.IsValueType)
+            if (type.IsValueType())
             {
                 il.Emit(OpCodes.Box, type);
             }
@@ -3880,7 +3965,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             {
                 bool handled = false;
                 OpCode opCode = default(OpCode);
-                switch (Type.GetTypeCode(from))
+                switch (TypeExtensions.GetTypeCode(from))
                 {
                     case TypeCode.Boolean:
                     case TypeCode.Byte:
@@ -3894,7 +3979,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                     case TypeCode.Single:
                     case TypeCode.Double:
                         handled = true;
-                        switch (Type.GetTypeCode(via ?? to))
+                        switch (TypeExtensions.GetTypeCode(via ?? to))
                         {
                             case TypeCode.Byte:
                                 opCode = OpCodes.Conv_Ovf_I1_Un; break;
@@ -4043,7 +4128,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         }
                         else
                         {
-                            formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
+                            formattedValue = Convert.ToString(value) + " - " + TypeExtensions.GetTypeCode(value.GetType());
                         }
                     }
                     catch (Exception valEx)
@@ -4379,6 +4464,8 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
             }
         }
 
+
+#if !DNXCORE50
         /// <summary>
         /// Used to pass a DataTable as a TableValuedParameter
         /// </summary>
@@ -4412,7 +4499,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
         {
             return table == null ? null : table.ExtendedProperties[DataTableTypeNameKey] as string;
         }
-
+#endif
 
         // one per thread
         [ThreadStatic]
@@ -4698,7 +4785,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     p.Direction = param.ParameterDirection;
                     if (handler == null)
                     {
-                        p.Value = val ?? DBNull.Value;
+                        p.Value = SqlMapper.SanitizeParameterValue(val);
                         if (dbType != null && p.DbType != dbType)
                         {
                             p.DbType = dbType.Value;
@@ -4711,10 +4798,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                                 p.Size = DbString.DefaultLength;
                             }
                         }
-                        if (param.Size != null)
-                        {
-                            p.Size = param.Size.Value;
-                        }
+                        if (param.Size != null) p.Size = param.Size.Value;
                         if (param.Precision != null) p.Precision = param.Precision.Value;
                         if (param.Scale != null) p.Scale = param.Scale.Value;
                     }
@@ -4722,6 +4806,8 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     {
                         if (dbType != null) p.DbType = dbType.Value;
                         if (param.Size != null) p.Size = param.Size.Value;
+                        if (param.Precision != null) p.Precision = param.Precision.Value;
+                        if (param.Scale != null) p.Scale = param.Scale.Value;
                         handler.SetValue(p, val ?? DBNull.Value);
                     }
 
@@ -4793,8 +4879,8 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             var lastMemberAccess = expression.Body as MemberExpression;
 
             if (lastMemberAccess == null ||
-                (lastMemberAccess.Member.MemberType != MemberTypes.Property &&
-                lastMemberAccess.Member.MemberType != MemberTypes.Field))
+                (!(lastMemberAccess.Member is PropertyInfo) &&
+                !(lastMemberAccess.Member is FieldInfo)))
             {
                 if (expression.Body.NodeType == ExpressionType.Convert &&
                     expression.Body.Type == typeof(object) &&
@@ -4829,8 +4915,8 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                     break;
                 }
                 else if (diving == null ||
-                    (diving.Member.MemberType != MemberTypes.Property &&
-                    diving.Member.MemberType != MemberTypes.Field))
+                    (!(diving.Member is PropertyInfo) &&
+                    !(diving.Member is FieldInfo)))
                 {
                     @throw();
                 }
@@ -4843,8 +4929,15 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             var lookup = string.Join("|", names.ToArray());
 
             var cache = CachedOutputSetters<T>.Cache;
-            var setter = (Action<object, DynamicParameters>)cache[lookup];
-
+            Action<object, DynamicParameters> setter;
+#if DNXCORE50
+            lock (cache)
+            {
+                if(!cache.TryGetValue(lookup, out setter)) setter = null;
+            }
+#else
+            setter = (Action<object, DynamicParameters>)cache[lookup];
+#endif
             if (setter != null) goto MAKECALLBACK;
 
             // Come on let's build a method, let's build it, let's build it now!
@@ -4860,7 +4953,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             {
                 var member = chain[0].Member;
 
-                if (member.MemberType == MemberTypes.Property)
+                if (member is PropertyInfo)
                 {
                     var get = ((PropertyInfo)member).GetGetMethod(true);
                     il.Emit(OpCodes.Callvirt, get); // [Member{i}]
@@ -4879,7 +4972,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             
             // GET READY
             var lastMember = lastMemberAccess.Member;
-            if (lastMember.MemberType == MemberTypes.Property)
+            if (lastMember is PropertyInfo)
             {
                 var set = ((PropertyInfo)lastMember).GetSetMethod(true);
                 il.Emit(OpCodes.Callvirt, set); // SET
@@ -4939,7 +5032,11 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
         internal static class CachedOutputSetters<T>
         {
+#if DNXCORE50
+            public static readonly Dictionary<string, Action<object, DynamicParameters>> Cache = new Dictionary<string, Action<object, DynamicParameters>>();
+#else
             public static readonly Hashtable Cache = new Hashtable();
+#endif
         }
 
         void SqlMapper.IParameterCallbacks.OnCompleted()
@@ -4950,7 +5047,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             }
         }
     }
-
+#if !DNXCORE50
     sealed class DataTableHandler : Dapper.SqlMapper.ITypeHandler
     {
         public object Parse(Type destinationType, object value)
@@ -5003,7 +5100,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         }
         internal static void Set(IDbDataParameter parameter, DataTable table, string typeName)
         {
-            parameter.Value = (object)table ?? DBNull.Value;
+            parameter.Value = SqlMapper.SanitizeParameterValue(table);
             if (string.IsNullOrEmpty(typeName) && table != null)
             {
                 typeName = SqlMapper.GetTypeName(table);
@@ -5019,6 +5116,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             }
         }
     }
+#endif
     /// <summary>
     /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
     /// </summary>
@@ -5064,7 +5162,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             }
             var param = command.CreateParameter();
             param.ParameterName = name;
-            param.Value = (object)Value ?? DBNull.Value;
+            param.Value = SqlMapper.SanitizeParameterValue(Value);
             if (Length == -1 && Value != null && Value.Length <= DefaultLength)
             {
                 param.Size = DefaultLength;
@@ -5093,7 +5191,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         public static FeatureSupport Get(IDbConnection connection)
         {
             string name = connection == null ? null : connection.GetType().Name;
-            if (string.Equals(name, "npgsqlconnection", StringComparison.InvariantCultureIgnoreCase)) return postgres;
+            if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return postgres;
             return @default;
         }
         private FeatureSupport(bool arrays)
@@ -5242,18 +5340,35 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             _properties = GetSettableProps(type);
             _type = type;
         }
-
+#if DNXCORE50
+        static bool IsParameterMatch(ParameterInfo[] x, ParameterInfo[] y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (x == null || y == null) return false;
+            if (x.Length != y.Length) return false;
+            for (int i = 0; i < x.Length; i++)
+                if (x[i].ParameterType != y[i].ParameterType) return false;
+            return true;
+        }
+#endif
         internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
-            return propertyInfo.DeclaringType == type ?
-                propertyInfo.GetSetMethod(true) :
-                propertyInfo.DeclaringType.GetProperty(
+            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
+#if DNXCORE50
+            return propertyInfo.DeclaringType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Single(x => x.Name == propertyInfo.Name
+                        && x.PropertyType == propertyInfo.PropertyType
+                        && IsParameterMatch(x.GetIndexParameters(), propertyInfo.GetIndexParameters())
+                        ).GetSetMethod(true);
+#else
+            return propertyInfo.DeclaringType.GetProperty(
                    propertyInfo.Name,
                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                    Type.DefaultBinder,
                    propertyInfo.PropertyType,
                    propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
                    null).GetSetMethod(true);
+#endif
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)
@@ -5296,10 +5411,12 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                         continue;
                     var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
                     if (unboxedType != types[i]
-                        && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i])
+                        && !(unboxedType.IsEnum() && Enum.GetUnderlyingType(unboxedType) == types[i])
                         && !(unboxedType == typeof(char) && types[i] == typeof(string))
-                        && !(unboxedType.IsEnum && types[i] == typeof(string)))
+                        && !(unboxedType.IsEnum() && types[i] == typeof(string)))
+                    {
                         break;
+                    }
                 }
 
                 if (i == ctorParameters.Length)
@@ -5315,7 +5432,11 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         public ConstructorInfo FindExplicitConstructor()
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+#if DNXCORE50
+            var withAttr = constructors.Where(c => c.CustomAttributes.Any(x => x.AttributeType == typeof(ExplicitConstructorAttribute))).ToList();
+#else
             var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();
+#endif
 
             if (withAttr.Count == 1)
             {
@@ -5446,6 +5567,211 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             return prop != null ? new SimpleMemberMap(columnName, prop) : null;
         }
     }
+
+#if DNXCORE50
+    internal class WrappedReader : WrappedDataReader
+    {
+        private IDbCommand cmd;
+        private IDataReader reader;
+
+        public override IEnumerator GetEnumerator()
+        {
+            return Reader.GetEnumerator();
+        }
+        public WrappedReader(IDbCommand cmd, IDataReader reader)
+        {
+            this.cmd = cmd;
+            this.reader = reader;
+        }
+        public override IDataReader Reader
+        {
+            get
+            {
+                var tmp = reader;
+                if (tmp == null) throw new ObjectDisposedException(GetType().Name);
+                return tmp;
+            }
+        }
+        public override IDbCommand Command
+        {
+            get
+            {
+                var tmp = cmd;
+                if (tmp == null) throw new ObjectDisposedException(GetType().Name);
+                return tmp;
+            }
+        }
+
+        public override int Depth
+        {
+            get { return Reader.Depth; }
+        }
+
+        public override bool IsClosed
+        {
+            get { return reader == null ? true : reader.IsClosed; }
+        }
+        public override bool HasRows
+        {
+            get
+            {
+                return Reader.HasRows;
+            }
+        }
+        public override bool NextResult()
+        {
+            return Reader.NextResult();
+        }
+
+        public override bool Read()
+        {
+            return Reader.Read();
+        }
+
+        public override int RecordsAffected
+        {
+            get { return Reader.RecordsAffected; }
+        }
+
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (reader != null) reader.Dispose();
+                reader = null;
+                if (cmd != null) cmd.Dispose();
+                cmd = null;
+            }
+            base.Dispose(disposing);
+        }
+
+        public override int FieldCount
+        {
+            get { return Reader.FieldCount; }
+        }
+
+        public override bool GetBoolean(int i)
+        {
+            return Reader.GetBoolean(i);
+        }
+
+        public override byte GetByte(int i)
+        {
+            return Reader.GetByte(i);
+        }
+
+        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        {
+            return Reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
+        }
+
+        public override char GetChar(int i)
+        {
+            return Reader.GetChar(i);
+        }
+
+        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        {
+            return Reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
+        }
+
+        protected override IDataReader GetDbDataReader(int ordinal)
+        {
+            return Reader.GetData(ordinal);
+        }
+
+        public override string GetDataTypeName(int i)
+        {
+            return Reader.GetDataTypeName(i);
+        }
+
+        public override DateTime GetDateTime(int i)
+        {
+            return Reader.GetDateTime(i);
+        }
+
+        public override decimal GetDecimal(int i)
+        {
+            return Reader.GetDecimal(i);
+        }
+
+        public override double GetDouble(int i)
+        {
+            return Reader.GetDouble(i);
+        }
+
+        public override Type GetFieldType(int i)
+        {
+            return Reader.GetFieldType(i);
+        }
+
+        public override float GetFloat(int i)
+        {
+            return Reader.GetFloat(i);
+        }
+
+        public override Guid GetGuid(int i)
+        {
+            return Reader.GetGuid(i);
+        }
+
+        public override short GetInt16(int i)
+        {
+            return Reader.GetInt16(i);
+        }
+
+        public override int GetInt32(int i)
+        {
+            return Reader.GetInt32(i);
+        }
+
+        public override long GetInt64(int i)
+        {
+            return Reader.GetInt64(i);
+        }
+
+        public override string GetName(int i)
+        {
+            return Reader.GetName(i);
+        }
+
+        public override int GetOrdinal(string name)
+        {
+            return Reader.GetOrdinal(name);
+        }
+
+        public override string GetString(int i)
+        {
+            return Reader.GetString(i);
+        }
+
+        public override object GetValue(int i)
+        {
+            return Reader.GetValue(i);
+        }
+
+        public override int GetValues(object[] values)
+        {
+            return Reader.GetValues(values);
+        }
+
+        public override bool IsDBNull(int i)
+        {
+            return Reader.IsDBNull(i);
+        }
+
+        public override object this[string name]
+        {
+            get { return Reader[name]; }
+        }
+
+        public override object this[int i]
+        {
+            get { return Reader[i]; }
+        }
+    }
+#else
 
     internal class WrappedReader : IDataReader, IWrappedDataReader
     {
@@ -5645,7 +5971,25 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
             get { return Reader[i]; }
         }
     }
+#endif
 
+#if DNXCORE50
+    /// <summary>
+    /// Describes a reader that controls the lifetime of both a command and a reader,
+    /// exposing the downstream command/reader as properties.
+    /// </summary>
+    public abstract class WrappedDataReader : IDataReader
+    {
+        /// <summary>
+        /// Obtain the underlying reader
+        /// </summary>
+        public abstract IDataReader Reader { get; }
+        /// <summary>
+        /// Obtain the underlying command
+        /// </summary>
+        public abstract IDbCommand Command { get; }
+    }
+#else
     /// <summary>
     /// Describes a reader that controls the lifetime of both a command and a reader,
     /// exposing the downstream command/reader as properties.
@@ -5661,6 +6005,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// </summary>
         IDbCommand Command { get; }
     }
+#endif
 
     /// <summary>
     /// Tell Dapper to use an explicit constructor, passing nulls or 0s for all parameters
@@ -5713,4 +6058,73 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
 #endif
 
+    internal static class TypeExtensions
+    {
+        public static bool IsValueType(this Type type)
+        {
+#if DNXCORE50
+            return typeof(ValueType).IsAssignableFrom(type) && type != typeof(ValueType);
+#else
+            return type.IsValueType;
+#endif
+        }
+        public static bool IsEnum(this Type type)
+        {
+#if DNXCORE50
+            return typeof(Enum).IsAssignableFrom(type) && type != typeof(Enum);
+#else
+            return type.IsEnum;
+#endif
+        }
+#if DNXCORE50
+        public static TypeCode GetTypeCode(Type type)
+        {
+            if (type == null) return TypeCode.Empty;
+            TypeCode result;
+            if (typeCodeLookup.TryGetValue(type, out result)) return result;
+
+            if (type.IsEnum())
+            {
+                type = Enum.GetUnderlyingType(type);
+                if (typeCodeLookup.TryGetValue(type, out result)) return result;
+            }
+            return TypeCode.Object;
+        }
+        static readonly Dictionary<Type, TypeCode> typeCodeLookup = new Dictionary<Type, TypeCode>
+        {
+            {typeof(bool), TypeCode.Boolean },
+            {typeof(byte), TypeCode.Byte },
+            {typeof(char), TypeCode.Char},
+            {typeof(DateTime), TypeCode.DateTime},
+            {typeof(decimal), TypeCode.Decimal},
+            {typeof(double), TypeCode.Double },
+            {typeof(short), TypeCode.Int16 },
+            {typeof(int), TypeCode.Int32 },
+            {typeof(long), TypeCode.Int64 },
+            {typeof(object), TypeCode.Object},
+            {typeof(sbyte), TypeCode.SByte },
+            {typeof(float), TypeCode.Single },
+            {typeof(string), TypeCode.String },
+            {typeof(ushort), TypeCode.UInt16 },
+            {typeof(uint), TypeCode.UInt32 },
+            {typeof(ulong), TypeCode.UInt64 },
+        };
+#else
+        public static TypeCode GetTypeCode(Type type)
+        {
+            return Type.GetTypeCode(type);
+        }
+#endif
+        public static MethodInfo GetPublicInstanceMethod(this Type type, string name, Type[] types)
+        {
+#if DNXCORE50
+            var method = type.GetMethod(name, types);
+            return (method != null && method.IsPublic && !method.IsStatic) ? method : null;
+#else
+            return type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public, null, types, null);
+#endif
+        }
+
+
+    }
 }
