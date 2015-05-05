@@ -75,9 +75,10 @@ namespace SqlMapper
             Console.WriteLine(Environment.Version);
 #endif
 
+#if DEBUG
             int fail = 0, skip = 0, pass = 0, frameworkFail = 0;
             var failNames = new List<string>();
-#if DEBUG
+
             RunTests<SqlMapper.Tests>(ref fail, ref skip, ref pass, ref frameworkFail, failNames);
 #if ASYNC
             RunTests<DapperTests_NET45.Tests>(ref fail, ref skip, ref pass, ref frameworkFail, failNames);
