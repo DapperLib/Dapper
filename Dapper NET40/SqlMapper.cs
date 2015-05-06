@@ -3314,6 +3314,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                         switch (typeCode)
                         {
                             case TypeCode.Boolean:
+                                Label ifTrue = il.DefineLabel(), allDone = il.DefineLabel();
+                                il.Emit(OpCodes.Brtrue_S, ifTrue);
+                                il.Emit(OpCodes.Ldstr, "0");
+                                il.Emit(OpCodes.Br_S, allDone);
+                                il.MarkLabel(ifTrue);
+                                il.Emit(OpCodes.Ldstr, "1");
+                                il.MarkLabel(allDone);
+                                break;
                             case TypeCode.Byte:
                             case TypeCode.SByte:
                             case TypeCode.UInt16:

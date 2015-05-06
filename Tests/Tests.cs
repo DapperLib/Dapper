@@ -3223,7 +3223,15 @@ end");
             y.Equals(123.45M);
             z.Equals(AnotherEnum.A);
         }
-
+        
+        public void LiteralReplacementBoolean()
+        {
+            var row = connection.Query<int?>("select 42 where 1 = {=val}", new { val = true }).SingleOrDefault();
+            row.IsNotNull();
+            row.IsEqualTo(42);
+            row = connection.Query<int?>("select 42 where 1 = {=val}", new { val = false }).SingleOrDefault();
+            row.IsNull();
+        }
         public void LiteralReplacementWithIn()
         {
             var data = connection.Query<MyRow>("select @x where 1 in @ids and 1 ={=a}",
