@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper</id>
-    <version>1.40</version>
+    <version>1.42</version>
     <title>Dapper dot net</title>
     <authors>Sam Saffron,Marc Gravell</authors>
     <owners>Sam Saffron,Marc Gravell</owners>

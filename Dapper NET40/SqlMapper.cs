@@ -4851,7 +4851,9 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <returns>The value, note DBNull.Value is not returned, instead the value is returned as null</returns>
         public T Get<T>(string name)
         {
-            var val = parameters[Clean(name)].AttachedParam.Value;
+            var paramInfo = parameters[Clean(name)];
+            var attachedParam = paramInfo.AttachedParam;
+            object val = attachedParam == null ? paramInfo.Value : attachedParam.Value;
             if (val == DBNull.Value)
             {
                 if (default(T) != null)

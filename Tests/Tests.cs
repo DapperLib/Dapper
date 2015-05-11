@@ -4565,5 +4565,13 @@ end");
             }
         }
 #endif
+
+        public void SO30156367_DynamicParamsWithoutExec()
+        {
+            var dbParams = new DynamicParameters();
+            dbParams.Add("Field1", 1);
+            var value = dbParams.Get<int>("Field1");
+            value.IsEqualTo(1);
+        }
     }
 }
