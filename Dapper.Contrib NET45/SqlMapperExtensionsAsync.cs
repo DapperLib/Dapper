@@ -15,7 +15,7 @@ namespace Dapper.Contrib.Extensions
 
     public static partial class SqlMapperExtensions
     {
-        
+
         /// <summary>
         /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
         /// Id must be marked with [Key] attribute.
@@ -41,7 +41,6 @@ namespace Dapper.Contrib.Extensions
 
                 var name = GetTableName(type);
 
-                // TODO: pluralizer 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
                 sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
                 GetQueries[type.TypeHandle] = sql;
@@ -50,29 +49,25 @@ namespace Dapper.Contrib.Extensions
             var dynParms = new DynamicParameters();
             dynParms.Add("@id", id);
 
-            T obj;
 
-            if (type.IsInterface)
+            if (!type.IsInterface)
+                return (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
+
+            var res = (await connection.QueryAsync<dynamic>(sql, dynParms).ConfigureAwait(false)).FirstOrDefault() as IDictionary<string, object>;
+
+            if (res == null)
+                return null;
+
+            var obj = ProxyGenerator.GetInterfaceProxy<T>();
+
+            foreach (var property in TypePropertiesCache(type))
             {
-                var res = (await connection.QueryAsync<dynamic>(sql, dynParms).ConfigureAwait(false)).FirstOrDefault() as IDictionary<string, object>;
-
-                if (res == null)
-                    return null;
-
-                obj = ProxyGenerator.GetInterfaceProxy<T>();
-
-                foreach (var property in TypePropertiesCache(type))
-                {
-                    var val = res[property.Name];
-                    property.SetValue(obj, val, null);
-                }
-
-                ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+                var val = res[property.Name];
+                property.SetValue(obj, val, null);
             }
-            else
-            {
-                obj = (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
-            }
+
+            ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+
             return obj;
         }
 
@@ -99,8 +94,6 @@ namespace Dapper.Contrib.Extensions
                 if (!keys.Any())
                     throw new DataException("Get<T> only supports en entity with a [Key] property");
 
-                var onlyKey = keys.First();
-
                 var name = GetTableName(type);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
@@ -115,9 +108,8 @@ namespace Dapper.Contrib.Extensions
 
             var result = await connection.QueryAsync(sql);
             var list = new List<T>();
-            Parallel.ForEach(result, r =>
+            foreach (IDictionary<string, object> res in result)
             {
-                var res = r as IDictionary<string, object>;
                 var obj = ProxyGenerator.GetInterfaceProxy<T>();
                 foreach (var property in TypePropertiesCache(type))
                 {
@@ -126,8 +118,7 @@ namespace Dapper.Contrib.Extensions
                 }
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
                 list.Add(obj);
-
-            });
+            }
             return list;
         }
 
@@ -138,9 +129,18 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
-        public static Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
+            var isList = false;
+
             var type = typeof(T);
+
+            if (type.IsArray || type.IsGenericType)
+            {
+                isList = true;
+                type = type.GetGenericArguments()[0];
+            }
+
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
@@ -164,9 +164,17 @@ namespace Dapper.Contrib.Extensions
                 if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbParameterList.Append(", ");
             }
-            var adapter = GetFormatter(connection);
-            return adapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(), 
-                sbParameterList.ToString(), keyProperties, entityToInsert);
+
+            if (!isList)    //single entity
+            {
+                var adapter = GetFormatter(connection);
+                return await adapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                    sbParameterList.ToString(), keyProperties, entityToInsert);
+            }
+
+            //insert list of entities
+            var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
+            return await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>

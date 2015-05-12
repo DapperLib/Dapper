@@ -28,6 +28,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 // tests against "Automobiles" table (Table attribute)
                 await connection.InsertAsync(new Car { Name = "Volvo" });
                 (await connection.GetAsync<Car>(1)).Name.IsEqualTo("Volvo");
@@ -42,6 +43,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 var id = await connection.InsertAsync(new User { Name = "Adama", Age = 10 });
                 var user = await connection.GetAsync<User>(id);
                 user.Id.IsEqualTo((int)id);
@@ -54,6 +56,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 (await connection.GetAsync<User>(3)).IsNull();
 
                 var id = await connection.InsertAsync(new User { Name = "Adam", Age = 10 });
@@ -87,6 +90,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 (await connection.GetAsync<IUser>(3)).IsNull();
                 User user = new User { Name = "Adamb", Age = 10 };
                 int id = (int)await connection.InsertAsync(user);
@@ -98,6 +102,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 var rand = new Random(8675309);
                 var data = new List<User>();
                 for (int i = 0; i < 100; i++)
@@ -134,6 +139,7 @@ namespace Dapper.Contrib.Tests
 
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 await connection.InsertAsync(new User { Age = 5, Name = "Testy McTestington" });
 
                 if ((await connection.QueryAsync<int>(template.RawSql, template.Parameters)).Single() != 1)
@@ -141,7 +147,7 @@ namespace Dapper.Contrib.Tests
             }
         }
 
-        public async Task GetAllAsync()
+        public async Task InsertListAsync()
         {
             const int numberOfEntities = 100;
 
@@ -153,12 +159,32 @@ namespace Dapper.Contrib.Tests
             {
                 connection.DeleteAll<User>();
 
-                var total = connection.Insert(users);
+                var total = await connection.InsertAsync(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+            }
+
+        }
+
+        public async Task GetAllAsync()
+        {
+            const int numberOfEntities = 10000;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = await connection.InsertAsync( users);
                 total.IsEqualTo(numberOfEntities);
                 users = (List<User>) await connection.GetAllAsync<User>();
                 users.Count.IsEqualTo(numberOfEntities);
                 var iusers = await connection.GetAllAsync<IUser>();
-                //iusers.Count.IsEqualTo(numberOfEntities);
+                iusers.ToList().Count.IsEqualTo(numberOfEntities);
             }
         }
 
@@ -166,6 +192,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 var id = await connection.InsertAsync(new Result() { Name = "Adam", Order = 1 });
 
                 var result = await connection.GetAsync<Result>(id);
@@ -177,6 +204,7 @@ namespace Dapper.Contrib.Tests
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 var id1 = await connection.InsertAsync(new User() { Name = "Alice", Age = 32 });
                 var id2 = await connection.InsertAsync(new User() { Name = "Bob", Age = 33 });
                 await connection.DeleteAllAsync<User>();

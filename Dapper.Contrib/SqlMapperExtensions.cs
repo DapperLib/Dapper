@@ -181,8 +181,6 @@ namespace Dapper.Contrib.Extensions
                 if (!keys.Any())
                     throw new DataException("Get<T> only supports en entity with a [Key] property");
 
-                var onlyKey = keys.First();
-
                 var name = GetTableName(type);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
