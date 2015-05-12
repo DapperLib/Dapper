@@ -1,13 +1,12 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Transactions;
 using Dapper.Contrib.Extensions;
-using System.Collections.Generic;
-using System;
-
 
 namespace Dapper.Contrib.Tests
 {
@@ -90,10 +89,83 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void InsertList()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+            }
+
+        }
+
+        public void UpdateList()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                foreach (var user in users)
+                {
+                    user.Name = user.Name + " updated";
+                }
+                connection.Update(users);
+                var name = connection.Query<User>("select * from users").First().Name;
+                name.Contains("updated").IsTrue();
+            }
+
+        }
+
+        public void DeleteList()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+
+                var usersToDelete = users.Take(10).ToList();
+                connection.Delete(usersToDelete);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities - 10);
+            }
+
+        }
+
         public void InsertGetUpdate()
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 connection.Get<User>(3).IsNull();
 
                 //insert with computed attribute that should be ignored
@@ -123,7 +195,30 @@ namespace Dapper.Contrib.Tests
                 connection.Query<User>("select * from Users").Count().IsEqualTo(0);
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+
             }
+        }
+
+        public void GetAll()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.GetAll<User>().ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                var iusers = connection.GetAll<IUser>().ToList();
+                iusers.Count.IsEqualTo(numberOfEntities);
+            }
+
         }
 
         public void Transactions()
@@ -182,7 +277,7 @@ namespace Dapper.Contrib.Tests
                 {
                     var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
                     data.Add(nU);
-                    nU.Id = (int)connection.Insert<User>(nU);
+                    nU.Id = (int)connection.Insert(nU);
                 }
 
                 var builder = new SqlBuilder();
@@ -212,6 +307,7 @@ namespace Dapper.Contrib.Tests
 
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 connection.Insert(new User { Age = 5, Name = "Testy McTestington" });
 
                 if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
@@ -221,11 +317,12 @@ namespace Dapper.Contrib.Tests
 
         public void InsertFieldWithReservedName()
         {
-            using (var conneciton = GetOpenConnection())
+            using (var connection = GetOpenConnection())
             {
-                var id = conneciton.Insert(new Result() { Name = "Adam", Order = 1 });
+                connection.DeleteAll<User>();
+                var id = connection.Insert(new Result() { Name = "Adam", Order = 1 });
 
-                var result = conneciton.Get<Result>(id);
+                var result = connection.Get<Result>(id);
                 result.Order.IsEqualTo(1);
             }
 

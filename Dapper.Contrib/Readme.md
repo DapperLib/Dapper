@@ -5,14 +5,23 @@ Features
 --------
 Dapper.Contrib contains a number of helper methods for inserting, getting, updating and deleting files.
 
-The object you are working with must have a property named Id or a property marked with a [Key] attribute. As with dapper,
-all extension methods assume the connection is already open, they will fail if the connection is closed.
+As with dapper, all extension methods assume the connection is already open, they will fail if the 
+connection is closed. The full list of extension methods in Dapper.Contrib right now are:
 
-Inserts
--------
 ```csharp
-public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+T Get<T>(id);
+IEnumerable<T> GetAll<T>();
+int Insert<T>(T obj);
+int Insert<T>(Enumerable<T> list);
+bool Update<T>(T obj);
+bool Update<T>(Enumerable<T> list);
+bool Delete<T>(T obj);
+bool Delete<T>(Enumerable<T> list);
+bool DeleteAll<T>();
 ```
+
+For these extensions to work, the entity in question _MUST_ have a key-property, a property named "id" or decorated with 
+a [Key] attribute.
 
 ```csharp
 public class Car
@@ -20,43 +29,63 @@ public class Car
     public int Id { get; set; }
     public string Name { get; set; }
 }
-    
-connection.Insert(new Car { Name = "Volvo" });
+
+public class User
+{
+    [Key]
+    int TheId { get; set; }
+    string Name { get; set; }
+    int Age { get; set; }
+}
+   
 ```
+
 
 Gets
 -------
-```csharp
-public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null)
-```
+Get one specific entity based on id, or a list of all entities in the table.
 
 ```csharp
 var car = connection.Get<Car>(1);
+
+var cars = connection.GetAll<Car>();
 ```
+
+Inserts
+-------
+Insert one entity or a list of entities.
+
+```csharp
+connection.Insert(new Car { Name = "Volvo" });
+
+connection.Insert(cars);
+```
+
+
 
 Updates
 -------
-```csharp
-public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) 
-```
+Update one specific entity or update a list of entities.
 
 ```csharp
 connection.Update(new Car() { Id = 1, Name = "Saab" });
+
+connection.Update(cars);
 ```
 
 Deletes
 -------
-```csharp
-public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null)
-public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null)
-```
+Delete one specific entity, a list of entities, or _ALL_ entities in the table.
 
 ```csharp
 connection.Delete(new Car() { Id = 1 });
+
+connection.Delete(cars);
+
 connection.DeleteAll<Car>();
 ```
 
-Attributes
+Special Attributes
 ----------
 Dapper.Contrib makes use of some optional attributes:
 

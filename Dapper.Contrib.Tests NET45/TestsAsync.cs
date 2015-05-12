@@ -44,7 +44,7 @@ namespace Dapper.Contrib.Tests
             {
                 var id = await connection.InsertAsync(new User { Name = "Adama", Age = 10 });
                 var user = await connection.GetAsync<User>(id);
-                user.Id.IsEqualTo((int)id);
+                user.TheId.IsEqualTo((int)id);
                 user.Name.IsEqualTo("Adama");
                 await connection.DeleteAsync(user);
             }
@@ -90,7 +90,7 @@ namespace Dapper.Contrib.Tests
                 (await connection.GetAsync<IUser>(3)).IsNull();
                 User user = new User { Name = "Adamb", Age = 10 };
                 int id = (int)await connection.InsertAsync(user);
-                user.Id.IsEqualTo(id);
+                user.TheId.IsEqualTo(id);
             }
         }
 
@@ -102,9 +102,9 @@ namespace Dapper.Contrib.Tests
                 var data = new List<User>();
                 for (int i = 0; i < 100; i++)
                 {
-                    var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
+                    var nU = new User { Age = rand.Next(70), TheId = i, Name = Guid.NewGuid().ToString() };
                     data.Add(nU);
-                    nU.Id = (int)await connection.InsertAsync<User>(nU);
+                    nU.TheId = (int)await connection.InsertAsync<User>(nU);
                 }
 
                 var builder = new SqlBuilder();
@@ -118,8 +118,8 @@ namespace Dapper.Contrib.Tests
 
                 foreach (var u in data)
                 {
-                    if (!ids.Any(i => u.Id == i)) throw new Exception("Missing ids in select");
-                    if (!users.Any(a => a.Id == u.Id && a.Name == u.Name && a.Age == u.Age)) throw new Exception("Missing users in select");
+                    if (!ids.Any(i => u.TheId == i)) throw new Exception("Missing ids in select");
+                    if (!users.Any(a => a.TheId == u.TheId && a.Name == u.Name && a.Age == u.Age)) throw new Exception("Missing users in select");
                 }
             }
         }

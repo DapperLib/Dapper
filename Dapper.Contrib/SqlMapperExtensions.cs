@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -109,6 +110,7 @@ namespace Dapper.Contrib.Extensions
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
+
             string sql;
             if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
             {
@@ -122,7 +124,6 @@ namespace Dapper.Contrib.Extensions
 
                 var name = GetTableName(type);
 
-                // TODO: pluralizer 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
                 sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
                 GetQueries[type.TypeHandle] = sql;
@@ -156,6 +157,58 @@ namespace Dapper.Contrib.Extensions
             }
             return obj;
         }
+
+        /// <summary>
+        /// Returns a list of entites from table "Ts".  
+        /// Id of T must be marked with [Key] attribute.
+        /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
+        /// for optimal performance. 
+        /// </summary>
+        /// <typeparam name="T">Interface or type to create and populate</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <returns>Entity of T</returns>
+        public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            var type = typeof(T);
+            var cacheType = typeof (List<T>);
+
+            string sql;
+            if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
+            {
+                var keys = KeyPropertiesCache(type);
+                if (keys.Count() > 1)
+                    throw new DataException("Get<T> only supports an entity with a single [Key] property");
+                if (!keys.Any())
+                    throw new DataException("Get<T> only supports en entity with a [Key] property");
+
+                var onlyKey = keys.First();
+
+                var name = GetTableName(type);
+
+                // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
+                sql = "select * from " + name ;
+                GetQueries[cacheType.TypeHandle] = sql;
+            }
+
+
+            if (!type.IsInterface) return connection.Query<T>(sql, null, transaction, commandTimeout: commandTimeout);
+
+            var result = connection.Query(sql);
+            var list = new List<T>();
+            foreach (IDictionary<string, object> res in result)
+            {
+                var obj = ProxyGenerator.GetInterfaceProxy<T>();
+                foreach (var property in TypePropertiesCache(type))
+                {
+                    var val = res[property.Name];
+                    property.SetValue(obj, val, null);
+                }
+                ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+                list.Add(obj);
+            }
+            return list;
+        }
+
         private static string GetTableName(Type type)
         {
             string name;
@@ -176,14 +229,23 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Inserts an entity into table "Ts" and returns identity id.
+        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="entityToInsert">Entity to insert</param>
-        /// <returns>Identity of inserted entity</returns>
+        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
+        /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
         public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
+            var isList = false;
+            
             var type = typeof(T);
+
+            if (type.IsArray || type.IsGenericType)
+            {
+                isList = true;
+                type = type.GetGenericArguments()[0];
+            }
+
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
@@ -207,9 +269,17 @@ namespace Dapper.Contrib.Extensions
                 if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbParameterList.Append(", ");
             }
-            var adapter = GetFormatter(connection);
-            return adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
-                sbParameterList.ToString(), keyProperties, entityToInsert);
+
+            if (!isList)    //single entity
+            {
+                var adapter = GetFormatter(connection);
+                return adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                    sbParameterList.ToString(), keyProperties, entityToInsert);
+            }
+            
+            //insert list of entities
+            var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
+            return connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -228,6 +298,9 @@ namespace Dapper.Contrib.Extensions
             }
 
             var type = typeof(T);
+
+            if (type.IsArray || type.IsGenericType)
+                type = type.GetGenericArguments()[0];
 
             var keyProperties = KeyPropertiesCache(type);
             if (!keyProperties.Any())
@@ -274,6 +347,9 @@ namespace Dapper.Contrib.Extensions
                 throw new ArgumentException("Cannot Delete null Object", "entityToDelete");
 
             var type = typeof(T);
+
+            if (type.IsArray || type.IsGenericType)
+                type = type.GetGenericArguments()[0];
 
             var keyProperties = KeyPropertiesCache(type);
             if (!keyProperties.Any())

@@ -17,6 +17,14 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public static void IsMoreThan(this int obj, int other)
+        {
+            if (obj < other)
+            {
+                throw new ApplicationException(string.Format("{0} should be larger than {1}", obj, other));
+            }
+        }
+
         public static void IsSequenceEqualTo<T>(this IEnumerable<T> obj, IEnumerable<T> other)
         {
             if (!obj.SequenceEqual(other))
