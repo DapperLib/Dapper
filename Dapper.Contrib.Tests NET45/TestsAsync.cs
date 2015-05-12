@@ -44,7 +44,7 @@ namespace Dapper.Contrib.Tests
             {
                 var id = await connection.InsertAsync(new User { Name = "Adama", Age = 10 });
                 var user = await connection.GetAsync<User>(id);
-                user.TheId.IsEqualTo((int)id);
+                user.Id.IsEqualTo((int)id);
                 user.Name.IsEqualTo("Adama");
                 await connection.DeleteAsync(user);
             }
@@ -90,7 +90,7 @@ namespace Dapper.Contrib.Tests
                 (await connection.GetAsync<IUser>(3)).IsNull();
                 User user = new User { Name = "Adamb", Age = 10 };
                 int id = (int)await connection.InsertAsync(user);
-                user.TheId.IsEqualTo(id);
+                user.Id.IsEqualTo(id);
             }
         }
 
@@ -102,9 +102,9 @@ namespace Dapper.Contrib.Tests
                 var data = new List<User>();
                 for (int i = 0; i < 100; i++)
                 {
-                    var nU = new User { Age = rand.Next(70), TheId = i, Name = Guid.NewGuid().ToString() };
+                    var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
                     data.Add(nU);
-                    nU.TheId = (int)await connection.InsertAsync<User>(nU);
+                    nU.Id = (int)await connection.InsertAsync<User>(nU);
                 }
 
                 var builder = new SqlBuilder();
@@ -118,8 +118,8 @@ namespace Dapper.Contrib.Tests
 
                 foreach (var u in data)
                 {
-                    if (!ids.Any(i => u.TheId == i)) throw new Exception("Missing ids in select");
-                    if (!users.Any(a => a.TheId == u.TheId && a.Name == u.Name && a.Age == u.Age)) throw new Exception("Missing users in select");
+                    if (!ids.Any(i => u.Id == i)) throw new Exception("Missing ids in select");
+                    if (!users.Any(a => a.Id == u.Id && a.Name == u.Name && a.Age == u.Age)) throw new Exception("Missing users in select");
                 }
             }
         }
@@ -138,6 +138,27 @@ namespace Dapper.Contrib.Tests
 
                 if ((await connection.QueryAsync<int>(template.RawSql, template.Parameters)).Single() != 1)
                     throw new Exception("Query failed");
+            }
+        }
+
+        public async Task GetAllAsync()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = (List<User>) await connection.GetAllAsync<User>();
+                users.Count.IsEqualTo(numberOfEntities);
+                var iusers = await connection.GetAllAsync<IUser>();
+                //iusers.Count.IsEqualTo(numberOfEntities);
             }
         }
 

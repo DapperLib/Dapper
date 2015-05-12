@@ -15,9 +15,7 @@ namespace Dapper.Contrib.Extensions
 
     public static partial class SqlMapperExtensions
     {
-
-
-
+        
         /// <summary>
         /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
         /// Id must be marked with [Key] attribute.
@@ -78,7 +76,60 @@ namespace Dapper.Contrib.Extensions
             return obj;
         }
 
+        /// <summary>
+        /// Returns a list of entites from table "Ts".  
+        /// Id of T must be marked with [Key] attribute.
+        /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
+        /// for optimal performance. 
+        /// </summary>
+        /// <typeparam name="T">Interface or type to create and populate</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <returns>Entity of T</returns>
+        public static async Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            var type = typeof(T);
+            var cacheType = typeof(List<T>);
 
+            string sql;
+            if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
+            {
+                var keys = KeyPropertiesCache(type);
+                if (keys.Count() > 1)
+                    throw new DataException("Get<T> only supports an entity with a single [Key] property");
+                if (!keys.Any())
+                    throw new DataException("Get<T> only supports en entity with a [Key] property");
+
+                var onlyKey = keys.First();
+
+                var name = GetTableName(type);
+
+                // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
+                sql = "select * from " + name;
+                GetQueries[cacheType.TypeHandle] = sql;
+            }
+
+            if (!type.IsInterface)
+            {
+                return await connection.QueryAsync<T>(sql, null, transaction, commandTimeout: commandTimeout);
+            }
+
+            var result = await connection.QueryAsync(sql);
+            var list = new List<T>();
+            Parallel.ForEach(result, r =>
+            {
+                var res = r as IDictionary<string, object>;
+                var obj = ProxyGenerator.GetInterfaceProxy<T>();
+                foreach (var property in TypePropertiesCache(type))
+                {
+                    var val = res[property.Name];
+                    property.SetValue(obj, val, null);
+                }
+                ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+                list.Add(obj);
+
+            });
+            return list;
+        }
 
 
         /// <summary>
