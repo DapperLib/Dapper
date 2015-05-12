@@ -183,7 +183,13 @@ namespace Dapper
                 cmd.Transaction = transaction;
             cmd.CommandText = commandText;
             if (commandTimeout.HasValue)
+            {
                 cmd.CommandTimeout = commandTimeout.Value;
+            }
+            else if (SqlMapper.Settings.CommandTimeout.HasValue)
+            {
+                cmd.CommandTimeout = SqlMapper.Settings.CommandTimeout.Value;
+            }
             if (commandType.HasValue)
                 cmd.CommandType = commandType.Value;
             if (paramReader != null)
