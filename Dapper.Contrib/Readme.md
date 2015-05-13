@@ -93,3 +93,4 @@ Dapper.Contrib makes use of some optional attributes:
 * Key - this property is the identity/key (unless it is named "Id")
 * Write(true/false) -  this property is (not) writeable
 * Computed - this property is computed and should not be part of updates
+

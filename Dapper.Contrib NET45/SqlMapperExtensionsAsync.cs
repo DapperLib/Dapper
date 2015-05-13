@@ -194,6 +194,9 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
+            if (type.IsArray || type.IsGenericType)
+                type = type.GetGenericArguments()[0];
+
             var keyProperties = KeyPropertiesCache(type);
             if (!keyProperties.Any())
                 throw new ArgumentException("Entity must have at least one [Key] property");
@@ -239,6 +242,9 @@ namespace Dapper.Contrib.Extensions
                 throw new ArgumentException("Cannot Delete null Object", "entityToDelete");
 
             var type = typeof(T);
+
+            if (type.IsArray || type.IsGenericType)
+                type = type.GetGenericArguments()[0];
 
             var keyProperties = KeyPropertiesCache(type);
             if (!keyProperties.Any())

@@ -2,15 +2,17 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Dapper.Contrib</id>
-    <version>1.40</version>
+    <version>1.41</version>
     <authors>Sam Saffron,Johan Danforth</authors>
-    <owners>Sam Saffron,Johan Danforth</owners>
+    <owners>Johan Danforth, Marc Gravell</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <projectUrl>https://github.com/StackExchange/dapper-dot-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A collection of create,insert,update,delete helpers for dapper.net</description>
-    <tags>orm sql micro-orm</tags>
+    <description>The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional "dirty" tracking of interface-based entities.</description>
+    <tags>orm sql micro-orm dapper</tags>
     <releaseNotes>
+      * 1.42    - InsertAsync() UpdateAsync() and DeleteAsync() now also handles lists of entities (.NET 4.5 only)
+      * 1.41    - added GetAll(). Insert() Update() and Delete() now handles lists of entities!
       * 1.40    - cumulative changes up to dapper 1.40; will track changes more carefully subsequently
     </releaseNotes>
     <dependencies>
