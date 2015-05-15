@@ -23,6 +23,7 @@ using System.Diagnostics;
 #if POSTGRESQL
 using Npgsql;
 #endif
+using ServiceStack.Common;
 
 namespace SqlMapper
 {
@@ -4258,7 +4259,144 @@ end");
             retVal.IsEqualTo(3);
         }
 
-        class SO29596645_RuleTableValuedParameters : Dapper.SqlMapper.IDynamicParameters {
+
+        private void EnumerableAutoExpand_EnsureDb()
+        {
+            var sql = @"
+IF OBJECT_ID('dbo.AutoExpand') IS NULL
+BEGIN
+    CREATE TABLE dbo.AutoExpand (
+        Id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+        Value VARCHAR(200) NOT NULL
+    );
+
+	DECLARE @i int
+
+	set @i = 0
+
+	WHILE @i <= 3001
+	BEGIN
+		
+		INSERT dbo.AutoExpand (Value) values (CONVERT(VARCHAR(MAX), @i) + '-' + replicate('x', 100))
+		
+		SET @i = @i + 1
+	END
+
+END
+
+IF TYPE_ID('dbo.IntList') IS NULL
+	CREATE TYPE dbo.IntList AS TABLE (Id INT NOT NULL PRIMARY KEY)
+
+";
+            connection.Execute(sql);
+        }
+
+        public IDbCommand GetCommandFromReader(IDataReader reader)
+        {
+            var wrappedReaderType = typeof(Dapper.CommandDefinition)
+                        .Assembly.GetType("Dapper.WrappedReader");
+            var field = wrappedReaderType
+                        .GetField("cmd", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null)
+            {
+                return field.GetValue(reader) as IDbCommand;
+            }
+            throw new ApplicationException();
+        }
+        public void EnumerableAutoExpand_InitialTest()
+        {
+            EnumerableAutoExpand_EnsureDb();
+
+            var ids = new[] { 1, 2, 3, 4 };
+            var sql = "SELECT COUNT(*) FROM dbo.AutoExpand WHERE Id IN @ids";
+            using (var reader = connection.ExecuteReader(sql, new { ids }))
+            {
+                var cmd = GetCommandFromReader(reader);
+                cmd.CommandText.Contains("@ids1").IsTrue();
+
+                reader.Read();
+                var count = (int)reader.GetValue(0);
+                count.IsEqualTo(4);
+            }
+
+        }
+
+        public void EnumerableAutoExpand_NoValues()
+        {
+            EnumerableAutoExpand_EnsureDb();
+
+            var ids = new int[] { };
+            var i = connection.Query("SELECT * FROM dbo.AutoExpand WHERE Id IN @ids", new { ids });
+
+            i.Count().IsEqualTo(0);
+        }
+
+        public void EnumerableAutoExpand_ManyValues()
+        {
+            EnumerableAutoExpand_EnsureDb();
+
+            try
+            {
+                //Sql should throw an exception with >2100 parameters
+                var ids = Enumerable.Range(20, 3000);
+                var i = connection.Query("SELECT * FROM dbo.AutoExpand WHERE Id IN @ids", new { ids });
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+
+                Assert.IsTrue(true);
+            }
+        }
+
+
+        public void EnumerableAutoExpand_ManyValues_Expanded_Above_Range()
+        {
+            EnumerableAutoExpand_EnsureDb();
+
+            Dapper.SqlMapper.Expander.Clear();
+            Dapper.SqlMapper.Expander.Add(typeof(int), new Dapper.SqlMapper.ExpanderRegistration() { UdtTypeName = "IntList", UdtFieldName = "Id", Type = typeof(int), Count = 100 });
+
+
+            var ids = Enumerable.Range(20, 200);
+            var sql = "SELECT COUNT(*) FROM dbo.AutoExpand WHERE Id IN @ids";
+            using (var reader = connection.ExecuteReader(sql, new { ids }))
+            {
+                var cmd = GetCommandFromReader(reader);
+                cmd.CommandText.Contains("(SELECT Id FROM @ids)").IsTrue();
+
+                ((SqlParameter)cmd.Parameters[0]).SqlDbType.IsEqualTo(SqlDbType.Structured);
+
+                reader.Read();
+                var count = (int)reader.GetValue(0);
+                count.IsEqualTo(200);
+            }
+        }
+
+        public void EnumerableAutoExpand_ManyValues_Not_Expanded_Below_Range()
+        {
+            EnumerableAutoExpand_EnsureDb();
+
+            Dapper.SqlMapper.Expander.Clear();
+            Dapper.SqlMapper.Expander.Add(typeof(int), new Dapper.SqlMapper.ExpanderRegistration() { UdtTypeName = "IntList", UdtFieldName = "Id", Type = typeof(int), Count = 100 });
+
+
+            var ids = Enumerable.Range(20, 99);
+            var sql = "SELECT COUNT(*) FROM dbo.AutoExpand WHERE Id IN @ids";
+            using (var reader = connection.ExecuteReader(sql, new { ids }))
+            {
+                var cmd = GetCommandFromReader(reader);
+                cmd.CommandText.Contains("@ids").IsTrue();
+
+
+                reader.Read();
+                var count = (int)reader.GetValue(0);
+                count.IsEqualTo(99);
+            }
+        }
+
+        class SO29596645_RuleTableValuedParameters : Dapper.SqlMapper.IDynamicParameters
+        {
             private string parameterName;
 
             public SO29596645_RuleTableValuedParameters(string parameterName)

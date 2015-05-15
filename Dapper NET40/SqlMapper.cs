@@ -724,7 +724,14 @@ namespace Dapper
             typeMap[typeof(object)] = DbType.Object;
 
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
+
+            Expander = new Dictionary<Type, ExpanderRegistration>();
+
         }
+        /// <summary>
+        /// A set of per-type configurations for automatically expanding IEnumerables into TVPs
+        /// </summary>
+        public static Dictionary<Type, ExpanderRegistration> Expander { get; set; }
 
         /// <summary>
         /// Clear the registered type handlers
@@ -2694,6 +2701,28 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         }
 
         /// <summary>
+        /// /
+        /// </summary>
+        public class ExpanderRegistration
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public Type Type { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public int Count { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string UdtTypeName { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string UdtFieldName { get; set; }
+        }
+        /// <summary>
         /// Internal use only
         /// </summary>
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
@@ -2709,89 +2738,165 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 arrayParm.Value = value ?? DBNull.Value;
                 arrayParm.ParameterName = namePrefix;
                 command.Parameters.Add(arrayParm);
+                return;
             }
-            else
-            {
-                var list = value as IEnumerable;
-                var count = 0;
-                bool isString = value is IEnumerable<string>;
-                bool isDbString = value is IEnumerable<DbString>;
-                foreach (var item in list)
-                {
-                    count++;
-                    var listParam = command.CreateParameter();
-                    listParam.ParameterName = namePrefix + count;
-                    if (isString)
-                    {
-                        listParam.Size = DbString.DefaultLength;
-                        if (item != null && ((string)item).Length > DbString.DefaultLength)
-                        {
-                            listParam.Size = -1;
-                        }
-                    }
-                    if (isDbString && item as DbString != null)
-                    {
-                        var str = item as DbString;
-                        str.AddParameter(command, listParam.ParameterName);
-                    }
-                    else
-                    {
-                        listParam.Value = item ?? DBNull.Value;
-                        command.Parameters.Add(listParam);
-                    }
-                }
 
-                var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(?!\w)(\s+(?i)unknown(?-i))?";
-                if (count == 0)
+            var list = value as IList;
+            if (list == null)
+                list = ((IEnumerable)value).Cast<object>().ToList();
+
+            if (list != null && list.Count > 0)
+            {
+                var enumerableType = list[0].GetType();
+                var config = Expander.ContainsKey(enumerableType) ? Expander[enumerableType] : null;
+
+                if (config != null && list.Count >= config.Count)
                 {
-                    command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
-                    {
-                        var variableName = match.Groups[1].Value;
-                        if (match.Groups[2].Success)
-                        {
-                            // looks like an optimize hint; leave it alone!
-                            return match.Value;
-                        }
-                        else
-                        {
-                            return "(SELECT " + variableName + " WHERE 1 = 0)";
-                        }
-                    }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);                        
-                    var dummyParam = command.CreateParameter();
-                    dummyParam.ParameterName = namePrefix;
-                    dummyParam.Value = DBNull.Value;
-                    command.Parameters.Add(dummyParam);
+                    PackListAsTvp(command, namePrefix, config, list);
+                    return;
+                }
+            }
+
+            PackParametersAsMultiple(command, namePrefix, list);
+        }
+
+        private static void PackListAsTvp(IDbCommand command, string namePrefix, ExpanderRegistration parameters, IEnumerable value)
+        {
+            var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(?!\w)(\s+(?i)unknown(?-i))?";
+
+            command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+            {
+                var variableName = match.Groups[1].Value;
+                if (match.Groups[2].Success)
+                {
+                    // looks like an optimize hint; leave it alone!
+                    return match.Value;
                 }
                 else
                 {
-                    command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                    return "(SELECT " + parameters.UdtFieldName + " FROM @" + namePrefix + ")";
+                }
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+            var param = command.CreateParameter();
+
+            var sqlParam = param as System.Data.SqlClient.SqlParameter;
+
+            if (sqlParam == null)
+                throw new ApplicationException("Support for TVP on Non-Sql Server not yet developed.");
+
+            sqlParam.ParameterName = namePrefix;
+            sqlParam.TypeName = parameters.UdtTypeName;
+            sqlParam.SqlDbType = SqlDbType.Structured;
+            sqlParam.Value = ToSqlDataRecord(value, parameters.UdtFieldName, typeMap[parameters.Type]);
+
+            command.Parameters.Add(sqlParam);
+
+        }
+
+        private static IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> ToSqlDataRecord(IEnumerable list, string fieldName, DbType type)
+        {
+            var fields = new[] {
+                new Microsoft.SqlServer.Server.SqlMetaData(fieldName, ResovleSqlDbType(type))
+            };
+
+            var record = new Microsoft.SqlServer.Server.SqlDataRecord(fields);
+            foreach (var item in list)
+            {
+                record.SetValue(0, item);
+                yield return record;
+            }
+
+        }
+        private static SqlDbType ResovleSqlDbType(DbType type)
+        {
+            switch (type)
+            {
+                case DbType.Int16: return SqlDbType.SmallInt;
+                case DbType.Int32: return SqlDbType.Int;
+                case DbType.Int64: return SqlDbType.BigInt;
+            }
+            throw new ArgumentException("Invalid dbType");
+        }
+        private static void PackParametersAsMultiple(IDbCommand command, string namePrefix, IEnumerable list)
+        {
+            var count = 0;
+            bool isString = list is IEnumerable<string>;
+            bool isDbString = list is IEnumerable<DbString>;
+            foreach (var item in list)
+            {
+                count++;
+                var listParam = command.CreateParameter();
+                listParam.ParameterName = namePrefix + count;
+                if (isString)
+                {
+                    listParam.Size = DbString.DefaultLength;
+                    if (item != null && ((string)item).Length > DbString.DefaultLength)
                     {
-                        var variableName = match.Groups[1].Value;
-                        if (match.Groups[2].Success)
-                        {
-                            // looks like an optimize hint; expand it
-                            var suffix = match.Groups[2].Value;
-                                
-                            var sb = GetStringBuilder().Append(variableName).Append(1).Append(suffix);
-                            for (int i = 2; i <= count; i++)
-                            {
-                                sb.Append(',').Append(variableName).Append(i).Append(suffix);
-                            }
-                            return sb.__ToStringRecycle();
-                        }
-                        else
-                        {
-                            var sb = GetStringBuilder().Append('(').Append(variableName).Append(1);
-                            for (int i = 2; i <= count; i++)
-                            {
-                                sb.Append(',').Append(variableName).Append(i);
-                            }
-                            return sb.Append(')').__ToStringRecycle();
-                        }
-                    }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+                        listParam.Size = -1;
+                    }
+                }
+                if (isDbString && item as DbString != null)
+                {
+                    var str = item as DbString;
+                    str.AddParameter(command, listParam.ParameterName);
+                }
+                else
+                {
+                    listParam.Value = item ?? DBNull.Value;
+                    command.Parameters.Add(listParam);
                 }
             }
 
+            var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(?!\w)(\s+(?i)unknown(?-i))?";
+            if (count == 0)
+            {
+                command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                {
+                    var variableName = match.Groups[1].Value;
+                    if (match.Groups[2].Success)
+                    {
+                        // looks like an optimize hint; leave it alone!
+                        return match.Value;
+                    }
+                    else
+                    {
+                        return "(SELECT " + variableName + " WHERE 1 = 0)";
+                    }
+                }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+                var dummyParam = command.CreateParameter();
+                dummyParam.ParameterName = namePrefix;
+                dummyParam.Value = DBNull.Value;
+                command.Parameters.Add(dummyParam);
+            }
+            else
+            {
+                command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                {
+                    var variableName = match.Groups[1].Value;
+                    if (match.Groups[2].Success)
+                    {
+                        // looks like an optimize hint; expand it
+                        var suffix = match.Groups[2].Value;
+
+                        var sb = GetStringBuilder().Append(variableName).Append(1).Append(suffix);
+                        for (int i = 2; i <= count; i++)
+                        {
+                            sb.Append(',').Append(variableName).Append(i).Append(suffix);
+                        }
+                        return sb.__ToStringRecycle();
+                    }
+                    else
+                    {
+                        var sb = GetStringBuilder().Append('(').Append(variableName).Append(1);
+                        for (int i = 2; i <= count; i++)
+                        {
+                            sb.Append(',').Append(variableName).Append(i);
+                        }
+                        return sb.Append(')').__ToStringRecycle();
+                    }
+                }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+            }
         }
 
         private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
