@@ -3799,7 +3799,13 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
                         var unboxType = nullUnderlyingType != null && nullUnderlyingType.IsEnum() ? nullUnderlyingType : memberType;
 
-                        if (unboxType.IsEnum())
+                        if (typeHandlers.ContainsKey(unboxType)) 
+                        {
+#pragma warning disable 618
+                            il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod("Parse"), null); // stack is now [target][target][typed-value]
+#pragma warning restore 618
+                        }
+                        else if (unboxType.IsEnum())
                         {
                             Type numericType = Enum.GetUnderlyingType(unboxType);
                             if(colType == typeof(string))
@@ -3838,13 +3844,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                             bool hasTypeHandler;
                             if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == TypeExtensions.GetTypeCode(nullUnderlyingType))
                             {
-                                if (hasTypeHandler)
-                                {
-#pragma warning disable 618
-                                    il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod("Parse"), null); // stack is now [target][target][typed-value]
-#pragma warning restore 618
-                                }
-                                else
+                                if (!hasTypeHandler)
                                 {
                                     il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
                                 }
