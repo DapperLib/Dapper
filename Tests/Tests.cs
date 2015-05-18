@@ -4573,5 +4573,34 @@ end");
             var value = dbParams.Get<int>("Field1");
             value.IsEqualTo(1);
         }
+
+        enum TestEnum2
+        {
+            Bla = 1
+        }
+        class TestEnumClassNoNull2
+        {
+            public TestEnum2 EnumEnum { get; set; }
+        }
+        class TestEnum2Handler : Dapper.SqlMapper.TypeHandler<TestEnum2>
+        {
+            public static readonly TestEnum2Handler Default = new TestEnum2Handler();
+
+            public override void SetValue(IDbDataParameter parameter, TestEnum2 value)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override TestEnum2 Parse(object value)
+            {
+                // Simulate custom deserialize DB value to enum value
+                return TestEnum2.Bla;
+            }
+        }
+        public void TestCustomEnumTypeHandler()
+        {
+            Dapper.SqlMapper.AddTypeHandler(TestEnum2Handler.Default);
+            connection.Query<TestEnumClassNoNull2>("select 'RandomStuff' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum2.Bla);
+        }
     }
 }
