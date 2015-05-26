@@ -129,7 +129,8 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
         /// <returns>Identity of inserted entity</returns>
-        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
+            int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             var isList = false;
 
@@ -167,8 +168,9 @@ namespace Dapper.Contrib.Extensions
 
             if (!isList)    //single entity
             {
-                var adapter = GetFormatter(connection);
-                return await adapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                if (sqlAdapter == null)
+                    sqlAdapter = GetFormatter(connection);
+                return await sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
 

@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlServerCe;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Transactions;
+using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace Dapper.Contrib.Tests
@@ -196,8 +198,12 @@ namespace Dapper.Contrib.Tests
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
 
+                //insert with custom sqladapter
+                connection.Insert(new User { Name = "Adam", Age = 10 }, sqlAdapter: new SqlServerAdapter()).IsMoreThan(0);
             }
         }
+
+       
 
         public void GetAll()
         {
@@ -342,3 +348,4 @@ namespace Dapper.Contrib.Tests
 
     }
 }
+

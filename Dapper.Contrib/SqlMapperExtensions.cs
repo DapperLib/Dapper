@@ -232,7 +232,8 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
+            int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             var isList = false;
             
@@ -270,8 +271,9 @@ namespace Dapper.Contrib.Extensions
 
             if (!isList)    //single entity
             {
-                var adapter = GetFormatter(connection);
-                return adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                if(sqlAdapter == null)
+                sqlAdapter = GetFormatter(connection);
+                return sqlAdapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
             
