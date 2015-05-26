@@ -2116,6 +2116,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
             {
+                if(GetMultiExec(exampleParameters) != null)
+                {
+                    throw new InvalidOperationException("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
+                }
                 info = new CacheInfo();
                 if (identity.parametersType != null)
                 {

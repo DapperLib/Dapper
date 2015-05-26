@@ -4573,5 +4573,42 @@ end");
             var value = dbParams.Get<int>("Field1");
             value.IsEqualTo(1);
         }
+
+        public void SO30435185_InvalidTypeOwner()
+        {
+            try {
+                string sql = @" INSERT INTO #XXX
+                        (XXXId, AnotherId, ThirdId, Value, Comment)
+                        VALUES
+                        (@XXXId, @AnotherId, @ThirdId, @Value, @Comment); select @@rowcount as [Foo]";
+
+                var command = new
+                {
+                    MyModels = new[]
+                    {
+                        new {XXXId = 1, AnotherId = 2, ThirdId = 3, Value = "abc", Comment = "def" }
+                }
+                };
+                var parameters = command
+                    .MyModels
+                    .Select(model => new
+                    {
+                        XXXId = model.XXXId,
+                        AnotherId = model.AnotherId,
+                        ThirdId = model.ThirdId,
+                        Value = model.Value,
+                        Comment = model.Comment
+                    })
+                    .ToArray();
+
+                var rowcount = (int)connection.Query(sql, parameters).Single().Foo;
+                rowcount.IsEqualTo(1);
+
+                Assert.Fail();
+            } catch(InvalidOperationException ex)
+            {
+                ex.Message.IsEqualTo("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
+            }
+        }
     }
 }
