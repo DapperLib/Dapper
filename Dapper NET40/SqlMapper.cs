@@ -1518,9 +1518,9 @@ this IDbConnection cnn, Type type, string sql, object param = null, IDbTransacti
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IEnumerable<T> Query<T>(this IDbConnection cnn, IDbCommand cmd)
+        public static IEnumerable<T> Query<T>(this IDbCommand cmd)
         {
-            var data = QueryImpl<T>(cnn, cmd, typeof(T));
+            var data = QueryImpl<T>(cmd, typeof(T));
             return data.ToList();
         }
 
@@ -1645,10 +1645,10 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             }
         }
 
-        private static IEnumerable<T> QueryImpl<T>(this IDbConnection cnn, IDbCommand cmd, Type effectiveType)
+        private static IEnumerable<T> QueryImpl<T>(this IDbCommand cmd, Type effectiveType)
         {
             var command = new CommandDefinition(cmd.CommandText, null, null, null, null, CommandFlags.Buffered);
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, null, null);
+            var identity = new Identity(command.CommandText, command.CommandType, cmd.Connection, effectiveType, null, null);
 
             CacheInfo info;
             if (!TryGetQueryCache(identity, out info))
@@ -1658,10 +1658,10 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             }
             IDataReader reader = null;
 
-            bool wasClosed = cnn.State == ConnectionState.Closed;
+            bool wasClosed = cmd.Connection.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) cnn.Open();
+                if (wasClosed) cmd.Connection.Open();
                 reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
@@ -1707,7 +1707,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                         catch { /* don't spoil the existing exception */ }
                     reader.Dispose();
                 }
-                if (wasClosed) cnn.Close();
+                if (wasClosed) cmd.Connection.Close();
                 if (cmd != null) cmd.Dispose();
             }
         }
