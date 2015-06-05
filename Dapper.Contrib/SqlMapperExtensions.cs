@@ -268,18 +268,29 @@ namespace Dapper.Contrib.Extensions
                 if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbParameterList.Append(", ");
             }
-
-            if (!isList)    //single entity
-            {
-                if(sqlAdapter == null)
-                sqlAdapter = GetFormatter(connection);
-                return sqlAdapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
-                    sbParameterList.ToString(), keyProperties, entityToInsert);
+            int returnVal;
+            bool wasClosed = connection.State == ConnectionState.Closed;
+            try {
+                if (wasClosed) connection.Open();
+                if (!isList) //single entity
+                {
+                    if (sqlAdapter == null)
+                        sqlAdapter = GetFormatter(connection);
+                    returnVal = sqlAdapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                        sbParameterList.ToString(), keyProperties, entityToInsert);
+                }
+                else
+                {
+                    //insert list of entities
+                    var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
+                    returnVal = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+                }
             }
-            
-            //insert list of entities
-            var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
-            return connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            finally
+            {
+                if (wasClosed) connection.Close();
+            }
+            return returnVal;
         }
 
         /// <summary>
