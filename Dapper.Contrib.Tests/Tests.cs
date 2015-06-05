@@ -91,6 +91,17 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void InsertOnClosed()
+        {
+            using (var connection = GetConnection()) {
+                var id = connection.Insert(new User() {Name = "Adama", Age = 10});
+                var user = connection.Get<User>(id);
+                user.Id.IsEqualTo((int) id);
+                user.Name.IsEqualTo("Adama");
+                connection.Delete(user);
+            }
+        }
+
         public void InsertList()
         {
             const int numberOfEntities = 100;
