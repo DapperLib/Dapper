@@ -197,13 +197,37 @@ namespace Dapper.Contrib.Tests
                 connection.Query<User>("select * from Users").Count().IsEqualTo(0);
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
-
-                //insert with custom sqladapter
-                connection.Insert(new User { Name = "Adam", Age = 10 }, sqlAdapter: new SqlServerAdapter()).IsMoreThan(0);
             }
         }
 
-       
+        public void InsertWithCustomDbType()
+        {
+            SqlMapperExtensions.GetDatabaseType = (conn) => "SQLiteConnection";
+
+            bool sqliteCodeCalled = false;
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                connection.Get<User>(3).IsNull();
+                try
+                {
+                    var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+                }
+                catch (SqlCeException ex)
+                {
+                    sqliteCodeCalled = ex.Message.IndexOf("last_insert_rowid", StringComparison.InvariantCultureIgnoreCase) >= 0;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            SqlMapperExtensions.GetDatabaseType = null;
+
+            if (!sqliteCodeCalled)
+            {
+                throw new Exception("Was expecting sqlite code to be called");
+            }
+        }
 
         public void GetAll()
         {

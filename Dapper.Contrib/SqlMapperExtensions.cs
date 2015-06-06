@@ -23,6 +23,7 @@ namespace Dapper.Contrib.Extensions
         {
             bool IsDirty { get; set; }
         }
+        public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
@@ -170,7 +171,7 @@ namespace Dapper.Contrib.Extensions
         public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            var cacheType = typeof (List<T>);
+            var cacheType = typeof(List<T>);
 
             string sql;
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
@@ -184,7 +185,7 @@ namespace Dapper.Contrib.Extensions
                 var name = GetTableName(type);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name ;
+                sql = "select * from " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
@@ -226,17 +227,17 @@ namespace Dapper.Contrib.Extensions
             return name;
         }
 
+       
         /// <summary>
         /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
-            int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var isList = false;
-            
+
             var type = typeof(T);
 
             if (type.IsArray || type.IsGenericType)
@@ -271,12 +272,11 @@ namespace Dapper.Contrib.Extensions
 
             if (!isList)    //single entity
             {
-                if(sqlAdapter == null)
-                sqlAdapter = GetFormatter(connection);
-                return sqlAdapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                var adapter = GetFormatter(connection);
+                return adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
-            
+
             //insert list of entities
             var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
             return connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
@@ -386,11 +386,29 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+        /// <summary>
+        /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
+        /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
+        /// </summary>
+        public static GetDatabaseTypeDelegate GetDatabaseType;
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
-            var name = connection.GetType().Name.ToLower();
-            return !AdapterDictionary.ContainsKey(name) ? 
-                new SqlServerAdapter() : 
+            string name;
+            var getDatabaseType = GetDatabaseType;
+            if (getDatabaseType != null)
+            {
+                name = getDatabaseType(connection);
+                if (name != null)
+                    name = name.ToLower();
+            }
+            else
+            {
+                name = connection.GetType().Name.ToLower();
+            }
+
+            return !AdapterDictionary.ContainsKey(name) ?
+                new SqlServerAdapter() :
                 AdapterDictionary[name];
         }
 
@@ -552,8 +570,8 @@ namespace Dapper.Contrib.Extensions
             Name = tableName;
         }
 
-// ReSharper disable once MemberCanBePrivate.Global
-// ReSharper disable once UnusedAutoPropertyAccessor.Global
+        // ReSharper disable once MemberCanBePrivate.Global
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string Name { get; set; }
     }
 
@@ -590,7 +608,7 @@ public partial class SqlServerAdapter : ISqlAdapter
     {
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
-        connection.Execute(cmd, entityToInsert,  transaction,  commandTimeout);
+        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
 
         //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
         var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
