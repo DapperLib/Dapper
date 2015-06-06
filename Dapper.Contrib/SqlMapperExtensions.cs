@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -23,7 +22,14 @@ namespace Dapper.Contrib.Extensions
         {
             bool IsDirty { get; set; }
         }
+
+        public interface ITableNameMapper
+        {
+            string GetTableName(Type type);
+        }
+
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
+        public delegate string TableNameMapperDelegate(Type type);
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
@@ -208,22 +214,35 @@ namespace Dapper.Contrib.Extensions
             return list;
         }
 
+        /// <summary>
+        /// Specify a custom table name mapper based on the POCO type name
+        /// </summary>
+        public static TableNameMapperDelegate TableNameMapper;
+
         private static string GetTableName(Type type)
         {
             string name;
-            if (!TypeTableName.TryGetValue(type.TypeHandle, out name))
+            if (TypeTableName.TryGetValue(type.TypeHandle, out name)) return name;
+            
+            if (TableNameMapper != null)
             {
-                name = type.Name + "s";
-                if (type.IsInterface && name.StartsWith("I"))
-                    name = name.Substring(1);
-
+                name = TableNameMapper(type);
+            }
+            else
+            {
                 //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
-                var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as
-                    dynamic;
+                var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
                 if (tableattr != null)
                     name = tableattr.Name;
-                TypeTableName[type.TypeHandle] = name;
+                else
+                {
+                    name = type.Name + "s";
+                    if (type.IsInterface && name.StartsWith("I"))
+                        name = name.Substring(1);
+                }
             }
+
+            TypeTableName[type.TypeHandle] = name;
             return name;
         }
 
@@ -391,14 +410,14 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
+       
 
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             string name;
-            var getDatabaseType = GetDatabaseType;
-            if (getDatabaseType != null)
+            if (GetDatabaseType != null)
             {
-                name = getDatabaseType(connection);
+                name = GetDatabaseType(connection);
                 if (name != null)
                     name = name.ToLower();
             }

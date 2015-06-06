@@ -27,6 +27,12 @@ namespace Dapper.Contrib.Tests
         public int Age { get; set; }
     }
 
+    public class Person
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
     [Table("Automobiles")]
     public class Car
     {
@@ -202,7 +208,7 @@ namespace Dapper.Contrib.Tests
 
         public void InsertWithCustomDbType()
         {
-            SqlMapperExtensions.GetDatabaseType = (conn) => "SQLiteConnection";
+            SqlMapperExtensions.GetDatabaseType = connection => "SQLiteConnection";
 
             bool sqliteCodeCalled = false;
             using (var connection = GetOpenConnection())
@@ -226,6 +232,31 @@ namespace Dapper.Contrib.Tests
             if (!sqliteCodeCalled)
             {
                 throw new Exception("Was expecting sqlite code to be called");
+            }
+        }
+
+        public void InsertWithCustomTableNameMapper()
+        {
+
+            SqlMapperExtensions.TableNameMapper = (type) =>
+            {
+                switch (type.Name)
+                {
+                    case "Person":
+                        return "People";
+                    default:
+                        var name = type.Name + "s";
+                        if (type.IsInterface && name.StartsWith("I"))
+                            name = name.Substring(1);
+                        return name;
+                }
+            };
+
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Person() { Name = "Mr Mapper" });
+                id.IsEqualTo(1);
+                var people = connection.GetAll<Person>();
             }
         }
 
