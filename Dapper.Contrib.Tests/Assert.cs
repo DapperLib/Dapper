@@ -64,6 +64,13 @@ namespace Dapper.Contrib.Tests
                 throw new ApplicationException("Expected null");
             }
         }
+        public static void IsNotNull(this object obj)
+        {
+            if (obj == null)
+            {
+                throw new ApplicationException("Expected not null");
+            }
+        }
 
     }
 }

@@ -223,7 +223,7 @@ namespace Dapper.Contrib.Extensions
         {
             string name;
             if (TypeTableName.TryGetValue(type.TypeHandle, out name)) return name;
-            
+
             if (TableNameMapper != null)
             {
                 name = TableNameMapper(type);
@@ -246,7 +246,7 @@ namespace Dapper.Contrib.Extensions
             return name;
         }
 
-       
+
         /// <summary>
         /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
         /// </summary>
@@ -418,7 +418,7 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
-       
+
 
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
@@ -634,20 +634,28 @@ public partial class SqlServerAdapter : ISqlAdapter
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         //TODO: Append a select identity at end if command?
+        //TODO: Create specific sqladapter for sqlce
 
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
 
-        //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
+        //TODO: use IDENT_CURRENT('tablename') or IDENT_SCOPE or SCOPE_IDENTITY() - create specific sqlce adapter with @@IDENTITY
         var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-        var id = (int)r.First().id;
+        var id = r.First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (propertyInfos.Any())
-            propertyInfos.First().SetValue(entityToInsert, id, null);
-        return id;
+        {
+            var idProperty = propertyInfos.First();
+            if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
+                idProperty.SetValue(entityToInsert, (Int16)id, null);
+            else
+                idProperty.SetValue(entityToInsert, (int)id, null);
+        }
+        return (int)id;
     }
 }
+
 
 public partial class PostgresAdapter : ISqlAdapter
 {

@@ -33,6 +33,15 @@ namespace Dapper.Contrib.Tests
         public string Name { get; set; }
     }
 
+    [Table("Stuff")]
+    public class Stuff
+    {
+        [Key]
+        public short TheId { get; set; }
+        public string Name { get; set; }
+        public DateTime? Created { get; set; }
+    }
+
     [Table("Automobiles")]
     public class Car
     {
@@ -71,6 +80,30 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
+        public void ShortIdentity()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Stuff() { Name = "First item" });
+                id.IsEqualTo(1);
+                var item = connection.Get<Stuff>(1);
+                item.TheId.IsEqualTo((short)1);
+            }
+        }
+
+        public void NullDateTime()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.Insert(new Stuff() { Name = "First item" });
+                connection.Insert(new Stuff() { Name = "Second item", Created = DateTime.Now });
+                var stuff = connection.Query<Stuff>("select * from stuff").ToList();
+                stuff.First().Created.IsNull();
+                stuff.Last().Created.IsNotNull();
+
+            }
+        }
+
         public void TableName()
         {
             using (var connection = GetOpenConnection())
@@ -96,14 +129,9 @@ namespace Dapper.Contrib.Tests
                 connection.Delete(user);
             }
         }
-        
+
         public void TestClosedConnection()
         {
-            //using (var connection = GetOpenConnection())
-            //{
-            //     connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
-            //}
-
             using (var connection = GetConnection())
             {
                 connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
