@@ -96,6 +96,21 @@ namespace Dapper.Contrib.Tests
                 connection.Delete(user);
             }
         }
+        
+        public void TestClosedConnection()
+        {
+            //using (var connection = GetOpenConnection())
+            //{
+            //     connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
+            //}
+
+            using (var connection = GetConnection())
+            {
+                connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
+                var users = connection.GetAll<User>();
+                users.Count().IsMoreThan(0);
+            }
+        }
 
         public void InsertList()
         {
@@ -208,7 +223,7 @@ namespace Dapper.Contrib.Tests
 
         public void InsertWithCustomDbType()
         {
-            SqlMapperExtensions.GetDatabaseType = connection => "SQLiteConnection";
+            SqlMapperExtensions.GetDatabaseType = conn => "SQLiteConnection";
 
             bool sqliteCodeCalled = false;
             using (var connection = GetOpenConnection())

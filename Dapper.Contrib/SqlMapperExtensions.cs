@@ -289,16 +289,24 @@ namespace Dapper.Contrib.Extensions
                     sbParameterList.Append(", ");
             }
 
+            int returnVal;
+            var wasClosed = connection.State == ConnectionState.Closed;
+            if (wasClosed) connection.Open();
+
             if (!isList)    //single entity
             {
                 var adapter = GetFormatter(connection);
-                return adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                returnVal = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
-
-            //insert list of entities
-            var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
-            return connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            else
+            {
+                //insert list of entities
+                var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
+                returnVal = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            }
+            if (wasClosed) connection.Close();
+            return returnVal;
         }
 
         /// <summary>
@@ -625,6 +633,8 @@ public partial class SqlServerAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
+        //TODO: Append a select identity at end if command?
+
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
