@@ -3,10 +3,12 @@ Dapper.Contrib - more extensions for dapper
 
 Features
 --------
-Dapper.Contrib contains a number of helper methods for inserting, getting, updating and deleting files.
+Dapper.Contrib contains a number of helper methods for inserting, getting,
+updating and deleting files.
 
-As with dapper, all extension methods assume the connection is already open, they will fail if the 
-connection is closed. The full list of extension methods in Dapper.Contrib right now are:
+As with dapper, all extension methods assume the connection is already open,
+they will fail if the connection is closed. The full list of extension methods
+in Dapper.Contrib right now are:
 
 ```csharp
 T Get<T>(id);
@@ -20,8 +22,8 @@ bool Delete<T>(Enumerable<T> list);
 bool DeleteAll<T>();
 ```
 
-For these extensions to work, the entity in question _MUST_ have a key-property, a property named "id" or decorated with 
-a [Key] attribute.
+For these extensions to work, the entity in question _MUST_ have a
+key-property, a property named "id" or decorated with a [Key] attribute.
 
 ```csharp
 public class Car
@@ -37,51 +39,71 @@ public class User
     string Name { get; set; }
     int Age { get; set; }
 }
-   
 ```
 
-
-Gets
+`Get` methods
 -------
-Get one specific entity based on id, or a list of all entities in the table.
+
+Get one specific entity based on id
 
 ```csharp
 var car = connection.Get<Car>(1);
+```
 
+or a list of all entities in the table.
+
+```csharp
 var cars = connection.GetAll<Car>();
 ```
 
-Inserts
+`Insert` methods
 -------
-Insert one entity or a list of entities.
+
+Insert one entity
 
 ```csharp
 connection.Insert(new Car { Name = "Volvo" });
+```
 
+or a list of entities.
+
+```csharp
 connection.Insert(cars);
 ```
 
 
 
-Updates
+`Update` methods
 -------
-Update one specific entity or update a list of entities.
+Update one specific entity
 
 ```csharp
 connection.Update(new Car() { Id = 1, Name = "Saab" });
+```
 
+or update a list of entities.
+
+```csharp
 connection.Update(cars);
 ```
 
-Deletes
+`Delete` methods
 -------
-Delete one specific entity, a list of entities, or _ALL_ entities in the table.
+Delete one specific entity
 
 ```csharp
 connection.Delete(new Car() { Id = 1 });
+```
 
+a list of entities
+
+```csharp
 connection.Delete(cars);
+```
 
+or _ALL_ entities in the table.
+
+```csharp
 connection.DeleteAll<Car>();
 ```
 
@@ -90,6 +112,14 @@ Special Attributes
 Dapper.Contrib makes use of some optional attributes:
 
 * Table("Tablename") - use another table name instead of the name of the class
+	```csharp
+    [Table ("emps")]
+    public class Employee
+    {
+    	public int Id { get; set; }
+        public string Name { get; set; }
+    }
+    ```
 * Key - this property is the identity/key (unless it is named "Id")
 * Write(true/false) -  this property is (not) writeable
 * Computed - this property is computed and should not be part of updates
