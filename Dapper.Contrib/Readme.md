@@ -23,7 +23,7 @@ bool DeleteAll<T>();
 ```
 
 For these extensions to work, the entity in question _MUST_ have a
-key-property, a property named "id" or decorated with a [Key] attribute.
+key-property, a property named "`id`" or decorated with a `[Key]` attribute.
 
 ```csharp
 public class Car
