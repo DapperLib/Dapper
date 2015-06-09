@@ -111,7 +111,8 @@ Special Attributes
 ----------
 Dapper.Contrib makes use of some optional attributes:
 
-* Table("Tablename") - use another table name instead of the name of the class
+* `[Table("Tablename")]` - use another table name instead of the name of the class
+
 	```csharp
     [Table ("emps")]
     public class Employee
@@ -120,7 +121,7 @@ Dapper.Contrib makes use of some optional attributes:
         public string Name { get; set; }
     }
     ```
-* Key - this property is the identity/key (unless it is named "Id")
-* Write(true/false) -  this property is (not) writeable
-* Computed - this property is computed and should not be part of updates
+* `[Key]` - this property is the identity/key (unless it is named "Id")
+* `[Write(true/false)]` -  this property is (not) writeable
+* `[Computed]` - this property is computed and should not be part of updates
 
