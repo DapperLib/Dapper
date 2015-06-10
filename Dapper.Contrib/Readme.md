@@ -130,7 +130,8 @@ Limitations and caveats
 
 ### SQLite
 
-`SQLiteConnection` exposes an `Update` event that clashes with the `Update` extension provided by Dapper.Contrib. There are 2 ways to deal with this.
+`SQLiteConnection` exposes an `Update` event that clashes with the `Update`
+extension provided by Dapper.Contrib. There are 2 ways to deal with this.
 
 1. Call the `Update` method explicitly from `SqlMapperExtensions`
 
