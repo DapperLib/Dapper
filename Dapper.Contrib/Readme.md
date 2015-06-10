@@ -6,9 +6,7 @@ Features
 Dapper.Contrib contains a number of helper methods for inserting, getting,
 updating and deleting files.
 
-As with dapper, all extension methods assume the connection is already open,
-they will fail if the connection is closed. The full list of extension methods
-in Dapper.Contrib right now are:
+The full list of extension methods in Dapper.Contrib right now are:
 
 ```csharp
 T Get<T>(id);
