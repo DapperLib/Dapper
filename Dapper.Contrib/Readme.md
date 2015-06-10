@@ -87,7 +87,7 @@ connection.Update(cars);
 
 `Delete` methods
 -------
-Delete one specific entity
+Delete an entity by the specified `[Key]` property
 
 ```csharp
 connection.Delete(new Car() { Id = 1 });
