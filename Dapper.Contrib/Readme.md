@@ -125,3 +125,20 @@ Dapper.Contrib makes use of some optional attributes:
 * `[Write(true/false)]` -  this property is (not) writeable
 * `[Computed]` - this property is computed and should not be part of updates
 
+Limitations and caveats
+-------
+
+### SQLite
+
+`SQLiteConnection` exposes an `Update` event that clashes with the `Update` extension provided by Dapper.Contrib. There are 2 ways to deal with this.
+
+1. Call the `Update` method explicitly from `SqlMapperExtensions`
+
+	```Csharp
+    SqlMapperExtensions.Update(_conn, new Employee { Id = 1, Name = "Mercedes" });
+    ```
+2. Make the method signature unique by passing a type parameter to `Update`
+
+	```Csharp
+    connection.Update<Car>(new Car() { Id = 1, Name = "Maruti" });
+    ```
