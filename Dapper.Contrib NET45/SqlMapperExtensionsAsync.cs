@@ -294,11 +294,41 @@ public partial class SqlServerAdapter
 {
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
+
+        var cmd = String.Format("insert into {0} ({1}) values ({2});select SCOPE_IDENTITY() id", tableName, columnList, parameterList);
+        var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout);
+
+        var id = (int)multi.Read().First().id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!propertyInfos.Any()) return id;
+
+        var idProperty = propertyInfos.First();
+        if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
+            idProperty.SetValue(entityToInsert, (Int16)id, null);
+        else
+            idProperty.SetValue(entityToInsert, id, null);
+        return id;
+
+        //var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        //await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
+        //var r = await connection.QueryAsync<dynamic>("select SCOPE_IDENTITY() id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
+        
+        //var id = (int)r.First().id;
+        //var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        //if (propertyInfos.Any())
+        //    propertyInfos.First().SetValue(entityToInsert, id, null);
+        //return id;
+    }
+}
+
+public partial class SqlCeServerAdapter
+{
+    public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
         await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
-        //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
         var r = await connection.QueryAsync<dynamic>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
         var id = (int)r.First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();

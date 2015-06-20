@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlServerCe;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Transactions;
-using Dapper;
+
 using Dapper.Contrib.Extensions;
 
 namespace Dapper.Contrib.Tests
@@ -264,7 +263,7 @@ namespace Dapper.Contrib.Tests
                 }
                 catch (SqlCeException ex)
                 {
-                    sqliteCodeCalled = ex.Message.IndexOf("last_insert_rowid", StringComparison.InvariantCultureIgnoreCase) >= 0;
+                    sqliteCodeCalled = ex.Message.IndexOf("There was an error parsing the query", StringComparison.InvariantCultureIgnoreCase) >= 0;
                 }
                 catch (Exception)
                 {
@@ -288,6 +287,10 @@ namespace Dapper.Contrib.Tests
                     case "Person":
                         return "People";
                     default:
+                        var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
+                        if (tableattr != null)
+                            return tableattr.Name;
+
                         var name = type.Name + "s";
                         if (type.IsInterface && name.StartsWith("I"))
                             name = name.Substring(1);

@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Dapper;
+
 using Dapper.Contrib.Extensions;
 
 namespace Dapper.Contrib.Tests
@@ -87,7 +87,7 @@ namespace Dapper.Contrib.Tests
 
                 (await connection.UpdateAsync(notrackedUser)).IsEqualTo(false); //returns false, user not found
 
-                (await connection.InsertAsync(new User { Name = "Adam", Age = 10 }, sqlAdapter: new SqlServerAdapter())).IsMoreThan(0);
+                (await connection.InsertAsync(new User { Name = "Adam", Age = 10 }, sqlAdapter: new SqlCeServerAdapter())).IsMoreThan(0);
             }
         }
 

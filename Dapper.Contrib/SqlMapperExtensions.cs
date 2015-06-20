@@ -39,6 +39,7 @@ namespace Dapper.Contrib.Extensions
 
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary = new Dictionary<string, ISqlAdapter> {
 																							{"sqlconnection", new SqlServerAdapter()},
+																							{"sqlceconnection", new SqlCeServerAdapter()},
 																							{"npgsqlconnection", new PostgresAdapter()},
 																							{"sqliteconnection", new SQLiteAdapter()}
 																						};
@@ -633,15 +634,31 @@ public partial class SqlServerAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        //TODO: Append a select identity at end if command?
-        //TODO: Create specific sqladapter for sqlce
 
+        var cmd = String.Format("insert into {0} ({1}) values ({2});select SCOPE_IDENTITY() id", tableName, columnList, parameterList);
+        var multi = connection.QueryMultiple(cmd,entityToInsert , transaction, commandTimeout);
+
+        var id = (int)multi.Read().First().id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!propertyInfos.Any()) return id;
+
+        var idProperty = propertyInfos.First();
+        if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
+            idProperty.SetValue(entityToInsert, (Int16)id, null);
+        else
+            idProperty.SetValue(entityToInsert, id, null);
+        return id;
+    }
+}
+
+public partial class SqlCeServerAdapter : ISqlAdapter
+{
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
-
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-
-        //TODO: use IDENT_CURRENT('tablename') or IDENT_SCOPE or SCOPE_IDENTITY() - create specific sqlce adapter with @@IDENTITY
         var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+
         var id = r.First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (propertyInfos.Any())
@@ -700,11 +717,8 @@ public partial class SQLiteAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
-
-        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-
-        var r = connection.Query("select last_insert_rowid() id", transaction: transaction, commandTimeout: commandTimeout);
+        var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
+        var r = connection.Query(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
         var id = (int)r.First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (propertyInfos.Any())
