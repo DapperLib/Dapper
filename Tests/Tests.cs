@@ -3707,6 +3707,51 @@ option (optimize for (@vals unKnoWn))";
             foo.Value.IsEqualTo(200);
         }
 
+        public class StringListTypeHandler : Dapper.SqlMapper.TypeHandler<List<String>>
+        {
+            private StringListTypeHandler() { }
+            public static readonly StringListTypeHandler Default = new StringListTypeHandler();
+            //Just a simple List<string> type handler implementation
+            public override void SetValue(IDbDataParameter parameter, List<string> value)
+            {
+                parameter.Value = String.Join(",", value);
+            }
+
+            public override List<string> Parse(object value)
+            {
+                return ((value as String) ?? "").Split(',').ToList();
+            }
+        }
+        public class MyObjectWithStringList
+        {
+            public List<String> Names { get; set; }
+        }
+        public void Issue253_TestIEnumerableTypeHandlerParsing()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(StringListTypeHandler.Default);
+            var foo = connection.Query<MyObjectWithStringList>("SELECT 'Sam,Kyro' AS Names").Single();
+            foo.Names.IsSequenceEqualTo(new[] { "Sam", "Kyro" });
+        }
+        public void Issue253_TestIEnumerableTypeHandlerSetParameterValue()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(StringListTypeHandler.Default);
+
+            connection.Execute("CREATE TABLE #Issue253 (Names VARCHAR(50) NOT NULL);");
+            try
+            {
+                String names = "Sam,Kyro";
+                List<String> names_list = names.Split(',').ToList();
+                var foo = connection.Query<String>("INSERT INTO #Issue253 (Names) VALUES (@Names); SELECT Names FROM #Issue253;", new { Names = names_list }).Single();
+                foo.IsEqualTo(names);
+            }
+            finally
+            {
+                connection.Execute("DROP TABLE #Issue253;");
+            }
+        }
+
         public void Issue130_IConvertible()
         {
             dynamic row = connection.Query("select 1 as [a], '2' as [b]").Single();

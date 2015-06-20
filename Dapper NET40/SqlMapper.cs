@@ -910,15 +910,15 @@ namespace Dapper
             {
                 return DbType.Binary;
             }
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
-            }
 #if !DNXCORE50
             switch (type.FullName)
             {
