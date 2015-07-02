@@ -11,6 +11,7 @@
         public static void Register()
         {
             SqlMapper.AddTypeHandler(DbGeographyHandler.Default);
+            SqlMapper.AddTypeHandler(DbGeometryHandler.Default);
         }
     }
 }

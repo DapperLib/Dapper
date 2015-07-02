@@ -17,6 +17,22 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public static void IsMoreThan(this int obj, int other)
+        {
+            if (obj < other)
+            {
+                throw new ApplicationException(string.Format("{0} should be larger than {1}", obj, other));
+            }
+        }
+
+        public static void IsMoreThan(this long obj, int other)
+        {
+            if (obj < other)
+            {
+                throw new ApplicationException(string.Format("{0} should be larger than {1}", obj, other));
+            }
+        }
+
         public static void IsSequenceEqualTo<T>(this IEnumerable<T> obj, IEnumerable<T> other)
         {
             if (!obj.SequenceEqual(other))
@@ -46,6 +62,13 @@ namespace Dapper.Contrib.Tests
             if (obj != null)
             {
                 throw new ApplicationException("Expected null");
+            }
+        }
+        public static void IsNotNull(this object obj)
+        {
+            if (obj == null)
+            {
+                throw new ApplicationException("Expected not null");
             }
         }
 

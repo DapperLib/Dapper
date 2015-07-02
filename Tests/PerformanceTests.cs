@@ -16,6 +16,7 @@ using SqlMapper.Linq2Sql;
 using SqlMapper.NHibernate;
 using Dapper.Contrib.Extensions;
 using SqlMapper.EntityFramework;
+using Susanoo;
 
 namespace SqlMapper
 {
@@ -128,7 +129,7 @@ namespace SqlMapper
 
                 // dapper.contrib
                 var mapperConnection3 = Program.GetOpenConnection();
-                tests.Add(id => mapperConnection2.Get<Post>(id), "Dapper.Cotrib");
+                tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Cotrib");
 
                 var massiveModel = new DynamicModel(Program.ConnectionString);
                 var massiveConnection = Program.GetOpenConnection();
@@ -137,7 +138,7 @@ namespace SqlMapper
                 // PetaPoco test with all default options
                 var petapoco = new PetaPoco.Database(Program.ConnectionString, "System.Data.SqlClient");
                 petapoco.OpenSharedConnection();
-                tests.Add(id => petapoco.Fetch<Post>("SELECT * from Posts where Id=@0", id), "PetaPoco (Normal)");
+                tests.Add(id => petapoco.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Normal)");
 
                 // PetaPoco with some "smart" functionality disabled
                 var petapocoFast = new PetaPoco.Database(Program.ConnectionString, "System.Data.SqlClient");
@@ -145,7 +146,7 @@ namespace SqlMapper
                 petapocoFast.EnableAutoSelect = false;
                 petapocoFast.EnableNamedParams = false;
                 petapocoFast.ForceDateTimesToUtc = false;
-                tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id), "PetaPoco (Fast)");
+                tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Fast)");
 
                 // Subsonic ActiveRecord 
                 tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
@@ -187,9 +188,44 @@ namespace SqlMapper
                 var sdb = Simple.Data.Database.OpenConnection(Program.ConnectionString);
                 tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
 
+                //Susanoo
+                var susanooDb = new DatabaseManager("Smackdown.Properties.Settings.tempdbConnectionString");
+                var susanooDb2 = new DatabaseManager("Smackdown.Properties.Settings.tempdbConnectionString");
+
+                var susanooPreDefinedCommand =
+                    CommandManager.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                        .DefineResults<Post>()
+                        .Realize("PostById");
+
+                var susanooDynamicPreDefinedCommand =
+                    CommandManager.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                        .DefineResults<dynamic>()
+                        .Realize("DynamicById");
+
+                tests.Add(Id =>
+                    CommandManager.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                        .DefineResults<Post>()
+                        .Realize("PostById")
+                        .Execute(susanooDb, new { Id }).First(), "Susanoo Mapping Cache Retrieval");
+
+                tests.Add(Id =>
+                    CommandManager.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                        .DefineResults<dynamic>()
+                        .Realize("DynamicById")
+                        .Execute(susanooDb, new { Id }).First(), "Susanoo Dynamic Mapping Cache Retrieval");
+
+                tests.Add(Id =>
+                    susanooDynamicPreDefinedCommand
+                        .Execute(susanooDb, new { Id }).First(), "Susanoo Dynamic Mapping Static");
+
+                tests.Add(Id =>
+                    susanooPreDefinedCommand
+                        .Execute(susanooDb, new { Id }).First(), "Susanoo Mapping Static");
+
                 // Soma
-                var somadb = new Soma.Core.Db(new SomaConfig());
-                tests.Add(id => somadb.Find<Post>(id), "Soma");
+                // DISABLED: assembly fail loading FSharp.PowerPack, Version=2.0.0.0
+                // var somadb = new Soma.Core.Db(new SomaConfig());
+                // tests.Add(id => somadb.Find<Post>(id), "Soma");
 
                 //ServiceStack's OrmLite:
                 OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server

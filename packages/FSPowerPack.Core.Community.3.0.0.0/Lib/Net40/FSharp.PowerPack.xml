@@ -1,0 +1,5024 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>FSharp.PowerPack</name></assembly>
+<members>
+<member name="P:Microsoft.FSharp.Collections.HashMultiMap`2.Item(`0,`1)">
+<summary>
+ Lookup or set the given element in the table. Set replaces all existing bindings for a value with a single
+ bindings. Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if the element is not found.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.HashMultiMap`2.Item(`0)">
+<summary>
+ Lookup or set the given element in the table. Set replaces all existing bindings for a value with a single
+ bindings. Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if the element is not found.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.HashMultiMap`2.Count">
+<summary>
+ The total number of keys in the hash table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.TryFind(`0)">
+<summary>
+ Lookup the given element in the table, returning the result as an Option
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Replace(`0,`1)">
+<summary>
+ Replace the latest binding (if any) for the given element.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Remove(`0)">
+<summary>
+ Remove the latest binding (if any) for the given element from the table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Iterate(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.Unit}})">
+<summary>
+Apply the given function to each binding in the hash table 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Fold``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.FSharpFunc{``0,``0}}},``0)">
+<summary>
+ Apply the given function to each element in the collection threading the accumulating parameter
+ through the sequence of function applications
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.FindAll(`0)">
+<summary>
+ Find all bindings for the given element in the table, if any
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Copy">
+<summary>
+ Make a shallow copy of the collection
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.ContainsKey(`0)">
+<summary>
+ Test if the collection contains any bindings for the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Clear">
+<summary>
+ Clear all elements from the collection
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.Add(`0,`1)">
+<summary>
+ Add a binding for the element to the table
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.#ctor(System.Collections.Generic.IEnumerable{System.Tuple{`0,`1}},System.Collections.Generic.IEqualityComparer{`0})">
+<summary>
+ Build a map that contains the bindings of the given IEnumerable
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.#ctor(System.Int32,System.Collections.Generic.IEqualityComparer{`0})">
+<summary>
+ Create a new empty mutable HashMultiMap with an internal bucket array of the given approximate size
+ and with the given key hash/equality functions
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashMultiMap`2.#ctor(System.Collections.Generic.IEqualityComparer{`0})">
+<summary>
+ Create a new empty mutable HashMultiMap with the given key hash/equality functions
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.HashMultiMap`2">
+<summary>
+ Hash tables, by default based on F# structural &quot;hash&quot; and (=) functions. 
+ The table may map a single key to multiple bindings.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.HashSet`1.Count">
+<summary>
+ The total number of elements in the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Remove(`0)">
+<summary>
+ Remove the given element from the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Iterate(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Apply the given function to each binding in the hash table 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Fold``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},``0)">
+<summary>
+ Apply the given function to the set threading the accumulating parameter
+ through the sequence of function applications
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Copy">
+<summary>
+ Make a shallow copy of the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Contains(`0)">
+<summary>
+ Test if the set contains the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Clear">
+<summary>
+ Clear all elements from the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.Add(`0)">
+<summary>
+ Add an element to the collection
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.#ctor(System.Collections.Generic.IEnumerable{`0},System.Collections.Generic.IEqualityComparer{`0})">
+<summary>
+ Create a new mutable hash set with the given elements and using the given key hash/equality functions 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.#ctor(System.Int32,System.Collections.Generic.IEqualityComparer{`0})">
+<summary>
+ Create a new empty mutable hash set with an internal bucket array of the given approximate size
+ and with the given key hash/equality functions 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.HashSet`1.#ctor(System.Collections.Generic.IEqualityComparer{`0})">
+<summary>
+ Create a new empty mutable hash set using the given key hash/equality functions 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.HashSet`1">
+<summary>
+ Mutable hash sets based by default on F# structural &quot;hash&quot; and (=) functions. Implemented via a hash table and/or Dictionary.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.LazyList`1">
+<summary>
+ LazyLists are possibly-infinite, cached sequences.  See also IEnumerable/Seq for
+ uncached sequences. LazyLists normally involve delayed computations without 
+ side-effects.  The results of these computations are cached and evaluations will be 
+ performed only once for each element of the lazy list.  In contrast, for sequences 
+ (IEnumerable) recomputation happens each time an enumerator is created and the sequence 
+ traversed.
+
+ LazyLists can represent cached, potentially-infinite computations.  Because they are 
+ cached they may cause memory leaks if some active code or data structure maintains a 
+ live reference to the head of an infinite or very large lazy list while iterating it, 
+ or if a reference is maintained after the list is no longer required.
+
+ Lazy lists may be matched using the LazyList.Cons and LazyList.Nil active patterns. 
+ These may force the computation of elements of the list.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.ofSeq``1(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ Build a new collection from the given enumerable object
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.toSeq``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return a view of the collection as an enumerable object
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.toList``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Build a non-lazy list from the given collection. This function will eagerly evaluate all of the 
+ list (and thus may not terminate). 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.ofList``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Build a collection from the given list. This function will eagerly evaluate all of the 
+ list (and thus may not terminate). 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.toArray``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Build an array from the given collection
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.ofArray``1(``0[])">
+<summary>
+ Build a collection from the given array. This function will eagerly evaluate all of the 
+ list (and thus may not terminate). 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.map2``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}},Microsoft.FSharp.Collections.LazyList{``0},Microsoft.FSharp.Collections.LazyList{``1})">
+<summary>
+ Build a new collection whose elements are the results of applying the given function
+ to the corresponding elements of the two collections pairwise.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.map``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Build a new collection whose elements are the results of applying the given function
+ to each of the elements of the collection.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.scan``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}},``0,Microsoft.FSharp.Collections.LazyList{``1})">
+<summary>
+ Return a new list consisting of the results of applying the given accumulating function
+ to successive elements of the list
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.iter``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.Unit},Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Apply the given function to each element of the collection. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.filter``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return a new collection which on consumption will consist of only the elements of the collection
+ for which the given predicate returns &quot;true&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.concat``1(Microsoft.FSharp.Collections.LazyList{Microsoft.FSharp.Collections.LazyList{``0}})">
+<summary>
+ Return the list which contains on demand the list of elements of the list of lazy lists.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.zip``2(Microsoft.FSharp.Collections.LazyList{``0},Microsoft.FSharp.Collections.LazyList{``1})">
+<summary>
+ Return the list which contains on demand the pair of elements of the first and second list
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.append``1(Microsoft.FSharp.Collections.LazyList{``0},Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the list which contains on demand the elements of the first list followed
+ by the elements of the second list
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.unfold``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpOption{System.Tuple{``1,``0}}},``0)">
+<summary>
+ Return a list that contains the elements returned by the given computation.
+ The given computation is not executed until the first element on the list is
+ consumed.  The given argument is passed to the computation.  Subsequent elements
+ in the list are generated by again applying the residual &apos;b to the computation.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.delayed``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Collections.LazyList{``0}})">
+<summary>
+ Return a list that is in effect the list returned by the given computation.
+ The given computation is not executed until the first element on the list is
+ consumed.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.repeat``1(``0)">
+<summary>
+ Return the list which on consumption will consist of an infinite sequence of 
+ the given item
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.consDelayed``1(``0,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Collections.LazyList{``0}})">
+<summary>
+ Return a new list which on consumption contains the given item 
+ followed by the list returned by the given computation.  The 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.cons``1(``0,Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return a new list which contains the given item followed by the
+ given list.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.length``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the length of the list
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.empty``1">
+<summary>
+ Evaluates to the list that contains no items
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.find``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the first element for which the given function returns &lt;c&gt;true&lt;/c&gt;.
+ Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if no such element exists.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.tryFind``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Apply the given function to successive elements of the list, returning the first
+ result where function returns &lt;c&gt;Some(x)&lt;/c&gt; for some x. If the function never returns
+ true, &apos;None&apos; is returned.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.skip``1(System.Int32,Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the list which on consumption will skip the first &apos;n&apos; elements of 
+ the input list.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.take``1(System.Int32,Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the list which on consumption will consist of at most &apos;n&apos; elements of 
+ the input list.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.get``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Get the first cell of the list.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.tail``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the list corresponding to the remaining items in the sequence.  
+ Forces the evaluation of the first cell of the list if it is not already evaluated.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.head``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Return the first element of the list.  Forces the evaluation of
+ the first cell of the list if it is not already evaluated.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.LazyListModule.isEmpty``1(Microsoft.FSharp.Collections.LazyList{``0})">
+<summary>
+ Test if a list is empty.  Forces the evaluation of
+ the first element of the stream if it is not already evaluated.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.LazyListModule">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.unzip``2(System.Collections.Generic.List{System.Tuple{``0,``1}})">
+<summary>
+ Split an array of pairs into two arrays
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.zip``2(System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+ Combine the two arrays into an array of pairs. The two arrays must have equal lengths, otherwise an &lt;c&gt;ArgumentException&lt;/c&gt; is
+ raised..
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.tryFindIndexi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}},System.Collections.Generic.List{``0})">
+<summary>
+ Return the index of the first element in the array
+ that satisfies the given predicate.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.tryFindIndex``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+ Return the index of the first element in the array
+ that satisfies the given predicate.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.singleton``1(``0)">
+<summary>
+ Return an array containing the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.scanBack``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``1}},System.Collections.Generic.List{``0},``1)">
+<summary>
+ Like &lt;c&gt;foldBack&lt;/c&gt;, but return both the intermediary and final results
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.scan``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}},``0,System.Collections.Generic.List{``1})">
+<summary>
+ Like &lt;c&gt;fold&lt;/c&gt;, but return the intermediary and final results
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.mapi2``3(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+ Build a new collection whose elements are the results of applying the given function
+ to the corresponding elements of the two collections pairwise.  The two input
+ arrays must have the same lengths, otherwise an &lt;c&gt;ArgumentException&lt;/c&gt; is
+ raised.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.iteri2``2(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.Unit}}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+ Apply the given function to pair of elements drawn from matching indices in two arrays,
+ also passing the index of the elements. The two arrays must have the same lengths, 
+ otherwise an &lt;c&gt;ArgumentException&lt;/c&gt; is raised.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.isEmpty``1(System.Collections.Generic.List{``0})">
+<summary>
+ Return true if the given array is empty, otherwise false
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.forall2``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,System.Boolean}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+ Test elements of the two arrays pairwise to see if all pairs of elements satisfy the given predicate.
+ Raise ArgumentException if the arrays have different lengths.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.foldBack2``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpFunc{``2,``2}}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1},``2)">
+<summary>
+ Apply a function to pairs of elements drawn from the two collections, right-to-left, 
+ threading an accumulator argument through the computation.  The two input
+ arrays must have the same lengths, otherwise an &lt;c&gt;ArgumentException&lt;/c&gt; is
+ raised.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.fold2``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpFunc{``2,``0}}},``0,System.Collections.Generic.List{``1},System.Collections.Generic.List{``2})">
+<summary>
+ Apply a function to pairs of elements drawn from the two collections, 
+ left-to-right, threading an accumulator argument
+ through the computation.  The two input
+ arrays must have the same lengths, otherwise an &lt;c&gt;ArgumentException&lt;/c&gt; is
+ raised.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.reduceBack``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},System.Collections.Generic.List{``0})">
+<summary>
+ Apply a function to each element of the array, threading an accumulator argument
+ through the computation. If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; then 
+ computes &lt;c&gt;f i0 (...(f iN-1 iN))&lt;/c&gt;. Raises ArgumentException if the array has size zero.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.reduce``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},System.Collections.Generic.List{``0})">
+<summary>
+ Apply a function to each element of the array, threading an accumulator argument
+ through the computation. If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; 
+ then computes &lt;c&gt;f (... (f i0 i1)...) iN&lt;/c&gt;. Raises ArgumentException if the array has size zero.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.findIndexi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}},System.Collections.Generic.List{``0})">
+<summary>
+ Return the index of the first element in the array
+ that satisfies the given predicate. Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if 
+ none of the elements satisfy the predicate.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.findIndex``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+ Return the index of the first element in the array
+ that satisfies the given predicate. Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if 
+ none of the elements satisfy the predicate.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.exists2``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,System.Boolean}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+ Test elements of the two arrays pairwise to see if any pair of element satisfies the given predicate.
+ Raise ArgumentException if the arrays have different lengths.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.toSeq``1(System.Collections.Generic.List{``0})">
+<summary>
+ Return a view of the array as an enumerable object
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.ofArray``1(``0[])">
+<summary>
+ Build a ResizeArray from the given elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.toArray``1(System.Collections.Generic.List{``0})">
+<summary>
+ Return a fixed-length array containing the elements of the input ResizeArray
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.sortBy``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},System.Collections.Generic.List{``0})">
+<summary>
+ Sort the elements using the key extractor and generic comparison on the keys
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.sort``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,System.Int32}},System.Collections.Generic.List{``0})">
+<summary>
+ Sort the elements using the given comparison function
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.rev``1(System.Collections.Generic.List{``0})">
+<summary>
+Return a new array with the elements in reverse order
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.split``2(System.Collections.Generic.List{System.Tuple{``0,``1}})">
+<summary>
+Split a list of pairs into two lists
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.combine``2(System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+Combine the two arrays into an array of pairs. The two arrays must have equal lengths.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.tryPick``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpOption{``1}},System.Collections.Generic.List{``0})">
+<summary>
+Apply the given function to successive elements, returning the first
+result where function returns &quot;Some(x)&quot; for some x.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.tryFind``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+Return the first element for which the given function returns &lt;c&gt;true&lt;/c&gt;.
+Return None if no such element exists.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.find``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+Return the first element for which the given function returns &lt;c&gt;true&lt;/c&gt;.
+Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if no such element exists.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.choose``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpOption{``1}},System.Collections.Generic.List{``0})">
+<summary>
+Apply the given function to each element of the array. Return
+the array comprised of the results &quot;x&quot; for each element where
+the function returns Some(x)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.partition``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+Split the collection into two collections, containing the 
+elements for which the given predicate returns &lt;c&gt;true&lt;/c&gt; and &lt;c&gt;false&lt;/c&gt;
+respectively 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.filter``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+Return a new collection containing only the elements of the collection
+for which the given predicate returns &lt;c&gt;true&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.forall``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+ Test if all elements of the array satisfy the given predicate.
+ If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; and &quot;j0...jN&quot;
+ then computes &lt;c&gt;p i0 &amp;&amp; ... &amp;&amp; p iN&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.exists``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},System.Collections.Generic.List{``0})">
+<summary>
+ Test if any element of the array satisfies the given predicate.
+ If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; 
+ then computes &lt;c&gt;p i0 or ... or p iN&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.mapi``2(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,``1}},System.Collections.Generic.List{``0})">
+<summary>
+Build a new array whose elements are the results of applying the given function
+to each of the elements of the array. The integer index passed to the
+function indicates the index of element being transformed.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.iteri``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.Unit}},System.Collections.Generic.List{``0})">
+<summary>
+Apply the given function to each element of the array.  The integer passed to the
+function indicates the index of element.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.map2``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+Build a new collection whose elements are the results of applying the given function
+to the corresponding elements of the two collections pairwise.  The two input
+arrays must have the same lengths.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.iter2``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.Unit}},System.Collections.Generic.List{``0},System.Collections.Generic.List{``1})">
+<summary>
+Apply the given function to two arrays simultaneously. The
+two arrays must have the same lengths, otherwise an Invalid_argument exception is
+raised.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.map``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},System.Collections.Generic.List{``0})">
+<summary>
+Build a new array whose elements are the results of applying the given function
+to each of the elements of the array.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.iter``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.Unit},System.Collections.Generic.List{``0})">
+<summary>
+Apply the given function to each element of the array. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.foldBack``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``1}},System.Collections.Generic.List{``0},``1)">
+<summary>
+ Apply a function to each element of the array, threading an accumulator argument
+ through the computation. If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; then 
+ computes &lt;c&gt;f i0 (...(f iN s))&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.fold``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}},``0,System.Collections.Generic.List{``1})">
+<summary>
+ Apply a function to each element of the collection, threading an accumulator argument
+ through the computation. If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; 
+ then computes &lt;c&gt;f (... (f s i0)...) iN&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.ofSeq``1(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+Build and array from the given seq
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.ofList``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+Build an array from the given list
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.toList``1(System.Collections.Generic.List{``0})">
+<summary>
+Build a list from the given array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.blit``1(System.Collections.Generic.List{``0},System.Int32,System.Collections.Generic.List{``0},System.Int32,System.Int32)">
+<summary>
+Read a range of elements from the first array and write them into the second.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.fill``1(System.Collections.Generic.List{``0},System.Int32,System.Int32,``0)">
+<summary>
+Fill a range of the collection with the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.copy``1(System.Collections.Generic.List{``0})">
+<summary>
+Build a new array that contains the elements of the given array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.sub``1(System.Collections.Generic.List{``0},System.Int32,System.Int32)">
+<summary>
+Build a new array that contains the given subrange specified by
+starting index and length.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.concat``1(Microsoft.FSharp.Collections.FSharpList{System.Collections.Generic.List{``0}})">
+<summary>
+Build a new array that contains the elements of each of the given list of arrays
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.append``1(System.Collections.Generic.List{``0},System.Collections.Generic.List{``0})">
+<summary>
+Build a new array that contains the elements of the first array followed by the elements of the second array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.init``1(System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,``0})">
+<summary>
+ Create an array by calling the given generator on each index.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.create``1(System.Int32,``0)">
+<summary>
+ Create an array whose elements are all initially the given value.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.set``1(System.Collections.Generic.List{``0},System.Int32,``0)">
+<summary>
+ Set the value of an element in the collection. You can also use the syntax &lt;c&gt;arr.[idx] &lt;- e&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.get``1(System.Collections.Generic.List{``0},System.Int32)">
+<summary>
+ Fetch an element from the collection.  You can also use the syntax &lt;c&gt;arr.[idx]&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.ResizeArrayModule.length``1(System.Collections.Generic.List{``0})">
+<summary>
+ Return the length of the collection.  You can also use property &lt;c&gt;arr.Length&lt;/c&gt;.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.ResizeArrayModule">
+<summary>
+ Generic operations on the type System.Collections.Generic.List, which is called ResizeArray in the F# libraries.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Item(`0,`1)">
+<summary>
+ Lookup or set the given element in the table.  Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if the element is not found.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Item(`0)">
+<summary>
+ Lookup or set the given element in the table.  Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if the element is not found.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Count">
+<summary>
+ The number of bindings in the hash table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.TryFind(`0)">
+<summary>
+ Lookup the given element in the table, returning the result as an Option
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Replace(`0,`1)">
+<summary>
+ Replace the latest binding (if any) for the given element.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Remove(`0)">
+<summary>
+ Remove the latest binding (if any) for the given element from the table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Iterate(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.Unit}})">
+<summary>
+ Apply the given function to each binding in the hash table 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Fold``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.FSharpFunc{``0,``0}}},``0)">
+<summary>
+ Apply the given function to each element in the collection threading the accumulating parameter
+ through the sequence of function applications
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.FindAll(`0)">
+<summary>
+ Find all bindings for the given element in the table, if any
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Create(`2,System.Int32)">
+<summary>
+ Create a new empty mutable hash table with an internal bucket array of the given approximate size
+ and with the given key hash/equality functions
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Copy">
+<summary>
+ Make a shallow copy of the collection
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.ContainsKey(`0)">
+<summary>
+ Test if the collection contains any bindings for the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Contains(`0)">
+<summary>
+ Test if the collection contains any bindings for the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Clear">
+<summary>
+ Clear all elements from the collection
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3.Add(`0,`1)">
+<summary>
+ Add a binding for the element to the table
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.Tagged.HashMultiMap`3">
+<summary>
+ HashMultiMap, but where a constraint tag tracks information about the hash/equality functions used
+ for the hashing. When the tag is Tags.StructuralHash this is identical to HashMultiMap.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.HashSet`2.Count">
+<summary>
+ The number of elements in the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Remove(`0)">
+<summary>
+ Remove the given element from the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Iterate(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Apply the given function to each binding in the hash table 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Fold``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},``0)">
+<summary>
+ Apply the given function to the set threading the accumulating parameter
+ through the sequence of function applications
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Create(`1,System.Int32)">
+<summary>
+ Create a new empty mutable hash set with an internal bucket array of the given approximate size
+ and with the given key hash/equality functions 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Copy">
+<summary>
+ Make a shallow copy of the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Contains(`0)">
+<summary>
+ Test if the set contains the given element
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Clear">
+<summary>
+ Clear all elements from the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.HashSet`2.Add(`0)">
+<summary>
+ Add an element to the collection
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.Tagged.HashSet`2">
+<summary>
+ Mutable hash sets where a constraint tag tracks information about the hash/equality functions used
+ for the hashing. When the tag is Tags.StructuralHash this is identical to HashSet.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Map`3.Item(`0)">
+<summary>
+ Lookup an element in the map. Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if no binding
+ exists in the map.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Map`3.IsEmpty">
+<summary>
+ Gets a value indicating whether there are no bindings in the map.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Map`3.Count">
+<summary>
+ The number of bindings in the map
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Map`3.Comparer">
+<summary>
+ Gets the comparer used for the map.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.TryFind(`0)">
+<summary>
+ Lookup an element in the map, returning a &lt;c&gt;Some&lt;/c&gt; value if the element is in the domain 
+ of the map and &lt;c&gt;None&lt;/c&gt; if not.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.ToList">
+<summary>
+ The elements of the set as a list.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.ToArray">
+<summary>
+ The elements of the set as an array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Remove(`0)">
+<summary>
+ Remove an element from the domain of the map.  No exception is raised if the element is not present.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Partition(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,System.Boolean}})">
+<summary>
+ Build two new maps, one containing the bindings for which the given predicate returns &apos;true&apos;,
+ and the other the remaining bindings.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.MapRange``1(Microsoft.FSharp.Core.FSharpFunc{`1,``0})">
+<summary>
+ Build a new collection whose elements are the results of applying the given function
+ to each of the elements of the collection.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Map``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,``0}})">
+<summary>
+ Build a new collection whose elements are the results of applying the given function
+ to each of the elements of the collection. The index passed to the
+ function indicates the index of element being transformed.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Iterate(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.Unit}})">
+<summary>
+ Apply the given function to each binding in the dictionary
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.ForAll(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,System.Boolean}})">
+<summary>
+ Return true if the given predicate returns true for all of the
+ bindings in the map. Always returns true if the map is empty.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.FoldSection``1(`0,`0,Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.FSharpFunc{``0,``0}}},``0)">
+<summary>
+ Given the start and end points of a key range,
+ Fold over the bindings in the map that are in the range,
+ and the end points are included if present (the range is considered a closed interval).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.FoldAndMap``2(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.FSharpFunc{``0,System.Tuple{``1,``0}}}},``0)">
+<summary>
+ Fold over the bindings in the map.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Fold``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.FSharpFunc{``0,``0}}},``0)">
+<summary>
+ Fold over the bindings in the map.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.First``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,Microsoft.FSharp.Core.FSharpOption{``0}}})">
+<summary>
+ Search the map looking for the first element where the given function returns a &lt;c&gt;Some&lt;/c&gt; value
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Filter(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,System.Boolean}})">
+<summary>
+ Build a new map containing the bindings for which the given predicate returns &apos;true&apos;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Exists(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{`1,System.Boolean}})">
+<summary>
+ Return true if the given predicate returns true for one of the
+ bindings in the map. Always returns false if the map is empty.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Empty(`2)">
+<summary>
+ The empty map, and use the given comparer comparison function for all operations associated
+ with any maps built from this map.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Create(`2,System.Collections.Generic.IEnumerable{System.Tuple{`0,`1}})">
+<summary>
+ Build a map that contains the bindings of the given IEnumerable
+ and where comparison of elements is based on the given comparison function
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.ContainsKey(`0)">
+<summary>
+ Test is an element is in the domain of the map
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Map`3.Add(`0,`1)">
+<summary>
+ Return a new map with the binding added to the given map.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.Tagged.Map`3">
+<summary>
+ Immutable maps.  Keys are ordered by construction function specified
+ when creating empty maps or by F# structural comparison if no
+ construction function is specified.
+
+ &lt;performance&gt; 
+   Maps based on structural comparison are  
+   efficient for small keys. They are not a suitable choice if keys are recursive data structures 
+   or require non-structural comparison semantics.
+ &lt;/performance&gt;
+ Immutable maps.  A constraint tag carries information about the class of key-comparers being used.  
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.op_Subtraction(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Return a new set with the elements of the second set removed from the first.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.op_Addition(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Compute the union of the two sets.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Set`2.MinimumElement">
+<summary>
+ Returns the lowest element in the set according to the ordering being used for the set
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Set`2.MaximumElement">
+<summary>
+ Returns the highest element in the set according to the ordering being used for the set
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Set`2.IsEmpty">
+<summary>
+ A useful shortcut for Set.isEmpty.  See the Set module for further operations on sets.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Set`2.Count">
+<summary>
+ Return the number of elements in the set
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Set`2.Comparer">
+<summary>
+ Gets the comparer used for the set.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Collections.Tagged.Set`2.Choose">
+<summary>
+ The number of elements in the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Union(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Compute the union of the two sets.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.ToList">
+<summary>
+ The elements of the set as a list.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.ToArray">
+<summary>
+ The elements of the set as an array.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Singleton(`1,`0)">
+<summary>
+ A singleton set based on the given comparison operator
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Remove(`0)">
+<summary>
+ A useful shortcut for Set.remove.  Note this operation produces a new set
+ and does not mutate the original set.  The new set will share many storage
+ nodes with the original.  See the Set module for further operations on sets.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Partition(Microsoft.FSharp.Core.FSharpFunc{`0,System.Boolean})">
+<summary>
+ Build two new sets, one containing the elements for which the given predicate returns &apos;true&apos;,
+ and the other the remaining elements.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Iterate(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Apply the given function to each binding in the collection
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.IsSupersetOf(Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Evaluates to &quot;true&quot; if all elements of the first set are in the second
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.IsSubsetOf(Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Evaluates to &quot;true&quot; if all elements of the second set are in the first
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Intersection(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Compute the intersection of the two sets.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.ForAll(Microsoft.FSharp.Core.FSharpFunc{`0,System.Boolean})">
+<summary>
+ Test if all elements of the collection satisfy the given predicate.
+ If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; and &lt;c&gt;j0...jN&lt;/c&gt; then 
+ computes &lt;c&gt;p i0 &amp;&amp; ... &amp;&amp; p iN&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Fold``1(Microsoft.FSharp.Core.FSharpFunc{`0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},``0)">
+<summary>
+ Apply the given accumulating function to all the elements of the set
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Filter(Microsoft.FSharp.Core.FSharpFunc{`0,System.Boolean})">
+<summary>
+ Return a new collection containing only the elements of the collection
+ for which the given predicate returns &quot;true&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Exists(Microsoft.FSharp.Core.FSharpFunc{`0,System.Boolean})">
+<summary>
+ Test if any element of the collection satisfies the given predicate.
+ If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; then computes 
+ &lt;c&gt;p i0 or ... or p iN&lt;/c&gt;.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Equality(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Compares two sets and returns true if they are equal or false otherwise
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Empty(`1)">
+<summary>
+ The empty set based on the given comparer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Difference(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Return a new set with the elements of the second set removed from the first.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Create(`1,System.Collections.Generic.IEnumerable{`0})">
+<summary>
+ A set based on the given comparer containing the given initial elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Contains(`0)">
+<summary>
+ A useful shortcut for Set.contains.  See the Set module for further operations on sets.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Compare(Microsoft.FSharp.Collections.Tagged.Set{`0,`1},Microsoft.FSharp.Collections.Tagged.Set{`0,`1})">
+<summary>
+ Compares a and b and returns 1 if a &gt; b, -1 if b &lt; a and 0 if a = b        
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Collections.Tagged.Set`2.Add(`0)">
+<summary>
+ A useful shortcut for Set.add.  Note this operation prodcues a new set
+ and does not mutate the original set.  The new set will share many storage
+ nodes with the original.  See the Set module for further operations on sets.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Collections.Tagged.Set`2">
+<summary>
+ Immutable sets based on binary trees, default tag
+ Immutable sets where a constraint tag carries information about the class of key-comparer being used.  
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Control.AsyncResultCell`1.AsyncResult">
+<summary>
+ Wait for the result and commit it
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncResultCell`1.RegisterResult(Microsoft.FSharp.Control.AsyncResult{`0},Microsoft.FSharp.Core.FSharpOption{System.Boolean})">
+<summary>
+ Record the result in the AsyncResultCell. Subsequent sets of the result are ignored. 
+
+ This may result in the scheduled resumption of a waiting asynchronous operation  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncResultCell`1.#ctor">
+<summary>
+ Create a new result cell
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Control.AsyncResultCell`1">
+<summary>
+ A helper type to store a single result from an asynchronous computation and asynchronously
+ access its result.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncResult`1.Commit(Microsoft.FSharp.Control.AsyncResult{`0})">
+<summary>
+ Create an async whose result depends on the value of an AsyncResult.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Control.AsyncResult`1">
+<summary>
+ Represents the reified result of an asynchronous computation
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Control.AsyncStreamReader.EndOfStream">
+<summary>
+ An async that produces true if the reader is at the end of stream and false otherwise
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.ReadToEnd">
+<summary>
+ Creates an async that read all characters in the stream up to the end.
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.ReadLine">
+<summary>
+ Creates an async that reads next line from the stream
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.ReadExactly(System.Char[],System.Int32,System.Int32)">
+<summary>
+ Creates an async that reads exactly &lt;c&gt;count&lt;/c&gt; characters from the stream unless end of stream is reached and puts them 
+ into &lt;c&gt;buffer&lt;/c&gt; starting at &lt;c&gt;index&lt;/c&gt;. The async returns the number of characters that are read (if end-of-stream is not reached
+ that will be &lt;c&gt;count&lt;/c&gt;
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.Read(System.Char[],System.Int32,System.Int32)">
+<summary>
+ Creates an async that reads all the charactes that are avilable in the stream up to &lt;c&gt;count&lt;/c characters and puts them 
+ into &lt;c&gt;buffer&lt;/c&gt; starting at &lt;c&gt;index&lt;/c&gt;. The async returns the number of characters that are read.
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.Read">
+<summary>
+ Creates an async that reads next character from the stream
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.Peek">
+<summary>
+ Creates an async that produces next character from the stream without advancing the stream
+
+ Note that when the async is run it reflects the reader state at the time of running; multiple runs will 
+ yield different results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.DiscardBufferedData">
+<summary>
+. DiscardBufferedData tells StreamReader to throw away its internal 
+. buffer contents.  This is useful if the user needs to seek on the
+ underlying stream to a known location then wants the StreamReader 
+ to start reading from this new point.  This method should be called
+ very sparingly, if ever, since it can lead to very poor performance.
+ However, it may be the only way of handling some scenarios where
+ users need to re-read the contents of a StreamReader a second time. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Control.AsyncStreamReader.#ctor(System.IO.Stream,System.Text.Encoding,System.Boolean,System.Int32)">
+<summary>
+ Creates a new AsyncStreamReader for the given stream.  The 
+ character encoding is set by encoding and the buffer size,
+ in number of 16-bit characters, is set by bufferSize. 
+ 
+ Note that detectEncodingFromByteOrderMarks is a very
+ loose attempt at detecting the encoding by looking at the first 
+ 3 bytes of the stream.  It will recognize UTF-8, little endian
+ unicode, and big endian unicode text, but that&apos;s it.  If neither
+ of those three match, it will use the Encoding you provided.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Control.AsyncStreamReader">
+ <summary>
+ Implements a TextReader-like API that asynchronously reads characters from 
+ a byte stream in a particular encoding.
+ </summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Control.FileExtensions.File.AsyncOpen.Static(System.String,System.IO.FileMode,Microsoft.FSharp.Core.FSharpOption{System.IO.FileAccess},Microsoft.FSharp.Core.FSharpOption{System.IO.FileShare},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.IO.FileOptions})">
+<summary>
+ Create an async that opens a &lt;c&gt;System.IO.FileStream&lt;/c&gt; on the specified path, via a fresh I/O thread.
+ Pass &lt;c&gt;options=FileOptions.Asynchronous&lt;/c&gt; to enable further asynchronous read/write operations
+ on the FileStream.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.FileExtensions.File.AsyncAppendText.Static(System.String)">
+<summary>
+ Create an async that returns a &lt;c&gt;System.IO.StreamWriter&lt;/c&gt; that appends UTF-8 text to an existing file, via a fresh I/O thread.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.FileExtensions.File.AsyncOpenWrite.Static(System.String)">
+<summary>
+ Create an async that opens an existing file writing, via a fresh I/O thread.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.FileExtensions.File.AsyncOpenRead.Static(System.String)">
+<summary>
+ Create an async that opens a &lt;c&gt;System.IO.FileStream&lt;/c&gt; on the specified path for read/write access, via a fresh I/O thread.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Control.FileExtensions.File.AsyncOpenText.Static(System.String)">
+<summary>
+ Create an async that opens an existing file for reading, via a fresh I/O thread.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Control.FileExtensions">
+
+</member>
+<member name="M:Microsoft.FSharp.Control.StreamReaderExtensions.StreamReader.AsyncReadToEnd(System.IO.StreamReader)">
+<summary>
+ Return an asynchronous computation that will read to the end of a stream via a fresh I/O thread.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Control.StreamReaderExtensions">
+
+</member>
+<member name="M:Microsoft.FSharp.Core.LazyModule.force``1(System.Lazy{``0})">
+<summary>
+ See Lazy.Force
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Core.LazyModule">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_UnaryPlus(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the given rational number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_UnaryNegation(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the negation of a rational number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Subtraction(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the difference of two rational numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Multiply(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the product of two rational numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_LessThanOrEqual(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ This operator is for use from other .NET languages
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_LessThan(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ This operator is for use from other .NET languages
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Inequality(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ This operator is for use from other .NET languages
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_GreaterThanOrEqual(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ This operator is for use from other .NET languages
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_GreaterThan(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ This operator is for use from other .NET languages
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Explicit(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the result of converting the given rational number to an integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Explicit(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the result of converting the given rational number to a big integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Explicit(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the result of converting the given rational number to a floating point number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Equality(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ This operator is for use from other .NET languages
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Division(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the ratio of two rational numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.op_Addition(Microsoft.FSharp.Math.BigRational,Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the sum of two rational numbers
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.Zero">
+<summary>
+ Get zero as a rational number
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.Sign">
+<summary>
+ Return the sign of a rational number; 0, +1 or -1
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.One">
+<summary>
+ Get one as a rational number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.Numerator">
+<summary>
+ Return the numerator of the normalized rational number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.IsPositive">
+<summary>
+ Return a boolean indicating if this rational number is strictly positive
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.IsNegative">
+<summary>
+ Return a boolean indicating if this rational number is strictly negative
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.BigRational.Denominator">
+<summary>
+ Return the denominator of the normalized rational number
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.ToInt32(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the result of converting the given rational number to an integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.ToDouble(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the result of converting the given rational number to a floating point number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.ToBigInt(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the result of converting the given rational number to a big integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.PowN(Microsoft.FSharp.Math.BigRational,System.Int32)">
+<summary>
+ Return the result of raising the given rational number to the given power
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.Parse(System.String)">
+<summary>
+ Return the result of converting the string to a rational number 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.FromInt(System.Int32)">
+<summary>
+ Return the result of converting the given integer to a rational number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.FromBigInt(System.Numerics.BigInteger)">
+<summary>
+ Return the result of converting the given big integer to a rational number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.BigRational.Abs(Microsoft.FSharp.Math.BigRational)">
+<summary>
+ Return the absolute value of a rational number 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.BigRational">
+<summary>
+ The type of arbitrary-sized rational numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_UnaryNegation(Microsoft.FSharp.Math.Complex)">
+<summary>
+ Unary negation of a complex number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_Subtraction(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Subtract one complex number from another
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_Multiply(Microsoft.FSharp.Math.Complex,System.Double)">
+<summary>
+ Multiply a complex number by a scalar
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_Multiply(System.Double,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Multiply a scalar by a complex number 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_Multiply(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Multiply two complex numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_Division(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Complex division of two complex numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.op_Addition(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Add two complex numbers
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.r">
+<summary>
+ The real part of a complex number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.i">
+<summary>
+ The imaginary part of a complex number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.Zero">
+<summary>
+ The complex number 0+0i
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.RealPart">
+<summary>
+ The real part of a complex number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.Phase">
+<summary>
+ The polar-coordinate phase of a complex number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.OneI">
+<summary>
+ The complex number 0+1i
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.One">
+<summary>
+ The complex number 1+0i
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.Magnitude">
+<summary>
+ The polar-coordinate magnitude of a complex number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.ImaginaryPart">
+<summary>
+ The imaginary part of a complex number
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Complex.Conjugate">
+<summary>
+ The conjugate of a complex number, i.e. x-yi
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.CreatePolar(System.Double,System.Double)">
+<summary>
+ Create a complex number using magnitude/phase polar coordinates
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.Create(System.Double,System.Double)">
+<summary>
+ Create a complex number x+ij using rectangular coordinates
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Complex.Abs(Microsoft.FSharp.Math.Complex)">
+<summary>
+ Computes the absolute value of a complex number: e.g. Abs x+iy = sqrt(x**2.0 + y**2.0.)
+ Note: Complex.Abs(z) is the same as z.Magnitude
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.Complex">
+<summary>
+ The type of complex numbers stored as pairs of 64-bit floating point numbers in rectangular coordinates
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.Item(System.Int32,System.Int32,`0)">
+<summary>
+ Get the item at the given position in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_UnaryPlus(Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Prefix &apos;+&apos; operator. A nop.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_UnaryNegation(Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Matrix negation. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_Subtraction(Microsoft.FSharp.Math.Matrix{`0},Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Point-wise subtraction of two matrices. An InvalidArgument exception will be
+ raised if the dimensions do not match.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_Multiply(`0,Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Multiply each element of a matrix by a scalar value
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_Multiply(Microsoft.FSharp.Math.Matrix{`0},`0)">
+<summary>
+ Multiply each element of a matrix by the given scalar value
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_Multiply(Microsoft.FSharp.Math.Matrix{`0},Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Matrix-vector multiplication. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_Multiply(Microsoft.FSharp.Math.Matrix{`0},Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Matrix multiplication. An InvalidArgument exception will be
+ raised if the dimensions do not match.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_DotMultiply(Microsoft.FSharp.Math.Matrix{`0},Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Point-wise matrix multiplication. An InvalidArgument exception will be
+ raised if the dimensions do not match.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.op_Addition(Microsoft.FSharp.Math.Matrix{`0},Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Point-wise addition of two matrices. An InvalidArgument exception will be
+ raised if the dimensions do not match.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.Transpose">
+<summary>
+ Get the transpose of a matrix.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.NumRows">
+<summary>
+ Get the number of rows in a matrix
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.NumCols">
+<summary>
+ Get the number of columns in a matrix
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.Norm">
+<summary>
+ Returns sqrt(sum(norm(x)*(norm(x))) of all the elements of a matrix.
+ The element type of a matrix must have an associated instance of INormFloat&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.NonZeroEntries">
+<summary>
+ Return the non-zero entries of a sparse or dense matrix
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.Item(System.Int32,System.Int32)">
+<summary>
+ Get the item at the given position in a matrix
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.IsSparse">
+<summary>
+ Indicates if a matrix uses the sparse representation.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.IsDense">
+<summary>
+ Indicates if a matrix uses the dense representation.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.InternalSparseValues">
+<summary>
+ Get the internal array of values for a sparse matrix. This property 
+ should only be used when interoperating with other matrix libraries.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.InternalSparseRowOffsets">
+<summary>
+ Get the internal array of row offsets for a sparse matrix. This property 
+ should only be used when interoperating with other matrix libraries.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.InternalSparseColumnValues">
+<summary>
+ Get the internal array of column values for a sparse matrix. This property 
+ should only be used when interoperating with other matrix libraries.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.InternalDenseValues">
+<summary>
+ Get the internal array of values for a dense matrix. This property 
+ should only be used when interoperating with other matrix libraries.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.ElementOps">
+<summary>
+ Retrieve the dictionary of numeric operations associated with the element
+ type of this matrix. Accessing the property may raise an NotSupportedException if the element
+ type doesn&apos;t support any numeric operations. The object returned
+ may support additional numeric operations such as IFractional: 
+ this can be determined by a dynamic type test against the object
+ returned.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.Dimensions">
+<summary>
+ Get the number of (rows,columns) in a matrix
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Matrix`1.Diagonal">
+<summary>
+ Get the main diagonal of a matrix, as a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.ToVector">
+<summary>
+ Convert a matrix to a column vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.ToRowVector">
+<summary>
+ Convert a matrix to a row vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.ToArray2D">
+<summary>
+ Return a new array containing the elements of a matrix
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.SetSlice(Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Supports the slicing syntax &apos;A.[idx1..idx2,idx1..idx2] &lt;- B&apos;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.Rows(System.Int32,System.Int32)">
+<summary>
+ Select a range of rows from a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.Row(System.Int32)">
+<summary>
+ Select a row from a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.Region(System.Int32,System.Int32,System.Int32,System.Int32)">
+<summary>
+ Select a region from a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.PermuteRows(Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Int32})">
+<summary>
+ Permutes the rows of a matrix.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.PermuteColumns(Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Int32})">
+<summary>
+ Permutes the columns of a matrix.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.GetSlice(Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Supports the slicing syntax &apos;A.[idx1..idx2,idx1..idx2]&apos;
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.GetDiagonal(System.Int32)">
+<summary>
+ Return the nth diagonal of a matrix, as a vector. Diagonal 0 is the primary
+ diagonal, positive diagonals are further to the upper-right of a matrix.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.Copy">
+<summary>
+ Create a new matrix that is a copy of an array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.Columns(System.Int32,System.Int32)">
+<summary>
+ Select a range of columns from a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Matrix`1.Column(System.Int32)">
+<summary>
+ Select a column from a matrix
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.Matrix`1">
+<summary>
+ The type of matrices. The arithmetic operations on the element type are determined by inspection on the element type itself.
+ Two representations are supported: sparse and dense. 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.Permutation">
+<summary>
+ A permutation of a finite range of integers 0 .. N-1, represented by a mapping of index positions
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_UnaryPlus(Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Return a row vector, unchanged
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_UnaryNegation(Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Point-wise negation of a row vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_Subtraction(Microsoft.FSharp.Math.RowVector{`0},Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Point-wise subtraction of two row vectors
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_Multiply(`0,Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Multiply a scalar by a row vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_Multiply(Microsoft.FSharp.Math.RowVector{`0},`0)">
+<summary>
+ Multiply a row vector by a scalar
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_Multiply(Microsoft.FSharp.Math.RowVector{`0},Microsoft.FSharp.Math.Matrix{`0})">
+<summary>
+ Multiply a row vector by a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_Multiply(Microsoft.FSharp.Math.RowVector{`0},Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Multiply a row vector by a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_DotMultiply(Microsoft.FSharp.Math.RowVector{`0},Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Point-wise multiplication of two row vectors
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.op_Addition(Microsoft.FSharp.Math.RowVector{`0},Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Point-wise addition of two row vectors
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.RowVector`1.Transpose">
+<summary>
+ Get the transpose of the row vector.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.RowVector`1.InternalValues">
+<summary>
+ Get the underlying internal array of values for a vector. This property 
+ should only be used when interoperating with other matrix libraries.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.ToArray">
+<summary>
+ Return a new array containing a copy of the elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.SetSlice(Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Supports the slicing syntax &apos;rv.[idx1..idx2] &lt;- rv2&apos;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.Permute(Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Int32})">
+<summary>
+ Permute the elements of the row vector.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.GetSlice(Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Supports the slicing syntax &apos;rv.[idx1..idx2]&apos;
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVector`1.Copy">
+<summary>
+ Create a new matrix that is a copy of a array
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.RowVector`1">
+<summary>
+ The type of row vectors. 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.Item(System.Int32,`0)">
+<summary>
+ Gets an item from a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_UnaryPlus(Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Return the input vector 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_UnaryNegation(Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Negate a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_Subtraction(Microsoft.FSharp.Math.Vector{`0},Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Subtract two vectors, pointwise
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_Multiply(Microsoft.FSharp.Math.Vector{`0},`0)">
+<summary>
+ Multiply a vector by a scalar
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_Multiply(Microsoft.FSharp.Math.Vector{`0},Microsoft.FSharp.Math.RowVector{`0})">
+<summary>
+ Multiply a column vector and a row vector to produce a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_Multiply(`0,Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Multiply each element of a vector by a scalar value.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_DotMultiply(Microsoft.FSharp.Math.Vector{`0},Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Point-wise multiplication of two vectors.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.op_Addition(Microsoft.FSharp.Math.Vector{`0},Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Add two vectors, pointwise
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.Transpose">
+<summary>
+ Get the transpose of a vector.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.NumRows">
+<summary>
+ Gets the number of rows in a vector
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.Norm">
+<summary>
+ Computes the 2-norm of a vector: sqrt(x.Transpose*x).
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.Length">
+<summary>
+ Gets the number of entries in a vector
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.Item(System.Int32)">
+<summary>
+ Gets an item from a vector
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.InternalValues">
+<summary>
+ Get the underlying internal array of values for a vector. This property 
+ should only be used when interoperating with other matrix libraries.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.Vector`1.ElementOps">
+<summary>
+ Gets the element operations for the element type of a vector, if any
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.ToArray">
+<summary>
+ Return a new array containing a copy of the elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.SetSlice(Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Math.Vector{`0})">
+<summary>
+ Supports the slicing syntax &apos;v.[idx1..idx2] &lt;- v2&apos;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.Permute(Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Int32})">
+<summary>
+ Permute the elements of a vector.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.GetSlice(Microsoft.FSharp.Core.FSharpOption{System.Int32},Microsoft.FSharp.Core.FSharpOption{System.Int32})">
+<summary>
+ Supports the slicing syntax &apos;v.[idx1..idx2]&apos;
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Vector`1.Copy">
+<summary>
+ Create a new matrix that is a copy of a array
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.Vector`1">
+<summary>
+ The type of column vectors. The arithmetic operations on the element type are determined by inspection 
+ on the element type itself
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Math.complex">
+<summary>
+ The type of complex numbers 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.matrix">
+<summary>
+ The type of floating point matrices
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Math.rowvec">
+<summary>
+ The type of floating point row vectors
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.vector">
+<summary>
+ The type of floating point column vectors
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.tan(Microsoft.FSharp.Math.Complex)">
+<summary>
+ Tagent
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.cos(Microsoft.FSharp.Math.Complex)">
+<summary>
+ Cosine
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.sin(Microsoft.FSharp.Math.Complex)">
+<summary>
+ Sine
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.sqrt(Microsoft.FSharp.Math.Complex)">
+<summary>
+ sqrt(x) and 0 &lt;= phase(x) &lt; pi
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.log(Microsoft.FSharp.Math.Complex)">
+<summary>
+ log(x) is natural log (base e)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.exp(Microsoft.FSharp.Math.Complex)">
+<summary>
+ exp(x) = e^x
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.ComplexModule.pi">
+<summary>
+ pi
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.muls(Microsoft.FSharp.Math.Complex,System.Double)">
+<summary>
+ Multiply a complex number by a scalar
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.smul(System.Double,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Multiply a scalar by a complex number 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.neg(Microsoft.FSharp.Math.Complex)">
+<summary>
+ Unary negation of a complex number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.div(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Complex division of two complex numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.mul(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Multiply two complex numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.sub(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Subtract one complex number from another
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.add(Microsoft.FSharp.Math.Complex,Microsoft.FSharp.Math.Complex)">
+<summary>
+ Add two complex numbers
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.ComplexModule.onei">
+<summary>
+ The complex number 0+1i
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.ComplexModule.one">
+<summary>
+ The complex number 1+0i
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.ComplexModule.zero">
+<summary>
+ The complex number 0+0i
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.conjugate(Microsoft.FSharp.Math.Complex)">
+<summary>
+ The conjugate of a complex number, i.e. x-yi
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.cis(System.Double)">
+<summary>
+ A complex of magnitude 1 and the given phase and , i.e. cis x = mkPolar 1.0 x
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.mkPolar(System.Double,System.Double)">
+<summary>
+ Create a complex number using magnitude/phase polar coordinates
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.imagPart(Microsoft.FSharp.Math.Complex)">
+<summary>
+ The imaginary part of a complex number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.realPart(Microsoft.FSharp.Math.Complex)">
+<summary>
+ The real part of a complex number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.phase(Microsoft.FSharp.Math.Complex)">
+<summary>
+ The polar-coordinate phase of a complex number
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexModule.magnitude(Microsoft.FSharp.Math.Complex)">
+<summary>
+ The polar-coordinate magnitude of a complex number
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Math.ComplexModule">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.ComplexTopLevelOperators.complex(System.Double,System.Double)">
+<summary>
+ Constructs a complex number from both the real and imaginary part.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.ComplexTopLevelOperators">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.GlobalAssociations.RegisterNumericAssociation``1(Microsoft.FSharp.Math.INumeric{``0})">
+<summary>
+ Record an AppDomain-wide association between the given type and the given dictionary of
+ numeric operations.  Raise an error if an existing association already exists. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.GlobalAssociations.GetNumericAssociation``1">
+<summary>
+ Attempt to determine a numeric association for the given type, i.e. a registered dictionary of
+ numeric operations.  The interface can be queried dynamically for additional functionality in the numerics
+ hierarchy.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.GlobalAssociations">
+<summary>
+ Associations are a way of associating dictionaries of
+ operations with given types at runtime.  Associations are global to a 
+ .NET application domain.  Once specified an association may not be deleted
+ or modified.
+
+ In this release the system of associations is simply 
+ limited to a registry of types that support dictionaries (i.e. interface objects)
+ of numeric operations.  The following types are pre-registered with associated numeric
+ operations: float, int32, int64, bigint, float32, Complex, bignum.  Other types must be
+ registered explicitly by user code.
+
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Math.Instances">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.inplaceSub(Microsoft.FSharp.Math.Matrix{System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ In-place subtraction, mutating the first matrix argument. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.inplaceAdd(Microsoft.FSharp.Math.Matrix{System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ In-place addition, mutating the first matrix argument.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.copy(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Create a new matrix that is a copy of the given array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.mapi(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double}}},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Map the given indexed function over each element of a matrix, producing a new matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.map(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Map a function over each element of a matrix, producing a new matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.foldRow``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}},``0,Microsoft.FSharp.Math.Matrix{System.Double},System.Int32)">
+<summary>
+ Fold a function down a particular row of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.foldCol``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}},``0,Microsoft.FSharp.Math.Matrix{System.Double},System.Int32)">
+<summary>
+ Fold a function along a particular column of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.foldByRow``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}},Microsoft.FSharp.Math.Vector{``0},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Fold a function along each row of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.foldByCol``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}},Microsoft.FSharp.Math.RowVector{``0},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Fold a function down each column of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.foldi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}}}},``0,Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Fold an indexed function over all elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.fold``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}},``0,Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Fold a function over all elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.existsi(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean}}},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Check if a predicate holds for at least one element of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.foralli(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean}}},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Check if a predicate holds for all elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.exists(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Check if a predicate holds for at least one element of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.forall(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Check if a predicate holds for all elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.norm(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+sqrt(sum(x*x)) of all the elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.prod(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+Multiply all the elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.sum(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Sum all the elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.randomize(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Generate a new matrix of the same size as the input with random entries 
+ drawn from the range 0..aij. Random numbers are generated using a globally 
+ shared System.Random instance with the initial seed 99.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.trace(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Sum of the diagonal elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.transpose(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Transpose of a matrix. Use also m.Transpose
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.cptPow(Microsoft.FSharp.Math.Matrix{System.Double},System.Double)">
+<summary>
+ Point-wise exponential of a matrix.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.dot(Microsoft.FSharp.Math.Matrix{System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Dot product
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.add(Microsoft.FSharp.Math.Matrix{System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Add two matrices (operator +)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.cptMin(Microsoft.FSharp.Math.Matrix{System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Point-wise minimum element of two matrices
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.cptMax(Microsoft.FSharp.Math.Matrix{System.Double},Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Point-wise maximum element of two matrices
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.toDense(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Ensure that a matrix uses dense representation
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.toVector(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Return the first column of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.toRowVector(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Return the first row of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.toScalar(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Return the element at row 0, column 0 of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.ofVector(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Create a matrix with one column from the given vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.ofRowVector(Microsoft.FSharp.Math.RowVector{System.Double})">
+<summary>
+ Create a matrix with one row from the given row vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.ofScalar(System.Double)">
+<summary>
+ Create a 1x1 matrix containing the given value 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.toArray2D(Microsoft.FSharp.Math.Matrix{System.Double})">
+<summary>
+ Return a new array containing the elements of the given matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.ofArray2D(System.Double[0:,0:])">
+<summary>
+ Create a matrix from the given data
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.ofSeq``1(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ Create a matrix from the given data
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.ofList(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Collections.FSharpList{System.Double}})">
+<summary>
+ Create a matrix from the given data
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.initDiagonal(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Create a square matrix with a vector lying on diagonal
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.identity(System.Int32)">
+<summary>
+ Create a square matrix with the constant 1.0 lying on diagonal
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.zero(System.Int32,System.Int32)">
+<summary>
+ Create a matrix with all entries zero
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.initSparse(System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.Tuple{System.Int32,System.Int32,System.Double}})">
+<summary>
+ Create a sparse representation matrix with the given entries. Not all 
+ operations are available for sparse matrices, and mutation is not permitted.
+ If an operation on sparse matrices raises a runtime exception then consider 
+ converting to a dense matrix using to_dense.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.initDense(System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.Tuple{System.Int32,System.Int32,System.Double}})">
+<summary>
+ Create a dense representation matrix with the given entries. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.create(System.Int32,System.Int32,System.Double)">
+<summary>
+ Create a matrix with all entries the given constant
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.set(Microsoft.FSharp.Math.Matrix{System.Double},System.Int32,System.Int32,System.Double)">
+<summary>
+ Set an element of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.get(Microsoft.FSharp.Math.Matrix{System.Double},System.Int32,System.Int32)">
+<summary>
+ Get an element of a matrix
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.inplaceSub``1(Microsoft.FSharp.Math.Matrix{``0},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Subtract the second matrix from the first, by mutating the first
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.inplaceAdd``1(Microsoft.FSharp.Math.Matrix{``0},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Add the second matrix to the first by, mutating the first
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.mapi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,``0}}},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Map the given position-indexed function over a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.map``1(Microsoft.FSharp.Core.FSharpFunc{``0,``0},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Map a function over a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.copy``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Create a new matrix that is a copy of the given array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.existsi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}}},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Return true if an indexed predicate returns true for some value in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.foralli``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}}},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Return true if an indexed predicate returns true for all values in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.exists``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Return true if a predicate returns true for some value in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.forall``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Return true if a predicate returns true for all values in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.foldi``2(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}}}},``0,Microsoft.FSharp.Math.Matrix{``1})">
+<summary>
+ Fold an indexed function over all elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.fold``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}},``0,Microsoft.FSharp.Math.Matrix{``1})">
+<summary>
+ Fold a function over all elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.norm``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Returns sqrt(sum(norm(x)*(norm(x))) of all the elements of a matrix.
+ The element type of a matrix must have an associated instance of INormFloat&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.prod``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Compute the product of the elements in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.sum``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Compute the sum of the elements in a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.trace``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Compute the sum of the diagonal of a square matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.transpose``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Return a new matrix which is the transpose of the input matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.dot``1(Microsoft.FSharp.Math.Matrix{``0},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Sum of the point-wise multiple of the two matrices.
+ The element type of a matrix must have an associated instance of INumeric&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.cptMin``1(Microsoft.FSharp.Math.Matrix{``0},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+Take the pointwise maximum of two matrices
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.cptMax``1(Microsoft.FSharp.Math.Matrix{``0},Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+Take the pointwise maximum of two matrices
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.initDiagonal``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Create a matrix containing the given vector along the diagonal.
+ The element type of a matrix must have an associated instance of INumeric&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.identity``1(System.Int32)">
+<summary>
+ Create a square matrix with the one for the element type lying on diagonal
+ The element type of a matrix must have an associated instance of INumeric&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.zero``1(System.Int32,System.Int32)">
+<summary>
+ Create a matrix containing the zero element at each index.
+ The element type of a matrix must have an associated instance of INumeric&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.initNumeric``1(System.Int32,System.Int32,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Math.INumeric{``0},Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,``0}}})">
+<summary>
+ Create a matrix using a function to compute the item at each index.
+ The element type of a matrix must have an associated instance of INumeric&lt;&apos;T&gt; (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+ The function is passed the dictionary of associated operations in addition to the index pair.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.init``1(System.Int32,System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,``0}})">
+<summary>
+ Create a matrix using a function to compute the item at each index.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.toVector``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Extract the first column of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.toRowVector``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Extract the first row of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.toScalar``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Get the element at column zero, row zero
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.ofVector``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Create a matrix from a column vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.ofRowVector``1(Microsoft.FSharp.Math.RowVector{``0})">
+<summary>
+ Create a matrix from a row vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.ofScalar``1(``0)">
+<summary>
+ Create a 1x1 matrix containing the given value 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.initSparse``1(System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.Tuple{System.Int32,System.Int32,``0}})">
+<summary>
+ Create a sparse matrix from the given sequence of elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.initDense``1(System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.Tuple{System.Int32,System.Int32,``0}})">
+<summary>
+ Create a dense matrix from the given sequence of elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.create``1(System.Int32,System.Int32,``0)">
+<summary>
+ Create a matrix containing the given value at every element.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.toArray2D``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ Return a new array containing the elements of the given matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.ofArray2D``1(``0[0:,0:])">
+<summary>
+ Create a matrix from the given data  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.ofSeq``2(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ Create a matrix from the given data  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.ofList``1(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Collections.FSharpList{``0}})">
+<summary>
+ Create a matrix from the given data  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.set``1(Microsoft.FSharp.Math.Matrix{``0},System.Int32,System.Int32,``0)">
+<summary>
+ Set an element in a matrix. The indexes are given in row/column order.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixModule.Generic.get``1(Microsoft.FSharp.Math.Matrix{``0},System.Int32,System.Int32)">
+<summary>
+ Get an element from a matrix. The indexes are given in row/column order.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.MatrixModule.Generic">
+<summary>
+ Operations to manipulate matrix types carrying
+ arbitrary element types. The names and types of the operations match those
+ in the containing module Math.Matrix. 
+
+ The numeric operations on the element type (add, zero etc.) are inferred from the type
+ argument itself. That is, for some operations 
+ the element type of a matrix must have an associated instance of INumeric&lt;&apos;T&gt; 
+ or some more specific numeric association (see &lt;c&gt;GlobalAssociations&lt;/c&gt;) ((else NotSupportedException)).
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.MatrixModule">
+<summary>
+ Operations to manipulate floating
+ point matrices. The submodule &lt;c&gt;Matrix.Generic&lt;/c&gt; contains a 
+ matching set of operations to manipulate matrix types carrying
+ arbitrary element types.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixTopLevelOperators.rowvec(System.Collections.Generic.IEnumerable{System.Double})">
+<summary>
+ Builds a (row) vector from a sequence of floats.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixTopLevelOperators.vector(System.Collections.Generic.IEnumerable{System.Double})">
+<summary>
+ Builds a (column) vector from a sequence of floats.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.MatrixTopLevelOperators.matrix``1(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ Builds a matrix from a sequence of sequence of floats.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.MatrixTopLevelOperators">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.Measure.nanf``1">
+ <summary>Version of <c>System.Single.NaN</c> that is generic in its units-of-measure</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Measure.infinityf``1">
+ <summary>Version of <c>System.Single.PositiveInfinity</c> that is generic in its units-of-measure</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Measure.nan``1">
+ <summary>Version of <c>System.Double.NaN</c> that is generic in its units-of-measure</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.Measure.infinity``1">
+ <summary>Version of <c>System.Double.PositiveInfinity</c> that is generic in its units-of-measure</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.Measure">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Math.NumericLiteralN">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.PermutationModule.identity">
+<summary>
+ The identity permutation over any size
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.PermutationModule.rotation(System.Int32,System.Int32)">
+<summary>
+ Return a permutation that rotates right by the given distance. If the distance
+ is negative then a left rotation results.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.PermutationModule.reversal(System.Int32)">
+<summary>
+ Return a permutation that, when applied, maps index 0 to size-1, size-1 to 0 etc.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.PermutationModule.swap(System.Int32,System.Int32)">
+<summary>
+ Return a swaps the given two elements over any size
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.PermutationModule.ofPairs(System.Collections.Generic.IEnumerable{System.Tuple{System.Int32,System.Int32}})">
+<summary>
+ Create a permutation by specifying (source,destination) index pairs. For example,
+ Permutation(3,[ (0,2);(1,0); (2,1) ]) specifies a permutation that rotates 
+ all elements left one place. Not all elements need be given, e.g. 
+ Permutation(5,[ (1,2);(2,1) |]) specifies a permutation that swaps elements at indexes
+ 1 and 2.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.PermutationModule.ofArray(System.Int32[])">
+<summary>
+ Create a permutation by specifying the result of permuting [| 0 .. n-1 |]. For example, 
+ Permutation.ofArray [| 1;2;0 |]  specifies a permutation that rotates all elements right one place.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.PermutationModule">
+
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.u">
+<summary>
+ Unified atomic mass unit
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.eV">
+<summary>
+ Electron volt
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.sigma">
+<summary>
+ Stefan-Boltzmann constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.k">
+<summary>
+ Boltzmann constant R/N_A
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.R">
+<summary>
+ Molar gas constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.F">
+<summary>
+ Faraday constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.N_A">
+<summary>
+ Avogadro constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.R_inf">
+<summary>
+ Rydberg constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.alpha">
+<summary>
+ Fine-structure constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.m_p">
+<summary>
+ Proton mass
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.m_e">
+<summary>
+ Electron mass
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.G0">
+<summary>
+ Conductance quantum 2e^2/h
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.Phi0">
+<summary>
+ Magnetic flux quantum h/2e
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.e">
+<summary>
+ Elementary charge
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.hbar">
+<summary>
+ Dirac constant, also known as the reduced Planck constant = h/2pi
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.h">
+<summary>
+ Planck constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.G">
+<summary>
+ Newtonian constant of gravitation
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.epsilon0">
+<summary>
+ electric constant = 1/(mu0 c^2)
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.mu0">
+<summary>
+ magnetic constant
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Math.PhysicalConstants.c">
+<summary>
+ speed of light in vacuum
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.PhysicalConstants">
+<summary>
+ Fundamental physical constants, with units-of-measure
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.toArray(Microsoft.FSharp.Math.RowVector{System.Double})">
+<summary>
+ Return a new array containing a copy of the elements of the given vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.ofArray(System.Double[])">
+<summary>
+ Create a vector from an array of double precision floats
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.ofSeq(System.Collections.Generic.IEnumerable{System.Double})">
+<summary>
+ Create a vector from a sequence of numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.ofList(Microsoft.FSharp.Collections.FSharpList{System.Double})">
+<summary>
+ Create a vector from a list of numbers
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.zero(System.Int32)">
+<summary>
+ Return a vector of the given length where every entry is zero.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.init(System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Double})">
+<summary>
+ Create by comprehension
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.create(System.Int32,System.Double)">
+<summary>
+ Create by constant initialization
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.length(Microsoft.FSharp.Math.RowVector{System.Double})">
+<summary>
+ Get the dimensions (number of rows) of a column rowvec. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.set(Microsoft.FSharp.Math.RowVector{System.Double},System.Int32,System.Double)">
+<summary>
+ Set an element of a column rowvec
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.get(Microsoft.FSharp.Math.RowVector{System.Double},System.Int32)">
+<summary>
+ Get an element of a column vector
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.toArray``1(Microsoft.FSharp.Math.RowVector{``0})">
+<summary>
+ Return a new array containing a copy of the elements of the given vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.ofArray``1(``0[])">
+<summary>
+ Create a row vector from an array of elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.ofSeq``1(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ Create a row vector from a sequence of elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.ofList``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Create a row vector from a list of elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.zero``1(System.Int32)">
+<summary>
+ Return a vector of the given length where every entry is zero.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.create``1(System.Int32,``0)">
+<summary>
+ Create by constant initialization
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.init``1(System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,``0})">
+<summary>
+ Create by comprehension
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.transpose``1(Microsoft.FSharp.Math.RowVector{``0})">
+<summary>
+ Transpose the row vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.length``1(Microsoft.FSharp.Math.RowVector{``0})">
+<summary>
+ Get the number of rows in a column vector. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.set``1(Microsoft.FSharp.Math.RowVector{``0},System.Int32,``0)">
+<summary>
+ Set an element in a column vector. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.RowVectorModule.Generic.get``1(Microsoft.FSharp.Math.RowVector{``0},System.Int32)">
+<summary>
+ Get an element from a column vector. 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.RowVectorModule.Generic">
+<summary>
+ Operations to manipulate row vectors types carrying
+ arbitrary element types. 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.RowVectorModule">
+<summary>
+ Operations to manipulate floating
+ point row vectors. These are included for completeness and are
+ nearly always transposed to column vectors.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.mapi(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double}},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Map an indexed function over each element of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.map(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Map a function over each element of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.copy(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Copy a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.foldi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}}},``0,Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Fold an indexed function over all elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.fold``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Double,``0}},``0,Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Fold a function over all elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.existsi(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean}},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Return true if an indexed predicate returns true for some value in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.foralli(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean}},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Return true if an indexed predicate returns true for all values in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.exists(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Return true if a predicate returns true for some value in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.forall(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Boolean},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Return true if a predicate returns true for all values in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.norm(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Computes the 2-norm of a vector: sqrt(x.Transpose*x).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.prod(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+Multiply all the elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.sum(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+Sum all the elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.transpose(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+Transpose of a matrix. Use also m.Transpose
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.cptPow(Microsoft.FSharp.Math.Vector{System.Double},System.Double)">
+<summary>
+Point-wise exponential of a vector.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.dot(Microsoft.FSharp.Math.Vector{System.Double},Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+Dot product
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.range(System.Int32,System.Int32)">
+<summary>
+ Create a vector that represents a integral mesh over the given range
+ e.g. range 1 5 = vector [ 1.;2.;3.;4.;5. ]
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.rangef(System.Double,System.Double,System.Double)">
+<summary>
+ Create a vector that represents a mesh over the given range
+ e.g. rangef (-1.0) 0.5 1.0 = vector [ -1.0; -0.5; 0.0; 0.5; 1.0]
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.zero(System.Int32)">
+<summary>
+ Return a vector of the given length where every entry is zero.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.create(System.Int32,System.Double)">
+<summary>
+ Generate a vector of the given length where each entry contains the given value
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.ofScalar(System.Double)">
+<summary>
+ Create a 1-element vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.toArray(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Return a new array containing a copy of the elements of the given vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.ofArray(System.Double[])">
+<summary>
+ Create a vector from an array of double precision floats
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.ofSeq(System.Collections.Generic.IEnumerable{System.Double})">
+<summary>
+ Create a vector from a sequence of numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.ofList(Microsoft.FSharp.Collections.FSharpList{System.Double})">
+<summary>
+ Create a vector from a list of numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.init(System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Double})">
+<summary>
+ Create a vector of a fixed length using a function to compute the initial element values
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.length(Microsoft.FSharp.Math.Vector{System.Double})">
+<summary>
+ Get the dimensions (number of rows) of a column vector. Identical to &lt;c&gt;nrows&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.set(Microsoft.FSharp.Math.Vector{System.Double},System.Int32,System.Double)">
+<summary>
+ Set an element of a column vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.get(Microsoft.FSharp.Math.Vector{System.Double},System.Int32)">
+<summary>
+ Get an element of a column vector
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.mapi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Map an indexed function over each element of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.map``1(Microsoft.FSharp.Core.FSharpFunc{``0,``0},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Map a function over each element of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.copy``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Copy the vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.foldi``2(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}}},``0,Microsoft.FSharp.Math.Vector{``1})">
+<summary>
+ Fold an indexed function over all elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.fold``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``0}},``0,Microsoft.FSharp.Math.Vector{``1})">
+<summary>
+ Fold a function over all elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.existsi``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Return true if an indexed predicate returns true for some value in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.foralli``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Return true if an indexed predicate returns true for all values in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.exists``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Return true if a predicate returns true for some value in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.forall``1(Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Return true if a predicate returns true for all values in a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.norm``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Computes the 2-norm of a vector: sqrt(x.Transpose*x).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.prod``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+Multiply all the elements of a matrix
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.sum``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+Sum all the elements of a vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.dot``1(Microsoft.FSharp.Math.Vector{``0},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+Dot product
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.cptMin``1(Microsoft.FSharp.Math.Vector{``0},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+Take the pointwise minimum of two vectors
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.cptMax``1(Microsoft.FSharp.Math.Vector{``0},Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+Take the pointwise maximum of two vectors
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.zero``1(System.Int32)">
+<summary>
+ Return a vector of the given length where every entry is zero.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.create``1(System.Int32,``0)">
+<summary>
+ Generate a vector of the given length where each entry contains the given value
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.toArray``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Return a new array containing a copy of the elements of the given vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.ofArray``1(``0[])">
+<summary>
+ Create a vector from an array of elements
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.ofScalar``1(``0)">
+<summary>
+ Create a 1-element vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.ofSeq``1(System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ Create a vector from a sequence of numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.ofList``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Create a vector from a list of numbers
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.initNumeric``1(System.Int32,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Math.INumeric{``0},Microsoft.FSharp.Core.FSharpFunc{System.Int32,``0}})">
+<summary>
+ Creation: useful when the element type has associated operations.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.init``1(System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,``0})">
+<summary>
+ Creation: general
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.length``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ Get the dimensions (number of rows) of a column vector. Identical to &lt;c&gt;nrows&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.set``1(Microsoft.FSharp.Math.Vector{``0},System.Int32,``0)">
+<summary>
+ Set an element of a column vector
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Math.VectorModule.Generic.get``1(Microsoft.FSharp.Math.Vector{``0},System.Int32)">
+<summary>
+ Get an element of a column vector
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.VectorModule.Generic">
+<summary>
+ Operations to manipulate column vectors carrying
+ arbitrary element types. 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Math.VectorModule">
+<summary>
+ Operations to manipulate floating
+ point column vectors. The submodule VectorOps.Generic contains a 
+ matching set of operations to manipulate column vectors carrying
+ arbitrary element types.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.CMatrix`1">
+<summary>
+ See NativeArray2
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.FortranMatrix`1.Item(System.Int32,System.Int32,`0)">
+<summary>
+ Get or set an entry in the array
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.FortranMatrix`1.NativeTranspose">
+<summary>
+ View a FortranMatrix as a CMatrix.  Doesn&apos;t actually allocate
+ a new matirx - just gives a different label to the same bits, and swaps the
+ row/column count information associated with the bits.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.FortranMatrix`1.Item(System.Int32,System.Int32)">
+<summary>
+ Get or set an entry in the array
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.FortranMatrix`1">
+<summary>
+ This type wraps a pointer to a blob of unmanaged memory assumed to contain
+ a Fortran-style column major two-dimensional matrix of items compatible with the (presumably blittable) 
+ type &apos;T. The blob of memory must be allocated and managed externally, 
+ e.g. by a computation routine written in C.
+
+ All operations on this type are marked inlined
+ because the code used to implement the operations is not verifiable.  
+
+ Any code that uses these operations will be unverifiable and may 
+ cause memory corruption if not used with extreme care.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray2`1.Item(System.Int32,System.Int32,`0)">
+<summary>
+ Get or set an entry in the array
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray2`1.Ptr">
+<summary>
+ Pointer to the C-style row major two-dimensional array 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray2`1.NumRows">
+<summary>
+ Get the number of rows of the native array
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray2`1.NumCols">
+<summary>
+ Get the number of columns of the native array
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray2`1.NativeTranspose">
+<summary>
+ View a CMatrix as a FortranMatrix.  Doesn&apos;t actually allocate
+ a new matirx - just gives a different label to the same bits, and swaps the
+ row/column count information associated with the bits.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray2`1.Item(System.Int32,System.Int32)">
+<summary>
+ Get or set an entry in the array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.NativeArray2`1.#ctor(`0*,System.Int32,System.Int32)">
+<summary>
+ Creates a C-style row major two-dimensional array from a native pointer, the number of rows and the number of columns.  
+ Nothing is actually copied.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.NativeArray2`1">
+<summary>
+ This type wraps a pointer to a blob of unmanaged memory assumed to contain
+ a C-style row major two-dimensional matrix of items compatible with the (presumably blittable) 
+ type &apos;T. The blob of memory must be allocated and managed externally, 
+ e.g. by a computation routine written in C.
+
+ All operations on this type are marked inlined
+ because the code used to implement the operations is not verifiable.  
+
+ Any code that uses these operations will be unverifiable and may 
+ cause memory corruption if not used with extreme care.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray`1.Item(System.Int32,`0)">
+<summary>
+ Get or set an entry in the array
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray`1.Ptr">
+<summary>
+ Pointer to the C-style one-dimensional array
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray`1.Length">
+<summary>
+ Length of the C-style one-dimensional array
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.NativeInterop.NativeArray`1.Item(System.Int32)">
+<summary>
+ Get or set an entry in the array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.NativeArray`1.#ctor(`0*,System.Int32)">
+<summary>
+ Creates a C-style one dimensional array from a native pointer and the length of the array
+ Nothing is actually copied.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.NativeArray`1">
+<summary>
+ This type wraps a pointer to a blob of unmanaged memory assumed to contain
+ a C-style one-dimensional array of items compatible with the (presumably blittable) 
+ type &apos;T.  The blob of memory must be allocated and managed externally, 
+ e.g. by a computation routine written in C.
+
+ All operations on this type are marked inlined
+ because the code used to implement the operations is not verifiable.  
+
+ Any code that uses these operations will be unverifiable and may 
+ cause memory corruption if not used with extreme care.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.PinnedArray2`1.of_array2D(`0[0:,0:])">
+<summary>
+ For native interop. Pin the given object
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.PinnedArray2`1.of_array2(`0[0:,0:])">
+<summary>
+ For native interop. Pin the given object
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.PinnedArray2`1">
+<summary>
+ Represents a pinned handle to a structure with an underlying 2D array, i.e. an underlying NativeArray2.
+ Used when interfacing with native code math libraries such as LAPACK.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.PinnedArray`1.of_array(`0[])">
+<summary>
+ For native interop. Pin the given object
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.PinnedArray`1">
+<summary>
+ Represents a pinned handle to a structure with an underlying 1D array, i.e. an underlying NativeArray.
+ Used when interfacing with native code math libraries such as LAPACK.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.NativArrayExtensionsForMatrix.PinnedArray2`1.of_matrix.Static``1(Microsoft.FSharp.Math.Matrix{``0})">
+<summary>
+ For native interop. Pin the given object
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.NativArrayExtensionsForMatrix.PinnedArray`1.of_rowvec.Static``1(Microsoft.FSharp.Math.RowVector{``0})">
+<summary>
+ For native interop. Pin the given object
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.NativArrayExtensionsForMatrix.PinnedArray`1.of_vector.Static``1(Microsoft.FSharp.Math.Vector{``0})">
+<summary>
+ For native interop. Pin the given object
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.NativArrayExtensionsForMatrix">
+
+</member>
+<member name="M:Microsoft.FSharp.NativeInterop.RefModule.pin``2(Microsoft.FSharp.Core.FSharpRef{``0},Microsoft.FSharp.Core.FSharpFunc{``0*,``1})">
+<summary>
+ Pin the given ref for the duration of a single call to the given function.  A native pointer to
+ the contents of the ref is passed to the given function.  Cleanup the GCHandle associated with the 
+ pin when the function completes, even if an exception is raised.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.NativeInterop.RefModule">
+
+</member>
+<member name="P:Microsoft.FSharp.Text.ArgInfo.Name">
+<summary>
+ Return the name of the argument
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.ArgInfo.HelpText">
+<summary>
+ Return the usage help associated with the argument
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.ArgInfo.ArgType">
+<summary>
+ Return the argument type and action of the argument
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.ArgParser.Usage(System.Collections.Generic.IEnumerable{Microsoft.FSharp.Text.ArgInfo},Microsoft.FSharp.Core.FSharpOption{System.String})">
+<summary>
+ Prints the help for each argument.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.ArgParser.ParsePartial(Microsoft.FSharp.Core.FSharpRef{System.Int32},System.String[],System.Collections.Generic.IEnumerable{Microsoft.FSharp.Text.ArgInfo},Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Core.FSharpFunc{System.String,Microsoft.FSharp.Core.Unit}},Microsoft.FSharp.Core.FSharpOption{System.String})">
+<summary>
+ Parse some of the arguments given by &apos;argv&apos;, starting at the given position
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.ArgParser.Parse(System.Collections.Generic.IEnumerable{Microsoft.FSharp.Text.ArgInfo},Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Core.FSharpFunc{System.String,Microsoft.FSharp.Core.Unit}},Microsoft.FSharp.Core.FSharpOption{System.String})">
+<summary>
+ Parse the arguments given by System.Environment.GetEnvironmentVariables()
+ according to the argument processing specifications &quot;specs&quot;.
+ Args begin with &quot;-&quot;. Non-arguments are passed to &quot;f&quot; in
+ order.  &quot;use&quot; is printed as part of the usage line if an error occurs.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Text.ArgType">
+<summary>
+ The spec value describes the action of the argument,
+ and whether it expects a following parameter.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.UnicodeTables.Interpret(System.Int32,Microsoft.FSharp.Text.Lexing.LexBuffer{System.Char})">
+<summary>
+ Interpret tables for a unicode lexer generated by fslex. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.UnicodeTables.AsyncInterpret(System.Int32,Microsoft.FSharp.Text.Lexing.LexBuffer{System.Char})">
+<summary>
+ Interpret tables for a unicode lexer generated by fslex, processing input asynchronously
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Lexing.UnicodeTables">
+<summary>
+ The type of tables for an unicode lexer generated by fslex. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.AsciiTables.Interpret(System.Int32,Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Interpret tables for an ascii lexer generated by fslex. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.AsciiTables.AsyncInterpret(System.Int32,Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Interpret tables for an ascii lexer generated by fslex, processing input asynchronously
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Lexing.AsciiTables">
+<summary>
+ The type of tables for an ascii lexer generated by fslex. 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.StartPos(Microsoft.FSharp.Text.Lexing.Position)">
+<summary>
+ The start position for the lexeme
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.IsPastEndOfStream(System.Boolean)">
+<summary>
+ True if the refill of the buffer ever failed , or if explicitly set to true.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.EndPos(Microsoft.FSharp.Text.Lexing.Position)">
+<summary>
+ The end position for the lexeme
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.StartPos">
+<summary>
+ The start position for the lexeme
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.LexemeLength">
+<summary>
+ The length of the matched string 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.Lexeme">
+<summary>
+ The matched string 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.IsPastEndOfStream">
+<summary>
+ True if the refill of the buffer ever failed , or if explicitly set to true.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.EndPos">
+<summary>
+ The end position for the lexeme
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.LexBuffer`1.BufferLocalStore">
+<summary>
+ Dynamically typed, non-lexically scoped parameter table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.LexemeString(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Char})">
+<summary>
+ Fast helper to turn the matched characters into a string, avoiding an intermediate array
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.LexemeChar(System.Int32)">
+<summary>
+ Fetch a particular character in the matched string 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromTextReader(System.IO.TextReader)">
+<summary>
+ Create a lex buffer suitable for use with a Unicode lexer that reads character inputs from the given text reader
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromString(System.String)">
+<summary>
+ Create a lex buffer suitable for Unicode lexing that reads characters from the given string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromFunction(Microsoft.FSharp.Core.FSharpFunc{System.Tuple{`0[],System.Int32,System.Int32},System.Int32})">
+<summary>
+ Create a lex buffer that reads character or byte inputs by using the given function
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromChars(System.Char[])">
+<summary>
+ Create a lex buffer suitable for Unicode lexing that reads characters from the given array
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromBytes(System.Byte[])">
+<summary>
+ Create a lex buffer suitable for byte lexing that reads characters from the given array
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromBinaryReader(System.IO.BinaryReader)">
+<summary>
+ Create a lex buffer suitable for use with ASCII byte lexing that reads byte inputs from the given binary reader
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.FromAsyncFunction(Microsoft.FSharp.Core.FSharpFunc{System.Tuple{`0[],System.Int32,System.Int32},Microsoft.FSharp.Control.FSharpAsync{System.Int32}})">
+<summary>
+ Create a lex buffer that asynchronously reads character or byte inputs by using the given function
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.LexBuffer`1.DiscardInput">
+<summary>
+ Remove all input, though don&apos;t discard the current lexeme 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Lexing.LexBuffer`1">
+<summary>
+ Input buffers consumed by lexers generated by &lt;c&gt;fslex.exe &lt;/c&gt;
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Lexing.Microsoft.FSharp.Text.Lexing.Position.pos_cnum">
+<summary>
+ The absolute offset of the column for the position
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Lexing.Microsoft.FSharp.Text.Lexing.Position.pos_bol">
+<summary>
+ The absolute offset of the beginning of the line
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Lexing.Microsoft.FSharp.Text.Lexing.Position.pos_lnum">
+<summary>
+ The line number for the position
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Lexing.Microsoft.FSharp.Text.Lexing.Position.pos_fname">
+<summary>
+ The file name for the position
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.Position.StartOfLineAbsoluteOffset">
+<summary>
+ Return absolute offset of the start of the line marked by the position
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.Position.Line">
+<summary>
+ The line number in the input stream, assuming fresh positions have been updated 
+ using AsNewLinePos() and by modifying the EndPos property of the LexBuffer.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.Position.FileName">
+<summary>
+ The file name associated with the input stream.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.Position.Empty">
+<summary>
+ Get an arbitrary position, with the empty string as filename, and  
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.Position.Column">
+<summary>
+ Return the column number marked by the position, i.e. the difference between the AbsoluteOffset and the StartOfLineAbsoluteOffset
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Text.Lexing.Position.AbsoluteOffset">
+<summary>
+ The character number in the input stream
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.Position.ShiftColumnBy(System.Int32)">
+<summary>
+ Gives a position shifted by specified number of characters
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.Position.FirstLine(System.String)">
+<summary>
+ Get a position corresponding to the first line (line number 1) in a given file
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Lexing.Position.EndOfToken(System.Int32)">
+<summary>
+ Given a position at the start of a token of length n, return a position just beyond the end of the token
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Text.Lexing.Position">
+<summary>
+ Position information stored for lexing tokens
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.tagOfErrorTerminal">
+<summary>
+ The tag of the error terminal
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.numTerminals">
+<summary>
+ The total number of terminals 
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.parseError">
+<summary>
+ This function is used to hold the user specified &quot;parse_error&quot; or &quot;parse_error_rich&quot; functions
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.productionToNonTerminalTable">
+<summary>
+ This table is logically part of the Goto table
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.stateToProdIdxsTableRowOffsets">
+<summary>
+ The sparse table offsets for the productions active for each state
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.stateToProdIdxsTableElements">
+<summary>
+ The sparse table for the productions active for each state
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.sparseGotoTableRowOffsets">
+<summary>
+ The sparse goto table row offsets
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.gotos">
+<summary>
+ The sparse goto table
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.immediateActions">
+<summary>
+ The immediate action table
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.reductionSymbolCounts">
+<summary>
+ The number of symbols for each reduction
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.actionTableRowOffsets">
+<summary>
+ The sparse action table row offsets
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.actionTableElements">
+<summary>
+ The sparse action table elements
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.dataOfToken">
+<summary>
+ A function to compute the data carried by a token
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.tagOfToken">
+<summary>
+ A function to compute the tag of a token
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.endOfInputTag">
+<summary>
+ The token number indicating the end of input
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Text.Parsing.Microsoft.FSharp.Text.Parsing.Tables`1.reductions">
+<summary>
+ The reduction table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.Tables`1.Interpret``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Text.Lexing.LexBuffer{``0},`0},Microsoft.FSharp.Text.Lexing.LexBuffer{``0},System.Int32)">
+<summary>
+ Interpret the parser table taking input from the given lexer, using the given lex buffer, and the given start state.
+ Returns an object indicating the final synthesized value for the parse.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Parsing.Tables`1">
+<summary>
+ Tables generated by fsyacc
+ The type of the tables contained in a file produced by the fsyacc.exe parser generator.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.StateStack">
+<summary>
+ The stack of state indexes active at the parse error 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.ShiftTokens">
+<summary>
+ The token that would cause a shift at the parse error
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.ReducibleProductions">
+<summary>
+ The stack of productions that would be reduced at the parse error 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.ReduceTokens">
+<summary>
+ The tokens that would cause a reduction at the parse error 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.ParseState">
+<summary>
+ The state active at the parse error 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.Message">
+<summary>
+ The message associated with the parse error
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1.CurrentToken">
+<summary>
+ The token that caused the parse error
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Parsing.ParseErrorContext`1">
+<summary>
+ The context provided when a parse error occurs
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.IParseState.ResultRange">
+<summary>
+ Get the full range of positions matched by the production
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.Parsing.IParseState.ParserLocalStore">
+<summary>
+ Get the store of local values associated with this parser
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.IParseState.RaiseError``1">
+<summary>
+ Raise an error in this parse context
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.IParseState.InputStartPosition(System.Int32)">
+<summary>
+ Get the start position for the terminal or non-terminal at a given index matched by the production
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.IParseState.InputRange(System.Int32)">
+<summary>
+ Get the start and end position for the terminal or non-terminal at a given index matched by the production
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.IParseState.InputEndPosition(System.Int32)">
+<summary>
+ Get the end position for the terminal or non-terminal at a given index matched by the production
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.IParseState.GetInput(System.Int32)">
+<summary>
+ Get the value produced by the terminal or non-terminal at the given position
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Parsing.IParseState">
+<summary>
+ The information accessible via the &lt;c&gt;parseState&lt;/c&gt; value within parser actions.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Parsing.RecoverableParseError">
+<summary>
+ Indicates a parse error has occured and parse recovery is in progress
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Text.Parsing.Accept">
+<summary>
+ Indicates an accept action has occured
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.ParseHelpers.parse_error(System.String)">
+<summary>
+ The default implementation of the parse_error function
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.Parsing.ParseHelpers.parse_error_rich``1">
+<summary>
+ The default implementation of the parse_error_rich function
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.Parsing.ParseHelpers">
+<summary>
+ Helpers used by generated parsers.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Text.StructuredFormat.FormatOptions">
+<summary>
+ A record of options to control structural formatting.
+ For F# Interactive properties matching those of this value can be accessed via the &apos;fsi&apos;
+ value.
+ 
+ Floating Point format given in the same format accepted by System.Double.ToString,
+ e.g. f6 or g15.
+
+ If ShowProperties is set the printing process will evaluate properties of the values being
+ displayed.  This may cause additional computation.  
+
+ The ShowIEnumerable is set the printing process will force the evalution of IEnumerable objects
+ to a small, finite depth, as determined by the printing parameters.
+ This may lead to additional computation being performed during printing.
+
+ &lt;example&gt;
+ From F# Interactive the default settings can be adjusted using, for example, 
+ &lt;pre&gt;
+   open Microsoft.FSharp.Compiler.Interactive.Settings;;
+   setPrintWidth 120;;
+ &lt;/pre&gt;
+ &lt;/example&gt;
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.StructuredFormat.IEnvironment.MaxRows">
+<summary>
+ The maximum number of rows for which to generate layout for table-like 
+ structures.  -1 if no maximum.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.StructuredFormat.IEnvironment.MaxColumns">
+<summary>
+ The maximum number of elements for which to generate layout for 
+ list-like structures, or columns in table-like 
+ structures.  -1 if no maximum.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.IEnvironment.GetLayout(System.Object)">
+<summary>
+ Return to the layout-generation 
+ environment to layout any otherwise uninterpreted object
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Text.StructuredFormat.Layout">
+<summary>
+ Data representing structured layouts of terms.  The representation
+ of this data type is only for the consumption of formatting engines.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Text.StructuredFormat.Joint">
+<summary>
+ Data representing joints in structured layouts of terms.  The representation
+ of this data type is only for the consumption of formatting engines.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.DisplayModule.layout_to_string(Microsoft.FSharp.Text.StructuredFormat.FormatOptions,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Convert any value to a layout using the given formatting options.  The
+ layout can then be processed using formatting display engines such as
+ those in the LayoutOps module.  any_to_string and output_any are
+ built using any_to_layout with default format options.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.DisplayModule.output_any``1(System.IO.TextWriter,``0)">
+<summary>
+ Ouput any value to a channel using the same set of formatting rules
+ as any_to_string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.DisplayModule.any_to_string``1(``0)">
+<summary>
+ Convert any value to a string using a standard formatter
+ Data is typically formatted in a structured format, e.g.
+ lists are formatted using the &quot;[1;2]&quot; notation.
+ The details of the format are not specified and may change
+ from version to version and according to the flags given
+ to the F# compiler.  The format is intended to be human-readable,
+ not machine readable.  If alternative generic formats are required
+ you should develop your own formatter, using the code in the
+ implementation of this file as a starting point.
+
+ Data from other .NET languages is formatted using a virtual
+ call to Object.ToString() on the boxed version of the input.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.StructuredFormat.DisplayModule">
+
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.unfoldL``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Text.StructuredFormat.Layout},Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpOption{System.Tuple{``0,``1}}},``1,System.Int32)">
+<summary>
+ For limitting layout of list-like sequences (lists,arrays,etc).
+ unfold a list of items using (project and z) making layout list via itemL.
+ If reach maxLength (before exhausting) then truncate.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.tagAttrL(System.String,Microsoft.FSharp.Collections.FSharpList{System.Tuple{System.String,System.String}},Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ See tagL
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.listL``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Text.StructuredFormat.Layout},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Layout like an F# list.    
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.optionL``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Text.StructuredFormat.Layout},Microsoft.FSharp.Core.FSharpOption{``0})">
+<summary>
+ Layout like an F# option.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.aboveListL(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Text.StructuredFormat.Layout})">
+<summary>
+ Layout list vertically.    
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.aboveL(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Layout two vertically.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.tupleL(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Text.StructuredFormat.Layout})">
+<summary>
+ Form tuple of layouts.            
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.braceL(Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Wrap braces around layout.        
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.squareBracketL(Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Wrap square brackets around layout.    
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.bracketL(Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Wrap round brackets around Layout.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.sepListL(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Text.StructuredFormat.Layout})">
+<summary>
+ Join layouts into a list separated using the given Layout.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.semiListL(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Text.StructuredFormat.Layout})">
+<summary>
+ Join layouts into a semi-colon separated list.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.spaceListL(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Text.StructuredFormat.Layout})">
+<summary>
+ Join layouts into a space separated list.    
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.commaListL(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Text.StructuredFormat.Layout})">
+<summary>
+ Join layouts into a comma separated list.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_AtAtMinusMinus(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join broken with ident=2 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_AtAtMinus(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join broken with ident=1 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_AtAt(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join broken with ident=0
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_MinusMinusMinus(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join, possible break with indent=2 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_MinusMinus(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join, possible break with indent=1
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_PlusPlus(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join, possible break with indent=0
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.op_HatHat(Microsoft.FSharp.Text.StructuredFormat.Layout,Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Join, unbreakable. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.leftL(System.String)">
+<summary>
+ An string which is left  parenthesis (no space on the right).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.rightL(System.String)">
+<summary>
+ An string which is right parenthesis (no space on the left).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.sepL(System.String)">
+<summary>
+ An string which requires no spaces either side.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.wordL(System.String)">
+<summary>
+ An string leaf 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.objL(System.Object)">
+<summary>
+ An uninterpreted leaf, to be interpreted into a string
+ by the layout engine. This allows leaf layouts for numbers, strings and
+ other atoms to be customized according to culture.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.isEmptyL(Microsoft.FSharp.Text.StructuredFormat.Layout)">
+<summary>
+ Is it the empty layout?
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule.emptyL">
+<summary>
+ The empty layout
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Text.StructuredFormat.LayoutOpsModule">
+<summary>
+ A layout is a sequence of strings which have been joined together.
+ The strings are classified as words, separators and left and right parenthesis.
+ This classification determines where spaces are inserted.
+ A joint is either unbreakable, breakable or broken.
+ If a joint is broken the RHS layout occurs on the next line with optional indentation.
+ A layout can be squashed to for given width which forces breaks as required.
+</summary>
+</member>
+</members>
+</doc>

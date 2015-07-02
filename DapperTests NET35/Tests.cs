@@ -17,12 +17,22 @@ namespace DapperTests_NET35
         }
         public void TestClassWithStringUsage()
         {
-            var arr = connection.Query<BasicType>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ToArray();
-            arr.Select(x => x.Value).IsSequenceEqualTo(new[] { "abc", "def" });
+            var oldMatch = Dapper.DefaultTypeMap.MatchNamesWithUnderscores;
+            try
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = true;
+                var arr = connection.Query<BasicType>("select 'abc' as [Value], '123' as [Another_Value] union all select @txt, @txt2", new { txt = "def", txt2 = "456" }).ToArray();
+                arr.Select(x => x.Value).IsSequenceEqualTo(new[] { "abc", "def" });
+                arr.Select(x => x.AnotherValue).IsSequenceEqualTo(new[] { "123", "456" });
+            } finally
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = oldMatch;
+            }
         }
         class BasicType
         { 
             public string Value { get; set; }
+            public string AnotherValue { get; set; }
         }
 
         public void TestDynamicSimulatedQuery() {

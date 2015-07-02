@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>FSharp.PowerPack.Linq</name></assembly>
+<members>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluator.ToLinqExpression(Microsoft.FSharp.Quotations.FSharpExpr)">
+<summary>
+ Convert the quotation expression to LINQ expression trees
+
+ This operation will only succeed for a subset of quotation expressions.
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluator.EvaluateUntyped(Microsoft.FSharp.Quotations.FSharpExpr)">
+<summary>
+ Compile the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluator.Evaluate``1(Microsoft.FSharp.Quotations.FSharpExpr{``0})">
+<summary>
+ Evaluate the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluator.CompileUntyped(Microsoft.FSharp.Quotations.FSharpExpr)">
+<summary>
+ Compile the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluator.Compile``1(Microsoft.FSharp.Quotations.FSharpExpr{``0})">
+<summary>
+ Compile the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Linq.ExtraHashCompare.GenericNotEqualIntrinsic``1(``0,``0)">
+<summary>
+ An intrinsic for compiling &lt;c&gt;&amp;lt;@ x &lt;&gt; y @&amp;gt;&lt;/c&gt; to expression trees
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Linq.ExtraHashCompare">
+
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.groupJoin``4(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{``1},Microsoft.FSharp.Core.FSharpFunc{``0,``2},Microsoft.FSharp.Core.FSharpFunc{``1,``2},Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{System.Collections.Generic.IEnumerable{``1},``3}})">
+<summary>
+ This join operator implements the LINQ GroupJoin operator and the &lt;c&gt;query&lt;/c&gt; convertor recognises it as such
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.join``4(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{``1},Microsoft.FSharp.Core.FSharpFunc{``0,``2},Microsoft.FSharp.Core.FSharpFunc{``1,``2},Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``3}})">
+<summary>
+ This join operator corresponds to the LINQ Join operator and the &lt;c&gt;query&lt;/c&gt; convertor recognises it as such
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.groupBy``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ When used in queries, this operator corresponds to the LINQ Join operator and the &lt;c&gt;query&lt;/c&gt; convertor recognises it as such
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.maxBy``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ When used in queries, this operator corresponds to the LINQ Max operator and the &lt;c&gt;query&lt;/c&gt; convertor recognises it as such
+ It differs in return type from &lt;c&gt;Seq.maxBy&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.minBy``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ When used in queries, this operator corresponds to the LINQ Min operator and the &lt;c&gt;query&lt;/c&gt; convertor recognises it as such
+ It differs in return type from &lt;c&gt;Seq.minBy&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.contains``1(``0,System.Collections.Generic.IEnumerable{``0})">
+<summary>
+ When used in queries, this operator corresponds to the LINQ Contains operator and the &lt;c&gt;query&lt;/c&gt; convertor recognises it as such
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QueryModule.query``1(Microsoft.FSharp.Quotations.FSharpExpr{``0})">
+<summary>
+ Evaluate the quotation expression by first converting to a LINQ expression tree
+ making use of IQueryable operators and then executing expression tree
+
+ Exceptions: &lt;c&gt;InvalidArgumentException&lt;/c&gt; will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Linq.QueryModule">
+
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluation.LinqExpressionHelper``1(``0)">
+<summary>
+ This function should not be called directly. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluation.Expr`1.Eval``1(Microsoft.FSharp.Quotations.FSharpExpr{``0})">
+<summary>
+ Evaluate the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluation.Expr`1.Compile``1(Microsoft.FSharp.Quotations.FSharpExpr{``0})">
+<summary>
+ Compile the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluation.Expr.EvalUntyped(Microsoft.FSharp.Quotations.FSharpExpr)">
+<summary>
+ Compile the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluation.Expr.CompileUntyped(Microsoft.FSharp.Quotations.FSharpExpr)">
+<summary>
+ Compile the quotation expression by first converting to LINQ expression trees
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Linq.QuotationEvaluation.Expr.ToLinqExpression(Microsoft.FSharp.Quotations.FSharpExpr)">
+<summary>
+ Convert the quotation expression to LINQ expression trees
+
+ This operation will only succeed for a subset of quotation expressions.
+
+ Exceptions: InvalidArgumentException will be raised if the input expression is
+ not in the subset that can be converted to a LINQ expression tree
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Linq.QuotationEvaluation.HelperTypes">
+<summary>
+ A set of types used for implementing quotation conversions.
+ These are public only because targets of Linq Lambda expressions require them to be so
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Linq.QuotationEvaluation">
+<summary>
+ This module provides Compile and Eval extension members
+ for F# quotation values, implemented by translating to LINQ
+ expression trees and using the LINQ dynamic compiler.
+</summary>
+</member>
+</members>
+</doc>

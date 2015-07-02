@@ -1,0 +1,3203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>FSharp.PowerPack.Compatibility</name></assembly>
+<members>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ArgModule.spec">
+<summary>
+ The spec value describes the action of the argument,
+ and whether it expects a following parameter.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArgModule.usage(Microsoft.FSharp.Collections.FSharpList{System.Tuple{System.String,Microsoft.FSharp.Text.ArgType,System.String}},System.String)">
+<summary>
+ &quot;usage specs use&quot; prints the help for each argument.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArgModule.parse(Microsoft.FSharp.Collections.FSharpList{System.Tuple{System.String,Microsoft.FSharp.Text.ArgType,System.String}},Microsoft.FSharp.Core.FSharpFunc{System.String,Microsoft.FSharp.Core.Unit},System.String)">
+<summary>
+ &quot;parse specs f use&quot; parses the arguments given by Sys.argv
+ according to the argument processing specifications &quot;specs&quot;.
+ Arguments begin with &quot;-&quot;. Non-arguments are passed to &quot;f&quot; in
+ order.  &quot;use&quot; is printed as part of the usage line if an error occurs.
+
+ Permitted arguments are specified using triples: (arg, action, help).
+ Actions are:
+   Unit(f): call f, no subseq. arg
+   Set(br): set ref to &apos;true&apos;, no subseq. arg.
+   Clear(br): set ref to &apos;false, no subseq. arg.
+   String(f): pass the subseq. arg to f
+   Int(f): pass the subseq. arg to f
+   Float(f): pass the subseq. arg to f
+   Rest(f): pass all subseq. args to f in order
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ArgModule">
+<summary>
+ A simple command-line argument processor.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Array2DModule.pinUnscoped``1(``0[0:,0:])">
+<summary>
+ As for Array2D.pin, except that the caller is responsible for calling Free on the returned GCHandle in order
+ to release the pin.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Array2DModule.pin``2(``0[0:,0:],Microsoft.FSharp.Core.FSharpFunc{``0*,``1})">
+<summary>
+ Pin the given array for the duration of a single call to the given function.  A native pointer to
+ the first element in the array is passed to the given function.  Cleanup the GCHandle associated with the 
+ pin when the function completes, even if an exception is raised.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.Array2DModule">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.fold_right``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``1}},``0[],``1)">
+<summary>
+ Apply a function to each element of the array, threading an accumulator argument
+ through the computation. If the input function is &lt;c&gt;f&lt;/c&gt; and the elements are &lt;c&gt;i0...iN&lt;/c&gt; 
+ then computes &lt;c&gt;f i0 (...(f iN s))&lt;/c&gt;
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.create_matrix``1(System.Int32,System.Int32,``0)">
+<summary>
+ Create a jagged 2 dimensional array.  Synonym for createJaggedMatrix.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.pinUnscoped``1(``0[])">
+<summary>
+ As for Array.pin, except that the caller is responsible for calling Free on the returned GCHandle in order
+ to release the pin.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.pin``2(``0[],Microsoft.FSharp.Core.FSharpFunc{``0*,``1})">
+<summary>
+ Pin the given array for the duration of a single call to the given function.  A native pointer to
+ the first element in the array is passed to the given function.  Cleanup the GCHandle associated with the 
+ pin when the function completes, even if an exception is raised.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.scanReduceBack``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},``0[])">
+<summary>
+ Like reduceBack, but return both the intermediary and final results
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.scanReduce``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},``0[])">
+<summary>
+ Like reduce, but return both the intermediary and final results
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.contains``1(``0,``0[])">
+<summary>
+ Is an element in the array, uses (=) equality.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ArrayModule.createJaggedMatrix``1(System.Int32,System.Int32,``0)">
+<summary>
+ Create a jagged 2 dimensional array.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ArrayModule">
+<summary>
+ Compatibility operations on arrays.  
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.add_channel(System.Text.StringBuilder,System.IO.TextReader,System.Int32)">
+<summary>
+ Read the given number of bytes as ASCII and add the resulting string 
+ to the buffer.  Warning: this assumes an ASCII encoding for the I/O channel, i.e. it uses 
+ Pervasives.really_input and then use ascii_to_string to produce the string 
+ to add.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.reset(System.Text.StringBuilder)">
+<summary>
+ Clears the buffer (same as Buffer.clear).
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.length(System.Text.StringBuilder)">
+<summary>
+ Number of characters in the buffer.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.create(System.Int32)">
+<summary>
+ Create a buffer with suggested size.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.contents(System.Text.StringBuilder)">
+<summary>
+ Gets the string built from the buffer.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.clear(System.Text.StringBuilder)">
+<summary>
+ Clears the buffer.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.add_substring(System.Text.StringBuilder,System.String,System.Int32,System.Int32)">
+<summary>
+ Given a string, start position and length add that substring to the buffer.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.add_string(System.Text.StringBuilder,System.String)">
+<summary>
+ Add string to the buffer.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.add_char(System.Text.StringBuilder,System.Char)">
+<summary>
+ Add character to the buffer.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.BufferModule.add_buffer(System.Text.StringBuilder,System.Text.StringBuilder)">
+<summary>
+ Add second buffer to the first.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.BufferModule">
+<summary>
+ Imperative buffers for building strings, a shallow interface to &lt;c&gt;System.Text.StringBuilder&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.to_string(System.Byte)">
+<summary>
+ Converts a byte to a string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.of_string(System.String)">
+<summary>
+ Converts a string to a byte
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.to_uint32(System.Byte)">
+<summary>
+ Converts a byte to an unsigned 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.of_uint32(System.UInt32)">
+<summary>
+ Converts an unsigned 32-bit integer to a byte
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.to_uint16(System.Byte)">
+<summary>
+ Converts a byte to a 16-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.of_uint16(System.UInt16)">
+<summary>
+ Converts a 16-bit integer to a byte
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.to_int32(System.Byte)">
+<summary>
+ Converts a byte to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.of_int32(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a byte
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.to_int(System.Byte)">
+<summary>
+ Converts a byte to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.of_int(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a byte
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.to_char(System.Byte)">
+<summary>
+ Converts a byte to a char 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.of_char(System.Char)">
+<summary>
+ Converts a char to a byte
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.shift_right(System.Byte,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the right
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.shift_left(System.Byte,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the left
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.logxor(System.Byte,System.Byte)">
+<summary>
+ Combines the binary representation of a and b by bitwise xor
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.logor(System.Byte,System.Byte)">
+<summary>
+ Combines the binary representation of a and b by bitwise or
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.lognot(System.Byte)">
+<summary>
+ Returns the bitwise logical negation of a
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.logand(System.Byte,System.Byte)">
+<summary>
+ Combines the binary representation of a and b by bitwise and
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.compare(System.Byte,System.Byte)">
+<summary>
+ Compares a and b and returns 1 if a &gt; b, -1 if b &lt; a and 0 if a = b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.rem(System.Byte,System.Byte)">
+<summary>
+ Returns the remainder of a divided by b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.sub(System.Byte,System.Byte)">
+<summary>
+ Returns a minus b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.mul(System.Byte,System.Byte)">
+<summary>
+ Returns a multiplied by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.div(System.Byte,System.Byte)">
+<summary>
+ Returns a divided by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.add(System.Byte,System.Byte)">
+<summary>
+ Returns the sum of a and b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.pred(System.Byte)">
+<summary>
+ Returns the predeccessor of the argument wrapped around 0uy
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ByteModule.succ(System.Byte)">
+<summary>
+ Returns the successor of the argument wrapped around 255uy
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.ByteModule.one">
+<summary>
+ The value one as a System.Byte
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.ByteModule.zero">
+<summary>
+ The value zero as a System.Byte
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ByteModule">
+<summary>
+ Byte (8-bit) operations.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.CharModule.uppercase(System.Char)">
+<summary>
+ Converts the value of a Unicode character to its uppercase equivalent
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.CharModule.lowercase(System.Char)">
+<summary>
+ Converts the value of a Unicode character to its lowercase equivalent
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.CharModule.compare(System.Char,System.Char)">
+<summary>
+ Compares a and b and returns 1 if a &gt; b, -1 if b &lt; a and 0 if a = b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.CharModule.code(System.Char)">
+<summary>
+ Converts the value of the specified Unicode character to the equivalent 32-bit signed integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.CharModule.chr(System.Int32)">
+<summary>
+ Converts the value of the specified 32-bit signed integer to its equivalent Unicode character
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.CharModule">
+<summary>
+ Unicode characters, i.e. the &lt;c&gt;System.Char&lt;/c&gt; type.  see also the operations
+ in &lt;c&gt;System.Char&lt;/c&gt; and the &lt;c&gt;System.Text.Encoding&lt;/c&gt; interfaces if necessary.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.temp_file(System.String,System.String)">
+<summary>
+ &quot;temp_file f s&quot; returns a hitherto unused new file name.  &quot;f&quot; and &quot;s&quot;
+ are hints as to a suitable file name and suffix for the file.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.quote(System.String)">
+<summary>
+ &quot;quote s&quot; is designed for use to quote a filename when using it
+ for a system command.  It returns (&quot;\&apos;&quot; ^ s ^ &quot;\&apos;&quot;).  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.is_implicit(System.String)">
+<summary>
+ Returns true if the path is relative to the current directory but does not begin with 
+ an explicit &quot;.&quot; or &quot;..&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.is_relative(System.String)">
+<summary>
+ Is the path is relative to the current directory or absolute.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.has_extension(System.String)">
+<summary>
+ Return true if the filename has a &quot;.&quot; extension
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.parent_dir_name">
+<summary>
+ &quot;parent_dir_name&quot; returns the name for the directory above the current directory on
+ this OS.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.current_dir_name">
+<summary>
+ The name used for the current directory on this OS. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.basename(System.String)">
+<summary>
+ &quot;dirname&quot; and &quot;basename&quot; decompose a filename into a directory name
+ and a filename, i.e. &quot;concat (dirname s) (basename s) = s&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.dirname(System.String)">
+<summary>
+ &quot;dirname&quot; and &quot;basename&quot; decompose a filename into a directory name
+ and a filename, i.e. &quot;concat (dirname s) (basename s) = s&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.concat(System.String,System.String)">
+<summary>
+ &quot;concat a b&quot; returns System.IO.Path.Combine(a,b), i.e. the
+ two names conjoined by the appropriate directory separator character
+ for this architecture.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.chop_suffix(System.String,System.String)">
+<summary>
+ Assuming &quot;check_suffix f s&quot; holds, &quot;chop_suffix f s&quot; returns the
+ filename &quot;f&quot; with the suffix &quot;s&quot; removed.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.chop_extension(System.String)">
+<summary>
+ &quot;chop_extension f&quot; removes the extension from the given
+ filename. Raises ArgumentException if no extension is present.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FilenameModule.check_suffix(System.String,System.String)">
+<summary>
+ &quot;check_suffix f s&quot; returns true if filename &quot;f&quot; ends in suffix &quot;s&quot;,
+ e.g. check_suffix &quot;abc.fs&quot; &quot;.fs&quot; returns true.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.FilenameModule">
+<summary>
+ Common filename operations.  This module is included to make it possible to cross-compile 
+ code with other ML compilers.  See also &lt;c&gt;System.IO.Path&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.to_bits(System.Double)">
+<summary>
+ Converts a 64-bit float to raw 64-bit representation 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.of_bits(System.Int64)">
+<summary>
+ Converts a raw 64-bit representation to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.to_string(System.Double)">
+<summary>
+ Converts a 64-bit float to a string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.of_string(System.String)">
+<summary>
+ Converts a string to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.to_float32(System.Double)">
+<summary>
+ Converts a 64-bit float to a 32-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.of_float32(System.Single)">
+<summary>
+ Converts a 32-bit float to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.to_int64(System.Double)">
+<summary>
+ Converts a 64-bit float to a 64-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.of_int64(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.to_int32(System.Double)">
+<summary>
+ Converts a 64-bit float to a 32-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.of_int32(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.to_int(System.Double)">
+<summary>
+ Converts a 64-bit float to a 32-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.of_int(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.compare(System.Double,System.Double)">
+<summary>
+ Compares a and b and returns 1 if a &gt; b, -1 if b &lt; a and 0 if a = b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.sub(System.Double,System.Double)">
+<summary>
+ Returns a minus b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.neg(System.Double)">
+<summary>
+ Returns -a
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.mul(System.Double,System.Double)">
+<summary>
+ Returns a multiplied by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.div(System.Double,System.Double)">
+<summary>
+ Returns a divided by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.FloatModule.add(System.Double,System.Double)">
+<summary>
+ Returns the sum of a and b
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.FloatModule">
+<summary>
+ ML-like operations on 64-bit System.Double floating point numbers.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.Provider`3">
+<summary>
+A collection of operations for creating and using hash tables based on particular type-tracked hash/equality functions.
+Generated by the Hashtbl.Make and Hashtbl.MakeTagged functors. This type is for use when you wish to
+specify a comparison function once and carry around an object that is a provider of (i.e. a factory for) hashtables 
+that utilize that comparison function.
+
+The &apos;Tag&apos; type parameter is used to track information about the comparison function, which helps ensure 
+that you don&apos;t mixup maps created with different comparison functions
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.t`2">
+<summary>
+ OCaml compatible type name, for use when not opening module, e.g. Hashtbl.t
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.Make``2(Microsoft.FSharp.Core.FSharpFunc{``0,System.Int32},Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}})">
+<summary>
+ Build a collection of operations for creating and using 
+ hashtables based on the given hash/equality functions. This returns a record
+ that contains the functions you use to create and manipulate tables of
+ this kind.  The returned value is much like an ML module. You should call Make once for 
+ each new pair of key/value types.  You may need to constrain the result 
+ to be an instantiation of Provider.
+
+ let MyStringHashProvider : Provider&lt;string,int&gt; = Hashtbl.Make(myStringHash,myStringEq)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.MakeTagged``3(``0)">
+<summary>
+ Same as Make, except track the comparison function being used through an additional type parameter.
+
+ To use this function accurately you need to define a new named class that implements IEqualityComparer and
+ pass an instance of that class as the first argument. For example:
+      type MyHasher = 
+        class
+          new() = { }
+          interface IEqualityComparer&lt;string&gt; with 
+            member self.GetHashCode(x) = ...
+            member self.Equals(x,y) = ...
+          end
+        end
+
+ let MyStringHashProvider : Hashtbl.Provider&lt;string,int&gt; = Hashtbl.MakeTagged(new MyStringHasher())
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.hashq``1(``0)">
+<summary>
+ Hash on the identity of an object. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.hash``1(``0)">
+<summary>
+ Hash on the structure of a value according to the F# structural hashing
+ conventions
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.tryfind``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0)">
+<summary>
+ Lookup the key&apos;s data in the table
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.replace``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0,``1)">
+<summary>
+ Replace the latest binding for the given key
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.remove``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0)">
+<summary>
+ Remove the latest binding for the given key
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.mem``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0)">
+<summary>
+ Test for the existence of any bindings for the given key
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.iter``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.Unit}},Microsoft.FSharp.Collections.HashMultiMap{``0,``1})">
+<summary>
+Apply the given function to each binding in the hash table 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.fold``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpFunc{``2,``2}}},Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``2)">
+<summary>
+ Fold over all bindings
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.find_all``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0)">
+<summary>
+ Return all bindings for the given key
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.find``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0)">
+<summary>
+ Lookup key&apos;s data in the table.
+ Raises exception is key not in table, if this could happen you should be using tryFind.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.copy``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1})">
+<summary>
+ Create a copy of the table. Remember they are imperative and get mutated. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.clear``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1})">
+<summary>
+ Empty the table.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.of_seq``2(System.Collections.Generic.IEnumerable{System.Tuple{``0,``1}})">
+<summary>
+ Create hash table using the given data
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.of_list``2(Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ Create a hash table using the given data
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.add``2(Microsoft.FSharp.Collections.HashMultiMap{``0,``1},``0,``1)">
+<summary>
+ Add key and data to the table.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.HashtblModule.create``2(System.Int32)">
+<summary>
+ Create a hash table with the suggested initial size.  
+
+ Inlined to enable generation of efficient hash routines for the key type in the common case.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.HashtblModule">
+<summary>
+ Multi-entry hash tables using the structural &quot;hash&quot; and &quot;equals&quot; functions.  
+
+These tables can be used with keys of any type, but you should check that
+structural hashing and equality are correct for your key type.  
+Structural hashing is efficient but not a suitable choice in all circumstances, 
+e.g. may not hash efficiently on non-reference types and deeply-structured types.
+Better efficiency is typically achieved if key types are F#-generated
+types.
+
+These hash tables may map items to multiple keys (see find_all).
+
+The implementations are not safe for concurrent reading/writing,
+and so users of these tables should take an appropriate lock
+before reading/writing if used in a concurrent setting.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.Int16Module">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.bits_of_float32(System.Single)">
+<summary>
+ Converts a 32-bit float to a raw 32-bit representation 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.float32_of_bits(System.Int32)">
+<summary>
+ Converts a raw 32-bit representation to a 32-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.bits_of_float(System.Double)">
+<summary>
+ Converts a 64-bit float to a raw 32-bit representation 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.float_of_bits(System.Int32)">
+<summary>
+ Converts a raw 32-bit representation to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_string(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a string 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_string(System.String)">
+<summary>
+ Converts a string to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_nativeint(System.Int32)">
+<summary>
+ Converts a 32-bit unsigned integer to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_nativeint(System.IntPtr)">
+<summary>
+ Converts a 32-bit unsigned integer to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_int64(System.Int32)">
+<summary>
+ Converts a 32-bit unsigned integer to a 64-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_int64(System.Int64)">
+<summary>
+ Converts a 64-bit unsigned integer to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_uint32(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 32-bit unsigned integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_uint32(System.UInt32)">
+<summary>
+ Converts a 32-bit unsigned integer to a 32-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_int(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 32-bit integer (included for ML compatability)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_int(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 32-bit integer (included for ML compatability)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_float32(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 32-bit float 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_float32(System.Single)">
+<summary>
+ Converts a 32-bit float to a 32-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.to_float(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 64-bit float 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.of_float(System.Double)">
+<summary>
+ Converts a 64-bit float to a 32-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.shift_right_logical(System.Int32,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the right; high-order bits are zero-filled
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.shift_right(System.Int32,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the right; high-order empty bits are set to the sign bit
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.shift_left(System.Int32,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the left
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.logxor(System.Int32,System.Int32)">
+<summary>
+ Combines the binary representation of a and b by bitwise xor
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.logor(System.Int32,System.Int32)">
+<summary>
+ Combines the binary representation of a and b by bitwise or
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.lognot(System.Int32)">
+<summary>
+ Returns the bitwise logical negation of a
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.logand(System.Int32,System.Int32)">
+<summary>
+ Combines the binary representation of a and b by bitwise and
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.compare(System.Int32,System.Int32)">
+<summary>
+ Compares a and b and returns 1 if a &gt; b, -1 if b &lt; a and 0 if a = b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.sub(System.Int32,System.Int32)">
+<summary>
+ Returns a minus b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.rem(System.Int32,System.Int32)">
+<summary>
+ Returns the remainder of a divided by b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.neg(System.Int32)">
+<summary>
+ Returns -a
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.mul(System.Int32,System.Int32)">
+<summary>
+ Returns a multiplied by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.div(System.Int32,System.Int32)">
+<summary>
+ Returns a divided by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.add(System.Int32,System.Int32)">
+<summary>
+ Returns the sum of a and b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.abs(System.Int32)">
+<summary>
+ Returns the absolute value of the argument
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.succ(System.Int32)">
+<summary>
+ Returns the successor of the argument 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int32Module.min_int">
+<summary>
+ Returns the smallest 32-bit signed integer
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int32Module.max_int">
+<summary>
+ Returns the largest 32-bit signed integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int32Module.pred(System.Int32)">
+<summary>
+ Returns the predeccessor of the argument 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int32Module.minus_one">
+<summary>
+ The value minus one as a System.Int32
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int32Module.one">
+<summary>
+ The value one as a System.Int32
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int32Module.zero">
+<summary>
+ The value zero as a System.Int32
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.Int32Module">
+<summary>
+ Basic operations on 32-bit integers. The type int32 is identical to &lt;c&gt;System.Int32&lt;/c&gt;. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.bits_of_float(System.Double)">
+<summary>
+ Converts a 64-bit float to a raw 64-bit representation 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.float_of_bits(System.Int64)">
+<summary>
+ Converts a raw 64-bit representation to a 64-bit float
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_string(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_string(System.String)">
+<summary>
+ Converts a string to a 64-bit integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_nativeint(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a native integer 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_nativeint(System.IntPtr)">
+<summary>
+ Converts a native integer to a 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_uint64(System.Int64)">
+<summary>
+ Converts a 64-bit integer to an unsigned 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_uint64(System.UInt64)">
+<summary>
+ Converts an unsigned 64-bit integer to a 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_int32(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a 32-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_int32(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_int(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a 32-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_int(System.Int32)">
+<summary>
+ Converts a 32-bit integer to a 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_float(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a 64-bit float 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_float(System.Double)">
+<summary>
+ Converts a 64-bit float to a 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.to_float32(System.Int64)">
+<summary>
+ Converts a 64-bit integer to a 32-bit float 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.of_float32(System.Single)">
+<summary>
+ Converts a 32-bit float to a 64-bit integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.shift_right_logical(System.Int64,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the right; high-order bits are zero-filled
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.shift_right(System.Int64,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the right; high-order empty bits are set to the sign bit
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.shift_left(System.Int64,System.Int32)">
+<summary>
+ Shifts the binary representation a by n bits to the left
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.logxor(System.Int64,System.Int64)">
+<summary>
+ Combines the binary representation of a and b by bitwise xor
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.logor(System.Int64,System.Int64)">
+<summary>
+ Combines the binary representation of a and b by bitwise or
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.lognot(System.Int64)">
+<summary>
+ Returns the bitwise logical negation of a
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.logand(System.Int64,System.Int64)">
+<summary>
+ Combines the binary representation of a and b by bitwise and
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.compare(System.Int64,System.Int64)">
+<summary>
+ Compares a and b and returns 1 if a &gt; b, -1 if b &lt; a and 0 if a = b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.sub(System.Int64,System.Int64)">
+<summary>
+ Returns a minus b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.rem(System.Int64,System.Int64)">
+<summary>
+ Returns the remainder of a divided by b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.neg(System.Int64)">
+<summary>
+ Returns -a
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.mul(System.Int64,System.Int64)">
+<summary>
+ Returns a multiplied by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.div(System.Int64,System.Int64)">
+<summary>
+ Returns a divided by b 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.add(System.Int64,System.Int64)">
+<summary>
+ Returns the sum of a and b
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.abs(System.Int64)">
+<summary>
+ Returns the absolute value of the argument
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int64Module.minus_one">
+<summary>
+ The value minus one as a System.Int64
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int64Module.min_int">
+<summary>
+ Returns the smallest 64-bit signed integer
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int64Module.max_int">
+<summary>
+ Returns the largest 64-bit signed integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.succ(System.Int64)">
+<summary>
+ Returns the successor of the argument 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.Int64Module.pred(System.Int64)">
+<summary>
+ Returns the predeccessor of the argument 
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int64Module.one">
+<summary>
+ The value one as a System.Int64
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.Int64Module.zero">
+<summary>
+ The value zero as a System.Int64
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.Int64Module">
+<summary>
+ Basic operations on 64-bit integers. The type int64 is identical to &lt;c&gt;System.Int64&lt;/c&gt;. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LazyModule.create``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,``0})">
+<summary>
+ Build a lazy (delayed) value from the given computation
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LazyModule.lazy_is_val``1(System.Lazy{``0})">
+<summary>
+ Check if a lazy (delayed) value has already been computed
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LazyModule.lazy_from_val``1(``0)">
+<summary>
+ Build a lazy (delayed) value from the given pre-computed value.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LazyModule.lazy_from_fun``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,``0})">
+<summary>
+ Build a lazy (delayed) value from the given computation
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LazyModule.force_val``1(System.Lazy{``0})">
+<summary>
+ See Lazy.Force.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.LazyModule">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexbuf">
+<summary>
+ ASCII LexBuffers 
+
+ The type &quot;lexbuf&quot; is opaque, but has an internal position information field 
+ that can be updated by setting &quot;lexbuf.EndPos&quot;, for example if you wish 
+ to update the other fields in that position data before or during 
+ lexing.  You will need to do this if you wish to maintain accurate 
+ line-count information.  If you do this and wish to maintain strict 
+ cross-compiling compatibility with OCamlLex and other tools you may need code 
+ to conditionally use lexbuf_set_curr_p when compiling F# code.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexbuf_curr_p(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ same as lexeme_end_p 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_end(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return absolute positions into the entire stream of characters
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_start(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return absolute positions into the entire stream of characters
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_end_p(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return the positions stored in the lexbuf for the matched string 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_start_p(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return the positions stored in the lexbuf for the matched string 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_char(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte},System.Int32)">
+<summary>
+ Return a character from the matched string, innterpreting the bytes using an ASCII encoding
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_bytes(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return the bytes for the matched string 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme_utf8(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return the matched string interpreting the bytes using the given Unicode text encoding
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.lexeme(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Return the matched string 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.from_function(Microsoft.FSharp.Core.FSharpFunc{System.Byte[],Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Int32}})">
+<summary>
+ Fuel a lexer from function that fills an array of bytes up to the given length, returning the
+ number of bytes filled.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.from_bytearray(System.Byte[])">
+<summary>
+ Fuel a lexer from an array of bytes
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.from_string(System.String)">
+<summary>
+ Fuel a lexer from a string, converted to ascii using &lt;c&gt;System.Text.Encoding.ASCII.GetBytes&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.from_binary_reader(System.IO.BinaryReader)">
+<summary>
+ Fuel a lexer using the given BinaryReader.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.from_text_reader(System.Text.Encoding,System.IO.TextReader)">
+<summary>
+ Fuel a lexer using the given TextReader or StreamReader.
+ The characters read are decoded to bytes using the given encoding (e.g. System.Text.Encoding.ASCII)
+ and the bytes presented to the lexer.  The encoding used to decode the characters
+ is associated with the expectations of the lexer (e.g. a lexer may be constructed to accept only 
+ ASCII or pseudo-UTF8 bytes) and will typically be different to 
+ the encoding used to decode the file.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.from_channel(System.IO.TextReader)">
+<summary>
+ Fuel a lexer using the given in_channel.  The bytes are read using Pervasives.input.
+ If the in_channel is a textual channel the bytes are 
+ presented to the lexer by decoding the characters using System.Text.Encoding.ASCII.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.LexingModule.flush_input(Microsoft.FSharp.Text.Lexing.LexBuffer{System.Byte})">
+<summary>
+ Remove all input, though don&apos;t discard the  except the current lexeme 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.LexingModule">
+<summary>
+ Lexing: ML-like lexing support
+
+ This file maintains rough compatibility for lexbuffers used by some ML
+ laxer generators.  The lexbuf carries an associated pair of positions.
+ Beware that only the &quot;cnum&quot; (absolute character number) field is automatically 
+ updated as each lexeme is matched.  Upon each successful match the prior end
+ position is transferred to be the start position and a new start position
+ is allocated with an updated pos_cnum field.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.tl``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Return the tail of the list.  
+
+ Raises &lt;c&gt;System.ArgumentException&lt;/c&gt; if &lt;c&gt;list&lt;/c&gt; is empty
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.hd``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Return the first element of the list.
+
+ Raises &lt;c&gt;System.ArgumentException&lt;/c&gt; if &lt;c&gt;list&lt;/c&gt; is empty
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.rev_append``1(Microsoft.FSharp.Collections.FSharpList{``0},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ &quot;rev_append l1 l2&quot; evaluates to &quot;append (rev l1) l2&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.rev_map2``3(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,``2}},Microsoft.FSharp.Collections.FSharpList{``0},Microsoft.FSharp.Collections.FSharpList{``1})">
+<summary>
+ &quot;rev_map2 f l1 l2&quot; evaluates to &quot;map2 f (rev l1) (rev l2)&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.rev_map``2(Microsoft.FSharp.Core.FSharpFunc{``0,``1},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ &quot;rev_map f l1&quot; evaluates to &quot;map f (rev l1)&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.nonempty``1(Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Return true if the list is not empty.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.memq``1(``0,Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ See &lt;c&gt;mem&lt;/c&gt;, but uses the physical equality operator (==) for equality tests.        
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.remove_assq``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ See &lt;c&gt;remove_assoc&lt;/c&gt;, but uses the physical equality operator (==) for equality tests.        
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.mem_assq``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ See &lt;c&gt;mem_assoc&lt;/c&gt;, but uses the physical equality operator (==) for equality tests.      
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.try_assq``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ See &lt;c&gt;try_assoc&lt;/c&gt;, but uses the physical equality operator (==) for equality tests.    
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.assq``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ See &lt;c&gt;assoc&lt;/c&gt;, but uses the physical equality operator (==) for equality tests
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.remove_assoc``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ Remove pair for key from the association list (if it&apos;s there).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.mem_assoc``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ Does the key have pair in the association list?
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.try_assoc``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ Lookup key&apos;s data in association list, uses (=) equality,
+ returning &quot;Some data&quot; or &quot;None&quot;.  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.assoc``2(``0,Microsoft.FSharp.Collections.FSharpList{System.Tuple{``0,``1}})">
+<summary>
+ Lookup key&apos;s data in association list, uses (=) equality.
+ Raise &lt;c&gt;System.IndexOutOfRangeException&lt;/c&gt; exception if key not found, in which case you should typically use &lt;c&gt;try_assoc&lt;/c&gt; instead.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.mem``1(``0,Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Is an element in the list. Elements are compared using generic equality.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.contains``1(``0,Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Is an element in the list. Elements are compared using generic equality.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.scanReduceBack``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Like reduceBack, but return both the intermediary and final results
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ListModule.scanReduce``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``0}},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Like reduce, but return both the intermediary and final results
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ListModule">
+<summary>
+ Compatibility operations on lists.  
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.MapModule.Provider`3">
+<summary>
+ A provider for creating and using maps based on a particular comparison function.
+ The &apos;Tag type parameter is used to track information about the comparison function.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.MapModule.MakeTagged``3(``0)">
+<summary>
+ A functor to build a collection of operations for creating and using 
+ maps based on the given comparison function. This returns a record that 
+ contains the functions you use to create and manipulate maps of
+ this kind.  The returned value is much like an ML module. 
+
+ Language restrictions related to polymorphism may mean you
+ have to create a new instantiation of for each toplevel
+ key/value type pair.
+
+ To use this function you need to define a new named class that implements IComparer and
+ pass an instance of that class as the first argument. For example:
+      type MyComparer = 
+          new() = { }
+          interface IComparer&lt;string&gt; with 
+            member self.Compare(x,y) = ...
+
+ let MyStringMapProvider : Map.Provider &lt; string,int &gt; = Map.MakeTagged(new MyComparer())
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.MapModule">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ObjModule.not_eq``1(``0,``0)">
+<summary>
+ Negation of Obj.eq (i.e. reference/physical inequality)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ObjModule.eq``1(``0,``0)">
+<summary>
+ See Microsoft.FSharp.Core.LanguagePrimitives.PhysicalEquality
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ObjModule.repr``1(``0)">
+<summary>
+ See Microsoft.FSharp.Core.Operators.box
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.ObjModule.obj``1(System.Object)">
+<summary>
+ See Microsoft.FSharp.Core.Operators.unbox
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ObjModule">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ParsingModule.Parse_error">
+<summary>
+ You can initialize error recovery by raising the Parse_error exception. 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.ParsingModule">
+<summary>
+ Parsing: parser support for parsers produced by fsyacc.
+
+ Parsers generated by fsyacc provide location information within parser
+ actions.  However that information is not available globally, but
+ rather is accessed via the functions available on the following local
+ variable which is available in all parser actions:
+
+    parseState : &apos;a Microsoft.FSharp.Text.Parsing.IParseState
+
+ However, this is not compatible with the parser specifications used
+ with ocamlyacc and similar tools, which make a single parser state available
+ globally.  If you wish to use a global parser state (e.g. so your code will
+ cross-compile with OCaml) then you can use the functions in this file.
+ You will need to either generate the parser with &apos;--ml-compatibility&apos; option 
+ or add the code
+
+       Parsing.set_parse_state parseState;
+
+ at the start of each action of your grammar.  The functions below
+ simply report the results of corresponding calls to the latest object
+ specified by a call to set_parse_state.
+
+ Note that there could be unprotected multi-threaded concurrent access for the
+ parser information, so you should not in general use these
+ functions if there may be more than one parser active, and
+ should instead use the functions directly available from the parseState
+ object.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.out_channel">
+<summary>
+ An pseudo-abstraction over binary and textual output channels.
+ OCaml-compatible channels conflate binary and text IO, and for this reasons their
+ use from F# is somewhat deprecated The direct use of System.IO StreamWriter, TextWriter and 
+ BinaryWriter objects is preferred, e.g. see System.IO.File.CreateText). Well-written OCaml code 
+ that simply opens either a channel in text or binary mode and then does text 
+ or binary I/O using the OCaml functions will work, though care must 
+ be taken with regard to end-of-line characters (see output_char below).
+
+ This library pretends that an out_channel is just a System.IO.TextWriter. Channels
+ created using open_out_bin maintain a private System.IO.BinaryWriter, which will be used whenever
+ do I/O using this channel. 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.in_channel">
+<summary>
+ A pseudo-abstraction over binary and textual input channels.
+ OCaml-compatible channels conflate binary and text IO, and for this reasons their
+ use from F# is somewhat deprecated (direct use of System.IO StreamReader, TextReader and 
+ BinaryReader objects is preferred, e.g. see System.IO.File.OpenText). 
+ Well-written OCaml-compatible code that simply opens either a channel in text or binary 
+ mode and then does text or binary I/O using the OCaml-compatible functions below
+ will work, though care must be taken with regard to end-of-line characters (see 
+ input_char below).
+
+ This library pretends that an in_channel is just a System.IO.TextReader. Channel values
+ created using open_in_bin maintain a private System.IO.BinaryReader, which will be used whenever
+ you do I/O using this channel. 
+
+ InChannel.of_BinaryReader and InChannel.of_StreamReader allow you to build input 
+ channels out of the corresponding .NET abstractions.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_flag">
+<summary>
+ This type is present primarily for compatibility with other versions of ML. When
+ not cross-compiling we recommend using the .NET I/O libraries
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.not_found``1">
+<summary>
+ Throw an &lt;c&gt;KeyNotFoundException&lt;/c&gt; exception
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.invalid_arg``1(System.String)">
+<summary>
+ Throw an ArgumentException
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.read_line">
+<summary>
+Read a line from the console, without the end-of-line character.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.read_int">
+<summary>
+Read an integer from the console.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.read_float">
+<summary>
+Read a floating point number from the console.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.prerr_char(System.Char)">
+<summary>
+ Print a character to the stderr stream
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.flush(System.IO.TextWriter)">
+<summary>
+ Flush all pending output on the channel to the physical
+ output device.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.set_binary_mode_out(System.IO.TextWriter,System.Boolean)">
+<summary>
+ Set the binary mode. If the binary mode is changed from &quot;true&quot; to 
+ &quot;false&quot; then a StreamWriter is created to write the binary stream. The StreamWriter uses 
+ the default text encoding System.Text.Encoding.Default.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.seek_out(System.IO.TextWriter,System.Int32)">
+<summary>
+ Set the current position in the output channel, measured from the
+ start of the channel.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.pos_out(System.IO.TextWriter)">
+<summary>
+ Return the current position in the output channel, measured from the
+ start of the channel. Not valid on all channels.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.output_value``1(System.IO.TextWriter,``0)">
+<summary>
+ Serialize the given value to the output channel.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.output_string(System.IO.TextWriter,System.String)">
+<summary>
+ Write the given Unicode string to the output channel. See output_char for the treatment of
+ &apos;\n&apos; characters within the string.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.output_char(System.IO.TextWriter,System.Char)">
+<summary>
+ Write the given Unicode character to the output channel. 
+
+ If the output channel is a binary stream and the UTF-16 value of the Unicode character is greater
+ than 255 then ArgumentException is thrown.
+
+ No CRLF translation is done on output. That is, if the output character is
+ &apos;\n&apos; (LF) characters they will not be written as &apos;\r\n&apos; (CRLF) characters, regardless
+ of whether the underlying operating system or output stream uses CRLF as the default
+ line-feed character.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.output_byte(System.IO.TextWriter,System.Int32)">
+<summary>
+ Write the given byte to the output channel. No CRLF translation is
+ performed.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.output_binary_int(System.IO.TextWriter,System.Int32)">
+<summary>
+ Write the given integer to the output channel in binary format.
+ Only valid on binary channels.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.output(System.IO.TextWriter,System.Byte[],System.Int32,System.Int32)">
+<summary>
+ Write the given range of bytes to the output channel. 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.out_channel_length(System.IO.TextWriter)">
+<summary>
+ Return the length of the output channel. 
+ Raise an exception if not an app
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.close_out(System.IO.TextWriter)">
+<summary>
+ Close the given output channel
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_out_gen(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_flag},System.Int32,System.String)">
+<summary>
+ Open the given file to write in the mode according to the specified flags
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_out_bin(System.String)">
+<summary>
+ Open the given file to write in binary-mode 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_out(System.String)">
+<summary>
+ Open the given file to write in text-mode using the
+ System.Text.Encoding.Default encoding
+
+ See output_char for a description of CR-LF translation
+ done on output.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.set_binary_mode_in(System.IO.TextReader,System.Boolean)">
+<summary>
+ Set the binary mode to true or false. If the binary mode is changed from &quot;true&quot; to 
+ &quot;false&quot; then a StreamReader is created to read the binary stream. The StreamReader uses 
+ the default text encoding System.Text.Encoding.Default
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.seek_in(System.IO.TextReader,System.Int32)">
+<summary>
+ Reads bytes from the channel. Blocks if the bytes are not available.
+ For text channels this only accepts UTF-16 bytes with an encoding less than 256.
+ Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.really_input(System.IO.TextReader,System.Byte[],System.Int32,System.Int32)">
+<summary>
+ Reads bytes from the channel. Blocks if the bytes are not available.
+ See &apos;input&apos; for treatment of text channels.
+ Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.pos_in(System.IO.TextReader)">
+<summary>
+ Report the current position in the input channel
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input_value``1(System.IO.TextReader)">
+<summary>
+ Input a single serialized value from a binary stream. Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input_line(System.IO.TextReader)">
+<summary>
+ Input a single line. Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input_char(System.IO.TextReader)">
+<summary>
+ Input a single character. Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input_byte(System.IO.TextReader)">
+<summary>
+ Input a single byte. 
+ For text channels this only accepts characters with a UTF16 encoding that fits in a byte, e.g. ASCII.
+ Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input_binary_int(System.IO.TextReader)">
+<summary>
+ Input a binary integer from a binary channel. Compatible with output_binary_int.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input_chars(System.IO.TextReader,System.Char[],System.Int32,System.Int32)">
+<summary>
+ Attempt to input characters from a channel. Does not block if inpout is not available.
+ Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+
+ No CRLF translation is done on input, even in text mode. That is, if an input file
+ has &apos;\r\n&apos; (CRLF) line terminators both characters will be seen in the input.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.input(System.IO.TextReader,System.Byte[],System.Int32,System.Int32)">
+<summary>
+ Attempt to input the given number of bytes from the channel, writing them into the
+ buffer at the given start position. Does not block if the bytes are not available.
+
+ The use of this function with a channel performing byte-to-character translation (e.g. one
+ created with open_in, open_in_utf8 or open_in_encoded, or one 
+ or built from a StreamReader or TextReader) is not recommended.
+ Instead, open the channel using open_in_bin or InChannel.of_BinaryReader.
+
+ If used with a StreamReader channel, i.e. one created using 
+ open_in, open_in_utf8 or open_in_encoded, or one 
+ or built from a StreamReader, this function reads bytes directly from the underlying
+ BaseStream. This may not be appropriate if any other input techniques are being
+ used on the channel.
+
+ If used with a TextReader channel (e.g. stdin), this function reads characters from the
+ stream and then fills some of the byte array with the decoding of these into 
+ bytes, where the decoding is performed using the System.Text.Encoding.Default encoding
+
+ Raise End_of_file (= System.IO.EndOfStreamException) if end of file reached.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.in_channel_length(System.IO.TextReader)">
+<summary>
+ Return the length of the input channel
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.close_in(System.IO.TextReader)">
+<summary>
+ Close the channel
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_in_gen(Microsoft.FSharp.Collections.FSharpList{Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_flag},System.Int32,System.String)">
+<summary>
+ Open the given file in the mode specified by the given flags
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_in_bin(System.String)">
+<summary>
+ Open the given file to read in binary-mode 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.open_in(System.String)">
+<summary>
+ Open the given file to read. 
+
+In the absence of an explicit encoding (e.g. using Open_encoding) open_in
+uses the default text encoding (System.Text.Encoding.Default). If you want to read a file
+regardless of encoding then you should use binary modes. Note that .NET&apos;s 
+&quot;new StreamReader&quot; function defaults to use a utf8 encoding, and also attempts
+to determine an automatic encoding by looking for &quot;byteorder-marks&quot; at the head
+of a text file. This function does not do this.
+
+ No CR-LF translation is done on input.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.neg_infinity">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.modf(System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.mod_float(System.Double,System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.epsilon_float">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+ The smallest value that when added to 1.0 gives a different value to 1.0
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.min_float">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+ The lowest non-denormalized positive IEEE64 float
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.max_float">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+ The highest representable positive value in the &apos;float&apos; type
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_DivideDot(System.Double,System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML. In F#
+ the overloaded operators may be used.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_TwiddlePlusDot(System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML. In F#
+ the overloaded operators may be used.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_TwiddleMinusDot(System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML. In F#
+ the overloaded operators may be used.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_MinusDot(System.Double,System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML. In F#
+ the overloaded operators may be used.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_PlusDot(System.Double,System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML. In F#
+ the overloaded operators may be used.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_MultiplyDot(System.Double,System.Double)">
+<summary>
+ This value is present primarily for compatibility with other versions of ML
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Invalid_argument(System.String)">
+<summary>
+ The exception thrown by &lt;c&gt;invalid_arg&lt;/c&gt; and misues of F# library functions
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.int_neg(System.Int32)">
+<summary>
+ Negation on integers of the &apos;int&apos; type
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.max_int">
+<summary>
+ The highest representable value in the &apos;int&apos; type
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.min_int">
+<summary>
+ The lowest representable value in the &apos;int&apos; type
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.succ(System.Int32)">
+<summary>
+ n+1 (no overflow checking)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.pred(System.Int32)">
+<summary>
+ n-1 (no overflow checking)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_ArrayAssign``1(``0[],System.Int32,``0)">
+<summary>
+ 1D Array element set-accessor (&apos;setter&apos;)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_ArrayLookup``1(``0[],System.Int32)">
+<summary>
+ 1D Array element get-accessor (&apos;getter&apos;)
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_BangEquals``1(``0,``0)">
+<summary>
+ Negation of the &apos;==&apos; operator, see also Obj.eq
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.op_EqualsEquals``1(``0,``0)">
+<summary>
+Reference/physical equality. 
+True if boxed versions of the inputs are reference-equal, OR if
+both are value types and the implementation of Object.Equals for the type
+of the first argument returns true on the boxed versions of the inputs. 
+
+In normal use on reference types or non-mutable value types this function 
+has the following properties:
+   - returns &apos;true&apos; for two F# values where mutation of data
+     in mutable fields of one affects mutation of data in the other
+   - will return &apos;true&apos; if (=) returns true
+   - hashq will return equal hashes if (==) returns &apos;true&apos;
+
+The use on mutable value types is not recommended.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Assert_failure">
+<summary>
+ The exception thrown by &apos;assert&apos; failures.
+ A future release of F# may map this exception to a corresponding .NET exception.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Match_failure">
+<summary>
+  Non-exhaustive match failures will raise Match failures
+ A future release of F# may map this exception to a corresponding .NET exception.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.list`1">
+<summary>
+The type of simple immutable lists 
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.option`1">
+<summary>
+The type of None/Some options
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.ref`1">
+<summary>
+The type of pointers to mutable reference cells
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_Append``1(Microsoft.FSharp.Collections.FSharpList{``0},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Concatenate two lists.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_Concatenate(System.String,System.String)">
+<summary>
+ Concatenate two strings. The overlaoded operator &apos;+&apos; may also be used.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.exit``1(System.Int32)">
+<summary>
+Exit the current hardware isolated process, if security settings permit,
+otherwise raise an exception. Calls System.Environment.Exit.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.incr(Microsoft.FSharp.Core.FSharpRef{System.Int32})">
+<summary>
+Increment a mutable reference cell containing an integer
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.decr(Microsoft.FSharp.Core.FSharpRef{System.Int32})">
+<summary>
+Decrement a mutable reference cell containing an integer
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.raise``1(System.Exception)">
+<summary>
+ Throw an exception
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.failwith``1(System.String)">
+<summary>
+ Throw a &apos;Failure&apos; exception
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.ref``1(``0)">
+<summary>
+Create a mutable reference cell
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_ColonEquals``1(Microsoft.FSharp.Core.FSharpRef{``0},``0)">
+<summary>
+Assign to a mutable reference cell
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_Dereference``1(Microsoft.FSharp.Core.FSharpRef{``0})">
+<summary>
+Dereference a mutable reference cell
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.abs(System.Int32)">
+<summary>
+Absolute value of the given integer
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.hash``1(``0)">
+<summary>
+The &quot;hash&quot; function is a structural hash function. It is 
+designed to return equal hash values for items that are 
+equal according to the polymorphic equality 
+function Pervasives.(=) (i.e. the standard &quot;=&quot; operator).
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.min``1(``0,``0)">
+<summary>
+Minimum based on structural comparison
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.max``1(``0,``0)">
+<summary>
+Maximum based on structural comparison
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.compare``1(``0,``0)">
+<summary>
+Structural comparison
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_GreaterThanOrEqual``1(``0,``0)">
+<summary>
+Structural greater-than-or-equal
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_GreaterThan``1(``0,``0)">
+<summary>
+Structural greater-than
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_Equality``1(``0,``0)">
+<summary>
+Structural equality
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_Inequality``1(``0,``0)">
+<summary>
+Structural inequality
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_LessThanOrEqual``1(``0,``0)">
+<summary>
+Structural less-than-or-equal comparison
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives.op_LessThan``1(``0,``0)">
+<summary>
+Structural less-than comparison
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule.Pervasives">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PervasivesModule">
+<summary>
+Pervasives: Additional OCaml-compatible bindings 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.PrintexcModule">
+<summary>
+ Compatibility module to display data about exceptions.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.SByteModule">
+<summary>
+ Simple operations on signed bytes
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.SeqModule">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.SetModule.Provider`2">
+<summary>
+A collection of operations for creating and using sets based on a particular comparison function.
+The &apos;Tag&apos; type parameter is used to track information about the comparison function.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SetModule.MakeTagged``2(``0)">
+<summary>
+A functor to build a collection of operations for creating and using 
+ sets based on the given comparison function. This returns a record that 
+ contains the functions you use to create and manipulate maps of
+ this kind.  The returned value is much like an ML module. 
+
+ To use this function you need to define a new named class that implements IComparer and
+ pass an instance of that class as the first argument. For example:
+      type MyComparer() = 
+          interface IComparer&lt;string&gt; with 
+            member self.Compare(x,y) = ...
+
+ let MyStringSetProvider = Set.MakeTagged(new MyComparer())
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SetModule.Make``1(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,System.Int32}})">
+<summary>
+ Build a collection of operations for creating and using 
+ maps based on a single consistent comparison function. This returns a record
+ that contains the functions you use to create and manipulate maps all of which 
+ use this comparison function.  The returned value is much like an ML module. 
+
+ Use MakeTagged if you want additional type safety that guarantees that two sets
+ based on different comparison functions can never be combined in inconsistent ways.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.SetModule">
+<summary>
+ Immutable sets implemented via binary trees
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.uppercase(System.String)">
+<summary>
+ Return a string with all characters converted to uppercase.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.rindex_from(System.String,System.Int32,System.Char)">
+<summary>
+ Return the index of the first occurrence of the given character 
+ starting from the given index proceeding backwards.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.rindex(System.String,System.Char)">
+<summary>
+ Return the index of the first occurrence of the given character 
+ from the end of the string proceeding backwards
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.rcontains_from(System.String,System.Int32,System.Char)">
+<summary>
+ Return true if the string contains the given character prior to the given index
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.index_from(System.String,System.Int32,System.Char)">
+<summary>
+ Return the first index of the given character in the
+ range from the given start position to the end of the string.  
+ Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if
+ the string does not contain the given character.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.index(System.String,System.Char)">
+<summary>
+ Return the first index of the given character in the
+ string.  Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if
+ the string does not contain the given character.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.contains_from(System.String,System.Int32,System.Char)">
+<summary>
+ Return true is the given string contains the given character in the
+ range from the given start index to the end of the string.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.contains_between(System.String,System.Int32,System.Int32,System.Char)">
+<summary>
+ Return true is the given string contains the given character in the
+ range specified by the given start index and the given length
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.contains(System.String,System.Char)">
+<summary>
+ Return true is the given string contains the given character
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.of_char(System.Char)">
+<summary>
+ Return s string of length 1 containing the given character
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.make(System.Int32,System.Char)">
+<summary>
+ Return a string of the given length containing repetitions of the given character
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.lowercase(System.String)">
+<summary>
+ Return a new string with all characters converted to lowercase
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.sub(System.String,System.Int32,System.Int32)">
+<summary>
+ Return a substring of length &apos;length&apos; starting index &apos;start&apos;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.get(System.String,System.Int32)">
+<summary>
+ Returns the character at the specified position in the string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.compare(System.String,System.String)">
+<summary>
+ Compare the given strings using ordinal comparison
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.trim(Microsoft.FSharp.Collections.FSharpList{System.Char})">
+<summary>
+ Removes all occurrences of a set of characters specified in a
+ list from the beginning and end of this instance.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.split(Microsoft.FSharp.Collections.FSharpList{System.Char})">
+<summary>
+ Split the string using the given list of separator characters.
+ Trimming is also performed at both ends of the string and any empty
+ strings that result from the split are discarded.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.uncapitalize(System.String)">
+<summary>
+ Return a string with the first character converted to lowercase.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.StringModule.capitalize(System.String)">
+<summary>
+ Return a string with the first character converted to uppercase.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.StringModule">
+<summary>
+ Compatibility module for string processing.  Richer string operations
+ are available via the member functions on strings and other functionality in
+ the &lt;c&gt;System.String&lt;/c&gt; type
+ and the &lt;c&gt;System.Text.RegularExpressions&lt;/c&gt; namespace.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.time">
+<summary>
+ Time consumed by the main thread. (for approximate timings).
+ Generally returns only the processor time used by the main 
+ thread of the application.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.SysModule.word_size">
+<summary>
+ The number of bits in the &quot;int&quot; type.
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.SysModule.executable_name">
+<summary>
+ Path of the current executable, using
+ &lt;c&gt;System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,System.AppDomain.CurrentDomain.FriendlyName)&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.command(System.String)">
+<summary>
+ Run the command and return it&apos;s exit code.
+
+ Warning: &apos;command&apos; currently attempts to execute the string using 
+ the &apos;cmd.exe&apos; shell processor.  If it is not present on the system 
+ then the operation will fail.  Use System.Diagnostics.Process 
+ directly to run commands in a portable way, which involves specifying 
+ the program to run and the arguments independently.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.getcwd">
+<summary>
+ Returns the current working directory for the process using &lt;c&gt;System.IO.Directory.GetCurrentDirectory&lt;/c&gt;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.chdir(System.String)">
+<summary>
+ Sets the current working directory for the process using &lt;c&gt;System.IO.Directory.SetCurrentDirectory&lt;/c&gt; 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.rename(System.String,System.String)">
+<summary>
+ Rename a file on disk using System.IO.File.Move  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.remove(System.String)">
+<summary>
+ Deletes a file using &lt;c&gt;System.IO.File.Delete&lt;/c&gt;.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.getenv(System.String)">
+<summary>
+ Call System.Environment.GetEnvironmentVariable. Raise &lt;c&gt;KeyNotFoundException&lt;/c&gt; if the variable is not defined.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compatibility.OCaml.SysModule.file_exists(System.String)">
+<summary>
+ Returns true if a file currently exists, using System.IO.File.Exists(s).
+</summary>
+</member>
+<member name="P:Microsoft.FSharp.Compatibility.OCaml.SysModule.argv">
+<summary>
+ The array of command line options. Gives the command line arguments
+ as returned by &lt;c&gt;System.Environment.GetCommandLineArgs&lt;/c&gt;.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.SysModule">
+<summary>
+ Sys: Basic system operations (for ML compatibility)
+
+ This module is only included to make it possible to cross-compile 
+ code with other ML compilers.  It may be deprecated and/or removed in 
+ a future release. You may wish to use .NET functions directly instead. 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.UInt32Module">
+<summary>
+ UInt32: ML-like operations on 32-bit System.UInt32 numbers.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compatibility.OCaml.UInt64Module">
+<summary>
+ UInt64: basic operations on 64-bit System.UInt64 numbers.
+</summary>
+</member>
+</members>
+</doc>

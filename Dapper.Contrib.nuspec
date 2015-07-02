@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Dapper.Contrib</id>
+    <version>1.44</version>
+    <authors>Sam Saffron,Johan Danforth</authors>
+    <owners>Johan Danforth, Marc Gravell</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/StackExchange/dapper-dot-net</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional "dirty" tracking of interface-based entities.</description>
+    <tags>orm sql micro-orm dapper</tags>
+    <releaseNotes>
+      * 1.44    - Specific insert adapters for sql/sql ce. Faster inserts for sql server now
+      * 1.43    - GetDatebaseType delegate for Insert, TableNameMapper, Insert now handles closed connection and supports short/int16 id/key
+      * 1.42    - InsertAsync() UpdateAsync() and DeleteAsync() now also handles lists of entities (.NET 4.5 only)
+      * 1.41    - added GetAll(). Insert() Update() and Delete() now handles lists of entities!
+      * 1.40    - cumulative changes up to dapper 1.40; will track changes more carefully subsequently
+    </releaseNotes>
+    <dependencies>
+      <dependency id="Dapper" version="1.40" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="Dapper.Contrib NET45\bin\Release\Dapper.Contrib.*" target="lib\net45" />
+    <file src="Dapper.Contrib\bin\Release\Dapper.Contrib.*" target="lib\net40" />
+  </files>
+</package>

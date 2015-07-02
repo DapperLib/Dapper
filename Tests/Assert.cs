@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+#if DNXCORE50
+using ApplicationException = global::System.InvalidOperationException;
+#endif
+
 namespace SqlMapper
 {
     static class Assert
@@ -24,6 +28,10 @@ namespace SqlMapper
             }
         }
 
+        public static void Fail()
+        {
+            throw new ApplicationException("Expectation failed");
+        }
         public static void IsFalse(this bool b)
         {
             if (b)

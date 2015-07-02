@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Dapper.SqlBuilder</id>
+    <version>1.40.0</version>
+    <authors>Sam Saffron,Johan Danforth</authors>
+    <owners>Sam Saffron,Johan Danforth</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://code.google.com/p/dapper-dot-net/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <title>Dapper SqlBuilder component</title>
+    <description>The Dapper SqlBuilder component to build SQL queries dynamically.</description>
+    <tags>orm sql micro-orm query sql sql-builder</tags>
+    <dependencies>
+      <dependency id="Dapper" version="1.40" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="Dapper.SqlBuilder NET45\bin\Release\Dapper.SqlBuilder.*" target="lib\net45" />
+    <file src="Dapper.SqlBuilder\bin\Release\Dapper.SqlBuilder.*" target="lib\net40" />
+  </files>
+</package>

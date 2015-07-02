@@ -1,13 +1,13 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Dapper.Contrib.Extensions;
-using System.Collections.Generic;
-using System;
-using Dapper;
+using System.Transactions;
 
+using Dapper.Contrib.Extensions;
 
 namespace Dapper.Contrib.Tests
 {
@@ -26,11 +26,28 @@ namespace Dapper.Contrib.Tests
         public int Age { get; set; }
     }
 
+    public class Person
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    [Table("Stuff")]
+    public class Stuff
+    {
+        [Key]
+        public short TheId { get; set; }
+        public string Name { get; set; }
+        public DateTime? Created { get; set; }
+    }
+
     [Table("Automobiles")]
     public class Car
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        [Computed]
+        public string Computed { get; set; }
     }
 
     [Table("Results")]
@@ -53,16 +70,49 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
+        private IDbConnection GetConnection()
+        {
+            var projLoc = Assembly.GetAssembly(GetType()).Location;
+            var projFolder = Path.GetDirectoryName(projLoc);
+
+            var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+            return connection;
+        }
+
+        public void ShortIdentity()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Stuff() { Name = "First item" });
+                id.IsEqualTo(1);
+                var item = connection.Get<Stuff>(1);
+                item.TheId.IsEqualTo((short)1);
+            }
+        }
+
+        public void NullDateTime()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.Insert(new Stuff() { Name = "First item" });
+                connection.Insert(new Stuff() { Name = "Second item", Created = DateTime.Now });
+                var stuff = connection.Query<Stuff>("select * from stuff").ToList();
+                stuff.First().Created.IsNull();
+                stuff.Last().Created.IsNotNull();
+
+            }
+        }
+
         public void TableName()
         {
             using (var connection = GetOpenConnection())
             {
                 // tests against "Automobiles" table (Table attribute)
-                connection.Insert(new Car {Name = "Volvo"});
+                connection.Insert(new Car { Name = "Volvo" }).IsEqualTo(1);
                 connection.Get<Car>(1).Name.IsEqualTo("Volvo");
-                connection.Update(new Car() {Id = 1, Name = "Saab"}).IsEqualTo(true);
+                connection.Update(new Car() { Id = 1, Name = "Saab" }).IsEqualTo(true);
                 connection.Get<Car>(1).Name.IsEqualTo("Saab");
-                connection.Delete(new Car() {Id = 1}).IsEqualTo(true);
+                connection.Delete(new Car() { Id = 1 }).IsEqualTo(true);
                 connection.Get<Car>(1).IsNull();
             }
         }
@@ -79,13 +129,99 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void TestClosedConnection()
+        {
+            using (var connection = GetConnection())
+            {
+                connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
+                var users = connection.GetAll<User>();
+                users.Count().IsMoreThan(0);
+            }
+        }
+
+        public void InsertList()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+            }
+
+        }
+
+        public void UpdateList()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                foreach (var user in users)
+                {
+                    user.Name = user.Name + " updated";
+                }
+                connection.Update(users);
+                var name = connection.Query<User>("select * from users").First().Name;
+                name.Contains("updated").IsTrue();
+            }
+
+        }
+
+        public void DeleteList()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+
+                var usersToDelete = users.Take(10).ToList();
+                connection.Delete(usersToDelete);
+                users = connection.Query<User>("select * from users").ToList();
+                users.Count.IsEqualTo(numberOfEntities - 10);
+            }
+
+        }
+
         public void InsertGetUpdate()
         {
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 connection.Get<User>(3).IsNull();
 
-                var id = connection.Insert(new User {Name = "Adam", Age = 10});
+                //insert with computed attribute that should be ignored
+                connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
+
+                var id = connection.Insert(new User { Name = "Adam", Age = 10 });
 
                 //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
@@ -112,6 +248,121 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void InsertWithCustomDbType()
+        {
+            SqlMapperExtensions.GetDatabaseType = conn => "SQLiteConnection";
+
+            bool sqliteCodeCalled = false;
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                connection.Get<User>(3).IsNull();
+                try
+                {
+                    var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+                }
+                catch (SqlCeException ex)
+                {
+                    sqliteCodeCalled = ex.Message.IndexOf("There was an error parsing the query", StringComparison.InvariantCultureIgnoreCase) >= 0;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            SqlMapperExtensions.GetDatabaseType = null;
+
+            if (!sqliteCodeCalled)
+            {
+                throw new Exception("Was expecting sqlite code to be called");
+            }
+        }
+
+        public void InsertWithCustomTableNameMapper()
+        {
+
+            SqlMapperExtensions.TableNameMapper = (type) =>
+            {
+                switch (type.Name)
+                {
+                    case "Person":
+                        return "People";
+                    default:
+                        var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
+                        if (tableattr != null)
+                            return tableattr.Name;
+
+                        var name = type.Name + "s";
+                        if (type.IsInterface && name.StartsWith("I"))
+                            name = name.Substring(1);
+                        return name;
+                }
+            };
+
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Person() { Name = "Mr Mapper" });
+                id.IsEqualTo(1);
+                var people = connection.GetAll<Person>();
+            }
+        }
+
+        public void GetAll()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.GetAll<User>().ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                var iusers = connection.GetAll<IUser>().ToList();
+                iusers.Count.IsEqualTo(numberOfEntities);
+            }
+
+        }
+
+        public void Transactions()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Car { Name = "one car" });   //insert outside transaction
+
+                var tran = connection.BeginTransaction();
+                var car = connection.Get<Car>(id, tran);
+                var orgName = car.Name;
+                car.Name = "Another car";
+                connection.Update(car, tran);
+                tran.Rollback();
+
+                car = connection.Get<Car>(id);  //updates should have been rolled back
+                car.Name.IsEqualTo(orgName);
+            }
+        }
+
+        public void TransactionScope()
+        {
+            using (var connection = GetConnection())
+            {
+                using (var txscope = new TransactionScope())
+                {
+                    connection.Open();  //connection MUST be opened inside the transactionscope
+
+                    var id = connection.Insert(new Car { Name = "one car" });   //inser car within transaction
+
+                    txscope.Dispose();  //rollback
+
+                    connection.Get<Car>(id).IsNull();   //returns null - car with that id should not exist
+                }
+            }
+        }
+
         public void InsertCheckKey()
         {
             using (var connection = GetOpenConnection())
@@ -133,7 +384,7 @@ namespace Dapper.Contrib.Tests
                 {
                     var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
                     data.Add(nU);
-                    nU.Id = (int)connection.Insert<User>(nU);
+                    nU.Id = (int)connection.Insert(nU);
                 }
 
                 var builder = new SqlBuilder();
@@ -156,13 +407,14 @@ namespace Dapper.Contrib.Tests
         public void BuilderTemplateWOComposition()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new {age = 5});
+            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new { age = 5 });
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");
 
             using (var connection = GetOpenConnection())
             {
+                connection.DeleteAll<User>();
                 connection.Insert(new User { Age = 5, Name = "Testy McTestington" });
 
                 if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
@@ -172,11 +424,12 @@ namespace Dapper.Contrib.Tests
 
         public void InsertFieldWithReservedName()
         {
-            using (var conneciton = GetOpenConnection())
+            using (var connection = GetOpenConnection())
             {
-                var id = conneciton.Insert(new Result() { Name = "Adam", Order = 1 });
+                connection.DeleteAll<User>();
+                var id = connection.Insert(new Result() { Name = "Adam", Order = 1 });
 
-                var result = conneciton.Get<Result>(id);
+                var result = connection.Get<Result>(id);
                 result.Order.IsEqualTo(1);
             }
 
@@ -188,7 +441,7 @@ namespace Dapper.Contrib.Tests
             {
                 var id1 = connection.Insert(new User() { Name = "Alice", Age = 32 });
                 var id2 = connection.Insert(new User() { Name = "Bob", Age = 33 });
-                connection.DeleteAll<User>();
+                connection.DeleteAll<User>().IsTrue();
                 connection.Get<User>(id1).IsNull();
                 connection.Get<User>(id2).IsNull();
             }
@@ -196,3 +449,4 @@ namespace Dapper.Contrib.Tests
 
     }
 }
+

@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.SqlServerCe;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Dapper.Contrib.Tests
 {
@@ -15,6 +11,8 @@ namespace Dapper.Contrib.Tests
         {
             Setup();
             RunTests();
+                Console.WriteLine("Press any key...");
+            Console.ReadKey();
         }
 
         private static void Setup()
@@ -30,6 +28,8 @@ namespace Dapper.Contrib.Tests
             using (var connection = new SqlCeConnection(connectionString))
             {
                 connection.Open();
+                connection.Execute(@" create table Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null) ");
+                connection.Execute(@" create table People (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@" create table Results (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, [Order] int not null) ");
@@ -46,7 +46,6 @@ namespace Dapper.Contrib.Tests
                 method.Invoke(tester, null);
                 Console.WriteLine(" - OK!");
             }
-            Console.ReadKey();
         }
 
     }

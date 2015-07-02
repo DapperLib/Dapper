@@ -1,0 +1,67 @@
+﻿{
+    "authors": [ "Sam Saffron", "Marc Gravell" ],
+    "owners": [ "Sam Saffron", "Marc Gravell" ],
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "summary": "A high performance Micro-ORM",
+    "description": "A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..",
+    "version": "1.41-beta5",
+    "compile": [ "../Dapper NET40/*.cs", "../Dapper NET45/*.cs" ],
+    "title": "Dapper dot net",
+    "tags": [ "orm", "sql", "micro-orm" ],
+    "frameworks": {
+        "net45": {
+            "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+            "dependencies": {
+                 "System.Runtime": "4.0.20-beta-22816"
+            },
+            "frameworkAssemblies": {
+                "System.Data": "4.0.0.0"
+            }
+        },
+        "net40": {
+            "compilationOptions": { "warningsAsErrors": true },
+            "dependencies": {
+            },
+            "frameworkAssemblies": {
+                "System.Data": "4.0.0.0"
+            }
+        },
+        //"net35": {
+        //    "compilationOptions": { "warningsAsErrors": true, "languageVersion": "csharp3", "define": ["CSHARP30"] },
+        //    "dependencies": {
+        //    },
+        //    "frameworkAssemblies": {
+        //        "System.Data":  "4.0.0.0"
+        //    }
+        //},
+        "dnx451": {
+            "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+            "dependencies": {
+            },
+            "frameworkAssemblies": {
+                "System.Data": "4.0.0.0"
+            }
+        },
+        "dnxcore50": {
+            "compilationOptions": { "define": [ "ASYNC"], "warningsAsErrors": true },
+            "dependencies": {
+                "System.Text.RegularExpressions": "4.0.10-beta-*",
+                "System.Collections": "4.0.10-beta-*",
+                "System.Collections.Concurrent": "4.0.10-beta-*",
+                "System.Linq": "4.0.0-beta-*",
+                "System.Threading": "4.0.10-beta-*",
+                "Microsoft.CSharp": "4.0.0-beta-*",
+                "System.Reflection": "4.0.10-beta-*",
+                "System.Reflection.Emit": "4.0.0-beta-*",
+                "System.Reflection.Emit.ILGeneration": "4.0.0-beta-*",
+                "System.Reflection.Emit.Lightweight": "4.0.0-beta-*",
+                "System.Reflection.TypeExtensions": "4.0.0-beta-*",
+                "System.Data.Common": "4.0.0-beta-*",
+                "System.Runtime.Extensions": "4.0.10-beta-*",
+                "System.Text.Encoding.CodePages": "4.0.0-beta-*",
+                "System.Globalization":  "4.0.10-beta-*"
+            }
+        }
+    }
+}

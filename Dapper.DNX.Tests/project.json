@@ -1,0 +1,53 @@
+﻿{
+  "version": "1.0.0-*",
+  "dependencies": {
+    "Dapper": "1.41-*"
+  },
+  "commands": {
+    "Dapper.DNX.Tests": "Dapper.DNX.Tests"
+  },
+  "compile": [ "../Tests/Tests.cs", "../Tests/Program.cs", "../Tests/Assert.cs", "../DapperTests NET45/Tests.cs" ],
+  "compilationOptions": { "define": [ "NOEXTERNALS" ] },
+  "frameworks": {
+    "net45": {
+      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+      "dependencies": {
+        "System.Threading.Thread": "4.0.0-beta-22816"
+      },
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
+      }
+    },
+    "net40": {
+      "dependencies": {
+      },
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
+      }
+    },
+    "dnx451": {
+      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
+      }
+
+    },
+    "dnxcore50": {
+      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+      "dependencies": {
+        "System.Console": "4.0.0-beta-*",
+        "System.Reflection": "4.0.10-beta-*",
+        "System.Linq": "4.0.0-beta-*",
+        "System.Data.Common": "4.0.0-beta-*",
+        "System.Data.SqlClient": "4.0.0-beta-*",
+        "System.Threading": "4.0.10-beta-*",
+        "System.Threading.Thread": "4.0.0-beta-*",
+        "System.Reflection.TypeExtensions": "4.0.0-beta-*"
+        //"System.Xml": "4.0.10-beta-*"
+      }
+    }
+  }
+}
