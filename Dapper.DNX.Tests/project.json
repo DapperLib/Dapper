@@ -46,7 +46,6 @@
         "System.Threading": "4.0.10-beta-*",
         "System.Threading.Thread": "4.0.0-beta-*",
         "System.Reflection.TypeExtensions": "4.0.0-beta-*"
-        //"System.Xml": "4.0.10-beta-*"
       }
     }
   }
