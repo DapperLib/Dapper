@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow</id>
-    <version>0.2.0</version>
+    <version>$version$</version>
     <title>Dapper.Rainbow</title>
     <authors>Sam Saffron</authors>
     <owners>Sam Saffron</owners>

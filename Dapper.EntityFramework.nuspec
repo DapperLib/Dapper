@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata schemaVersion="2">
     <id>Dapper.EntityFramework</id>
-    <version>1.37</version>
+    <version>$version$</version>
     <title>Dapper entity framework type handlers</title>
     <authors>Marc Gravell</authors>
     <owners>Marc Gravell</owners>
