@@ -5224,7 +5224,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// </summary>
         public static Func<IDbConnection, DbmsType> GetDbmsTypeFromConnection = (connection) =>
         {
-            string name = connection == null ? null : connection.GetType().Name;
+            string name = connection == null ? null : connection.GetType().Name.ToLowerInvariant();
             switch (name)
             {
                 case "npgsqlconnection":
