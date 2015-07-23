@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlServerCe;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Transactions;
-using Dapper;
+
 using Dapper.Contrib.Extensions;
 
 namespace Dapper.Contrib.Tests
@@ -25,6 +24,21 @@ namespace Dapper.Contrib.Tests
         public int Id { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
+    }
+
+    public class Person
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    [Table("Stuff")]
+    public class Stuff
+    {
+        [Key]
+        public short TheId { get; set; }
+        public string Name { get; set; }
+        public DateTime? Created { get; set; }
     }
 
     [Table("Automobiles")]
@@ -65,6 +79,30 @@ namespace Dapper.Contrib.Tests
             return connection;
         }
 
+        public void ShortIdentity()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Stuff() { Name = "First item" });
+                id.IsEqualTo(1);
+                var item = connection.Get<Stuff>(1);
+                item.TheId.IsEqualTo((short)1);
+            }
+        }
+
+        public void NullDateTime()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.Insert(new Stuff() { Name = "First item" });
+                connection.Insert(new Stuff() { Name = "Second item", Created = DateTime.Now });
+                var stuff = connection.Query<Stuff>("select * from stuff").ToList();
+                stuff.First().Created.IsNull();
+                stuff.Last().Created.IsNotNull();
+
+            }
+        }
+
         public void TableName()
         {
             using (var connection = GetOpenConnection())
@@ -88,6 +126,16 @@ namespace Dapper.Contrib.Tests
                 user.Id.IsEqualTo((int)id);
                 user.Name.IsEqualTo("Adama");
                 connection.Delete(user);
+            }
+        }
+
+        public void TestClosedConnection()
+        {
+            using (var connection = GetConnection())
+            {
+                connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
+                var users = connection.GetAll<User>();
+                users.Count().IsMoreThan(0);
             }
         }
 
@@ -197,13 +245,66 @@ namespace Dapper.Contrib.Tests
                 connection.Query<User>("select * from Users").Count().IsEqualTo(0);
 
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
-
-                //insert with custom sqladapter
-                connection.Insert(new User { Name = "Adam", Age = 10 }, sqlAdapter: new SqlServerAdapter()).IsMoreThan(0);
             }
         }
 
-       
+        public void InsertWithCustomDbType()
+        {
+            SqlMapperExtensions.GetDatabaseType = conn => "SQLiteConnection";
+
+            bool sqliteCodeCalled = false;
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                connection.Get<User>(3).IsNull();
+                try
+                {
+                    var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+                }
+                catch (SqlCeException ex)
+                {
+                    sqliteCodeCalled = ex.Message.IndexOf("There was an error parsing the query", StringComparison.InvariantCultureIgnoreCase) >= 0;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            SqlMapperExtensions.GetDatabaseType = null;
+
+            if (!sqliteCodeCalled)
+            {
+                throw new Exception("Was expecting sqlite code to be called");
+            }
+        }
+
+        public void InsertWithCustomTableNameMapper()
+        {
+
+            SqlMapperExtensions.TableNameMapper = (type) =>
+            {
+                switch (type.Name)
+                {
+                    case "Person":
+                        return "People";
+                    default:
+                        var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
+                        if (tableattr != null)
+                            return tableattr.Name;
+
+                        var name = type.Name + "s";
+                        if (type.IsInterface && name.StartsWith("I"))
+                            name = name.Substring(1);
+                        return name;
+                }
+            };
+
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Person() { Name = "Mr Mapper" });
+                id.IsEqualTo(1);
+                var people = connection.GetAll<Person>();
+            }
+        }
 
         public void GetAll()
         {

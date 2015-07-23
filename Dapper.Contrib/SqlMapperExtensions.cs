@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -24,6 +23,14 @@ namespace Dapper.Contrib.Extensions
             bool IsDirty { get; set; }
         }
 
+        public interface ITableNameMapper
+        {
+            string GetTableName(Type type);
+        }
+
+        public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
+        public delegate string TableNameMapperDelegate(Type type);
+
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
@@ -32,6 +39,7 @@ namespace Dapper.Contrib.Extensions
 
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary = new Dictionary<string, ISqlAdapter> {
 																							{"sqlconnection", new SqlServerAdapter()},
+																							{"sqlceconnection", new SqlCeServerAdapter()},
 																							{"npgsqlconnection", new PostgresAdapter()},
 																							{"sqliteconnection", new SQLiteAdapter()}
 																						};
@@ -170,7 +178,7 @@ namespace Dapper.Contrib.Extensions
         public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            var cacheType = typeof (List<T>);
+            var cacheType = typeof(List<T>);
 
             string sql;
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
@@ -184,7 +192,7 @@ namespace Dapper.Contrib.Extensions
                 var name = GetTableName(type);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name ;
+                sql = "select * from " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
@@ -207,24 +215,38 @@ namespace Dapper.Contrib.Extensions
             return list;
         }
 
+        /// <summary>
+        /// Specify a custom table name mapper based on the POCO type name
+        /// </summary>
+        public static TableNameMapperDelegate TableNameMapper;
+
         private static string GetTableName(Type type)
         {
             string name;
-            if (!TypeTableName.TryGetValue(type.TypeHandle, out name))
-            {
-                name = type.Name + "s";
-                if (type.IsInterface && name.StartsWith("I"))
-                    name = name.Substring(1);
+            if (TypeTableName.TryGetValue(type.TypeHandle, out name)) return name;
 
+            if (TableNameMapper != null)
+            {
+                name = TableNameMapper(type);
+            }
+            else
+            {
                 //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
-                var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as
-                    dynamic;
+                var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
                 if (tableattr != null)
                     name = tableattr.Name;
-                TypeTableName[type.TypeHandle] = name;
+                else
+                {
+                    name = type.Name + "s";
+                    if (type.IsInterface && name.StartsWith("I"))
+                        name = name.Substring(1);
+                }
             }
+
+            TypeTableName[type.TypeHandle] = name;
             return name;
         }
+
 
         /// <summary>
         /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
@@ -232,11 +254,10 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
-            int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var isList = false;
-            
+
             var type = typeof(T);
 
             if (type.IsArray || type.IsGenericType)
@@ -269,17 +290,24 @@ namespace Dapper.Contrib.Extensions
                     sbParameterList.Append(", ");
             }
 
+            int returnVal;
+            var wasClosed = connection.State == ConnectionState.Closed;
+            if (wasClosed) connection.Open();
+
             if (!isList)    //single entity
             {
-                if(sqlAdapter == null)
-                sqlAdapter = GetFormatter(connection);
-                return sqlAdapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                var adapter = GetFormatter(connection);
+                returnVal = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
-            
-            //insert list of entities
-            var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
-            return connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            else
+            {
+                //insert list of entities
+                var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
+                returnVal = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            }
+            if (wasClosed) connection.Close();
+            return returnVal;
         }
 
         /// <summary>
@@ -318,7 +346,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < nonIdProps.Count(); i++)
             {
                 var property = nonIdProps.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                sb.AppendFormat("[{0}] = @{1}", property.Name, property.Name);
                 if (i < nonIdProps.Count() - 1)
                     sb.AppendFormat(", ");
             }
@@ -326,7 +354,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count(); i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                sb.AppendFormat("[{0}] = @{1}", property.Name, property.Name);
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
@@ -363,7 +391,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count(); i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                sb.AppendFormat("[{0}] = @{1}", property.Name, property.Name);
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
@@ -386,11 +414,29 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+        /// <summary>
+        /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
+        /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
+        /// </summary>
+        public static GetDatabaseTypeDelegate GetDatabaseType;
+
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
-            var name = connection.GetType().Name.ToLower();
-            return !AdapterDictionary.ContainsKey(name) ? 
-                new SqlServerAdapter() : 
+            string name;
+            if (GetDatabaseType != null)
+            {
+                name = GetDatabaseType(connection);
+                if (name != null)
+                    name = name.ToLower();
+            }
+            else
+            {
+                name = connection.GetType().Name.ToLower();
+            }
+
+            return !AdapterDictionary.ContainsKey(name) ?
+                new SqlServerAdapter() :
                 AdapterDictionary[name];
         }
 
@@ -552,8 +598,8 @@ namespace Dapper.Contrib.Extensions
             Name = tableName;
         }
 
-// ReSharper disable once MemberCanBePrivate.Global
-// ReSharper disable once UnusedAutoPropertyAccessor.Global
+        // ReSharper disable once MemberCanBePrivate.Global
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string Name { get; set; }
     }
 
@@ -588,19 +634,45 @@ public partial class SqlServerAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
-        connection.Execute(cmd, entityToInsert,  transaction,  commandTimeout);
+        var cmd = String.Format("insert into {0} ({1}) values ({2});select SCOPE_IDENTITY() id", tableName, columnList, parameterList);
+        var multi = connection.QueryMultiple(cmd,entityToInsert , transaction, commandTimeout);
 
-        //NOTE: would prefer to use IDENT_CURRENT('tablename') or IDENT_SCOPE but these are not available on SQLCE
-        var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
-        var id = (int)r.First().id;
+        var id = (int)multi.Read().First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Any())
-            propertyInfos.First().SetValue(entityToInsert, id, null);
+        if (!propertyInfos.Any()) return id;
+
+        var idProperty = propertyInfos.First();
+        if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
+            idProperty.SetValue(entityToInsert, (Int16)id, null);
+        else
+            idProperty.SetValue(entityToInsert, id, null);
         return id;
     }
 }
+
+public partial class SqlCeServerAdapter : ISqlAdapter
+{
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
+        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+        var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+
+        var id = r.First().id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (propertyInfos.Any())
+        {
+            var idProperty = propertyInfos.First();
+            if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
+                idProperty.SetValue(entityToInsert, (Int16)id, null);
+            else
+                idProperty.SetValue(entityToInsert, (int)id, null);
+        }
+        return (int)id;
+    }
+}
+
 
 public partial class PostgresAdapter : ISqlAdapter
 {
@@ -645,11 +717,8 @@ public partial class SQLiteAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
-
-        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-
-        var r = connection.Query("select last_insert_rowid() id", transaction: transaction, commandTimeout: commandTimeout);
+        var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
+        var r = connection.Query(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
         var id = (int)r.First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (propertyInfos.Any())
