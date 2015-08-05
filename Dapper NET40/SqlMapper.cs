@@ -2759,9 +2759,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
+				DbType dbType = 0;
                 foreach (var item in list)
                 {
-                    count++;
+                    if (count++ == 0)
+                    {
+                        ITypeHandler handler;
+                        dbType = LookupDbType(item.GetType(), "", true, out handler);
+                    }
                     var listParam = command.CreateParameter();
                     listParam.ParameterName = namePrefix + count;
                     if (isString)
@@ -2780,6 +2785,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     else
                     {
                         listParam.Value = SanitizeParameterValue(item);
+						if (listParam.DbType != dbType)
+                        {
+                            listParam.DbType = dbType;
+                        }
                         command.Parameters.Add(listParam);
                     }
                 }
