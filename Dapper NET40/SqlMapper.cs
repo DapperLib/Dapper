@@ -183,7 +183,13 @@ namespace Dapper
                 cmd.Transaction = transaction;
             cmd.CommandText = commandText;
             if (commandTimeout.HasValue)
+            {
                 cmd.CommandTimeout = commandTimeout.Value;
+            }
+            else if (SqlMapper.Settings.CommandTimeout.HasValue)
+            {
+                cmd.CommandTimeout = SqlMapper.Settings.CommandTimeout.Value;
+            }
             if (commandType.HasValue)
                 cmd.CommandType = commandType.Value;
             if (paramReader != null)
@@ -252,6 +258,30 @@ namespace Dapper
     /// </summary>
     static partial class SqlMapper
     {
+        /// <summary>
+        /// Permits specifying certain SqlMapper values globally.
+        /// </summary>
+        public static class Settings
+        {
+            static Settings()
+            {
+                SetDefaults();
+            }
+
+            /// <summary>
+            /// Resets all Settings to their default values
+            /// </summary>
+            public static void SetDefaults()
+            {
+                CommandTimeout = null;
+            }
+
+            /// <summary>
+            /// Specifies the default Command Timeout for all Queries
+            /// </summary>
+            public static int? CommandTimeout { get; set; }
+        }
+
         /// <summary>
         /// Implement this interface to pass an arbitrary db specific set of parameters to Dapper
         /// </summary>
