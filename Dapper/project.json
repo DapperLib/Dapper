@@ -27,14 +27,6 @@
                 "System.Data": "4.0.0.0"
             }
         },
-        //"net35": {
-        //    "compilationOptions": { "warningsAsErrors": true, "languageVersion": "csharp3", "define": ["CSHARP30"] },
-        //    "dependencies": {
-        //    },
-        //    "frameworkAssemblies": {
-        //        "System.Data":  "4.0.0.0"
-        //    }
-        //},
         "dnx451": {
             "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
             "dependencies": {
