@@ -301,7 +301,7 @@ using (var multi = connection.QueryMultiple(sql, new {id=selectedId}))
 
 Stored Procedures
 ---------------------
-Dapper supports fully stored procs:
+Dapper fully supports stored procs:
 
 ```csharp
 var user = cnn.Query<User>("spGetUser", new {Id = 1}, 
