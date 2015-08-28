@@ -13,7 +13,7 @@
         "net45": {
             "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
             "dependencies": {
-                 "System.Runtime": "4.0.20-beta-22816"
+
             },
             "frameworkAssemblies": {
                 "System.Data": "4.0.0.0"
