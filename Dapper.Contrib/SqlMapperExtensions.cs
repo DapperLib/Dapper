@@ -414,6 +414,8 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+        //State to suoport getter on GetDatabaseType, to be removed when GetDatabaseType is permanantly obsoleted.
+        private static GetDatabaseTypeDelegate DatabaseTypeDelegate;
         /// <summary>
         /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
@@ -421,11 +423,16 @@ namespace Dapper.Contrib.Extensions
         [Obsolete("Set Dapper.Config.GetDbmsTypeFromConnection instead, this gets used for more than just extensions")]
         public static GetDatabaseTypeDelegate GetDatabaseType
         {
+            get
+            {
+                return DatabaseTypeDelegate;
+            }
             set
             {
                 //This is only here so that people using the delegate wont break
                 Dapper.Config.GetDbmsTypeFromConnection = (connection) =>
                 {
+                    DatabaseTypeDelegate = value;
                     var name = value(connection).ToLowerInvariant();
                     switch (name)
                     {
