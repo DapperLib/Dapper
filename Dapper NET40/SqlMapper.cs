@@ -5195,14 +5195,17 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// </summary>
     partial class FeatureSupport
     {
+        private static readonly FeatureSupport 
+           @default = new FeatureSupport(false),		
+           postgres = new FeatureSupport(true);
         /// <summary>
         /// Gets the featureset based on the passed connection
         /// </summary>
         public static FeatureSupport Get(IDbConnection connection)
         {
             string name = connection == null ? null : connection.GetType().Name;
-            if (Config.GetDbmsType(connection) == DbmsType.Postgres) return new FeatureSupport(true); //Postgresql supports arrays
-            return new FeatureSupport(false);
+            if (Config.GetDbmsType(connection) == DbmsType.Postgres) return postgres; //Postgresql supports arrays
+            return @default;
         }
         private FeatureSupport(bool arrays)
         {
