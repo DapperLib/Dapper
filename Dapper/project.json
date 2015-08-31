@@ -5,7 +5,7 @@
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
     "summary": "A high performance Micro-ORM",
     "description": "A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-    "version": "1.41-beta5",
+    "version": "1.43-beta1",
     "compile": [ "../Dapper NET40/*.cs", "../Dapper NET45/*.cs" ],
     "title": "Dapper dot net",
     "tags": [ "orm", "sql", "micro-orm" ],
@@ -38,21 +38,21 @@
         "dnxcore50": {
             "compilationOptions": { "define": [ "ASYNC"], "warningsAsErrors": true },
             "dependencies": {
-                "System.Text.RegularExpressions": "4.0.10-beta-*",
-                "System.Collections": "4.0.10-beta-*",
-                "System.Collections.Concurrent": "4.0.10-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Threading": "4.0.10-beta-*",
-                "Microsoft.CSharp": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Reflection.Emit": "4.0.0-beta-*",
-                "System.Reflection.Emit.ILGeneration": "4.0.0-beta-*",
-                "System.Reflection.Emit.Lightweight": "4.0.0-beta-*",
-                "System.Reflection.TypeExtensions": "4.0.0-beta-*",
-                "System.Data.Common": "4.0.0-beta-*",
-                "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Text.Encoding.CodePages": "4.0.0-beta-*",
-                "System.Globalization":  "4.0.10-beta-*"
+                "System.Text.RegularExpressions": "4.0.10",
+                "System.Collections": "4.0.10",
+                "System.Collections.Concurrent": "4.0.10",
+                "System.Linq": "4.0.0",
+                "System.Threading": "4.0.10",
+                "Microsoft.CSharp": "4.0.0",
+                "System.Reflection": "4.0.10",
+                "System.Reflection.Emit": "4.0.0",
+                "System.Reflection.Emit.ILGeneration": "4.0.0",
+                "System.Reflection.Emit.Lightweight": "4.0.0",
+                "System.Reflection.TypeExtensions": "4.0.0",
+                "System.Data.Common": "4.0.0",
+                "System.Runtime.Extensions": "4.0.10",
+                "System.Text.Encoding.CodePages": "4.0.0",
+                "System.Globalization": "4.0.10"
             }
         }
     }
