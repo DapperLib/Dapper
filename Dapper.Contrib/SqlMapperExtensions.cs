@@ -126,7 +126,7 @@ namespace Dapper.Contrib.Extensions
                 if (keys.Count() > 1)
                     throw new DataException("Get<T> only supports an entity with a single [Key] property");
                 if (!keys.Any())
-                    throw new DataException("Get<T> only supports en entity with a [Key] property");
+                    throw new DataException("Get<T> only supports an entity with a [Key] property");
 
                 var onlyKey = keys.First();
 
@@ -232,9 +232,9 @@ namespace Dapper.Contrib.Extensions
             else
             {
                 //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
-                var tableattr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
-                if (tableattr != null)
-                    name = tableattr.Name;
+                var tableAttr = type.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
+                if (tableAttr != null)
+                    name = tableAttr.Name;
                 else
                 {
                     name = type.Name + "s";
