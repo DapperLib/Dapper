@@ -3553,6 +3553,10 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             return r =>
             {
                 var val = r.GetValue(index);
+                if (type.IsValueType)
+                {
+                    return val is DBNull ? 0 : val;
+                }
                 return val is DBNull ? null : val;
             };
         }
