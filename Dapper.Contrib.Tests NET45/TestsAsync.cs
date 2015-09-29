@@ -249,6 +249,30 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public async Task GetWhereAsync()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                await connection.DeleteAllAsync<User>();
+
+                var total = await connection.InsertAsync(users);
+                total.IsEqualTo(numberOfEntities);
+                for (var i = 0; i < numberOfEntities; i++)
+                {
+                    var item = await connection.GetWhereAsync<User>(new { Name = "User " + i, Age = i });
+                    item.Count().IsEqualTo(1);
+                    item.FirstOrDefault().Name.IsEqualTo("User " + i);
+                    item.FirstOrDefault().Age.IsEqualTo(i);
+                }
+            }
+        }
+
         public async Task InsertFieldWithReservedNameAsync()
         {
             using (var connection = GetOpenConnection())

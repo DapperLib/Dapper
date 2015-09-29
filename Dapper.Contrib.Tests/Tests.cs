@@ -328,6 +328,30 @@ namespace Dapper.Contrib.Tests
 
         }
 
+        public void GetWhere()
+        {
+            const int numberOfEntities = 100;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                for (var i = 0; i < numberOfEntities; i++)
+                {
+                    var item = connection.GetWhere<User>(new { Name = "User " + i, Age = i });
+                    item.Count().IsEqualTo(1);
+                    item.FirstOrDefault().Name.IsEqualTo("User " + i);
+                    item.FirstOrDefault().Age.IsEqualTo(i);
+                }
+            }
+        }
+
         public void Transactions()
         {
             using (var connection = GetOpenConnection())

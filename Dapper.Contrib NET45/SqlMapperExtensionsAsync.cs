@@ -122,6 +122,46 @@ namespace Dapper.Contrib.Extensions
             return list;
         }
 
+        /// <summary>
+        /// Returns a list of entites from table
+        /// </summary>
+        /// <typeparam name="T">Interface or type to create and populate</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <returns>Entity of T</returns>
+        public static async Task<IEnumerable<T>> GetWhereAsync<T>(this IDbConnection connection, object param, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            var type = typeof(T);
+
+            var props = param.GetType().GetProperties();
+            if (!props.Any())
+            {
+                throw new DataException("GetWhere<T> must have param");
+            }
+
+            var sql = new StringBuilder();
+            var name = GetTableName(type);
+
+            sql.Append("select * from ");
+            sql.Append(name);
+            sql.Append(" where ");
+
+            bool setAnd = false;
+            foreach (var prop in props)
+            {
+                if (setAnd)
+                {
+                    sql.Append(" AND ");
+                }
+
+                sql.Append(prop.Name);
+                sql.Append("=@");
+                sql.Append(prop.Name);
+                setAnd = true;
+            }
+
+            return await connection.QueryAsync<T>(sql.ToString(), param, transaction, commandTimeout: commandTimeout);
+
+        }
 
         /// <summary>
         /// Inserts an entity into table "Ts" asynchronously using .NET 4.5 Task and returns identity id.
