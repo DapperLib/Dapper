@@ -376,7 +376,7 @@ namespace Dapper
             void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
                 parameter.Value = SanitizeParameterValue(value);
-                if (parameter is System.Data.SqlClient.SqlParameter)
+                if (parameter is System.Data.SqlClient.SqlParameter && !(value is DBNull))
                 {
                     ((System.Data.SqlClient.SqlParameter)parameter).UdtTypeName = udtTypeName;
                 }
