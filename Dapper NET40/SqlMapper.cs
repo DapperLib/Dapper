@@ -34,6 +34,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Data.Common;
+using System.Data.SqlClient;
 
 namespace Dapper
 {
@@ -89,11 +90,13 @@ namespace Dapper
 
         internal void OnCompleted()
         {
-            if (parameters is SqlMapper.IParameterCallbacks)
+            var parametersCallbacks = parameters as SqlMapper.IParameterCallbacks;
+            if (parametersCallbacks != null)
             {
-                ((SqlMapper.IParameterCallbacks)parameters).OnCompleted();
+                parametersCallbacks.OnCompleted();
             }
         }
+
         /// <summary>
         /// The command (sql or a stored-procedure name) to execute
         /// </summary>
@@ -376,9 +379,10 @@ namespace Dapper
             void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
                 parameter.Value = SanitizeParameterValue(value);
-                if (parameter is System.Data.SqlClient.SqlParameter)
+                var sqlParameter = parameter as SqlParameter;
+                if (sqlParameter != null)
                 {
-                    ((System.Data.SqlClient.SqlParameter)parameter).UdtTypeName = udtTypeName;
+                    sqlParameter.UdtTypeName = udtTypeName;
                 }
             }
         }
@@ -2802,7 +2806,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             listParam.Size = -1;
                         }
                     }
-                    if (isDbString && item as DbString != null)
+                    if (isDbString && item is DbString)
                     {
                         var str = item as DbString;
                         str.AddParameter(command, listParam.ParameterName);
@@ -3036,14 +3040,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var matches = literalTokens.Matches(sql);
             var found = new HashSet<string>(StringComparer.Ordinal);
             List<LiteralToken> list = new List<LiteralToken>(matches.Count);
-            foreach(Match match in matches)
-            {
-                string token = match.Value;
-                if(found.Add(match.Value))
-                {
-                    list.Add(new LiteralToken(token, match.Groups[1].Value));
-                }
-            }
+            list.AddRange(from Match match in matches let token = match.Value where found.Add(match.Value) select new LiteralToken(token, match.Groups[1].Value));
             return list.Count == 0 ? LiteralToken.None : list;
         }
 
@@ -3095,15 +3092,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (ctors.Length == 1 && propsArr.Length == (ctorParams = ctors[0].GetParameters()).Length)
             {
                 // check if reflection was kind enough to put everything in the right order for us
-                bool ok = true;
-                for (int i = 0; i < propsArr.Length; i++)
-                {
-                    if (!string.Equals(propsArr[i].Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        ok = false;
-                        break;
-                    }
-                }
+                bool ok = !propsArr.Where((t, i) => !string.Equals(t.Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase)).Any();
                 if(ok)
                 {
                     // pre-sorted; the reflection gods have smiled upon us
@@ -3494,7 +3483,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             object param = command.Parameters;
             IEnumerable multiExec = GetMultiExec(param);
-            Identity identity;
             CacheInfo info = null;
             if (multiExec != null)
             {
@@ -3504,7 +3492,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             // nice and simple
             if (param != null)
             {
-                identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
+                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
                 info = GetCacheInfo(identity, param, command.AddToCache);
             }
             var paramReader = info == null ? null : info.ParamReader;
@@ -3901,14 +3889,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         // Store the value in the property/field
                         if (item.Property != null)
                         {
-                            if (type.IsValueType())
-                            {
-                                il.Emit(OpCodes.Call, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
-                            }
+                            il.Emit(type.IsValueType() ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type));
                         }
                         else
                         {
@@ -4938,7 +4919,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
             // Does the chain consist of MemberExpressions leading to a ParameterExpression of type T?
             MemberExpression diving = lastMemberAccess;
-            ParameterExpression constant = null;
             // Retain a list of member names and the member expressions so we can rebuild the chain.
             List<string> names = new List<string>();
             List<MemberExpression> chain = new List<MemberExpression>();
@@ -4950,7 +4930,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 names.Insert(0, diving.Member.Name);
                 chain.Insert(0, diving);
 
-                constant = diving.Expression as ParameterExpression;
+                var constant = diving.Expression as ParameterExpression;
                 diving = diving.Expression as MemberExpression;
 
                 if (constant != null &&

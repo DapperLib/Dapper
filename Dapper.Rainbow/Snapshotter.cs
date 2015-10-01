@@ -6,7 +6,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -78,7 +77,7 @@ namespace Dapper
             private static bool AreEqual<U>(U first, U second)
             {
                 if (first == null && second == null) return true;
-                if (first == null && second != null) return false;
+                if (first == null) return false;
                 return first.Equals(second);
             }
 
@@ -171,7 +170,6 @@ namespace Dapper
             // adapted from http://stackoverflow.com/a/966466/17174
             private static Func<T, T> GenerateCloner()
             {
-                Delegate myExec = null;
                 var dm = new DynamicMethod("DoClone", typeof(T), new Type[] { typeof(T) }, true);
                 var ctor = typeof(T).GetConstructor(new Type[] { });
 
@@ -199,7 +197,7 @@ namespace Dapper
                 // Return constructed object.   --> 0 items on stack
                 il.Emit(OpCodes.Ret);
 
-                myExec = dm.CreateDelegate(typeof(Func<T, T>));
+                var myExec = dm.CreateDelegate(typeof(Func<T, T>));
 
                 return (Func<T, T>)myExec;
             }

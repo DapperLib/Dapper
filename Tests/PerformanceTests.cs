@@ -174,8 +174,7 @@ namespace SqlMapper
 
                 var nhSession4 = NHibernateHelper.OpenSession();
                 tests.Add(id => nhSession4
-                    .Query<Post>()
-                    .Where(p => p.Id == id).First(), "NHibernate LINQ");
+                    .Query<Post>().First(p => p.Id == id), "NHibernate LINQ");
 
                 var nhSession5 = NHibernateHelper.OpenSession();
                 tests.Add(id => nhSession5.Get<Post>(id), "NHibernate Session.Get");
@@ -314,7 +313,7 @@ namespace SqlMapper
             return null;
         }
 
-        public static Nullable<T> GetNullableValue<T>(this SqlDataReader reader, int index) where T : struct
+        public static T? GetNullableValue<T>(this SqlDataReader reader, int index) where T : struct
         {
             object tmp = reader.GetValue(index);
             if (tmp != DBNull.Value)
