@@ -141,8 +141,12 @@ namespace SubSonic
        
         
         internal static IRepository<Post> GetRepo(string connectionString, string providerName){
-            tempdbDB db;
-            db = String.IsNullOrEmpty(connectionString) ? new tempdbDB() : new tempdbDB(connectionString, providerName);
+            SubSonic.tempdbDB db;
+            if(String.IsNullOrEmpty(connectionString)){
+                db=new SubSonic.tempdbDB();
+            }else{
+                db=new SubSonic.tempdbDB(connectionString, providerName);
+            }
             IRepository<Post> _repo;
             
             if(db.TestMode){
@@ -162,7 +166,7 @@ namespace SubSonic
             var repo = GetRepo();
             var results=repo.Find(expression);
             Post single=null;
-            if(results.Any()){
+            if(results.Count() > 0){
                 single=results.ToList()[0];
                 single.OnLoaded();
                 single.SetIsLoaded(true);
@@ -176,7 +180,7 @@ namespace SubSonic
             var repo = GetRepo(connectionString,providerName);
             var results=repo.Find(expression);
             Post single=null;
-            if(results.Any()){
+            if(results.Count() > 0){
                 single=results.ToList()[0];
             }
 
@@ -251,7 +255,7 @@ namespace SubSonic
         }
         
         public override string ToString(){
-                            return this.Text;
+                            return this.Text.ToString();
                     }
 
         public override bool Equals(object obj){
@@ -270,7 +274,7 @@ namespace SubSonic
         
         public string DescriptorValue()
         {
-                            return this.Text;
+                            return this.Text.ToString();
                     }
 
         public string DescriptorColumn() {

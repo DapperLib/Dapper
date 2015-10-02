@@ -34,7 +34,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Data.Common;
-using System.Data.SqlClient;
 
 namespace Dapper
 {
@@ -90,13 +89,11 @@ namespace Dapper
 
         internal void OnCompleted()
         {
-            var parametersCallbacks = parameters as SqlMapper.IParameterCallbacks;
-            if (parametersCallbacks != null)
+            if (parameters is SqlMapper.IParameterCallbacks)
             {
-                parametersCallbacks.OnCompleted();
+                ((SqlMapper.IParameterCallbacks)parameters).OnCompleted();
             }
         }
-
         /// <summary>
         /// The command (sql or a stored-procedure name) to execute
         /// </summary>
@@ -379,10 +376,9 @@ namespace Dapper
             void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
                 parameter.Value = SanitizeParameterValue(value);
-                var sqlParameter = parameter as SqlParameter;
-                if (sqlParameter != null)
+                if (parameter is System.Data.SqlClient.SqlParameter)
                 {
-                    sqlParameter.UdtTypeName = udtTypeName;
+                    ((System.Data.SqlClient.SqlParameter)parameter).UdtTypeName = udtTypeName;
                 }
             }
         }
@@ -2806,7 +2802,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                             listParam.Size = -1;
                         }
                     }
-                    if (isDbString && item is DbString)
+                    if (isDbString && item as DbString != null)
                     {
                         var str = item as DbString;
                         str.AddParameter(command, listParam.ParameterName);
@@ -3040,7 +3036,14 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             var matches = literalTokens.Matches(sql);
             var found = new HashSet<string>(StringComparer.Ordinal);
             List<LiteralToken> list = new List<LiteralToken>(matches.Count);
-            list.AddRange(from Match match in matches let token = match.Value where found.Add(match.Value) select new LiteralToken(token, match.Groups[1].Value));
+            foreach(Match match in matches)
+            {
+                string token = match.Value;
+                if(found.Add(match.Value))
+                {
+                    list.Add(new LiteralToken(token, match.Groups[1].Value));
+                }
+            }
             return list.Count == 0 ? LiteralToken.None : list;
         }
 
@@ -3092,7 +3095,15 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             if (ctors.Length == 1 && propsArr.Length == (ctorParams = ctors[0].GetParameters()).Length)
             {
                 // check if reflection was kind enough to put everything in the right order for us
-                bool ok = !propsArr.Where((t, i) => !string.Equals(t.Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase)).Any();
+                bool ok = true;
+                for (int i = 0; i < propsArr.Length; i++)
+                {
+                    if (!string.Equals(propsArr[i].Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
                 if(ok)
                 {
                     // pre-sorted; the reflection gods have smiled upon us

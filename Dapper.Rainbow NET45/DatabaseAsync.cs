@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,8 +26,8 @@ namespace Dapper
                 paramNames.Remove("Id");
 
                 string cols = string.Join(",", paramNames);
-                string colsParams = string.Join(",", paramNames.Select(p => "@" + p));
-                var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + colsParams + ") select cast(scope_identity() as int)";
+                string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
+                var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + cols_params + ") select cast(scope_identity() as int)";
 
                 return (await database.QueryAsync<int?>(sql, o).ConfigureAwait(false)).Single();
             }

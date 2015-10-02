@@ -1,4 +1,5 @@
-﻿using NHibernate;
+﻿using System.Data;
+using NHibernate;
 using NHibernate.Cfg;
 
 namespace SqlMapper.NHibernate

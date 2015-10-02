@@ -31,9 +31,14 @@ namespace SubSonic
             }
         }
 
-        public tempdbDB()
+        public tempdbDB() 
         {
-            DataProvider = DefaultDataProvider ?? ProviderFactory.GetProvider("Smackdown.Properties.Settings.tempdbConnectionString");
+            if (DefaultDataProvider == null) {
+                DataProvider = ProviderFactory.GetProvider("Smackdown.Properties.Settings.tempdbConnectionString");
+            }
+            else {
+                DataProvider = DefaultDataProvider;
+            }
             Init();
         }
 

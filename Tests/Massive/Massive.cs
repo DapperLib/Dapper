@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
+using System.Collections;
+using System.Text.RegularExpressions;
 
 namespace Massive
 {
@@ -34,13 +37,13 @@ namespace Massive
             }
             else
             {
-                if (item is Guid)
+                if (item.GetType() == typeof(Guid))
                 {
                     p.Value = item.ToString();
                     p.DbType = DbType.String;
                     p.Size = 4000;
                 }
-                else if (item is ExpandoObject)
+                else if (item.GetType() == typeof(ExpandoObject))
                 {
                     var d = (IDictionary<string, object>)item;
                     p.Value = d.Values.FirstOrDefault();
@@ -50,7 +53,7 @@ namespace Massive
                     p.Value = item;
                 }
                 //from DataChomp
-                if (item is string)
+                if (item.GetType() == typeof(string))
                     p.Size = 4000;
             }
             cmd.Parameters.Add(p);
@@ -82,7 +85,7 @@ namespace Massive
         {
             var result = new ExpandoObject();
             var d = result as IDictionary<string, object>; //work with the Expando as a Dictionary
-            if (o is ExpandoObject) return o; //shouldn't have to... but just in case
+            if (o.GetType() == typeof(ExpandoObject)) return o; //shouldn't have to... but just in case
             if (o.GetType() == typeof(NameValueCollection) || o.GetType().IsSubclassOf(typeof(NameValueCollection)))
             {
                 var nv = (NameValueCollection)o;
@@ -148,7 +151,7 @@ namespace Massive
                 var rdr = CreateCommand(sql, conn, args).ExecuteReader();
                 while (rdr.Read())
                 {
-                    yield return rdr.RecordToExpando();
+                    yield return rdr.RecordToExpando(); ;
                 }
             }
         }
@@ -158,7 +161,7 @@ namespace Massive
             {
                 while (rdr.Read())
                 {
-                    yield return rdr.RecordToExpando();
+                    yield return rdr.RecordToExpando(); ;
                 }
             }
 
@@ -417,7 +420,7 @@ namespace Massive
                     where = "WHERE " + where;
                 }
             }
-            var sql = string.Format("SELECT {0} FROM (SELECT ROW_NUMBER() OVER (ORDER BY {2}) AS Row, {0} FROM {3} {4}) AS Paged ", columns, orderBy, TableName, where);
+            var sql = string.Format("SELECT {0} FROM (SELECT ROW_NUMBER() OVER (ORDER BY {2}) AS Row, {0} FROM {3} {4}) AS Paged ", columns, pageSize, orderBy, TableName, where);
             var pageStart = (currentPage - 1) * pageSize;
             sql += string.Format(" WHERE Row >={0} AND Row <={1}", pageStart, (pageStart + pageSize));
             countSQL += where;

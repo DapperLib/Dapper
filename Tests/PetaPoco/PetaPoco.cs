@@ -283,13 +283,13 @@ namespace PetaPoco
 			}
 			else
 			{
-				if (item is Guid)
+				if (item.GetType() == typeof(Guid))
 				{
 					p.Value = item.ToString();
 					p.DbType = DbType.String;
 					p.Size = 4000;
 				}
-				else if (item is string)
+				else if (item.GetType() == typeof(string))
 				{
 					p.Size = (item as string).Length + 1;
 					if (p.Size < 4000)
@@ -344,13 +344,13 @@ namespace PetaPoco
 				}
 				else
 				{
-					if (item is Guid)
+					if (item.GetType() == typeof(Guid))
 					{
 						p.Value = item.ToString();
 						p.DbType = DbType.String;
 						p.Size = 4000;
 					}
-					else if (item is string)
+					else if (item.GetType() == typeof(string))
 					{
 						p.Size = (item as string).Length + 1;
 						if (p.Size < 4000)
@@ -1034,7 +1034,7 @@ namespace PetaPoco
 					sb.Append("\r\n\r\n");
 					for (int i = 0; i < _lastArgs.Length; i++)
 					{
-						sb.AppendFormat("{0} - {1}\r\n", i, _lastArgs[i]);
+						sb.AppendFormat("{0} - {1}\r\n", i, _lastArgs[i].ToString());
 					}
 				}
 				return sb.ToString();
@@ -1185,13 +1185,13 @@ namespace PetaPoco
 							// Standard DateTime->Utc mapper
 							if (ForceDateTimesToUtc && converter == null && srcType == typeof(DateTime) && (dstType == typeof(DateTime) || dstType == typeof(DateTime?)))
 							{
-								converter = src => new DateTime(((DateTime) src).Ticks, DateTimeKind.Utc);
+								converter = delegate(object src) { return new DateTime(((DateTime)src).Ticks, DateTimeKind.Utc); };
 							}
 
 							// Forced type conversion
 							if (converter == null && !dstType.IsAssignableFrom(srcType))
 							{
-								converter = src => Convert.ChangeType(src, dstType, null);
+								converter = delegate(object src) { return Convert.ChangeType(src, dstType, null); };
 							}
 
 							// Fast
@@ -1222,10 +1222,11 @@ namespace PetaPoco
 							if (!Handled)
 							{
 								// Setup stack for call to converter
-							    if (converter != null)
+								int converterIndex = -1;
+								if (converter != null)
 								{
 									// Add the converter
-									var converterIndex = m_Converters.Count;
+									converterIndex = m_Converters.Count;
 									m_Converters.Add(converter);
 
 									// Generate IL to push the converter onto the stack

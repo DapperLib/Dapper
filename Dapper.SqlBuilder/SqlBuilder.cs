@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Dapper
 {
@@ -104,7 +106,7 @@ namespace Dapper
             return new Template(this, sql, parameters);
         }
 
-        void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool isInclusive = false)
+        void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool IsInclusive = false)
         {
             Clauses clauses;
             if (!data.TryGetValue(name, out clauses))
@@ -112,7 +114,7 @@ namespace Dapper
                 clauses = new Clauses(joiner, prefix, postfix);
                 data[name] = clauses;
             }
-            clauses.Add(new Clause { Sql = sql, Parameters = parameters, IsInclusive = isInclusive });
+            clauses.Add(new Clause { Sql = sql, Parameters = parameters, IsInclusive = IsInclusive });
             seq++;
         }
 
@@ -148,7 +150,7 @@ namespace Dapper
 
         public SqlBuilder OrWhere(string sql, dynamic parameters = null)
         {
-            AddClause("where", sql, parameters, " AND ", prefix: "WHERE ", postfix: "\n", isInclusive: true);
+            AddClause("where", sql, parameters, " AND ", prefix: "WHERE ", postfix: "\n", IsInclusive: true);
             return this;
         }
         
