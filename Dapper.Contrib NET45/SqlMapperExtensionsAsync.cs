@@ -135,7 +135,7 @@ namespace Dapper.Contrib.Extensions
             var props = param.GetType().GetProperties();
             if (!props.Any())
             {
-                throw new DataException("GetWhere<T> must have param");
+                throw new DataException("GetWhere<T> parameter param must have properties.");
             }
 
             var sql = new StringBuilder();
