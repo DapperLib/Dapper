@@ -146,6 +146,7 @@ namespace Dapper.Contrib.Extensions
             sql.Append(" where ");
 
             bool setAnd = false;
+            var adapter = GetFormatter(connection);
             foreach (var prop in props)
             {
                 if (setAnd)
@@ -154,7 +155,8 @@ namespace Dapper.Contrib.Extensions
                 }
 
                 sql.Append(prop.Name);
-                sql.Append("=@");
+                sql.Append("=");
+                sql.Append(adapter.Symbol);
                 sql.Append(prop.Name);
                 setAnd = true;
             }

@@ -239,6 +239,7 @@ namespace Dapper.Contrib.Extensions
             sql.Append(" where ");
 
             bool setAnd = false;
+            var adapter = GetFormatter(connection);
             foreach (var prop in props)
             {
                 if (setAnd)
@@ -247,7 +248,8 @@ namespace Dapper.Contrib.Extensions
                 }
 
                 sql.Append(prop.Name);
-                sql.Append("=@");
+                sql.Append("=");
+                sql.Append(adapter.Symbol);
                 sql.Append(prop.Name);
                 setAnd = true;
             }
@@ -669,6 +671,9 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
+
+    char Symbol { get; }
+
 }
 
 public partial class SqlServerAdapter : ISqlAdapter
@@ -689,6 +694,11 @@ public partial class SqlServerAdapter : ISqlAdapter
         else
             idProperty.SetValue(entityToInsert, id, null);
         return id;
+    }
+
+    public char Symbol
+    {
+        get { return '@'; }
     }
 }
 
@@ -711,6 +721,11 @@ public partial class SqlCeServerAdapter : ISqlAdapter
                 idProperty.SetValue(entityToInsert, (int)id, null);
         }
         return (int)id;
+    }
+
+    public char Symbol
+    {
+        get { return '@'; }
     }
 }
 
@@ -752,6 +767,11 @@ public partial class PostgresAdapter : ISqlAdapter
         }
         return id;
     }
+
+    public char Symbol
+    {
+        get { return ':'; }
+    }
 }
 
 public partial class SQLiteAdapter : ISqlAdapter
@@ -765,6 +785,11 @@ public partial class SQLiteAdapter : ISqlAdapter
         if (propertyInfos.Any())
             propertyInfos.First().SetValue(entityToInsert, id, null);
         return id;
+    }
+
+    public char Symbol
+    {
+        get { return '@'; }
     }
 
 }
