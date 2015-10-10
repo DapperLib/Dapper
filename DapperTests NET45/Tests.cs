@@ -412,6 +412,15 @@ namespace DapperTests_NET45
             }
         }
 
+        public void Issue346_QueryAsyncConvert()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                int i = connection.QueryAsync<int>("Select Cast(123 as bigint)").Result.First();
+                i.IsEqualTo(123);
+            }
+        }
+
         public void TestSupportForDynamicParametersOutputExpressions()
         {
             using (var connection = Program.GetOpenConnection())
