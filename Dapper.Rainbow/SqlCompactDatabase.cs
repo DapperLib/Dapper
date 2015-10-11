@@ -26,9 +26,9 @@ namespace Dapper.Rainbow
                 paramNames.Remove("Id");
 
                 string cols = string.Join(",", paramNames);
-                string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
+                string colsParams = string.Join(",", paramNames.Select(p => "@" + p));
 
-                var sql = "insert " + TableName + " (" + cols + ") values (" + cols_params + ")";
+                var sql = "insert " + TableName + " (" + cols + ") values (" + colsParams + ")";
                 if (database.Execute(sql, o) != 1)
                 {
                     return null;

@@ -20,7 +20,6 @@ using System.Reflection;
 using System.Dynamic;
 using System.ComponentModel;
 using Microsoft.CSharp.RuntimeBinder;
-using System.Data.Common;
 using System.Globalization;
 using System.Threading;
 using System.Data.SqlTypes;
@@ -407,7 +406,7 @@ namespace SqlMapper
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
             try
             {
-                var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+                var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", Tuple.Create, splitOn: "Age").Single();
 
                 tuple.Item1.Name.IsEqualTo("Alf");
                 tuple.Item1.Age.IsEqualTo(1);
@@ -415,7 +414,7 @@ namespace SqlMapper
                 tuple.Item2.Age.IsEqualTo(1);
 
                 connection.Execute("alter table #dog drop column Name");
-                tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+                tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", Tuple.Create, splitOn: "Age").Single();
 
                 tuple.Item1.Name.IsNull();
                 tuple.Item1.Age.IsEqualTo(1);
@@ -1573,7 +1572,7 @@ end");
     3 as Id, 'fred' as Name
     ";
             var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address, Extra>>
-                (sql, (p, a, e) => Tuple.Create(p, a, e), splitOn: "AddressId,Id").First();
+                (sql, Tuple.Create, splitOn: "AddressId,Id").First();
 
             personWithAddress.Item1.PersonId.IsEqualTo(1);
             personWithAddress.Item1.Name.IsEqualTo("bob");
@@ -1593,7 +1592,7 @@ end");
                         3 as Id, 'fred' as Name
                         ";
             var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address, Extra>>
-                (sql, (p, a, e) => Tuple.Create(p, a, e), splitOn: "AddressId, Id").First();
+                (sql, Tuple.Create, splitOn: "AddressId, Id").First();
 
             personWithAddress.Item1.PersonId.IsEqualTo(1);
             personWithAddress.Item1.Name.IsEqualTo("bob");
@@ -2130,7 +2129,7 @@ Order by p.Id";
         }
         public void TestMultiMapperIsNotConfusedWithUnorderedCols()
         {
-            var result = connection.Query<Foo1, Bar1, Tuple<Foo1, Bar1>>("select 1 as Id, 2 as BarId, 3 as BarId, 'a' as Name", (f, b) => Tuple.Create(f, b), splitOn: "BarId").First();
+            var result = connection.Query<Foo1, Bar1, Tuple<Foo1, Bar1>>("select 1 as Id, 2 as BarId, 3 as BarId, 'a' as Name", Tuple.Create, splitOn: "BarId").First();
 
             result.Item1.Id.IsEqualTo(1);
             result.Item1.BarId.IsEqualTo(2);
@@ -2534,7 +2533,7 @@ Order by p.Id";
 
             // custom mapping
             var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
-                (type, columnName) => type.GetProperties().Where(prop => GetDescriptionFromAttribute(prop) == columnName).FirstOrDefault());
+                (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName));
             Dapper.SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
 
             item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
@@ -2837,10 +2836,7 @@ end");
         {
             var results = connection.Query<dynamic, int, dynamic>(
                 "SELECT 1 Id, 'Mr' Title, 'John' Surname, 4 AddressCount",
-                (person, addressCount) =>
-                {
-                    return person;
-                },
+                (person, addressCount) => person,
                 splitOn: "AddressCount"
             ).FirstOrDefault();
 

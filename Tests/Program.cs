@@ -175,7 +175,7 @@ end
             {
 
                 MethodInfo[] methods = typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-                var activeTests = methods.Where(m => HasAttribute<ActiveTestAttribute>(m)).ToArray();
+                var activeTests = methods.Where(HasAttribute<ActiveTestAttribute>).ToArray();
                 if (activeTests.Length != 0) methods = activeTests;
                 foreach (var method in methods)
                 {

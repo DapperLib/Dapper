@@ -131,7 +131,7 @@ namespace Dapper
                     {
                         var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
                         var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
-                        if (attr==null || (attr != null && !attr.Value))
+                        if (attr==null || (!attr.Value))
                         {
                             paramNames.Add(prop.Name);
                         }                        

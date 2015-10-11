@@ -3494,7 +3494,6 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             object param = command.Parameters;
             IEnumerable multiExec = GetMultiExec(param);
-            Identity identity;
             CacheInfo info = null;
             if (multiExec != null)
             {
@@ -3504,7 +3503,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
             // nice and simple
             if (param != null)
             {
-                identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
+                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
                 info = GetCacheInfo(identity, param, command.AddToCache);
             }
             var paramReader = info == null ? null : info.ParamReader;
@@ -3901,14 +3900,7 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                         // Store the value in the property/field
                         if (item.Property != null)
                         {
-                            if (type.IsValueType())
-                            {
-                                il.Emit(OpCodes.Call, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type)); // stack is now [target]
-                            }
+                            il.Emit(type.IsValueType() ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type));
                         }
                         else
                         {
@@ -4938,7 +4930,6 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
 
             // Does the chain consist of MemberExpressions leading to a ParameterExpression of type T?
             MemberExpression diving = lastMemberAccess;
-            ParameterExpression constant = null;
             // Retain a list of member names and the member expressions so we can rebuild the chain.
             List<string> names = new List<string>();
             List<MemberExpression> chain = new List<MemberExpression>();
@@ -4950,7 +4941,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
                 names.Insert(0, diving.Member.Name);
                 chain.Insert(0, diving);
 
-                constant = diving.Expression as ParameterExpression;
+                var constant = diving.Expression as ParameterExpression;
                 diving = diving.Expression as MemberExpression;
 
                 if (constant != null &&

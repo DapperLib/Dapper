@@ -123,7 +123,7 @@ namespace Dapper
 
                            
                         }
-                        while (await reader.NextResultAsync().ConfigureAwait(false)) { }
+                        while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { }
                         command.OnCompleted();
                         return buffer;
                     }
