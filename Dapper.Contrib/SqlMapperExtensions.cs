@@ -216,6 +216,49 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
+        /// Returns a list of entites from table
+        /// </summary>
+        /// <typeparam name="T">Interface or type to create and populate</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <returns>Entity of T</returns>
+        public static IEnumerable<T> GetWhere<T>(this IDbConnection connection, object param, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            var type = typeof(T);
+
+            var props = param.GetType().GetProperties();
+            if (!props.Any())
+            {
+                throw new DataException("GetWhere<T> must have param");
+            }
+
+            var sql = new StringBuilder();
+            var name = GetTableName(type);
+
+            sql.Append("select * from ");
+            sql.Append(name);
+            sql.Append(" where ");
+
+            bool setAnd = false;
+            var adapter = GetFormatter(connection);
+            foreach (var prop in props)
+            {
+                if (setAnd)
+                {
+                    sql.Append(" AND ");
+                }
+
+                sql.Append(prop.Name);
+                sql.Append("=");
+                sql.Append(adapter.Symbol);
+                sql.Append(prop.Name);
+                setAnd = true;
+            }
+
+            return connection.Query<T>(sql.ToString(), param, transaction, commandTimeout: commandTimeout);
+
+        }
+
+        /// <summary>
         /// Specify a custom table name mapper based on the POCO type name
         /// </summary>
         public static TableNameMapperDelegate TableNameMapper;
@@ -628,6 +671,9 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
+
+    char Symbol { get; }
+
 }
 
 public partial class SqlServerAdapter : ISqlAdapter
@@ -648,6 +694,11 @@ public partial class SqlServerAdapter : ISqlAdapter
         else
             idProperty.SetValue(entityToInsert, id, null);
         return id;
+    }
+
+    public char Symbol
+    {
+        get { return '@'; }
     }
 }
 
@@ -670,6 +721,11 @@ public partial class SqlCeServerAdapter : ISqlAdapter
                 idProperty.SetValue(entityToInsert, (int)id, null);
         }
         return (int)id;
+    }
+
+    public char Symbol
+    {
+        get { return '@'; }
     }
 }
 
@@ -711,6 +767,11 @@ public partial class PostgresAdapter : ISqlAdapter
         }
         return id;
     }
+
+    public char Symbol
+    {
+        get { return ':'; }
+    }
 }
 
 public partial class SQLiteAdapter : ISqlAdapter
@@ -724,6 +785,11 @@ public partial class SQLiteAdapter : ISqlAdapter
         if (propertyInfos.Any())
             propertyInfos.First().SetValue(entityToInsert, id, null);
         return id;
+    }
+
+    public char Symbol
+    {
+        get { return '@'; }
     }
 
 }
