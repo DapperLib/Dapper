@@ -3504,6 +3504,23 @@ option (optimize for (@vals unKnoWn))";
             row.Geometry.IsNotNull();
         }
 
+        public void NullableSqlGeometry()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            connection.Execute("create table #SqlNullableGeo (id int, geometry geometry null)");
+
+            var obj = new HazSqlGeo
+            {
+                Id = 1,
+                Geometry = null
+            };
+            connection.Execute("insert #SqlNullableGeo(id, geometry) values (@Id, @Geometry)", obj);
+            var row = connection.Query<HazSqlGeo>("select * from #SqlNullableGeo where id=1").SingleOrDefault();
+            row.IsNotNull();
+            row.Id.IsEqualTo(1);
+            row.Geometry.IsNull();
+        }
+
         public void SqlHierarchyId_SO18888911()
         {
             Dapper.SqlMapper.ResetTypeHandlers();
