@@ -378,6 +378,7 @@ namespace Dapper
                 parameter.Value = SanitizeParameterValue(value);
                 if (parameter is System.Data.SqlClient.SqlParameter)
                 {
+                    ((System.Data.SqlClient.SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
                     ((System.Data.SqlClient.SqlParameter)parameter).UdtTypeName = udtTypeName;
                 }
             }
