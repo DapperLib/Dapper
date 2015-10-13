@@ -282,9 +282,9 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                sbColumnList.Append(qouteAdapter.ColumnQoutePrefix);
+                sbColumnList.Append(qouteAdapter.ColumnQuotePrefix);
                 sbColumnList.Append(property.Name);
-                sbColumnList.Append(qouteAdapter.ColumnQouteSuffix);
+                sbColumnList.Append(qouteAdapter.ColumnQuoteSuffix);
                 if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbColumnList.Append(", ");
             }
@@ -636,8 +636,8 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
-    char ColumnQoutePrefix { get; }
-    char ColumnQouteSuffix { get; }
+    char ColumnQuotePrefix { get; }
+    char ColumnQuoteSuffix { get; }
 }
 
 public partial class SqlServerAdapter : ISqlAdapter
@@ -660,14 +660,14 @@ public partial class SqlServerAdapter : ISqlAdapter
         return id;
     }
 
-    public char ColumnQoutePrefix
+    public char ColumnQuotePrefix
     {
         get
         {
             return '[';
         }
     }
-    public char ColumnQouteSuffix
+    public char ColumnQuoteSuffix
     {
         get
         {
@@ -698,14 +698,14 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         return (int)id;
     }
 
-    public char ColumnQoutePrefix
+    public char ColumnQuotePrefix
     {
         get
         {
             return '[';
         }
     }
-    public char ColumnQouteSuffix
+    public char ColumnQuoteSuffix
     {
         get
         {
@@ -753,14 +753,14 @@ public partial class PostgresAdapter : ISqlAdapter
         return id;
     }
 
-    public char ColumnQoutePrefix
+    public char ColumnQuotePrefix
     {
         get
         {
             return '"';
         }
     }
-    public char ColumnQouteSuffix
+    public char ColumnQuoteSuffix
     {
         get
         {
@@ -783,14 +783,14 @@ public partial class SQLiteAdapter : ISqlAdapter
         return id;
     }
 
-    public char ColumnQoutePrefix
+    public char ColumnQuotePrefix
     {
         get
         {
             return '[';
         }
     }
-    public char ColumnQouteSuffix
+    public char ColumnQuoteSuffix
     {
         get
         {
@@ -815,14 +815,14 @@ public partial class MySqlAdapter : ISqlAdapter
         return id;
     }
 
-    public char ColumnQoutePrefix
+    public char ColumnQuotePrefix
     {
         get
         {
             return '`';
         }
     }
-    public char ColumnQouteSuffix
+    public char ColumnQuoteSuffix
     {
         get
         {
