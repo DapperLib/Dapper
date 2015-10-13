@@ -37,12 +37,12 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
-        private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary = new Dictionary<string, ISqlAdapter> {
-																							{"sqlconnection", new SqlServerAdapter()},
-																							{"sqlceconnection", new SqlCeServerAdapter()},
-																							{"npgsqlconnection", new PostgresAdapter()},
-																							{"sqliteconnection", new SQLiteAdapter()}
-																						};
+        private static readonly Dictionary<DbmsType, ISqlAdapter> AdapterDictionary = new Dictionary<DbmsType, ISqlAdapter>() {
+                                                                                            {DbmsType.TSql, new SqlServerAdapter()},
+                                                                                            {DbmsType.SqlCe, new SqlCeServerAdapter()},
+                                                                                            {DbmsType.Postgres, new PostgresAdapter()},
+                                                                                            {DbmsType.SqlLite, new SQLiteAdapter()}
+                                                                                        };
 
         private static IEnumerable<PropertyInfo> ComputedPropertiesCache(Type type)
         {
@@ -414,30 +414,46 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+        //State to suoport getter on GetDatabaseType, to be removed when GetDatabaseType is permanantly obsoleted.
+        private static GetDatabaseTypeDelegate DatabaseTypeDelegate;
         /// <summary>
         /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
-        public static GetDatabaseTypeDelegate GetDatabaseType;
+        [Obsolete("Set Dapper.Config.GetDbmsTypeFromConnection instead, this gets used for more than just extensions")]
+        public static GetDatabaseTypeDelegate GetDatabaseType
+        {
+            get
+            {
+                return DatabaseTypeDelegate;
+            }
+            set
+            {
+                //This is only here so that people using the delegate wont break
+                Dapper.Config.GetDbmsTypeFromConnection = (connection) =>
+                {
+                    DatabaseTypeDelegate = value;
+                    var name = value(connection).ToLowerInvariant();
+                    switch (name)
+                    {
+                        case "npgsqlconnection":
+                            return DbmsType.Postgres;
+                        case "sqliteconnection":
+                            return DbmsType.SqlLite;
+                        case "sqlceconnection":
+                            return DbmsType.SqlCe;
+                        default:
+                            return DbmsType.TSql;
+                    }
+                };
+            }
+        }
 
 
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
-            string name;
-            if (GetDatabaseType != null)
-            {
-                name = GetDatabaseType(connection);
-                if (name != null)
-                    name = name.ToLower();
-            }
-            else
-            {
-                name = connection.GetType().Name.ToLower();
-            }
-
-            return !AdapterDictionary.ContainsKey(name) ?
-                new SqlServerAdapter() :
-                AdapterDictionary[name];
+            return AdapterDictionary.ContainsKey(Dapper.Config.GetDbmsType(connection)) ?
+                AdapterDictionary[Dapper.Config.GetDbmsType(connection)] : new SqlServerAdapter();
         }
 
         static class ProxyGenerator

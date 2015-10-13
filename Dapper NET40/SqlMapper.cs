@@ -1637,7 +1637,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 while (reader.Read())
                 {
                     object val = func(reader);
-					if (val == null || val is T) {
+                    if (val == null || val is T) {
                         yield return (T)val;
                     } else {
                         yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
@@ -5217,17 +5217,16 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// </summary>
     partial class FeatureSupport
     {
-        private static readonly FeatureSupport
-            @default = new FeatureSupport(false),
-            postgres = new FeatureSupport(true);
-
+        private static readonly FeatureSupport 
+           @default = new FeatureSupport(false),		
+           postgres = new FeatureSupport(true);
         /// <summary>
-        /// Gets the feature set based on the passed connection
+        /// Gets the featureset based on the passed connection
         /// </summary>
         public static FeatureSupport Get(IDbConnection connection)
         {
             string name = connection == null ? null : connection.GetType().Name;
-            if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return postgres;
+            if (Config.GetDbmsType(connection) == DbmsType.Postgres) return postgres; //Postgresql supports arrays
             return @default;
         }
         private FeatureSupport(bool arrays)
@@ -5238,6 +5237,64 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// True if the db supports array columns e.g. Postgresql
         /// </summary>
         public bool Arrays { get; private set; }
+    }
+
+    /// <summary>
+    /// Global config for Dapper containing things like the type of DB you are using
+    /// </summary>
+    public static class Config
+    {
+        /// <summary>
+        /// A function to get the DbmsType, this can be set to something custom to deal with nested connection types ect. Gets called by GetDbmsType
+        /// </summary>
+        public static Func<IDbConnection, DbmsType> GetDbmsTypeFromConnection = (connection) =>
+        {
+            string name = connection == null ? null : connection.GetType().Name.ToLowerInvariant();
+            switch (name)
+            {
+                case "npgsqlconnection":
+                    return DbmsType.Postgres;
+                case "sqliteconnection":
+                    return DbmsType.SqlLite;
+                case "sqlceconnection":
+                    return DbmsType.SqlCe;
+                default:
+                    return DbmsType.TSql;
+            }
+        };
+
+        /// <summary>
+        /// Get the type of database
+        /// </summary>
+        /// <param name="connection">The DbConnection to check for types</param>
+        /// <returns>A DbmsType containing the type of database dapper is generating for</returns>
+        public static DbmsType GetDbmsType(IDbConnection connection)
+        {
+            return GetDbmsTypeFromConnection.Invoke(connection);
+        }
+    }
+
+    /// <summary>
+    /// Types of databases dapper can generate for
+    /// </summary>
+    public enum DbmsType
+    {
+        /// <summary>
+        /// Basic standard T-Sql
+        /// </summary>
+        TSql,
+        /// <summary>
+        /// Postgresql
+        /// </summary>
+        Postgres,
+        /// <summary>
+        /// SqlLite
+        /// </summary>
+        SqlLite,
+        /// <summary>
+        /// SQL CE
+        /// </summary>
+        SqlCe
     }
 
     /// <summary>
