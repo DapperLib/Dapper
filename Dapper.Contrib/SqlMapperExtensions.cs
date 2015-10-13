@@ -32,6 +32,7 @@ namespace Dapper.Contrib.Extensions
         public delegate string TableNameMapperDelegate(Type type);
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
@@ -44,7 +45,7 @@ namespace Dapper.Contrib.Extensions
 																							{"sqliteconnection", new SQLiteAdapter()}
 																						};
 
-        private static IEnumerable<PropertyInfo> ComputedPropertiesCache(Type type)
+        private static List<PropertyInfo> ComputedPropertiesCache(Type type)
         {
             IEnumerable<PropertyInfo> pi;
             if (ComputedProperties.TryGetValue(type.TypeHandle, out pi))
@@ -56,6 +57,20 @@ namespace Dapper.Contrib.Extensions
 
             ComputedProperties[type.TypeHandle] = computedProperties;
             return computedProperties;
+        }
+
+        private static List<PropertyInfo> ExplicitKeyPropertiesCache(Type type)
+        {
+            IEnumerable<PropertyInfo> pi;
+            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out pi))
+            {
+                return pi.ToList();
+            }
+
+            var explicitKeyProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute)).ToList();
+
+            ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
+            return explicitKeyProperties;
         }
 
         private static List<PropertyInfo> KeyPropertiesCache(Type type)
@@ -123,17 +138,18 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
             {
                 var keys = KeyPropertiesCache(type);
-                if (keys.Count() > 1)
-                    throw new DataException("Get<T> only supports an entity with a single [Key] property");
-                if (!keys.Any())
-                    throw new DataException("Get<T> only supports an entity with a [Key] property");
+                var explicitKeys = ExplicitKeyPropertiesCache(type);
+                if (keys.Count() > 1 || explicitKeys.Count() > 1)
+                    throw new DataException("Get<T> only supports an entity with a single [Key] or [ExplicitKey] property");
+                if (!keys.Any() && !explicitKeys.Any())
+                    throw new DataException("Get<T> only supports an entity with a [Key] or an [ExplicitKey] property");
 
-                var onlyKey = keys.First();
+                var key = keys.Any() ? keys.First() : explicitKeys.First();
 
                 var name = GetTableName(type);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
+                sql = "select * from " + name + " where " + key.Name + " = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -154,7 +170,7 @@ namespace Dapper.Contrib.Extensions
                 foreach (var property in TypePropertiesCache(type))
                 {
                     var val = res[property.Name];
-                    property.SetValue(obj, val, null);
+                    property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
                 }
 
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
@@ -207,7 +223,7 @@ namespace Dapper.Contrib.Extensions
                 foreach (var property in TypePropertiesCache(type))
                 {
                     var val = res[property.Name];
-                    property.SetValue(obj, val, null);
+                    property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
                 }
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
                 list.Add(obj);
@@ -331,8 +347,9 @@ namespace Dapper.Contrib.Extensions
                 type = type.GetGenericArguments()[0];
 
             var keyProperties = KeyPropertiesCache(type);
-            if (!keyProperties.Any())
-                throw new ArgumentException("Entity must have at least one [Key] property");
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (!keyProperties.Any() && !explicitKeyProperties.Any())
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
             var name = GetTableName(type);
 
@@ -340,6 +357,7 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("update {0} set ", name);
 
             var allProperties = TypePropertiesCache(type);
+            keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
@@ -380,10 +398,12 @@ namespace Dapper.Contrib.Extensions
                 type = type.GetGenericArguments()[0];
 
             var keyProperties = KeyPropertiesCache(type);
-            if (!keyProperties.Any())
-                throw new ArgumentException("Entity must have at least one [Key] property");
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (!keyProperties.Any() && !explicitKeyProperties.Any())
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
             var name = GetTableName(type);
+            keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
@@ -610,6 +630,11 @@ namespace Dapper.Contrib.Extensions
     }
 
     [AttributeUsage(AttributeTargets.Property)]
+    public class ExplicitKeyAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
     public class WriteAttribute : Attribute
     {
         public WriteAttribute(bool write)
@@ -634,11 +659,13 @@ public partial class SqlServerAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-
         var cmd = String.Format("insert into {0} ({1}) values ({2});select SCOPE_IDENTITY() id", tableName, columnList, parameterList);
-        var multi = connection.QueryMultiple(cmd,entityToInsert , transaction, commandTimeout);
+        var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
 
-        var id = (int)multi.Read().First().id;
+        var first = multi.Read().FirstOrDefault();
+        if (first == null || first.id == null) return 0;
+
+        var id = (int)first.id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (!propertyInfos.Any()) return id;
 
@@ -660,10 +687,11 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
 
         var id = r.First().id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Any())
+        if (id == null) return 0;
+        var keyPropertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (keyPropertyInfos.Any())
         {
-            var idProperty = propertyInfos.First();
+            var idProperty = keyPropertyInfos.First();
             if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
                 idProperty.SetValue(entityToInsert, (Int16)id, null);
             else
@@ -718,11 +746,17 @@ public partial class SQLiteAdapter : ISqlAdapter
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
-        var r = connection.Query(cmd, entityToInsert, transaction: transaction, commandTimeout: commandTimeout);
-        var id = (int)r.First().id;
+        var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
+
+        var id = (int)multi.Read().First().id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Any())
-            propertyInfos.First().SetValue(entityToInsert, id, null);
+        if (!propertyInfos.Any()) return id;
+
+        var idProperty = propertyInfos.First();
+        if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
+            idProperty.SetValue(entityToInsert, (Int16)id, null);
+        else
+            idProperty.SetValue(entityToInsert, id, null);
         return id;
     }
 
