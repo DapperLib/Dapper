@@ -730,6 +730,8 @@ namespace Dapper
 
         static SqlMapper()
         {
+            SetDefaultTypeMap(t => new DefaultTypeMap(t));
+
             typeMap = new Dictionary<Type, DbType>();
             typeMap[typeof(byte)] = DbType.Byte;
             typeMap[typeof(sbyte)] = DbType.SByte;
@@ -3584,7 +3586,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                     getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
                         .Where(p => p.GetIndexParameters().Any() && p.GetIndexParameters()[0].ParameterType == typeof(int))
                         .Select(p => p.GetGetMethod()).First();
-
+        
         /// <summary>
         /// Gets type-map for the given type
         /// </summary>
@@ -3610,13 +3612,24 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                         if (map == null)
                     {
-                        map = new DefaultTypeMap(type);
+                        map = _defaultTypeMapFactory(type);
                         _typeMaps[type] = map;
                     }
                 }
             }
             return map;
         }
+
+        private static Func<Type, ITypeMap> _defaultTypeMapFactory;
+
+        /// <summary>
+        /// Set a custom mapping for all types
+        /// </summary>
+        /// <param name="factory">A function that creates the ITypeMap</param>
+        public static void SetDefaultTypeMap(Func<Type, ITypeMap> factory)
+        {
+            _defaultTypeMapFactory = factory;
+        } 
 
         // use Hashtable to get free lockless reading
 #if DNXCORE50
@@ -3634,8 +3647,8 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         {
             if (type == null)
                 throw new ArgumentNullException("type");
-
-            if (map == null || map is DefaultTypeMap)
+            
+            if (map == null)
             {
                 lock (_typeMaps)
                 {
@@ -5357,7 +5370,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     /// <summary>
     /// Represents default type mapping strategy used by Dapper
     /// </summary>
-    sealed partial class DefaultTypeMap : SqlMapper.ITypeMap
+    partial class DefaultTypeMap : SqlMapper.ITypeMap
     {
         private readonly List<FieldInfo> _fields;
         private readonly List<PropertyInfo> _properties;
@@ -5426,7 +5439,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <param name="names">DataReader column names</param>
         /// <param name="types">DataReader column types</param>
         /// <returns>Matching constructor or default one</returns>
-        public ConstructorInfo FindConstructor(string[] names, Type[] types)
+        public virtual ConstructorInfo FindConstructor(string[] names, Type[] types)
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
@@ -5488,7 +5501,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <param name="constructor">Constructor to resolve</param>
         /// <param name="columnName">DataReader column name</param>
         /// <returns>Mapping implementation</returns>
-        public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
+        public virtual SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
             var parameters = constructor.GetParameters();
 
@@ -5500,7 +5513,7 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// </summary>
         /// <param name="columnName">DataReader column name</param>
         /// <returns>Mapping implementation</returns>
-        public SqlMapper.IMemberMap GetMember(string columnName)
+        public virtual SqlMapper.IMemberMap GetMember(string columnName)
         {
             var property = _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
                ?? _properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
