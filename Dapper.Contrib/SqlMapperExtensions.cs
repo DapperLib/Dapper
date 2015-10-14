@@ -42,7 +42,8 @@ namespace Dapper.Contrib.Extensions
 																							{"sqlconnection", new SqlServerAdapter()},
 																							{"sqlceconnection", new SqlCeServerAdapter()},
 																							{"npgsqlconnection", new PostgresAdapter()},
-																							{"sqliteconnection", new SQLiteAdapter()}
+																							{"sqliteconnection", new SQLiteAdapter()},
+																							{"mysqlconnection", new MySqlAdapter()},
 																						};
 
         private static List<PropertyInfo> ComputedPropertiesCache(Type type)
@@ -289,10 +290,12 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                sbColumnList.AppendFormat("[{0}]", property.Name);
+                adapter.AppendColumnName(sbColumnList, property.Name);  //fix for issue #336
                 if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbColumnList.Append(", ");
             }
@@ -312,7 +315,6 @@ namespace Dapper.Contrib.Extensions
 
             if (!isList)    //single entity
             {
-                var adapter = GetFormatter(connection);
                 returnVal = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
@@ -361,10 +363,12 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
+            var adapter = GetFormatter(connection); 
+
             for (var i = 0; i < nonIdProps.Count(); i++)
             {
                 var property = nonIdProps.ElementAt(i);
-                sb.AppendFormat("[{0}] = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < nonIdProps.Count() - 1)
                     sb.AppendFormat(", ");
             }
@@ -372,7 +376,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count(); i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("[{0}] = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
@@ -408,10 +412,12 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < keyProperties.Count(); i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("[{0}] = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
@@ -653,6 +659,10 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
+    
+    //new methods for issue #336
+    void AppendColumnName(StringBuilder sb, string columnName);
+    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
 }
 
 public partial class SqlServerAdapter : ISqlAdapter
@@ -666,15 +676,23 @@ public partial class SqlServerAdapter : ISqlAdapter
         if (first == null || first.id == null) return 0;
 
         var id = (int)first.id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!pi.Any()) return id;
 
-        var idProperty = propertyInfos.First();
-        if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
-            idProperty.SetValue(entityToInsert, (Int16)id, null);
-        else
-            idProperty.SetValue(entityToInsert, id, null);
+        var idp = pi.First();
+        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+
         return id;
+    }
+
+    public void AppendColumnName(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("[{0}]", columnName);
+    }
+
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
     }
 }
 
@@ -684,20 +702,58 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     {
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-        var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout);
+        var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ToList();
+
+        if (r.First().id == null) return 0;
+        var id = (int) r.First().id;
+
+        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!pi.Any()) return id;
+
+        var idp = pi.First();
+        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+
+        return id;
+    }
+
+    public void AppendColumnName(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("[{0}]", columnName);
+    }
+
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+    }
+}
+
+public partial class MySqlAdapter : ISqlAdapter
+{
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
+        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+        var r = connection.Query("Select LAST_INSERT_ID()", transaction: transaction, commandTimeout: commandTimeout);
 
         var id = r.First().id;
         if (id == null) return 0;
-        var keyPropertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (keyPropertyInfos.Any())
-        {
-            var idProperty = keyPropertyInfos.First();
-            if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
-                idProperty.SetValue(entityToInsert, (Int16)id, null);
-            else
-                idProperty.SetValue(entityToInsert, (int)id, null);
-        }
-        return (int)id;
+        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!pi.Any()) return id;
+
+        var idp = pi.First();
+        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+
+        return id;
+    }
+
+    public void AppendColumnName(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("`{0}`", columnName);
+    }
+
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
     }
 }
 
@@ -739,6 +795,16 @@ public partial class PostgresAdapter : ISqlAdapter
         }
         return id;
     }
+
+    public void AppendColumnName(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("\"{0}\"", columnName);
+    }
+
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+    }
 }
 
 public partial class SQLiteAdapter : ISqlAdapter
@@ -749,15 +815,22 @@ public partial class SQLiteAdapter : ISqlAdapter
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
 
         var id = (int)multi.Read().First().id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!pi.Any()) return id;
 
-        var idProperty = propertyInfos.First();
-        if (idProperty.PropertyType.Name == "Int16") //for short id/key types issue #196
-            idProperty.SetValue(entityToInsert, (Int16)id, null);
-        else
-            idProperty.SetValue(entityToInsert, id, null);
+        var idp = pi.First();
+        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+
         return id;
     }
 
+    public void AppendColumnName(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("\"{0}\"", columnName);
+    }
+
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+    }
 }
