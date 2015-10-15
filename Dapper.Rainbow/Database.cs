@@ -197,6 +197,11 @@ namespace Dapper
             transaction = null;
         }
 
+        protected Action<TDatabase> CreateTableConstructor(Type tableType)
+        {
+            return CreateTableConstructor(new Type[] {tableType});
+        }
+
         protected Action<TDatabase> CreateTableConstructor(params Type[] tableTypes)
         {
             var dm = new DynamicMethod("ConstructInstances", null, new Type[] { typeof(TDatabase) }, true);
