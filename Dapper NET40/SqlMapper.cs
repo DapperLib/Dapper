@@ -3601,6 +3601,12 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
         /// <summary>
         /// Gets type-map for the given type
         /// </summary>
+        /// <returns>Type map instance, default is to create new instance of DefaultTypeMap</returns>
+        public static Func<Type, ITypeMap> TypeMapProvider = ( Type type ) => new DefaultTypeMap( type );
+
+        /// <summary>
+        /// Gets type-map for the given type
+        /// </summary>
         /// <returns>Type map implementation, DefaultTypeMap instance if no override present</returns>
         public static ITypeMap GetTypeMap(Type type)
         {
@@ -3623,7 +3629,7 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
 
                         if (map == null)
                     {
-                        map = new DefaultTypeMap(type);
+                        map = TypeMapProvider( type );
                         _typeMaps[type] = map;
                     }
                 }
