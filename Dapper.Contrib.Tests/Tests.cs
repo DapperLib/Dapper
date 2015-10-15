@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+#if SQLITE
+using System.Data.SQLite;
+#elif MSSQL
+using System.Data.SqlClient;
+#endif
 using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
@@ -11,6 +16,22 @@ using Dapper.Contrib.Extensions;
 
 namespace Dapper.Contrib.Tests
 {
+    [Table("ObjectX")]
+    public class ObjectX
+    {
+        [ExplicitKey]
+        public string ObjectXId { get; set; }
+        public string Name { get; set; }
+    }
+
+    [Table("ObjectY")]
+    public class ObjectY
+    {
+        [ExplicitKey]
+        public int ObjectYId { get; set; }
+        public string Name { get; set; }
+    }
+
     public interface IUser
     {
         [Key]
@@ -65,7 +86,13 @@ namespace Dapper.Contrib.Tests
             var projLoc = Assembly.GetAssembly(GetType()).Location;
             var projFolder = Path.GetDirectoryName(projLoc);
 
+#if SQLITE
+            var connection = new SQLiteConnection("Data Source = " + projFolder + "\\Test.sqlite;");
+#elif MSSQL
+            var connection = new SqlConnection("Data Source = .\\SQLEXPRESS;Initial Catalog=DapperContribMsSqlTests;Integrated Security=SSPI");
+#else
             var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+#endif
             connection.Open();
             return connection;
         }
@@ -75,8 +102,55 @@ namespace Dapper.Contrib.Tests
             var projLoc = Assembly.GetAssembly(GetType()).Location;
             var projFolder = Path.GetDirectoryName(projLoc);
 
+#if SQLITE
+            var connection = new SQLiteConnection("Data Source = " + projFolder + "\\Test.sqlite;");
+#elif MSSQL
+            var connection = new SqlConnection("Data Source = .\\SQLEXPRESS;Initial Catalog=DapperContribMsSqlTests;Integrated Security=SSPI");
+#else
             var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+#endif
             return connection;
+        }
+
+        /// <summary>
+        /// Tests for issue #351 
+        /// </summary>
+        public void InsertGetUpdateDeleteWithExplicitKey()
+        {
+
+            using (var connection = GetOpenConnection())
+            {
+
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
+                connection.Insert(o1);
+                var list1 = connection.Query<ObjectX>("select * from objectx").ToList();
+                list1.Count.IsEqualTo(1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.ObjectXId.IsEqualTo(guid);
+                o1.Name = "Bar";
+                connection.Update(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.Name.IsEqualTo("Bar");
+                connection.Delete(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.IsNull();
+
+                const int id = 42;
+                var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
+                connection.Insert(o2);
+                var list2 = connection.Query<ObjectY>("select * from objecty").ToList();
+                list2.Count.IsEqualTo(1);
+                o2 = connection.Get<ObjectY>(id);
+                o2.ObjectYId.IsEqualTo(id);
+                o2.Name = "Bar";
+                connection.Update(o2);
+                o2 = connection.Get<ObjectY>(id);
+                o2.Name.IsEqualTo("Bar");
+                connection.Delete(o2);
+                o2 = connection.Get<ObjectY>(id);
+                o2.IsNull();
+            }
         }
 
         public void ShortIdentity()
@@ -141,7 +215,7 @@ namespace Dapper.Contrib.Tests
 
         public void InsertList()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)
@@ -161,7 +235,7 @@ namespace Dapper.Contrib.Tests
 
         public void UpdateList()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)
@@ -188,7 +262,7 @@ namespace Dapper.Contrib.Tests
 
         public void DeleteList()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)
@@ -247,6 +321,9 @@ namespace Dapper.Contrib.Tests
                 connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
             }
         }
+#if SQLITE
+#elif MSSQL
+#else
 
         public void InsertWithCustomDbType()
         {
@@ -265,6 +342,7 @@ namespace Dapper.Contrib.Tests
                 {
                     sqliteCodeCalled = ex.Message.IndexOf("There was an error parsing the query", StringComparison.InvariantCultureIgnoreCase) >= 0;
                 }
+// ReSharper disable once EmptyGeneralCatchClause
                 catch (Exception)
                 {
                 }
@@ -276,7 +354,7 @@ namespace Dapper.Contrib.Tests
                 throw new Exception("Was expecting sqlite code to be called");
             }
         }
-
+#endif
         public void InsertWithCustomTableNameMapper()
         {
 
@@ -308,7 +386,7 @@ namespace Dapper.Contrib.Tests
 
         public void GetAll()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)

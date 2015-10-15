@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+#if SQLITE
+using System.Data.SQLite;
+#elif MSSQL
+using System.Data.SqlClient;
+#endif
 using System.Data.SqlServerCe;
 using System.IO;
 using System.Linq;
@@ -18,9 +23,54 @@ namespace Dapper.Contrib.Tests
             var projLoc = Assembly.GetAssembly(GetType()).Location;
             var projFolder = Path.GetDirectoryName(projLoc);
 
+#if SQLITE
+            var connection = new SQLiteConnection("Data Source = " + projFolder + "\\Test.sqlite;");
+#elif MSSQL
+            var connection = new SqlConnection("Data Source = .\\SQLEXPRESS;Initial Catalog=DapperContribMsSqlTests;Integrated Security=SSPI");
+#else
             var connection = new SqlCeConnection("Data Source = " + projFolder + "\\Test.sdf;");
+#endif
             connection.Open();
             return connection;
+        }
+        /// <summary>
+        /// Tests for issue #351 
+        /// </summary>
+        public async Task InsertGetUpdateDeleteWithExplicitKey()
+        {
+
+            using (var connection = GetOpenConnection())
+            {
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
+                await connection.InsertAsync(o1);
+                var list1 = (await connection.QueryAsync<ObjectX>("select * from objectx")).ToList();
+                list1.Count.IsEqualTo(1);
+                o1 = await connection.GetAsync<ObjectX>(guid);
+                o1.ObjectXId.IsEqualTo(guid);
+                o1.Name = "Bar";
+                await connection.UpdateAsync(o1);
+                o1 = await connection.GetAsync<ObjectX>(guid);
+                o1.Name.IsEqualTo("Bar");
+                await connection.DeleteAsync(o1);
+                o1 = await connection.GetAsync<ObjectX>(guid);
+                o1.IsNull();
+
+                const int id = 42;
+                var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
+                await connection.InsertAsync(o2);
+                var list2 = (await connection.QueryAsync<ObjectY>("select * from objecty")).ToList();
+                list2.Count.IsEqualTo(1);
+                o2 = await connection.GetAsync<ObjectY>(id);
+                o2.ObjectYId.IsEqualTo(id);
+                o2.Name = "Bar";
+                await connection.UpdateAsync(o2);
+                o2 = await connection.GetAsync<ObjectY>(id);
+                o2.Name.IsEqualTo("Bar");
+                await connection.DeleteAsync(o2);
+                o2 = await connection.GetAsync<ObjectY>(id);
+                o2.IsNull();
+            }
         }
 
         public async Task TableNameAsync()
@@ -87,7 +137,7 @@ namespace Dapper.Contrib.Tests
 
                 (await connection.UpdateAsync(notrackedUser)).IsEqualTo(false); //returns false, user not found
 
-                (await connection.InsertAsync(new User { Name = "Adam", Age = 10 }, sqlAdapter: new SqlCeServerAdapter())).IsMoreThan(0);
+                (await connection.InsertAsync(new User { Name = "Adam", Age = 10 })).IsMoreThan(0);
             }
         }
 
@@ -159,7 +209,7 @@ namespace Dapper.Contrib.Tests
 
         public async Task InsertListAsync()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)
@@ -178,7 +228,7 @@ namespace Dapper.Contrib.Tests
 
         public async Task UpdateList()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)
@@ -205,7 +255,7 @@ namespace Dapper.Contrib.Tests
 
         public async Task DeleteList()
         {
-            const int numberOfEntities = 100;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)
@@ -230,7 +280,7 @@ namespace Dapper.Contrib.Tests
 
         public async Task GetAllAsync()
         {
-            const int numberOfEntities = 1000;
+            const int numberOfEntities = 10;
 
             var users = new List<User>();
             for (var i = 0; i < numberOfEntities; i++)

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Data.SqlClient;
 using System.Data.SqlServerCe;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -10,25 +12,54 @@ namespace Dapper.Contrib.Tests
     {
         static void Main(string[] args)
         {
-            Setup();
+            SetupMsSqlDatabase();
+            SetupTables();
             RunTests();
-            Setup();
+            DropTables();
+            SetupTables();
             RunAsyncTests();
             Console.WriteLine("Press any key...");
             Console.ReadKey();
         }
 
-        private static void Setup()
+        private static void SetupMsSqlDatabase()
         {
-            var projLoc = Assembly.GetAssembly(typeof(Program)).Location;
-            var projFolder = Path.GetDirectoryName(projLoc);
+            using (var connection = new SqlConnection("Data Source = .\\SQLEXPRESS;Initial Catalog=master;Integrated Security=SSPI"))
+            {
+                connection.Open();
+                var exists = connection.Query<int>("SELECT count(*) FROM master.sys.databases WHERE name = @name",
+                    new { name = "DapperContribMsSqlTests" }).First();
+                if (exists > 0)
+                {
+                    connection.Execute("drop database DapperContribMsSqlTests");
+                }
+                connection.Execute("create database DapperContribMsSqlTests");
 
-            if (File.Exists(projFolder + "\\Test.sdf"))
-                File.Delete(projFolder + "\\Test.sdf");
-            var connectionString = "Data Source = " + projFolder + "\\Test.sdf;";
-            var engine = new SqlCeEngine(connectionString);
-            engine.CreateDatabase();
-            using (var connection = new SqlCeConnection(connectionString))
+            }
+        }
+
+        private static void DropTables()
+        {
+
+            using (var connection = new SqlConnection("Data Source = .\\SQLEXPRESS;Initial Catalog=DapperContribMsSqlTests;Integrated Security=SSPI"))
+            {
+                connection.Open();
+                connection.Execute("alter database DapperContribMsSqlTests set single_user with rollback immediate");
+                connection.Execute(@" drop table Stuff");
+                connection.Execute(@" drop table People ");
+                connection.Execute(@" drop table Users");
+                connection.Execute(@" drop table Automobiles ");
+                connection.Execute(@" drop table Results ");
+                connection.Execute(@" drop table ObjectX ");
+                connection.Execute(@" drop table ObjectY ");
+            }
+            Console.WriteLine("Created database");
+        }
+
+        private static void SetupTables()
+        {
+
+            using (var connection = new SqlConnection("Data Source = .\\SQLEXPRESS;Initial Catalog=DapperContribMsSqlTests;Integrated Security=SSPI"))
             {
                 connection.Open();
                 connection.Execute(@" create table Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null) ");
