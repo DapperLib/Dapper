@@ -1541,6 +1541,23 @@ end");
             ((int)obj.f).IsEqualTo(10);
         }
 
+        public void TestDefaultDbStringDbType()
+        {
+            var origDefaultStringDbType = DbString.IsAnsiDefault;
+            try
+            {
+                DbString.IsAnsiDefault = true;
+                var a = new DbString { Value = "abcde" };
+                var b = new DbString { Value = "abcde", IsAnsi = false };
+                a.IsAnsi.IsTrue();
+                b.IsAnsi.IsFalse();
+            }
+            finally
+            {
+                DbString.IsAnsiDefault = origDefaultStringDbType;
+            }
+        }
+
         class Person
         {
             public int PersonId { get; set; }
@@ -3289,7 +3306,7 @@ option (optimize for (@vals unKnoWn))";
             connection.Query<TimeSpan>("#TestProcWithTimeParameter", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(new TimeSpan(10, 0, 0));
         }
 
-        public void DbString()
+        public void DbStringAnsi()
         {
             var a = connection.Query<int>("select datalength(@x)",
                 new { x = new DbString { Value = "abc", IsAnsi = true } }).Single();

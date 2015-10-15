@@ -5259,6 +5259,11 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
     sealed partial class DbString : Dapper.SqlMapper.ICustomQueryParameter
     {
         /// <summary>
+        /// Default value for IsAnsi.
+        /// </summary>
+        public static bool IsAnsiDefault { get; set; }
+
+        /// <summary>
         /// A value to set the default value of strings
         /// going through Dapper. Default is 4000, any value larger than this
         /// field will not have the default value applied.
@@ -5268,7 +5273,10 @@ string name, object value = null, DbType? dbType = null, ParameterDirection? dir
         /// <summary>
         /// Create a new DbString
         /// </summary>
-        public DbString() { Length = -1; }
+        public DbString() {
+            Length = -1;
+            IsAnsi = IsAnsiDefault;
+        }
         /// <summary>
         /// Ansi vs Unicode 
         /// </summary>
