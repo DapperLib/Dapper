@@ -1313,9 +1313,11 @@ this IDbConnection cnn, string sql, object param = null, IDbTransaction transact
 
         private static IEnumerable GetMultiExec(object param)
         {
-            return (param is IEnumerable
-                && !(param is string || param is IEnumerable<KeyValuePair<string, object>>
-                    )) ? (IEnumerable)param : null;
+            return (param is IEnumerable &&
+                    !(param is string ||
+                      param is IEnumerable<KeyValuePair<string, object>> ||
+                      param is IDynamicParameters)
+                ) ? (IEnumerable) param : null;
         }
 
         private static int ExecuteImpl(this IDbConnection cnn, ref CommandDefinition command)
