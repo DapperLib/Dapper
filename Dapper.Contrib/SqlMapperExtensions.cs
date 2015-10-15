@@ -676,11 +676,11 @@ public partial class SqlServerAdapter : ISqlAdapter
         if (first == null || first.id == null) return 0;
 
         var id = (int)first.id;
-        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!pi.Any()) return id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!propertyInfos.Any()) return id;
 
-        var idp = pi.First();
-        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+        var idProperty = propertyInfos.First();
+        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
 
         return id;
     }
@@ -707,11 +707,11 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         if (r.First().id == null) return 0;
         var id = (int) r.First().id;
 
-        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!pi.Any()) return id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!propertyInfos.Any()) return id;
 
-        var idp = pi.First();
-        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+        var idProperty = propertyInfos.First();
+        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
 
         return id;
     }
@@ -737,10 +737,10 @@ public partial class MySqlAdapter : ISqlAdapter
 
         var id = r.First().id;
         if (id == null) return 0;
-        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!pi.Any()) return id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!propertyInfos.Any()) return id;
 
-        var idp = pi.First();
+        var idp = propertyInfos.First();
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
 
         return id;
@@ -815,11 +815,11 @@ public partial class SQLiteAdapter : ISqlAdapter
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
 
         var id = (int)multi.Read().First().id;
-        var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!pi.Any()) return id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (!propertyInfos.Any()) return id;
 
-        var idp = pi.First();
-        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+        var idProperty = propertyInfos.First();
+        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
 
         return id;
     }
