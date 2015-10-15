@@ -4337,6 +4337,22 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 }
             }
 
+            private IEnumerable<TReturn> MultiReadInternal<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn)
+            {
+                var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
+                try
+                {
+                    foreach (var r in SqlMapper.MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, false))
+                    {
+                        yield return r;
+                    }
+                }
+                finally
+                {
+                    NextResult();
+                }
+            }
+
 #if CSHARP30
             /// <summary>
             /// Read multiple objects from a single record set on the grid
@@ -4431,6 +4447,16 @@ Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnN
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(func, splitOn);
                 return buffered ? result.ToList() : result;
             }
+
+            /// <summary>
+            /// Read multiple objects from a single record set on the grid
+            /// </summary>
+            public IEnumerable<TReturn> Read<TReturn>(Type[] types, Func<object [], TReturn> map, string splitOn = "id", bool buffered = true)
+            {
+                var result = MultiReadInternal<TReturn>(types, map, splitOn);
+                return buffered ? result.ToList() : result;
+            }
+
 #endif
 
             private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)
