@@ -197,7 +197,7 @@ namespace Dapper
             transaction = null;
         }
 
-        protected Action<TDatabase> CreateTableConstructor(Type tableType)
+        protected Action<TDatabase> CreateTableConstructor(params Type[] tableTypes)
         {
             return CreateTableConstructor(new Type[] {tableType});
         }
