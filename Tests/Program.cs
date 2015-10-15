@@ -181,7 +181,7 @@ end
                 {
                     if (HasAttribute<SkipTestAttribute>(method))
                     {
-                        Console.Write("Skipping " + method.Name);
+                        Console.WriteLine("Skipping " + method.Name);
                         skip++;
                         continue;
                     }

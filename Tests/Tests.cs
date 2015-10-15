@@ -4477,11 +4477,7 @@ SELECT * FROM @ExplicitConstructors"
 
                 if (setPrecisionScaleViaAbstractApi)
                 {
-#if DNXCORE50
-                    DbParameter baseParam = c;
-#else
                     IDbDataParameter baseParam = c;
-#endif
                     baseParam.Precision = 10;
                     baseParam.Scale = 5;
                 }
