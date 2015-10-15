@@ -2794,37 +2794,40 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
-				DbType dbType = 0;
-                foreach (var item in list)
+                DbType dbType = 0;
+                if (list != null)
                 {
-                    if (count++ == 0)
+                    foreach (var item in list)
                     {
-                        ITypeHandler handler;
-                        dbType = LookupDbType(item.GetType(), "", true, out handler);
-                    }
-                    var listParam = command.CreateParameter();
-                    listParam.ParameterName = namePrefix + count;
-                    if (isString)
-                    {
-                        listParam.Size = DbString.DefaultLength;
-                        if (item != null && ((string)item).Length > DbString.DefaultLength)
+                        if (count++ == 0)
                         {
-                            listParam.Size = -1;
+                            ITypeHandler handler;
+                            dbType = LookupDbType(item.GetType(), "", true, out handler);
                         }
-                    }
-                    if (isDbString && item as DbString != null)
-                    {
-                        var str = item as DbString;
-                        str.AddParameter(command, listParam.ParameterName);
-                    }
-                    else
-                    {
-                        listParam.Value = SanitizeParameterValue(item);
-						if (listParam.DbType != dbType)
+                        var listParam = command.CreateParameter();
+                        listParam.ParameterName = namePrefix + count;
+                        if (isString)
                         {
-                            listParam.DbType = dbType;
+                            listParam.Size = DbString.DefaultLength;
+                            if (item != null && ((string) item).Length > DbString.DefaultLength)
+                            {
+                                listParam.Size = -1;
+                            }
                         }
-                        command.Parameters.Add(listParam);
+                        if (isDbString && item as DbString != null)
+                        {
+                            var str = item as DbString;
+                            str.AddParameter(command, listParam.ParameterName);
+                        }
+                        else
+                        {
+                            listParam.Value = SanitizeParameterValue(item);
+                            if (listParam.DbType != dbType)
+                            {
+                                listParam.DbType = dbType;
+                            }
+                            command.Parameters.Add(listParam);
+                        }
                     }
                 }
 
