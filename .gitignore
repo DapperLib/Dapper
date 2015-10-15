@@ -10,3 +10,4 @@ NuGet.exe
 *.nupkg
 .docstats
 *.ide/
+*.lock.json
