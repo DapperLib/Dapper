@@ -123,13 +123,15 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
+        /// Inserts an entity into table "Ts" asynchronously using .NET 4.5 Task and returns identity id.
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
-        /// <returns>Identity (long) of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        /// <param name="entityToInsert">Entity to insert</param>
+        /// <returns>Identity of inserted entity</returns>
+        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
+            int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
+            //NOTE: sqlAdapter parameter is no longer used, and that parameter is missing from the Insert<T> method in the "non-async" file
             return await connection.InsertAsync<int>(entityToInsert, transaction, commandTimeout);
         }
 
@@ -139,7 +141,8 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static async Task<TKey> InsertAsync<TKey>(this IDbConnection connection, object entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<TKey> InsertAsync<TKey>(this IDbConnection connection, object entityToInsert, IDbTransaction transaction = null,
+            int? commandTimeout = null)
         {
             var type = entityToInsert.GetType();
             if (type.IsArray || type.IsGenericType)
