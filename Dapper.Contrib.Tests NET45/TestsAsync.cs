@@ -36,29 +36,30 @@ namespace Dapper.Contrib.Tests
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
-        public async Task InsertGetUpdateDeleteWithExplicitKey()
+        public async Task InsertGetUpdateDeleteWithExplicitKeyAsync()
         {
 
             using (var connection = GetOpenConnection())
             {
                 var guid = Guid.NewGuid().ToString();
                 var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
-                await connection.InsertAsync(o1);
-                var list1 = (await connection.QueryAsync<ObjectX>("select * from objectx")).ToList();
+                var stringId = await connection.InsertAsync<string>(o1);
+                stringId.IsEqualTo(guid);
+                var list1 = connection.Query<ObjectX>("select * from objectx").ToList();
                 list1.Count.IsEqualTo(1);
-                o1 = await connection.GetAsync<ObjectX>(guid);
+                o1 = connection.Get<ObjectX>(guid);
                 o1.ObjectXId.IsEqualTo(guid);
                 o1.Name = "Bar";
-                await connection.UpdateAsync(o1);
-                o1 = await connection.GetAsync<ObjectX>(guid);
+                connection.Update(o1);
+                o1 = connection.Get<ObjectX>(guid);
                 o1.Name.IsEqualTo("Bar");
-                await connection.DeleteAsync(o1);
-                o1 = await connection.GetAsync<ObjectX>(guid);
+                connection.Delete(o1);
+                o1 = connection.Get<ObjectX>(guid);
                 o1.IsNull();
 
                 const int id = 42;
                 var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
-                await connection.InsertAsync(o2);
+                await connection.InsertAsync<long>(o2);
                 var list2 = (await connection.QueryAsync<ObjectY>("select * from objecty")).ToList();
                 list2.Count.IsEqualTo(1);
                 o2 = await connection.GetAsync<ObjectY>(id);
@@ -138,20 +139,6 @@ namespace Dapper.Contrib.Tests
                 (await connection.UpdateAsync(notrackedUser)).IsEqualTo(false); //returns false, user not found
 
                 (await connection.InsertAsync(new User { Name = "Adam", Age = 10 })).IsMoreThan(0);
-            }
-        }
-
-
-        public async Task InsertCheckKeyAsync()
-        {
-            using (var connection = GetOpenConnection())
-            {
-                await connection.DeleteAllAsync<User>();
-
-                (await connection.GetAsync<IUser>(3)).IsNull();
-                var user = new User { Name = "Adamb", Age = 10 };
-                var id = await connection.InsertAsync(user);
-                user.Id.IsEqualTo(id);
             }
         }
 

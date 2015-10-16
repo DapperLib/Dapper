@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using System.Threading;
 
 using Dapper;
+using Dapper.Contrib.Extensions;
 
 #pragma warning disable 1573, 1591 // xml comments
 
@@ -264,22 +265,17 @@ namespace Dapper.Contrib.Extensions
             return name;
         }
 
-
         /// <summary>
-        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
+        /// Inserts an entity into table based on the entity name  and returns identity id of type T or number of inserted rows (long) if inserting a list.
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static T Insert<T>(this IDbConnection connection, object entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            var isList = false;
-
-            var type = typeof(T);
-
+            var type = entityToInsert.GetType();
             if (type.IsArray || type.IsGenericType)
             {
-                isList = true;
                 type = type.GetGenericArguments()[0];
             }
 
@@ -287,6 +283,10 @@ namespace Dapper.Contrib.Extensions
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (!keyProperties.Any() && !explicitKeyProperties.Any())
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
@@ -309,23 +309,34 @@ namespace Dapper.Contrib.Extensions
                     sbParameterList.Append(", ");
             }
 
-            int returnVal;
             var wasClosed = connection.State == ConnectionState.Closed;
             if (wasClosed) connection.Open();
 
-            if (!isList)    //single entity
+            type = entityToInsert.GetType();
+            if (type.IsArray || type.IsGenericType) //a list is inserted, should return nr of affected rows
             {
-                returnVal = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
-                    sbParameterList.ToString(), keyProperties, entityToInsert);
-            }
-            else
-            {
-                //insert list of entities
                 var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
-                returnVal = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+                var affectedRows = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+                if (wasClosed) connection.Close();
+                return (T)Convert.ChangeType(affectedRows, typeof(long));
             }
+
+            var id = adapter.Insert<T>(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                sbParameterList.ToString(), keyProperties, explicitKeyProperties, entityToInsert);
+
             if (wasClosed) connection.Close();
-            return returnVal;
+            return id;
+        }
+
+        /// <summary>
+        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
+        /// </summary>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
+        /// <returns>Identity (long) of inserted entity, or number of inserted rows if inserting a list</returns>
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            return connection.Insert<long>(entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -363,7 +374,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection); 
+            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count(); i++)
             {
@@ -658,8 +669,10 @@ namespace Dapper.Contrib.Extensions
 
 public partial interface ISqlAdapter
 {
-    int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
-    
+    T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName,
+        string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties,
+        object entityToInsert);
+
     //new methods for issue #336
     void AppendColumnName(StringBuilder sb, string columnName);
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
@@ -667,21 +680,13 @@ public partial interface ISqlAdapter
 
 public partial class SqlServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+        string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2});select SCOPE_IDENTITY() id", tableName, columnList, parameterList);
-        var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
-
-        var first = multi.Read().FirstOrDefault();
-        if (first == null || first.id == null) return 0;
-
-        var id = (int)first.id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
-
-        var idProperty = propertyInfos.First();
-        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
-
+        var keyProperty = keyProperties.Any() ? keyProperties.First() : explicitKeyProperties.First();
+        var cmd = String.Format("insert into {0} ({1}) OUTPUT INSERTED.{3} values ({2})", tableName, columnList, parameterList, keyProperty.Name);
+        var id = connection.Query<T>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout)
+                .FirstOrDefault();
         return id;
     }
 
@@ -698,23 +703,23 @@ public partial class SqlServerAdapter : ISqlAdapter
 
 public partial class SqlCeServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+        string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
+
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-        var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ToList();
 
-        if (r.First().id == null) return 0;
-        var id = (int) r.First().id;
-
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
-
-        var idProperty = propertyInfos.First();
-        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
-
-        return id;
+        if (keyProperties.Any())
+        {
+            var id = connection.Query<T>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).FirstOrDefault();
+            return id;
+        }
+        
+        // get explicit key value from inserted entity
+        return (T)entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
     }
+
 
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
@@ -729,20 +734,12 @@ public partial class SqlCeServerAdapter : ISqlAdapter
 
 public partial class MySqlAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+        string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-        var r = connection.Query("Select LAST_INSERT_ID()", transaction: transaction, commandTimeout: commandTimeout);
-
-        var id = r.First().id;
-        if (id == null) return 0;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
-
-        var idp = propertyInfos.First();
-        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
-
+        var id = connection.Query<T>("Select LAST_INSERT_ID()", transaction: transaction, commandTimeout: commandTimeout).FirstOrDefault();
         return id;
     }
 
@@ -760,20 +757,21 @@ public partial class MySqlAdapter : ISqlAdapter
 
 public partial class PostgresAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+        string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
         sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
         // If no primary key then safe to assume a join table with not too much data to return
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any())
+        keyProperties.AddRange(explicitKeyProperties);
+        if (!keyProperties.Any())
             sb.Append(" RETURNING *");
         else
         {
             sb.Append(" RETURNING ");
             var first = true;
-            foreach (var property in propertyInfos)
+            foreach (var property in keyProperties)
             {
                 if (!first)
                     sb.Append(", ");
@@ -782,17 +780,7 @@ public partial class PostgresAdapter : ISqlAdapter
             }
         }
 
-        var results = connection.Query(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).ToList();
-
-        // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
-        var id = 0;
-        foreach (var p in propertyInfos)
-        {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
-            p.SetValue(entityToInsert, value, null);
-            if (id == 0)
-                id = Convert.ToInt32(value);
-        }
+        var id = connection.Query<T>(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault();
         return id;
     }
 
@@ -809,20 +797,25 @@ public partial class PostgresAdapter : ISqlAdapter
 
 public partial class SQLiteAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+       string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
-        var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
-
-        var id = (int)multi.Read().First().id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
-
-        var idProperty = propertyInfos.First();
-        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
-
-        return id;
+        if (keyProperties.Any())
+        {
+            var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
+            var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
+            return (T)multi.Read().First().id;
+        }
+        else //insert of object with explicit key
+        {
+            var cmd = String.Format("insert into {0} ({1}) values ({2});", tableName, columnList, parameterList);
+            //insert object, don't care about the inserted id
+            connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            // get explicit key value from inserted entity
+            return (T)entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+        }
     }
+
 
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
