@@ -28,21 +28,21 @@ namespace Dapper.Contrib.Tests
     public class ObjectY
     {
         [ExplicitKey]
-        public int ObjectYId { get; set; }
+        public long ObjectYId { get; set; }
         public string Name { get; set; }
     }
 
     public interface IUser
     {
         [Key]
-        int Id { get; set; }
+        long Id { get; set; }
         string Name { get; set; }
         int Age { get; set; }
     }
 
     public class User : IUser
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
     }
@@ -123,7 +123,8 @@ namespace Dapper.Contrib.Tests
 
                 var guid = Guid.NewGuid().ToString();
                 var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
-                connection.Insert(o1);
+                var stringId = connection.Insert<string>(o1);
+                stringId.IsEqualTo(guid);
                 var list1 = connection.Query<ObjectX>("select * from objectx").ToList();
                 list1.Count.IsEqualTo(1);
                 o1 = connection.Get<ObjectX>(guid);
@@ -138,7 +139,7 @@ namespace Dapper.Contrib.Tests
 
                 const int id = 42;
                 var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
-                connection.Insert(o2);
+                connection.Insert<long>(o2);
                 var list2 = connection.Query<ObjectY>("select * from objecty").ToList();
                 list2.Count.IsEqualTo(1);
                 o2 = connection.Get<ObjectY>(id);
@@ -438,17 +439,6 @@ namespace Dapper.Contrib.Tests
 
                     connection.Get<Car>(id).IsNull();   //returns null - car with that id should not exist
                 }
-            }
-        }
-
-        public void InsertCheckKey()
-        {
-            using (var connection = GetOpenConnection())
-            {
-                connection.Get<IUser>(3).IsNull();
-                User user = new User { Name = "Adamb", Age = 10 };
-                int id = (int)connection.Insert(user);
-                user.Id.IsEqualTo(id);
             }
         }
 
