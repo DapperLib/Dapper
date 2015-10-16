@@ -122,6 +122,16 @@ namespace Dapper.Contrib.Extensions
             return list;
         }
 
+        /// <summary>
+        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
+        /// </summary>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
+        /// <returns>Identity (long) of inserted entity, or number of inserted rows if inserting a list</returns>
+        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            return await connection.InsertAsync<int>(entityToInsert, transaction, commandTimeout);
+        }
 
         /// <summary>
         /// Inserts an entity into table based on the entity name  and returns identity id of type T or number of inserted rows (long) if inserting a list.
@@ -129,7 +139,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static async Task<T> InsertAsync<T>(this IDbConnection connection, object entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<TKey> InsertAsync<TKey>(this IDbConnection connection, object entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var type = entityToInsert.GetType();
             if (type.IsArray || type.IsGenericType)
@@ -176,25 +186,14 @@ namespace Dapper.Contrib.Extensions
                 var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
                 var affectedRows = await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
                 if (wasClosed) connection.Close();
-                return (T)Convert.ChangeType(affectedRows, typeof(long));
+                return (TKey)Convert.ChangeType(affectedRows, typeof(long));
             }
 
-            var id = await adapter.InsertAsync<T>(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+            var id = await adapter.InsertAsync<TKey>(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                 sbParameterList.ToString(), keyProperties, explicitKeyProperties, entityToInsert);
 
             if (wasClosed) connection.Close();
             return id;
-        }
-
-        /// <summary>
-        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
-        /// </summary>
-        /// <param name="connection">Open SqlConnection</param>
-        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
-        /// <returns>Identity (long) of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static async Task<long> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
-        {
-            return await connection.InsertAsync<long>(entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>
