@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Remoting;
 using System.Text;
 using System.Threading.Tasks;
 
 using Dapper;
+using Dapper.Contrib.Extensions;
 
 #pragma warning disable 1573, 1591 // xml comments
 
@@ -186,10 +189,10 @@ namespace Dapper.Contrib.Extensions
             type = entityToInsert.GetType();
             if (type.IsArray || type.IsGenericType) //a list is inserted, should return nr of affected rows
             {
-                var cmd = String.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
+                var cmd = string.Format("insert into {0} ({1}) values ({2})", name, sbColumnList, sbParameterList);
                 var affectedRows = await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
                 if (wasClosed) connection.Close();
-                return (TKey)Convert.ChangeType(affectedRows, typeof(long));
+                return (TKey)Convert.ChangeType(affectedRows, typeof(int));
             }
 
             var id = await adapter.InsertAsync<TKey>(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
@@ -311,51 +314,84 @@ namespace Dapper.Contrib.Extensions
 
 public partial interface ISqlAdapter
 {
-    Task<T> InsertAsync<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, 
+    Task<TKey> InsertAsync<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName,
         string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert);
 }
 
 public partial class SqlServerAdapter
 {
-    public async Task<T> InsertAsync<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, 
-        String tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
+    public async Task<TKey> InsertAsync<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
+        string tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         var keyProperty = keyProperties.Any() ? keyProperties.First() : explicitKeyProperties.First();
-        var cmd = String.Format("insert into {0} ({1}) OUTPUT INSERTED.{3} values ({2})", tableName, columnList, parameterList, keyProperty.Name);
-        var id = (await connection.QueryAsync<T>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout))
-                .FirstOrDefault();
-        return id;
+        var cmd = string.Format("insert into {0} ({1}) OUTPUT INSERTED.{3} values ({2})", tableName, columnList, parameterList, keyProperty.Name);
+
+        //if <T> matches type of given key
+        if (keyProperty.PropertyType == typeof(TKey))
+            return (await connection.QueryAsync<TKey>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout)).FirstOrDefault();
+
+        //TODO: merge with query above as idict then check
+        var ret = (await connection.QueryAsync(cmd, entityToInsert, transaction, commandTimeout: commandTimeout)).FirstOrDefault() as
+            IDictionary<string, object>;
+
+        //we end up here in calls to non-generic Insert() where the return object is non-numeric-integral
+        if (ret == null)
+            return default(TKey);
+        if (!(ret[keyProperty.Name].GetType()).IsNumericType())
+            return default(TKey);
+
+        //cast to int for backwards compat...
+        return (TKey)Convert.ChangeType(ret[keyProperty.Name], typeof(int));
 
     }
 }
 
 public partial class SqlCeServerAdapter
 {
-    public async Task<T> InsertAsync<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
-        String tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
+    public async Task<TKey> InsertAsync<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
+        string tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
-        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+        var cmd = string.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
+        var ret = (await connection.QueryAsync("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout))
+            .FirstOrDefault() as IDictionary<string, object>;
+
+        object returnVal;
 
         if (keyProperties.Any())
         {
-            var id = (await connection.QueryAsync<T>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout)).FirstOrDefault();
-            return id;
+            if (ret == null)
+                return default(TKey);
+            returnVal = ret["id"];
+        }
+        else //explicit key given, just copy the value back as sqlce cannot do OUTPUT INSERTED...
+        {
+            returnVal = entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
         }
 
-        // get explicit key value from inserted entity
-        return (T)entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+        if (returnVal.GetType() == typeof(TKey))
+        {
+            return (TKey)returnVal;
+        }
+        if ((returnVal.GetType()).IsNumericType())
+        {
+            //cast to int for backwards compat...
+            var numVal = Convert.ChangeType(returnVal, typeof(int));
+            return (TKey)numVal;
+        }
+
+        return default(TKey);
     }
 }
 
 public partial class MySqlAdapter : ISqlAdapter
 {
-    public async Task<T> InsertAsync<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
-        String tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
+    public async Task<TKey> InsertAsync<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
+        string tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
-        await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
-        var id = (await connection.QueryAsync<T>("Select LAST_INSERT_ID()", transaction: transaction, commandTimeout: commandTimeout)).FirstOrDefault();
+        var cmd = string.Format("insert into {0} ({1}) values ({2}); select last_insert_id() id", tableName, columnList, parameterList);
+        var r = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout);
+        var id = (TKey)r.Read().First().id; //NOTE: MySQL returns last_insert_id() as ulong.
         return id;
     }
 }
@@ -363,8 +399,8 @@ public partial class MySqlAdapter : ISqlAdapter
 public partial class PostgresAdapter
 {
 
-    public async Task<T> InsertAsync<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
-        String tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
+    public async Task<TKey> InsertAsync<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
+        string tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
         sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
@@ -386,7 +422,7 @@ public partial class PostgresAdapter
             }
         }
 
-        var id = (await connection.QueryAsync<T>(sb.ToString(), entityToInsert, transaction, commandTimeout)).FirstOrDefault();
+        var id = (await connection.QueryAsync<TKey>(sb.ToString(), entityToInsert, transaction, commandTimeout)).FirstOrDefault();
         return id;
     }
 }
@@ -394,22 +430,34 @@ public partial class PostgresAdapter
 public partial class SQLiteAdapter
 {
 
-    public async Task<T> InsertAsync<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
-        String tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
+    public async Task<TKey> InsertAsync<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout,
+        string tableName, string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         if (keyProperties.Any())
         {
-            var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
+            var cmd = string.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
             var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout);
-            return (T)multi.Read().First().id;
+            return (TKey)multi.Read().First().id;
         }
         else //insert of object with explicit key
         {
-            var cmd = String.Format("insert into {0} ({1}) values ({2});", tableName, columnList, parameterList);
+            var cmd = string.Format("insert into {0} ({1}) values ({2});", tableName, columnList, parameterList);
             //insert object, don't care about the inserted id
             await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
-            // get explicit key value from inserted entity
-            return (T)entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+            var returnVal = entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+
+            if (returnVal.GetType() == typeof(TKey))
+            {
+                return (TKey)returnVal;
+            }
+            if ((returnVal.GetType()).IsNumericType())
+            {
+                //cast to int for backwards compat...
+                var numVal = Convert.ChangeType(returnVal, typeof(int));
+                return (TKey)numVal;
+            }
+
+            return default(TKey);
         }
     }
 }

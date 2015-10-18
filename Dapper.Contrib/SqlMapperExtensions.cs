@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Collections.Concurrent;
+using System.Diagnostics.Eventing;
 using System.Reflection.Emit;
 using System.Threading;
 
@@ -457,7 +458,6 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
 
-
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             string name;
@@ -625,6 +625,15 @@ namespace Dapper.Contrib.Extensions
                 typeBuilder.DefineMethodOverride(currSetPropMthdBldr, setMethod);
             }
         }
+
+        public static bool IsNumericType(this Type type)
+        {
+            if (type == null) return false;
+            var integralTypes = new HashSet<Type>() { 
+                typeof(byte), typeof(char), typeof(int), typeof(long), typeof(sbyte), 
+                typeof(short), typeof(uint),typeof(ulong), typeof(ushort), typeof(decimal) };
+            return integralTypes.Contains(type);
+        }
     }
 
     [AttributeUsage(AttributeTargets.Class)]
@@ -669,7 +678,7 @@ namespace Dapper.Contrib.Extensions
 
 public partial interface ISqlAdapter
 {
-    T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName,
+    TKey Insert<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName,
         string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties,
         object entityToInsert);
 
@@ -680,14 +689,28 @@ public partial interface ISqlAdapter
 
 public partial class SqlServerAdapter : ISqlAdapter
 {
-    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+    public TKey Insert<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
         string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         var keyProperty = keyProperties.Any() ? keyProperties.First() : explicitKeyProperties.First();
-        var cmd = String.Format("insert into {0} ({1}) OUTPUT INSERTED.{3} values ({2})", tableName, columnList, parameterList, keyProperty.Name);
-        var id = connection.Query<T>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout)
-                .FirstOrDefault();
-        return id;
+        var cmd = string.Format("insert into {0} ({1}) OUTPUT INSERTED.{3} values ({2})", tableName, columnList, parameterList, keyProperty.Name);
+
+        //if <T> matches type of given key
+        if (keyProperty.PropertyType == typeof(TKey))
+            return connection.Query<TKey>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault();
+
+        //TODO: merge with query above as idict then check
+        var ret = connection.Query(cmd, entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault() as
+            IDictionary<string, object>;
+
+        //we end up here in calls to non-generic Insert() where the return object is non-numeric-integral
+        if (ret == null)
+            return default(TKey);
+        if (!(ret[keyProperty.Name].GetType()).IsNumericType())
+            return default(TKey);
+
+        //cast to long for backwards compat...
+        return (TKey)Convert.ChangeType(ret[keyProperty.Name], typeof(long));
     }
 
     public void AppendColumnName(StringBuilder sb, string columnName)
@@ -703,23 +726,40 @@ public partial class SqlServerAdapter : ISqlAdapter
 
 public partial class SqlCeServerAdapter : ISqlAdapter
 {
-    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+    public TKey Insert<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
         string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
 
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        var cmd = string.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+        var ret = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).FirstOrDefault() as IDictionary<string, object>;
+
+        object returnVal;
 
         if (keyProperties.Any())
         {
-            var id = connection.Query<T>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).FirstOrDefault();
-            return id;
+            if (ret == null)
+                return default(TKey);
+            returnVal = ret["id"];
         }
-        
-        // get explicit key value from inserted entity
-        return (T)entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
-    }
+        else //explicit key given, just copy the value back as sqlce cannot do OUTPUT INSERTED...
+        {
+            returnVal = entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+        }
 
+        if (returnVal.GetType() == typeof(TKey))
+        {
+            return (TKey)returnVal;
+        }
+        if ((returnVal.GetType()).IsNumericType())
+        {
+            //cast to long for backwards compat...
+            var numVal = Convert.ChangeType(returnVal, typeof(long));
+            return (TKey)numVal;
+        }
+
+        return default(TKey);
+    }
 
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
@@ -734,12 +774,12 @@ public partial class SqlCeServerAdapter : ISqlAdapter
 
 public partial class MySqlAdapter : ISqlAdapter
 {
-    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+    public TKey Insert<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
         string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
-        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-        var id = connection.Query<T>("Select LAST_INSERT_ID()", transaction: transaction, commandTimeout: commandTimeout).FirstOrDefault();
+        var cmd = string.Format("insert into {0} ({1}) values ({2}); select last_insert_id() id", tableName, columnList, parameterList);
+        var r = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
+        var id = (TKey)r.Read().First().id; //NOTE: MySQL returns last_insert_id() as ulong.
         return id;
     }
 
@@ -754,10 +794,9 @@ public partial class MySqlAdapter : ISqlAdapter
     }
 }
 
-
 public partial class PostgresAdapter : ISqlAdapter
 {
-    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+    public TKey Insert<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
         string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
@@ -780,7 +819,7 @@ public partial class PostgresAdapter : ISqlAdapter
             }
         }
 
-        var id = connection.Query<T>(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault();
+        var id = connection.Query<TKey>(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault();
         return id;
     }
 
@@ -797,25 +836,36 @@ public partial class PostgresAdapter : ISqlAdapter
 
 public partial class SQLiteAdapter : ISqlAdapter
 {
-    public T Insert<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
+    public TKey Insert<TKey>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
        string columnList, string parameterList, List<PropertyInfo> keyProperties, List<PropertyInfo> explicitKeyProperties, object entityToInsert)
     {
         if (keyProperties.Any())
         {
-            var cmd = String.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
+            var cmd = string.Format("insert into {0} ({1}) values ({2}); select last_insert_rowid() id", tableName, columnList, parameterList);
             var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
-            return (T)multi.Read().First().id;
+            return (TKey)multi.Read().First().id;
         }
         else //insert of object with explicit key
         {
-            var cmd = String.Format("insert into {0} ({1}) values ({2});", tableName, columnList, parameterList);
+            var cmd = string.Format("insert into {0} ({1}) values ({2});", tableName, columnList, parameterList);
             //insert object, don't care about the inserted id
             connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-            // get explicit key value from inserted entity
-            return (T)entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+            var returnVal = entityToInsert.GetType().GetProperty(explicitKeyProperties.First().Name).GetValue(entityToInsert, null);
+
+            if (returnVal.GetType() == typeof(TKey))
+            {
+                return (TKey)returnVal;
+            }
+            if ((returnVal.GetType()).IsNumericType())
+            {
+                //cast to long for backwards compat...
+                var numVal = Convert.ChangeType(returnVal, typeof(long));
+                return (TKey)numVal;
+            }
+
+            return default(TKey);
         }
     }
-
 
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
