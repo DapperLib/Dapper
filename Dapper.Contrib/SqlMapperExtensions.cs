@@ -86,12 +86,15 @@ namespace Dapper.Contrib.Extensions
             }
 
             var allProperties = TypePropertiesCache(type);
-            var keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
+            var keyProperties = allProperties.Where(p =>
+            {
+                return p.GetCustomAttributes(true).Any(a => a is KeyAttribute );
+            }).ToList();
 
             if (keyProperties.Count == 0)
             {
                 var idProp = allProperties.FirstOrDefault(p => p.Name.ToLower() == "id");
-                if (idProp != null)
+                if (idProp != null && !idProp.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
                 {
                     keyProperties.Add(idProp);
                 }
@@ -699,7 +702,6 @@ public partial class SqlServerAdapter : ISqlAdapter
         if (keyProperty.PropertyType == typeof(TKey))
             return connection.Query<TKey>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault();
 
-        //TODO: merge with query above as idict then check
         var ret = connection.Query(cmd, entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault() as
             IDictionary<string, object>;
 
