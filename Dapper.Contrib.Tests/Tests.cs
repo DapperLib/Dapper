@@ -35,14 +35,14 @@ namespace Dapper.Contrib.Tests
     public interface IUser
     {
         [Key]
-        long Id { get; set; }
+        int Id { get; set; }
         string Name { get; set; }
         int Age { get; set; }
     }
 
     public class User : IUser
     {
-        public long Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
     }
@@ -482,6 +482,18 @@ namespace Dapper.Contrib.Tests
 
                     connection.Get<Car>(id).IsNull();   //returns null - car with that id should not exist
                 }
+            }
+        }
+
+        public void InsertCheckKey()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.Get<IUser>(3).IsNull();
+                User user = new User { Name = "Adamb", Age = 10 };
+                int id = (int)connection.Insert(user);
+                user = connection.Get<User>(id);
+                user.Id.IsEqualTo(id);
             }
         }
 

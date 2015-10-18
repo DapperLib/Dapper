@@ -90,7 +90,6 @@ namespace Dapper.Contrib.Tests
             foreach (var method in typeof(TestsAsync).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 Console.Write("Running " + method.Name);
-                
                 Task.WaitAll((Task)method.Invoke(tester, null));
                 Console.WriteLine(" - OK!");
             }
