@@ -124,7 +124,7 @@ The performance tests are broken in to 3 lists:
 	<tr>
 		<td>Hand coded (using a <code>SqlDataReader</code>)</td>
 		<td>47ms</td>
-		<td rowspan="9"><a href="http://www.toptensoftware.com/Articles/94/PetaPoco-More-Speed">Can be faster</a></td>
+		<td rowspan="9"><a href="http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed">Can be faster</a></td>
 	</tr>
 	<tr>
 		<td>Dapper <code>ExecuteMapperQuery<Post></code></td>
