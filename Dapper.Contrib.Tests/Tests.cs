@@ -476,6 +476,8 @@ namespace Dapper.Contrib.Tests
                 users.Count.IsEqualTo(numberOfEntities);
                 var iusers = connection.GetAll<IUser>().ToList();
                 iusers.Count.IsEqualTo(numberOfEntities);
+                for (var i = 0; i < numberOfEntities; i++)
+                    iusers[i].Age.IsEqualTo(i);
             }
 
         }

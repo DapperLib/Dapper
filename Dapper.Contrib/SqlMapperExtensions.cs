@@ -482,7 +482,8 @@ namespace Dapper.Contrib.Extensions
 
         static class ProxyGenerator
         {
-            private static readonly Dictionary<Type, object> TypeCache = new Dictionary<Type, object>();
+           // private static readonly Dictionary<Type, object> TypeCache = new Dictionary<Type, object>();
+            private static readonly Dictionary<Type, Type> TypeCache = new Dictionary<Type, Type>();
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
@@ -495,39 +496,40 @@ namespace Dapper.Contrib.Extensions
             public static T GetInterfaceProxy<T>()
             {
                 Type typeOfT = typeof(T);
+                Type proxyType;
 
-                object k;
-                if (TypeCache.TryGetValue(typeOfT, out k))
+                if (!TypeCache.TryGetValue(typeOfT, out proxyType))
                 {
-                    return (T)k;
+                    //generate new proxy type
+                    var assemblyBuilder = GetAsmBuilder(typeOfT.Name);
+
+                    var moduleBuilder = assemblyBuilder.DefineDynamicModule("SqlMapperExtensions." + typeOfT.Name); //NOTE: to save, add "asdasd.dll" parameter
+
+                    var interfaceType = typeof(IProxy);
+                    var typeBuilder = moduleBuilder.DefineType(typeOfT.Name + "_" + Guid.NewGuid(),
+                        TypeAttributes.Public | TypeAttributes.Class);
+                    typeBuilder.AddInterfaceImplementation(typeOfT);
+                    typeBuilder.AddInterfaceImplementation(interfaceType);
+
+                    //create our _isDirty field, which implements IProxy
+                    var setIsDirtyMethod = CreateIsDirtyProperty(typeBuilder);
+
+                    // Generate a field for each property, which implements the T
+                    foreach (var property in typeof(T).GetProperties())
+                    {
+                        var isId = property.GetCustomAttributes(true).Any(a => a is KeyAttribute);
+                        CreateProperty<T>(typeBuilder, property.Name, property.PropertyType, setIsDirtyMethod, isId);
+                    }
+
+                    proxyType  = typeBuilder.CreateType();
+
+                    TypeCache.Add(typeOfT, proxyType);
                 }
-                var assemblyBuilder = GetAsmBuilder(typeOfT.Name);
-
-                var moduleBuilder = assemblyBuilder.DefineDynamicModule("SqlMapperExtensions." + typeOfT.Name); //NOTE: to save, add "asdasd.dll" parameter
-
-                var interfaceType = typeof(IProxy);
-                var typeBuilder = moduleBuilder.DefineType(typeOfT.Name + "_" + Guid.NewGuid(),
-                    TypeAttributes.Public | TypeAttributes.Class);
-                typeBuilder.AddInterfaceImplementation(typeOfT);
-                typeBuilder.AddInterfaceImplementation(interfaceType);
-
-                //create our _isDirty field, which implements IProxy
-                var setIsDirtyMethod = CreateIsDirtyProperty(typeBuilder);
-
-                // Generate a field for each property, which implements the T
-                foreach (var property in typeof(T).GetProperties())
-                {
-                    var isId = property.GetCustomAttributes(true).Any(a => a is KeyAttribute);
-                    CreateProperty<T>(typeBuilder, property.Name, property.PropertyType, setIsDirtyMethod, isId);
-                }
-
-                var generatedType = typeBuilder.CreateType();
 
                 //assemblyBuilder.Save(name + ".dll");  //NOTE: to save, uncomment
 
-                var generatedObject = Activator.CreateInstance(generatedType);
+                var generatedObject = Activator.CreateInstance(proxyType);
 
-                TypeCache.Add(typeOfT, generatedObject);
                 return (T)generatedObject;
             }
 
