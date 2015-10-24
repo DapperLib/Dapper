@@ -328,7 +328,6 @@ public partial class SqlServerAdapter
         if (keyProperty.PropertyType == typeof(TKey))
             return (await connection.QueryAsync<TKey>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout)).FirstOrDefault();
 
-        //TODO: merge with query above as idict then check
         var ret = (await connection.QueryAsync(cmd, entityToInsert, transaction, commandTimeout: commandTimeout)).FirstOrDefault() as
             IDictionary<string, object>;
 
