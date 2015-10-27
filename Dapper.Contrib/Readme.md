@@ -11,8 +11,10 @@ The full list of extension methods in Dapper.Contrib right now are:
 ```csharp
 T Get<T>(id);
 IEnumerable<T> GetAll<T>();
-int Insert<T>(T obj);
-int Insert<T>(Enumerable<T> list);
+long Insert<T>(T obj);
+long Insert<T>(Enumerable<T> list);
+TKey Insert<TKey>(object obj)
+TKey Insert<TKey>(Enumerable<object> list)
 bool Update<T>(T obj);
 bool Update<T>(Enumerable<T> list);
 bool Delete<T>(T obj);
@@ -20,8 +22,9 @@ bool Delete<T>(Enumerable<T> list);
 bool DeleteAll<T>();
 ```
 
-For these extensions to work, the entity in question _MUST_ have a
-key-property, a property named "`id`" or decorated with a `[Key]` attribute.
+For these extensions to work, the entity in question _MUST_ have either a
+key-property, which is a property named "`id`" or decorated with a `[Key]` attribute
+_OR_ a property marked with `[ExplicitKey]` attribute.
 
 ```csharp
 public class Car

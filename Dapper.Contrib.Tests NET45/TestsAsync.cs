@@ -33,6 +33,7 @@ namespace Dapper.Contrib.Tests
             connection.Open();
             return connection;
         }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
@@ -59,6 +60,47 @@ namespace Dapper.Contrib.Tests
                 const int id = 42;
                 var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
                 await connection.InsertAsync(o2);
+                var list2 = (await connection.QueryAsync<ObjectY>("select * from objecty")).ToList();
+                list2.Count.IsEqualTo(1);
+                o2 = await connection.GetAsync<ObjectY>(id);
+                o2.ObjectYId.IsEqualTo(id);
+                o2.Name = "Bar";
+                await connection.UpdateAsync(o2);
+                o2 = await connection.GetAsync<ObjectY>(id);
+                o2.Name.IsEqualTo("Bar");
+                await connection.DeleteAsync(o2);
+                o2 = await connection.GetAsync<ObjectY>(id);
+                o2.IsNull();
+            }
+        }
+
+        /// <summary>
+        /// Tests for issue #351 
+        /// </summary>
+        public async Task InsertGetUpdateDeleteWithExplicitTypedKeyAsync()
+        {
+
+            using (var connection = GetOpenConnection())
+            {
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
+                var stringId = await connection.InsertAsync<string>(o1);
+                stringId.IsEqualTo(guid);
+                var list1 = connection.Query<ObjectX>("select * from objectx").ToList();
+                list1.Count.IsEqualTo(1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.ObjectXId.IsEqualTo(guid);
+                o1.Name = "Bar";
+                connection.Update(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.Name.IsEqualTo("Bar");
+                connection.Delete(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.IsNull();
+
+                const int id = 42;
+                var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
+                await connection.InsertAsync<int>(o2);
                 var list2 = (await connection.QueryAsync<ObjectY>("select * from objecty")).ToList();
                 list2.Count.IsEqualTo(1);
                 o2 = await connection.GetAsync<ObjectY>(id);
@@ -151,6 +193,7 @@ namespace Dapper.Contrib.Tests
                 (await connection.GetAsync<IUser>(3)).IsNull();
                 var user = new User { Name = "Adamb", Age = 10 };
                 var id = await connection.InsertAsync(user);
+                user = await connection.GetAsync<User>(id);
                 user.Id.IsEqualTo(id);
             }
         }

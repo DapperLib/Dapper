@@ -32,6 +32,14 @@ namespace Dapper.Contrib.Tests
         public string Name { get; set; }
     }
 
+    [Table("ObjectZ")]
+    public class ObjectZ
+    {
+        [ExplicitKey]
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
     public interface IUser
     {
         [Key]
@@ -152,6 +160,51 @@ namespace Dapper.Contrib.Tests
                 o2.IsNull();
             }
         }
+
+      
+        /// <summary>
+        /// Tests for issue #351 
+        /// </summary>
+        public void InsertGetUpdateDeleteWithExplicitTypedKey()
+        {
+
+            using (var connection = GetOpenConnection())
+            {
+
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
+                var stringId = connection.Insert<string>(o1);
+                stringId.IsEqualTo(guid);
+                var list1 = connection.Query<ObjectX>("select * from objectx").ToList();
+                list1.Count.IsEqualTo(1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.ObjectXId.IsEqualTo(guid);
+                o1.Name = "Bar";
+                connection.Update(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.Name.IsEqualTo("Bar");
+                connection.Delete(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.IsNull();
+
+                const int id = 42;
+                var o2 = new ObjectY() { ObjectYId = id, Name = "Foo" };
+                var o2Id = connection.Insert(o2);
+                o2Id.IsEqualTo(id);
+                var list2 = connection.Query<ObjectY>("select * from objecty").ToList();
+                list2.Count.IsEqualTo(1);
+                o2 = connection.Get<ObjectY>(id);
+                o2.ObjectYId.IsEqualTo(id);
+                o2.Name = "Bar";
+                connection.Update(o2);
+                o2 = connection.Get<ObjectY>(id);
+                o2.Name.IsEqualTo("Bar");
+                connection.Delete(o2);
+                o2 = connection.Get<ObjectY>(id);
+                o2.IsNull();
+            }
+        }
+
 
         public void ShortIdentity()
         {
@@ -342,7 +395,7 @@ namespace Dapper.Contrib.Tests
                 {
                     sqliteCodeCalled = ex.Message.IndexOf("There was an error parsing the query", StringComparison.InvariantCultureIgnoreCase) >= 0;
                 }
-// ReSharper disable once EmptyGeneralCatchClause
+                // ReSharper disable once EmptyGeneralCatchClause
                 catch (Exception)
                 {
                 }
@@ -448,6 +501,7 @@ namespace Dapper.Contrib.Tests
                 connection.Get<IUser>(3).IsNull();
                 User user = new User { Name = "Adamb", Age = 10 };
                 int id = (int)connection.Insert(user);
+                user = connection.Get<User>(id);
                 user.Id.IsEqualTo(id);
             }
         }
