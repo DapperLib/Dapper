@@ -38,6 +38,7 @@ namespace Dapper.Contrib.Tests
                 connection.Execute(@" create table Results (Id integer primary key autoincrement not null, Name nvarchar(100) not null, [Order] int not null) ");
                 connection.Execute(@" create table ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@" create table ObjectY (ObjectYId integer not null, Name nvarchar(100) not null) ");
+                connection.Execute(@" create table ObjectZ (Id integer not null, Name nvarchar(100) not null) ");
             }
             Console.WriteLine("Created database");
         }
