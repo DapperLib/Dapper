@@ -468,7 +468,7 @@ namespace Dapper.Contrib.Extensions
 
         static class ProxyGenerator
         {
-            private static readonly Dictionary<Type, object> TypeCache = new Dictionary<Type, object>();
+            private static readonly Dictionary<Type, Type> TypeCache = new Dictionary<Type, Type>();
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
@@ -482,10 +482,10 @@ namespace Dapper.Contrib.Extensions
             {
                 Type typeOfT = typeof(T);
 
-                object k;
+                Type k;
                 if (TypeCache.TryGetValue(typeOfT, out k))
                 {
-                    return (T)k;
+                    return (T)Activator.CreateInstance(k);
                 }
                 var assemblyBuilder = GetAsmBuilder(typeOfT.Name);
 
@@ -509,12 +509,8 @@ namespace Dapper.Contrib.Extensions
 
                 var generatedType = typeBuilder.CreateType();
 
-                //assemblyBuilder.Save(name + ".dll");  //NOTE: to save, uncomment
-
-                var generatedObject = Activator.CreateInstance(generatedType);
-
-                TypeCache.Add(typeOfT, generatedObject);
-                return (T)generatedObject;
+                TypeCache.Add(typeOfT, generatedType);
+                return (T)Activator.CreateInstance(generatedType);
             }
 
 
