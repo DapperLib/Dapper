@@ -363,7 +363,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection); 
+            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count(); i++)
             {
@@ -659,7 +659,7 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
-    
+
     //new methods for issue #336
     void AppendColumnName(StringBuilder sb, string columnName);
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
@@ -669,20 +669,21 @@ public partial class SqlServerAdapter : ISqlAdapter
 {
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = String.Format("insert into {0} ({1}) values ({2});select SCOPE_IDENTITY() id", tableName, columnList, parameterList);
-        var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
-
-        var first = multi.Read().FirstOrDefault();
-        if (first == null || first.id == null) return 0;
-
-        var id = (int)first.id;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+        if (propertyInfos.Any())
+        {  //fix for issue #355
+            var idProperty = propertyInfos.First();
+            var cmd = String.Format("insert into {0} ({1}) OUTPUT INSERTED.{3} values ({2})", tableName, columnList, parameterList, idProperty.Name);
+            var id = connection.Query<int>(cmd, entityToInsert, transaction, commandTimeout: commandTimeout).FirstOrDefault();
+            idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
+            return id;
+        }
 
-        var idProperty = propertyInfos.First();
-        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
-
-        return id;
+        //insert with no generated id returned
+        connection.Execute(String.Format("insert into {0} ({1}) values ({2})", 
+            tableName, columnList, parameterList), 
+            entityToInsert, transaction, commandTimeout);
+        return 0;
     }
 
     public void AppendColumnName(StringBuilder sb, string columnName)
@@ -705,7 +706,7 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ToList();
 
         if (r.First().id == null) return 0;
-        var id = (int) r.First().id;
+        var id = (int)r.First().id;
 
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (!propertyInfos.Any()) return id;
