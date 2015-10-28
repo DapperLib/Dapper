@@ -153,6 +153,19 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void GetAllWithExplicitKey()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
+                connection.Insert(o1);
+
+                var objectXs = connection.GetAll<ObjectX>();
+                objectXs.Count().IsEqualTo(1);
+            }
+        }
+
         public void ShortIdentity()
         {
             using (var connection = GetOpenConnection())
