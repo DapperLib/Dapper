@@ -124,7 +124,7 @@ The performance tests are broken in to 3 lists:
 	<tr>
 		<td>Hand coded (using a <code>SqlDataReader</code>)</td>
 		<td>47ms</td>
-		<td rowspan="9"><a href="http://www.toptensoftware.com/Articles/94/PetaPoco-More-Speed">Can be faster</a></td>
+		<td rowspan="9"><a href="http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed">Can be faster</a></td>
 	</tr>
 	<tr>
 		<td>Dapper <code>ExecuteMapperQuery<Post></code></td>
@@ -174,7 +174,7 @@ The performance tests are broken in to 3 lists:
 		<td rowspan="3">&nbsp;</td>
 	</tr>
 	<tr>
-		<td><a href="http://blog.wekeroad.com/helpy-stuff/and-i-shall-call-it-massive">Massive</a></td>
+		<td><a href="https://github.com/robconery/massive">Massive</a></td>
 		<td>52ms</td>
 	</tr>
 	<tr>
@@ -301,11 +301,11 @@ using (var multi = connection.QueryMultiple(sql, new {id=selectedId}))
 
 Stored Procedures
 ---------------------
-Dapper supports fully stored procs:
+Dapper fully supports stored procs:
 
 ```csharp
 var user = cnn.Query<User>("spGetUser", new {Id = 1}, 
-        commandType: CommandType.StoredProcedure).First();}}}
+        commandType: CommandType.StoredProcedure).SingleOrDefault();
 ```
 
 If you want something more fancy, you can do:
@@ -316,7 +316,7 @@ p.Add("@a", 11);
 p.Add("@b", dbType: DbType.Int32, direction: ParameterDirection.Output);
 p.Add("@c", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
-cnn.Execute("spMagicProc", p, commandType: commandType.StoredProcedure); 
+cnn.Execute("spMagicProc", p, commandType: CommandType.StoredProcedure); 
 
 int b = p.Get<int>("@b");
 int c = p.Get<int>("@c"); 
@@ -340,9 +340,9 @@ Dapper's simplicity means that many feature that ORMs ship with are stripped out
 
 Dapper does not manage your connection's lifecycle, it assumes the connection it gets is open AND has no existing datareaders enumerating (unless MARS is enabled)
 
-Will dapper work with my db provider?
+Will Dapper work with my DB provider?
 ---------------------
-Dapper has no DB specific implementation details, it works across all .net ado providers including sqlite, sqlce, firebird, oracle, MySQL and SQL Server
+Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](http://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
 
 Do you have a comprehensive list of examples?
 ---------------------

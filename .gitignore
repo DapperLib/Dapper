@@ -1,4 +1,5 @@
 /*.suo
+.vs/
 bin/
 obj/
 /*.user
@@ -9,3 +10,4 @@ NuGet.exe
 *.nupkg
 .docstats
 *.ide/
+*.lock.json

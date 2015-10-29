@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<system.data>
+		<DbProviderFactories>
+			<remove invariant="FirebirdSql.Data.FirebirdClient" />
+			<add name="FirebirdClient Data Provider" invariant="FirebirdSql.Data.FirebirdClient" description=".NET Framework Data Provider for Firebird" type="FirebirdSql.Data.FirebirdClient.FirebirdClientFactory, FirebirdSql.Data.FirebirdClient" />
+		</DbProviderFactories>
+	</system.data>
+</configuration>

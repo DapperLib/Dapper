@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata schemaVersion="2">
+    <id>Dapper.StrongName</id>
+    <version>1.40</version>
+    <title>Dapper dot net (strong named)</title>
+    <authors>Sam Saffron,Marc Gravell</authors>
+    <owners>Sam Saffron,Marc Gravell</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/StackExchange/dapper-dot-net</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..; but with a strong name</description>
+    <summary>A high performance Micro-ORM; this is Dapper, but with a strong name</summary>
+    <tags>orm sql micro-orm</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Core"/>
+      <frameworkAssembly assemblyName="System"/>
+      <frameworkAssembly assemblyName="System.Data"/>
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
+    </frameworkAssemblies>
+    <releaseNotes>Please refer to Dapper (not Dapper.StrongName) for release notes</releaseNotes>
+  </metadata>
+  <files>
+    <file src="Dapper NET45 SNK\bin\Release\Dapper.dll" target="lib\net45" />
+    <file src="Dapper NET45 SNK\bin\Release\Dapper.pdb" target="lib\net45" />
+    <file src="Dapper NET45 SNK\bin\Release\Dapper.xml" target="lib\net45" />
+    
+    <file src="Dapper NET40 SNK\bin\Release\Dapper.dll" target="lib\net40" />
+    <file src="Dapper NET40 SNK\bin\Release\Dapper.pdb" target="lib\net40" />
+    <file src="Dapper NET40 SNK\bin\Release\Dapper.xml" target="lib\net40" />
+    
+    <file src="Dapper NET35 SNK\bin\Release\Dapper.dll" target="lib\net35" />
+    <file src="Dapper NET35 SNK\bin\Release\Dapper.pdb" target="lib\net35" />
+    <file src="Dapper NET35 SNK\bin\Release\Dapper.xml" target="lib\net35" />
+  </files>
+</package>

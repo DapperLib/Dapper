@@ -131,7 +131,7 @@ namespace Dapper
                     {
                         var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
                         var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
-                        if (attr==null || (attr != null && !attr.Value))
+                        if (attr==null || (!attr.Value))
                         {
                             paramNames.Add(prop.Name);
                         }                        
@@ -177,7 +177,7 @@ namespace Dapper
 
         internal virtual Action<TDatabase> CreateTableConstructorForTable()
         {
-            return CreateTableConstructor(typeof(Table<>));
+            return CreateTableConstructor(typeof(Table<>), typeof(Table<,>));
         }
 
         public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
@@ -199,11 +199,16 @@ namespace Dapper
 
         protected Action<TDatabase> CreateTableConstructor(Type tableType)
         {
+            return CreateTableConstructor(new Type[] {tableType});
+        }
+
+        protected Action<TDatabase> CreateTableConstructor(params Type[] tableTypes)
+        {
             var dm = new DynamicMethod("ConstructInstances", null, new Type[] { typeof(TDatabase) }, true);
             var il = dm.GetILGenerator();
 
             var setters = GetType().GetProperties()
-                .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == tableType)
+                .Where(p => p.PropertyType.IsGenericType && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
                 .Select(p => Tuple.Create(
                         p.GetSetMethod(true),
                         p.PropertyType.GetConstructor(new Type[] { typeof(TDatabase), typeof(string) }),

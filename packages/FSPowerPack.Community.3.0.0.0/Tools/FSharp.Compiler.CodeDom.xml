@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>FSharp.Compiler.CodeDom</name></assembly>
+<members>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Internal.Utilities.FSharpEnvironment.Option.ofString(System.String)">
+<summary>
+ Convert string into Option string where null and String.Empty result in None
+</summary>
+</member>
+<member name="T:Internal.Utilities.FSharpEnvironment.Option">
+
+</member>
+<member name="T:Internal.Utilities.FSharpEnvironment">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.FSharpAspNetCodeProvider">
+<summary>
+ Implementation of the CodeDomProvider for the F# language.
+ This is specialized version that can be used with ASP.NET.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.FSharpCodeProvider">
+<summary>
+ Implementation of the CodeDomProvider for the F# language.
+ If you intend to use CodeDom with ASP.NET you should use &lt;c&gt;FSharpAspNetCodeProvider&lt;/c&gt; instead.
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.Internal.AssemblyAttributes">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.Internal.Compiler">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.MemberGenerateType">
+<summary>
+ Where are we generating member?
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context.ReturnUsingException">
+<summary>
+ We use exception for returning value when generating complex
+ code that returns using imperative &quot;return&quot; statement
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context.CurrentMethodReturnType">
+<summary>
+ Type of the method 
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context.LocalVariableTypes">
+<summary>
+ Types of all local variables in the method
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context.TypeArgumentNames">
+<summary>
+ Names of all type arguments in scope (need to rename T -&gt; &apos;T etc.)
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context.Options">
+<summary>
+ Options, output, ...
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context.UniqueID">
+<summary>
+ Some unique ID for every namespace (so we don&apos;t have name clashes)
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.AdditionalOptions.AspNetArrays">
+<summary>
+ Hacking for ASP.NET incorrect array initializers 
+ They generate &quot;string&quot; where codedom test suite uses &quot;string[]&quot;
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.AdditionalOptions.UnknonwFieldsAsLocals">
+<summary>
+ Reference inherited fields using &quot;fld&quot; instead of &quot;this.fld&quot; 
+ (could be used in the future to allow implicit classes in ASP.NET?)
+</summary>
+</member>
+<member name="F:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.AdditionalOptions.None">
+<summary>
+ No extra configuration
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateCompileUnit(System.CodeDom.CodeCompileUnit,Microsoft.FSharp.Core.FSharpFunc{System.CodeDom.CodeCompileUnit,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Generate code for compile unit (file)                
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateTypeDeclOnly(System.CodeDom.CodeTypeDeclaration)">
+<summary>
+ Generate code for type declaration (not included in namespace)                 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateNamespace(System.CodeDom.CodeNamespace)">
+<summary>
+ Generate code for namespace without compilation unit  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateNamespaceInternal``1(System.Tuple{System.CodeDom.CodeNamespace,Microsoft.FSharp.Collections.FSharpList{System.Tuple{Microsoft.FSharp.Collections.FSharpList{System.String},System.CodeDom.CodeTypeDeclaration}},``0},System.Collections.Generic.IEnumerable{System.String})">
+<summary>
+ Generates namespace code - takes output from &apos;preprocessNamespace&apos;
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.preprocessNamespace(System.CodeDom.CodeNamespace)">
+<summary>
+ Returns CodeNamespace, list of classes with scope (which includes class names 
+ of containing classes and sequence of class renames)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateMainMethod(System.CodeDom.CodeEntryPointMethod,System.CodeDom.CodeTypeDeclaration,System.CodeDom.CodeNamespace)">
+<summary>
+ Generates a main method.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateClassMemberMethod(Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.MemberGenerateType,System.CodeDom.CodeMemberMethod,System.Int32)">
+<summary>
+ Generates method code
+ Generates comments and than calls &apos;generatMethod&apos;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateMethod(Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.MemberGenerateType,System.CodeDom.CodeMemberMethod,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context})">
+<summary>
+ By default all CodeDOM generated methods are &apos;virtual&apos; which means that 
+ we have to generate &quot;abstract and default&quot; (unless we&apos;re in struct or
+ we&apos;re implementing an interface, or the method is overriden)
+ (NOTE: the same logic isn&apos;t properly implemented for properties)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateInterfaceMemberMethod(System.CodeDom.CodeMemberMethod,System.Int32)">
+<summary>
+ Abstract method in the interface
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateInterfaceMemberProperty(System.CodeDom.CodeMemberProperty)">
+<summary>
+ Abstract property in the interface 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateField(System.CodeDom.CodeMemberField)">
+<summary>
+ fields 
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateExpression(System.CodeDom.CodeExpression)">
+<summary>
+ Generate expression - with unkonw type
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.|CodeArrayAccessOrIndexer|_|(Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,System.CodeDom.CodeExpression)">
+<summary>
+ Matches array or indexer expression and corrects it if the generated CodeDOM is incorrect
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateExpressionDefaultThis(System.Boolean,System.CodeDom.CodeExpression)">
+<summary>
+ Generates a &quot;this&quot; or &quot;CurrentType&quot; reference depending on whether a reference
+ is static or not. Used for &quot;ambiguous&quot; references without a type or object qualifier.
+
+ Unfortunately the Code tree isn&apos;t so kind as to tell us whether a reference is static
+ or not up front. Instead we predetermine a set of some static members and 
+ assume all other references are instance references. 
+
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.tryGetExpressionType(System.CodeDom.CodeExpression,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Tries to resolve type of an expression using a few tricks:
+ * Fields of current type may have known type
+ * Properties of current type as well
+ * We can also try to resolve other properties (sometimes it helps)
+ * Resolve type for local variables or argument reference 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.tryIsExpressionArray(System.CodeDom.CodeExpression,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Tries to resolve if type is an array, so we can generate 
+ appropriate code (it can be either indexer or array, but we need to generate
+ .Item call for indexers (no overloading is supported by .[]).
+ Returns: &quot;None&quot; - can&apos;t resolve, &quot;Some&quot; resovled (true/false - is it an array?)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateArrayCreateExpr(System.CodeDom.CodeArrayCreateExpression)">
+<summary>
+ Generate array initializer. Checks generator options for ASP.NET workaround.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generatePrimitiveExpr(Microsoft.FSharp.Core.FSharpOption{System.Type},System.CodeDom.CodePrimitiveExpression)">
+<summary>
+ Generate value of primitive expression  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.convertFunc(System.Type)">
+<summary>
+ Returns F# conversion function for the specified type (or empty string)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.isNumericConversion(System.Type,System.Type)">
+<summary>
+ Are both types numerical types where numeric conversion function can be applied?
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.binaryOp(System.CodeDom.CodeBinaryOperatorType,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context})">
+<summary>
+ Generates code for binary operator using function for left and right operand
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.processTypeArgs(System.CodeDom.CodeTypeParameterCollection)">
+<summary>
+ Preprocess collection with type parameters
+ Returns array to be used with &lt;c&gt;usingTyParams&lt;/c&gt; and
+ function to be called to generate &lt; ... &gt; code
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.usingTyParams(System.Collections.Generic.IEnumerable{System.String},Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Record specified type parameters in the context, call generating function
+ and then restore the original type parameters
+ (this works if someone uses nested type parameters with the same name)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateTypeArgs(System.CodeDom.CodeTypeReferenceCollection)">
+<summary>
+ Generate type arguments using context
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateTypeRef(System.CodeDom.CodeTypeReference)">
+<summary>
+ Generate type reference using context
+ (this is most commonly used method)  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.generateTypeRefNet(System.CodeDom.CodeTypeReference)">
+<summary>
+ Get type reference, but don&apos;t rename .NET types to F# types
+ (this is only needed when calling static methods on the type)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.getTypeRefSimple(System.CodeDom.CodeTypeReference)">
+<summary>
+ Get full type reference string using empty context
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.getTypeRef(System.CodeDom.CodeTypeReference,Microsoft.FSharp.Collections.FSharpMap{System.String,System.String},System.String,Microsoft.FSharp.Collections.FSharpSet{System.String},System.Boolean)">
+<summary>
+ Get full type reference using information from context  
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.getBaseTypeRefString(System.String)">
+<summary>
+ Generate type reference with empty context
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.getBaseTypeRef(System.CodeDom.CodeTypeReference,Microsoft.FSharp.Collections.FSharpMap{System.String,System.String},System.String,Microsoft.FSharp.Collections.FSharpSet{System.String},System.Boolean)">
+<summary>
+ Generates type reference (not for arrays)
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.tryAddVariableType(System.String,System.CodeDom.CodeTypeReference,Microsoft.FSharp.Collections.FSharpMap{System.String,System.Type})">
+<summary>
+ Tries to resolve type of a variable and adds it to the Context dictionary
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.tryGetSystemType(Microsoft.FSharp.Core.FSharpOption{System.CodeDom.CodeTypeReference})">
+<summary>
+ Get System.Type of know type (either standard type or resolved)  
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.op_MinusBang(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},System.String,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Output string as a valid F# identifier
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.|FoundSystemType|_|(System.String)">
+<summary>
+ Tries to find .NET type for specified type name
+ This is used when we need to know type in order to generate something correctly,
+ but it&apos;s just a fallback case
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.colFilterT``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},System.Collections.IEnumerable,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context}},Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Call specified function only on elements of specified type.
+ (performs dynamic type test using x.GetType())
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.colT``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},System.Collections.Generic.IEnumerable{``0},Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context}},Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Process collection - keeps context through the whole processing
+ calls &apos;f&apos; for every element in sequence and &apos;fs&apos; between every two elements 
+ as a separator. This is a variant that works on typed collections.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.col``1(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},System.Collections.IEnumerable,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context}},Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Process collection - keeps context through the whole processing
+ calls &apos;f&apos; for every element in sequence and &apos;fs&apos; between every two elements 
+ as a separator
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.mapFilter``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpOption{``1}},Microsoft.FSharp.Collections.FSharpList{``0})">
+<summary>
+ Perform map and filter operations in one 
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.createCounter">
+<summary>
+ Create closure to do the counting 
+ (this is usend when we need indexing during collection processing)
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.str``1(``0,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Print object converted to string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.id``1(``0)">
+<summary>
+ Identity function
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.withCtxt``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``0,``1}},``0)">
+<summary>
+ Call function, but give it context as an argument      
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.op_MinusMinus(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},System.String,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Append specified string without line-break
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.op_PlusPlus(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},System.String,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Break-line and append specified string
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.uniqid(Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Print unique id using: &quot;+&gt; uniqid&quot;
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.op_PlusGreater(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context},Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.Context)">
+<summary>
+ Function composition operator
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.createContext(System.IO.TextWriter,System.CodeDom.Compiler.CodeGeneratorOptions,Microsoft.FSharp.Compiler.CodeDom.Internal.Generator.AdditionalOptions)">
+<summary>
+ Create context using specified text writer and options
+</summary>
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.Internal.Generator">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.Internal.Global">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Visitor.codeDomCallbackWithScope``4(Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpFunc{``2,``1}}},Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpFunc{System.Object,``1}}}},``0,``1,``3)">
+<summary>
+ Walks through the CodeDom tree and keeps current &quot;scope&quot; and the result.
+ The result is collected through entire tree, but the modified scope is 
+ passed only to sub-nodes of the current node.
+
+ First argument is a function that is called for nodes and has a 
+ function as a first argument, scope and result as a second and current node as a third.
+ The function argument can be used to walk deeper in the tree if wanted.
+</summary>
+</member>
+<member name="M:Microsoft.FSharp.Compiler.CodeDom.Internal.Visitor.codeDomFlatFilter``1(Microsoft.FSharp.Core.FSharpFunc{System.Object,System.Tuple{System.Boolean,System.Boolean}},``0)">
+<summary>
+ Search for members and return flat list of selected members
+ Function given as an argument returns tuple - first item specifies
+ if the current element should be included in the result, the second
+ specifies if we should walk through child members of the current object
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.FSharp.Compiler.CodeDom.Internal.Visitor">
+
+</member>
+</members>
+</doc>

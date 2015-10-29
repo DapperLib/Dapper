@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.22823.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{088D8CC4-E71E-44B6-9B87-4060B043983D}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{03340C6E-4176-4C42-9C76-D5DFC79D1A22}"
+	ProjectSection(SolutionItems) = preProject
+		Tests\Assert.cs = Tests\Assert.cs
+		Tests\Program.cs = Tests\Program.cs
+		Tests\Tests.cs = Tests\Tests.cs
+		DapperTests NET45\Tests.cs = DapperTests NET45\Tests.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{ECD7C7BC-176D-49E7-8DB2-FCF248702F87}"
+	ProjectSection(SolutionItems) = preProject
+		Dapper NET40\SqlMapper.cs = Dapper NET40\SqlMapper.cs
+		Dapper NET45\SqlMapperAsync.cs = Dapper NET45\SqlMapperAsync.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

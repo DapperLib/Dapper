@@ -1,11 +1,26 @@
-﻿using System;
+﻿#if ASYNC
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+#if DNXCORE50
+using IDbDataParameter = global::System.Data.Common.DbParameter;
+using IDataParameter = global::System.Data.Common.DbParameter;
+using IDbTransaction = global::System.Data.Common.DbTransaction;
+using IDbConnection = global::System.Data.Common.DbConnection;
+using IDbCommand = global::System.Data.Common.DbCommand;
+using IDataReader = global::System.Data.Common.DbDataReader;
+using IDataRecord = global::System.Data.Common.DbDataReader;
+using IDataParameterCollection = global::System.Data.Common.DbParameterCollection;
+using DataException = global::System.InvalidOperationException;
+using ApplicationException = global::System.InvalidOperationException;
+#endif
 
 namespace Dapper
 {
@@ -17,17 +32,19 @@ namespace Dapper
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
-        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static async Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return QueryAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
+            return await QueryAsync<DapperRow>(cnn, typeof(DapperRow), new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken))).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
-        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, CommandDefinition command)
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static async Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, CommandDefinition command)
         {
-            return QueryAsync<dynamic>(cnn, typeof(DapperRow), command);
+           return await QueryAsync<DapperRow>(cnn, typeof(DapperRow), command).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -91,11 +108,22 @@ namespace Dapper
                     if (command.Buffered)
                     {
                         List<T> buffer = new List<T>();
+                        var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                         while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                         {
-                            buffer.Add((T)func(reader));
+                            object val = func(reader);
+                            if (val == null || val is T)
+                            {
+                                buffer.Add((T) val);
+                            }
+                            else
+                            {
+                                buffer.Add((T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture));
+                            }
+
+                           
                         }
-                        while (await reader.NextResultAsync().ConfigureAwait(false)) { }
+                        while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { }
                         command.OnCompleted();
                         return buffer;
                     }
@@ -132,8 +160,8 @@ namespace Dapper
         public static Task<int> ExecuteAsync(this IDbConnection cnn, CommandDefinition command)
         {
             object param = command.Parameters;
-            IEnumerable multiExec = param as IEnumerable;
-            if (multiExec != null && !(param is string))
+            IEnumerable multiExec = GetMultiExec(param);
+            if (multiExec != null)
             {
                 return ExecuteMultiImplAsync(cnn, command, multiExec);
             }
@@ -537,7 +565,8 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
         partial class GridReader
         {
             CancellationToken cancel;
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, CancellationToken cancel) : this(command, reader, identity, dynamicParams)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
+                : this(command, reader, identity, dynamicParams, addToCache)
             {
                 this.cancel = cancel;
             }
@@ -545,6 +574,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
             /// <summary>
             /// Read the next grid of results, returned as a dynamic object
             /// </summary>
+            /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             public Task<IEnumerable<dynamic>> ReadAsync(bool buffered = true)
             {
                 return ReadAsyncImpl<dynamic>(typeof(DapperRow), buffered);
@@ -590,7 +620,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null, true);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
@@ -656,7 +686,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                 cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
                 reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
-                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.CancellationToken);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -825,3 +855,4 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
         }
     }
 }
+#endif

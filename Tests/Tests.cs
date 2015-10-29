@@ -1,10 +1,18 @@
 ﻿//#define POSTGRESQL // uncomment to run postgres tests
+
+#if DNXCORE50
+using IDbCommand = global::System.Data.Common.DbCommand;
+using IDbDataParameter = global::System.Data.Common.DbParameter;
+using IDbConnection = global::System.Data.Common.DbConnection;
+using IDbTransaction = global::System.Data.Common.DbTransaction;
+using IDataReader = global::System.Data.Common.DbDataReader;
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
-using System.Data.SqlServerCe;
 using System.IO;
 using System.Data;
 using System.Collections;
@@ -12,14 +20,47 @@ using System.Reflection;
 using System.Dynamic;
 using System.ComponentModel;
 using Microsoft.CSharp.RuntimeBinder;
-using System.Data.Common;
 using System.Globalization;
 using System.Threading;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+
+#if EXTERNALS
+using FirebirdSql.Data.FirebirdClient;
 using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
-using System.Data.SqlTypes;
+using System.Data.SqlServerCe;
 #if POSTGRESQL
 using Npgsql;
+#endif
+#endif
+
+#if DNXCORE50
+namespace System.ComponentModel {
+    public sealed class DescriptionAttribute : Attribute {
+        public DescriptionAttribute(string description)
+        {
+            Description = description;
+        }
+        public string Description {get;private set;}
+    }
+}
+namespace System
+{   
+    public enum GenericUriParserOptions
+    {
+        Default
+    }
+    public class GenericUriParser
+    {
+        private GenericUriParserOptions options;
+
+        public GenericUriParser(GenericUriParserOptions options)
+        {
+            this.options = options;
+        }
+    }
+}
 #endif
 
 namespace SqlMapper
@@ -220,7 +261,7 @@ namespace SqlMapper
             nodef.NE1.IsEqualTo(ShortEnum.Five);
             nodef.NE2.IsEqualTo(null);
         }
-
+#if EXTERNALS
         class NoDefaultConstructorWithBinary
         {
             public System.Data.Linq.Binary Value { get; set; }
@@ -230,7 +271,6 @@ namespace SqlMapper
                 Value = val;
             }
         }
-
         public void TestNoDefaultConstructorBinary()
         {
             byte[] orig = new byte[20];
@@ -239,6 +279,7 @@ namespace SqlMapper
             var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as val", new { input }).First().Value;
             output.ToArray().IsSequenceEqualTo(orig);
         }
+#endif
 
         // http://stackoverflow.com/q/8593871
         public void TestAbstractInheritance()
@@ -292,6 +333,14 @@ namespace SqlMapper
 
         }
 
+        struct CarWithAllProps
+        {
+            public string Name { get; set; }
+            public int Age { get; set; }
+
+            public Car.TrapEnum Trap { get; set; }
+        }
+
         public void TestStructs()
         {
             var car = connection.Query<Car>("select 'Ford' Name, 21 Age, 2 Trap").First();
@@ -299,6 +348,17 @@ namespace SqlMapper
             car.Age.IsEqualTo(21);
             car.Name.IsEqualTo("Ford");
             ((int)car.Trap).IsEqualTo(2);
+        }
+
+        public void TestStructAsParam()
+        {
+            var car1 = new CarWithAllProps { Name = "Ford", Age = 21, Trap = Car.TrapEnum.B };
+            // note Car has Name as a field; parameters only respect properties at the moment
+            var car2 = connection.Query<CarWithAllProps>("select @Name Name, @Age Age, @Trap Trap", car1).First();
+
+            car2.Name.IsEqualTo(car1.Name);
+            car2.Age.IsEqualTo(car1.Age);
+            car2.Trap.IsEqualTo(car1.Trap);
         }
 
         public void SelectListInt()
@@ -346,7 +406,7 @@ namespace SqlMapper
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
             try
             {
-                var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+                var tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", Tuple.Create, splitOn: "Age").Single();
 
                 tuple.Item1.Name.IsEqualTo("Alf");
                 tuple.Item1.Age.IsEqualTo(1);
@@ -354,7 +414,7 @@ namespace SqlMapper
                 tuple.Item2.Age.IsEqualTo(1);
 
                 connection.Execute("alter table #dog drop column Name");
-                tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", (d1, d2) => Tuple.Create(d1, d2), splitOn: "Age").Single();
+                tuple = connection.Query<Dog, Dog, Tuple<Dog, Dog>>("select * from #dog d1 join #dog d2 on 1=1", Tuple.Create, splitOn: "Age").Single();
 
                 tuple.Item1.Name.IsNull();
                 tuple.Item1.Age.IsEqualTo(1);
@@ -494,11 +554,11 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             dog.First().Id
                 .IsEqualTo(guid);
         }
-
+#if EXTERNALS
         // see http://stackoverflow.com/q/18847510/23354
         public void TestOleDbParameters()
         {
-            using (var conn = new System.Data.OleDb.OleDbConnection(Program.OleDbConnectionString))
+            using (var conn = ConnectViaOledb())
             {
                 var row = conn.Query("select Id = ?, Age = ?",
                     new { foo = 12, bar = 23 } // these names DO NOT MATTER!!!
@@ -510,6 +570,13 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             }
         }
 
+        System.Data.OleDb.OleDbConnection ConnectViaOledb()
+        {
+            var conn = new System.Data.OleDb.OleDbConnection(Program.OleDbConnectionString);
+            conn.Open();
+            return conn;
+        }
+#endif
         public void TestStrongType()
         {
             var guid = Guid.NewGuid();
@@ -1081,7 +1148,7 @@ Order by p.Id";
 
         }
 
-
+#if EXTERNALS
         public void ExecuteReader()
         {
             var dt = new DataTable();
@@ -1093,7 +1160,7 @@ Order by p.Id";
             ((int)dt.Rows[0][0]).IsEqualTo(3);
             ((int)dt.Rows[0][1]).IsEqualTo(4);
         }
-
+#endif
         private class TestFieldCaseAndPrivatesEntity
         {
             public int a { get; set; }
@@ -1207,7 +1274,7 @@ Order by p.Id";
             public int ID { get; set; }
             public string Name { get; set; }
         }
-
+#if EXTERNALS
         public void MultiRSSqlCE()
         {
             if (File.Exists("Test.sdf"))
@@ -1236,7 +1303,7 @@ Order by p.Id";
                 cnn.Close();
             }
         }
-
+#endif
         enum TestEnum : byte
         {
             Bla = 1
@@ -1458,20 +1525,37 @@ end");
         {
             var obj = connection.Query("select datalength(@a) as a, datalength(@b) as b, datalength(@c) as c, datalength(@d) as d, datalength(@e) as e, datalength(@f) as f",
                 new
-            {
-                a = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true },
-                b = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = false },
-                c = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true },
-                d = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false },
-                e = new DbString { Value = "abcde", IsAnsi = true },
-                f = new DbString { Value = "abcde", IsAnsi = false },
-            }).First();
+                {
+                    a = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true },
+                    b = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = false },
+                    c = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true },
+                    d = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false },
+                    e = new DbString { Value = "abcde", IsAnsi = true },
+                    f = new DbString { Value = "abcde", IsAnsi = false },
+                }).First();
             ((int)obj.a).IsEqualTo(10);
             ((int)obj.b).IsEqualTo(20);
             ((int)obj.c).IsEqualTo(5);
             ((int)obj.d).IsEqualTo(10);
             ((int)obj.e).IsEqualTo(5);
             ((int)obj.f).IsEqualTo(10);
+        }
+
+        public void TestDefaultDbStringDbType()
+        {
+            var origDefaultStringDbType = DbString.IsAnsiDefault;
+            try
+            {
+                DbString.IsAnsiDefault = true;
+                var a = new DbString { Value = "abcde" };
+                var b = new DbString { Value = "abcde", IsAnsi = false };
+                a.IsAnsi.IsTrue();
+                b.IsAnsi.IsFalse();
+            }
+            finally
+            {
+                DbString.IsAnsiDefault = origDefaultStringDbType;
+            }
         }
 
         class Person
@@ -1505,7 +1589,7 @@ end");
     3 as Id, 'fred' as Name
     ";
             var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address, Extra>>
-                (sql, (p, a, e) => Tuple.Create(p, a, e), splitOn: "AddressId,Id").First();
+                (sql, Tuple.Create, splitOn: "AddressId,Id").First();
 
             personWithAddress.Item1.PersonId.IsEqualTo(1);
             personWithAddress.Item1.Name.IsEqualTo("bob");
@@ -1525,7 +1609,7 @@ end");
                         3 as Id, 'fred' as Name
                         ";
             var personWithAddress = connection.Query<Person, Address, Extra, Tuple<Person, Address, Extra>>
-                (sql, (p, a, e) => Tuple.Create(p, a, e), splitOn: "AddressId, Id").First();
+                (sql, Tuple.Create, splitOn: "AddressId, Id").First();
 
             personWithAddress.Item1.PersonId.IsEqualTo(1);
             personWithAddress.Item1.Name.IsEqualTo("bob");
@@ -1544,10 +1628,10 @@ end");
                             2 as BlogId, 'Blog' as Title";
             var postWithBlog = connection.Query<Post_DupeProp, Blog_DupeProp, Post_DupeProp>(sql,
                 (p, b) =>
-            {
-                p.Blog = b;
-                return p;
-            }, splitOn: "BlogId").First();
+                {
+                    p.Blog = b;
+                    return p;
+                }, splitOn: "BlogId").First();
 
             postWithBlog.PostId.IsEqualTo(1);
             postWithBlog.Title.IsEqualTo("Title");
@@ -1628,7 +1712,7 @@ end");
 
             }
         }
-
+#if EXTERNALS
         // SQL Server specific test to demonstrate TVP 
         public void TestTVP()
         {
@@ -1727,7 +1811,7 @@ end");
                 }
             }
         }
-
+#endif
         class IntCustomParam : Dapper.SqlMapper.ICustomQueryParameter
         {
             IEnumerable<int> numbers;
@@ -1761,7 +1845,7 @@ end");
                 p.Value = number_list;
             }
         }
-
+#if EXTERNALS
         public void TestTVPWithAnonymousObject()
         {
             try
@@ -1788,6 +1872,7 @@ end");
                 }
             }
         }
+#endif
 
         class Parent
         {
@@ -1803,15 +1888,15 @@ end");
             var lookup = new Dictionary<int, Parent>();
             var parents = connection.Query<Parent, Child, Parent>(@"select 1 as [Id], 1 as [Id] union all select 1,2 union all select 2,3 union all select 1,4 union all select 3,5",
                 (parent, child) =>
-            {
-                Parent found;
-                if (!lookup.TryGetValue(parent.Id, out found))
                 {
-                    lookup.Add(parent.Id, found = parent);
-                }
-                found.Children.Add(child);
-                return found;
-            }).Distinct().ToDictionary(p => p.Id);
+                    Parent found;
+                    if (!lookup.TryGetValue(parent.Id, out found))
+                    {
+                        lookup.Add(parent.Id, found = parent);
+                    }
+                    found.Children.Add(child);
+                    return found;
+                }).Distinct().ToDictionary(p => p.Id);
             parents.Count().IsEqualTo(3);
             parents[1].Children.Select(c => c.Id).SequenceEqual(new[] { 1, 2, 4 }).IsTrue();
             parents[2].Children.Select(c => c.Id).SequenceEqual(new[] { 3 }).IsTrue();
@@ -1836,6 +1921,7 @@ end");
             public GenericUriParser Foo { get; set; }
             public int Bar { get; set; }
         }
+
         public void TestUnexpectedDataMessage()
         {
             string msg = null;
@@ -1850,6 +1936,7 @@ end");
             }
             msg.IsEqualTo("The member Foo of type System.GenericUriParser cannot be used as a parameter value");
         }
+
         public void TestUnexpectedButFilteredDataMessage()
         {
             int i = connection.Query<int>("select @Bar", new WithBizarreData { Foo = new GenericUriParser(GenericUriParserOptions.Default), Bar = 23 }).Single();
@@ -2059,13 +2146,15 @@ Order by p.Id";
         }
         public void TestMultiMapperIsNotConfusedWithUnorderedCols()
         {
-            var result = connection.Query<Foo1, Bar1, Tuple<Foo1, Bar1>>("select 1 as Id, 2 as BarId, 3 as BarId, 'a' as Name", (f, b) => Tuple.Create(f, b), splitOn: "BarId").First();
+            var result = connection.Query<Foo1, Bar1, Tuple<Foo1, Bar1>>("select 1 as Id, 2 as BarId, 3 as BarId, 'a' as Name", Tuple.Create, splitOn: "BarId").First();
 
             result.Item1.Id.IsEqualTo(1);
             result.Item1.BarId.IsEqualTo(2);
             result.Item2.BarId.IsEqualTo(3);
             result.Item2.Name.IsEqualTo("a");
         }
+
+#if EXTERNALS
         public void TestLinqBinaryToClass()
         {
             byte[] orig = new byte[20];
@@ -2092,7 +2181,7 @@ Order by p.Id";
         {
             public System.Data.Linq.Binary Value { get; set; }
         }
-
+#endif
 
         class WithPrivateConstructor
         {
@@ -2461,7 +2550,7 @@ Order by p.Id";
 
             // custom mapping
             var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
-                (type, columnName) => type.GetProperties().Where(prop => prop.GetCustomAttributes(false).OfType<DescriptionAttribute>().Any(attr => attr.Description == columnName)).FirstOrDefault());
+                (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName));
             Dapper.SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
 
             item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
@@ -2474,7 +2563,17 @@ Order by p.Id";
             item.A.IsEqualTo("AVal");
             item.B.IsEqualTo("BVal");
         }
-
+        static string GetDescriptionFromAttribute(MemberInfo member)
+        {
+            if (member == null) return null;
+#if DNXCORE50
+            var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
+            return data == null ? null : (string)data.ConstructorArguments.Single().Value;
+#else
+            var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
+            return attrib == null ? null : attrib.Description;
+#endif
+        }
         public class TypeWithMapping
         {
             [Description("B")]
@@ -2754,10 +2853,7 @@ end");
         {
             var results = connection.Query<dynamic, int, dynamic>(
                 "SELECT 1 Id, 'Mr' Title, 'John' Surname, 4 AddressCount",
-                (person, addressCount) =>
-            {
-                return person;
-            },
+                (person, addressCount) => person,
                 splitOn: "AddressCount"
             ).FirstOrDefault();
 
@@ -2844,7 +2940,70 @@ end");
             Dapper.SqlMapper.PurgeQueryCache();
             Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
         }
+#if DNXCORE50
+        class TransactedConnection : IDbConnection
+        {
+            IDbConnection _conn;
+            IDbTransaction _tran;
 
+            public TransactedConnection(IDbConnection conn, IDbTransaction tran)
+            {
+                _conn = conn;
+                _tran = tran;
+            }
+
+            public override string ConnectionString { get { return _conn.ConnectionString; } set { _conn.ConnectionString = value; } }
+            public override int ConnectionTimeout { get { return _conn.ConnectionTimeout; } }
+            public override string Database { get { return _conn.Database; } }
+            public override ConnectionState State { get { return _conn.State; } }
+
+            protected override IDbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+            {
+                return _tran;
+            }
+            
+            public override void ChangeDatabase(string databaseName)
+            {
+                _conn.ChangeDatabase(databaseName);
+            }
+            public override string DataSource
+            {
+                get
+                {
+                    return _conn.DataSource;
+                }
+            }
+            public override string ServerVersion
+            {
+                get
+                {
+                    return _conn.ServerVersion;
+                }
+            }
+            public override void Close()
+            {
+                _conn.Close();
+            }
+            protected override IDbCommand CreateDbCommand()
+            {
+                // The command inherits the "current" transaction.
+                var command = _conn.CreateCommand();
+                command.Transaction = _tran;
+                return command;
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                if(disposing) _conn.Dispose();
+                base.Dispose(disposing);
+            }
+
+            public override void Open()
+            {
+                _conn.Open();
+            }
+        }
+#else
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
@@ -2899,7 +3058,7 @@ end");
                 _conn.Open();
             }
         }
-
+#endif
         public void TestDapperTableMetadataRetrieval()
         {
             // Test for a bug found in CS 51509960 where the following sequence would result in an InvalidOperationException being
@@ -2976,19 +3135,29 @@ end");
             row.C.Equals(0.0M);
             row.D.IsNull();
         }
-
+        private static CultureInfo ActiveCulture
+        {
+#if DNXCORE50
+            get { return CultureInfo.CurrentCulture; }
+            set { CultureInfo.CurrentCulture = value; }
+#else
+            get { return Thread.CurrentThread.CurrentCulture; }
+            set { Thread.CurrentThread.CurrentCulture = value; }
+#endif
+        }
         public void TestParameterInclusionNotSensitiveToCurrentCulture()
         {
-            CultureInfo current = Thread.CurrentThread.CurrentCulture;
+            // note this might fail if your database server is case-sensitive
+            CultureInfo current = ActiveCulture;
             try
             {
-                Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+                ActiveCulture = new CultureInfo("tr-TR");
 
                 connection.Query<int>("select @pid", new { PId = 1 }).Single();
             }
             finally
             {
-                Thread.CurrentThread.CurrentCulture = current;
+                ActiveCulture = current;
             }
         }
         public void LiteralReplacement()
@@ -3025,6 +3194,22 @@ end");
             A = 2,
             B = 1
         }
+
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1613")]
+#endif
+        public void AdoNetEnumValue()
+        {
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "select @foo";
+                cmd.Parameters.AddWithValue("@foo", AnEnum.B);
+                object value = cmd.ExecuteScalar();
+                AnEnum val = (AnEnum)value;
+                val.IsEqualTo(AnEnum.B);
+            }
+        }
+
         public void LiteralReplacementEnumAndString()
         {
             var args = new { x = AnEnum.B, y = 123.45M, z = AnotherEnum.A };
@@ -3036,6 +3221,7 @@ end");
             y.Equals(123.45M);
             z.Equals(AnotherEnum.A);
         }
+
         public void LiteralReplacementDynamicEnumAndString()
         {
             var args = new DynamicParameters();
@@ -3050,7 +3236,15 @@ end");
             y.Equals(123.45M);
             z.Equals(AnotherEnum.A);
         }
-
+        
+        public void LiteralReplacementBoolean()
+        {
+            var row = connection.Query<int?>("select 42 where 1 = {=val}", new { val = true }).SingleOrDefault();
+            row.IsNotNull();
+            row.IsEqualTo(42);
+            row = connection.Query<int?>("select 42 where 1 = {=val}", new { val = false }).SingleOrDefault();
+            row.IsNull();
+        }
         public void LiteralReplacementWithIn()
         {
             var data = connection.Query<MyRow>("select @x where 1 in @ids and 1 ={=a}",
@@ -3112,7 +3306,7 @@ option (optimize for (@vals unKnoWn))";
             connection.Query<TimeSpan>("#TestProcWithTimeParameter", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(new TimeSpan(10, 0, 0));
         }
 
-        public void DbString()
+        public void DbStringAnsi()
         {
             var a = connection.Query<int>("select datalength(@x)",
                 new { x = new DbString { Value = "abc", IsAnsi = true } }).Single();
@@ -3144,12 +3338,15 @@ option (optimize for (@vals unKnoWn))";
             public decimal C { get; set; }
             public decimal? D { get; set; }
         }
-
+#if EXTERNALS
         public void DataTableParameters()
         {
-            try { connection.Execute("drop proc #DataTableParameters"); } catch { }
-            try { connection.Execute("drop table #DataTableParameters"); } catch { }
-            try { connection.Execute("drop type MyTVPType"); } catch { }
+            try { connection.Execute("drop proc #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop table #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop type MyTVPType"); }
+            catch { }
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
 
@@ -3165,17 +3362,58 @@ option (optimize for (@vals unKnoWn))";
             {
                 connection.Query<int>("select count(1) from @ids", new { ids = table.AsTableValuedParameter() }).First();
                 throw new InvalidOperationException();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
         }
 
-        public void DataTableParametersWithExtendedProperty()
+        public void SO29533765_DataTableParametersViaDynamicParameters()
         {
             try { connection.Execute("drop proc #DataTableParameters"); } catch { }
             try { connection.Execute("drop table #DataTableParameters"); } catch { }
             try { connection.Execute("drop type MyTVPType"); } catch { }
+            connection.Execute("create type MyTVPType as table (id int)");
+            connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
+
+            var table = new DataTable { TableName="MyTVPType", Columns = { { "id", typeof(int) } }, Rows = { { 1 }, { 2 }, { 3 } } };
+            table.SetTypeName(table.TableName); // per SO29533765
+            IDictionary<string, object> args = new Dictionary<string, object>();
+            args.Add("ids", table);
+            int count = connection.Query<int>("#DataTableParameters", args, commandType: CommandType.StoredProcedure).First();
+            count.IsEqualTo(3);
+
+            count = connection.Query<int>("select count(1) from @ids", args).First();
+            count.IsEqualTo(3);
+        }
+        public void SO26468710_InWithTVPs()
+        {
+            // this is just to make it re-runnable; normally you only do this once
+            try { connection.Execute("drop type MyIdList"); }
+            catch { }
+            connection.Execute("create type MyIdList as table(id int);");
+
+            DataTable ids = new DataTable
+            {
+                Columns = { { "id", typeof(int) } },
+                Rows = { { 1 }, { 3 }, { 5 } }
+            };
+            ids.SetTypeName("MyIdList");
+            int sum = connection.Query<int>(@"
+            declare @tmp table(id int not null);
+            insert @tmp (id) values(1), (2), (3), (4), (5), (6), (7);
+            select * from @tmp t inner join @ids i on i.id = t.id", new { ids }).Sum();
+            sum.IsEqualTo(9);
+        }
+        public void DataTableParametersWithExtendedProperty()
+        {
+            try { connection.Execute("drop proc #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop table #DataTableParameters"); }
+            catch { }
+            try { connection.Execute("drop type MyTVPType"); }
+            catch { }
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
 
@@ -3204,7 +3442,7 @@ option (optimize for (@vals unKnoWn))";
             obj.Value.Equals("abc");
             obj.Flags.Equals(31);
         }
-
+#endif
         public void GuidIn_SO_24177902()
         {
             // invent and populate
@@ -3231,7 +3469,7 @@ option (optimize for (@vals unKnoWn))";
             rows[1].i.Equals(3);
             rows[1].g.Equals(c);
         }
-
+#if EXTERNALS
         class HazGeo
         {
             public int Id { get; set; }
@@ -3283,6 +3521,23 @@ option (optimize for (@vals unKnoWn))";
             row.Geometry.IsNotNull();
         }
 
+        public void NullableSqlGeometry()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            connection.Execute("create table #SqlNullableGeo (id int, geometry geometry null)");
+
+            var obj = new HazSqlGeo
+            {
+                Id = 1,
+                Geometry = null
+            };
+            connection.Execute("insert #SqlNullableGeo(id, geometry) values (@Id, @Geometry)", obj);
+            var row = connection.Query<HazSqlGeo>("select * from #SqlNullableGeo where id=1").SingleOrDefault();
+            row.IsNotNull();
+            row.Id.IsEqualTo(1);
+            row.Geometry.IsNull();
+        }
+
         public void SqlHierarchyId_SO18888911()
         {
             Dapper.SqlMapper.ResetTypeHandlers();
@@ -3299,7 +3554,7 @@ option (optimize for (@vals unKnoWn))";
             public int Id { get; set; }
             public SqlHierarchyId Path { get; set; }
         }
-
+#endif
         public void TypeBasedViaDynamic()
         {
             Type type = GetSomeType();
@@ -3359,7 +3614,7 @@ option (optimize for (@vals unKnoWn))";
             public int A { get; set; }
             public string B { get; set; }
         }
-
+#if !DNXCORE50
         class WithInit : ISupportInitialize
         {
             public string Value { get; set; }
@@ -3375,7 +3630,7 @@ option (optimize for (@vals unKnoWn))";
                 Flags += 30;
             }
         }
-
+#endif
         public void SO24607639_NullableBools()
         {
             var obj = connection.Query<HazBools>(
@@ -3409,7 +3664,9 @@ option (optimize for (@vals unKnoWn))";
         class PracticeRebateOrders
         {
             public string fTaxInvoiceNumber;
+#if EXTERNALS
             [System.Xml.Serialization.XmlElementAttribute(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
+#endif
             public string TaxInvoiceNumber { get { return fTaxInvoiceNumber; } set { fTaxInvoiceNumber = value; } }
         }
 
@@ -3425,7 +3682,7 @@ option (optimize for (@vals unKnoWn))";
                 throw new FormatException("Invalid conversion to RatingValue");
             }
 
-            public override void SetValue(System.Data.IDbDataParameter parameter, RatingValue value)
+            public override void SetValue(IDbDataParameter parameter, RatingValue value)
             {
                 // ... null, range checks etc ...
                 parameter.DbType = System.Data.DbType.Int32;
@@ -3453,12 +3710,76 @@ option (optimize for (@vals unKnoWn))";
             foo.CategoryRating.Value.IsEqualTo(200);
         }
 
+        enum SO27024806Enum { Foo, Bar }
+
+        private class SO27024806Class
+        {
+            public SO27024806Class(SO27024806Enum myField)
+            {
+                this.MyField = myField;
+            }
+
+            public SO27024806Enum MyField { get; set; }
+        }
+
+        public void SO27024806_TestVarcharEnumMemberWithExplicitConstructor()
+        {
+            var foo = connection.Query<SO27024806Class>("SELECT 'Foo' AS myField").Single();
+            foo.MyField.IsEqualTo(SO27024806Enum.Foo);
+        }
+
+
         public void SO24740733_TestCustomValueSingleColumn()
         {
             Dapper.SqlMapper.AddTypeHandler(RatingValueHandler.Default);
             var foo = connection.Query<RatingValue>("SELECT 200 AS CategoryRating").Single();
 
             foo.Value.IsEqualTo(200);
+        }
+
+        public class StringListTypeHandler : Dapper.SqlMapper.TypeHandler<List<String>>
+        {
+            private StringListTypeHandler() { }
+            public static readonly StringListTypeHandler Default = new StringListTypeHandler();
+            //Just a simple List<string> type handler implementation
+            public override void SetValue(IDbDataParameter parameter, List<string> value)
+            {
+                parameter.Value = String.Join(",", value);
+            }
+
+            public override List<string> Parse(object value)
+            {
+                return ((value as String) ?? "").Split(',').ToList();
+            }
+        }
+        public class MyObjectWithStringList
+        {
+            public List<String> Names { get; set; }
+        }
+        public void Issue253_TestIEnumerableTypeHandlerParsing()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(StringListTypeHandler.Default);
+            var foo = connection.Query<MyObjectWithStringList>("SELECT 'Sam,Kyro' AS Names").Single();
+            foo.Names.IsSequenceEqualTo(new[] { "Sam", "Kyro" });
+        }
+        public void Issue253_TestIEnumerableTypeHandlerSetParameterValue()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.AddTypeHandler(StringListTypeHandler.Default);
+
+            connection.Execute("CREATE TABLE #Issue253 (Names VARCHAR(50) NOT NULL);");
+            try
+            {
+                String names = "Sam,Kyro";
+                List<String> names_list = names.Split(',').ToList();
+                var foo = connection.Query<String>("INSERT INTO #Issue253 (Names) VALUES (@Names); SELECT Names FROM #Issue253;", new { Names = names_list }).Single();
+                foo.IsEqualTo(names);
+            }
+            finally
+            {
+                connection.Execute("DROP TABLE #Issue253;");
+            }
         }
 
         public void Issue130_IConvertible()
@@ -3493,10 +3814,12 @@ option (optimize for (@vals unKnoWn))";
             int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
             k.IsNull();
 
+#if EXTERNALS
             Dapper.EntityFramework.Handlers.Register();
             var geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326);
             var geo2 = connection.ExecuteScalar<DbGeography>("select @geo", new { geo });
             geo2.IsNotNull();
+#endif
         }
 
         public void Issue142_FailsNamedStatus()
@@ -3580,7 +3903,8 @@ option (optimize for (@vals unKnoWn))";
             public LocalDate? NullableIsNull { get; set; }
         }
 
-        public class LotsOfNumerics {
+        public class LotsOfNumerics
+        {
             public enum E_Byte : byte { A = 0, B = 1 }
             public enum E_SByte : sbyte { A = 0, B = 1 }
             public enum E_Short : short { A = 0, B = 1 }
@@ -3788,7 +4112,8 @@ option (optimize for (@vals unKnoWn))";
             var parameters = new DynamicParameters();
             parameters.Add("foo", "bar");
             // parameters = new DynamicParameters(parameters);
-            try { connection.Execute("drop proc SO25069578"); } catch { }
+            try { connection.Execute("drop proc SO25069578"); }
+            catch { }
             connection.Execute("create proc SO25069578 @foo nvarchar(max) as select @foo as [X]");
             var tran = connection.BeginTransaction(); // gist used transaction; behaves the same either way, though
             var row = connection.Query<HazX>("SO25069578", parameters,
@@ -3805,14 +4130,15 @@ option (optimize for (@vals unKnoWn))";
             {
                 var result = connection.Query<Issue149_Person>(@"select @guid as Id", new { guid }).First();
                 error = null;
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 error = ex.Message;
             }
             error.IsEqualTo("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)");
         }
         public class Issue149_Person { public string Id { get; set; } }
-        
+
         public class HazX
         {
             public string X { get; set; }
@@ -3834,7 +4160,7 @@ SELECT value FROM @table WHERE value IN @myIds";
             var queryParams = new Dictionary<string, object> {
                 { "myIds", new [] { 5, 6 } }
             };
-            
+
             var dynamicParams = new DynamicParameters(queryParams);
             List<int> result = connection.Query<int>(query, dynamicParams).ToList();
             result.Count.IsEqualTo(2);
@@ -3842,6 +4168,434 @@ SELECT value FROM @table WHERE value IN @myIds";
             result.Contains(6).IsTrue();
         }
 
+        public void AllowIDictionaryParameters()
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "param1", 0 }
+            };
+
+            connection.Query("SELECT @param1", parameters);
+        }
+
+
+        public void Issue178_SqlServer()
+        {
+            const string sql = @"select count(*) from Issue178";
+            try { connection.Execute("drop table Issue178"); }
+            catch { }
+            try { connection.Execute("create table Issue178(id int not null)"); }
+            catch { }
+            // raw ADO.net
+            var sqlCmd = new SqlCommand(sql, connection);
+            using (IDataReader reader1 = sqlCmd.ExecuteReader())
+            {
+                Assert.IsTrue(reader1.Read());
+                reader1.GetInt32(0).IsEqualTo(0);
+                Assert.IsFalse(reader1.Read());
+                Assert.IsFalse(reader1.NextResult());
+            }
+
+            // dapper
+            using (var reader2 = connection.ExecuteReader(sql))
+            {
+                Assert.IsTrue(reader2.Read());
+                reader2.GetInt32(0).IsEqualTo(0);
+                Assert.IsFalse(reader2.Read());
+                Assert.IsFalse(reader2.NextResult());
+            }
+        }
+#if EXTERNALS
+        public void Issue178_Firebird() // we expect this to fail due to a bug in Firebird; a PR to fix it has been submitted
+        {
+            var cs = @"initial catalog=localhost:database;user id=SYSDBA;password=masterkey";
+
+            using (var connection = new FbConnection(cs))
+            {
+                connection.Open();
+                const string sql = @"select count(*) from Issue178";
+                try { connection.Execute("drop table Issue178"); }
+                catch { }
+                connection.Execute("create table Issue178(id int not null)");
+                connection.Execute("insert into Issue178(id) values(42)");
+                // raw ADO.net
+                using (var sqlCmd = new FbCommand(sql, connection))
+                using (IDataReader reader1 = sqlCmd.ExecuteReader())
+                {
+                    Assert.IsTrue(reader1.Read());
+                    reader1.GetInt32(0).IsEqualTo(1);
+                    Assert.IsFalse(reader1.Read());
+                    Assert.IsFalse(reader1.NextResult());
+                }
+
+                // dapper
+                using (var reader2 = connection.ExecuteReader(sql))
+                {
+                    Assert.IsTrue(reader2.Read());
+                    reader2.GetInt32(0).IsEqualTo(1);
+                    Assert.IsFalse(reader2.Read());
+                    Assert.IsFalse(reader2.NextResult());
+                }
+
+                var count = connection.Query<int>(sql).Single();
+                count.IsEqualTo(1);
+            }
+        }
+
+        public void PseudoPositionalParameters_Simple()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                int value = connection.Query<int>("select ?x? + ?y_2? + ?z?", new { x = 1, y_2 = 3, z = 5, z2 = 24 }).Single();
+                value.IsEqualTo(9);
+            }
+        }
+
+        public void PseudoPositionalParameters_Dynamic()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                var args = new DynamicParameters();
+                args.Add("x", 1);
+                args.Add("y_2", 3);
+                args.Add("z", 5);
+                args.Add("z2", 24);
+                int value = connection.Query<int>("select ?x? + ?y_2? + ?z?", args).Single();
+                value.IsEqualTo(9);
+            }
+        }
+
+        public void PseudoPositionalParameters_ReusedParameter()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                try
+                {
+                    int value = connection.Query<int>("select ?x? + ?y_2? + ?x?", new { x = 1, y_2 = 3 }).Single();
+                    Assert.Fail();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ex.Message.IsEqualTo("When passing parameters by position, each parameter can only be referenced once");
+                }
+            }
+        }
+
+        public void PseudoPositionalParameters_ExecSingle()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                var data = new { x = 6 };
+                connection.Execute("create table #named_single(val int not null)");
+                int count = connection.Execute("insert #named_single (val) values (?x?)", data);
+                int sum = (int)connection.ExecuteScalar("select sum(val) from #named_single");
+                count.IsEqualTo(1);
+                sum.IsEqualTo(6);
+            }
+        }
+        public void PseudoPositionalParameters_ExecMulti()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                var data = new[]
+                {
+                    new { x = 1, y = 1 },
+                    new { x = 3, y = 1 },
+                    new { x = 6, y = 1 },
+                };
+                connection.Execute("create table #named_multi(val int not null)");
+                int count = connection.Execute("insert #named_multi (val) values (?x?)", data);
+                int sum = (int)connection.ExecuteScalar("select sum(val) from #named_multi");
+                count.IsEqualTo(3);
+                sum.IsEqualTo(10);
+            }
+        }
+#endif
+        public void QueryBasicWithoutQuery()
+        {
+            int? i = connection.Query<int?>("print 'not a query'").FirstOrDefault();
+            i.IsNull();
+        }
+
+        public void QueryComplexWithoutQuery()
+        {
+            var obj = connection.Query<Foo1>("print 'not a query'").FirstOrDefault();
+            obj.IsNull();
+        }
+
+
+        public void Issue182_BindDynamicObjectParametersAndColumns()
+        {
+            connection.Execute("create table #Dyno ([Id] uniqueidentifier primary key, [Name] nvarchar(50) not null, [Foo] bigint not null);");
+
+            var guid = Guid.NewGuid();
+            var orig = new Dyno { Name = "T Rex", Id = guid, Foo = 123L };
+            var result = connection.Execute("insert into #Dyno ([Id], [Name], [Foo]) values (@Id, @Name, @Foo);", orig);
+
+            var fromDb = connection.Query<Dyno>("select * from #Dyno where Id=@Id", orig).Single();
+            ((Guid)fromDb.Id).IsEqualTo(guid);
+            fromDb.Name.IsEqualTo("T Rex");
+            ((long)fromDb.Foo).IsEqualTo(123L);
+        }
+        public class Dyno
+        {
+            public dynamic Id { get; set; }
+            public string Name { get; set; }
+
+            public object Foo { get; set; }
+        }
+
+        public void Issue151_ExpandoObjectArgsQuery()
+        {
+            dynamic args = new ExpandoObject();
+            args.Id = 123;
+            args.Name = "abc";
+
+            var row = connection.Query("select @Id as [Id], @Name as [Name]", (object)args).Single();
+            ((int)row.Id).Equals(123);
+            ((string)row.Name).Equals("abc");
+        }
+
+        public void Issue151_ExpandoObjectArgsExec()
+        {
+            dynamic args = new ExpandoObject();
+            args.Id = 123;
+            args.Name = "abc";
+            connection.Execute("create table #issue151 (Id int not null, Name nvarchar(20) not null)");
+            connection.Execute("insert #issue151 values(@Id, @Name)", (object)args).IsEqualTo(1);
+            var row = connection.Query("select Id, Name from #issue151").Single();
+            ((int)row.Id).Equals(123);
+            ((string)row.Name).Equals("abc");
+        }
+
+        public void Issue192_InParameterWorksWithSimilarNames()
+        {
+            var rows = connection.Query(@"
+declare @Issue192 table (
+    Field INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    Field_1 INT NOT NULL);
+insert @Issue192(Field_1) values (1), (2), (3);
+SELECT * FROM @Issue192 WHERE Field IN @Field AND Field_1 IN @Field_1",
+    new { Field = new[] { 1, 2 }, Field_1 = new[] { 2, 3 } }).Single();
+            ((int)rows.Field).IsEqualTo(2);
+            ((int)rows.Field_1).IsEqualTo(2);
+        }
+
+        public void Issue192_InParameterWorksWithSimilarNamesWithUnicode()
+        {
+            var rows = connection.Query(@"
+declare @Issue192 table (
+    Field INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    Field_1 INT NOT NULL);
+insert @Issue192(Field_1) values (1), (2), (3);
+SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
+    new { µ = new[] { 1, 2 }, µµ = new[] { 2, 3 } }).Single();
+            ((int)rows.Field).IsEqualTo(2);
+            ((int)rows.Field_1).IsEqualTo(2);
+        }
+
+        class _ExplicitConstructors
+        {
+            public int Field { get; set; }
+            public int Field_1 { get; set; }
+
+            private bool WentThroughProperConstructor;
+
+            public _ExplicitConstructors() { }
+
+            [ExplicitConstructor]
+            public _ExplicitConstructors(string foo, int bar)
+            {
+                WentThroughProperConstructor = true;
+            }
+
+            public bool GetWentThroughProperConstructor()
+            {
+                return WentThroughProperConstructor;
+            }
+        }
+
+        public void ExplicitConstructors()
+        {
+            var rows = connection.Query<_ExplicitConstructors>(@"
+declare @ExplicitConstructors table (
+    Field INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    Field_1 INT NOT NULL);
+insert @ExplicitConstructors(Field_1) values (1);
+SELECT * FROM @ExplicitConstructors"
+).ToList();
+
+            rows.Count.IsEqualTo(1);
+            rows[0].Field.IsEqualTo(1);
+            rows[0].Field_1.IsEqualTo(1);
+            rows[0].GetWentThroughProperConstructor().IsTrue();
+        }
+
+        public void Issue220_InParameterCanBeSpecifiedInAnyCase()
+        {
+            // note this might fail if your database server is case-sensitive
+            connection.Query<int>("select * from (select 1 as Id) as X where Id in @ids", new { Ids = new[] { 1 } })
+                      .IsSequenceEqualTo(new[] { 1 });
+        }
+
+        public void SO29343103_UtcDates()
+        {
+            const string sql = "select @date";
+            var date = DateTime.UtcNow;
+            var returned = connection.Query<DateTime>(sql, new { date }).Single();
+            var delta = returned - date;
+            Assert.IsTrue(delta.TotalMilliseconds >= -1 && delta.TotalMilliseconds <= 1);
+        }
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
+#endif
+        public void Issue261_Decimals()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("c", dbType: DbType.Decimal, direction: ParameterDirection.Output, precision: 10, scale: 5);
+            connection.Execute("create proc #Issue261 @c decimal(10,5) OUTPUT as begin set @c=11.884 end");
+            connection.Execute("#Issue261", parameters, commandType: CommandType.StoredProcedure);
+            var c = parameters.Get<Decimal>("c");
+            c.IsEqualTo(11.884M);
+        }
+#if DNXCORE50
+        [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
+#endif
+        public void Issue261_Decimals_ADONET_SetViaBaseClass()
+        {
+            Issue261_Decimals_ADONET(true);
+        }
+
+        public void Issue261_Decimals_ADONET_SetViaConcreteClass()
+        {
+            Issue261_Decimals_ADONET(false);
+        }
+        private void Issue261_Decimals_ADONET(bool setPrecisionScaleViaAbstractApi)
+        {
+            try
+            {
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "create proc #Issue261Direct @c decimal(10,5) OUTPUT as begin set @c=11.884 end";
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch { /* we don't care that it already exists */ }
+
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "#Issue261Direct";
+                var c = cmd.CreateParameter();
+                c.ParameterName = "c";
+                c.Direction = ParameterDirection.Output;
+                c.Value = DBNull.Value;
+                c.DbType = DbType.Decimal;
+
+                if (setPrecisionScaleViaAbstractApi)
+                {
+                    IDbDataParameter baseParam = c;
+                    baseParam.Precision = 10;
+                    baseParam.Scale = 5;
+                }
+                else
+                {
+                    c.Precision = 10;
+                    c.Scale = 5;
+                }
+
+                cmd.Parameters.Add(c);
+                cmd.ExecuteNonQuery();
+                decimal value = (decimal)c.Value;
+                value.IsEqualTo(11.884M);
+            }
+        }
+
+        public void BasicDecimals()
+        {
+            var c = connection.Query<decimal>("select @c", new { c = 11.884M }).Single();
+            c.IsEqualTo(11.884M);
+        }
+        [SkipTest]
+        public void Issue263_Timeout()
+        {
+            var watch = Stopwatch.StartNew();
+            var i = connection.Query<int>("waitfor delay '00:01:00'; select 42;", commandTimeout: 300, buffered: false).Single();
+            watch.Stop();
+            i.IsEqualTo(42);
+            var minutes = watch.ElapsedMilliseconds / 1000 / 60;
+            Assert.IsTrue(minutes >= 0.95 && minutes <= 1.05);
+        }
+#if EXTERNALS
+        public void SO29596645_TvpProperty()
+        {
+            try { connection.Execute("CREATE TYPE SO29596645_ReminderRuleType AS TABLE (id int NOT NULL)"); }
+            catch { }
+            connection.Execute(@"create proc #SO29596645_Proc (@Id int, @Rules SO29596645_ReminderRuleType READONLY)
+                                as begin select @Id + ISNULL((select sum(id) from @Rules), 0); end");
+            var obj = new SO29596645_OrganisationDTO();
+            int val = connection.Query<int>("#SO29596645_Proc", obj.Rules, commandType: CommandType.StoredProcedure).Single();
+
+            // 4 + 9 + 7 = 20
+            val.IsEqualTo(20);
+
+        }
+#endif
+        public void Issue268_ReturnQueryMultiple()
+        {
+            connection.Execute(@"create proc #TestProc268 (@a int, @b int, @c int)as 
+begin
+select @a;
+
+select @b
+
+return @c; 
+end");
+
+
+            var p = new DynamicParameters(new { a = 1, b = 2, c = 3 });
+            p.Add("RetVal", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+            using (var reader = connection.QueryMultiple("#TestProc268", p, commandType: CommandType.StoredProcedure))
+            {
+                reader.Read();
+            }
+            var retVal = p.Get<int>("RetVal");
+            retVal.IsEqualTo(3);
+        }
+#if EXTERNALS
+        class SO29596645_RuleTableValuedParameters : Dapper.SqlMapper.IDynamicParameters {
+            private string parameterName;
+
+            public SO29596645_RuleTableValuedParameters(string parameterName)
+            {
+                this.parameterName = parameterName;
+            }
+
+
+            public void AddParameters(IDbCommand command, Dapper.SqlMapper.Identity identity)
+            {
+                Console.WriteLine("> AddParameters");
+                SqlCommand lazy = (SqlCommand)command;
+                lazy.Parameters.AddWithValue("Id", 7);
+                DataTable table = new DataTable {
+                    Columns = {{"Id", typeof(int)}},
+                    Rows = {{4}, {9}}
+                };
+                lazy.Parameters.AddWithValue("Rules", table);
+                Console.WriteLine("< AddParameters");
+            }
+        }
+        class SO29596645_OrganisationDTO
+        {
+            public SO29596645_RuleTableValuedParameters Rules { get; private set; }
+
+            public SO29596645_OrganisationDTO()
+            {
+                Rules = new SO29596645_RuleTableValuedParameters("@Rules");
+            }
+        }
+#endif
 #if POSTGRESQL
 
         class Cat
@@ -3882,5 +4636,50 @@ SELECT value FROM @table WHERE value IN @myIds";
             }
         }
 #endif
+
+        public void SO30156367_DynamicParamsWithoutExec()
+        {
+            var dbParams = new DynamicParameters();
+            dbParams.Add("Field1", 1);
+            var value = dbParams.Get<int>("Field1");
+            value.IsEqualTo(1);
+        }
+
+        public void SO30435185_InvalidTypeOwner()
+        {
+            try {
+                string sql = @" INSERT INTO #XXX
+                        (XXXId, AnotherId, ThirdId, Value, Comment)
+                        VALUES
+                        (@XXXId, @AnotherId, @ThirdId, @Value, @Comment); select @@rowcount as [Foo]";
+
+                var command = new
+                {
+                    MyModels = new[]
+                    {
+                        new {XXXId = 1, AnotherId = 2, ThirdId = 3, Value = "abc", Comment = "def" }
+                }
+                };
+                var parameters = command
+                    .MyModels
+                    .Select(model => new
+                    {
+                        XXXId = model.XXXId,
+                        AnotherId = model.AnotherId,
+                        ThirdId = model.ThirdId,
+                        Value = model.Value,
+                        Comment = model.Comment
+                    })
+                    .ToArray();
+
+                var rowcount = (int)connection.Query(sql, parameters).Single().Foo;
+                rowcount.IsEqualTo(1);
+
+                Assert.Fail();
+            } catch(InvalidOperationException ex)
+            {
+                ex.Message.IsEqualTo("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
+            }
+        }
     }
 }
