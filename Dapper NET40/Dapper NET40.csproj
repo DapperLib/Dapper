@@ -45,8 +45,91 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandDefinition.cs" />
+    <Compile Include="CommandFlags.cs" />
+    <Compile Include="CustomPropertyTypeMap.cs" />
+    <Compile Include="DataTableHandler.cs" />
+    <Compile Include="DbString.cs" />
+    <Compile Include="DefaultTypeMap.cs" />
+    <Compile Include="DynamicParameters.cs" />
+    <Compile Include="ExplicitConstructorAttribute.cs" />
+    <Compile Include="FeatureSupport.cs" />
+    <Compile Include="SimpleMemberMap.cs" />
+    <Compile Include="SqlDataRecordHandler.cs" />
+    <Compile Include="SqlDataRecordListTVPParameter.cs" />
+    <Compile Include="SqlMapper.CacheInfo.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
     <Compile Include="SqlMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SqlMapper.DapperRow.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.DataTable.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.DeserializerState.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.DontMap.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.GridReader.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.IDynamicParameters.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.IMemberMap.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.IParameterLookup.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.ITypeHandler.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.ITypeMap.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.Link.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.LiteralToken.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.Settings.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TableValuedParameter.cs" />
+    <Compile Include="TypeExtensions.cs" />
+    <Compile Include="SqlMapper.TypeHandler.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UdtTypeHandler.cs" />
+    <Compile Include="WrappedDataReader.cs" />
+    <Compile Include="WrappedReader.cs" />
+    <Compile Include="SqlMapper.ICustomQueryParameter.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.IParameterCallbacks.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DynamicParameters.ParamInfo.cs">
+      <DependentUpon>DynamicParameters.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DynamicParameters.CachedOutputSetters.cs">
+      <DependentUpon>DynamicParameters.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.DapperRowMetaObject.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.Identity.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlMapper.TypeHandlerCache.cs">
+      <DependentUpon>SqlMapper.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

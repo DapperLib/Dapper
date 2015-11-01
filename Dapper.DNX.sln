@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22823.1
+VisualStudioVersion = 14.0.24606.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{088D8CC4-E71E-44B6-9B87-4060B043983D}"
 EndProject
@@ -16,10 +16,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{03340C6E
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{ECD7C7BC-176D-49E7-8DB2-FCF248702F87}"
-	ProjectSection(SolutionItems) = preProject
-		Dapper NET40\SqlMapper.cs = Dapper NET40\SqlMapper.cs
-		Dapper NET45\SqlMapperAsync.cs = Dapper NET45\SqlMapperAsync.cs
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

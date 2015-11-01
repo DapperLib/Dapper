@@ -295,8 +295,13 @@ namespace SqlMapper
         public void TestListOfAnsiStrings()
         {
             var results = connection.Query<string>("select * from (select 'a' str union select 'b' union select 'c') X where str in @strings",
-                new { strings = new[] { new DbString { IsAnsi = true, Value = "a" }, new DbString { IsAnsi = true, Value = "b" } } }).ToList();
+                new { strings = new[] {
+                    new DbString { IsAnsi = true, Value = "a" },
+                    new DbString { IsAnsi = true, Value = "b" }
+                } }).ToList();
 
+            results.Count.IsEqualTo(2);
+            results.Sort();
             results[0].IsEqualTo("a");
             results[1].IsEqualTo("b");
         }
@@ -4206,6 +4211,7 @@ SELECT value FROM @table WHERE value IN @myIds";
             }
         }
 #if EXTERNALS
+        [SkipTest]
         public void Issue178_Firebird() // we expect this to fail due to a bug in Firebird; a PR to fix it has been submitted
         {
             var cs = @"initial catalog=localhost:database;user id=SYSDBA;password=masterkey";

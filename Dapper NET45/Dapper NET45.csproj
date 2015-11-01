@@ -43,11 +43,128 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Dapper NET40\CommandDefinition.cs">
+      <Link>CommandDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\CommandFlags.cs">
+      <Link>CommandFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\CustomPropertyTypeMap.cs">
+      <Link>CustomPropertyTypeMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\DataTableHandler.cs">
+      <Link>DataTableHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\DbString.cs">
+      <Link>DbString.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\DefaultTypeMap.cs">
+      <Link>DefaultTypeMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\DynamicParameters.CachedOutputSetters.cs">
+      <Link>DynamicParameters.CachedOutputSetters.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\DynamicParameters.cs">
+      <Link>DynamicParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\DynamicParameters.ParamInfo.cs">
+      <Link>DynamicParameters.ParamInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\ExplicitConstructorAttribute.cs">
+      <Link>ExplicitConstructorAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\FeatureSupport.cs">
+      <Link>FeatureSupport.cs</Link>
+    </Compile>
     <Compile Include="..\Dapper NET40\Properties\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\Dapper NET40\SimpleMemberMap.cs">
+      <Link>SimpleMemberMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlDataRecordHandler.cs">
+      <Link>SqlDataRecordHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlDataRecordListTVPParameter.cs">
+      <Link>SqlDataRecordListTVPParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.CacheInfo.cs">
+      <Link>SqlMapper.CacheInfo.cs</Link>
+    </Compile>
     <Compile Include="..\Dapper NET40\SqlMapper.cs">
       <Link>SqlMapper.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.DapperRow.cs">
+      <Link>SqlMapper.DapperRow.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.DapperRowMetaObject.cs">
+      <Link>SqlMapper.DapperRowMetaObject.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.DataTable.cs">
+      <Link>SqlMapper.DataTable.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.DeserializerState.cs">
+      <Link>SqlMapper.DeserializerState.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.DontMap.cs">
+      <Link>SqlMapper.DontMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.GridReader.cs">
+      <Link>SqlMapper.GridReader.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.ICustomQueryParameter.cs">
+      <Link>SqlMapper.ICustomQueryParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.Identity.cs">
+      <Link>SqlMapper.Identity.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.IDynamicParameters.cs">
+      <Link>SqlMapper.IDynamicParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.IMemberMap.cs">
+      <Link>SqlMapper.IMemberMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.IParameterCallbacks.cs">
+      <Link>SqlMapper.IParameterCallbacks.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.IParameterLookup.cs">
+      <Link>SqlMapper.IParameterLookup.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.ITypeHandler.cs">
+      <Link>SqlMapper.ITypeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.ITypeMap.cs">
+      <Link>SqlMapper.ITypeMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.Link.cs">
+      <Link>SqlMapper.Link.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.LiteralToken.cs">
+      <Link>SqlMapper.LiteralToken.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.Settings.cs">
+      <Link>SqlMapper.Settings.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.TypeHandler.cs">
+      <Link>SqlMapper.TypeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\SqlMapper.TypeHandlerCache.cs">
+      <Link>SqlMapper.TypeHandlerCache.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\TableValuedParameter.cs">
+      <Link>TableValuedParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\TypeExtensions.cs">
+      <Link>TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\UdtTypeHandler.cs">
+      <Link>UdtTypeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\WrappedDataReader.cs">
+      <Link>WrappedDataReader.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper NET40\WrappedReader.cs">
+      <Link>WrappedReader.cs</Link>
     </Compile>
     <Compile Include="SqlMapperAsync.cs" />
   </ItemGroup>
