@@ -74,6 +74,7 @@ namespace SqlMapper
 #else
                 Console.WriteLine(".NET: " + Environment.Version);
 #endif
+            Console.WriteLine("Dapper: " + typeof(global::Dapper.SqlMapper).AssemblyQualifiedName);
 
 #if DEBUG
             int fail = 0, skip = 0, pass = 0, frameworkFail = 0;
