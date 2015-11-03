@@ -7,6 +7,11 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xpr
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A34907DF-958A-4E4C-8491-84CF303FD13E}"
+	ProjectSection(SolutionItems) = preProject
+		Dapper.DNX.Tests\global.json = Dapper.DNX.Tests\global.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
