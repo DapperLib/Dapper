@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.24606.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{088D8CC4-E71E-44B6-9B87-4060B043983D}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{03340C6E-4176-4C42-9C76-D5DFC79D1A22}"
 	ProjectSection(SolutionItems) = preProject
 		Tests\Assert.cs = Tests\Assert.cs
@@ -16,6 +14,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{03340C6E
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{ECD7C7BC-176D-49E7-8DB2-FCF248702F87}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{48B0D0A6-D527-457F-AFDB-9D7DBF277E04}"
+	ProjectSection(SolutionItems) = preProject
+		Dapper.DNX.Tests\global.json = Dapper.DNX.Tests\global.json
+		Dapper\global.json = Dapper\global.json
+	EndProjectSection
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +33,10 @@ Global
 		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{088D8CC4-E71E-44B6-9B87-4060B043983D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B6EAE030-3119-49C0-ADB5-39E25BA60C4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

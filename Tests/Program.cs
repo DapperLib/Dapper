@@ -70,9 +70,9 @@ namespace SqlMapper
         static void Main()
         {
 #if DNXCORE50
-            Console.WriteLine("CoreCLR");
+                Console.WriteLine("CoreCLR");
 #else
-            Console.WriteLine(Environment.Version);
+                Console.WriteLine(".NET: " + Environment.Version);
 #endif
 
 #if DEBUG

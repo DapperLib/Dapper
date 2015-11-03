@@ -1,26 +1,33 @@
 ﻿{
   "version": "1.0.0-*",
+  "description": "Dapper.DNX.Tests Console Application",
+  "authors": [ "marc gravell" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+  "compile": [
+    "../Tests/Tests.cs",
+    "../Tests/Program.cs",
+    "../Tests/Assert.cs",
+    "../DapperTests NET45/Tests.cs"
+  ],
   "dependencies": {
     "Dapper": "1.43-*"
   },
+
   "commands": {
     "Dapper.DNX.Tests": "Dapper.DNX.Tests"
   },
-  "compile": [ "../Tests/Tests.cs", "../Tests/Program.cs", "../Tests/Assert.cs", "../DapperTests NET45/Tests.cs" ],
-  "compilationOptions": { "define": [ "NOEXTERNALS" ] },
+
   "frameworks": {
-    "net45": {
+ "net45": {
       "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
-      "dependencies": {
-      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
       }
     },
     "net40": {
-      "dependencies": {
-      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
@@ -32,19 +39,16 @@
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
       }
-
     },
     "dnxcore50": {
-      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+      "compilationOptions": { "define": [ "ASYNC" ] },
       "dependencies": {
-        "System.Console": "4.0.0-beta-*",
-        "System.Reflection": "4.0.10",
-        "System.Linq": "4.0.0",
-        "System.Data.Common": "4.0.0",
-        "System.Data.SqlClient": "4.0.0-beta-*",
-        "System.Threading": "4.0.10",
-        "System.Threading.Thread": "4.0.0-beta-*",
-        "System.Reflection.TypeExtensions": "4.0.0"
+        "Microsoft.CSharp": "4.0.1-beta-23225",
+        "System.Collections": "4.0.11-beta-23225",
+        "System.Console": "4.0.0-beta-23225",
+        "System.Linq": "4.0.1-beta-23225",
+        "System.Threading": "4.0.11-beta-23225",
+        "System.Data.SqlClient": "4.0.0-beta-23225"
       }
     }
   }
