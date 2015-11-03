@@ -5,12 +5,6 @@
   "tags": [ "" ],
   "projectUrl": "",
   "licenseUrl": "",
-  "compile": [
-    "../Tests/Tests.cs",
-    "../Tests/Program.cs",
-    "../Tests/Assert.cs",
-    "../DapperTests NET45/Tests.cs"
-  ],
   "dependencies": {
     "Dapper": "1.43-*"
   },
@@ -20,8 +14,11 @@
   },
 
   "frameworks": {
- "net45": {
-      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+    "net45": {
+      "compilationOptions": {
+        "define": [ ],
+        "warningsAsErrors": true
+      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
@@ -34,14 +31,21 @@
       }
     },
     "dnx451": {
-      "compilationOptions": { "define": [ "ASYNC" ], "warningsAsErrors": true },
+      "compilationOptions": {
+        "define": [ "ASYNC" ],
+        "shouldDefine": [ ],
+        "warningsAsErrors": true
+      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
       }
     },
     "dnxcore50": {
-      "compilationOptions": { "define": [ "ASYNC" ] },
+      "compilationOptions": {
+        "define": [ ],
+        "shouldDefine": [ "ASYNC" ]
+      },
       "dependencies": {
         "Microsoft.CSharp": "4.0.1-beta-23225",
         "System.Collections": "4.0.11-beta-23225",

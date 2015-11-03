@@ -45,90 +45,134 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandDefinition.cs" />
-    <Compile Include="CommandFlags.cs" />
-    <Compile Include="CustomPropertyTypeMap.cs" />
-    <Compile Include="DataTableHandler.cs" />
-    <Compile Include="DbString.cs" />
-    <Compile Include="DefaultTypeMap.cs" />
-    <Compile Include="DynamicParameters.cs" />
-    <Compile Include="ExplicitConstructorAttribute.cs" />
-    <Compile Include="FeatureSupport.cs" />
-    <Compile Include="SimpleMemberMap.cs" />
-    <Compile Include="SqlDataRecordHandler.cs" />
-    <Compile Include="SqlDataRecordListTVPParameter.cs" />
-    <Compile Include="SqlMapper.CacheInfo.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\CommandDefinition.cs">
+      <Link>CommandDefinition.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SqlMapper.DapperRow.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\CommandFlags.cs">
+      <Link>CommandFlags.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.DataTable.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\CustomPropertyTypeMap.cs">
+      <Link>CustomPropertyTypeMap.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.DeserializerState.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\DataTableHandler.cs">
+      <Link>DataTableHandler.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.DontMap.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\DbString.cs">
+      <Link>DbString.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.GridReader.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\DefaultTypeMap.cs">
+      <Link>DefaultTypeMap.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.IDynamicParameters.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\DynamicParameters.CachedOutputSetters.cs">
+      <Link>DynamicParameters.CachedOutputSetters.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.IMemberMap.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\DynamicParameters.cs">
+      <Link>DynamicParameters.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.IParameterLookup.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\DynamicParameters.ParamInfo.cs">
+      <Link>DynamicParameters.ParamInfo.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.ITypeHandler.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\ExplicitConstructorAttribute.cs">
+      <Link>ExplicitConstructorAttribute.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.ITypeMap.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\FeatureSupport.cs">
+      <Link>FeatureSupport.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.Link.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\Properties\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.LiteralToken.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SimpleMemberMap.cs">
+      <Link>SimpleMemberMap.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.Settings.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlDataRecordHandler.cs">
+      <Link>SqlDataRecordHandler.cs</Link>
     </Compile>
-    <Compile Include="TableValuedParameter.cs" />
-    <Compile Include="TypeExtensions.cs" />
-    <Compile Include="SqlMapper.TypeHandler.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlDataRecordListTVPParameter.cs">
+      <Link>SqlDataRecordListTVPParameter.cs</Link>
     </Compile>
-    <Compile Include="UdtTypeHandler.cs" />
-    <Compile Include="WrappedDataReader.cs" />
-    <Compile Include="WrappedReader.cs" />
-    <Compile Include="SqlMapper.ICustomQueryParameter.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.CacheInfo.cs">
+      <Link>SqlMapper.CacheInfo.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.IParameterCallbacks.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.cs">
+      <Link>SqlMapper.cs</Link>
     </Compile>
-    <Compile Include="DynamicParameters.ParamInfo.cs">
-      <DependentUpon>DynamicParameters.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.DapperRow.cs">
+      <Link>SqlMapper.DapperRow.cs</Link>
     </Compile>
-    <Compile Include="DynamicParameters.CachedOutputSetters.cs">
-      <DependentUpon>DynamicParameters.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.DapperRowMetaObject.cs">
+      <Link>SqlMapper.DapperRowMetaObject.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.DapperRowMetaObject.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.DataTable.cs">
+      <Link>SqlMapper.DataTable.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.Identity.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.DeserializerState.cs">
+      <Link>SqlMapper.DeserializerState.cs</Link>
     </Compile>
-    <Compile Include="SqlMapper.TypeHandlerCache.cs">
-      <DependentUpon>SqlMapper.cs</DependentUpon>
+    <Compile Include="..\Dapper\SqlMapper.DontMap.cs">
+      <Link>SqlMapper.DontMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.GridReader.cs">
+      <Link>SqlMapper.GridReader.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.ICustomQueryParameter.cs">
+      <Link>SqlMapper.ICustomQueryParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.Identity.cs">
+      <Link>SqlMapper.Identity.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.IDynamicParameters.cs">
+      <Link>SqlMapper.IDynamicParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.IMemberMap.cs">
+      <Link>SqlMapper.IMemberMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.IParameterCallbacks.cs">
+      <Link>SqlMapper.IParameterCallbacks.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.IParameterLookup.cs">
+      <Link>SqlMapper.IParameterLookup.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.ITypeHandler.cs">
+      <Link>SqlMapper.ITypeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.ITypeMap.cs">
+      <Link>SqlMapper.ITypeMap.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.Link.cs">
+      <Link>SqlMapper.Link.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.LiteralToken.cs">
+      <Link>SqlMapper.LiteralToken.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.Settings.cs">
+      <Link>SqlMapper.Settings.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.TypeHandler.cs">
+      <Link>SqlMapper.TypeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.TypeHandlerCache.cs">
+      <Link>SqlMapper.TypeHandlerCache.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\TableValuedParameter.cs">
+      <Link>TableValuedParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\TypeExtensions.cs">
+      <Link>TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\UdtTypeHandler.cs">
+      <Link>UdtTypeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\WrappedDataReader.cs">
+      <Link>WrappedDataReader.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\WrappedReader.cs">
+      <Link>WrappedReader.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.Async.cs">
+      <Link>SqlMapper.Async.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper\SqlMapper.GridReader.Async.cs">
+      <Link>SqlMapper.GridReader.Async.cs</Link>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

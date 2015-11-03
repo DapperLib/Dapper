@@ -43,12 +43,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Tests\Assert.cs">
+    <Compile Include="..\Dapper.DNX.Tests\Assert.cs">
       <Link>Assert.cs</Link>
     </Compile>
-    <Compile Include="Program.cs" />
+    <Compile Include="..\Dapper.DNX.Tests\Program.Async.cs">
+      <Link>Program.Async.cs</Link>
+    </Compile>
+    <Compile Include="..\Dapper.DNX.Tests\Tests.Async.cs">
+      <Link>Tests.Async.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

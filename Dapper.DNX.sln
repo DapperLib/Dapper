@@ -5,16 +5,6 @@ VisualStudioVersion = 14.0.24606.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{088D8CC4-E71E-44B6-9B87-4060B043983D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{03340C6E-4176-4C42-9C76-D5DFC79D1A22}"
-	ProjectSection(SolutionItems) = preProject
-		Tests\Assert.cs = Tests\Assert.cs
-		Tests\Program.cs = Tests\Program.cs
-		Tests\Tests.cs = Tests\Tests.cs
-		DapperTests NET45\Tests.cs = DapperTests NET45\Tests.cs
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{48B0D0A6-D527-457F-AFDB-9D7DBF277E04}"
-EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}"
 EndProject
 Global
