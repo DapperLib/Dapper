@@ -32,17 +32,35 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
             {
                 var keys = KeyPropertiesCache(type);
+                var explicitKeys = ExplicitKeyPropertiesCache(type);
                 if (keys.Count() > 1)
                     throw new DataException("Get<T> only supports an entity with a single [Key] property");
                 if (!keys.Any())
                     throw new DataException("Get<T> only supports en entity with a [Key] property");
 
-                var onlyKey = keys.First();
-
+                var key = keys.Any() ? keys.First() : explicitKeys.First();
                 var name = GetTableName(type);
 
+                ISqlAdapter adapter = GetFormatter(connection);
+
+                var allProperties = TypePropertiesCache(type);
+                var computedProperties = ComputedPropertiesCache(type);
+                var allPropertiesExceptComputed = allProperties.Except(computedProperties).ToList();
+
+                var colsList = new StringBuilder();
+                foreach (var prop in allPropertiesExceptComputed)
+                {
+                    if (colsList.Length > 0) colsList.Append(", ");
+                    adapter.AppendColumnName(colsList, ColumnNamesCache(type, prop.Name));
+                    colsList.Append(" as ");
+                    adapter.AppendColumnName(colsList, prop.Name);
+                }
+
+                var keyColumn = ColumnNamesCache(type, key.Name);
+
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
+                sql = "select " + colsList.ToString() + " from " + name + " where " + keyColumn + " = @id";
+                
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -96,8 +114,19 @@ namespace Dapper.Contrib.Extensions
 
                 var name = GetTableName(type);
 
+                ISqlAdapter adapter = GetFormatter(connection);
+                var props = TypePropertiesCache(type);
+                var colsList = new StringBuilder();
+                foreach (var prop in props)
+                {
+                    if (colsList.Length > 0) colsList.Append(", ");
+                    adapter.AppendColumnName(colsList, ColumnNamesCache(type, prop.Name));
+                    colsList.Append(" as ");
+                    adapter.AppendColumnName(colsList, prop.Name);
+                }
+
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name;
+                sql = "select " + colsList.ToString() + " from " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
@@ -149,10 +178,13 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                sbColumnList.AppendFormat("[{0}]", property.Name);
+                var column = ColumnNamesCache(type, property.Name);
+                adapter.AppendColumnName(sbColumnList, column);
                 if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
                     sbColumnList.Append(", ");
             }
@@ -214,10 +246,13 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
+            var adapter = GetFormatter(connection); 
+
             for (var i = 0; i < nonIdProps.Count(); i++)
             {
                 var property = nonIdProps.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                var column = ColumnNamesCache(type, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, column, property.Name);
                 if (i < nonIdProps.Count() - 1)
                     sb.AppendFormat(", ");
             }
@@ -225,7 +260,8 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count(); i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                var column = ColumnNamesCache(type, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, column, property.Name);
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
@@ -261,10 +297,13 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < keyProperties.Count(); i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                var column = ColumnNamesCache(type, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, column, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count() - 1)
                     sb.AppendFormat(" and ");
             }
