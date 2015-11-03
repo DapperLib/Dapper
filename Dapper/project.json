@@ -41,34 +41,16 @@
         "warningsAsErrors": true
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-*",
-        "System.Collections": "4.0.11-beta-*",
-        "System.Collections.Concurrent": "4.0.11-beta-*",
-        "System.Console": "4.0.0-beta-*",
-        "System.Linq": "4.0.1-beta-*",
-        "System.Threading": "4.0.11-beta-*",
-        "System.Data.SqlClient": "4.0.0-*",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-beta-*",
-        "System.Reflection.Emit.Lightweight": "4.0.1-beta-*",
-        "System.Reflection.TypeExtensions": "4.0.1-beta-*",
-        "System.Text.RegularExpressions": "4.0.11-beta-*"
-      },
-      "dependencies2": {
-        "System.Text.RegularExpressions": "4.0.10",
-        "System.Collections": "4.0.10",
-        "System.Collections.Concurrent": "4.0.10",
-        "System.Linq": "4.0.0",
-        "System.Threading": "4.0.10",
-        "Microsoft.CSharp": "4.0.0",
-        "System.Reflection": "4.0.10",
-        "System.Reflection.Emit": "4.0.0",
-        "System.Reflection.Emit.ILGeneration": "4.0.0",
-        "System.Reflection.Emit.Lightweight": "4.0.0",
-        "System.Reflection.TypeExtensions": "4.0.0",
-        "System.Data.Common": "4.0.0",
-        "System.Runtime.Extensions": "4.0.10",
-        "System.Text.Encoding.CodePages": "4.0.0",
-        "System.Globalization": "4.0.10"
+        "Microsoft.CSharp": "4.0.1-beta-23225",
+        "System.Collections": "4.0.11-beta-23225",
+        "System.Console": "4.0.0-beta-23225",
+        "System.Linq": "4.0.1-beta-23225",
+        "System.Threading": "4.0.11-beta-23225",
+        "System.Data.SqlClient": "4.0.0-beta-23225",
+        "System.Reflection.Emit.ILGeneration": "4.0.1-beta-23225",
+        "System.Reflection.Emit.Lightweight": "4.0.1-beta-23225",
+        "System.Reflection.TypeExtensions": "4.0.1-beta-23225",
+        "System.Text.RegularExpressions": "4.0.11-beta-23225"
       }
     }
   }
