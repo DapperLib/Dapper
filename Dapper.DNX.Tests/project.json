@@ -6,7 +6,7 @@
   "projectUrl": "",
   "licenseUrl": "",
   "dependencies": {
-    "Dapper": "1.43-*"
+    "Dapper": { "version": "1.43-*", "target": "project" }
   },
 
   "commands": {
