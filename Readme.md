@@ -3,7 +3,7 @@ Dapper - a simple object mapper for .Net
 
 Features
 --------
-Dapper is a [single file](https://github.com/SamSaffron/dapper-dot-net/blob/master/Dapper%20NET40/SqlMapper.cs) you can drop in to your project that will extend your IDbConnection interface.
+Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will extend your `IDbConnection` interface.
 
 It provides 3 helpers:
 
@@ -219,9 +219,11 @@ The performance tests are broken in to 3 lists:
 	</tr>
 </table>
 
-Performance benchmarks are available [here](https://github.com/SamSaffron/dapper-dot-net/blob/master/Tests/PerformanceTests.cs)
+Performance benchmarks are available [here](https://github.com/StackExchange/dapper-dot-net/blob/master/Tests/PerformanceTests.cs).
 
-Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (ctrl F5)
+Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (ctrl F5).
+
+Alternatively, you might prefer Frans Bouma's [RawDataAccessBencher](https://github.com/FransBouma/RawDataAccessBencher) test suite.
 
 Parameterized queries
 ---------------------
