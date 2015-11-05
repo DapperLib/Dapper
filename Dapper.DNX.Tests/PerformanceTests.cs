@@ -1,3 +1,4 @@
+#if EXTERNALS
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -325,3 +326,4 @@ namespace SqlMapper
         }
     }
 }
+#endif

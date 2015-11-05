@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if ASYNC
+using System;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
@@ -56,3 +57,4 @@ namespace DapperTests_NET45
         }
     }
 }
+#endif

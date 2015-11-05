@@ -10,6 +10,12 @@
   "tags": [ "orm", "sql", "micro-orm" ],
   "dependencies": {
   },
+  "compile": [
+    "../Dapper/**/*.cs"
+  ],
+  "compilationOptions": {
+    "keyFile": "../Dapper.snk"
+  },
   "frameworks": {
     "net45": {
       "compilationOptions": {
