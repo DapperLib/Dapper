@@ -124,10 +124,10 @@ namespace Dapper.Contrib.Extensions
                 return propertyname;
             }
 
-            var columnNames = type.GetProperties()
-                                  .Where(p => p.GetCustomAttributes(typeof(ColumnAttribute), false).Any())
+            var columnNames = TypePropertiesCache(type)
+                                  .Where(p => p.GetCustomAttributes(false).Any(attr => attr.GetType().Name == "ColumnAttribute"))
                                   .ToDictionary(p => p.Name,
-                                                p =>((ColumnAttribute) p.GetCustomAttributes(typeof(ColumnAttribute), false).First()).Name);
+                                                p =>(p.GetCustomAttributes(typeof(ColumnAttribute), false).First() as dynamic).Name as string);
 
             var columnNamesConc = new ConcurrentDictionary<string, string>(columnNames);
             ColumnNames[type.TypeHandle] = columnNamesConc;
@@ -145,6 +145,26 @@ namespace Dapper.Contrib.Extensions
 
             var writeAttribute = (WriteAttribute)attributes[0];
             return writeAttribute.Write;
+        }
+
+        private static string ColumnListForSelect(IDbConnection connection, Type type)
+        {
+            ISqlAdapter adapter = GetFormatter(connection);
+
+            var allProperties = TypePropertiesCache(type);
+            var computedProperties = ComputedPropertiesCache(type);
+            var allPropertiesExceptComputed = allProperties.Except(computedProperties).ToList();
+
+            var colsList = new StringBuilder();
+            foreach (var prop in allPropertiesExceptComputed)
+            {
+                if (colsList.Length > 0) colsList.Append(", ");
+                adapter.AppendColumnName(colsList, ColumnNamesCache(type, prop.Name));
+                colsList.Append(" as ");
+                adapter.AppendColumnName(colsList, prop.Name);
+            }
+
+            return colsList.ToString();
         }
 
         /// <summary>
@@ -174,26 +194,11 @@ namespace Dapper.Contrib.Extensions
                 var key = keys.Any() ? keys.First() : explicitKeys.First();
 
                 var name = GetTableName(type);
-
-                ISqlAdapter adapter = GetFormatter(connection);
-
-                var allProperties = TypePropertiesCache(type);
-                var computedProperties = ComputedPropertiesCache(type);
-                var allPropertiesExceptComputed = allProperties.Except(computedProperties).ToList();
-                
-                var colsList = new StringBuilder();
-                foreach (var prop in allPropertiesExceptComputed)
-                {
-                    if (colsList.Length > 0) colsList.Append(", ");
-                    adapter.AppendColumnName(colsList, ColumnNamesCache(type, prop.Name));
-                    colsList.Append(" as ");
-                    adapter.AppendColumnName(colsList, prop.Name);
-                }
-
+                var colsList = ColumnListForSelect(connection, type);
                 var keyColumn = ColumnNamesCache(type, key.Name);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select " + colsList.ToString() + " from " + name + " where " + keyColumn + " = @id";
+                sql = "select " + colsList + " from " + name + " where " + keyColumn + " = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 

@@ -40,26 +40,12 @@ namespace Dapper.Contrib.Extensions
 
                 var key = keys.Any() ? keys.First() : explicitKeys.First();
                 var name = GetTableName(type);
-
-                ISqlAdapter adapter = GetFormatter(connection);
-
-                var allProperties = TypePropertiesCache(type);
-                var computedProperties = ComputedPropertiesCache(type);
-                var allPropertiesExceptComputed = allProperties.Except(computedProperties).ToList();
-
-                var colsList = new StringBuilder();
-                foreach (var prop in allPropertiesExceptComputed)
-                {
-                    if (colsList.Length > 0) colsList.Append(", ");
-                    adapter.AppendColumnName(colsList, ColumnNamesCache(type, prop.Name));
-                    colsList.Append(" as ");
-                    adapter.AppendColumnName(colsList, prop.Name);
-                }
+                var colsList = ColumnListForSelect(connection, type);
 
                 var keyColumn = ColumnNamesCache(type, key.Name);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select " + colsList.ToString() + " from " + name + " where " + keyColumn + " = @id";
+                sql = "select " + colsList + " from " + name + " where " + keyColumn + " = @id";
                 
                 GetQueries[type.TypeHandle] = sql;
             }
