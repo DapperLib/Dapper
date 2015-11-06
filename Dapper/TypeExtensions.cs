@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections.Generic;
+
 #if DNXCORE50
 using IDbDataParameter = global::System.Data.Common.DbParameter;
 using IDataParameter = global::System.Data.Common.DbParameter;
@@ -13,6 +14,7 @@ using IDataParameterCollection = global::System.Data.Common.DbParameterCollectio
 using DataException = global::System.InvalidOperationException;
 using ApplicationException = global::System.InvalidOperationException;
 #endif
+
 namespace Dapper
 {
     internal static class TypeExtensions
@@ -25,6 +27,7 @@ namespace Dapper
             return type.IsValueType;
 #endif
         }
+
         public static bool IsEnum(this Type type)
         {
 #if DNXCORE50
@@ -33,6 +36,7 @@ namespace Dapper
             return type.IsEnum;
 #endif
         }
+
 #if DNXCORE50
         public static TypeCode GetTypeCode(Type type)
         {
@@ -72,6 +76,7 @@ namespace Dapper
             return Type.GetTypeCode(type);
         }
 #endif
+
         public static MethodInfo GetPublicInstanceMethod(this Type type, string name, Type[] types)
         {
 #if DNXCORE50
@@ -81,7 +86,5 @@ namespace Dapper
             return type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public, null, types, null);
 #endif
         }
-
-
     }
 }

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using Microsoft.SqlServer.Server;
 
 #if !DNXCORE50
 namespace Dapper
 {
-    sealed class SqlDataRecordHandler : Dapper.SqlMapper.ITypeHandler
+    internal sealed class SqlDataRecordHandler : SqlMapper.ITypeHandler
     {
         public object Parse(Type destinationType, object value)
         {
@@ -14,7 +15,7 @@ namespace Dapper
 
         public void SetValue(IDbDataParameter parameter, object value)
         {
-            SqlDataRecordListTVPParameter.Set(parameter, value as IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>, null);
+            SqlDataRecordListTVPParameter.Set(parameter, value as IEnumerable<SqlDataRecord>, null);
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 #if DNXCORE50
 using IDbDataParameter = global::System.Data.Common.DbParameter;
 using IDataParameter = global::System.Data.Common.DbParameter;
@@ -18,13 +19,15 @@ using IDataParameterCollection = global::System.Data.Common.DbParameterCollectio
 using DataException = global::System.InvalidOperationException;
 using ApplicationException = global::System.InvalidOperationException;
 #endif
+
 namespace Dapper
 {
     partial class SqlMapper
     {
         partial class GridReader
         {
-            CancellationToken cancel;
+            private readonly CancellationToken cancel;
+
             internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
                 : this(command, reader, identity, dynamicParams, addToCache)
             {
@@ -45,9 +48,13 @@ namespace Dapper
             /// </summary>
             public Task<IEnumerable<object>> ReadAsync(Type type, bool buffered = true)
             {
-                if (type == null) throw new ArgumentNullException("type");
+                if (type == null)
+                {
+                    throw new ArgumentNullException(nameof(type));
+                }
                 return ReadAsyncImpl<object>(type, buffered);
             }
+
             /// <summary>
             /// Read the next grid of results
             /// </summary>
@@ -62,7 +69,7 @@ namespace Dapper
                 {
                     readCount++;
                     gridIndex++;
-                    consumed = false;
+                    IsConsumed = false;
                 }
                 else
                 {
@@ -70,36 +77,42 @@ namespace Dapper
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-                    if (callbacks != null) callbacks.OnCompleted();
+                    callbacks?.OnCompleted();
                     Dispose();
                 }
             }
 
             private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                if (reader == null)
+                {
+                    throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                }
+                if (IsConsumed)
+                {
+                    throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                }
                 var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                var cache = GetCacheInfo(typedIdentity, null, addToCache);
                 var deserializer = cache.Deserializer;
 
-                int hash = GetColumnHash(reader);
+                var hash = GetColumnHash(reader);
                 if (deserializer.Func == null || deserializer.Hash != hash)
                 {
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
                 }
-                consumed = true;
-                if (buffered && this.reader is DbDataReader)
+                IsConsumed = true;
+                if (buffered && reader is DbDataReader)
                 {
                     return ReadBufferedAsync<T>(gridIndex, deserializer.Func, typedIdentity);
                 }
-                else
+                var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
+                if (buffered)
                 {
-                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
-                    if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
-                    return Task.FromResult(result);
+                    result = result.ToList(); // for the "not a DbDataReader" scenario
                 }
+                return Task.FromResult(result);
             }
 
             private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)
@@ -107,7 +120,7 @@ namespace Dapper
                 //try
                 //{
                 var reader = (DbDataReader)this.reader;
-                List<T> buffer = new List<T>();
+                var buffer = new List<T>();
                 while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                 {
                     buffer.Add((T)deserializer(reader));
@@ -127,7 +140,6 @@ namespace Dapper
                 //}
             }
         }
-
     }
 }
 #endif

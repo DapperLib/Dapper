@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Data;
+
 #if DNXCORE50
 using IDbDataParameter = global::System.Data.Common.DbParameter;
 using IDataParameter = global::System.Data.Common.DbParameter;
@@ -13,6 +14,7 @@ using IDataParameterCollection = global::System.Data.Common.DbParameterCollectio
 using DataException = global::System.InvalidOperationException;
 using ApplicationException = global::System.InvalidOperationException;
 #endif
+
 namespace Dapper
 {
     partial class SqlMapper
@@ -34,7 +36,6 @@ namespace Dapper
             public static T Parse(object value)
             {
                 return (T)handler.Parse(typeof(T), value);
-
             }
 
             /// <summary>

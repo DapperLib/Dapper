@@ -19,7 +19,7 @@ namespace Dapper
     /// <summary>
     /// This class represents a SQL string, it can be used if you need to denote your parameter is a Char vs VarChar vs nVarChar vs nChar
     /// </summary>
-    public sealed class DbString : Dapper.SqlMapper.ICustomQueryParameter
+    public sealed class DbString : SqlMapper.ICustomQueryParameter
     {
         /// <summary>
         /// Default value for IsAnsi.
@@ -41,22 +41,27 @@ namespace Dapper
             Length = -1;
             IsAnsi = IsAnsiDefault;
         }
+
         /// <summary>
-        /// Ansi vs Unicode 
+        /// Ansi vs Unicode
         /// </summary>
         public bool IsAnsi { get; set; }
+
         /// <summary>
-        /// Fixed length 
+        /// Fixed length
         /// </summary>
         public bool IsFixedLength { get; set; }
+
         /// <summary>
         /// Length of the string -1 for max
         /// </summary>
         public int Length { get; set; }
+
         /// <summary>
         /// The value of the string
         /// </summary>
         public string Value { get; set; }
+
         /// <summary>
         /// Add the parameter to the command... internal use only
         /// </summary>
@@ -83,5 +88,4 @@ namespace Dapper
             command.Parameters.Add(param);
         }
     }
-
 }

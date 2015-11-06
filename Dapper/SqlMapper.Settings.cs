@@ -25,6 +25,5 @@
             /// </summary>
             public static int? CommandTimeout { get; set; }
         }
-
     }
 }
