@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24606.1
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{088D8CC4-E71E-44B6-9B87-4060B043983D}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.DNX.Tests", "Dapper.DNX.Tests\Dapper.DNX.Tests.xproj", "{2AD7E470-9AC1-4F0A-A8C6-F19EEA00593F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A34907DF-958A-4E4C-8491-84CF303FD13E}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+		NuGet.Config = NuGet.Config
+	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.StrongName", "Dapper.StrongName\Dapper.StrongName.xproj", "{6EF701B6-1611-47F1-8325-E9AE1489BD2B}"
 EndProject
