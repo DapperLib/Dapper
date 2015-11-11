@@ -45,16 +45,17 @@
         "warningsAsErrors": true
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-*",
-        "System.Collections": "4.0.11-beta-*",
+        "Microsoft.CSharp": "4.0.1-beta-23409",
+        "System.Collections": "4.0.11-beta-23409",
         "System.Collections.Concurrent": "4.0.11-beta-*",
-        "System.Data.SqlClient": "4.0.0-beta-*",
+        "System.Data.SqlClient": "4.0.0-beta-23225",
         "System.Linq": "4.0.1-beta-*",
         "System.Reflection.Emit.ILGeneration": "4.0.1-beta-*",
         "System.Reflection.Emit.Lightweight": "4.0.1-beta-*",
-        "System.Reflection.TypeExtensions": "4.0.1-beta-*",
-        "System.Text.RegularExpressions": "4.0.11-beta-*",
-        "System.Threading": "4.0.11-beta-*"
+        "System.Reflection.TypeExtensions": "4.0.1-beta-23225",
+        "System.Text.RegularExpressions": "4.0.11-beta-23409",
+        "System.Threading": "4.0.11-beta-*",
+        "System.Threading.ThreadPool": "4.0.10-beta-*"
       }
     }
   }
