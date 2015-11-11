@@ -1,6 +1,12 @@
 Dapper - a simple object mapper for .Net
 ========================================
 
+Release Notes
+-------------
+
+[link](http://stackexchange.github.io/dapper-dot-net/)
+
+
 Features
 --------
 Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will extend your `IDbConnection` interface.
