@@ -119,9 +119,9 @@ namespace Dapper
         }
 
 #if CSHARP30
-        void AddClause(string name, string sql, object parameters, string joiner, string prefix, string postfix, bool isInclusive)
+        protected void AddClause(string name, string sql, object parameters, string joiner, string prefix, string postfix, bool isInclusive)
 #else
-        void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool isInclusive = false)
+        protected void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool isInclusive = false)
 #endif
         {
             Clauses clauses;
