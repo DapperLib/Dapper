@@ -201,10 +201,11 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
             {
                 var keys = KeyPropertiesCache(type);
-                if (keys.Count() > 1)
-                    throw new DataException("Get<T> only supports an entity with a single [Key] property");
-                if (!keys.Any())
-                    throw new DataException("Get<T> only supports en entity with a [Key] property");
+                var explicitKeys = ExplicitKeyPropertiesCache(type);
+                if (keys.Count() > 1 || explicitKeys.Count() > 1)
+                    throw new DataException("Get<T> only supports an entity with a single [Key] or [ExplicitKey] property");
+                if (!keys.Any() && !explicitKeys.Any())
+                    throw new DataException("Get<T> only supports an entity with a [Key] or an [ExplicitKey] property");
 
                 var name = GetTableName(type);
 
