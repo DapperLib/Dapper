@@ -6,7 +6,7 @@
   "summary": "A high performance Micro-ORM",
   "description": "A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..",
   "version": "1.50-beta1",
-  "title": "Dapper dot net",
+  "title": "Dapper dot net (strong named)",
   "tags": [ "orm", "sql", "micro-orm" ],
   "dependencies": {
   },
