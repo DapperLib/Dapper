@@ -49,9 +49,9 @@ namespace Dapper
                 Value = value;
                 Tail = tail;
             }
-            public TKey Key { get; private set; }
-            public TValue Value { get; private set; }
-            public Link<TKey, TValue> Tail { get; private set; }
+            public TKey Key { get; }
+            public TValue Value { get; }
+            public Link<TKey, TValue> Tail { get; }
         }
     }
 }

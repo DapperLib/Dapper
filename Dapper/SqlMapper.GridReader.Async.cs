@@ -45,7 +45,7 @@ namespace Dapper
             /// </summary>
             public Task<IEnumerable<object>> ReadAsync(Type type, bool buffered = true)
             {
-                if (type == null) throw new ArgumentNullException("type");
+                if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadAsyncImpl<object>(type, buffered);
             }
             /// <summary>
@@ -62,7 +62,7 @@ namespace Dapper
                 {
                     readCount++;
                     gridIndex++;
-                    consumed = false;
+                    IsConsumed = false;
                 }
                 else
                 {
@@ -70,7 +70,7 @@ namespace Dapper
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-                    if (callbacks != null) callbacks.OnCompleted();
+                    callbacks?.OnCompleted();
                     Dispose();
                 }
             }
@@ -78,7 +78,7 @@ namespace Dapper
             private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
                 CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
                 var deserializer = cache.Deserializer;
@@ -89,8 +89,8 @@ namespace Dapper
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
                 }
-                consumed = true;
-                if (buffered && this.reader is DbDataReader)
+                IsConsumed = true;
+                if (buffered && reader is DbDataReader)
                 {
                     return ReadBufferedAsync<T>(gridIndex, deserializer.Func, typedIdentity);
                 }
@@ -104,27 +104,23 @@ namespace Dapper
 
             private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)
             {
-                //try
-                //{
-                var reader = (DbDataReader)this.reader;
-                List<T> buffer = new List<T>();
-                while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
+                try
                 {
-                    buffer.Add((T)deserializer(reader));
+                    var reader = (DbDataReader)this.reader;
+                    List<T> buffer = new List<T>();
+                    while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    {
+                        buffer.Add((T)deserializer(reader));
+                    }
+                    return buffer;
                 }
-                if (index == gridIndex) // need to do this outside of the finally pre-C#6
+                finally // finally so that First etc progresses things even when multiple rows
                 {
-                    await NextResultAsync().ConfigureAwait(false);
+                    if (index == gridIndex)
+                    {
+                        await NextResultAsync().ConfigureAwait(false);
+                    }
                 }
-                return buffer;
-                //}
-                //finally // finally so that First etc progresses things even when multiple rows
-                //{
-                //    if (index == gridIndex)
-                //    {
-                //        await NextResultAsync().ConfigureAwait(false);
-                //    }
-                //}
             }
         }
 

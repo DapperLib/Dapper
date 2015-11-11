@@ -58,22 +58,22 @@ namespace Dapper
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
                     hashCode = hashCode * 23 + commandType.GetHashCode();
                     hashCode = hashCode * 23 + gridIndex.GetHashCode();
-                    hashCode = hashCode * 23 + (sql == null ? 0 : sql.GetHashCode());
-                    hashCode = hashCode * 23 + (type == null ? 0 : type.GetHashCode());
+                    hashCode = hashCode * 23 + (sql?.GetHashCode() ?? 0);
+                    hashCode = hashCode * 23 + (type?.GetHashCode() ?? 0);
                     if (otherTypes != null)
                     {
                         foreach (var t in otherTypes)
                         {
-                            hashCode = hashCode * 23 + (t == null ? 0 : t.GetHashCode());
+                            hashCode = hashCode * 23 + (t?.GetHashCode() ?? 0);
                         }
                     }
-                    hashCode = hashCode * 23 + (connectionString == null ? 0 : SqlMapper.connectionStringComparer.GetHashCode(connectionString));
-                    hashCode = hashCode * 23 + (parametersType == null ? 0 : parametersType.GetHashCode());
+                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
+                    hashCode = hashCode * 23 + (parametersType?.GetHashCode() ?? 0);
                 }
             }
 
             /// <summary>
-            /// 
+            ///
             /// </summary>
             /// <param name="obj"></param>
             /// <returns></returns>
@@ -86,28 +86,28 @@ namespace Dapper
             /// </summary>
             public readonly string sql;
             /// <summary>
-            /// The command type 
+            /// The command type
             /// </summary>
             public readonly CommandType? commandType;
 
             /// <summary>
-            /// 
+            ///
             /// </summary>
             public readonly int hashCode, gridIndex;
             /// <summary>
-            /// 
+            ///
             /// </summary>
             public readonly Type type;
             /// <summary>
-            /// 
+            ///
             /// </summary>
             public readonly string connectionString;
             /// <summary>
-            /// 
+            ///
             /// </summary>
             public readonly Type parametersType;
             /// <summary>
-            /// 
+            ///
             /// </summary>
             /// <returns></returns>
             public override int GetHashCode()
@@ -127,7 +127,7 @@ namespace Dapper
                     type == other.type &&
                     sql == other.sql &&
                     commandType == other.commandType &&
-                    SqlMapper.connectionStringComparer.Equals(connectionString, other.connectionString) &&
+                    connectionStringComparer.Equals(connectionString, other.connectionString) &&
                     parametersType == other.parametersType;
             }
         }

@@ -252,23 +252,17 @@ namespace Dapper
 
         void IDataReader.Close()
         {
-            if (reader != null) reader.Close();
+            reader?.Close();
         }
 
-        int IDataReader.Depth
-        {
-            get { return Reader.Depth; }
-        }
+        int IDataReader.Depth => Reader.Depth;
 
         DataTable IDataReader.GetSchemaTable()
         {
             return Reader.GetSchemaTable();
         }
 
-        bool IDataReader.IsClosed
-        {
-            get { return reader == null ? true : reader.IsClosed; }
-        }
+        bool IDataReader.IsClosed => reader?.IsClosed ?? true;
 
         bool IDataReader.NextResult()
         {
@@ -280,24 +274,18 @@ namespace Dapper
             return Reader.Read();
         }
 
-        int IDataReader.RecordsAffected
-        {
-            get { return Reader.RecordsAffected; }
-        }
+        int IDataReader.RecordsAffected => Reader.RecordsAffected;
 
         void IDisposable.Dispose()
         {
-            if (reader != null) reader.Close();
-            if (reader != null) reader.Dispose();
+            reader?.Close();
+            reader?.Dispose();
             reader = null;
-            if (cmd != null) cmd.Dispose();
+            cmd?.Dispose();
             cmd = null;
         }
 
-        int IDataRecord.FieldCount
-        {
-            get { return Reader.FieldCount; }
-        }
+        int IDataRecord.FieldCount => Reader.FieldCount;
 
         bool IDataRecord.GetBoolean(int i)
         {
@@ -409,15 +397,9 @@ namespace Dapper
             return Reader.IsDBNull(i);
         }
 
-        object IDataRecord.this[string name]
-        {
-            get { return Reader[name]; }
-        }
+        object IDataRecord.this[string name] => Reader[name];
 
-        object IDataRecord.this[int i]
-        {
-            get { return Reader[i]; }
-        }
+        object IDataRecord.this[int i] => Reader[i];
     }
 #endif
 }

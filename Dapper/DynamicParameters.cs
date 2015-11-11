@@ -198,7 +198,7 @@ namespace Dapper
                     appender(command, template);
                 }
 
-                // The parameters were added to the command, but not the 
+                // The parameters were added to the command, but not the
                 // DynamicParameters until now.
                 foreach (IDbDataParameter param in command.Parameters)
                 {
@@ -246,7 +246,7 @@ namespace Dapper
                 {
                     ((SqlMapper.ICustomQueryParameter)val).AddParameter(command, name);
                 }
-                else if (dbType == DynamicParameters.EnumerableMultiParameter)
+                else if (dbType == EnumerableMultiParameter)
                 {
 #pragma warning disable 612, 618
                     SqlMapper.PackListParameters(command, name, val);
@@ -276,12 +276,9 @@ namespace Dapper
                             p.DbType = dbType.Value;
                         }
                         var s = val as string;
-                        if (s != null)
+                        if (s?.Length <= DbString.DefaultLength)
                         {
-                            if (s.Length <= DbString.DefaultLength)
-                            {
-                                p.Size = DbString.DefaultLength;
-                            }
+                            p.Size = DbString.DefaultLength;
                         }
                         if (param.Size != null) p.Size = param.Size.Value;
                         if (param.Precision != null) p.Precision = param.Precision.Value;
@@ -344,7 +341,7 @@ namespace Dapper
 
         /// <summary>
         /// Allows you to automatically populate a target property/field from output parameters. It actually
-        /// creates an InputOutput parameter, so you can still pass data in. 
+        /// creates an InputOutput parameter, so you can still pass data in.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="target">The object whose property/field you wish to populate.</param>
@@ -383,13 +380,13 @@ namespace Dapper
 
             do
             {
-                // Insert the names in the right order so expression 
+                // Insert the names in the right order so expression
                 // "Post.Author.Name" becomes parameter "PostAuthorName"
-                names.Insert(0, diving.Member.Name);
+                names.Insert(0, diving?.Member.Name);
                 chain.Insert(0, diving);
 
-                var constant = diving.Expression as ParameterExpression;
-                diving = diving.Expression as MemberExpression;
+                var constant = diving?.Expression as ParameterExpression;
+                diving = diving?.Expression as MemberExpression;
 
                 if (constant != null &&
                     constant.Type == typeof(T))
@@ -423,7 +420,7 @@ namespace Dapper
             if (setter != null) goto MAKECALLBACK;
 
             // Come on let's build a method, let's build it, let's build it now!
-            var dm = new DynamicMethod(string.Format("ExpressionParam{0}", Guid.NewGuid()), null, new[] { typeof(object), this.GetType() }, true);
+            var dm = new DynamicMethod($"ExpressionParam{Guid.NewGuid()}", null, new[] { typeof(object), GetType() }, true);
             var il = dm.GetILGenerator();
 
             il.Emit(OpCodes.Ldarg_0); // [object]
@@ -446,7 +443,7 @@ namespace Dapper
                 }
             }
 
-            var paramGetter = this.GetType().GetMethod("Get", new Type[] { typeof(string) }).MakeGenericMethod(lastMemberAccess.Type);
+            var paramGetter = GetType().GetMethod("Get", new Type[] { typeof(string) }).MakeGenericMethod(lastMemberAccess.Type);
 
             il.Emit(OpCodes.Ldarg_1); // [target] [DynamicParameters]
             il.Emit(OpCodes.Ldstr, dynamicParamName); // [target] [DynamicParameters] [ParamName]
@@ -478,10 +475,10 @@ namespace Dapper
             {
                 // Finally, prep the parameter and attach the callback to it
                 ParamInfo parameter;
-                var targetMemberType = lastMemberAccess.Type;
+                var targetMemberType = lastMemberAccess?.Type;
                 int sizeToSet = (!size.HasValue && targetMemberType == typeof(string)) ? DbString.DefaultLength : size ?? 0;
 
-                if (this.parameters.TryGetValue(dynamicParamName, out parameter))
+                if (parameters.TryGetValue(dynamicParamName, out parameter))
                 {
                     parameter.ParameterDirection = parameter.AttachedParam.Direction = ParameterDirection.InputOutput;
 
@@ -493,14 +490,14 @@ namespace Dapper
                 else
                 {
                     SqlMapper.ITypeHandler handler;
-                    dbType = (!dbType.HasValue) ? SqlMapper.LookupDbType(targetMemberType, targetMemberType.Name, true, out handler) : dbType;
+                    dbType = (!dbType.HasValue) ? SqlMapper.LookupDbType(targetMemberType, targetMemberType?.Name, true, out handler) : dbType;
 
                     // CameFromTemplate property would not apply here because this new param
                     // Still needs to be added to the command
-                    this.Add(dynamicParamName, expression.Compile().Invoke(target), null, ParameterDirection.InputOutput, sizeToSet);
+                    Add(dynamicParamName, expression.Compile().Invoke(target), null, ParameterDirection.InputOutput, sizeToSet);
                 }
 
-                parameter = this.parameters[dynamicParamName];
+                parameter = parameters[dynamicParamName];
                 parameter.OutputCallback = setter;
                 parameter.OutputTarget = target;
             });
@@ -518,7 +515,7 @@ namespace Dapper
         {
             foreach (var param in (from p in parameters select p.Value))
             {
-                if (param.OutputCallback != null) param.OutputCallback(param.OutputTarget, this);
+                param.OutputCallback?.Invoke(param.OutputTarget, this);
             }
         }
     }
