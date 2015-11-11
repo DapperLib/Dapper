@@ -8,11 +8,6 @@ namespace Dapper
     /// </summary>
     sealed class SimpleMemberMap : SqlMapper.IMemberMap
     {
-        private readonly string _columnName;
-        private readonly PropertyInfo _property;
-        private readonly FieldInfo _field;
-        private readonly ParameterInfo _parameter;
-
         /// <summary>
         /// Creates instance for simple property mapping
         /// </summary>
@@ -21,13 +16,13 @@ namespace Dapper
         public SimpleMemberMap(string columnName, PropertyInfo property)
         {
             if (columnName == null)
-                throw new ArgumentNullException("columnName");
+                throw new ArgumentNullException(nameof(columnName));
 
             if (property == null)
-                throw new ArgumentNullException("property");
+                throw new ArgumentNullException(nameof(property));
 
-            _columnName = columnName;
-            _property = property;
+            ColumnName = columnName;
+            Property = property;
         }
 
         /// <summary>
@@ -38,13 +33,13 @@ namespace Dapper
         public SimpleMemberMap(string columnName, FieldInfo field)
         {
             if (columnName == null)
-                throw new ArgumentNullException("columnName");
+                throw new ArgumentNullException(nameof(columnName));
 
             if (field == null)
-                throw new ArgumentNullException("field");
+                throw new ArgumentNullException(nameof(field));
 
-            _columnName = columnName;
-            _field = field;
+            ColumnName = columnName;
+            Field = field;
         }
 
         /// <summary>
@@ -55,66 +50,39 @@ namespace Dapper
         public SimpleMemberMap(string columnName, ParameterInfo parameter)
         {
             if (columnName == null)
-                throw new ArgumentNullException("columnName");
+                throw new ArgumentNullException(nameof(columnName));
 
             if (parameter == null)
-                throw new ArgumentNullException("parameter");
+                throw new ArgumentNullException(nameof(parameter));
 
-            _columnName = columnName;
-            _parameter = parameter;
+            ColumnName = columnName;
+            Parameter = parameter;
         }
 
         /// <summary>
         /// DataReader column name
         /// </summary>
-        public string ColumnName
-        {
-            get { return _columnName; }
-        }
+        public string ColumnName { get; }
 
         /// <summary>
         /// Target member type
         /// </summary>
-        public Type MemberType
-        {
-            get
-            {
-                if (_field != null)
-                    return _field.FieldType;
-
-                if (_property != null)
-                    return _property.PropertyType;
-
-                if (_parameter != null)
-                    return _parameter.ParameterType;
-
-                return null;
-            }
-        }
+        public Type MemberType => Field?.FieldType ?? Property?.PropertyType ?? Parameter?.ParameterType;
 
         /// <summary>
         /// Target property
         /// </summary>
-        public PropertyInfo Property
-        {
-            get { return _property; }
-        }
+        public PropertyInfo Property { get; }
 
         /// <summary>
         /// Target field
         /// </summary>
-        public FieldInfo Field
-        {
-            get { return _field; }
-        }
+        public FieldInfo Field { get; }
 
         /// <summary>
         /// Target constructor parameter
         /// </summary>
-        public ParameterInfo Parameter
-        {
-            get { return _parameter; }
-        }
+        public ParameterInfo Parameter { get; }
     }
 
 }

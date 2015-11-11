@@ -8,7 +8,7 @@ namespace Dapper
     /// <summary>
     /// Used to pass a DataTable as a TableValuedParameter
     /// </summary>
-    sealed class TableValuedParameter : Dapper.SqlMapper.ICustomQueryParameter
+    sealed class TableValuedParameter : SqlMapper.ICustomQueryParameter
     {
         private readonly DataTable table;
         private readonly string typeName;
@@ -47,14 +47,14 @@ namespace Dapper
             parameter.Value = SqlMapper.SanitizeParameterValue(table);
             if (string.IsNullOrEmpty(typeName) && table != null)
             {
-                typeName = SqlMapper.GetTypeName(table);
+                typeName = table.GetTypeName();
             }
             if (!string.IsNullOrEmpty(typeName))
             {
                 var sqlParam = parameter as System.Data.SqlClient.SqlParameter;
                 if (sqlParam != null)
                 {
-                    if (setTypeName != null) setTypeName(sqlParam, typeName);
+                    setTypeName?.Invoke(sqlParam, typeName);
                     sqlParam.SqlDbType = SqlDbType.Structured;
                 }
             }

@@ -60,7 +60,7 @@ namespace Dapper
         /// </summary>
         public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
             return QueryAsync<object>(cnn, type, new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
         }
 
@@ -83,7 +83,7 @@ namespace Dapper
         private static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param == null ? null : param.GetType(), null);
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType(), null);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
@@ -94,7 +94,7 @@ namespace Dapper
                 {
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync(cancel).ConfigureAwait(false);
                     reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, cancel).ConfigureAwait(false);
-                    
+
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
                     if (tuple.Func == null || tuple.Hash != hash)
@@ -121,7 +121,7 @@ namespace Dapper
                                 buffer.Add((T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture));
                             }
 
-                           
+
                         }
                         while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { }
                         command.OnCompleted();
@@ -135,13 +135,13 @@ namespace Dapper
                         reader = null; // to prevent it being disposed before the caller gets to see it
                         return deferred;
                     }
-                    
+
                 }
                 finally
                 {
                     using (reader) { } // dispose if non-null
                     if (wasClosed) cnn.Close();
-                    
+
                 }
             }
         }
@@ -170,15 +170,15 @@ namespace Dapper
                 return ExecuteImplAsync(cnn, command, param);
             }
         }
-       
+
         private struct AsyncExecState
         {
             public readonly DbCommand Command;
             public readonly Task<int> Task;
             public AsyncExecState(DbCommand command, Task<int> task)
             {
-                this.Command = command;
-                this.Task = task;
+                Command = command;
+                Task = task;
             }
         }
         private static async Task<int> ExecuteMultiImplAsync(IDbConnection cnn, CommandDefinition command, IEnumerable multiExec)
@@ -189,7 +189,7 @@ namespace Dapper
             try
             {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                
+
                 CacheInfo info = null;
                 string masterSql = null;
                 if ((command.Flags & CommandFlags.Pipelined) != 0)
@@ -276,7 +276,7 @@ namespace Dapper
         }
         private static async Task<int> ExecuteImplAsync(IDbConnection cnn, CommandDefinition command, object param)
         {
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param == null ? null : param.GetType(), null);
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param?.GetType(), null);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
@@ -503,15 +503,15 @@ namespace Dapper
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
         /// <returns></returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) 
+        public static Task<IEnumerable<TReturn>> QueryAsync<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken));
             return MultiMapAsync<TReturn>(cnn, command, types, map, splitOn);
         }
 
-        private static async Task<IEnumerable<TReturn>> MultiMapAsync<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn) 
+        private static async Task<IEnumerable<TReturn>> MultiMapAsync<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn)
         {
-            if (types.Length < 1) 
+            if (types.Length < 1)
             {
                 throw new ArgumentException("you must provide at least one type to deserialize");
             }
@@ -542,8 +542,7 @@ namespace Dapper
                     yield return (T)func(reader);
                 }
                 while (reader.NextResult()) { }
-                if (parameters is SqlMapper.IParameterCallbacks)
-                    ((SqlMapper.IParameterCallbacks)parameters).OnCompleted();
+                (parameters as IParameterCallbacks)?.OnCompleted();
             }
         }
 
@@ -598,7 +597,7 @@ this IDbConnection cnn, string sql, object param, IDbTransaction transaction, in
                         { /* don't spoil the existing exception */ }
                     reader.Dispose();
                 }
-                if (cmd != null) cmd.Dispose();
+                cmd?.Dispose();
                 if (wasClosed) cnn.Close();
                 throw;
             }
@@ -666,7 +665,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             finally
             {
                 if (wasClosed) cnn.Close();
-                if (cmd != null) cmd.Dispose();
+                cmd?.Dispose();
             }
         }
 
@@ -743,7 +742,7 @@ this IDbConnection cnn, string sql, dynamic param = null, IDbTransaction transac
             finally
             {
                 if (wasClosed) cnn.Close();
-                if (cmd != null) cmd.Dispose();
+                cmd?.Dispose();
             }
             return Parse<T>(result);
         }

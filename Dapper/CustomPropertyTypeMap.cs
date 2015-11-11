@@ -20,10 +20,10 @@ namespace Dapper
         public CustomPropertyTypeMap(Type type, Func<Type, string, PropertyInfo> propertySelector)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
 
             if (propertySelector == null)
-                throw new ArgumentNullException("propertySelector");
+                throw new ArgumentNullException(nameof(propertySelector));
 
             _type = type;
             _propertySelector = propertySelector;

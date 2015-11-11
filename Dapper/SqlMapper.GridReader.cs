@@ -22,18 +22,17 @@ namespace Dapper
     {
 
         /// <summary>
-        /// The grid reader provides interfaces for reading multiple result sets from a Dapper query 
+        /// The grid reader provides interfaces for reading multiple result sets from a Dapper query
         /// </summary>
         public partial class GridReader : IDisposable
         {
             private IDataReader reader;
-            private IDbCommand command;
             private Identity identity;
             private bool addToCache;
 
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, SqlMapper.IParameterCallbacks callbacks, bool addToCache)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
             {
-                this.Command = command;
+                Command = command;
                 this.reader = reader;
                 this.identity = identity;
                 this.callbacks = callbacks;
@@ -62,14 +61,14 @@ namespace Dapper
             /// </summary>
             public IEnumerable<object> Read(Type type, bool buffered = true)
             {
-                if (type == null) throw new ArgumentNullException("type");
+                if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadImpl<object>(type, buffered);
             }
 
             private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (consumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 var typedIdentity = identity.ForGrid(type, gridIndex);
                 CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
                 var deserializer = cache.Deserializer;
@@ -80,7 +79,7 @@ namespace Dapper
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
                 }
-                consumed = true;
+                IsConsumed = true;
                 var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
                 return buffered ? result.ToList() : result;
             }
@@ -99,7 +98,7 @@ namespace Dapper
                 }, gridIndex);
                 try
                 {
-                    foreach (var r in SqlMapper.MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
@@ -115,7 +114,7 @@ namespace Dapper
                 var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
                 try
                 {
-                    foreach (var r in SqlMapper.MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
@@ -205,34 +204,17 @@ namespace Dapper
                 }
             }
             private int gridIndex, readCount;
-            private bool consumed;
-            private SqlMapper.IParameterCallbacks callbacks;
+            private IParameterCallbacks callbacks;
 
             /// <summary>
             /// Has the underlying reader been consumed?
             /// </summary>
-            public bool IsConsumed
-            {
-                get
-                {
-                    return consumed;
-                }
-            }
+            public bool IsConsumed { get; private set; }
+
             /// <summary>
             /// The command associated with the reader
             /// </summary>
-            public IDbCommand Command
-            {
-                get
-                {
-                    return command;
-                }
-
-                set
-                {
-                    command = value;
-                }
-            }
+            public IDbCommand Command { get; set; }
 
             private void NextResult()
             {
@@ -240,7 +222,7 @@ namespace Dapper
                 {
                     readCount++;
                     gridIndex++;
-                    consumed = false;
+                    IsConsumed = false;
                 }
                 else
                 {
@@ -248,7 +230,7 @@ namespace Dapper
                     // need for "Cancel" etc
                     reader.Dispose();
                     reader = null;
-                    if (callbacks != null) callbacks.OnCompleted();
+                    callbacks?.OnCompleted();
                     Dispose();
                 }
             }
@@ -259,7 +241,7 @@ namespace Dapper
             {
                 if (reader != null)
                 {
-                    if (!reader.IsClosed && Command != null) Command.Cancel();
+                    if (!reader.IsClosed) Command?.Cancel();
                     reader.Dispose();
                     reader = null;
                 }

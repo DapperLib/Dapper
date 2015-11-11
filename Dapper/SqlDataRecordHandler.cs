@@ -5,7 +5,7 @@ using System.Data;
 #if !DNXCORE50
 namespace Dapper
 {
-    sealed class SqlDataRecordHandler : Dapper.SqlMapper.ITypeHandler
+    sealed class SqlDataRecordHandler : SqlMapper.ITypeHandler
     {
         public object Parse(Type destinationType, object value)
         {

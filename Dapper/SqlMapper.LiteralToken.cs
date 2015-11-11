@@ -9,20 +9,20 @@ namespace Dapper
         /// </summary>
         internal struct LiteralToken
         {
-            private readonly string token, member;
             /// <summary>
             /// The text in the original command that should be replaced
             /// </summary>
-            public string Token { get { return token; } }
+            public string Token { get; }
 
             /// <summary>
             /// The name of the member referred to by the token
             /// </summary>
-            public string Member { get { return member; } }
+            public string Member { get; }
+
             internal LiteralToken(string token, string member)
             {
-                this.token = token;
-                this.member = member;
+                Token = token;
+                Member = member;
             }
 
             internal static readonly IList<LiteralToken> None = new LiteralToken[0];

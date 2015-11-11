@@ -17,8 +17,8 @@ namespace Dapper
 
             public DapperRow(DapperTable table, object[] values)
             {
-                if (table == null) throw new ArgumentNullException("table");
-                if (values == null) throw new ArgumentNullException("values");
+                if (table == null) throw new ArgumentNullException(nameof(table));
+                if (values == null) throw new ArgumentNullException(nameof(values));
                 this.table = table;
                 this.values = values;
             }
@@ -136,11 +136,7 @@ namespace Dapper
                 return dic.Remove(item.Key);
             }
 
-            bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-            {
-                get { return false; }
-            }
-
+            bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
             #endregion
 
             #region Implementation of IDictionary<string,object>
@@ -177,7 +173,7 @@ namespace Dapper
             }
             private object SetValue(string key, object value, bool isAdd)
             {
-                if (key == null) throw new ArgumentNullException("key");
+                if (key == null) throw new ArgumentNullException(nameof(key));
                 int index = table.IndexOfName(key);
                 if (index < 0)
                 {
@@ -186,7 +182,7 @@ namespace Dapper
                 else if (isAdd && index < values.Length && !(values[index] is DeadValue))
                 {
                     // then semantically, this value already exists
-                    throw new ArgumentException("An item with the same key has already been added", "key");
+                    throw new ArgumentException("An item with the same key has already been added", nameof(key));
                 }
                 int oldLength = values.Length;
                 if (oldLength <= index)

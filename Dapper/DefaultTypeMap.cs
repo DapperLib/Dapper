@@ -11,7 +11,6 @@ namespace Dapper
     sealed class DefaultTypeMap : SqlMapper.ITypeMap
     {
         private readonly List<FieldInfo> _fields;
-        private readonly List<PropertyInfo> _properties;
         private readonly Type _type;
 
         /// <summary>
@@ -21,10 +20,10 @@ namespace Dapper
         public DefaultTypeMap(Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
 
             _fields = GetSettableFields(type);
-            _properties = GetSettableProps(type);
+            Properties = GetSettableProps(type);
             _type = type;
         }
 #if DNXCORE50
@@ -184,12 +183,6 @@ namespace Dapper
         /// </summary>
         public static bool MatchNamesWithUnderscores { get; set; }
 
-        public List<PropertyInfo> Properties
-        {
-            get
-            {
-                return _properties;
-            }
-        }
+        public List<PropertyInfo> Properties { get; }
     }
 }

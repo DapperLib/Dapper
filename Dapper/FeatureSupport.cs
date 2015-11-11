@@ -28,7 +28,7 @@ namespace Dapper
         /// </summary>
         public static FeatureSupport Get(IDbConnection connection)
         {
-            string name = connection == null ? null : connection.GetType().Name;
+            string name = connection?.GetType().Name;
             if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return postgres;
             return @default;
         }
@@ -39,7 +39,7 @@ namespace Dapper
         /// <summary>
         /// True if the db supports array columns e.g. Postgresql
         /// </summary>
-        public bool Arrays { get; private set; }
+        public bool Arrays { get; }
     }
 
 }
