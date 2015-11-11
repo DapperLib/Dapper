@@ -18,13 +18,15 @@
         "warningsAsErrors": true
       },
       "frameworkAssemblies": {
-        "System.Data": "4.0.0.0"
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
       }
     },
     "net40": {
       "compilationOptions": { "warningsAsErrors": true },
       "frameworkAssemblies": {
-        "System.Data": "4.0.0.0"
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
       }
     },
     "dnx451": {
@@ -33,7 +35,8 @@
         "warningsAsErrors": true
       },
       "frameworkAssemblies": {
-        "System.Data": "4.0.0.0"
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
       }
     },
     "dnxcore50": {
