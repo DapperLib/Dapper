@@ -26,6 +26,7 @@ namespace Dapper
         /// Obtain the underlying reader
         /// </summary>
         public abstract IDataReader Reader { get; }
+
         /// <summary>
         /// Obtain the underlying command
         /// </summary>
@@ -42,6 +43,7 @@ namespace Dapper
         /// Obtain the underlying reader
         /// </summary>
         IDataReader Reader { get; }
+
         /// <summary>
         /// Obtain the underlying command
         /// </summary>

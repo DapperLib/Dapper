@@ -8,10 +8,9 @@ namespace Dapper
     /// <summary>
     /// Represents default type mapping strategy used by Dapper
     /// </summary>
-    sealed class DefaultTypeMap : SqlMapper.ITypeMap
+    internal sealed class DefaultTypeMap : SqlMapper.ITypeMap
     {
         private readonly List<FieldInfo> _fields;
-        private readonly List<PropertyInfo> _properties;
         private readonly Type _type;
 
         /// <summary>
@@ -21,12 +20,15 @@ namespace Dapper
         public DefaultTypeMap(Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
 
             _fields = GetSettableFields(type);
-            _properties = GetSettableProps(type);
+            Properties = GetSettableProps(type);
             _type = type;
         }
+
 #if DNXCORE50
         static bool IsParameterMatch(ParameterInfo[] x, ParameterInfo[] y)
         {
@@ -38,9 +40,13 @@ namespace Dapper
             return true;
         }
 #endif
+
         internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
-            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
+            if (propertyInfo.DeclaringType == type)
+            {
+                return propertyInfo.GetSetMethod(true);
+            }
 #if DNXCORE50
             return propertyInfo.DeclaringType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Single(x => x.Name == propertyInfo.Name
@@ -49,21 +55,21 @@ namespace Dapper
                         ).GetSetMethod(true);
 #else
             return propertyInfo.DeclaringType.GetProperty(
-                   propertyInfo.Name,
-                   BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-                   Type.DefaultBinder,
-                   propertyInfo.PropertyType,
-                   propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
-                   null).GetSetMethod(true);
+                propertyInfo.Name,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                Type.DefaultBinder,
+                propertyInfo.PropertyType,
+                propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
+                null).GetSetMethod(true);
 #endif
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)
         {
             return t
-                  .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                  .Where(p => GetPropertySetter(p, t) != null)
-                  .ToList();
+                .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(p => GetPropertySetter(p, t) != null)
+                .ToList();
         }
 
         internal static List<FieldInfo> GetSettableFields(Type t)
@@ -80,22 +86,30 @@ namespace Dapper
         public ConstructorInfo FindConstructor(string[] names, Type[] types)
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
+            foreach (var ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
             {
-                ParameterInfo[] ctorParameters = ctor.GetParameters();
+                var ctorParameters = ctor.GetParameters();
                 if (ctorParameters.Length == 0)
+                {
                     return ctor;
+                }
 
                 if (ctorParameters.Length != types.Length)
+                {
                     continue;
+                }
 
-                int i = 0;
+                var i = 0;
                 for (; i < ctorParameters.Length; i++)
                 {
-                    if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                    {
                         break;
+                    }
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
+                    {
                         continue;
+                    }
                     var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
                     if (unboxedType != types[i]
                         && !(unboxedType.IsEnum() && Enum.GetUnderlyingType(unboxedType) == types[i])
@@ -107,7 +121,9 @@ namespace Dapper
                 }
 
                 if (i == ctorParameters.Length)
+                {
                     return ctor;
+                }
             }
 
             return null;
@@ -154,42 +170,41 @@ namespace Dapper
         public SqlMapper.IMemberMap GetMember(string columnName)
         {
             var property = Properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? Properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+                           ?? Properties.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
 
             if (property == null && MatchNamesWithUnderscores)
             {
                 property = Properties.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
-                    ?? Properties.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
+                           ?? Properties.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
             }
 
             if (property != null)
+            {
                 return new SimpleMemberMap(columnName, property);
+            }
 
             var field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+                        ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
 
             if (field == null && MatchNamesWithUnderscores)
             {
                 field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
-                    ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
+                        ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
             }
 
             if (field != null)
+            {
                 return new SimpleMemberMap(columnName, field);
+            }
 
             return null;
         }
+
         /// <summary>
         /// Should column names like User_Id be allowed to match properties/fields like UserId ?
         /// </summary>
         public static bool MatchNamesWithUnderscores { get; set; }
 
-        public List<PropertyInfo> Properties
-        {
-            get
-            {
-                return _properties;
-            }
-        }
+        public List<PropertyInfo> Properties { get; }
     }
 }

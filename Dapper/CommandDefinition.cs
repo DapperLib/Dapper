@@ -18,9 +18,10 @@ using ApplicationException = global::System.InvalidOperationException;
 #endif
 
 namespace Dapper
-{    /// <summary>
-     /// Represents the key aspects of a sql operation
-     /// </summary>
+{
+    /// <summary>
+    /// Represents the key aspects of a sql operation
+    /// </summary>
     public struct CommandDefinition
     {
         internal static CommandDefinition ForCallback(object parameters)
@@ -29,130 +30,131 @@ namespace Dapper
             {
                 return new CommandDefinition(parameters);
             }
-            else
-            {
-                return default(CommandDefinition);
-            }
+            return default(CommandDefinition);
         }
-        private readonly string commandText;
-        private readonly object parameters;
-        private readonly IDbTransaction transaction;
-        private readonly int? commandTimeout;
-        private readonly CommandType? commandType;
-        private readonly CommandFlags flags;
 
 
         internal void OnCompleted()
         {
-            if (parameters is SqlMapper.IParameterCallbacks)
+            if (Parameters is SqlMapper.IParameterCallbacks)
             {
-                ((SqlMapper.IParameterCallbacks)parameters).OnCompleted();
+                ((SqlMapper.IParameterCallbacks)Parameters).OnCompleted();
             }
         }
+
         /// <summary>
         /// The command (sql or a stored-procedure name) to execute
         /// </summary>
-        public string CommandText { get { return commandText; } }
+        public string CommandText { get; }
+
         /// <summary>
         /// The parameters associated with the command
         /// </summary>
-        public object Parameters { get { return parameters; } }
+        public object Parameters { get; }
+
         /// <summary>
         /// The active transaction for the command
         /// </summary>
-        public IDbTransaction Transaction { get { return transaction; } }
+        public IDbTransaction Transaction { get; }
+
         /// <summary>
         /// The effective timeout for the command
         /// </summary>
-        public int? CommandTimeout { get { return commandTimeout; } }
+        public int? CommandTimeout { get; }
+
         /// <summary>
         /// The type of command that the command-text represents
         /// </summary>
-        public CommandType? CommandType { get { return commandType; } }
+        public CommandType? CommandType { get; }
 
         /// <summary>
         /// Should data be buffered before returning?
         /// </summary>
-        public bool Buffered { get { return (flags & CommandFlags.Buffered) != 0; } }
+        public bool Buffered => (Flags & CommandFlags.Buffered) != 0;
 
         /// <summary>
         /// Should the plan for this query be cached?
         /// </summary>
-        internal bool AddToCache { get { return (flags & CommandFlags.NoCache) == 0; } }
+        internal bool AddToCache => (Flags & CommandFlags.NoCache) == 0;
 
         /// <summary>
         /// Additional state flags against this command
         /// </summary>
-        public CommandFlags Flags { get { return flags; } }
+        public CommandFlags Flags { get; }
 
         /// <summary>
         /// Can async queries be pipelined?
         /// </summary>
-        public bool Pipelined { get { return (flags & CommandFlags.Pipelined) != 0; } }
+        public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
 
         /// <summary>
         /// Initialize the command definition
         /// </summary>
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
-            CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
+                                 CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
 #if ASYNC
-            , CancellationToken cancellationToken = default(CancellationToken)
+                                 , CancellationToken cancellationToken = default(CancellationToken)
 #endif
             )
         {
-            this.commandText = commandText;
-            this.parameters = parameters;
-            this.transaction = transaction;
-            this.commandTimeout = commandTimeout;
-            this.commandType = commandType;
-            this.flags = flags;
+            CommandText = commandText;
+            Parameters = parameters;
+            Transaction = transaction;
+            CommandTimeout = commandTimeout;
+            CommandType = commandType;
+            Flags = flags;
 #if ASYNC
-            this.cancellationToken = cancellationToken;
+            CancellationToken = cancellationToken;
 #endif
         }
 
         private CommandDefinition(object parameters) : this()
         {
-            this.parameters = parameters;
+            Parameters = parameters;
         }
 
 #if ASYNC
-        private readonly CancellationToken cancellationToken;
+
         /// <summary>
         /// For asynchronous operations, the cancellation-token
         /// </summary>
-        public CancellationToken CancellationToken { get { return cancellationToken; } }
+        public CancellationToken CancellationToken { get; }
 #endif
 
         internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
             var cmd = cnn.CreateCommand();
             var init = GetInit(cmd.GetType());
-            if (init != null) init(cmd);
-            if (transaction != null)
-                cmd.Transaction = transaction;
-            cmd.CommandText = commandText;
-            if (commandTimeout.HasValue)
+            init?.Invoke(cmd);
+            if (Transaction != null)
             {
-                cmd.CommandTimeout = commandTimeout.Value;
+                cmd.Transaction = Transaction;
+            }
+            cmd.CommandText = CommandText;
+            if (CommandTimeout.HasValue)
+            {
+                cmd.CommandTimeout = CommandTimeout.Value;
             }
             else if (SqlMapper.Settings.CommandTimeout.HasValue)
             {
                 cmd.CommandTimeout = SqlMapper.Settings.CommandTimeout.Value;
             }
-            if (commandType.HasValue)
-                cmd.CommandType = commandType.Value;
-            if (paramReader != null)
+            if (CommandType.HasValue)
             {
-                paramReader(cmd, parameters);
+                cmd.CommandType = CommandType.Value;
             }
+            paramReader?.Invoke(cmd, Parameters);
             return cmd;
         }
 
-        static SqlMapper.Link<Type, Action<IDbCommand>> commandInitCache;
-        static Action<IDbCommand> GetInit(Type commandType)
+        private static SqlMapper.Link<Type, Action<IDbCommand>> commandInitCache;
+
+        private static Action<IDbCommand> GetInit(Type commandType)
         {
-            if (commandType == null) return null; // GIGO
+            if (commandType == null)
+            {
+                return null; // GIGO
+            }
             Action<IDbCommand> action;
             if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out action))
             {
@@ -164,7 +166,7 @@ namespace Dapper
             action = null;
             if (bindByName != null || initialLongFetchSize != null)
             {
-                var method = new DynamicMethod(commandType.Name + "_init", null, new Type[] { typeof(IDbCommand) });
+                var method = new DynamicMethod(commandType.Name + "_init", null, new[] { typeof(IDbCommand) });
                 var il = method.GetILGenerator();
 
                 if (bindByName != null)
@@ -186,11 +188,12 @@ namespace Dapper
                 il.Emit(OpCodes.Ret);
                 action = (Action<IDbCommand>)method.CreateDelegate(typeof(Action<IDbCommand>));
             }
-            // cache it            
+            // cache it
             SqlMapper.Link<Type, Action<IDbCommand>>.TryAdd(ref commandInitCache, commandType, ref action);
             return action;
         }
-        static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+
+        private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
         {
             var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
             ParameterInfo[] indexers;
@@ -202,5 +205,4 @@ namespace Dapper
             return null;
         }
     }
-
 }

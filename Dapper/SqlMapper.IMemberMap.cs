@@ -16,7 +16,7 @@ namespace Dapper
             string ColumnName { get; }
 
             /// <summary>
-            ///  Target member type
+            /// Target member type
             /// </summary>
             Type MemberType { get; }
 
@@ -35,6 +35,5 @@ namespace Dapper
             /// </summary>
             ParameterInfo Parameter { get; }
         }
-
     }
 }

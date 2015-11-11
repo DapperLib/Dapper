@@ -20,9 +20,7 @@ namespace Dapper
 
             /// <summary>
             /// Returns a constructor which should *always* be used.
-            /// 
             /// Parameters will be default values, nulls for reference types and zero'd for value types.
-            /// 
             /// Use this class to force object creation away from parameterless constructors you don't control.
             /// </summary>
             ConstructorInfo FindExplicitConstructor();
@@ -42,6 +40,5 @@ namespace Dapper
             /// <returns>Mapping implementation</returns>
             IMemberMap GetMember(string columnName);
         }
-
     }
 }

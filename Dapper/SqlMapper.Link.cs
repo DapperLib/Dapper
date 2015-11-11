@@ -15,7 +15,7 @@ namespace Dapper
             {
                 while (link != null)
                 {
-                    if ((object)key == (object)link.Key)
+                    if (key == link.Key)
                     {
                         value = link.Value;
                         return true;
@@ -25,6 +25,7 @@ namespace Dapper
                 value = default(TValue);
                 return false;
             }
+
             public static bool TryAdd(ref Link<TKey, TValue> head, TKey key, ref TValue value)
             {
                 bool tryAgain;
@@ -33,7 +34,8 @@ namespace Dapper
                     var snapshot = Interlocked.CompareExchange(ref head, null, null);
                     TValue found;
                     if (TryGet(snapshot, key, out found))
-                    { // existing match; report the existing value instead
+                    {
+                        // existing match; report the existing value instead
                         value = found;
                         return false;
                     }
@@ -43,15 +45,19 @@ namespace Dapper
                 } while (tryAgain);
                 return true;
             }
+
             private Link(TKey key, TValue value, Link<TKey, TValue> tail)
             {
                 Key = key;
                 Value = value;
                 Tail = tail;
             }
-            public TKey Key { get; private set; }
-            public TValue Value { get; private set; }
-            public Link<TKey, TValue> Tail { get; private set; }
+
+            public TKey Key { get; }
+
+            public TValue Value { get; }
+
+            public Link<TKey, TValue> Tail { get; }
         }
     }
 }

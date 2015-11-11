@@ -3,7 +3,6 @@ using System.Reflection;
 
 namespace Dapper
 {
-
     /// <summary>
     /// Implements custom property mapping by user provided criteria (usually presence of some custom attribute with column to member mapping)
     /// </summary>
@@ -20,10 +19,14 @@ namespace Dapper
         public CustomPropertyTypeMap(Type type, Func<Type, string, PropertyInfo> propertySelector)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
 
             if (propertySelector == null)
-                throw new ArgumentNullException("propertySelector");
+            {
+                throw new ArgumentNullException(nameof(propertySelector));
+            }
 
             _type = type;
             _propertySelector = propertySelector;
@@ -71,6 +74,4 @@ namespace Dapper
             return prop != null ? new SimpleMemberMap(columnName, prop) : null;
         }
     }
-
-
 }

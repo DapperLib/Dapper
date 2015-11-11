@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Data.SqlClient;
 using System.Reflection;
 
 #if !DNXCORE50
@@ -8,7 +9,7 @@ namespace Dapper
     /// <summary>
     /// Used to pass a DataTable as a TableValuedParameter
     /// </summary>
-    sealed class TableValuedParameter : Dapper.SqlMapper.ICustomQueryParameter
+    internal sealed class TableValuedParameter : SqlMapper.ICustomQueryParameter
     {
         private readonly DataTable table;
         private readonly string typeName;
@@ -16,7 +17,10 @@ namespace Dapper
         /// <summary>
         /// Create a new instance of TableValuedParameter
         /// </summary>
-        public TableValuedParameter(DataTable table) : this(table, null) { }
+        public TableValuedParameter(DataTable table) : this(table, null)
+        {
+        }
+
         /// <summary>
         /// Create a new instance of TableValuedParameter
         /// </summary>
@@ -25,16 +29,19 @@ namespace Dapper
             this.table = table;
             this.typeName = typeName;
         }
-        static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
+
+        private static readonly Action<SqlParameter, string> setTypeName;
+
         static TableValuedParameter()
         {
-            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public);
+            var prop = typeof(SqlParameter).GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public);
             if (prop != null && prop.PropertyType == typeof(string) && prop.CanWrite)
             {
-                setTypeName = (Action<System.Data.SqlClient.SqlParameter, string>)
-                    Delegate.CreateDelegate(typeof(Action<System.Data.SqlClient.SqlParameter, string>), prop.GetSetMethod());
+                setTypeName = (Action<SqlParameter, string>)
+                              Delegate.CreateDelegate(typeof(Action<SqlParameter, string>), prop.GetSetMethod());
             }
         }
+
         void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
         {
             var param = command.CreateParameter();
@@ -42,19 +49,20 @@ namespace Dapper
             Set(param, table, typeName);
             command.Parameters.Add(param);
         }
+
         internal static void Set(IDbDataParameter parameter, DataTable table, string typeName)
         {
             parameter.Value = SqlMapper.SanitizeParameterValue(table);
             if (string.IsNullOrEmpty(typeName) && table != null)
             {
-                typeName = SqlMapper.GetTypeName(table);
+                typeName = table.GetTypeName();
             }
             if (!string.IsNullOrEmpty(typeName))
             {
-                var sqlParam = parameter as System.Data.SqlClient.SqlParameter;
+                var sqlParam = parameter as SqlParameter;
                 if (sqlParam != null)
                 {
-                    if (setTypeName != null) setTypeName(sqlParam, typeName);
+                    setTypeName?.Invoke(sqlParam, typeName);
                     sqlParam.SqlDbType = SqlDbType.Structured;
                 }
             }
