@@ -10,6 +10,7 @@
   "tags": [ "orm", "sql", "micro-orm" ],
   "dependencies": {
   },
+  "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",
   "frameworks": {
     "net45": {
       "compilationOptions": {

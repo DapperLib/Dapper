@@ -22,8 +22,7 @@
       <frameworkAssembly assemblyName="System.Data"/>
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
-    <releaseNotes>
-    </releaseNotes>
+    <releaseNotes>http://stackexchange.github.io/dapper-dot-net/</releaseNotes>
   </metadata>
   <files>
     <file src="Dapper.EntityFramework NET45\bin\Release\Dapper.EntityFramework.dll" target="lib\net45" />

@@ -18,7 +18,7 @@
       <frameworkAssembly assemblyName="System.Data"/>
       <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0-Client, .NETFramework4.0" />
     </frameworkAssemblies>
-    <releaseNotes>Please refer to Dapper (not Dapper.StrongName) for release notes</releaseNotes>
+    <releaseNotes>http://stackexchange.github.io/dapper-dot-net/</releaseNotes>
   </metadata>
   <files>
     <file src="Dapper NET45 SNK\bin\Release\Dapper.dll" target="lib\net45" />
