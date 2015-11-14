@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 #if DNXCORE50
-using ApplicationException = global::System.InvalidOperationException;
+using ApplicationException = System.InvalidOperationException;
 #endif
 
 namespace SqlMapper

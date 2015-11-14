@@ -2572,7 +2572,7 @@ Order by p.Id";
             if (member == null) return null;
 #if DNXCORE50
             var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
-            return data == null ? null : (string)data.ConstructorArguments.Single().Value;
+            return (string) data?.ConstructorArguments.Single().Value;
 #else
             var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
             return attrib == null ? null : attrib.Description;
@@ -2957,9 +2957,9 @@ end");
             }
 
             public override string ConnectionString { get { return _conn.ConnectionString; } set { _conn.ConnectionString = value; } }
-            public override int ConnectionTimeout { get { return _conn.ConnectionTimeout; } }
-            public override string Database { get { return _conn.Database; } }
-            public override ConnectionState State { get { return _conn.State; } }
+            public override int ConnectionTimeout => _conn.ConnectionTimeout;
+            public override string Database => _conn.Database;
+            public override ConnectionState State => _conn.State;
 
             protected override IDbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
             {
@@ -2970,20 +2970,10 @@ end");
             {
                 _conn.ChangeDatabase(databaseName);
             }
-            public override string DataSource
-            {
-                get
-                {
-                    return _conn.DataSource;
-                }
-            }
-            public override string ServerVersion
-            {
-                get
-                {
-                    return _conn.ServerVersion;
-                }
-            }
+            public override string DataSource => _conn.DataSource;
+
+            public override string ServerVersion => _conn.ServerVersion;
+
             public override void Close()
             {
                 _conn.Close();

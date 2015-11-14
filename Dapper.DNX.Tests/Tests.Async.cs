@@ -10,11 +10,7 @@ using System.Threading;
 using System.Data.SqlClient;
 
 #if DNXCORE50
-using IDbCommand = global::System.Data.Common.DbCommand;
-using IDbDataParameter = global::System.Data.Common.DbParameter;
-using IDbConnection = global::System.Data.Common.DbConnection;
-using IDbTransaction = global::System.Data.Common.DbTransaction;
-using IDataReader = global::System.Data.Common.DbDataReader;
+using IDbConnection = System.Data.Common.DbConnection;
 #endif
 
 namespace DapperTests_NET45
