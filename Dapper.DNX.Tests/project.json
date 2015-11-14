@@ -1,7 +1,7 @@
 ﻿{
   "version": "1.0.0-*",
   "description": "Dapper.DNX.Tests Console Application",
-  "authors": [ "marc gravell" ],
+  "authors": [ "marc.gravell" ],
   "tags": [ "" ],
   "projectUrl": "",
   "licenseUrl": "",

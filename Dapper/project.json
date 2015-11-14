@@ -1,6 +1,6 @@
 ﻿{
-  "authors": [ "Sam Saffron", "Marc Gravell" ],
-  "owners": [ "Sam Saffron", "Marc Gravell" ],
+  "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
+  "owners": [ "marc.gravell", "nick.craver" ],
   "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "summary": "A high performance Micro-ORM",
