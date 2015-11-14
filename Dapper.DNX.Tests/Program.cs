@@ -42,8 +42,10 @@ namespace SqlMapper
             var cs = ConnectionString;
             if (mars)
             {
-                SqlConnectionStringBuilder scsb = new SqlConnectionStringBuilder(cs);
-                scsb.MultipleActiveResultSets = true;
+                var scsb = new SqlConnectionStringBuilder(cs)
+                {
+                    MultipleActiveResultSets = true
+                };
                 cs = scsb.ConnectionString;
             }
             var connection = new SqlConnection(cs);

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 #if DNXCORE50
 using ApplicationException = global::System.InvalidOperationException;
@@ -16,7 +15,7 @@ namespace SqlMapper
         {
             if (!Equals(obj, other))
             {
-                throw new ApplicationException(string.Format("{0} should be equals to {1}", obj, other));
+                throw new ApplicationException($"{obj} should be equals to {other}");
             }
         }
 
@@ -24,7 +23,7 @@ namespace SqlMapper
         {
             if (!(obj ?? new T[0]).SequenceEqual(other ?? new T[0]))
             {
-                throw new ApplicationException(string.Format("{0} should be equals to {1}", obj, other));
+                throw new ApplicationException($"{obj} should be equals to {other}");
             }
         }
 

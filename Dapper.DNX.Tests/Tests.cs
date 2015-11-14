@@ -1,11 +1,11 @@
 ﻿//#define POSTGRESQL // uncomment to run postgres tests
 
 #if DNXCORE50
-using IDbCommand = global::System.Data.Common.DbCommand;
-using IDbDataParameter = global::System.Data.Common.DbParameter;
-using IDbConnection = global::System.Data.Common.DbConnection;
-using IDbTransaction = global::System.Data.Common.DbTransaction;
-using IDataReader = global::System.Data.Common.DbDataReader;
+using IDbCommand = System.Data.Common.DbCommand;
+using IDbDataParameter = System.Data.Common.DbParameter;
+using IDbConnection = System.Data.Common.DbConnection;
+using IDbTransaction = System.Data.Common.DbTransaction;
+using IDataReader = System.Data.Common.DbDataReader;
 #endif
 
 using System;
@@ -24,7 +24,6 @@ using System.Globalization;
 using System.Threading;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-
 #if EXTERNALS
 using FirebirdSql.Data.FirebirdClient;
 using System.Data.Entity.Spatial;
@@ -78,7 +77,7 @@ namespace SqlMapper
                 protected int Protected { get; set; }
                 public int Public { get; set; }
 
-                public int ProtectedVal { get { return Protected; } }
+                public int ProtectedVal => Protected;
             }
 
             public class ConcreteOrder : Order

@@ -1,17 +1,10 @@
 ﻿using System;
 using System.Data;
 using System.Collections;
+
 #if DNXCORE50
-using IDbDataParameter = global::System.Data.Common.DbParameter;
-using IDataParameter = global::System.Data.Common.DbParameter;
-using IDbTransaction = global::System.Data.Common.DbTransaction;
-using IDbConnection = global::System.Data.Common.DbConnection;
-using IDbCommand = global::System.Data.Common.DbCommand;
-using IDataReader = global::System.Data.Common.DbDataReader;
-using IDataRecord = global::System.Data.Common.DbDataReader;
-using IDataParameterCollection = global::System.Data.Common.DbParameterCollection;
-using DataException = global::System.InvalidOperationException;
-using ApplicationException = global::System.InvalidOperationException;
+using IDbCommand = System.Data.Common.DbCommand;
+using IDataReader = System.Data.Common.DbDataReader;
 #endif
 
 namespace Dapper
@@ -50,174 +43,86 @@ namespace Dapper
             }
         }
 
-        public override int Depth
-        {
-            get { return Reader.Depth; }
-        }
+        public override int Depth => Reader.Depth;
 
-        public override bool IsClosed
-        {
-            get { return reader == null ? true : reader.IsClosed; }
-        }
-        public override bool HasRows
-        {
-            get
-            {
-                return Reader.HasRows;
-            }
-        }
-        public override bool NextResult()
-        {
-            return Reader.NextResult();
-        }
+        public override bool IsClosed => reader?.IsClosed ?? true;
 
-        public override bool Read()
-        {
-            return Reader.Read();
-        }
+        public override bool HasRows => Reader.HasRows;
 
-        public override int RecordsAffected
-        {
-            get { return Reader.RecordsAffected; }
-        }
+        public override bool NextResult() => Reader.NextResult();
+
+        public override bool Read() => Reader.Read();
+
+        public override int RecordsAffected => Reader.RecordsAffected;
 
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                if (reader != null) reader.Dispose();
+                reader?.Dispose();
                 reader = null;
-                if (cmd != null) cmd.Dispose();
+                cmd?.Dispose();
                 cmd = null;
             }
             base.Dispose(disposing);
         }
 
-        public override int FieldCount
-        {
-            get { return Reader.FieldCount; }
-        }
+        public override int FieldCount => Reader.FieldCount;
 
-        public override bool GetBoolean(int i)
-        {
-            return Reader.GetBoolean(i);
-        }
+        public override bool GetBoolean(int i) => Reader.GetBoolean(i);
 
-        public override byte GetByte(int i)
-        {
-            return Reader.GetByte(i);
-        }
+        public override byte GetByte(int i) => Reader.GetByte(i);
 
         public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
         {
             return Reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
         }
 
-        public override char GetChar(int i)
-        {
-            return Reader.GetChar(i);
-        }
+        public override char GetChar(int i) => Reader.GetChar(i);
 
         public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
         {
             return Reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
         }
 
-        protected override IDataReader GetDbDataReader(int ordinal)
-        {
-            return Reader.GetData(ordinal);
-        }
+        protected override IDataReader GetDbDataReader(int ordinal) => Reader.GetData(ordinal);
 
-        public override string GetDataTypeName(int i)
-        {
-            return Reader.GetDataTypeName(i);
-        }
+        public override string GetDataTypeName(int i) => Reader.GetDataTypeName(i);
 
-        public override DateTime GetDateTime(int i)
-        {
-            return Reader.GetDateTime(i);
-        }
+        public override DateTime GetDateTime(int i) => Reader.GetDateTime(i);
 
-        public override decimal GetDecimal(int i)
-        {
-            return Reader.GetDecimal(i);
-        }
+        public override decimal GetDecimal(int i) => Reader.GetDecimal(i);
 
-        public override double GetDouble(int i)
-        {
-            return Reader.GetDouble(i);
-        }
+        public override double GetDouble(int i) => Reader.GetDouble(i);
 
-        public override Type GetFieldType(int i)
-        {
-            return Reader.GetFieldType(i);
-        }
+        public override Type GetFieldType(int i) => Reader.GetFieldType(i);
 
-        public override float GetFloat(int i)
-        {
-            return Reader.GetFloat(i);
-        }
+        public override float GetFloat(int i) => Reader.GetFloat(i);
 
-        public override Guid GetGuid(int i)
-        {
-            return Reader.GetGuid(i);
-        }
+        public override Guid GetGuid(int i) => Reader.GetGuid(i);
 
-        public override short GetInt16(int i)
-        {
-            return Reader.GetInt16(i);
-        }
+        public override short GetInt16(int i) => Reader.GetInt16(i);
 
-        public override int GetInt32(int i)
-        {
-            return Reader.GetInt32(i);
-        }
+        public override int GetInt32(int i) => Reader.GetInt32(i);
 
-        public override long GetInt64(int i)
-        {
-            return Reader.GetInt64(i);
-        }
+        public override long GetInt64(int i) => Reader.GetInt64(i);
 
-        public override string GetName(int i)
-        {
-            return Reader.GetName(i);
-        }
+        public override string GetName(int i) => Reader.GetName(i);
 
-        public override int GetOrdinal(string name)
-        {
-            return Reader.GetOrdinal(name);
-        }
+        public override int GetOrdinal(string name) => Reader.GetOrdinal(name);
 
-        public override string GetString(int i)
-        {
-            return Reader.GetString(i);
-        }
+        public override string GetString(int i) => Reader.GetString(i);
 
-        public override object GetValue(int i)
-        {
-            return Reader.GetValue(i);
-        }
+        public override object GetValue(int i) => Reader.GetValue(i);
 
-        public override int GetValues(object[] values)
-        {
-            return Reader.GetValues(values);
-        }
+        public override int GetValues(object[] values) => Reader.GetValues(values);
 
-        public override bool IsDBNull(int i)
-        {
-            return Reader.IsDBNull(i);
-        }
+        public override bool IsDBNull(int i) => Reader.IsDBNull(i);
 
-        public override object this[string name]
-        {
-            get { return Reader[name]; }
-        }
+        public override object this[string name] => Reader[name];
 
-        public override object this[int i]
-        {
-            get { return Reader[i]; }
-        }
+        public override object this[int i] => Reader[i];
     }
 #else
 

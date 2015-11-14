@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -8,16 +7,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 
 #if DNXCORE50
-using IDbDataParameter = global::System.Data.Common.DbParameter;
-using IDataParameter = global::System.Data.Common.DbParameter;
-using IDbTransaction = global::System.Data.Common.DbTransaction;
-using IDbConnection = global::System.Data.Common.DbConnection;
-using IDbCommand = global::System.Data.Common.DbCommand;
-using IDataReader = global::System.Data.Common.DbDataReader;
-using IDataRecord = global::System.Data.Common.DbDataReader;
-using IDataParameterCollection = global::System.Data.Common.DbParameterCollection;
-using DataException = global::System.InvalidOperationException;
-using ApplicationException = global::System.InvalidOperationException;
+using IDbDataParameter = System.Data.Common.DbParameter;
+using IDbCommand = System.Data.Common.DbCommand;
+using ApplicationException = System.InvalidOperationException;
 #endif
 
 namespace Dapper
