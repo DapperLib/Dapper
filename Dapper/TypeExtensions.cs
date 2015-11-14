@@ -9,7 +9,7 @@ namespace Dapper
         public static bool IsValueType(this Type type)
         {
 #if DNXCORE50
-            return typeof(ValueType).IsAssignableFrom(type) && type != typeof(ValueType);
+            return type.GetTypeInfo().IsValueType;
 #else
             return type.IsValueType;
 #endif
@@ -17,7 +17,7 @@ namespace Dapper
         public static bool IsEnum(this Type type)
         {
 #if DNXCORE50
-            return typeof(Enum).IsAssignableFrom(type) && type != typeof(Enum);
+            return type.GetTypeInfo().IsEnum;
 #else
             return type.IsEnum;
 #endif
