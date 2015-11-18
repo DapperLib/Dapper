@@ -180,7 +180,7 @@ The performance tests are broken in to 3 lists:
 		<td rowspan="3">&nbsp;</td>
 	</tr>
 	<tr>
-		<td><a href="https://github.com/robconery/massive">Massive</a></td>
+		<td><a href="https://github.com/FransBouma/Massive">Massive</a></td>
 		<td>52ms</td>
 	</tr>
 	<tr>
@@ -360,6 +360,6 @@ Who is using this?
 ---------------------
 Dapper is in production use at:
 
-[Stack Overflow](http://stackoverflow.com/), [helpdesk](http://www.jitbit.com/helpdesk-software/)
+[Stack Overflow](http://stackoverflow.com/), [helpdesk](https://www.jitbit.com/web-helpdesk/)
 
 (if you would like to be listed here let me know)
