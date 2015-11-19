@@ -11,3 +11,4 @@ NuGet.exe
 .docstats
 *.ide/
 *.lock.json
+*.coverage
