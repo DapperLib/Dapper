@@ -29,17 +29,7 @@
         "System.Xml": "4.0.0.0"
       }
     },
-    "dnx451": {
-      "compilationOptions": {
-        "define": [ "ASYNC" ],
-        "warningsAsErrors": true
-      },
-      "frameworkAssemblies": {
-        "System.Data": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
-      }
-    },
-    "dnxcore50": {
+    "dotnet5.2": {
       "compilationOptions": {
         "define": [ "ASYNC" ],
         "warningsAsErrors": true

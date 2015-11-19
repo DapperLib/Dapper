@@ -1,6 +1,6 @@
 ﻿//#define POSTGRESQL // uncomment to run postgres tests
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbCommand = System.Data.Common.DbCommand;
 using IDbDataParameter = System.Data.Common.DbParameter;
 using IDbConnection = System.Data.Common.DbConnection;
@@ -34,7 +34,7 @@ using Npgsql;
 #endif
 #endif
 
-#if DNXCORE50
+#if DOTNET5_2
 namespace System.ComponentModel {
     public sealed class DescriptionAttribute : Attribute {
         public DescriptionAttribute(string description)
@@ -2570,7 +2570,7 @@ Order by p.Id";
         static string GetDescriptionFromAttribute(MemberInfo member)
         {
             if (member == null) return null;
-#if DNXCORE50
+#if DOTNET5_2
             var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
             return (string) data?.ConstructorArguments.Single().Value;
 #else
@@ -2944,7 +2944,7 @@ end");
             Dapper.SqlMapper.PurgeQueryCache();
             Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
         }
-#if DNXCORE50
+#if DOTNET5_2
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
@@ -3131,7 +3131,7 @@ end");
         }
         private static CultureInfo ActiveCulture
         {
-#if DNXCORE50
+#if DOTNET5_2
             get { return CultureInfo.CurrentCulture; }
             set { CultureInfo.CurrentCulture = value; }
 #else
@@ -3189,7 +3189,7 @@ end");
             B = 1
         }
 
-#if DNXCORE50
+#if DOTNET5_2
         [FrameworkFail("https://github.com/dotnet/corefx/issues/1613")]
 #endif
         public void AdoNetEnumValue()
@@ -3608,7 +3608,7 @@ option (optimize for (@vals unKnoWn))";
             public int A { get; set; }
             public string B { get; set; }
         }
-#if !DNXCORE50
+#if !DOTNET5_2
         class WithInit : ISupportInitialize
         {
             public string Value { get; set; }
@@ -4441,7 +4441,7 @@ SELECT * FROM @ExplicitConstructors"
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -1 && delta.TotalMilliseconds <= 1);
         }
-#if DNXCORE50
+#if DOTNET5_2
         [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
 #endif
         public void Issue261_Decimals()
@@ -4453,7 +4453,7 @@ SELECT * FROM @ExplicitConstructors"
             var c = parameters.Get<Decimal>("c");
             c.IsEqualTo(11.884M);
         }
-#if DNXCORE50
+#if DOTNET5_2
         [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
 #endif
         public void Issue261_Decimals_ADONET_SetViaBaseClass()

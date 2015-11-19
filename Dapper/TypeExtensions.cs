@@ -8,7 +8,7 @@ namespace Dapper
     {
         public static bool IsValueType(this Type type)
         {
-#if DNXCORE50
+#if DOTNET5_2
             return type.GetTypeInfo().IsValueType;
 #else
             return type.IsValueType;
@@ -16,13 +16,13 @@ namespace Dapper
         }
         public static bool IsEnum(this Type type)
         {
-#if DNXCORE50
+#if DOTNET5_2
             return type.GetTypeInfo().IsEnum;
 #else
             return type.IsEnum;
 #endif
         }
-#if DNXCORE50
+#if DOTNET5_2
         public static TypeCode GetTypeCode(Type type)
         {
             if (type == null) return TypeCode.Empty;
@@ -63,7 +63,7 @@ namespace Dapper
 #endif
         public static MethodInfo GetPublicInstanceMethod(this Type type, string name, Type[] types)
         {
-#if DNXCORE50
+#if DOTNET5_2
             var method = type.GetMethod(name, types);
             return (method != null && method.IsPublic && !method.IsStatic) ? method : null;
 #else

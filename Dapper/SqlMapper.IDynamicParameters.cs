@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbCommand = System.Data.Common.DbCommand;
 #endif
 

@@ -71,7 +71,7 @@ namespace SqlMapper
 
         static void Main()
         {
-#if DNXCORE50
+#if DOTNET5_2
                 Console.WriteLine("CoreCLR");
 #else
                 Console.WriteLine(".NET: " + Environment.Version);
@@ -105,7 +105,7 @@ namespace SqlMapper
             RunPerformanceTests();
 #endif
 
-#if DNXCORE50
+#if DOTNET5_2
             Console.WriteLine("(end of tests; press return)");
             Console.ReadLine();
 #else
@@ -164,7 +164,7 @@ end
         }
         private static bool HasAttribute<T>(MemberInfo member) where T : Attribute
         {
-#if DNXCORE50
+#if DOTNET5_2
             return member.CustomAttributes.Any(x => x.AttributeType == typeof(T));
 #else
             return Attribute.IsDefined(member, typeof(T), true);

@@ -2,14 +2,14 @@
 using System.Data;
 using System.Collections;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbCommand = System.Data.Common.DbCommand;
 using IDataReader = System.Data.Common.DbDataReader;
 #endif
 
 namespace Dapper
 {
-#if DNXCORE50
+#if DOTNET5_2
     internal class WrappedReader : WrappedDataReader
     {
         private IDbCommand cmd;

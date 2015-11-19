@@ -4,7 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbDataParameter = System.Data.Common.DbParameter;
 #endif
 

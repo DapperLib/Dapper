@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbTransaction = System.Data.Common.DbTransaction;
 using IDbConnection = System.Data.Common.DbConnection;
 using IDbCommand = System.Data.Common.DbCommand;
