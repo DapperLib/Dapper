@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 
-#if DOTNET5_2
+#if COREFX
 using IDataReader = System.Data.Common.DbDataReader;
 #endif
 

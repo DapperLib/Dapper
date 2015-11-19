@@ -8,7 +8,7 @@ using System.Dynamic;
 using System.Linq;
 using Xunit;
 
-#if DOTNET5_2
+#if COREFX
 using IDbCommand = System.Data.Common.DbCommand;
 using IDbDataParameter = System.Data.Common.DbParameter;
 using IDbConnection = System.Data.Common.DbConnection;
@@ -970,12 +970,12 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
             ((int)rows.Field_1).IsEqualTo(2);
         }
 
-        [Fact]
+        [FactUnlessCaseSensitiveDatabase]
         public void Issue220_InParameterCanBeSpecifiedInAnyCase()
         {
             // note this might fail if your database server is case-sensitive
             connection.Query<int>("select * from (select 1 as Id) as X where Id in @ids", new { Ids = new[] { 1 } })
-                      .IsSequenceEqualTo(new[] { 1 });
+                          .IsSequenceEqualTo(new[] { 1 });
         }
 
         [Fact]

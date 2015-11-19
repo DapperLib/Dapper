@@ -1,6 +1,6 @@
 ﻿//#define POSTGRESQL // uncomment to run postgres tests
 
-#if DOTNET5_2
+#if COREFX
 using IDbCommand = System.Data.Common.DbCommand;
 using IDbDataParameter = System.Data.Common.DbParameter;
 using IDbConnection = System.Data.Common.DbConnection;
@@ -35,7 +35,7 @@ using Npgsql;
 #endif
 #endif
 
-#if DOTNET5_2
+#if COREFX
 namespace System.ComponentModel {
     public sealed class DescriptionAttribute : Attribute {
         public DescriptionAttribute(string description)
@@ -1239,7 +1239,7 @@ end");
         static string GetDescriptionFromAttribute(MemberInfo member)
         {
             if (member == null) return null;
-#if DOTNET5_2
+#if COREFX
             var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
             return (string) data?.ConstructorArguments.Single().Value;
 #else
@@ -1591,7 +1591,7 @@ end");
             Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
         }
 
-#if DOTNET5_2
+#if COREFX
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
@@ -1787,7 +1787,7 @@ end");
         
         private static CultureInfo ActiveCulture
         {
-#if DOTNET5_2
+#if COREFX
             get { return CultureInfo.CurrentCulture; }
             set { CultureInfo.CurrentCulture = value; }
 #else
@@ -1796,7 +1796,7 @@ end");
 #endif
         }
 
-        [Fact]
+        [FactUnlessCaseSensitiveDatabase]
         public void TestParameterInclusionNotSensitiveToCurrentCulture()
         {
             // note this might fail if your database server is case-sensitive
@@ -1851,10 +1851,7 @@ end");
             B = 1
         }
 
-#if DOTNET5_2
-        [FrameworkFail("https://github.com/dotnet/corefx/issues/1613")]
-#endif
-        [Fact]
+        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1613")]
         public void AdoNetEnumValue()
         {
             using (var cmd = connection.CreateCommand())
@@ -2061,7 +2058,7 @@ end");
             public int A { get; set; }
             public string B { get; set; }
         }
-#if !DOTNET5_2
+#if !COREFX
         class WithInit : ISupportInitialize
         {
             public string Value { get; set; }
@@ -2756,12 +2753,10 @@ end");
             var date = DateTime.UtcNow;
             var returned = connection.Query<DateTime>(sql, new { date }).Single();
             var delta = returned - date;
-            Assert.IsTrue(delta.TotalMilliseconds >= -1 && delta.TotalMilliseconds <= 1);
+            Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
         }
-#if DOTNET5_2
-        [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
-#endif
-        [Fact]
+
+        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1612")]
         public void Issue261_Decimals()
         {
             var parameters = new DynamicParameters();
@@ -2771,10 +2766,7 @@ end");
             var c = parameters.Get<Decimal>("c");
             c.IsEqualTo(11.884M);
         }
-#if DOTNET5_2
-        [FrameworkFail("https://github.com/dotnet/corefx/issues/1612")]
-#endif
-        [Fact]
+        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1612")]
         public void Issue261_Decimals_ADONET_SetViaBaseClass()
         {
             Issue261_Decimals_ADONET(true);
@@ -2833,7 +2825,7 @@ end");
             c.IsEqualTo(11.884M);
         }
 
-        [SkipTest]
+        [FactLongRunning]
         public void Issue263_Timeout()
         {
             var watch = Stopwatch.StartNew();

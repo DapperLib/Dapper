@@ -3,7 +3,7 @@
  Home page: http://code.google.com/p/dapper-dot-net/
  */
 
-#if DOTNET5_2
+#if COREFX
 using IDbDataParameter = System.Data.Common.DbParameter;
 using IDataParameter = System.Data.Common.DbParameter;
 using IDbTransaction = System.Data.Common.DbTransaction;
@@ -214,7 +214,7 @@ namespace Dapper
                           [typeof(TimeSpan?)] = DbType.Time,
                           [typeof(object)] = DbType.Object
                       };
-#if !DOTNET5_2
+#if !COREFX
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
             AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), false);
 #endif
@@ -226,7 +226,7 @@ namespace Dapper
         public static void ResetTypeHandlers()
         {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
-#if !DOTNET5_2
+#if !COREFX
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
             AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), true);
 #endif
@@ -321,7 +321,7 @@ namespace Dapper
         /// Get the DbType that maps to a given value
         /// </summary>
         [Obsolete("This method is for internal use only")]
-#if !DOTNET5_2
+#if !COREFX
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -360,7 +360,7 @@ namespace Dapper
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
-#if !DOTNET5_2
+#if !COREFX
             switch (type.FullName)
             {
                 case "Microsoft.SqlServer.Types.SqlGeography":
@@ -1401,7 +1401,7 @@ namespace Dapper
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-#if !DOTNET5_2
+#if !COREFX
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1417,7 +1417,7 @@ namespace Dapper
         /// <summary>
         /// Internal use only
         /// </summary>
-#if !DOTNET5_2
+#if !COREFX
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1434,7 +1434,7 @@ namespace Dapper
         /// <summary>
         /// Internal use only
         /// </summary>
-#if !DOTNET5_2
+#if !COREFX
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1458,7 +1458,7 @@ namespace Dapper
         /// <summary>
         /// Internal use only
         /// </summary>
-#if !DOTNET5_2
+#if !COREFX
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1637,7 +1637,7 @@ namespace Dapper
             {
                 switch (TypeExtensions.GetTypeCode(value.GetType()))
                 {
-#if !DOTNET5_2
+#if !COREFX
                     case TypeCode.DBNull:
                         return "null";
 #endif
@@ -2282,7 +2282,7 @@ namespace Dapper
         public static ITypeMap GetTypeMap(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-#if DOTNET5_2
+#if COREFX
             ITypeMap map = null;
 #else
             var map = (ITypeMap)_typeMaps[type];
@@ -2292,7 +2292,7 @@ namespace Dapper
                 lock (_typeMaps)
                 {   // double-checked; store this to avoid reflection next time we see this type
                     // since multiple queries commonly use the same domain-entity/DTO/view-model type
-#if DOTNET5_2
+#if COREFX
                     if (!_typeMaps.TryGetValue(type, out map)) map = null;
 #else
                     map = (ITypeMap)_typeMaps[type];
@@ -2309,7 +2309,7 @@ namespace Dapper
         }
 
         // use Hashtable to get free lockless reading
-#if DOTNET5_2
+#if COREFX
         private static readonly Dictionary<Type,ITypeMap> _typeMaps = new Dictionary<Type, ITypeMap>();
 #else
         private static readonly Hashtable _typeMaps = new Hashtable();
@@ -2382,7 +2382,7 @@ namespace Dapper
 
             ConstructorInfo specializedConstructor = null;
 
-#if !DOTNET5_2
+#if !COREFX
             bool supportInitialize = false;
 #endif
             if (type.IsValueType())
@@ -2427,7 +2427,7 @@ namespace Dapper
 
                     il.Emit(OpCodes.Newobj, explicitConstr);
                     il.Emit(OpCodes.Stloc_1);
-#if !DOTNET5_2
+#if !COREFX
                     supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                     if (supportInitialize)
                     {
@@ -2449,7 +2449,7 @@ namespace Dapper
                     {
                         il.Emit(OpCodes.Newobj, ctor);
                         il.Emit(OpCodes.Stloc_1);
-#if !DOTNET5_2
+#if !COREFX
                         supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                         if (supportInitialize)
                         {
@@ -2643,7 +2643,7 @@ namespace Dapper
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
-#if !DOTNET5_2
+#if !COREFX
                 if (supportInitialize)
                 {
                     il.Emit(OpCodes.Ldloc_1);
@@ -2914,7 +2914,7 @@ namespace Dapper
 
 
 
-#if !DOTNET5_2
+#if !COREFX
         /// <summary>
         /// Used to pass a DataTable as a TableValuedParameter
         /// </summary>

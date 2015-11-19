@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-#if DOTNET5_2
+#if COREFX
 using IDbCommand = System.Data.Common.DbCommand;
 #endif
 

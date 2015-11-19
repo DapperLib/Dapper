@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 
-#if DOTNET5_2
+#if COREFX
 using IDbConnection = System.Data.Common.DbConnection;
 #endif
 namespace Dapper

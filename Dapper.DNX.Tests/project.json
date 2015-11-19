@@ -12,14 +12,16 @@
     }
   },
   "commands": {
-    "Dapper.DNX.Tests": "Dapper.DNX.Tests",
+    "run": "Dapper.DNX.Tests",
     "test": "xunit.runner.dnx"
+  },
+  "compilationOptions": {
+    "warningsAsErrors": true
   },
   "frameworks": {
     "net45": {
       "compilationOptions": {
-        "define": [ "ASYNC" ],
-        "warningsAsErrors": true
+        "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
@@ -39,18 +41,18 @@
         "xunit": "1.9.2"
       }
     },
-    "dotnet5.2": {
+    "dotnet5.4": {
       "compilationOptions": {
-        "define": [ ],
-        "shouldDefine": [ "ASYNC" ]
+        "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-23225",
-        "System.Collections": "4.0.11-beta-23225",
-        "System.Console": "4.0.0-beta-23409",
-        "System.Data.SqlClient": "4.0.0-beta-23225",
-        "System.Linq": "4.0.1-beta-23225",
-        "System.Threading": "4.0.11-beta-23225",
+        "Microsoft.CSharp": "4.0.1-beta-23516",
+        "System.Runtime": "4.0.21-beta-23509",
+        "System.Collections": "4.0.11-beta-23516",
+        "System.Console": "4.0.0-beta-23516",
+        "System.Data.SqlClient": "4.0.0-beta-23516",
+        "System.Linq": "4.0.1-beta-23516",
+        "System.Threading": "4.0.11-beta-23516",
         "xunit": "2.1.0"
       }
     },
@@ -65,7 +67,7 @@
     },
     "dnxcore50": {
       "compilationOptions": {
-        "define": [ "DOTNET5_2", "ASYNC" ]
+        "define": [ "COREFX", "ASYNC" ]
       },
       "dependencies": {
         "xunit": "2.1.0",

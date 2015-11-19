@@ -1,13 +1,13 @@
 ﻿using System.Data;
 
-#if DOTNET5_2
+#if COREFX
 using IDbCommand = System.Data.Common.DbCommand;
 using IDataReader = System.Data.Common.DbDataReader;
 #endif
 
 namespace Dapper
 {
-#if DOTNET5_2
+#if COREFX
     /// <summary>
     /// Describes a reader that controls the lifetime of both a command and a reader,
     /// exposing the downstream command/reader as properties.

@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
 
-#if DOTNET5_2
+#if COREFX
 using IDbTransaction = System.Data.Common.DbTransaction;
 using IDbConnection = System.Data.Common.DbConnection;
 using IDbCommand = System.Data.Common.DbCommand;

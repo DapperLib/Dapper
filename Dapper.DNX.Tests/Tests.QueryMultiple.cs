@@ -4,7 +4,7 @@ using System.Data;
 using System.Linq;
 using Xunit;
 
-#if DOTNET5_2
+#if COREFX
 using IDbCommand = System.Data.Common.DbCommand;
 using IDbDataParameter = System.Data.Common.DbParameter;
 using IDbConnection = System.Data.Common.DbConnection;

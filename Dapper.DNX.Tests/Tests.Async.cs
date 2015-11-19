@@ -10,7 +10,7 @@ using System.Threading;
 using System.Data.SqlClient;
 using Xunit;
 
-#if DOTNET5_2
+#if COREFX
 using IDbConnection = System.Data.Common.DbConnection;
 #endif
 

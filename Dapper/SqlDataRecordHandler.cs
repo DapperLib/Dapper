@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 
-#if !DOTNET5_2
+#if !COREFX
 namespace Dapper
 {
     sealed class SqlDataRecordHandler : SqlMapper.ITypeHandler

@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
-#if DOTNET5_2
+#if COREFX
 using IDbDataParameter = System.Data.Common.DbParameter;
 using IDbCommand = System.Data.Common.DbCommand;
 using ApplicationException = System.InvalidOperationException;
@@ -401,7 +401,7 @@ namespace Dapper
 
             var cache = CachedOutputSetters<T>.Cache;
             Action<object, DynamicParameters> setter;
-#if DOTNET5_2
+#if COREFX
             lock (cache)
             {
                 if(!cache.TryGetValue(lookup, out setter)) setter = null;
