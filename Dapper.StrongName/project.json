@@ -33,6 +33,15 @@
         "System.Data": "4.0.0.0"
       }
     },
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
+      },
+      "compilationOptions": {
+        "define": [ "ASYNC" ]
+      }
+    },
     "dotnet5.4": {
       "compilationOptions": {
         "define": [ "ASYNC", "COREFX" ]
