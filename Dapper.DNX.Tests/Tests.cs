@@ -67,7 +67,7 @@ namespace SqlMapper
 {
     public partial class Tests : IDisposable
     {
-        SqlConnection connection;
+        readonly SqlConnection connection;
 
         public Tests()
         {

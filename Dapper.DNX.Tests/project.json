@@ -18,7 +18,7 @@
   "frameworks": {
     "net45": {
       "compilationOptions": {
-        "define": [ ],
+        "define": [ "ASYNC" ],
         "warningsAsErrors": true
       },
       "frameworkAssemblies": {
@@ -55,6 +55,9 @@
       }
     },
     "dnx451": {
+      "compilationOptions": {
+        "define": [ "ASYNC" ]
+      },
       "dependencies": {
         "xunit": "2.1.0",
         "xunit.runner.dnx": "2.1.0-rc1-build204"

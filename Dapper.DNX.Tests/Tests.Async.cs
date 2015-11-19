@@ -8,6 +8,7 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Data.SqlClient;
+using Xunit;
 
 #if DOTNET5_2
 using IDbConnection = System.Data.Common.DbConnection;
@@ -15,27 +16,33 @@ using IDbConnection = System.Data.Common.DbConnection;
 
 namespace DapperTests_NET45
 {
-    public class Tests
+    public class Tests : IDisposable
     {
-        public void TestBasicStringUsageAsync()
+        public void Dispose() { }
+
+        [Fact]
+        public async Task TestBasicStringUsageAsync()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                var query = connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
-                var arr = query.Result.ToArray();
-                arr.IsSequenceEqualTo(new[] { "abc", "def" });
-            }
-        }
-        public void TestBasicStringUsageAsyncNonBuffered()
-        {
-            using (var connection = Program.GetOpenConnection())
-            {
-                var query = connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags: CommandFlags.None));
-                var arr = query.Result.ToArray();
+                var query = await connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
+                var arr = query.ToArray();
                 arr.IsSequenceEqualTo(new[] { "abc", "def" });
             }
         }
 
+        [Fact]
+        public async Task TestBasicStringUsageAsyncNonBuffered()
+        {
+            using (var connection = Program.GetOpenConnection())
+            {
+                var query = await connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags: CommandFlags.None));
+                var arr = query.ToArray();
+                arr.IsSequenceEqualTo(new[] { "abc", "def" });
+            }
+        }
+
+        [Fact]
         public void TestLongOperationWithCancellation()
         {
             using (var connection = Program.GetClosedConnection())
@@ -56,45 +63,50 @@ namespace DapperTests_NET45
             }
         }
 
-        public void TestBasicStringUsageClosedAsync()
+        [Fact]
+        public async Task TestBasicStringUsageClosedAsync()
         {
             using (var connection = Program.GetClosedConnection())
             {
-                var query = connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
-                var arr = query.Result.ToArray();
+                var query = await connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
+                var arr = query.ToArray();
                 arr.IsSequenceEqualTo(new[] { "abc", "def" });
             }
         }
 
-        public void TestQueryDynamicAsync()
+        [Fact]
+        public async Task TestQueryDynamicAsync()
         {
             using (var connection = Program.GetClosedConnection())
             {
-                var row = connection.QueryAsync("select 'abc' as [Value]").Result.Single();
+                var row = (await connection.QueryAsync("select 'abc' as [Value]")).Single();
                 string value = row.Value;
                 value.IsEqualTo("abc");
             }
         }
 
-        public void TestClassWithStringUsageAsync()
+        [Fact]
+        public async Task TestClassWithStringUsageAsync()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                var query = connection.QueryAsync<BasicType>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
-                var arr = query.Result.ToArray();
+                var query = await connection.QueryAsync<BasicType>("select 'abc' as [Value] union all select @txt", new { txt = "def" });
+                var arr = query.ToArray();
                 arr.Select(x => x.Value).IsSequenceEqualTo(new[] { "abc", "def" });
             }
         }
 
-        public void TestExecuteAsync()
+        [Fact]
+        public async Task TestExecuteAsync()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                var query = connection.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
-                var val = query.Result;
+                var val = await connection.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
                 val.Equals(1);
             }
         }
+
+        [Fact]
         public void TestExecuteClosedConnAsync()
         {
             using (var connection = Program.GetClosedConnection())
@@ -105,18 +117,19 @@ namespace DapperTests_NET45
             }
         }
 
-        public void TestMultiMapWithSplitAsync()
+        [Fact]
+        public async Task TestMultiMapWithSplitAsync()
         {
-            var sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+            const string sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
             using (var connection = Program.GetOpenConnection())
             {
-                var productQuery = connection.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
+                var productQuery = await connection.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
                 {
                     prod.Category = cat;
                     return prod;
                 });
 
-                var product = productQuery.Result.First();
+                var product = productQuery.First();
                 // assertions
                 product.Id.IsEqualTo(1);
                 product.Name.IsEqualTo("abc");
@@ -125,16 +138,18 @@ namespace DapperTests_NET45
             }
         }
 
-        public void TestMultiMapArbitraryWithSplitAsync() {
-            var sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+        [Fact]
+        public async Task TestMultiMapArbitraryWithSplitAsync()
+        {
+            const string sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
             using (var connection = Program.GetOpenConnection()) {
-                var productQuery = connection.QueryAsync<Product>(sql, new[] { typeof(Product), typeof(Category) }, (objects) => {
+                var productQuery = await connection.QueryAsync<Product>(sql, new[] { typeof(Product), typeof(Category) }, (objects) => {
                     var prod = (Product)objects[0];
                     prod.Category = (Category)objects[1];
                     return prod;
                 });
 
-                var product = productQuery.Result.First();
+                var product = productQuery.First();
                 // assertions
                 product.Id.IsEqualTo(1);
                 product.Name.IsEqualTo("abc");
@@ -143,18 +158,19 @@ namespace DapperTests_NET45
             }
         }
 
-        public void TestMultiMapWithSplitClosedConnAsync()
+        [Fact]
+        public async Task TestMultiMapWithSplitClosedConnAsync()
         {
             var sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
             using (var connection = Program.GetClosedConnection())
             {
-                var productQuery = connection.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
+                var productQuery = await connection.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
                 {
                     prod.Category = cat;
                     return prod;
                 });
 
-                var product = productQuery.Result.First();
+                var product = productQuery.First();
                 // assertions
                 product.Id.IsEqualTo(1);
                 product.Name.IsEqualTo("abc");
@@ -163,35 +179,40 @@ namespace DapperTests_NET45
             }
         }
 
-        public void TestMultiAsync()
+        [Fact]
+        public async Task TestMultiAsync()
         {
             using (var conn = Program.GetOpenConnection())
             {
-                using (Dapper.SqlMapper.GridReader multi = conn.QueryMultipleAsync("select 1; select 2").Result)
+                using (Dapper.SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2"))
                 {
                     multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
                     multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
                 }
             }
         }
-        public void TestMultiClosedConnAsync()
+
+        [Fact]
+        public async Task TestMultiClosedConnAsync()
         {
             using (var conn = Program.GetClosedConnection())
             {
-                using (Dapper.SqlMapper.GridReader multi = conn.QueryMultipleAsync("select 1; select 2").Result)
+                using (Dapper.SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2"))
                 {
                     multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
                     multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
                 }
             }
         }
+
 #if EXTERNALS
-        public void ExecuteReaderOpenAsync()
+        [Fact]
+        public async Task ExecuteReaderOpenAsync()
         {
             using (var conn = Program.GetOpenConnection())
             {
                 var dt = new DataTable();
-                dt.Load(conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").Result);
+                dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]"));
                 dt.Columns.Count.IsEqualTo(2);
                 dt.Columns[0].ColumnName.IsEqualTo("three");
                 dt.Columns[1].ColumnName.IsEqualTo("four");
@@ -200,12 +221,14 @@ namespace DapperTests_NET45
                 ((int)dt.Rows[0][1]).IsEqualTo(4);
             }
         }
-        public void ExecuteReaderClosedAsync()
+        
+        [Fact]
+        public async Task ExecuteReaderClosedAsync()
         {
             using (var conn = Program.GetClosedConnection())
             {
                 var dt = new DataTable();
-                dt.Load(conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").Result);
+                dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]"));
                 dt.Columns.Count.IsEqualTo(2);
                 dt.Columns[0].ColumnName.IsEqualTo("three");
                 dt.Columns[1].ColumnName.IsEqualTo("four");
@@ -216,89 +239,96 @@ namespace DapperTests_NET45
         }
 #endif
 
-        public void LiteralReplacementOpen()
+        [Fact]
+        public async Task LiteralReplacementOpen()
         {
-            using (var conn = Program.GetOpenConnection()) LiteralReplacement(conn);
+            using (var conn = Program.GetOpenConnection()) await LiteralReplacement(conn);
         }
-        public void LiteralReplacementClosed()
+        [Fact]
+        public async Task LiteralReplacementClosed()
         {
-            using (var conn = Program.GetClosedConnection()) LiteralReplacement(conn);
+            using (var conn = Program.GetClosedConnection()) await LiteralReplacement(conn);
         }
-        private void LiteralReplacement(IDbConnection connection)
+        private async Task LiteralReplacement(IDbConnection connection)
         {
-            try { connection.ExecuteAsync("drop table literal1").Wait(); } catch { }
-            connection.ExecuteAsync("create table literal1 (id int not null, foo int not null)").Wait();
-            connection.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", new { id = 123, foo = 456 }).Wait();
+            try
+            {
+                await connection.ExecuteAsync("drop table literal1");
+            } catch { }
+            await connection.ExecuteAsync("create table literal1 (id int not null, foo int not null)");
+            await connection.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", new { id = 123, foo = 456 });
             var rows = new[] { new { id = 1, foo = 2 }, new { id = 3, foo = 4 } };
-            connection.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", rows).Wait();
-            var count = connection.QueryAsync<int>("select count(1) from literal1 where id={=foo}", new { foo = 123 }).Result.Single();
+            await connection.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", rows);
+            var count = (await connection.QueryAsync<int>("select count(1) from literal1 where id={=foo}", new { foo = 123 })).Single();
             count.IsEqualTo(1);
-            int sum = connection.QueryAsync<int>("select sum(id) + sum(foo) from literal1").Result.Single();
+            int sum = (await connection.QueryAsync<int>("select sum(id) + sum(foo) from literal1")).Single();
             sum.IsEqualTo(123 + 456 + 1 + 2 + 3 + 4);
         }
 
-        public void LiteralReplacementDynamicOpen()
+        [Fact]
+        public async Task LiteralReplacementDynamicOpen()
         {
-            using (var conn = Program.GetOpenConnection()) LiteralReplacementDynamic(conn);
+            using (var conn = Program.GetOpenConnection()) await LiteralReplacementDynamic(conn);
         }
-        public void LiteralReplacementDynamicClosed()
+        [Fact]
+        public async Task LiteralReplacementDynamicClosed()
         {
-            using (var conn = Program.GetClosedConnection()) LiteralReplacementDynamic(conn);
+            using (var conn = Program.GetClosedConnection()) await LiteralReplacementDynamic(conn);
         }
-        private void LiteralReplacementDynamic(IDbConnection connection)
+        private async Task LiteralReplacementDynamic(IDbConnection connection)
         {
             var args = new DynamicParameters();
             args.Add("id", 123);
-            try { connection.ExecuteAsync("drop table literal2").Wait(); } catch { }
-            connection.ExecuteAsync("create table literal2 (id int not null)").Wait();
-            connection.ExecuteAsync("insert literal2 (id) values ({=id})", args).Wait();
+            try { await connection.ExecuteAsync("drop table literal2"); } catch { }
+            await connection.ExecuteAsync("create table literal2 (id int not null)");
+            await connection.ExecuteAsync("insert literal2 (id) values ({=id})", args);
 
             args = new DynamicParameters();
             args.Add("foo", 123);
-            var count = connection.QueryAsync<int>("select count(1) from literal2 where id={=foo}", args).Result.Single();
+            var count = (await connection.QueryAsync<int>("select count(1) from literal2 where id={=foo}", args)).Single();
             count.IsEqualTo(1);
         }
 
-        public void LiteralIn()
+        [Fact]
+        public async Task LiteralIn()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                connection.ExecuteAsync("create table #literalin(id int not null);").Wait();
-                connection.ExecuteAsync("insert #literalin (id) values (@id)", new[] {
+                await connection.ExecuteAsync("create table #literalin(id int not null);");
+                await connection.ExecuteAsync("insert #literalin (id) values (@id)", new[] {
                     new { id = 1 },
                     new { id = 2 },
                     new { id = 3 },
-                }).Wait();
-                var count = connection.QueryAsync<int>("select count(1) from #literalin where id in {=ids}",
-                    new { ids = new[] { 1, 3, 4 } }).Result.Single();
+                });
+                var count = (await connection.QueryAsync<int>("select count(1) from #literalin where id in {=ids}",
+                    new { ids = new[] { 1, 3, 4 } })).Single();
                 count.IsEqualTo(2);
             }
         }
 
-
-        public void RunSequentialVersusParallelAsync()
+        [Fact]
+        public async Task RunSequentialVersusParallelAsync()
         {
-
             var ids = Enumerable.Range(1, 20000).Select(id => new { id }).ToArray();
             using (var connection = Program.GetOpenConnection(true))
             {
-                connection.ExecuteAsync(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None)).Wait();
+                await connection.ExecuteAsync(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None));
 
                 var watch = Stopwatch.StartNew();
-                connection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.None)).Wait();
+                await connection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.None));
                 watch.Stop();
-                System.Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
+                Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
 
                 watch = Stopwatch.StartNew();
-                connection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined)).Wait();
+                await connection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined));
                 watch.Stop();
-                System.Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
+                Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
             }
         }
 
+        [Fact]
         public void RunSequentialVersusParallelSync()
         {
-
             var ids = Enumerable.Range(1, 20000).Select(id => new { id }).ToArray();
             using (var connection = Program.GetOpenConnection(true))
             {
@@ -307,15 +337,16 @@ namespace DapperTests_NET45
                 var watch = Stopwatch.StartNew();
                 connection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.None));
                 watch.Stop();
-                System.Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
+                Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
 
                 watch = Stopwatch.StartNew();
                 connection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined));
                 watch.Stop();
-                System.Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
+                Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
             }
         }
 
+        [Fact]
         public void AssertNoCacheWorksForQueryMultiple()
         {
             int a = 123, b = 456;
@@ -340,8 +371,6 @@ namespace DapperTests_NET45
             after.IsEqualTo(0);
             c.IsEqualTo(123);
             d.IsEqualTo(456);
-
-
         }
         class Product
         {
@@ -355,20 +384,20 @@ namespace DapperTests_NET45
             public string Name { get; set; }
             public string Description { get; set; }
         }
-
+ 
         class BasicType
         {
             public string Value { get; set; }
         }
 
-
-        public void TypeBasedViaType()
+        [Fact]
+        public async Task TypeBasedViaType()
         {
             Type type = GetSomeType();
 
             using (var connection = Program.GetOpenConnection(true))
             {
-                dynamic actual = connection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).Result.FirstOrDefault();
+                dynamic actual = (await connection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" })).FirstOrDefault();
                 ((object)actual).GetType().IsEqualTo(type);
                 int a = actual.A;
                 string b = actual.B;
@@ -387,37 +416,40 @@ namespace DapperTests_NET45
             public string B { get; set; }
         }
 
-        public void Issue22_ExecuteScalar()
+        [Fact]
+        public async Task Issue22_ExecuteScalar()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                int i = connection.ExecuteScalarAsync<int>("select 123").Result;
+                int i = await connection.ExecuteScalarAsync<int>("select 123");
                 i.IsEqualTo(123);
 
-                i = connection.ExecuteScalarAsync<int>("select cast(123 as bigint)").Result;
+                i = await connection.ExecuteScalarAsync<int>("select cast(123 as bigint)");
                 i.IsEqualTo(123);
 
-                long j = connection.ExecuteScalarAsync<long>("select 123").Result;
+                long j = await connection.ExecuteScalarAsync<long>("select 123");
                 j.IsEqualTo(123L);
 
-                j = connection.ExecuteScalarAsync<long>("select cast(123 as bigint)").Result;
+                j = await connection.ExecuteScalarAsync<long>("select cast(123 as bigint)");
                 j.IsEqualTo(123L);
 
-                int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
+                int? k = await connection.ExecuteScalarAsync<int?>("select @i", new { i = default(int?) });
                 k.IsNull();
             }
         }
 
-        public void Issue346_QueryAsyncConvert()
+        [Fact]
+        public async Task Issue346_QueryAsyncConvert()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                int i = connection.QueryAsync<int>("Select Cast(123 as bigint)").Result.First();
+                int i = (await connection.QueryAsync<int>("Select Cast(123 as bigint)")).First();
                 i.IsEqualTo(123);
             }
         }
 
-        public void TestSupportForDynamicParametersOutputExpressions()
+        [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions()
         {
             using (var connection = Program.GetOpenConnection())
             {
@@ -430,12 +462,12 @@ namespace DapperTests_NET45
                 p.Output(bob, b => b.Address.Name);
                 p.Output(bob, b => b.Address.PersonId);
 
-                connection.ExecuteAsync(@"
+                await connection.ExecuteAsync(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
-SET @AddressPersonId = @PersonId", p).Wait();
+SET @AddressPersonId = @PersonId", p);
 
                 bob.Occupation.IsEqualTo("grillmaster");
                 bob.PersonId.IsEqualTo(2);
@@ -444,7 +476,9 @@ SET @AddressPersonId = @PersonId", p).Wait();
                 bob.Address.PersonId.IsEqualTo(2);
             }
         }
-        public void TestSupportForDynamicParametersOutputExpressions_Scalar()
+
+        [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions_Scalar()
         {
             using (var connection = Program.GetOpenConnection())
             {
@@ -457,13 +491,13 @@ SET @AddressPersonId = @PersonId", p).Wait();
                 p.Output(bob, b => b.Address.Name);
                 p.Output(bob, b => b.Address.PersonId);
 
-                var result = (int)connection.ExecuteScalarAsync(@"
+                var result = (int)(await connection.ExecuteScalarAsync(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
-select 42", p).Result;
+select 42", p));
 
                 bob.Occupation.IsEqualTo("grillmaster");
                 bob.PersonId.IsEqualTo(2);
@@ -473,7 +507,9 @@ select 42", p).Result;
                 result.IsEqualTo(42);
             }
         }
-        public void TestSupportForDynamicParametersOutputExpressions_Query_Default()
+
+        [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions_Query_Default()
         {
             using (var connection = Program.GetOpenConnection())
             {
@@ -486,13 +522,13 @@ select 42", p).Result;
                 p.Output(bob, b => b.Address.Name);
                 p.Output(bob, b => b.Address.PersonId);
 
-                var result = connection.QueryAsync<int>(@"
+                var result = (await connection.QueryAsync<int>(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
-select 42", p).Result.Single();
+select 42", p)).Single();
 
                 bob.Occupation.IsEqualTo("grillmaster");
                 bob.PersonId.IsEqualTo(2);
@@ -502,7 +538,9 @@ select 42", p).Result.Single();
                 result.IsEqualTo(42);
             }
         }
-        public void TestSupportForDynamicParametersOutputExpressions_Query_Buffered()
+
+        [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions_Query_Buffered()
         {
             using (var connection = Program.GetOpenConnection())
             {
@@ -515,13 +553,13 @@ select 42", p).Result.Single();
                 p.Output(bob, b => b.Address.Name);
                 p.Output(bob, b => b.Address.PersonId);
 
-                var result = connection.QueryAsync<int>(new CommandDefinition(@"
+                var result = (await connection.QueryAsync<int>(new CommandDefinition(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
-select 42", p, flags: CommandFlags.Buffered)).Result.Single();
+select 42", p, flags: CommandFlags.Buffered))).Single();
 
                 bob.Occupation.IsEqualTo("grillmaster");
                 bob.PersonId.IsEqualTo(2);
@@ -531,7 +569,9 @@ select 42", p, flags: CommandFlags.Buffered)).Result.Single();
                 result.IsEqualTo(42);
             }
         }
-        public void TestSupportForDynamicParametersOutputExpressions_Query_NonBuffered()
+
+        [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions_Query_NonBuffered()
         {
             using (var connection = Program.GetOpenConnection())
             {
@@ -544,13 +584,13 @@ select 42", p, flags: CommandFlags.Buffered)).Result.Single();
                 p.Output(bob, b => b.Address.Name);
                 p.Output(bob, b => b.Address.PersonId);
 
-                var result = connection.QueryAsync<int>(new CommandDefinition(@"
+                var result = (await connection.QueryAsync<int>(new CommandDefinition(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
-select 42", p, flags: CommandFlags.None)).Result.Single();
+select 42", p, flags: CommandFlags.None))).Single();
 
                 bob.Occupation.IsEqualTo("grillmaster");
                 bob.PersonId.IsEqualTo(2);
@@ -560,7 +600,9 @@ select 42", p, flags: CommandFlags.None)).Result.Single();
                 result.IsEqualTo(42);
             }
         }
-        public void TestSupportForDynamicParametersOutputExpressions_QueryMultiple()
+
+        [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions_QueryMultiple()
         {
             using (var connection = Program.GetOpenConnection())
             {
@@ -574,14 +616,14 @@ select 42", p, flags: CommandFlags.None)).Result.Single();
                 p.Output(bob, b => b.Address.PersonId);
 
                 int x, y;
-                using (var multi = connection.QueryMultipleAsync(@"
+                using (var multi = await connection.QueryMultipleAsync(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 select 42
 select 17
-SET @AddressPersonId = @PersonId", p).Result)
+SET @AddressPersonId = @PersonId", p))
                 {
                     x = multi.ReadAsync<int>().Result.Single();
                     y = multi.ReadAsync<int>().Result.Single();
@@ -597,27 +639,28 @@ SET @AddressPersonId = @PersonId", p).Result)
             }
         }
 
-        public void TestSubsequentQueriesSuccess()
+        [Fact]
+        public async Task TestSubsequentQueriesSuccess()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                var data0 = connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0").Result.ToList();
-                data0.Count().IsEqualTo(0);
+                var data0 = (await connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0")).ToList();
+                data0.Count.IsEqualTo(0);
 
-                var data1 = connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).Result.ToList();
-                data1.Count().IsEqualTo(0);
+                var data1 = (await connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered))).ToList();
+                data1.Count.IsEqualTo(0);
 
-                var data2 = connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).Result.ToList();
-                data2.Count().IsEqualTo(0);
+                var data2 = (await connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None))).ToList();
+                data2.Count.IsEqualTo(0);
 
-                data0 = connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0").Result.ToList();
-                data0.Count().IsEqualTo(0);
+                data0 = (await connection.QueryAsync<Foo0>("select 1 as [Id] where 1 = 0")).ToList();
+                data0.Count.IsEqualTo(0);
 
-                data1 = connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).Result.ToList();
-                data1.Count().IsEqualTo(0);
+                data1 = (await connection.QueryAsync<Foo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered))).ToList();
+                data1.Count.IsEqualTo(0);
 
-                data2 = connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).Result.ToList();
-                data2.Count().IsEqualTo(0);
+                data2 = (await connection.QueryAsync<Foo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None))).ToList();
+                data2.Count.IsEqualTo(0);
 
             }
         }
@@ -659,10 +702,11 @@ SET @AddressPersonId = @PersonId", p).Result)
             public string Name { get; set; }
         }
 
-        public void TestMultiMapArbitraryMaps()
+        [Fact]
+        public async Task TestMultiMapArbitraryMaps()
         {
             // please excuse the trite example, but it is easier to follow than a more real-world one
-            var createSql = @"
+            const string createSql = @"
                 create table #ReviewBoards (Id int, Name varchar(20), User1Id int, User2Id int, User3Id int, User4Id int, User5Id int, User6Id int, User7Id int, User8Id int, User9Id int)
                 create table #Users (Id int, Name varchar(20))
 
@@ -680,10 +724,10 @@ SET @AddressPersonId = @PersonId", p).Result)
 ";
             using (var connection = Program.GetOpenConnection())
             {
-                connection.ExecuteAsync(createSql).Wait();
+                await connection.ExecuteAsync(createSql);
                 try
                 {
-                    var sql = @"
+                    const string sql = @"
                     select 
                         rb.Id, rb.Name,
                         u1.*, u2.*, u3.*, u4.*, u5.*, u6.*, u7.*, u8.*, u9.*
@@ -716,7 +760,7 @@ SET @AddressPersonId = @PersonId", p).Result)
                         return board;
                     };
 
-                    var data = connection.QueryAsync<ReviewBoard>(sql, types, mapper).Result.ToList();
+                    var data = (await connection.QueryAsync<ReviewBoard>(sql, types, mapper)).ToList();
 
                     var p = data.First();
                     p.Id.IsEqualTo(1);
@@ -748,33 +792,35 @@ SET @AddressPersonId = @PersonId", p).Result)
             }
         }
 
-        public void Issue157_ClosedReaderAsync()
+        [Fact]
+        public async Task Issue157_ClosedReaderAsync()
         {
             using(var conn = Program.GetOpenConnection())
             {
                 var args = new { x = 42 };
                 const string sql = @"select 123 as [A], 'abc' as [B] where @x=42";
-                var row = conn.QueryAsync<SomeType>(new CommandDefinition(
-                    sql, args, flags:CommandFlags.None)).Result.Single();
+                var row = (await conn.QueryAsync<SomeType>(new CommandDefinition(
+                    sql, args, flags:CommandFlags.None))).Single();
                 row.IsNotNull();
                 row.A.IsEqualTo(123);
                 row.B.IsEqualTo("abc");
 
                 args = new { x = 5 };
-                conn.QueryAsync<SomeType>(new CommandDefinition(
-                    sql, args, flags: CommandFlags.None)).Result.Any().IsFalse();
+                (await conn.QueryAsync<SomeType>(new CommandDefinition(
+                    sql, args, flags: CommandFlags.None))).Any().IsFalse();
             }
         }
 
-        public void TestAtEscaping()
+        [Fact]
+        public async Task TestAtEscaping()
         {
             using (var connection = Program.GetOpenConnection())
             {
-                var id = connection.QueryAsync<int>(@"
+                var id = (await connection.QueryAsync<int>(@"
                     declare @@Name int
                     select @@Name = @Id+1
                     select @@Name
-                    ", new Product { Id = 1 }).Result.Single();
+                    ", new Product { Id = 1 })).Single();
                 id.IsEqualTo(2);
 
             }
