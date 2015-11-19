@@ -11,26 +11,32 @@
       "target": "project"
     }
   },
-
   "commands": {
-    "Dapper.DNX.Tests": "Dapper.DNX.Tests"
+    "Dapper.DNX.Tests": "Dapper.DNX.Tests",
+    "test": "xunit.runner.dnx"
   },
-
   "frameworks": {
     "net45": {
       "compilationOptions": {
-        "define": [ ],
+        "define": [ "ASYNC" ],
         "warningsAsErrors": true
       },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
+        "System.Runtime": "4.0.0.0",
         "System.Xml": "4.0.0.0"
+      },
+      "dependencies": {
+        "xunit": "2.1.0"
       }
     },
     "net40": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
+      },
+      "dependencies": {
+        "xunit": "1.9.2"
       }
     },
     "dotnet5.2": {
@@ -44,7 +50,26 @@
         "System.Console": "4.0.0-beta-23409",
         "System.Data.SqlClient": "4.0.0-beta-23225",
         "System.Linq": "4.0.1-beta-23225",
-        "System.Threading": "4.0.11-beta-23225"
+        "System.Threading": "4.0.11-beta-23225",
+        "xunit": "2.1.0"
+      }
+    },
+    "dnx451": {
+      "compilationOptions": {
+        "define": [ "ASYNC" ]
+      },
+      "dependencies": {
+        "xunit": "2.1.0",
+        "xunit.runner.dnx": "2.1.0-rc1-build204"
+      }
+    },
+    "dnxcore50": {
+      "compilationOptions": {
+        "define": [ "DOTNET5_2", "ASYNC" ]
+      },
+      "dependencies": {
+        "xunit": "2.1.0",
+        "xunit.runner.dnx": "2.1.0-rc1-build204"
       }
     }
   }

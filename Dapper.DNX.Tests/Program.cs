@@ -171,7 +171,7 @@ end
 #endif
         }
 
-        private static void RunTests<T>(ref int fail, ref int skip, ref int pass, ref int frameworkFail, List<string> failNames) where T : class, new()
+        private static void RunTests<T>(ref int fail, ref int skip, ref int pass, ref int frameworkFail, List<string> failNames) where T : class, IDisposable, new()
         {
             var tester = new T();
             using (tester as IDisposable)
@@ -193,7 +193,10 @@ end
                     Console.Write("Running " + method.Name);
                     try
                     {
-                        method.Invoke(tester, null);
+                        using (var t = new T())
+                        {
+                            method.Invoke(t, null);
+                        }
                         if (expectFrameworkFail)
                         {
                             Console.WriteLine(" - was expected to framework-fail, but didn't");

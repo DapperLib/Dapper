@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-
-#if DOTNET5_2
-using ApplicationException = System.InvalidOperationException;
-#endif
 
 namespace SqlMapper
 {
@@ -13,54 +8,36 @@ namespace SqlMapper
 
         public static void IsEqualTo<T>(this T obj, T other)
         {
-            if (!Equals(obj, other))
-            {
-                throw new ApplicationException($"{obj} should be equals to {other}");
-            }
+            Xunit.Assert.Equal(obj, other);
         }
 
         public static void IsSequenceEqualTo<T>(this IEnumerable<T> obj, IEnumerable<T> other)
         {
-            if (!(obj ?? new T[0]).SequenceEqual(other ?? new T[0]))
-            {
-                throw new ApplicationException($"{obj} should be equals to {other}");
-            }
+            Xunit.Assert.Equal(obj ?? new T[0], other);
         }
 
         public static void Fail()
         {
-            throw new ApplicationException("Expectation failed");
+            Xunit.Assert.True(false, "Expectation failed");
         }
         public static void IsFalse(this bool b)
         {
-            if (b)
-            {
-                throw new ApplicationException("Expected false");
-            }
+            Xunit.Assert.False(b);
         }
 
         public static void IsTrue(this bool b)
         {
-            if (!b)
-            {
-                throw new ApplicationException("Expected true");
-            }
+            Xunit.Assert.True(b);
         }
 
         public static void IsNull(this object obj)
         {
-            if (obj != null)
-            {
-                throw new ApplicationException("Expected null");
-            }
+            Xunit.Assert.Null(obj);
         }
 
         public static void IsNotNull(this object obj)
         {
-            if (obj == null)
-            {
-                throw new ApplicationException("Expected not null");
-            }
+            Xunit.Assert.NotNull(obj);
         }
     }
 }
