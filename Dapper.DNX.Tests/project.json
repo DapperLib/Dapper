@@ -47,13 +47,13 @@
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-23516",
-        "System.Runtime": "4.0.21-beta-23509",
-        "System.Collections": "4.0.11-beta-23516",
-        "System.Console": "4.0.0-beta-23516",
-        "System.Data.SqlClient": "4.0.0-beta-23516",
-        "System.Linq": "4.0.1-beta-23516",
-        "System.Threading": "4.0.11-beta-23516",
+        "Microsoft.CSharp": "4.0.1-*",
+        "System.Runtime": "4.0.21-*",
+        "System.Collections": "4.0.11-*",
+        "System.Console": "4.0.0-*",
+        "System.Data.SqlClient": "4.0.0-*",
+        "System.Linq": "4.0.1-*",
+        "System.Threading": "4.0.11-*",
         "xunit": "2.1.0"
       }
     },
