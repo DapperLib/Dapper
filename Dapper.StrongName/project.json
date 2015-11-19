@@ -5,7 +5,7 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "summary": "A high performance Micro-ORM",
   "description": "A high performance Micro-ORM supporting Sql Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-  "version": "1.50-beta2",
+  "version": "1.50-beta3",
   "title": "Dapper dot net (strong named)",
   "tags": [ "orm", "sql", "micro-orm" ],
   "copyright": "2015 Stack Exchange Inc",
