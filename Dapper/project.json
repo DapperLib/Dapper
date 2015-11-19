@@ -40,7 +40,7 @@
         "define": [ "ASYNC" ]
       }
     },
-    "dotnet5.2": {
+    "dotnet5.4": {
       "compilationOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
