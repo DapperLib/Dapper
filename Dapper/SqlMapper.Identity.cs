@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbConnection = System.Data.Common.DbConnection;
 #endif
 

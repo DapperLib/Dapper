@@ -2,7 +2,7 @@
 using System.Data;
 using System.Threading;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbCommand = System.Data.Common.DbCommand;
 using IDataReader = System.Data.Common.DbDataReader;
 #endif

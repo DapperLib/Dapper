@@ -5,7 +5,7 @@ namespace Dapper
 {
     partial class SqlMapper
     {
-#if !DNXCORE50
+#if !DOTNET5_2
         /// <summary>
         /// A type handler for data-types that are supported by the underlying provider, but which need
         /// a well-known UdtTypeName to be specified

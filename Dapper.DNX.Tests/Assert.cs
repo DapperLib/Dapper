@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-#if DNXCORE50
+#if DOTNET5_2
 using ApplicationException = System.InvalidOperationException;
 #endif
 

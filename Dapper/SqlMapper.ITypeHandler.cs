@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbDataParameter = System.Data.Common.DbParameter;
 #endif
 namespace Dapper

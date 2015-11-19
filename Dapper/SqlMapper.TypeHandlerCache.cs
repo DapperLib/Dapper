@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Data;
 
-#if DNXCORE50
+#if DOTNET5_2
 using IDbDataParameter = System.Data.Common.DbParameter;
 #endif
 
@@ -14,7 +14,7 @@ namespace Dapper
         /// Not intended for direct usage
         /// </summary>
         [Obsolete("Not intended for direct usage", false)]
-#if !DNXCORE50
+#if !DOTNET5_2
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
