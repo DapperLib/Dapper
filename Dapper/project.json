@@ -8,6 +8,7 @@
   "version": "1.50-beta2",
   "title": "Dapper dot net",
   "tags": [ "orm", "sql", "micro-orm" ],
+  "copyright": "2015 Stack Exchange Inc",
   "dependencies": {
   },
   "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",

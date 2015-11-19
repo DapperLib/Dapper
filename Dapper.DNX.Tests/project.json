@@ -3,6 +3,7 @@
   "description": "Dapper.DNX.Tests Console Application",
   "authors": [ "marc.gravell" ],
   "tags": [ "" ],
+  "copyright": "2015 Stack Exchange Inc",
   "projectUrl": "",
   "licenseUrl": "",
   "dependencies": {
