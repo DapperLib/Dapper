@@ -31,18 +31,18 @@ namespace SqlMapper
         public int? Counter7 { get; set; }
         public int? Counter8 { get; set; }
         public int? Counter9 { get; set; }
-
     }
 
     class Program
     {
-
         public const string ConnectionString = "Data Source=.;Initial Catalog=tempdb;Integrated Security=True",
+            AppveyorConnectionStrng = @"Server=(local)\SQL2014;Database=master;User ID=sa;Password=Password12!",
             OleDbConnectionString = "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
         public static SqlConnection GetOpenConnection(bool mars = false)
         {
-            var cs = ConnectionString;
+            var isAppveyor = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("Appveyor"));
+            var cs = isAppveyor ? AppveyorConnectionStrng : ConnectionString;
             if (mars)
             {
                 var scsb = new SqlConnectionStringBuilder(cs)
