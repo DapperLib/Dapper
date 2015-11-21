@@ -9,6 +9,9 @@ namespace SqlServerTypes
     /// </summary>
     internal class Utilities
     {
+        private static object _nativeLoadLock = new object();
+        private static bool _nativeAssembliesLoaded = false;
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr LoadLibrary(string libname);
 
@@ -21,12 +24,21 @@ namespace SqlServerTypes
         /// </param>
         public static void LoadNativeAssemblies(string rootApplicationPath)
         {
-            var nativeBinaryPath = IntPtr.Size > 4
-                ? Path.Combine(rootApplicationPath, @"SqlServerTypes\x64\")
-                : Path.Combine(rootApplicationPath, @"SqlServerTypes\x86\");
+            if (_nativeAssembliesLoaded)
+                return;
+            lock (_nativeLoadLock)
+            {
+                if (!_nativeAssembliesLoaded)
+                {
+                    var nativeBinaryPath = IntPtr.Size > 4
+                        ? Path.Combine(rootApplicationPath, @"SqlServerTypes\x64\")
+                        : Path.Combine(rootApplicationPath, @"SqlServerTypes\x86\");
 
-            LoadNativeAssembly(nativeBinaryPath, "msvcr100.dll");
-            LoadNativeAssembly(nativeBinaryPath, "SqlServerSpatial110.dll");
+                    LoadNativeAssembly(nativeBinaryPath, "msvcr100.dll");
+                    LoadNativeAssembly(nativeBinaryPath, "SqlServerSpatial110.dll");
+                    _nativeAssembliesLoaded = true;
+                }
+            }
         }
 
         private static void LoadNativeAssembly(string nativeBinaryPath, string assemblyName)

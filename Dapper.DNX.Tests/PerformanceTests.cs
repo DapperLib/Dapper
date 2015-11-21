@@ -21,7 +21,7 @@ using Susanoo;
 
 namespace SqlMapper
 {
-    class PerformanceTests
+    public class PerformanceTests
     {
         class Test
         {

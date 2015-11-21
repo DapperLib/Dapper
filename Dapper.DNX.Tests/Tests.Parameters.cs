@@ -4,9 +4,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Data.SqlTypes;
 using System.Dynamic;
 using System.Linq;
 using Xunit;
+
+#if EXTERNALS
+using System.Data.Entity.Spatial;
+using Microsoft.SqlServer.Types;
+#endif
 
 #if COREFX
 using IDbCommand = System.Data.Common.DbCommand;

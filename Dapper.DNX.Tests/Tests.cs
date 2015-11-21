@@ -30,6 +30,7 @@ using FirebirdSql.Data.FirebirdClient;
 using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 using System.Data.SqlServerCe;
+using SqlServerTypes;
 #if POSTGRESQL
 using Npgsql;
 #endif
@@ -72,6 +73,9 @@ namespace SqlMapper
         public Tests()
         {
             connection = Program.GetOpenConnection();
+#if EXTERNALS
+            Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);
+#endif
         }
 
         public void Dispose()
@@ -2619,7 +2623,7 @@ end");
             }
         }
 #if EXTERNALS
-        [SkipTest]
+        //[Fact]
         public void Issue178_Firebird() // we expect this to fail due to a bug in Firebird; a PR to fix it has been submitted
         {
             var cs = @"initial catalog=localhost:database;user id=SYSDBA;password=masterkey";

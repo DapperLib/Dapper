@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="AddXunitTestAdapterLibs" AfterTargets="_ComputeAppxPackagePayload" BeforeTargets="_GenerateAppxManifest">
+    <ItemGroup>
+      <xUnitVsLibs Include="$(MSBuildThisFileDirectory)xunit.runner.visualstudio.uwp.dll">
+        <TargetPath>xunit.runner.visualstudio.uwp.dll</TargetPath>
+      </xUnitVsLibs>
+      <xUnitVsLibs Include="$(MSBuildThisFileDirectory)xunit.runner.visualstudio.uwp.pri">
+        <TargetPath>xunit.runner.visualstudio.uwp.pri</TargetPath>
+      </xUnitVsLibs>
+      <xUnitVsLibs Include="$(MSBuildThisFileDirectory)..\_common\xunit.runner.utility.dotnet.dll">
+        <TargetPath>xunit.runner.utility.dotnet.dll</TargetPath>
+      </xUnitVsLibs>
+      <xUnitVsLibsToRemove Include="@(AppxPackagePayload)" Condition="'%(TargetPath)' == 'xunit.runner.visualstudio.testadapter.dll'"/>
+      <xUnitVsLibsToRemove Include="@(AppxPackagePayload)" Condition="'%(TargetPath)' == 'xunit.runner.utility.desktop.dll'"/>
+      <AppxPackagePayload Remove="@(xUnitVsLibsToRemove)" />
+      <AppxPackagePayload Include="@(xUnitVsLibs)" />
+    </ItemGroup>
+  </Target>
+</Project>
