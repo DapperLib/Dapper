@@ -20,6 +20,15 @@
     "warningsAsErrors": true
   },
   "frameworks": {
+    "net40": {
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0"
+      },
+      "dependencies": {
+        "xunit": "1.9.2"
+      }
+    },
     "net45": {
       "compilationOptions": {
         "define": [ "ASYNC" ]
@@ -31,15 +40,6 @@
       },
       "dependencies": {
         "xunit": "2.1.0"
-      }
-    },
-    "net40": {
-      "frameworkAssemblies": {
-        "System.Data": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
-      },
-      "dependencies": {
-        "xunit": "1.9.2"
       }
     },
     "dotnet5.4": {
