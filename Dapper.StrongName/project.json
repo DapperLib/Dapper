@@ -20,15 +20,15 @@
     "warningsAsErrors": true
   },
   "frameworks": {
-    "net45": {
-      "compilationOptions": {
-        "define": [ "ASYNC" ]
-      },
+    "net40": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0"
       }
     },
-    "net40": {
+    "net45": {
+      "compilationOptions": {
+        "define": [ "ASYNC" ]
+      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0"
       }
