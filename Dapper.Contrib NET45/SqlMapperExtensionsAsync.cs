@@ -32,17 +32,18 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
             {
                 var keys = KeyPropertiesCache(type);
-                if (keys.Count() > 1)
-                    throw new DataException("Get<T> only supports an entity with a single [Key] property");
-                if (!keys.Any())
-                    throw new DataException("Get<T> only supports en entity with a [Key] property");
+                var explicitKeys = ExplicitKeyPropertiesCache(type);
+                if (keys.Count() > 1 || explicitKeys.Count() > 1)
+                    throw new DataException("Get<T> only supports an entity with a single [Key] or [ExplicitKey] property");
+                if (!keys.Any() && !explicitKeys.Any())
+                    throw new DataException("Get<T> only supports an entity with a [Key] or an [ExplicitKey] property");
 
-                var onlyKey = keys.First();
+                var key = keys.Any() ? keys.First() : explicitKeys.First();
 
                 var name = GetTableName(type);
 
                 // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
-                sql = "select * from " + name + " where " + onlyKey.Name + " = @id";
+                sql = "select * from " + name + " where " + key.Name + " = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
