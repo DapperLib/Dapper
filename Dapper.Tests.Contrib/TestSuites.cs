@@ -31,20 +31,22 @@ namespace Dapper.Tests.Contrib
         {
             using (var connection = new SqlConnection(ConnectionString))
             {
+                // ReSharper disable once AccessToDisposedClosure
+                Action<string> dropTable = name => connection.Execute($@"IF OBJECT_ID('{name}', 'U') IS NOT NULL DROP TABLE [{name}]; ");
                 connection.Open();
-                connection.Execute(@"DROP TABLE Stuff;");
+                dropTable("Stuff");
                 connection.Execute(@"CREATE TABLE Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null);");
-                connection.Execute(@"DROP TABLE People;");
+                dropTable("People");
                 connection.Execute(@"CREATE TABLE People (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
-                connection.Execute(@"DROP TABLE Users;");
+                dropTable("Users");
                 connection.Execute(@"CREATE TABLE Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null);");
-                connection.Execute(@"DROP TABLE Automobiles;");
+                dropTable("Automobiles");
                 connection.Execute(@"CREATE TABLE Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
-                connection.Execute(@"DROP TABLE Results;");
+                dropTable("Results");
                 connection.Execute(@"CREATE TABLE Results (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, [Order] int not null);");
-                connection.Execute(@"DROP TABLE ObjectX;");
+                dropTable("ObjectX");
                 connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
-                connection.Execute(@"DROP TABLE ObjectY;");
+                dropTable("ObjectY");
                 connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
             }
         }
