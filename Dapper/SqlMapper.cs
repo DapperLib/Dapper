@@ -2282,23 +2282,15 @@ namespace Dapper
         public static ITypeMap GetTypeMap(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-#if COREFX
-            ITypeMap map = null;
-#else
             var map = (ITypeMap)_typeMaps[type];
-#endif
             if (map == null)
             {
                 lock (_typeMaps)
                 {   // double-checked; store this to avoid reflection next time we see this type
                     // since multiple queries commonly use the same domain-entity/DTO/view-model type
-#if COREFX
-                    if (!_typeMaps.TryGetValue(type, out map)) map = null;
-#else
                     map = (ITypeMap)_typeMaps[type];
-#endif
 
-                        if (map == null)
+                    if (map == null)
                     {
                         map = TypeMapProvider( type );
                         _typeMaps[type] = map;
@@ -2309,11 +2301,7 @@ namespace Dapper
         }
 
         // use Hashtable to get free lockless reading
-#if COREFX
-        private static readonly Dictionary<Type,ITypeMap> _typeMaps = new Dictionary<Type, ITypeMap>();
-#else
         private static readonly Hashtable _typeMaps = new Hashtable();
-#endif
 
         /// <summary>
         /// Set custom mapping for type deserializers
