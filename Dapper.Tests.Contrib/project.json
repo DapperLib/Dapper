@@ -42,8 +42,8 @@
         "System.Xml": "4.0.0.0"
       },
       "dependencies": {
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "System.Data.SQLite.Core": "1.0.98.1",
-        "System.Data.SqlServerCe_unofficial": "4.0.8482.1",
         "xunit": "1.9.2"
       }
     },
@@ -60,8 +60,8 @@
         "System.Xml": "4.0.0.0"
       },
       "dependencies": {
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "System.Data.SQLite.Core": "1.0.98.1",
-        "System.Data.SqlServerCe_unofficial": "4.0.8482.1",
         "xunit": "2.1.0"
       }
     },
@@ -91,8 +91,8 @@
         "System.Transactions": "4.0.0.0"
       },
       "dependencies": {
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "System.Data.SQLite.Core": "1.0.98.1",
-        "System.Data.SqlServerCe_unofficial": "4.0.8482.1",
         "xunit": "2.1.0",
         "xunit.runner.dnx": "2.1.0-*"
       }
