@@ -73,7 +73,7 @@ namespace Dapper.Tests
             OleDbConnectionString = "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
         public static string ConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("Appveyor"))
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
                 ? AppveyorConnectionStrng
                 : LocalConnectionString;
 
