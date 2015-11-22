@@ -12,3 +12,4 @@ NuGet.exe
 *.ide/
 *.lock.json
 *.coverage
+Test.DB.*

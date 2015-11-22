@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Dapper
 {
@@ -22,12 +21,8 @@ namespace Dapper
             string joiner;
             string prefix;
             string postfix;
-
-#if CSHARP30
-            public Clauses(string joiner, string prefix, string postfix)
-#else
+            
             public Clauses(string joiner, string prefix = "", string postfix = "")
-#endif
             {
                 this.joiner = joiner;
                 this.prefix = prefix;
@@ -61,19 +56,15 @@ namespace Dapper
             readonly SqlBuilder builder;
             readonly object initParams;
             int dataSeq = -1; // Unresolved
-
-#if CSHARP30
-            public Template(SqlBuilder builder, string sql, object parameters)
-#else
+            
             public Template(SqlBuilder builder, string sql, dynamic parameters)
-#endif
             {
                 this.initParams = parameters;
                 this.sql = sql;
                 this.builder = builder;
             }
 
-            static System.Text.RegularExpressions.Regex regex =
+            static Regex regex =
                 new System.Text.RegularExpressions.Regex(@"\/\*\*.+\*\*\/", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
 
             void ResolveSql()
@@ -104,25 +95,14 @@ namespace Dapper
             public object Parameters { get { ResolveSql(); return parameters; } }
         }
 
+        public SqlBuilder() { }
 
-        public SqlBuilder()
-        {
-        }
-
-#if CSHARP30
-        public Template AddTemplate(string sql, object parameters)
-#else
         public Template AddTemplate(string sql, dynamic parameters = null)
-#endif
         {
             return new Template(this, sql, parameters);
         }
 
-#if CSHARP30
-        protected void AddClause(string name, string sql, object parameters, string joiner, string prefix, string postfix, bool isInclusive)
-#else
         protected void AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool isInclusive = false)
-#endif
         {
             Clauses clauses;
             if (!data.TryGetValue(name, out clauses))
@@ -134,123 +114,73 @@ namespace Dapper
             seq++;
         }
         
-#if CSHARP30
-        public SqlBuilder Intersect(string sql, object parameters)
-#else
         public SqlBuilder Intersect(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("intersect", sql, parameters, "\nINTERSECT\n ", "\n ", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder InnerJoin(string sql, object parameters)
-#else
         public SqlBuilder InnerJoin(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("innerjoin", sql, parameters, "\nINNER JOIN ", "\nINNER JOIN ", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder LeftJoin(string sql, object parameters)
-#else
         public SqlBuilder LeftJoin(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("leftjoin", sql, parameters, "\nLEFT JOIN ", "\nLEFT JOIN ", "\n", false);
             return this;
         }
-
         
-#if CSHARP30
-        public SqlBuilder RightJoin(string sql, object parameters)
-#else
         public SqlBuilder RightJoin(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("rightjoin", sql, parameters, "\nRIGHT JOIN ", "\nRIGHT JOIN ", "\n", false);
             return this;
         }
-
-        
-#if CSHARP30
-        public SqlBuilder Where(string sql, object parameters)
-#else
+  
         public SqlBuilder Where(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("where", sql, parameters, " AND ", "WHERE ", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder OrWhere(string sql, object parameters)
-#else
         public SqlBuilder OrWhere(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("where", sql, parameters, " AND ", "WHERE ", "\n", true);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder OrderBy(string sql, object parameters)
-#else
         public SqlBuilder OrderBy(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("orderby", sql, parameters, " , ", "ORDER BY ", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder Select(string sql, object parameters)
-#else
         public SqlBuilder Select(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("select", sql, parameters, " , ", "", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder AddParameters(object parameters)
-#else
         public SqlBuilder AddParameters(dynamic parameters)
-#endif
         {
             AddClause("--parameters", "", parameters, "", "", "", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder Join(string sql, object parameters)
-#else
         public SqlBuilder Join(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("join", sql, parameters, "\nJOIN ", "\nJOIN ", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder GroupBy(string sql, object parameters)
-#else
         public SqlBuilder GroupBy(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("groupby", sql, parameters, " , ", "\nGROUP BY ", "\n", false);
             return this;
         }
         
-#if CSHARP30
-        public SqlBuilder Having(string sql, object parameters)
-#else
         public SqlBuilder Having(string sql, dynamic parameters = null)
-#endif
         {
             AddClause("having", sql, parameters, "\nAND ", "HAVING ", "\n", false);
             return this;

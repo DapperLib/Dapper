@@ -1,0 +1,55 @@
+﻿{
+  "authors": [ "Sam Saffron", "Johan Danforth" ],
+  "owners": [ "johandanforth", "marc.gravell", "nick.craver" ],
+  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+  "summary": "Dapper.Contrib",
+  "description": "The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional \"dirty\" tracking of interface-based entities.",
+  "version": "1.50-beta3",
+  "title": "Dapper.Contrib",
+  "tags": [ "orm", "sql", "micro-orm", "dapper" ],
+  "copyright": "2015 Stack Exchange, Inc.",
+  "dependencies": {
+    "Dapper": {
+      "version": "1.50-*",
+      "target": "project"
+    }
+  },
+  "compile": [
+    "**/*.cs",
+    "../Dapper/TypeExtensions.cs"
+  ],
+  "compilationOptions": {
+    "warningsAsErrors": true
+  },
+  "frameworks": {
+    "net40": {
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Data.Linq": "4.0.0.0"
+      }
+    },
+    "net45": {
+      "compilationOptions": {
+        "define": [ "ASYNC" ]
+      },
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Data.Linq": "4.0.0.0"
+      },
+      "dependencies": {
+      }
+    },
+    "dotnet5.4": {
+      "compilationOptions": {
+        "define": [ "ASYNC", "COREFX" ]
+      },
+      "dependencies": {
+        "System.Reflection.Emit": "4.0.1-*",
+        "System.Reflection.Emit.ILGeneration": "4.0.1-*",
+        "System.Reflection.Emit.Lightweight": "4.0.1-*",
+        "System.Runtime": "4.0.21-*"
+      }
+    }
+  }
+}

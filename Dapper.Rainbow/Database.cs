@@ -1,20 +1,16 @@
-﻿/*
- License: http://www.apache.org/licenses/LICENSE-2.0 
- Home page: http://code.google.com/p/dapper-dot-net/
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Data;
-using Dapper;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Reflection.Emit;
+
+#if COREFX
+using IDbTransaction = System.Data.Common.DbTransaction;
+#endif
 
 namespace Dapper
 {
@@ -57,8 +53,8 @@ namespace Dapper
                 paramNames.Remove("Id");
 
                 string cols = string.Join(",", paramNames);
-                string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
-                var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + cols_params + ") select cast(scope_identity() as int)";
+                string colsParams = string.Join(",", paramNames.Select(p => "@" + p));
+                var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + colsParams + ") select cast(scope_identity() as int)";
 
                 return database.Query<int?>(sql, o).Single();
             }
@@ -118,16 +114,17 @@ namespace Dapper
 
             internal static List<string> GetParamNames(object o)
             {
-                if (o is DynamicParameters)
+                var parameters = o as DynamicParameters;
+                if (parameters != null)
                 {
-                    return (o as DynamicParameters).ParameterNames.ToList();
+                    return parameters.ParameterNames.ToList();
                 }
 
                 List<string> paramNames;
                 if (!paramNameCache.TryGetValue(o.GetType(), out paramNames))
                 {
                     paramNames = new List<string>();
-                    foreach (var prop in o.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public))
+                    foreach (var prop in o.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetGetMethod(false) != null))
                     {
                         var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
                         var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
@@ -149,10 +146,9 @@ namespace Dapper
 			}
 		}
 
-        DbConnection connection;
-        int commandTimeout;
-        DbTransaction transaction;
-
+        DbConnection _connection;
+        int _commandTimeout;
+        DbTransaction _transaction;
 
         public static TDatabase Init(DbConnection connection, int commandTimeout)
         {
@@ -165,8 +161,8 @@ namespace Dapper
 
         internal void InitDatabase(DbConnection connection, int commandTimeout)
         {
-            this.connection = connection;
-            this.commandTimeout = commandTimeout;
+            this._connection = connection;
+            this._commandTimeout = commandTimeout;
             if (tableConstructor == null)
             {
                 tableConstructor = CreateTableConstructorForTable();
@@ -182,36 +178,42 @@ namespace Dapper
 
         public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
         {
-            transaction = connection.BeginTransaction(isolation);
+            _transaction = _connection.BeginTransaction(isolation);
         }
 
         public void CommitTransaction()
         {
-            transaction.Commit();
-            transaction = null;
+            _transaction.Commit();
+            _transaction = null;
         }
 
         public void RollbackTransaction()
         {
-            transaction.Rollback();
-            transaction = null;
+            _transaction.Rollback();
+            _transaction = null;
         }
 
         protected Action<TDatabase> CreateTableConstructor(Type tableType)
         {
-            return CreateTableConstructor(new Type[] {tableType});
+            return CreateTableConstructor(new[] {tableType});
         }
 
         protected Action<TDatabase> CreateTableConstructor(params Type[] tableTypes)
         {
-            var dm = new DynamicMethod("ConstructInstances", null, new Type[] { typeof(TDatabase) }, true);
+            var dm = new DynamicMethod("ConstructInstances", null, new[] { typeof(TDatabase) }, true);
             var il = dm.GetILGenerator();
 
             var setters = GetType().GetProperties()
-                .Where(p => p.PropertyType.IsGenericType && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
+                .Where(
+#if COREFX
+                p => p.PropertyType.GetTypeInfo().IsGenericType && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition())
+#else
+                p => p.PropertyType.IsGenericType && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition())
+#endif
+                )
                 .Select(p => Tuple.Create(
                         p.GetSetMethod(true),
-                        p.PropertyType.GetConstructor(new Type[] { typeof(TDatabase), typeof(string) }),
+                        p.PropertyType.GetConstructor(new[] { typeof(TDatabase), typeof(string) }),
                         p.Name,
                         p.DeclaringType
                  ));
@@ -276,7 +278,7 @@ namespace Dapper
             if(name.Contains("."))
             {
                 var parts = name.Split('.');
-                if (parts.Count() == 2)
+                if (parts.Length == 2)
                 {
                     schemaName = parts[0];
                     name = parts[1];
@@ -287,61 +289,58 @@ namespace Dapper
             if (!String.IsNullOrEmpty(schemaName)) builder.Append("TABLE_SCHEMA = @schemaName AND ");
             builder.Append("TABLE_NAME = @name");
 
-            return connection.Query(builder.ToString(), new { schemaName, name }, transaction: transaction).Count() == 1;
+            return _connection.Query(builder.ToString(), new { schemaName, name }, transaction: _transaction).Count() == 1;
         }
 
         public int Execute(string sql, dynamic param = null)
         {
-            return SqlMapper.Execute(connection, sql, param as object, transaction, commandTimeout: this.commandTimeout);
+            return SqlMapper.Execute(_connection, sql, param as object, _transaction, commandTimeout: this._commandTimeout);
         }
 
         public IEnumerable<T> Query<T>(string sql, dynamic param = null, bool buffered = true)
         {
-            return SqlMapper.Query<T>(connection, sql, param as object, transaction, buffered, commandTimeout);
+            return SqlMapper.Query<T>(_connection, sql, param as object, _transaction, buffered, _commandTimeout);
         }
 
         public IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return SqlMapper.Query(connection, sql, map, param as object, transaction, buffered, splitOn);
+            return SqlMapper.Query(_connection, sql, map, param as object, transaction, buffered, splitOn);
         }
 
         public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return SqlMapper.Query(connection, sql, map, param as object, transaction, buffered, splitOn);
+            return SqlMapper.Query(_connection, sql, map, param as object, transaction, buffered, splitOn);
         }
 
         public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return SqlMapper.Query(connection, sql, map, param as object, transaction, buffered, splitOn);
+            return SqlMapper.Query(_connection, sql, map, param as object, transaction, buffered, splitOn);
         }
 
         public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
         {
-            return SqlMapper.Query(connection, sql, map, param as object, transaction, buffered, splitOn);
+            return SqlMapper.Query(_connection, sql, map, param as object, transaction, buffered, splitOn);
         }
 
         public IEnumerable<dynamic> Query(string sql, dynamic param = null, bool buffered = true)
         {
-            return SqlMapper.Query(connection, sql, param as object, transaction, buffered);
+            return SqlMapper.Query(_connection, sql, param as object, _transaction, buffered);
         }
 
         public Dapper.SqlMapper.GridReader QueryMultiple(string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return SqlMapper.QueryMultiple(connection, sql, param, transaction, commandTimeout, commandType);
+            return SqlMapper.QueryMultiple(_connection, sql, param, transaction, commandTimeout, commandType);
         }
 
 
         public void Dispose()
         {
-            if (connection.State != ConnectionState.Closed)
+            if (_connection.State != ConnectionState.Closed)
             {
-                if (transaction != null)
-                {
-                    transaction.Rollback();
-                }
+                _transaction?.Rollback();
 
-                connection.Close();
-                connection = null;
+                _connection.Close();
+                _connection = null;
             }
         }
     }
