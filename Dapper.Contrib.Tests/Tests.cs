@@ -74,7 +74,9 @@ namespace Dapper.Contrib.Tests
     [Table("Results")]
     public class Result
     {
+        [Column("ResultId")]
         public int Id { get; set; }
+        [Column("ResultName")]
         public string Name { get; set; }
         public int Order { get; set; }
     }
@@ -201,6 +203,20 @@ namespace Dapper.Contrib.Tests
                 connection.Get<Car>(1).Name.IsEqualTo("Saab");
                 connection.Delete(new Car() { Id = 1 }).IsEqualTo(true);
                 connection.Get<Car>(1).IsNull();
+            }
+        }
+
+        public void ColumnName()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                // tests against "Name" column (set by Column attribute on Result.FullName )
+                connection.Insert(new Result { Name = "Mike" });
+                connection.Get<Result>(1).Name.IsEqualTo("Mike");
+                connection.Update(new Result() { Id = 1, Name = "Michael" }).IsEqualTo(true);
+                connection.Get<Result>(1).Name.IsEqualTo("Michael");
+                connection.Delete(new Result() { Id = 1 }).IsEqualTo(true);
+                connection.Get<Result>(1).IsNull();
             }
         }
 
@@ -355,7 +371,7 @@ namespace Dapper.Contrib.Tests
                 {
                     sqliteCodeCalled = ex.Message.IndexOf("There was an error parsing the query", StringComparison.InvariantCultureIgnoreCase) >= 0;
                 }
-// ReSharper disable once EmptyGeneralCatchClause
+                // ReSharper disable once EmptyGeneralCatchClause
                 catch (Exception)
                 {
                 }

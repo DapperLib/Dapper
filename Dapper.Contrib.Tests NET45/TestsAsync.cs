@@ -89,6 +89,22 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public async Task ColumnNameAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                await connection.DeleteAllAsync<Result>();
+
+                // tests against "Name" column (set by Column attribute on Result.FullName )
+                await connection.InsertAsync(new Result { Name = "Mike" });
+                (await connection.GetAsync<Result>(1)).Name.IsEqualTo("Mike");
+                (await connection.UpdateAsync(new Result() { Id = 1, Name = "Michael" })).IsEqualTo(true);
+                (await connection.GetAsync<Result>(1)).Name.IsEqualTo("Michael");
+                (await connection.DeleteAsync(new Result() { Id = 1 })).IsEqualTo(true);
+                (await connection.GetAsync<Result>(1)).IsNull();
+            }
+        }
+
         public async Task TestSimpleGetAsync()
         {
             using (var connection = GetOpenConnection())
