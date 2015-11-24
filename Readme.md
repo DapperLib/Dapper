@@ -338,7 +338,7 @@ Dapper supports varchar params, if you are executing a where clause on a varchar
 Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true });
 ```
 
-On Sql Server it is crucial to use the unicode when querying unicode and ansi when querying non unicode.
+On SQL Server it is crucial to use the unicode when querying unicode and ansi when querying non unicode.
 
 Limitations and caveats
 ---------------------

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?><Database Name="tempdb" Class="DataClassesDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="AppSettings" ConnectionString="Data Source=.;Initial Catalog=tempdb;Integrated Security=True" SettingsObjectName="Dapper.Tests.Properties.Settings" SettingsPropertyName="tempdbConnectionString" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.Posts" Member="Posts">
+    <Type Name="Post">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="Text" Type="System.String" DbType="VarChar(MAX) NOT NULL" CanBeNull="false" />
+      <Column Name="CreationDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="LastChangeDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="Counter1" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter2" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter3" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter4" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter5" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter6" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter7" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter8" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Counter9" Type="System.Int32" DbType="Int" CanBeNull="true" />
+    </Type>
+  </Table>
+</Database>

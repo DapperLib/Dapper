@@ -1,12 +1,6 @@
-﻿/*
- License: http://www.apache.org/licenses/LICENSE-2.0 
- Home page: http://code.google.com/p/dapper-dot-net/
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -68,12 +62,11 @@ namespace Dapper
                     .Where(p =>
                         p.GetSetMethod() != null &&
                         p.GetGetMethod() != null &&
-                        (p.PropertyType.IsValueType ||
-                            p.PropertyType == typeof(string) ||
-                            (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                        (p.PropertyType == typeof(string) ||
+                         p.PropertyType.IsValueType() ||
+                         (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
                         ).ToList();
             }
-
 
             private static bool AreEqual<U>(U first, U second)
             {

@@ -6,6 +6,15 @@ namespace Dapper
 {
     internal static class TypeExtensions
     {
+        public static string Name(this Type type)
+        {
+#if COREFX
+            return type.GetTypeInfo().Name;
+#else
+            return type.Name;
+#endif
+        }
+
         public static bool IsValueType(this Type type)
         {
 #if COREFX
@@ -22,7 +31,28 @@ namespace Dapper
             return type.IsEnum;
 #endif
         }
+        public static bool IsGenericType(this Type type)
+        {
 #if COREFX
+            return type.GetTypeInfo().IsGenericType;
+#else
+            return type.IsGenericType;
+#endif
+        }
+        public static bool IsInterface(this Type type)
+        {
+#if COREFX
+            return type.GetTypeInfo().IsInterface;
+#else
+            return type.IsInterface;
+#endif
+        }
+#if COREFX
+        public static IEnumerable<Attribute> GetCustomAttributes(this Type type, bool inherit)
+        {
+            return type.GetTypeInfo().GetCustomAttributes(inherit);
+        }
+
         public static TypeCode GetTypeCode(Type type)
         {
             if (type == null) return TypeCode.Empty;

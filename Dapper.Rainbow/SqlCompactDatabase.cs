@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 
-namespace Dapper.Rainbow
+namespace Dapper
 {
-    public abstract class SqlCompactDatabase<TDatabase> : Database<TDatabase>, IDisposable where TDatabase : Database<TDatabase>, new()
+    public abstract class SqlCompactDatabase<TDatabase> : Database<TDatabase> where TDatabase : Database<TDatabase>, new()
     {
         public class SqlCompactTable<T> : Table<T>
         {
