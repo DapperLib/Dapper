@@ -39,6 +39,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Dapper.SqlBuilder\DapperSqlBuilderMixin.cs">
+      <Link>DapperSqlBuilderMixin.cs</Link>
+    </Compile>
     <Compile Include="..\Dapper.SqlBuilder\SqlBuilder.cs">
       <Link>SqlBuilder.cs</Link>
     </Compile>
