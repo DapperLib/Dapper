@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
 using Dapper;
 
 #if COREFX
@@ -18,10 +17,8 @@ using System.Data;
 
 namespace Dapper.Contrib.Extensions
 {
-
     public static partial class SqlMapperExtensions
     {
-
         /// <summary>
         /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
         /// Id must be marked with [Key] attribute.
@@ -39,25 +36,15 @@ namespace Dapper.Contrib.Extensions
             string sql;
             if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
             {
-                var keys = KeyPropertiesCache(type);
-                var explicitKeys = ExplicitKeyPropertiesCache(type);
-                if (keys.Count > 1 || explicitKeys.Count > 1)
-                    throw new DataException("Get<T> only supports an entity with a single [Key] or [ExplicitKey] property");
-                if (!keys.Any() && !explicitKeys.Any())
-                    throw new DataException("Get<T> only supports an entity with a [Key] or an [ExplicitKey] property");
-
-                var key = keys.Any() ? keys.First() : explicitKeys.First();
-
+                var key = GetSingleKey<T>(nameof(GetAsync));
                 var name = GetTableName(type);
 
-                // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
                 sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
             var dynParms = new DynamicParameters();
             dynParms.Add("@id", id);
-
 
             if (!type.IsInterface())
                 return (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
@@ -99,15 +86,9 @@ namespace Dapper.Contrib.Extensions
             string sql;
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
             {
-                var keys = KeyPropertiesCache(type);
-                if (keys.Count > 1)
-                    throw new DataException("Get<T> only supports an entity with a single [Key] property");
-                if (!keys.Any())
-                    throw new DataException("Get<T> only supports en entity with a [Key] property");
-
+                GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
-                // TODO: query information schema and only select fields that are both in information schema and underlying class / interface 
                 sql = "SELECT * FROM " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
             }
@@ -301,8 +282,7 @@ namespace Dapper.Contrib.Extensions
         public static async Task<bool> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            var name = GetTableName(type);
-            var statement = $"DELETE FROM {name}";
+            var statement = "DELETE FROM " + GetTableName(type);
             var deleted = await connection.ExecuteAsync(statement, null, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;
         }
