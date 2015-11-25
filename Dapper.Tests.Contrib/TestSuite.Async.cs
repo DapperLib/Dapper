@@ -235,7 +235,6 @@ namespace Dapper.Tests.Contrib
                 var name = connection.Query<User>("select * from users").First().Name;
                 name.Contains("updated").IsTrue();
             }
-
         }
 
         [Fact]
@@ -261,7 +260,6 @@ namespace Dapper.Tests.Contrib
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities - 10);
             }
-
         }
 
         [Fact]

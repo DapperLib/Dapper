@@ -42,6 +42,7 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
+        private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
             = new Dictionary<string, ISqlAdapter>
             {
@@ -465,16 +466,15 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
-
-
+        
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             var name = GetDatabaseType?.Invoke(connection).ToLower()
                        ?? connection.GetType().Name.ToLower();
 
-            return !AdapterDictionary.ContainsKey(name) ?
-                new SqlServerAdapter() :
-                AdapterDictionary[name];
+            return !AdapterDictionary.ContainsKey(name)
+                ? DefaultAdapter
+                : AdapterDictionary[name];
         }
 
         static class ProxyGenerator
@@ -754,12 +754,12 @@ public partial class MySqlAdapter : ISqlAdapter
         var id = r.First().id;
         if (id == null) return 0;
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+        if (!propertyInfos.Any()) return Convert.ToInt32(id);
 
         var idp = propertyInfos.First();
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
 
-        return (int)id;
+        return Convert.ToInt32(id);
     }
 
     public void AppendColumnName(StringBuilder sb, string columnName)
