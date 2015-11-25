@@ -12,7 +12,6 @@ namespace Dapper
 {
     partial class SqlMapper
     {
-
         /// <summary>
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query
         /// </summary>

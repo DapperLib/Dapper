@@ -35,6 +35,5 @@ namespace Dapper
             /// </summary>
             ParameterInfo Parameter { get; }
         }
-
     }
 }

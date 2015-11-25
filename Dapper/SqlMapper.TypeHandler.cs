@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
 
 #if COREFX
 using IDbDataParameter = System.Data.Common.DbParameter;
@@ -48,6 +45,5 @@ namespace Dapper
                 return Parse(value);
             }
         }
-
     }
 }

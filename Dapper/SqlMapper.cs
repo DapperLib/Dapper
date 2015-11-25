@@ -310,9 +310,7 @@ namespace Dapper
         {
             AddTypeHandlerImpl(typeof(T), handler, true);
         }
-
-
-
+        
         private static Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
@@ -1001,7 +999,7 @@ namespace Dapper
             }
 
             object param = command.Parameters;
-            identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, types[0], param == null ? null : param.GetType(), types);
+            identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
@@ -1018,7 +1016,7 @@ namespace Dapper
                     reader = ownedReader;
                 }
                 DeserializerState deserializer = default(DeserializerState);
-                Func<IDataReader, object>[] otherDeserializers = null;
+                Func<IDataReader, object>[] otherDeserializers;
 
                 int hash = GetColumnHash(reader);
                 if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
@@ -1100,7 +1098,7 @@ namespace Dapper
             var deserializers = new List<Func<IDataReader, object>>();
             var splits = splitOn.Split(',').Select(s => s.Trim()).ToArray();
                 bool isMultiSplit = splits.Length > 1;
-            if (types.First() == typeof(Object))
+            if (types.First() == typeof(object))
             {
                 // we go left to right for dynamic multi-mapping so that the madness of TestMultiMappingVariations
                 // is supported
@@ -1318,8 +1316,7 @@ namespace Dapper
         }
         static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
         {
-            return (IDataReader reader) =>
-                handler.Parse(type, reader.GetValue(startBound));
+            return reader => handler.Parse(type, reader.GetValue(startBound));
         }
 
 
@@ -2344,7 +2341,6 @@ namespace Dapper
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
-
             var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", typeof(object), new[] { typeof(IDataReader) }, true);
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
@@ -2565,9 +2561,7 @@ namespace Dapper
                                 {
                                     il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
                                 }
-
                             }
-
                         }
                     }
                     if (specializedConstructor == null)
@@ -2747,8 +2741,8 @@ namespace Dapper
                 ?? ResolveOperator(toMethods = to.GetMethods(BindingFlags.Static | BindingFlags.Public), from, to, "op_Implicit")
                 ?? ResolveOperator(fromMethods, from, to, "op_Explicit")
                 ?? ResolveOperator(toMethods, from, to, "op_Explicit");
-
         }
+
         static MethodInfo ResolveOperator(MethodInfo[] methods, Type from, Type to, string name)
         {
             for (int i = 0; i < methods.Length; i++)
@@ -2803,6 +2797,7 @@ namespace Dapper
                     break;
             }
         }
+
         private static void LoadLocalAddress(ILGenerator il, int index)
         {
             if (index < 0 || index >= short.MaxValue) throw new ArgumentNullException(nameof(index));
@@ -2816,6 +2811,7 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloca, (short)index);
             }
         }
+
         /// <summary>
         /// Throws a data exception, only used internally
         /// </summary>
@@ -2853,6 +2849,7 @@ namespace Dapper
             }
             throw toThrow;
         }
+
         private static void EmitInt32(ILGenerator il, int value)
         {
             switch (value)
@@ -2880,12 +2877,6 @@ namespace Dapper
             }
         }
 
-
-        /// <summary>
-        /// Key used to indicate the type name associated with a DataTable
-        /// </summary>
-        private const string DataTableTypeNameKey = "dapper:TypeName";
-
         /// <summary>
         /// How should connection strings be compared for equivalence? Defaults to StringComparer.Ordinal.
         /// Providing a custom implementation can be useful for allowing multi-tenancy databases with identical
@@ -2899,10 +2890,12 @@ namespace Dapper
         }
         private static IEqualityComparer<string> connectionStringComparer = StringComparer.Ordinal;
 
-
-
-
 #if !COREFX
+        /// <summary>
+        /// Key used to indicate the type name associated with a DataTable
+        /// </summary>
+        private const string DataTableTypeNameKey = "dapper:TypeName";
+
         /// <summary>
         /// Used to pass a DataTable as a TableValuedParameter
         /// </summary>
@@ -2969,7 +2962,4 @@ namespace Dapper
             return s;
         }
     }
-
-
-
 }

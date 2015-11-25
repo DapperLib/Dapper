@@ -7,7 +7,6 @@ namespace Dapper
 {
     partial class SqlMapper
     {
-
         private sealed class DapperRow
             : System.Dynamic.IDynamicMetaObjectProvider
             , IDictionary<string, object>
@@ -171,6 +170,7 @@ namespace Dapper
             {
                 return SetValue(key, value, false);
             }
+
             private object SetValue(string key, object value, bool isAdd)
             {
                 if (key == null) throw new ArgumentNullException(nameof(key));

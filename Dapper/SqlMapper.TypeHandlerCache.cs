@@ -27,7 +27,6 @@ namespace Dapper
             public static T Parse(object value)
             {
                 return (T)handler.Parse(typeof(T), value);
-
             }
 
             /// <summary>

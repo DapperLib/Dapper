@@ -42,6 +42,5 @@ namespace Dapper
             /// <returns>Mapping implementation</returns>
             IMemberMap GetMember(string columnName);
         }
-
     }
 }

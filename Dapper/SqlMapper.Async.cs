@@ -20,7 +20,6 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
-
         /// <summary>
         /// Execute a query asynchronously using .NET 4.5 Task.
         /// </summary>
@@ -112,8 +111,6 @@ namespace Dapper
                             {
                                 buffer.Add((T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture));
                             }
-
-
                         }
                         while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { }
                         command.OnCompleted();
@@ -127,7 +124,6 @@ namespace Dapper
                         reader = null; // to prevent it being disposed before the caller gets to see it
                         return deferred;
                     }
-
                 }
                 finally
                 {
@@ -461,7 +457,7 @@ namespace Dapper
         private static async Task<IEnumerable<TReturn>> MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn)
         {
             object param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param == null ? null : param.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
