@@ -1,22 +1,30 @@
-#if EXTERNALS
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Linq;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
-using BLToolkit.Data;
+
+using Dapper.Tests.Linq2Sql;
+using Dapper.Contrib.Extensions;
+
+
+#if EXTERNALS
+using Soma.Core;
+using Dapper.Tests.NHibernate;
+using System.Data.Linq;
 using Massive;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.SqlServer;
-using Dapper.Tests.Linq2Sql;
-using Dapper.Tests.NHibernate;
-using Dapper.Contrib.Extensions;
+using BLToolkit.Data;
 using Dapper.Tests.EntityFramework;
 using Susanoo;
+using ServiceStack.OrmLite.Converters;
+using ServiceStack.OrmLite.Dapper;
+#endif
+
 
 namespace Dapper.Tests
 {
@@ -68,28 +76,31 @@ namespace Dapper.Tests
                 }
             }
         }
-
+#if EXTERNALS
         static DataClassesDataContext GetL2SContext(SqlConnection connection)
         {
             return new DataClassesDataContext(connection);
         }
 
+
 		internal class SomaConfig : Soma.Core.MsSqlConfig
 		{
 			public override string ConnectionString => TestSuite.ConnectionString;
 
-		    public override void Log(Soma.Core.PreparedStatement preparedStatement)
-			{
-				// no op
-			}
+            public override Action<PreparedStatement> Logger
+            {
+                get { return noOp; }
+            }
+            static readonly Action<PreparedStatement> noOp = x => { };
 		}
+#endif
 
         public void Run(int iterations)
         {
             using (var connection = TestSuite.GetOpenConnection())
             {
                 var tests = new Tests();
-
+#if EXTERNALS
                 var l2scontext1 = GetL2SContext(connection);
                 tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq 2 SQL");
 
@@ -115,7 +126,7 @@ namespace Dapper.Tests
 
                 var entityContext5 = new EFContext(connection);
                 tests.Add(id => entityContext5.Posts.AsNoTracking().First(p => p.Id == id), "Entity framework No Tracking");
-
+#endif
                 var mapperConnection = TestSuite.GetOpenConnection();
                 tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
                 tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
@@ -128,6 +139,8 @@ namespace Dapper.Tests
                 var mapperConnection3 = TestSuite.GetOpenConnection();
                 tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Cotrib");
 
+#if EXTERNALS
+                // massive
                 var massiveModel = new DynamicModel(TestSuite.ConnectionString);
                 var massiveConnection = TestSuite.GetOpenConnection();
                 tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
@@ -145,15 +158,17 @@ namespace Dapper.Tests
                 petapocoFast.ForceDateTimesToUtc = false;
                 tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Fast)");
 
+#if SUBSONIC
                 // Subsonic ActiveRecord 
                 tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
 
                 // Subsonic coding horror
                 SubSonic.tempdbDB db = new SubSonic.tempdbDB();
                 tests.Add(id => new SubSonic.Query.CodingHorror(db.Provider, "select * from Posts where Id = @0", id).ExecuteTypedList<Post>(), "SubSonic Coding Horror");
-
+#endif
                 // NHibernate
 
+#if NHIBERNATE
                 var nhSession1 = NHibernateHelper.OpenSession();
                 tests.Add(id => nhSession1.CreateSQLQuery(@"select * from Posts where Id = :id")
                     .SetInt32("id", id)
@@ -176,15 +191,16 @@ namespace Dapper.Tests
 
                 var nhSession5 = NHibernateHelper.OpenSession();
                 tests.Add(id => nhSession5.Get<Post>(id), "NHibernate Session.Get");
-
+#endif
                 // bltoolkit
                 var db1 = new DbManager(TestSuite.GetOpenConnection());
                 tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
 
+#if SIMPLEDATA
                 // Simple.Data
                 var sdb = Simple.Data.Database.OpenConnection(TestSuite.ConnectionString);
                 tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
-
+#endif
                 //Susanoo
                 var susanooDb = new DatabaseManager("Smackdown.Properties.Settings.tempdbConnectionString");
                 var susanooDb2 = new DatabaseManager("Smackdown.Properties.Settings.tempdbConnectionString");
@@ -224,11 +240,13 @@ namespace Dapper.Tests
                 // var somadb = new Soma.Core.Db(new SomaConfig());
                 // tests.Add(id => somadb.Find<Post>(id), "Soma");
 
+#if ORMLITE
                 //ServiceStack's OrmLite:
                 OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
                 IDbCommand ormLiteCmd = TestSuite.GetOpenConnection().CreateCommand();
                 tests.Add(id => ormLiteCmd.QueryById<Post>(id), "OrmLite QueryById");
-
+#endif
+#endif // EXTERNALS
                 // HAND CODED 
 
                 var postCommand = new SqlCommand();
@@ -262,6 +280,7 @@ namespace Dapper.Tests
                 }
             }, "hand coded");
 
+#if !COREFX
                 DataTable table = new DataTable
                 {
                     Columns =
@@ -292,7 +311,7 @@ namespace Dapper.Tests
                         table.Rows.Add(values);
                     }
                 }, "DataTable via IDataReader.GetValues");
-
+#endif
                 tests.Run(iterations);
             }
         }
@@ -322,4 +341,3 @@ namespace Dapper.Tests
         }
     }
 }
-#endif

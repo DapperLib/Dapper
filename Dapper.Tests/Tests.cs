@@ -114,7 +114,7 @@ namespace Dapper.Tests
 #endif
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
             Console.WriteLine("Using Connectionstring: {0}", ConnectionString);
-#if EXTERNALS
+#if EXTERNALS && !DNX
             Console.Write("Loading native assemblies for SQL types...");
             Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);
             Console.WriteLine("done.");
@@ -2804,7 +2804,7 @@ end");
         }
 
 #if EXTERNALS
-        [Fact(Skip=Bug in Firebird; a PR to fix it has been submitted")]
+        [Fact(Skip="Bug in Firebird; a PR to fix it has been submitted")]
         public void Issue178_Firebird()
         {
             var cs = @"initial catalog=localhost:database;user id=SYSDBA;password=masterkey";

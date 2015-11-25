@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<hibernate-mapping namespace="SqlMapper" assembly="Smackdown" xmlns="urn:nhibernate-mapping-2.2" default-lazy="false">
+<hibernate-mapping namespace="Dapper.Tests" assembly="Dapper.Tests" xmlns="urn:nhibernate-mapping-2.2" default-lazy="false">
   <class name="Post" table="Posts" schema="dbo">
     <id name="Id" access="property" column="Id">
       <generator class="native" />

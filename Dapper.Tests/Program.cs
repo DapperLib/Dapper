@@ -30,10 +30,18 @@ namespace Dapper.Tests
     {
         static void Main()
         {
-#if !DEBUG
+#if DEBUG
+            var fg = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Warning: DEBUG configuration; performance may be impacted");
+#if DNX
+            Console.WriteLine("use: dnx --configuration release perf");
+#endif
+            Console.ForegroundColor = fg;
+            Console.WriteLine();
+#endif
             EnsureDBSetup();
             RunPerformanceTests();
-#endif
         }
 
         private static void EnsureDBSetup()
@@ -87,14 +95,10 @@ end
 
         static void RunPerformanceTests()
         {
-#if PERF
             var test = new PerformanceTests();
             const int iterations = 500;
             Console.WriteLine("Running {0} iterations that load up a post entity", iterations);
             test.Run(iterations);
-#else
-            Console.WriteLine("Performance tests have not been built; add the PERF symbol");
-#endif
         }
     }
 }

@@ -171,7 +171,7 @@ namespace Dapper.Tests
         public async Task ExecuteReaderOpenAsync()
         {
             var dt = new DataTable();
-            dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]"));
+            dt.Load(await connection.ExecuteReaderAsync("select 3 as [three], 4 as [four]"));
             dt.Columns.Count.IsEqualTo(2);
             dt.Columns[0].ColumnName.IsEqualTo("three");
             dt.Columns[1].ColumnName.IsEqualTo("four");

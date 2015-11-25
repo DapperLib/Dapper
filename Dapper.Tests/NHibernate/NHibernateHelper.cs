@@ -1,4 +1,4 @@
-﻿#if !COREFX
+﻿#if EXTERNALS
 using NHibernate;
 using NHibernate.Cfg;
 
@@ -15,9 +15,9 @@ namespace Dapper.Tests.NHibernate
                 if (_sessionFactory == null)
                 {
                     var configuration = new Configuration();
-                    configuration.Configure(@"..\..\NHibernate\hibernate.cfg.xml");
+                    configuration.Configure(@"..\Dapper.Tests\NHibernate\hibernate.cfg.xml");
                     configuration.AddAssembly(typeof(Post).Assembly);
-                    configuration.AddXmlFile(@"..\..\NHibernate\Post.hbm.xml");
+                    configuration.AddXmlFile(@"..\Dapper.Tests\NHibernate\Post.hbm.xml");
                     _sessionFactory = configuration.BuildSessionFactory();
                 }
 
