@@ -8,7 +8,7 @@ namespace Dapper
     /// <summary>
     /// Represents default type mapping strategy used by Dapper
     /// </summary>
-    sealed class DefaultTypeMap : SqlMapper.ITypeMap
+    public sealed class DefaultTypeMap : SqlMapper.ITypeMap
     {
         private readonly List<FieldInfo> _fields;
         private readonly Type _type;
