@@ -127,10 +127,11 @@ namespace Dapper.Contrib.Extensions
         public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
             int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
-            var isList = false;
-
             var type = typeof(T);
+            if (sqlAdapter == null)
+                sqlAdapter = GetFormatter(connection);
 
+            var isList = false;
             if (type.IsArray || type.IsGenericType())
             {
                 isList = true;
@@ -147,7 +148,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                sbColumnList.AppendFormat("[{0}]", property.Name);
+                sqlAdapter.AppendColumnName(sbColumnList, property.Name);
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbColumnList.Append(", ");
             }
@@ -163,8 +164,6 @@ namespace Dapper.Contrib.Extensions
 
             if (!isList)    //single entity
             {
-                if (sqlAdapter == null)
-                    sqlAdapter = GetFormatter(connection);
                 return await sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
@@ -211,10 +210,12 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < nonIdProps.Count - 1)
                     sb.AppendFormat(", ");
             }
@@ -222,7 +223,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }
@@ -348,12 +349,12 @@ public partial class MySqlAdapter
         var id = r.First().id;
         if (id == null) return 0;
         var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!pi.Any()) return id;
+        if (!pi.Any()) return Convert.ToInt32(id);
 
         var idp = pi.First();
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
 
-        return (int)id;
+        return Convert.ToInt32(id);
     }
 }
 
