@@ -346,7 +346,7 @@ WHERE (first_name LIKE {0} OR last_name LIKE {0});";
             // if true, slower query due to not being able to use indices, but will allow searching inside strings 
             bool allow_start_wildcards = false;
 
-            string query = String.Format(formatted, allow_start_wildcards ? use_both : use_end_only);
+            string query = string.Format(formatted, allow_start_wildcards ? use_both : use_end_only);
             string term = "F"; // the term the user searched for
 
             connection.Execute(@"create table #users16726709 (first_name varchar(200), last_name varchar(200))

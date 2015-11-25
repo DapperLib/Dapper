@@ -23,7 +23,7 @@ namespace Dapper.Tests
         public FactLongRunningAttribute()
         {
 #if !LONG_RUNNING
-            Skip = $"Long running";
+            Skip = "Long running";
 #endif
         }
         public string Url { get; private set; }
