@@ -68,17 +68,20 @@ namespace Dapper
                         ).ToList();
             }
 
+            // This is used by IL, ReSharper is wrong.
+            // ReSharper disable UnusedMember.Local
             private static bool AreEqual<U>(U first, U second)
             {
                 if (first == null && second == null) return true;
                 if (first == null) return false;
                 return first.Equals(second);
             }
+            // ReSharper restore UnusedMember.Local
 
             private static Func<T, T, List<Change>> GenerateDiffer()
             {
 
-                var dm = new DynamicMethod("DoDiff", typeof(List<Change>), new Type[] { typeof(T), typeof(T) }, true);
+                var dm = new DynamicMethod("DoDiff", typeof(List<Change>), new[] { typeof(T), typeof(T) }, true);
 
                 var il = dm.GetILGenerator();
                 // change list
@@ -198,4 +201,3 @@ namespace Dapper
         }
     }
 }
-

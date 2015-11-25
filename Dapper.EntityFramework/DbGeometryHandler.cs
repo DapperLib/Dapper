@@ -10,7 +10,7 @@ namespace Dapper.EntityFramework
     /// <summary>
     /// Type-handler for the DbGeometry spatial type
     /// </summary>
-    public class DbGeometryHandler : Dapper.SqlMapper.TypeHandler<DbGeometry>
+    public class DbGeometryHandler : SqlMapper.TypeHandler<DbGeometry>
     {
         /// <summary>
         /// Create a new handler instance

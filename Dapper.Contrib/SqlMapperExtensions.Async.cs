@@ -16,8 +16,6 @@ using DataException = System.InvalidOperationException;
 using System.Data;
 #endif
 
-#pragma warning disable 1573, 1591 // xml comments
-
 namespace Dapper.Contrib.Extensions
 {
 
@@ -32,6 +30,8 @@ namespace Dapper.Contrib.Extensions
         /// <typeparam name="T">Interface type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
+        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
         public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
@@ -41,7 +41,7 @@ namespace Dapper.Contrib.Extensions
             {
                 var keys = KeyPropertiesCache(type);
                 var explicitKeys = ExplicitKeyPropertiesCache(type);
-                if (keys.Count() > 1 || explicitKeys.Count() > 1)
+                if (keys.Count > 1 || explicitKeys.Count > 1)
                     throw new DataException("Get<T> only supports an entity with a single [Key] or [ExplicitKey] property");
                 if (!keys.Any() && !explicitKeys.Any())
                     throw new DataException("Get<T> only supports an entity with a [Key] or an [ExplicitKey] property");
@@ -88,6 +88,8 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
+        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
         public static async Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
@@ -98,7 +100,7 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
             {
                 var keys = KeyPropertiesCache(type);
-                if (keys.Count() > 1)
+                if (keys.Count > 1)
                     throw new DataException("Get<T> only supports an entity with a single [Key] property");
                 if (!keys.Any())
                     throw new DataException("Get<T> only supports en entity with a [Key] property");
@@ -112,7 +114,7 @@ namespace Dapper.Contrib.Extensions
 
             if (!type.IsInterface())
             {
-                return await connection.QueryAsync<T>(sql, null, transaction, commandTimeout: commandTimeout);
+                return await connection.QueryAsync<T>(sql, null, transaction, commandTimeout);
             }
 
             var result = await connection.QueryAsync(sql);
@@ -137,6 +139,9 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
+        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="sqlAdapter">The specific ISqlAdapter to use, auto-detected based on connection if null</param>
         /// <returns>Identity of inserted entity</returns>
         public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
             int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
@@ -158,20 +163,20 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
+            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
                 sbColumnList.AppendFormat("[{0}]", property.Name);
-                if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
+                if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbColumnList.Append(", ");
             }
 
             var sbParameterList = new StringBuilder(null);
-            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count(); i++)
+            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
                 sbParameterList.AppendFormat("@{0}", property.Name);
-                if (i < allPropertiesExceptKeyAndComputed.Count() - 1)
+                if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
 
@@ -194,6 +199,8 @@ namespace Dapper.Contrib.Extensions
         /// <typeparam name="T">Type to be updated</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToUpdate">Entity to be updated</param>
+        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
@@ -223,19 +230,19 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            for (var i = 0; i < nonIdProps.Count(); i++)
+            for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps.ElementAt(i);
                 sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
-                if (i < nonIdProps.Count() - 1)
+                if (i < nonIdProps.Count - 1)
                     sb.AppendFormat(", ");
             }
             sb.Append(" where ");
-            for (var i = 0; i < keyProperties.Count(); i++)
+            for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
                 sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
-                if (i < keyProperties.Count() - 1)
+                if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }
             var updated = await connection.ExecuteAsync(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction).ConfigureAwait(false);
@@ -248,11 +255,13 @@ namespace Dapper.Contrib.Extensions
         /// <typeparam name="T">Type of entity</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToDelete">Entity to delete</param>
+        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if not found</returns>
         public static async Task<bool> DeleteAsync<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             if (entityToDelete == null)
-                throw new ArgumentException("Cannot Delete null Object", "entityToDelete");
+                throw new ArgumentException("Cannot Delete null Object", nameof(entityToDelete));
 
             var type = typeof(T);
 
@@ -268,14 +277,14 @@ namespace Dapper.Contrib.Extensions
             keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
-            sb.AppendFormat("delete from {0} where ", name);
+            sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
-            for (var i = 0; i < keyProperties.Count(); i++)
+            for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
                 sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
-                if (i < keyProperties.Count() - 1)
-                    sb.AppendFormat(" and ");
+                if (i < keyProperties.Count - 1)
+                    sb.AppendFormat(" AND ");
             }
             var deleted = await connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;
@@ -286,12 +295,14 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <typeparam name="T">Type of entity</typeparam>
         /// <param name="connection">Open SqlConnection</param>
+        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if none found</returns>
         public static async Task<bool> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
             var name = GetTableName(type);
-            var statement = String.Format("delete from {0}", name);
+            var statement = $"DELETE FROM {name}";
             var deleted = await connection.ExecuteAsync(statement, null, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;
         }
@@ -328,9 +339,9 @@ public partial class SqlCeServerAdapter
 {
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = $"INSERT INTO {tableName} ({columnList}) values ({parameterList})";
+        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList})";
         await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
-        var r = (await connection.QueryAsync<dynamic>("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false)).ToList();
+        var r = (await connection.QueryAsync<dynamic>("SELECT @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false)).ToList();
 
         if (r.First() == null || r.First().id == null) return 0;
         var id = (int)r.First().id;
@@ -352,7 +363,7 @@ public partial class MySqlAdapter
     {
         var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList})";
         await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
-        var r = await connection.QueryAsync<dynamic>("SELECT LAST_INSERT_ID()", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
+        var r = await connection.QueryAsync<dynamic>("SELECT LAST_INSERT_ID() id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
 
         var id = r.First().id;
         if (id == null) return 0;
@@ -362,13 +373,12 @@ public partial class MySqlAdapter
         var idp = pi.First();
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
 
-        return id;
+        return (int)id;
     }
 }
 
 public partial class PostgresAdapter
-{
-
+{ 
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
@@ -391,13 +401,14 @@ public partial class PostgresAdapter
             }
         }
 
-        var results = await connection.QueryAsync<dynamic>(sb.ToString(), entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
+        var results = await connection.QueryAsync(sb.ToString(), entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
         // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
+        var values = results.First();
         foreach (var p in propertyInfos)
         {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
+            var value = values[p.Name.ToLower()];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
