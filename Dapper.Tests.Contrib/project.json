@@ -43,6 +43,7 @@
       },
       "dependencies": {
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
+        "MySql.Data": "6.9.8",
         "System.Data.SQLite.Core": "1.0.98.1",
         "xunit": "1.9.2"
       }
@@ -61,6 +62,7 @@
       },
       "dependencies": {
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
+        "MySql.Data": "6.9.8",
         "System.Data.SQLite.Core": "1.0.98.1",
         "xunit": "2.1.0"
       }
@@ -92,6 +94,7 @@
       },
       "dependencies": {
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
+        "MySql.Data": "6.9.8",
         "System.Data.SQLite.Core": "1.0.98.1",
         "xunit": "2.1.0",
         "xunit.runner.dnx": "2.1.0-*"
