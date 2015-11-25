@@ -71,6 +71,4 @@ namespace Dapper
             return prop != null ? new SimpleMemberMap(columnName, prop) : null;
         }
     }
-
-
 }

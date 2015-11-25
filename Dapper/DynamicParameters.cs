@@ -108,7 +108,7 @@ namespace Dapper
         /// </summary>
         public void Add(string name, object value, DbType? dbType, ParameterDirection? direction, int? size)
         {
-            parameters[Clean(name)] = new ParamInfo()
+            parameters[Clean(name)] = new ParamInfo
             {
                 Name = name,
                 Value = value,
@@ -125,7 +125,7 @@ namespace Dapper
             string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null
 )
         {
-            parameters[Clean(name)] = new ParamInfo()
+            parameters[Clean(name)] = new ParamInfo
             {
                 Name = name,
                 Value = value,
@@ -300,13 +300,7 @@ namespace Dapper
         /// <summary>
         /// All the names of the param in the bag, use Get to yank them out
         /// </summary>
-        public IEnumerable<string> ParameterNames
-        {
-            get
-            {
-                return parameters.Select(p => p.Key);
-            }
-        }
+        public IEnumerable<string> ParameterNames => parameters.Select(p => p.Key);
 
 
         /// <summary>
@@ -490,11 +484,7 @@ namespace Dapper
         }
 
         private List<Action> outputCallbacks;
-
-        private readonly Dictionary<string, Action<object, DynamicParameters>> cachedOutputSetters = new Dictionary<string, Action<object, DynamicParameters>>();
-
-
-
+        
         void SqlMapper.IParameterCallbacks.OnCompleted()
         {
             foreach (var param in (from p in parameters select p.Value))
@@ -503,6 +493,4 @@ namespace Dapper
             }
         }
     }
-
-
 }

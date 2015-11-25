@@ -74,5 +74,4 @@ namespace Dapper
             command.Parameters.Add(param);
         }
     }
-
 }

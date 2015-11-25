@@ -84,5 +84,4 @@ namespace Dapper
         /// </summary>
         public ParameterInfo Parameter { get; }
     }
-
 }

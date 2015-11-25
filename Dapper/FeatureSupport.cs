@@ -12,8 +12,8 @@ namespace Dapper
     class FeatureSupport
     {
         private static readonly FeatureSupport
-            @default = new FeatureSupport(false),
-            postgres = new FeatureSupport(true);
+            Default = new FeatureSupport(false),
+            Postgres = new FeatureSupport(true);
 
         /// <summary>
         /// Gets the feature set based on the passed connection
@@ -21,8 +21,8 @@ namespace Dapper
         public static FeatureSupport Get(IDbConnection connection)
         {
             string name = connection?.GetType().Name;
-            if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return postgres;
-            return @default;
+            if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return Postgres;
+            return Default;
         }
         private FeatureSupport(bool arrays)
         {
@@ -33,5 +33,4 @@ namespace Dapper
         /// </summary>
         public bool Arrays { get; }
     }
-
 }

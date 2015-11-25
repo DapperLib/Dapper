@@ -5,7 +5,6 @@ using System.Reflection;
 #if !COREFX
 namespace Dapper
 {
-
     /// <summary>
     /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a SqlDataRecordListTVPParameter
     /// </summary>
@@ -49,6 +48,5 @@ namespace Dapper
             }
         }
     }
-
 }
 #endif

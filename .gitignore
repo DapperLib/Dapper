@@ -13,3 +13,4 @@ NuGet.exe
 *.lock.json
 *.coverage
 Test.DB.*
+TestResults/
