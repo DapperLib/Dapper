@@ -259,6 +259,26 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void TestSchemaChangedViaFirstOrDefault()
+        {
+            connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            try
+            {
+                var d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
+                d.Name.IsEqualTo("Alf");
+                d.Age.IsEqualTo(1);
+                connection.Execute("alter table #dog drop column Name");
+                d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
+                d.Name.IsNull();
+                d.Age.IsEqualTo(1);
+            }
+            finally
+            {
+                connection.Execute("drop table #dog");
+            }
+        }
+
+        [Fact]
         public void TestSchemaChangedMultiMap()
         {
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
@@ -845,6 +865,8 @@ end");
         public void TestDapperSetsPrivates()
         {
             connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow.IsEqualTo(1);
+
+            connection.QueryFirstOrDefault<PrivateDan>("select 'one' ShadowInDB").Shadow.IsEqualTo(1);
         }
 
         class PrivateDan

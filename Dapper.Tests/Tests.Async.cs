@@ -364,6 +364,19 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public async Task TypeBasedViaTypeAsyncFirstOrDefault()
+        {
+            Type type = GetSomeType();
+
+            dynamic actual = (await marsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }));
+            ((object)actual).GetType().IsEqualTo(type);
+            int a = actual.A;
+            string b = actual.B;
+            a.IsEqualTo(123);
+            b.IsEqualTo("abc");
+        }
+
+        [Fact]
         public async Task Issue22_ExecuteScalarAsync()
         {
             int i = await connection.ExecuteScalarAsync<int>("select 123");
@@ -588,7 +601,26 @@ SET @AddressPersonId = @PersonId", p))
         class AsyncFoo0 { public int Id { get; set; } }
         class AsyncFoo1 { public int Id { get; set; } }
         class AsyncFoo2 { public int Id { get; set; } }
-        
+
+        [Fact]
+        public async Task TestSchemaChangedViaFirstOrDefaultAsync()
+        {
+            await connection.ExecuteAsync("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            try
+            {
+                var d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog");
+                d.Name.IsEqualTo("Alf");
+                d.Age.IsEqualTo(1);
+                connection.Execute("alter table #dog drop column Name");
+                d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog");
+                d.Name.IsNull();
+                d.Age.IsEqualTo(1);
+            }
+            finally
+            {
+                await connection.ExecuteAsync("drop table #dog");
+            }
+        }
 
         [Fact]
         public async Task TestMultiMapArbitraryMapsAsync()
