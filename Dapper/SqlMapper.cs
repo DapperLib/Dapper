@@ -397,7 +397,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteImpl(cnn, ref command);
         }
         /// <summary>
@@ -418,7 +418,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteScalarImpl<object>(cnn, ref command);
         }
 
@@ -430,7 +430,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteScalarImpl<T>(cnn, ref command);
         }
 
@@ -543,7 +543,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
 )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             IDbCommand dbcmd;
             var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out dbcmd);
             return new WrappedReader(dbcmd, reader);
@@ -606,7 +606,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
         )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var data = QueryImpl<T>(cnn, command, typeof(T));
             return command.Buffered ? data.ToList() : data;
         }
@@ -621,7 +621,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.None);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryFirstOrDefaultImpl<T>(cnn, ref command, typeof(T));
         }
 
@@ -636,7 +636,7 @@ namespace Dapper
         )
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var data = QueryImpl<object>(cnn, command, type);
             return command.Buffered ? data.ToList() : data;
         }
@@ -651,7 +651,7 @@ namespace Dapper
         )
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType,  CommandFlags.None);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType,  CommandFlags.None);
             return QueryFirstOrDefaultImpl<object>(cnn, ref command, type);
         }
         /// <summary>
@@ -687,7 +687,7 @@ namespace Dapper
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return QueryMultipleImpl(cnn, ref command);
         }
         /// <summary>
@@ -1030,9 +1030,9 @@ namespace Dapper
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
         /// <returns></returns>
-        public static IEnumerable<TReturn> Query<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> Query<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var results = MultiMapImpl<TReturn>(cnn, command, types, map, splitOn, null, null, true);
             return buffered ? results.ToList() : results;
         }
@@ -1040,7 +1040,7 @@ namespace Dapper
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
             this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
-            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null, true);
             return buffered ? results.ToList() : results;
         }
