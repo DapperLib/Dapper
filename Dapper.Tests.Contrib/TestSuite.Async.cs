@@ -5,7 +5,11 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Dapper.Contrib.Extensions;
+#if XUNIT2
+using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
+#else
 using Xunit;
+#endif
 
 namespace Dapper.Tests.Contrib
 {

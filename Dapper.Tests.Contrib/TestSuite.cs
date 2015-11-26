@@ -13,6 +13,9 @@ using IDbConnection = System.Data.Common.DbConnection;
 using System.Data.SqlServerCe;
 using System.Transactions;
 #endif
+#if XUNIT2
+using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
+#endif
 
 namespace Dapper.Tests.Contrib
 {
