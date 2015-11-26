@@ -259,6 +259,26 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void TestSchemaChangedViaFirstOrDefault()
+        {
+            connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            try
+            {
+                var d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
+                d.Name.IsEqualTo("Alf");
+                d.Age.IsEqualTo(1);
+                connection.Execute("alter table #dog drop column Name");
+                d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
+                d.Name.IsNull();
+                d.Age.IsEqualTo(1);
+            }
+            finally
+            {
+                connection.Execute("drop table #dog");
+            }
+        }
+
+        [Fact]
         public void TestSchemaChangedMultiMap()
         {
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
@@ -845,6 +865,8 @@ end");
         public void TestDapperSetsPrivates()
         {
             connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow.IsEqualTo(1);
+
+            connection.QueryFirstOrDefault<PrivateDan>("select 'one' ShadowInDB").Shadow.IsEqualTo(1);
         }
 
         class PrivateDan
@@ -1625,6 +1647,25 @@ end");
 
             Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
             var result02 = connection.Query<string>(sql, param).FirstOrDefault();
+            result02.IsEqualTo("varchar");
+
+            Dapper.SqlMapper.PurgeQueryCache();
+            Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+        }
+
+        [Fact]
+        public void TestChangingDefaultStringTypeMappingToAnsiStringFirstOrDefault()
+        {
+            var sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
+            var param = new { testParam = "TestString" };
+
+            var result01 = connection.QueryFirstOrDefault<string>(sql, param);
+            result01.IsEqualTo("nvarchar");
+
+            Dapper.SqlMapper.PurgeQueryCache();
+
+            Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+            var result02 = connection.QueryFirstOrDefault<string>(sql, param);
             result02.IsEqualTo("varchar");
 
             Dapper.SqlMapper.PurgeQueryCache();

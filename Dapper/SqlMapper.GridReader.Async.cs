@@ -33,6 +33,15 @@ namespace Dapper
             }
 
             /// <summary>
+            /// Read the first row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public Task<dynamic> ReadFirstOrDefaultAsync()
+            {
+                return ReadFirstOrDefaultAsyncImpl<dynamic>(typeof(DapperRow));
+            }
+
+            /// <summary>
             /// Read the next grid of results
             /// </summary>
             public Task<IEnumerable<object>> ReadAsync(Type type, bool buffered = true)
@@ -40,12 +49,30 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadAsyncImpl<object>(type, buffered);
             }
+
+            /// <summary>
+            /// Read the first row of the next grid of results
+            /// </summary>
+            public Task<object> ReadFirstOrDefaultAsync(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadFirstOrDefaultAsyncImpl<object>(type);
+            }
+
             /// <summary>
             /// Read the next grid of results
             /// </summary>
             public Task<IEnumerable<T>> ReadAsync<T>(bool buffered = true)
             {
                 return ReadAsyncImpl<T>(typeof(T), buffered);
+            }
+
+            /// <summary>
+            /// Read the first row of the next grid of results
+            /// </summary>
+            public Task<T> ReadFirstOrDefaultAsync<T>()
+            {
+                return ReadFirstOrDefaultAsyncImpl<T>(typeof(T));
             }
 
             private async Task NextResultAsync()
@@ -92,6 +119,42 @@ namespace Dapper
                     if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
                     return Task.FromResult(result);
                 }
+            }
+
+            private Task<T> ReadFirstOrDefaultAsyncImpl<T>(Type type)
+            {
+                var dbReader = reader as DbDataReader;
+                if (dbReader != null) return ReadFirstOrDefaultAsyncImplImpl<T>(dbReader, type);
+
+                // no async API available; use non-async and fake it
+                return Task.FromResult<T>(ReadFirstOrDefaultImpl<T>(type));
+            }
+
+            private async Task<T> ReadFirstOrDefaultAsyncImplImpl<T>(DbDataReader reader, Type type)
+            {
+                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+
+                IsConsumed = true;
+                T result = default(T);
+                if (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                {
+                    var typedIdentity = identity.ForGrid(type, gridIndex);
+                    CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                    var deserializer = cache.Deserializer;
+
+                    int hash = GetColumnHash(reader);
+                    if (deserializer.Func == null || deserializer.Hash != hash)
+                    {
+                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                        cache.Deserializer = deserializer;
+                    }
+                    result = (T)deserializer.Func(reader);
+
+                    while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { }
+                }
+                await NextResultAsync().ConfigureAwait(false);
+                return result;
             }
 
             private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity)

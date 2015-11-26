@@ -157,12 +157,38 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public async Task TestMultiAsyncViaFirstOrDefault()
+        {
+            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5"))
+            {
+                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(1);
+                multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
+                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(3);
+                multi.ReadAsync<int>().Result.Single().IsEqualTo(4);
+                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(5);
+            }
+        }
+
+        [Fact]
         public async Task TestMultiClosedConnAsync()
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2"))
             {
                 multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
                 multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
+            }
+        }
+
+        [Fact]
+        public async Task TestMultiClosedConnAsyncViaFirstOrDefault()
+        {
+            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5;"))
+            {
+                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(1);
+                multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
+                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(3);
+                multi.ReadAsync<int>().Result.Single().IsEqualTo(4);
+                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(5);
             }
         }
 
@@ -330,6 +356,19 @@ namespace Dapper.Tests
             Type type = GetSomeType();
             
             dynamic actual = (await marsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" })).FirstOrDefault();
+            ((object)actual).GetType().IsEqualTo(type);
+            int a = actual.A;
+            string b = actual.B;
+            a.IsEqualTo(123);
+            b.IsEqualTo("abc");
+        }
+
+        [Fact]
+        public async Task TypeBasedViaTypeAsyncFirstOrDefault()
+        {
+            Type type = GetSomeType();
+
+            dynamic actual = (await marsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }));
             ((object)actual).GetType().IsEqualTo(type);
             int a = actual.A;
             string b = actual.B;
@@ -562,7 +601,26 @@ SET @AddressPersonId = @PersonId", p))
         class AsyncFoo0 { public int Id { get; set; } }
         class AsyncFoo1 { public int Id { get; set; } }
         class AsyncFoo2 { public int Id { get; set; } }
-        
+
+        [Fact]
+        public async Task TestSchemaChangedViaFirstOrDefaultAsync()
+        {
+            await connection.ExecuteAsync("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+            try
+            {
+                var d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog");
+                d.Name.IsEqualTo("Alf");
+                d.Age.IsEqualTo(1);
+                connection.Execute("alter table #dog drop column Name");
+                d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog");
+                d.Name.IsNull();
+                d.Age.IsEqualTo(1);
+            }
+            finally
+            {
+                await connection.ExecuteAsync("drop table #dog");
+            }
+        }
 
         [Fact]
         public async Task TestMultiMapArbitraryMapsAsync()

@@ -40,11 +40,28 @@ namespace Dapper
             }
 
             /// <summary>
+            /// Read the first row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public dynamic ReadFirstOrDefault()
+            {
+                return ReadFirstOrDefaultImpl<dynamic>(typeof(DapperRow));
+            }
+
+            /// <summary>
             /// Read the next grid of results
             /// </summary>
             public IEnumerable<T> Read<T>(bool buffered = true)
             {
                 return ReadImpl<T>(typeof(T), buffered);
+            }
+
+            /// <summary>
+            /// Read the first row of the next grid of results
+            /// </summary>
+            public T ReadFirstOrDefault<T>()
+            {
+                return ReadFirstOrDefaultImpl<T>(typeof(T));
             }
 
             /// <summary>
@@ -54,6 +71,15 @@ namespace Dapper
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadImpl<object>(type, buffered);
+            }
+
+            /// <summary>
+            /// Read the first row of the next grid of results
+            /// </summary>
+            public object ReadFirstOrDefault(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadFirstOrDefaultImpl<object>(type);
             }
 
             private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
@@ -73,6 +99,32 @@ namespace Dapper
                 IsConsumed = true;
                 var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
                 return buffered ? result.ToList() : result;
+            }
+
+            private T ReadFirstOrDefaultImpl<T>(Type type)
+            {
+                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                IsConsumed = true;
+
+                T result = default(T);
+                if(reader.Read())
+                {
+                    var typedIdentity = identity.ForGrid(type, gridIndex);
+                    CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                    var deserializer = cache.Deserializer;
+
+                    int hash = GetColumnHash(reader);
+                    if (deserializer.Func == null || deserializer.Hash != hash)
+                    {
+                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                        cache.Deserializer = deserializer;
+                    }
+                    result = (T) deserializer.Func(reader);
+                    while (reader.Read()) { }
+                }
+                NextResult();
+                return result;
             }
 
 

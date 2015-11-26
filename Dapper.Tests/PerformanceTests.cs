@@ -130,10 +130,13 @@ namespace Dapper.Tests
                 var mapperConnection = TestSuite.GetOpenConnection();
                 tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
                 tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
+                tests.Add(id => mapperConnection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = id }), "Mapper QueryFirstOrDefault");
+
 
                 var mapperConnection2 = TestSuite.GetOpenConnection();
                 tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
                 tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dynamic Mapper Query (non-buffered)");
+                tests.Add(id => mapperConnection2.QueryFirstOrDefault("select * from Posts where Id = @Id", new { Id = id }), "Dynamic Mapper QueryQueryFirstOrDefault");
 
                 // dapper.contrib
                 var mapperConnection3 = TestSuite.GetOpenConnection();
