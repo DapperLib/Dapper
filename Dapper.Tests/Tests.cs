@@ -68,14 +68,15 @@ namespace Dapper.Tests
 {
     public partial class TestSuite : IDisposable
     {
-        public const string LocalConnectionString = "Data Source=.;Initial Catalog=tempdb;Integrated Security=True",
-            AppveyorConnectionStrng = @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!",
-            OleDbConnectionString = "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
-
         public static string ConnectionString =>
             !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
-                ? AppveyorConnectionStrng
-                : LocalConnectionString;
+                ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
+                : "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
+
+        public static string OleDbConnectionString =>
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+                ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2014;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
+                : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
         public static SqlConnection GetOpenConnection(bool mars = false)
         {
