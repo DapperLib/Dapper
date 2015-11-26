@@ -4,9 +4,9 @@ namespace Dapper.Tests
 {
     public static class Assert
     {
-        public static void IsEqualTo<T>(this T obj, T other)
+        public static void IsEqualTo<T>(this T expected, T actual)
         {
-            Xunit.Assert.Equal(obj, other);
+            Xunit.Assert.Equal(expected, actual);
         }
 
         public static void IsSequenceEqualTo<T>(this IEnumerable<T> obj, IEnumerable<T> other)
