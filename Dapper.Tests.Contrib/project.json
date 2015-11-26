@@ -5,7 +5,7 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "description": "Dapper Contrib Test Suite",
   "title": "Dapper.Contrib.Tests",
-  "version": "1.0.0-*",
+  "version": "1.0.0",
   "copyright": "2015 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
@@ -24,6 +24,7 @@
   "compile": [
     "**/*.cs",
     "../Dapper.Tests/Assert.cs",
+    "../Dapper.Tests/XunitSkippable.cs",
     "../Dapper/TypeExtensions.cs"
   ],
   "commands": {
@@ -50,7 +51,7 @@
     },
     "net45": {
       "compilationOptions": {
-        "define": [ "ASYNC" ]
+        "define": [ "ASYNC", "XUNIT2" ]
       },
       "frameworkAssemblies": {
         "System.Configuration": "4.0.0.0",
@@ -69,7 +70,7 @@
     },
     "dotnet5.4": {
       "compilationOptions": {
-        "define": [ "ASYNC", "COREFX" ]
+        "define": [ "ASYNC", "COREFX", "XUNIT2" ]
       },
       "dependencies": {
         "Microsoft.CSharp": "4.0.1-*",
@@ -85,7 +86,7 @@
     },
     "dnx451": {
       "compilationOptions": {
-        "define": [ "ASYNC" ]
+        "define": [ "ASYNC", "XUNIT2" ]
       },
       "frameworkAssemblies": {
         "System.Configuration": "4.0.0.0",
@@ -102,7 +103,7 @@
     },
     "dnxcore50": {
       "compilationOptions": {
-        "define": [ "COREFX", "ASYNC" ]
+        "define": [ "COREFX", "ASYNC", "XUNIT2" ]
       },
       "dependencies": {
         "Microsoft.Data.Sqlite": "1.0.0-rc1-final",

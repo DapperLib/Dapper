@@ -2,6 +2,8 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using Xunit;
+using Xunit.Sdk;
 #if COREFX
 using Microsoft.Data.Sqlite;
 using IDbConnection = System.Data.Common.DbConnection;
@@ -17,6 +19,11 @@ namespace Dapper.Tests.Contrib
     // The test suites here implement TestSuiteBase so that each provider runs
     // the entire set of tests without declarations per method
     // If we want to support a new provider, they need only be added here - not in multiple places
+
+#if XUNIT2
+    [XunitTestCaseDiscoverer("Dapper.Tests.SkippableFactDiscoverer", "Dapper.Tests.Contrib")]
+    public class SkippableFactAttribute : FactAttribute { }
+#endif
 
     public class SqlServerTestSuite : TestSuite
     {
@@ -56,35 +63,52 @@ namespace Dapper.Tests.Contrib
     public class MySqlServerTestSuite : TestSuite
     {
         const string DbName = "DapperContribTests";
+
         public static string ConnectionString =>
             !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
                 ? @"Server=localhost;Uid=root;Pwd=Password12!;"
                 : $"Server=localhost;Uid=root;Pwd=Password12!;";
 
-        public override IDbConnection GetConnection() => new MySqlConnection(ConnectionString);
+        public override IDbConnection GetConnection()
+        {
+            if (_skip) throw new SkipTestException("Skipping MySQL Tests - no server.");
+            return new MySqlConnection(ConnectionString);
+        }
+
+        private static readonly bool _skip;
 
         static MySqlServerTestSuite()
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                // ReSharper disable once AccessToDisposedClosure
-                Action<string> dropTable = name => connection.Execute($@"DROP TABLE IF EXISTS `{name}`;");
-                connection.Open();
-                connection.Execute($@"DROP DATABASE IF EXISTS {DbName}; CREATE DATABASE {DbName}; USE {DbName};");
-                dropTable("Stuff");
-                connection.Execute(@"CREATE TABLE Stuff (TheId int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Created DateTime null);");
-                dropTable("People");
-                connection.Execute(@"CREATE TABLE People (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
-                dropTable("Users");
-                connection.Execute(@"CREATE TABLE Users (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Age int not null);");
-                dropTable("Automobiles");
-                connection.Execute(@"CREATE TABLE Automobiles (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
-                dropTable("Results");
-                connection.Execute(@"CREATE TABLE Results (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, `Order` int not null);");
-                dropTable("ObjectX");
-                connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
-                dropTable("ObjectY");
-                connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    // ReSharper disable once AccessToDisposedClosure
+                    Action<string> dropTable = name => connection.Execute($@"DROP TABLE IF EXISTS `{name}`;");
+                    connection.Open();
+                    connection.Execute($@"DROP DATABASE IF EXISTS {DbName}; CREATE DATABASE {DbName}; USE {DbName};");
+                    dropTable("Stuff");
+                    connection.Execute(@"CREATE TABLE Stuff (TheId int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Created DateTime null);");
+                    dropTable("People");
+                    connection.Execute(@"CREATE TABLE People (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
+                    dropTable("Users");
+                    connection.Execute(@"CREATE TABLE Users (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Age int not null);");
+                    dropTable("Automobiles");
+                    connection.Execute(@"CREATE TABLE Automobiles (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
+                    dropTable("Results");
+                    connection.Execute(@"CREATE TABLE Results (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, `Order` int not null);");
+                    dropTable("ObjectX");
+                    connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
+                    dropTable("ObjectY");
+                    connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
+                }
+            }
+            catch (MySqlException e)
+            {
+                if (e.Message.Contains("Unable to connect"))
+                    _skip = true;
+                else
+                    throw;
             }
         }
     }
