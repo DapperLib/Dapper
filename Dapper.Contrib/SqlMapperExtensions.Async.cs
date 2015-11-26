@@ -78,7 +78,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static async Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
             var cacheType = typeof(List<T>);
@@ -95,9 +95,12 @@ namespace Dapper.Contrib.Extensions
 
             if (!type.IsInterface())
             {
-                return await connection.QueryAsync<T>(sql, null, transaction, commandTimeout);
+                return connection.QueryAsync<T>(sql, null, transaction, commandTimeout);
             }
-
+            return GetAllAsyncImpl<T>(connection, transaction, commandTimeout, sql, type);
+        }
+        private static async Task<IEnumerable<T>> GetAllAsyncImpl<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string sql, Type type) where T : class
+        {
             var result = await connection.QueryAsync(sql);
             var list = new List<T>();
             foreach (IDictionary<string, object> res in result)
@@ -124,7 +127,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <param name="sqlAdapter">The specific ISqlAdapter to use, auto-detected based on connection if null</param>
         /// <returns>Identity of inserted entity</returns>
-        public static async Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
+        public static Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
             int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             var type = typeof(T);
@@ -164,13 +167,13 @@ namespace Dapper.Contrib.Extensions
 
             if (!isList)    //single entity
             {
-                return await sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                return sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
 
             //insert list of entities
             var cmd = $"INSERT INTO {name} ({sbColumnList}) values ({sbParameterList})";
-            return await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
+            return connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>

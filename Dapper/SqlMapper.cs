@@ -579,7 +579,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Return a list of dynamic objects, reader is closed after the call
+        /// Return a sequence of dynamic objects with properties matching the columns
         /// </summary>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
@@ -588,9 +588,17 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QueryFirstOrDefault(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QueryFirstOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+        }
+
+        /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
-        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
@@ -604,7 +612,21 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Executes a query, returning the data typed as per the Type suggested
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QueryFirstOrDefault<T>(
+            this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryFirstOrDefaultImpl<T>(cnn, ref command, typeof(T));
+        }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
         /// </summary>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
@@ -619,6 +641,20 @@ namespace Dapper
             return command.Buffered ? data.ToList() : data;
         }
         /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QueryFirstOrDefault(
+            this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, (object)param, transaction, commandTimeout, commandType,  CommandFlags.None);
+            return QueryFirstOrDefaultImpl<object>(cnn, ref command, type);
+        }
+        /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
@@ -631,6 +667,17 @@ namespace Dapper
             return command.Buffered ? data.ToList() : data;
         }
 
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QueryFirstOrDefault<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryFirstOrDefaultImpl<T>(cnn, ref command, typeof(T));
+        }
 
 
         /// <summary>
@@ -735,6 +782,73 @@ namespace Dapper
                 reader = null;
 
                 command.OnCompleted();
+            }
+            finally
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) try { cmd.Cancel(); }
+                        catch { /* don't spoil the existing exception */ }
+                    reader.Dispose();
+                }
+                if (wasClosed) cnn.Close();
+                cmd?.Dispose();
+            }
+        }
+
+        private static T QueryFirstOrDefaultImpl<T>(this IDbConnection cnn, ref CommandDefinition command, Type effectiveType)
+        {
+            object param = command.Parameters;
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType(), null);
+            var info = GetCacheInfo(identity, param, command.AddToCache);
+
+            IDbCommand cmd = null;
+            IDataReader reader = null;
+
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                cmd = command.SetupCommand(cnn, info.ParamReader);
+
+                if (wasClosed) cnn.Open();
+                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
+                wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
+
+                T result = default(T);
+                if (reader.Read() && reader.FieldCount != 0)
+                {
+                    // with the CloseConnection flag, so the reader will deal with the connection; we
+                    // still need something in the "finally" to ensure that broken SQL still results
+                    // in the connection closing itself
+                    var tuple = info.Deserializer;
+                    int hash = GetColumnHash(reader);
+                    if (tuple.Func == null || tuple.Hash != hash)
+                    {
+                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        if (command.AddToCache) SetQueryCache(identity, info);
+                    }
+
+                    var func = tuple.Func;
+                    object val = func(reader);
+                    if (val == null || val is T)
+                    {
+                        result = (T)val;
+                    }
+                    else {
+                        var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
+                        result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                    }
+                    while (reader.Read()) { }
+                }
+                
+                while (reader.NextResult()) { }
+                // happy path; close the reader cleanly - no
+                // need for "Cancel" etc
+                reader.Dispose();
+                reader = null;
+
+                command.OnCompleted();
+                return result;
             }
             finally
             {
