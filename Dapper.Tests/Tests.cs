@@ -698,10 +698,10 @@ select * from @bar", new { foo }).Single();
         [Fact]
         public void MultiRSSqlCE()
         {
-            if (File.Exists("Test.sdf"))
-                File.Delete("Test.sdf");
+            if (File.Exists("Test.DB.sdf"))
+                File.Delete("Test.DB.sdf");
 
-            var cnnStr = "Data Source = Test.sdf;";
+            var cnnStr = "Data Source = Test.DB.sdf;";
             var engine = new SqlCeEngine(cnnStr);
             engine.CreateDatabase();
 
