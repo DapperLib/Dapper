@@ -34,6 +34,14 @@ namespace Dapper.Tests.Contrib
         public int ObjectYId { get; set; }
         public string Name { get; set; }
     }
+    
+    [Table("ObjectZ")]
+    public class ObjectZ
+    {
+        [ExplicitKey]
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
 
     public interface IUser
     {
@@ -134,7 +142,7 @@ namespace Dapper.Tests.Contrib
                 o2.IsNull();
             }
         }
-
+        
         [Fact]
         public void GetAllWithExplicitKey()
         {
@@ -149,6 +157,28 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        [Fact]
+        public void InsertGetUpdateDeleteWithExplicitKeyNamedId()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                const int id = 42;
+                var o2 = new ObjectZ { Id = id, Name = "Foo" };
+                connection.Insert(o2);
+                var list2 = connection.Query<ObjectZ>("select * from ObjectZ").ToList();
+                list2.Count.IsEqualTo(1);
+                o2 = connection.Get<ObjectZ>(id);
+                o2.Id.IsEqualTo(id);
+                //o2.Name = "Bar";
+                //connection.Update(o2);
+                //o2 = connection.Get<ObjectY>(id);
+                //o2.Name.IsEqualTo("Bar");
+                //connection.Delete(o2);
+                //o2 = connection.Get<ObjectY>(id);
+                //o2.IsNull();
+            }
+        }
+        
         [Fact]
         public void ShortIdentity()
         {
