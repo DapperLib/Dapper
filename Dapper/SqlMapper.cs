@@ -697,6 +697,7 @@ namespace Dapper
         {
             return QueryMultipleImpl(cnn, ref command);
         }
+
         private static GridReader QueryMultipleImpl(this IDbConnection cnn, ref CommandDefinition command)
         {
             object param = command.Parameters;
@@ -710,7 +711,7 @@ namespace Dapper
             {
                 if (wasClosed) cnn.Open();
                 cmd = command.SetupCommand(cnn, info.ParamReader);
-                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
+                reader = cmd.ExecuteReader(GetBehavior(wasClosed, CommandBehavior.SequentialAccess));
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache);
                 cmd = null; // now owned by result
@@ -749,7 +750,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
+                reader = cmd.ExecuteReader(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult));
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -811,7 +812,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = cmd.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
+                reader = cmd.ExecuteReader(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow));
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
 
                 T result = default(T);
@@ -1061,7 +1062,7 @@ namespace Dapper
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ownedCommand.ExecuteReader(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess);
+                    ownedReader = ownedCommand.ExecuteReader(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult));
                     reader = ownedReader;
                 }
                 DeserializerState deserializer = default(DeserializerState);
@@ -1104,7 +1105,10 @@ namespace Dapper
                 }
             }
         }
-
+        private static CommandBehavior GetBehavior(bool close, CommandBehavior @default)
+        {
+            return close ? (@default | CommandBehavior.CloseConnection) : @default;
+        }
         static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
         {
             if (types.Length < 1)
@@ -1126,7 +1130,7 @@ namespace Dapper
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ownedCommand.ExecuteReader();
+                    ownedReader = ownedCommand.ExecuteReader(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult));
                     reader = ownedReader;
                 }
                 DeserializerState deserializer = default(DeserializerState);
@@ -2272,8 +2276,7 @@ namespace Dapper
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
-                if (wasClosed) commandBehavior |= CommandBehavior.CloseConnection;
-                var reader = cmd.ExecuteReader(commandBehavior);
+                var reader = cmd.ExecuteReader(GetBehavior(wasClosed, commandBehavior));
                 wasClosed = false; // don't dispose before giving it to them!
                 disposeCommand = false;
                 // note: command.FireOutputCallbacks(); would be useless here; parameters come at the **end** of the TDS stream
