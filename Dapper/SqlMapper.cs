@@ -1464,48 +1464,69 @@ namespace Dapper
             }
 
             var effectiveFieldCount = Math.Min(fieldCount - startBound, length);
-
+            int firstCol = -1;
             DapperTable table = null;
-
+            BitArray enabledCols = null;
             return
                 r =>
                 {
                     if (table == null)
                     {
-                        string[] names = new string[effectiveFieldCount];
-                        for (int i = 0; i < effectiveFieldCount; i++)
+                        string[] names;
+                        if (Settings.IgnoreDuplicatedColumns)
                         {
-                            names[i] = r.GetName(i + startBound);
+                            enabledCols = new BitArray(effectiveFieldCount);
+                            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                            List<string> namesList = new List<string>(effectiveFieldCount);
+                            for (int i = 0; i < effectiveFieldCount; i++)
+                            {
+                                var name = r.GetName(i + startBound);
+                                if (seen.Add(name))
+                                {
+                                    namesList.Add(name);
+                                    enabledCols[i] = true;
+                                    if (firstCol == -1) firstCol = i;
+                                }
+                            }
+                            names = namesList.ToArray();
+                        }
+                        else
+                        {
+                            firstCol = 0;
+                            names = new string[effectiveFieldCount];
+                            for (int i = 0; i < effectiveFieldCount; i++)
+                            {
+                                names[i] = r.GetName(i + startBound);
+                            }
                         }
                         table = new DapperTable(names);
                     }
 
-                    var values = new object[effectiveFieldCount];
+                    var values = new object[table.FieldCount];
 
                     if (returnNullIfFirstMissing)
                     {
-                        values[0] = r.GetValue(startBound);
+                        if (Settings.IgnoreDuplicatedColumns)
+                            System.Diagnostics.Debugger.Break();
+
+                        if (firstCol == -1) return null;
+
+                        values[0] = r.GetValue(startBound + firstCol);
                         if (values[0] is DBNull)
                         {
                             return null;
                         }
                     }
 
-                    if (startBound == 0)
+                    // actually load the data
+                    int idx = firstCol;
+                    if (returnNullIfFirstMissing) idx++; // we already read it
+                    for (int i = idx; i < effectiveFieldCount; i++)
                     {
-                        for (int i = 0; i < values.Length; i++)
+                        if (enabledCols == null || enabledCols[i])
                         {
-                            object val = r.GetValue(i);
-                            values[i] = val is DBNull ? null : val;
-                        }
-                    }
-                    else
-                    {
-                        var begin = returnNullIfFirstMissing ? 1 : 0;
-                        for (var iter = begin; iter < effectiveFieldCount; ++iter)
-                        {
-                            object obj = r.GetValue(iter + startBound);
-                            values[iter] = obj is DBNull ? null : obj;
+                            object val = r.GetValue(i + startBound);
+                            values[idx++] = val is DBNull ? null : val;
                         }
                     }
                     return new DapperRow(table, values);
@@ -2445,6 +2466,22 @@ namespace Dapper
             PurgeQueryCacheByType(type);
         }
 
+        struct ColumnInfo
+        {
+            public ColumnInfo(string name, Type type, int ordinal)
+            {
+                this.name = name;
+                this.type = type;
+                this.ordinal = ordinal;
+            }
+            private string name;
+            private Type type;
+            private int ordinal;
+            public string Name { get { return name; } }
+            public Type Type { get { return type; } }
+            public int Ordinal { get { return ordinal; } }
+        }
+
         /// <summary>
         /// Internal use only
         /// </summary>
@@ -2475,11 +2512,18 @@ namespace Dapper
                 throw MultiMapException(reader);
             }
 
-            var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
-
+            List<ColumnInfo> cols = new List<ColumnInfo>(length);
+            HashSet<string> uniqueNames = Settings.IgnoreDuplicatedColumns ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
+            {
+                int ordinal = startBound - 1;
+                for (int i = 0; i < length; i++)
+                {
+                    var name = reader.GetName(++ordinal);
+                    if (uniqueNames != null && !uniqueNames.Add(name)) continue; // seen it before
+                    cols.Add(new ColumnInfo(name, reader.GetFieldType(ordinal), ordinal));
+                }
+            }
             ITypeMap typeMap = GetTypeMap(type);
-
-            int index = startBound;
 
             ConstructorInfo specializedConstructor = null;
 
@@ -2493,12 +2537,6 @@ namespace Dapper
             }
             else
             {
-                var types = new Type[length];
-                for (int i = startBound; i < startBound + length; i++)
-                {
-                    types[i - startBound] = reader.GetFieldType(i);
-                }
-
                 var explicitConstr = typeMap.FindExplicitConstructor();
                 if (explicitConstr != null)
                 {
@@ -2539,10 +2577,17 @@ namespace Dapper
                 }
                 else
                 {
-                    var ctor = typeMap.FindConstructor(names, types);
+                    Type[] types = new Type[cols.Count];
+                    string[] argNames = new string[cols.Count];
+                    for (int i = 0; i < types.Length; i++)
+                    {
+                        types[i] = cols[i].Type;
+                        argNames[i] = cols[i].Name;
+                    }
+                    var ctor = typeMap.FindConstructor(argNames, types);
                     if (ctor == null)
                     {
-                        string proposedTypes = $"({string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray())})";
+                        string proposedTypes = $"({string.Join(", ", types.Select((t, i) => t.FullName + " " + argNames[i]).ToArray())})";
                         throw new InvalidOperationException($"A parameterless default constructor or one matching signature {proposedTypes} is required for {type.FullName} materialization");
                     }
 
@@ -2576,17 +2621,18 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloc_1);// [target]
             }
 
-            var members = (specializedConstructor != null
-                ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList();
-
             // stack is now [target]
 
             bool first = true;
             var allDone = il.DefineLabel();
             int enumDeclareLocal = -1, valueCopyLocal = il.DeclareLocal(typeof(object)).LocalIndex;
-            foreach (var item in members)
+
+            foreach (var col in cols)
             {
+                IMemberMap item = specializedConstructor == null
+                    ? typeMap.GetMember(col.Name)
+                    : typeMap.GetConstructorParameter(specializedConstructor, col.Name);
+
                 if (item != null)
                 {
                     if (specializedConstructor == null)
@@ -2595,13 +2641,13 @@ namespace Dapper
                     Label finishLabel = il.DefineLabel();
 
                     il.Emit(OpCodes.Ldarg_0); // stack is now [target][target][reader]
-                    EmitInt32(il, index); // stack is now [target][target][reader][index]
+                    EmitInt32(il, col.Ordinal); // stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
                     il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
                     il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
                     il.Emit(OpCodes.Dup); // stack is now [target][target][value-as-object][value-as-object]
                     StoreLocal(il, valueCopyLocal);
-                    Type colType = reader.GetFieldType(index);
+                    Type colType = col.Type;
                     Type memberType = item.MemberType;
 
                     if (memberType == typeof(char) || memberType == typeof(char?))
@@ -2729,7 +2775,6 @@ namespace Dapper
                     il.MarkLabel(finishLabel);
                 }
                 first = false;
-                index += 1;
             }
             if (type.IsValueType())
             {

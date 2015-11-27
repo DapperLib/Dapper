@@ -2845,6 +2845,44 @@ end");
             }
         }
 
+        [Fact]
+        public void Issue326_RepeatedColumnWinners_Original()
+        {
+            RunRepeatedColumnWinners(false);
+        }
+        [Fact]
+        public void Issue326_RepeatedColumnWinners_FirstColumnWins()
+        {
+            RunRepeatedColumnWinners(true);
+        }
+        class Issue326
+        {
+            public int Id { get; private set; }
+            public string Name { get; private set; }
+            public string Description { get; private set; }
+        }
+        private void RunRepeatedColumnWinners(bool newBehavior)
+        {
+            var oldValue = Dapper.SqlMapper.Settings.IgnoreDuplicatedColumns;
+            Dapper.SqlMapper.Settings.IgnoreDuplicatedColumns = newBehavior;
+            try
+            {
+                var row = connection.QueryFirstOrDefault<Issue326>("select 1 as Id, 'abc' as Name, 2 as Id, 'def' as Description");
+                row.Id.IsEqualTo(newBehavior ? 1 : 2);
+                row.Name.IsEqualTo("abc");
+                row.Description.IsEqualTo("def");
+
+                var dyn = connection.QueryFirstOrDefault("select 3 as Id, 'ghi' as Name, 4 as Id, 'jkl' as Description");
+                ((int)dyn.Id).IsEqualTo(3); // note: dynamic, old behavior was to pick the first, since that won the IndexOf race
+                ((string)dyn.Name).IsEqualTo("ghi");
+                ((string)dyn.Description).IsEqualTo("jkl");
+
+            }
+            finally
+            {
+                Dapper.SqlMapper.Settings.IgnoreDuplicatedColumns = oldValue;
+            }
+        }
 #if EXTERNALS
         [Fact(Skip="Bug in Firebird; a PR to fix it has been submitted")]
         public void Issue178_Firebird()

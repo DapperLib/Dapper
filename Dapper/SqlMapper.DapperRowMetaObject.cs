@@ -12,14 +12,6 @@ namespace Dapper
 
             public DapperRowMetaObject(
                 System.Linq.Expressions.Expression expression,
-                System.Dynamic.BindingRestrictions restrictions
-                )
-                : base(expression, restrictions)
-            {
-            }
-
-            public DapperRowMetaObject(
-                System.Linq.Expressions.Expression expression,
                 System.Dynamic.BindingRestrictions restrictions,
                 object value
                 )
@@ -79,6 +71,12 @@ namespace Dapper
 
                 return callMethod;
             }
+            public override IEnumerable<string> GetDynamicMemberNames()
+            {
+                DapperTable table = base.Value as DapperTable;
+                return table == null ? NoNames : table.FieldNames;
+            }
+            private static readonly string[] NoNames = new string[0];
         }
     }
 }

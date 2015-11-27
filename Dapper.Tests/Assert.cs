@@ -4,7 +4,7 @@ namespace Dapper.Tests
 {
     public static class Assert
     {
-        public static void IsEqualTo<T>(this T expected, T actual)
+        public static void IsEqualTo<T>(this T actual, T expected)
         {
             Xunit.Assert.Equal(expected, actual);
         }
