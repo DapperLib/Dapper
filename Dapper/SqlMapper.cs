@@ -1506,9 +1506,6 @@ namespace Dapper
 
                     if (returnNullIfFirstMissing)
                     {
-                        if (Settings.IgnoreDuplicatedColumns)
-                            System.Diagnostics.Debugger.Break();
-
                         if (firstCol == -1) return null;
 
                         values[0] = r.GetValue(startBound + firstCol);
