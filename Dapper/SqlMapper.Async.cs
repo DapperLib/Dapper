@@ -721,7 +721,7 @@ namespace Dapper
             {
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.SequentialAccess), command.CancellationToken).ConfigureAwait(false);
+                var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.Default), command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 return reader;
             }

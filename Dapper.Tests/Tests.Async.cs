@@ -734,6 +734,19 @@ SET @AddressPersonId = @PersonId", p))
                 ", new Product { Id = 1 })).Single();
             id.IsEqualTo(2);
         }
+
+        [Fact]
+        public async Task Issue1281_DataReaderOutOfOrderAsync()
+        {
+            using (var reader = await connection.ExecuteReaderAsync("Select 0, 1, 2"))
+            {
+                reader.Read().IsTrue();
+                reader.GetInt32(2).IsEqualTo(2);
+                reader.GetInt32(0).IsEqualTo(0);
+                reader.GetInt32(1).IsEqualTo(1);
+                reader.Read().IsFalse();
+            }
+        }
     }
 }
 #endif
