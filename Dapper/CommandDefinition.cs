@@ -182,9 +182,7 @@ namespace Dapper
         private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
         {
             var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-            ParameterInfo[] indexers;
-            if (prop != null && prop.CanWrite && prop.PropertyType == expectedType
-                && ((indexers = prop.GetIndexParameters()) == null || indexers.Length == 0))
+            if (prop != null && prop.CanWrite && prop.PropertyType == expectedType && prop.GetIndexParameters().Length == 0)
             {
                 return prop.GetSetMethod();
             }
