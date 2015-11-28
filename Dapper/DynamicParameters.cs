@@ -61,7 +61,7 @@ namespace Dapper
         /// <param name="param"></param>
         public void AddDynamicParams(object param)
         {
-            var obj = param as object;
+            var obj = param;
             if (obj != null)
             {
                 var subDynamic = obj as DynamicParameters;
@@ -394,7 +394,7 @@ namespace Dapper
             var lookup = string.Join("|", names.ToArray());
 
             var cache = CachedOutputSetters<T>.Cache;
-            Action<object, DynamicParameters> setter = (Action<object, DynamicParameters>)cache[lookup];
+            var setter = (Action<object, DynamicParameters>)cache[lookup];
             if (setter != null) goto MAKECALLBACK;
 
             // Come on let's build a method, let's build it, let's build it now!
