@@ -25,6 +25,9 @@
   },
   "frameworks": {
     "net40": {
+      "compilationOptions": {
+        "define": [ "MYSQL" ]
+      },
       "frameworkAssemblies": {
         "System.Configuration": "4.0.0.0",
         "System.Data": "4.0.0.0",
@@ -36,12 +39,13 @@
         "ServiceStack.OrmLite": "4.0.48",
         "ServiceStack.OrmLite.SqlServer": "4.0.48",
         "Soma": "1.8.0.7",
-        "xunit": "1.9.2"
+        "xunit": "1.9.2",
+        "MySql.Data": "6.9.8"
       }
     },
     "net45": {
       "compilationOptions": {
-        "define": [ "ASYNC" ]
+        "define": [ "ASYNC", "MYSQL" ]
       },
       "frameworkAssemblies": {
         "System.Configuration": "4.0.0.0",
@@ -55,7 +59,8 @@
         "ServiceStack.OrmLite": "4.0.48",
         "ServiceStack.OrmLite.SqlServer": "4.0.48",
         "Soma": "1.8.0.7",
-        "xunit": "2.1.0"
+        "xunit": "2.1.0",
+        "MySql.Data": "6.9.8"
       }
     },
     "dotnet5.4": {
@@ -75,7 +80,7 @@
     },
     "dnx451": {
       "compilationOptions": {
-        "define": [ "ASYNC", "EXTERNALS", "DNX" ]
+        "define": [ "ASYNC", "EXTERNALS", "DNX", "MYSQL" ]
       },
       "frameworkAssemblies": {
         "System.Configuration": "4.0.0.0",
@@ -102,7 +107,8 @@
         "FirebirdSql.Data.FirebirdClient": "4.8.1.1",
         "Dapper.EntityFramework": {
           "target": "project"
-        }
+        },
+        "MySql.Data": "6.9.8"
       }
       
     },

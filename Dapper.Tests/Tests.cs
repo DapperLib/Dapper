@@ -25,6 +25,7 @@ using System.Threading;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using Xunit;
+using System.Data.Common;
 #if EXTERNALS
 using FirebirdSql.Data.FirebirdClient;
 using System.Data.Entity.Spatial;
@@ -2844,7 +2845,95 @@ end");
                 ex.Message.IsEqualTo("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
             }
         }
+        [Fact]
+        public void Issue295_NullableDateTime_SqlServer()
+        {
+            TestDateTime(connection);
+        }
+#if MYSQL
+        private static MySql.Data.MySqlClient.MySqlConnection GetMySqlConnection(bool open = true,
+            bool convertZeroDatetime = false, bool allowZeroDatetime = false)
+        {
+            const string cs = "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
+            var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs);
+            csb.AllowZeroDateTime = allowZeroDatetime;
+            csb.ConvertZeroDateTime = convertZeroDatetime;
+            var conn = new MySql.Data.MySqlClient.MySqlConnection(csb.ConnectionString);
+            if (open) conn.Open();
+            return conn;
+        }
+        [FactMySql]
+        public void Issue295_NullableDateTime_MySql_Default()
+        {
+            using (var conn = GetMySqlConnection(true, false, false)) { TestDateTime(connection); }
+        }
+        [FactMySql]
+        public void Issue295_NullableDateTime_MySql_ConvertZeroDatetime()
+        {
+            using (var conn = GetMySqlConnection(true, true, false)) { TestDateTime(connection); }
+        }
+        [FactMySql]
+        public void Issue295_NullableDateTime_MySql_AllowZeroDatetime()
+        {
+            using (var conn = GetMySqlConnection(true, false, true)) { TestDateTime(connection); }
+        }
+        [FactMySql]
+        public void Issue295_NullableDateTime_MySql_ConvertAllowZeroDatetime()
+        {
+            using (var conn = GetMySqlConnection(true, true, true)) { TestDateTime(connection); }
+        }
 
+        public class FactMySqlAttribute : FactAttribute
+        {
+            public override string Skip
+            {
+                get { return unavailable ?? base.Skip; }
+                set { base.Skip = value; }
+            }
+            private static string unavailable;
+            static FactMySqlAttribute()
+            {
+                try
+                {
+                    using (GetMySqlConnection(true)) { }
+                }
+                catch(Exception ex)
+                {
+                    unavailable = $"MySql is unavailable: {ex.Message}";
+                }
+            }
+        }
+#endif
+        private void TestDateTime(DbConnection connection)
+        {
+            DateTime? now = DateTime.UtcNow;
+            try { connection.Execute("DROP TABLE Persons"); } catch { }
+            connection.Execute(@"CREATE TABLE Persons (id int not null, dob datetime null)");
+            connection.Execute(@"INSERT Persons (id, dob) values (@id, @dob)",
+                 new { id = 7, dob = (DateTime?)null });
+            connection.Execute(@"INSERT Persons (id, dob) values (@id, @dob)",
+                 new { id = 42, dob = now });
+
+            var row = connection.QueryFirstOrDefault<Issue295Person>(
+                "SELECT id, dob, dob as dob2 FROM Persons WHERE id=@id", new { id = 7});
+            row.IsNotNull();
+            row.Id.IsEqualTo(7);
+            row.DoB.IsNull();
+            row.DoB2.IsNull();
+
+            row = connection.QueryFirstOrDefault<Issue295Person>(
+                "SELECT id, dob FROM Persons WHERE id=@id", new { id = 42 });
+            row.IsNotNull();
+            row.Id.IsEqualTo(42);
+            row.DoB.Equals(now);
+            row.DoB2.Equals(now);
+        }
+        class Issue295Person
+        {
+            public int Id { get; set; }
+            public DateTime? DoB { get; set; }
+            public DateTime? DoB2 { get; set; }
+        }
 #if EXTERNALS
         [Fact(Skip="Bug in Firebird; a PR to fix it has been submitted")]
         public void Issue178_Firebird()
