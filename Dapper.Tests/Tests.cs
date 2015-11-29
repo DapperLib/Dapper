@@ -2845,6 +2845,34 @@ end");
                 ex.Message.IsEqualTo("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
             }
         }
+
+        [Fact]
+        public void Issue327_ReadEmptyProcedureResults()
+        {
+            // Actually testing for not erroring here on the mapping having no rows to map on in Read<T>();
+            connection.Execute(@"
+        CREATE PROCEDURE #TestEmptyResults
+        AS
+        SELECT Top 0 1 Id, 'Bob' Name;
+        SELECT Top 0 'Billy Goat' Creature, 'Unicorn' SpiritAnimal, 'Rainbow' Location;");
+            var query = connection.QueryMultiple("#TestEmptyResults", commandType: CommandType.StoredProcedure);
+            var result1 = query.Read<Issue327_Person>();
+            var result2 = query.Read<Issue327_Magic>();
+            result1.Any().IsFalse();
+            result2.Any().IsFalse();
+        }
+        class Issue327_Person
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+        class Issue327_Magic
+        {
+            public string Creature { get; set; }
+            public string SpiritAnimal { get; set; }
+            public string Location { get; set; }
+        }
+
         [Fact]
         public void Issue295_NullableDateTime_SqlServer()
         {
