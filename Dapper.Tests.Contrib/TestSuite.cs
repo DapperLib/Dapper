@@ -101,6 +101,35 @@ namespace Dapper.Tests.Contrib
             return connection;
         }
 
+        [Fact]
+        public void Issue418()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                //update first (will fail) then insert
+                //added for bug #418
+                var updateObject = new ObjectX()
+                {
+                    ObjectXId = Guid.NewGuid().ToString(),
+                    Name = "Someone"
+                };
+                var updates = connection.Update(updateObject);
+                updates.IsFalse();
+
+                connection.DeleteAll<ObjectX>();
+
+                var objectXId = Guid.NewGuid().ToString();
+                var insertObject = new ObjectX()
+                {
+                    ObjectXId = objectXId,
+                    Name = "Someone else"
+                };
+                var inserts = connection.Insert(insertObject);
+                var list = connection.GetAll<ObjectX>();
+                list.Count().IsEqualTo(1);
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
