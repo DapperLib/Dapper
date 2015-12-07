@@ -4,7 +4,6 @@ using System.Data;
 using System.Linq;
 
 using Dapper.Contrib.Extensions;
-using Xunit;
 
 #if COREFX
 using System.Reflection;
@@ -15,6 +14,8 @@ using System.Transactions;
 #endif
 #if XUNIT2
 using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
+#else
+using Xunit;
 #endif
 
 namespace Dapper.Tests.Contrib
@@ -108,7 +109,7 @@ namespace Dapper.Tests.Contrib
             {
                 //update first (will fail) then insert
                 //added for bug #418
-                var updateObject = new ObjectX()
+                var updateObject = new ObjectX
                 {
                     ObjectXId = Guid.NewGuid().ToString(),
                     Name = "Someone"
@@ -119,12 +120,12 @@ namespace Dapper.Tests.Contrib
                 connection.DeleteAll<ObjectX>();
 
                 var objectXId = Guid.NewGuid().ToString();
-                var insertObject = new ObjectX()
+                var insertObject = new ObjectX
                 {
                     ObjectXId = objectXId,
                     Name = "Someone else"
                 };
-                var inserts = connection.Insert(insertObject);
+                connection.Insert(insertObject);
                 var list = connection.GetAll<ObjectX>();
                 list.Count().IsEqualTo(1);
             }
@@ -181,8 +182,9 @@ namespace Dapper.Tests.Contrib
                 var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
                 connection.Insert(o1);
 
-                var objectXs = connection.GetAll<ObjectX>();
-                objectXs.Count().IsEqualTo(1);
+                var objectXs = connection.GetAll<ObjectX>().ToList();
+                objectXs.Count.IsMoreThan(0);
+                objectXs.Count(x => x.ObjectXId== guid).IsEqualTo(1);
             }
         }
 
