@@ -4,7 +4,6 @@ using System.Data;
 using System.Linq;
 
 using Dapper.Contrib.Extensions;
-using Xunit;
 
 #if COREFX
 using System.Reflection;
@@ -15,6 +14,8 @@ using System.Transactions;
 #endif
 #if XUNIT2
 using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
+#else
+using Xunit;
 #endif
 
 namespace Dapper.Tests.Contrib
@@ -101,6 +102,35 @@ namespace Dapper.Tests.Contrib
             return connection;
         }
 
+        [Fact]
+        public void Issue418()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                //update first (will fail) then insert
+                //added for bug #418
+                var updateObject = new ObjectX
+                {
+                    ObjectXId = Guid.NewGuid().ToString(),
+                    Name = "Someone"
+                };
+                var updates = connection.Update(updateObject);
+                updates.IsFalse();
+
+                connection.DeleteAll<ObjectX>();
+
+                var objectXId = Guid.NewGuid().ToString();
+                var insertObject = new ObjectX
+                {
+                    ObjectXId = objectXId,
+                    Name = "Someone else"
+                };
+                connection.Insert(insertObject);
+                var list = connection.GetAll<ObjectX>();
+                list.Count().IsEqualTo(1);
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
@@ -152,8 +182,9 @@ namespace Dapper.Tests.Contrib
                 var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
                 connection.Insert(o1);
 
-                var objectXs = connection.GetAll<ObjectX>();
-                objectXs.Count().IsEqualTo(1);
+                var objectXs = connection.GetAll<ObjectX>().ToList();
+                objectXs.Count.IsMoreThan(0);
+                objectXs.Count(x => x.ObjectXId== guid).IsEqualTo(1);
             }
         }
 
