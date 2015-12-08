@@ -284,8 +284,8 @@ namespace Dapper.Tests
         public void Test_Single_First_Default()
         {
             var sql = "select 0 where 1 = 0;"; // no rows
-            try { connection.QueryFirst<int>(sql); Assert.Fail("QueryFirst, 0"); } catch (InvalidOperationException ex) { ex.Message.Equals("???"); }
-            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 0"); } catch (InvalidOperationException ex) { ex.Message.Equals("???"); }
+            try { connection.QueryFirst<int>(sql); Assert.Fail("QueryFirst, 0"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains no elements"); }
+            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 0"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains no elements"); }
             connection.QueryFirstOrDefault<int>(sql).IsEqualTo(0);
             connection.QuerySingleOrDefault<int>(sql).IsEqualTo(0);
 
@@ -297,9 +297,9 @@ namespace Dapper.Tests
 
             sql = "select 2 union select 3 order by 1;"; // two rows
             connection.QueryFirst<int>(sql).IsEqualTo(2);
-            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 2"); } catch (InvalidOperationException ex) { ex.Message.Equals(" ???"); }
+            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 2"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains more than one element"); }
             connection.QueryFirstOrDefault<int>(sql).IsEqualTo(2);
-            try { connection.QuerySingleOrDefault<int>(sql); Assert.Fail("QuerySingleOrDefault, 2"); } catch (InvalidOperationException ex) { ex.Message.Equals("???"); }
+            try { connection.QuerySingleOrDefault<int>(sql); Assert.Fail("QuerySingleOrDefault, 2"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains more than one element"); }
         }
 
 
