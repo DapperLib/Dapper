@@ -40,12 +40,36 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the first row of the next grid of results, returned as a dynamic object
+            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public dynamic ReadFirst()
+            {
+                return ReadRow<dynamic>(typeof(DapperRow), Row.First);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             public dynamic ReadFirstOrDefault()
             {
-                return ReadFirstOrDefaultImpl<dynamic>(typeof(DapperRow));
+                return ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public dynamic ReadSingle()
+            {
+                return ReadRow<dynamic>(typeof(DapperRow), Row.Single);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public dynamic ReadSingleOrDefault()
+            {
+                return ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
             }
 
             /// <summary>
@@ -57,11 +81,32 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the first row of the next grid of results
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public T ReadFirst<T>()
+            {
+                return ReadRow<T>(typeof(T), Row.First);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
             /// </summary>
             public T ReadFirstOrDefault<T>()
             {
-                return ReadFirstOrDefaultImpl<T>(typeof(T));
+                return ReadRow<T>(typeof(T), Row.FirstOrDefault);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public T ReadSingle<T>()
+            {
+                return ReadRow<T>(typeof(T), Row.Single);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public T ReadSingleOrDefault<T>()
+            {
+                return ReadRow<T>(typeof(T), Row.SingleOrDefault);
             }
 
             /// <summary>
@@ -74,12 +119,36 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the first row of the next grid of results
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public object ReadFirst(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadRow<object>(type, Row.First);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
             /// </summary>
             public object ReadFirstOrDefault(Type type)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
-                return ReadFirstOrDefaultImpl<object>(type);
+                return ReadRow<object>(type, Row.FirstOrDefault);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public object ReadSingle(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadRow<object>(type, Row.Single);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public object ReadSingleOrDefault(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadRow<object>(type, Row.SingleOrDefault);
             }
 
             private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
@@ -101,14 +170,14 @@ namespace Dapper
                 return buffered ? result.ToList() : result;
             }
 
-            private T ReadFirstOrDefaultImpl<T>(Type type)
+            private T ReadRow<T>(Type type, Row row)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 IsConsumed = true;
 
                 T result = default(T);
-                if(reader.Read())
+                if(reader.Read() && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);
                     CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
@@ -121,7 +190,11 @@ namespace Dapper
                         cache.Deserializer = deserializer;
                     }
                     result = (T) deserializer.Func(reader);
-                    while (reader.Read()) { }
+                    if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);                    while (reader.Read()) { }
+                }
+                else if((row & Row.FirstOrDefault) == 0) // demanding a row, and don't have one
+                {
+                    ThrowZeroRows(row);
                 }
                 NextResult();
                 return result;

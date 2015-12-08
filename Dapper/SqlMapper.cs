@@ -591,9 +591,33 @@ namespace Dapper
         /// Return a dynamic object with properties matching the columns
         /// </summary>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QueryFirst(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QueryFirst<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+        }
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static dynamic QueryFirstOrDefault(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             return QueryFirstOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+        }
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QuerySingle(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QuerySingle<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+        }
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QuerySingleOrDefault(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QuerySingleOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
         }
 
         /// <summary>
@@ -617,12 +641,51 @@ namespace Dapper
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
+        public static T QueryFirst<T>(
+            this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(cnn, Row.First, ref command, typeof(T));
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
         public static T QueryFirstOrDefault<T>(
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryFirstOrDefaultImpl<T>(cnn, ref command, typeof(T));
+            return QueryRowImpl<T>(cnn, Row.FirstOrDefault, ref command, typeof(T));
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QuerySingle<T>(
+            this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(cnn, Row.Single, ref command, typeof(T));
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QuerySingleOrDefault<T>(
+            this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(cnn, Row.SingleOrDefault, ref command, typeof(T));
         }
 
         /// <summary>
@@ -646,13 +709,55 @@ namespace Dapper
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static object QueryFirstOrDefault(
+        public static object QueryFirst(
             this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType,  CommandFlags.None);
-            return QueryFirstOrDefaultImpl<object>(cnn, ref command, type);
+            return QueryRowImpl<object>(cnn, Row.First, ref command, type);
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QueryFirstOrDefault(
+            this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(cnn, Row.FirstOrDefault, ref command, type);
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QuerySingle(
+            this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(cnn, Row.Single, ref command, type);
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QuerySingleOrDefault(
+            this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(cnn, Row.SingleOrDefault, ref command, type);
         }
         /// <summary>
         /// Executes a query, returning the data typed as per T
@@ -674,9 +779,42 @@ namespace Dapper
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
+        public static T QueryFirst<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowImpl<T>(cnn, Row.First, ref command, typeof(T));
+        }
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
         public static T QueryFirstOrDefault<T>(this IDbConnection cnn, CommandDefinition command)
         {
-            return QueryFirstOrDefaultImpl<T>(cnn, ref command, typeof(T));
+            return QueryRowImpl<T>(cnn, Row.FirstOrDefault, ref command, typeof(T));
+        }
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QuerySingle<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowImpl<T>(cnn, Row.Single, ref command, typeof(T));
+        }
+        /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QuerySingleOrDefault<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowImpl<T>(cnn, Row.SingleOrDefault, ref command, typeof(T));
         }
 
 
@@ -797,7 +935,34 @@ namespace Dapper
             }
         }
 
-        private static T QueryFirstOrDefaultImpl<T>(this IDbConnection cnn, ref CommandDefinition command, Type effectiveType)
+        [Flags]
+        internal enum Row
+        {
+            First = 0,
+            FirstOrDefault = 1, //  &FirstOrDefault != 0: allow zero rows
+            Single = 2, // & Single != 0: demand at least one row
+            SingleOrDefault = 3
+        }
+        static readonly int[] ErrTwoRows = new int[2], ErrZeroRows = new int[0];
+        static void ThrowMultipleRows(Row row)
+        {
+            switch (row)
+            {  // get the standard exception from the runtime
+                case Row.Single: ErrTwoRows.Single(); break;
+                case Row.SingleOrDefault: ErrTwoRows.SingleOrDefault(); break;
+                default: throw new InvalidOperationException();
+            }
+        }
+        static void ThrowZeroRows(Row row)
+        {
+            switch (row)
+            { // get the standard exception from the runtime
+                case Row.First: ErrZeroRows.First(); break;
+                case Row.Single: ErrZeroRows.Single(); break;
+                default: throw new InvalidOperationException();
+            }
+        }
+        private static T QueryRowImpl<T>(IDbConnection cnn, Row row, ref CommandDefinition command, Type effectiveType)
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType(), null);
@@ -812,7 +977,9 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = cmd.ExecuteReader(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow));
+                reader = cmd.ExecuteReader(GetBehavior(wasClosed, (row & Row.Single) != 0
+                    ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
+                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow));
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
 
                 T result = default(T);
@@ -835,13 +1002,18 @@ namespace Dapper
                     {
                         result = (T)val;
                     }
-                    else {
+                    else
+                    {
                         var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                         result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
+                    if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);
                     while (reader.Read()) { }
                 }
-                
+                else if ((row & Row.FirstOrDefault) == 0) // demanding a row, and don't have one
+                {
+                    ThrowZeroRows(row);
+                }
                 while (reader.NextResult()) { }
                 // happy path; close the reader cleanly - no
                 // need for "Cancel" etc

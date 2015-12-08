@@ -33,12 +33,36 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the first row of the next grid of results, returned as a dynamic object
+            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public Task<dynamic> ReadFirstAsync()
+            {
+                return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.First);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             public Task<dynamic> ReadFirstOrDefaultAsync()
             {
-                return ReadFirstOrDefaultAsyncImpl<dynamic>(typeof(DapperRow));
+                return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public Task<dynamic> ReadSingleAsync()
+            {
+                return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.Single);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// </summary>
+            /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+            public Task<dynamic> ReadSingleOrDefaultAsync()
+            {
+                return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
             }
 
             /// <summary>
@@ -51,12 +75,36 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the first row of the next grid of results
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public Task<object> ReadFirstAsync(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadRowAsyncImpl<object>(type, Row.First);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
             /// </summary>
             public Task<object> ReadFirstOrDefaultAsync(Type type)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
-                return ReadFirstOrDefaultAsyncImpl<object>(type);
+                return ReadRowAsyncImpl<object>(type, Row.FirstOrDefault);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public Task<object> ReadSingleAsync(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadRowAsyncImpl<object>(type, Row.Single);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public Task<object> ReadSingleOrDefaultAsync(Type type)
+            {
+                if (type == null) throw new ArgumentNullException(nameof(type));
+                return ReadRowAsyncImpl<object>(type, Row.SingleOrDefault);
             }
 
             /// <summary>
@@ -68,11 +116,32 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the first row of the next grid of results
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public Task<T> ReadFirstAsync<T>()
+            {
+                return ReadRowAsyncImpl<T>(typeof(T), Row.First);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
             /// </summary>
             public Task<T> ReadFirstOrDefaultAsync<T>()
             {
-                return ReadFirstOrDefaultAsyncImpl<T>(typeof(T));
+                return ReadRowAsyncImpl<T>(typeof(T), Row.FirstOrDefault);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public Task<T> ReadSingleAsync<T>()
+            {
+                return ReadRowAsyncImpl<T>(typeof(T), Row.Single);
+            }
+            /// <summary>
+            /// Read an individual row of the next grid of results
+            /// </summary>
+            public Task<T> ReadSingleOrDefaultAsync<T>()
+            {
+                return ReadRowAsyncImpl<T>(typeof(T), Row.SingleOrDefault);
             }
 
             private async Task NextResultAsync()
@@ -121,23 +190,23 @@ namespace Dapper
                 }
             }
 
-            private Task<T> ReadFirstOrDefaultAsyncImpl<T>(Type type)
+            private Task<T> ReadRowAsyncImpl<T>(Type type, Row row)
             {
                 var dbReader = reader as DbDataReader;
-                if (dbReader != null) return ReadFirstOrDefaultAsyncImplImpl<T>(dbReader, type);
+                if (dbReader != null) return ReadRowAsyncImplViaDbReader<T>(dbReader, type, row);
 
                 // no async API available; use non-async and fake it
-                return Task.FromResult<T>(ReadFirstOrDefaultImpl<T>(type));
+                return Task.FromResult<T>(ReadRow<T>(type, row));
             }
 
-            private async Task<T> ReadFirstOrDefaultAsyncImplImpl<T>(DbDataReader reader, Type type)
+            private async Task<T> ReadRowAsyncImplViaDbReader<T>(DbDataReader reader, Type type, Row row)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
 
                 IsConsumed = true;
                 T result = default(T);
-                if (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);
                     CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
@@ -150,8 +219,12 @@ namespace Dapper
                         cache.Deserializer = deserializer;
                     }
                     result = (T)deserializer.Func(reader);
-
+                    if ((row & Row.Single) != 0 && await reader.ReadAsync(cancel).ConfigureAwait(false)) ThrowMultipleRows(row);
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { }
+                }
+                else if ((row & Row.FirstOrDefault) == 0) // demanding a row, and don't have one
+                {
+                    ThrowZeroRows(row);
                 }
                 await NextResultAsync().ConfigureAwait(false);
                 return result;

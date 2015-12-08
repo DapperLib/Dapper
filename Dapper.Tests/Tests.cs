@@ -281,6 +281,29 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void Test_Single_First_Default()
+        {
+            var sql = "select 0 where 1 = 0;"; // no rows
+            try { connection.QueryFirst<int>(sql); Assert.Fail("QueryFirst, 0"); } catch (InvalidOperationException ex) { ex.Message.Equals("???"); }
+            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 0"); } catch (InvalidOperationException ex) { ex.Message.Equals("???"); }
+            connection.QueryFirstOrDefault<int>(sql).IsEqualTo(0);
+            connection.QuerySingleOrDefault<int>(sql).IsEqualTo(0);
+
+            sql = "select 1;"; // one row
+            connection.QueryFirst<int>(sql).IsEqualTo(1);
+            connection.QuerySingle<int>(sql).IsEqualTo(1);
+            connection.QueryFirstOrDefault<int>(sql).IsEqualTo(1);
+            connection.QuerySingleOrDefault<int>(sql).IsEqualTo(1);
+
+            sql = "select 2 union select 3 order by 1;"; // two rows
+            connection.QueryFirst<int>(sql).IsEqualTo(2);
+            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 2"); } catch (InvalidOperationException ex) { ex.Message.Equals(" ???"); }
+            connection.QueryFirstOrDefault<int>(sql).IsEqualTo(2);
+            try { connection.QuerySingleOrDefault<int>(sql); Assert.Fail("QuerySingleOrDefault, 2"); } catch (InvalidOperationException ex) { ex.Message.Equals("???"); }
+        }
+
+
+        [Fact]
         public void TestSchemaChangedMultiMap()
         {
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");

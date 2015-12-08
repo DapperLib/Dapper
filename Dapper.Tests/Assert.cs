@@ -23,9 +23,9 @@ namespace Dapper.Tests
             Xunit.Assert.True(a > b, $"{a} should be larger than {b}");
         }
 
-        public static void Fail()
+        public static void Fail(string message = null)
         {
-            Xunit.Assert.True(false, "Expectation failed");
+            Xunit.Assert.True(false, message ?? "Expectation failed");
         }
         public static void IsFalse(this bool b)
         {
