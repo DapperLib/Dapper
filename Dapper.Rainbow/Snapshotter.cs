@@ -58,10 +58,10 @@ namespace Dapper
 
             static List<PropertyInfo> RelevantProperties()
             {
-                return typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                return typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(p =>
-                        p.GetSetMethod() != null &&
-                        p.GetGetMethod() != null &&
+                        p.GetSetMethod(true) != null &&
+                        p.GetGetMethod(true) != null &&
                         (p.PropertyType == typeof(string) ||
                          p.PropertyType.IsValueType() ||
                          (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
@@ -98,11 +98,11 @@ namespace Dapper
                     // []
                     il.Emit(OpCodes.Ldarg_0);
                     // [original]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod(true));
                     // [original prop val]
                     il.Emit(OpCodes.Ldarg_1);
                     // [original prop val, current]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod(true));
                     // [original prop val, current prop val]
 
                     il.Emit(OpCodes.Dup);
@@ -183,9 +183,9 @@ namespace Dapper
                     // [clone]
                     il.Emit(OpCodes.Ldarg_0);
                     // [clone, source]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod(true));
                     // [clone, source val]
-                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod(true));
                     // []
                 }
 
