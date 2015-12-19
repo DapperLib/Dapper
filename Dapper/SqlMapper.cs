@@ -24,6 +24,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -214,10 +215,7 @@ namespace Dapper
                           [typeof(TimeSpan?)] = DbType.Time,
                           [typeof(object)] = DbType.Object
                       };
-#if !COREFX
-            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), false);
-            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), false);
-#endif
+            ResetTypeHandlers(false);
         }
 
         /// <summary>
@@ -225,12 +223,27 @@ namespace Dapper
         /// </summary>
         public static void ResetTypeHandlers()
         {
+            ResetTypeHandlers(true);
+        }
+        private static void ResetTypeHandlers(bool clone)
+        {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
 #if !COREFX
-            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), true);
-            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), true);
+            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
+            try // see https://github.com/StackExchange/dapper-dot-net/issues/424
+            {
+                AddSqlDataRecordsTypeHandler(clone);
+            } catch { }
 #endif
         }
+#if !COREFX
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void AddSqlDataRecordsTypeHandler(bool clone)
+        {
+            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), clone);
+        }
+#endif
+
         /// <summary>
         /// Configure the specified type to be mapped to a given db-type
         /// </summary>
@@ -310,8 +323,8 @@ namespace Dapper
         {
             AddTypeHandlerImpl(typeof(T), handler, true);
         }
-        
-        private static Dictionary<Type, ITypeHandler> typeHandlers = new Dictionary<Type, ITypeHandler>();
+
+        private static Dictionary<Type, ITypeHandler> typeHandlers;
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
 
