@@ -94,7 +94,7 @@ namespace Dapper.Tests
             connection.Open();
             return connection;
         }
-        
+
         public static SqlConnection GetClosedConnection()
         {
             var conn = new SqlConnection(ConnectionString);
@@ -1029,7 +1029,7 @@ end");
             foo.IsEqualTo(123);
             bar.IsEqualTo("abc");
         }
-        
+
         [Fact]
         public void TestDynamicParamNullSupport()
         {
@@ -1524,17 +1524,26 @@ end");
         }
 
         [Fact]
-        public void TestMultiSelectWithSomeEmptyGrids()
+        public void TestMultiSelectWithSomeEmptyGridsUnbuffered()
+        {
+            TestMultiSelectWithSomeEmptyGrids(false);
+        }
+        [Fact]
+        public void TestMultiSelectWithSomeEmptyGridsBuffered()
+        {
+            TestMultiSelectWithSomeEmptyGrids(true);
+        }
+        private void TestMultiSelectWithSomeEmptyGrids(bool buffered)
         {
             using (var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 4;"))
             {
-                var one = reader.Read<int>().ToArray();
-                var two = reader.Read<int>().ToArray();
-                var three = reader.Read<int>().ToArray();
-                var four = reader.Read<int>().ToArray();
+                var one = reader.Read<int>(buffered: buffered).ToArray();
+                var two = reader.Read<int>(buffered: buffered).ToArray();
+                var three = reader.Read<int>(buffered: buffered).ToArray();
+                var four = reader.Read<int>(buffered: buffered).ToArray();
                 try
                 { // only returned four grids; expect a fifth read to fail
-                    reader.Read<int>();
+                    reader.Read<int>(buffered: buffered);
                     throw new InvalidOperationException("this should not have worked!");
                 }
                 catch (ObjectDisposedException ex)
