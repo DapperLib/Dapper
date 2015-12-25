@@ -195,7 +195,19 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public async Task InsertArrayAsync()
+        {
+            await InsertHelperAsync(src => src.ToArray());
+        }
+
+        [Fact]
         public async Task InsertListAsync()
+        {
+            await InsertHelperAsync(src => src.ToList());
+        }
+
+        private async Task InsertHelperAsync<T>(Func<IEnumerable<User>, T> helper)
+            where T : class
         {
             const int numberOfEntities = 10;
 
@@ -207,7 +219,7 @@ namespace Dapper.Tests.Contrib
             {
                 await connection.DeleteAllAsync<User>();
 
-                var total = await connection.InsertAsync(users);
+                var total = await connection.InsertAsync(helper(users));
                 total.IsEqualTo(numberOfEntities);
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
@@ -215,7 +227,19 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public async Task UpdateArrayAsync()
+        {
+            await UpdateHelperAsync(src => src.ToArray());
+        }
+
+        [Fact]
         public async Task UpdateListAsync()
+        {
+            await UpdateHelperAsync(src => src.ToList());
+        }
+
+        private async Task UpdateHelperAsync<T>(Func<IEnumerable<User>, T> helper)
+            where T : class
         {
             const int numberOfEntities = 10;
 
@@ -227,7 +251,7 @@ namespace Dapper.Tests.Contrib
             {
                 await connection.DeleteAllAsync<User>();
 
-                var total = await connection.InsertAsync(users);
+                var total = await connection.InsertAsync(helper(users));
                 total.IsEqualTo(numberOfEntities);
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
@@ -235,14 +259,26 @@ namespace Dapper.Tests.Contrib
                 {
                     user.Name = user.Name + " updated";
                 }
-                await connection.UpdateAsync(users);
+                await connection.UpdateAsync(helper(users));
                 var name = connection.Query<User>("select * from users").First().Name;
                 name.Contains("updated").IsTrue();
             }
         }
 
         [Fact]
+        public async Task DeleteArrayAsync()
+        {
+            await DeleteHelperAsync(src => src.ToArray());
+        }
+
+        [Fact]
         public async Task DeleteListAsync()
+        {
+            await DeleteHelperAsync(src => src.ToList());
+        }
+
+        private async Task DeleteHelperAsync<T>(Func<IEnumerable<User>, T> helper)
+            where T : class
         {
             const int numberOfEntities = 10;
 
@@ -254,13 +290,13 @@ namespace Dapper.Tests.Contrib
             {
                 await connection.DeleteAllAsync<User>();
 
-                var total = await connection.InsertAsync(users);
+                var total = await connection.InsertAsync(helper(users));
                 total.IsEqualTo(numberOfEntities);
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
 
                 var usersToDelete = users.Take(10).ToList();
-                await connection.DeleteAsync(usersToDelete);
+                await connection.DeleteAsync(helper(usersToDelete));
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities - 10);
             }

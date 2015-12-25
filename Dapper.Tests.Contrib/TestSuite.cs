@@ -281,7 +281,19 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void InsertArray()
+        {
+            InsertHelper(src => src.ToArray());
+        }
+
+        [Fact]
         public void InsertList()
+        {
+            InsertHelper(src => src.ToList());
+        }
+
+        private void InsertHelper<T>(Func<IEnumerable<User>, T> helper)
+            where T : class
         {
             const int numberOfEntities = 10;
 
@@ -293,7 +305,7 @@ namespace Dapper.Tests.Contrib
             {
                 connection.DeleteAll<User>();
 
-                var total = connection.Insert(users);
+                var total = connection.Insert(helper(users));
                 total.IsEqualTo(numberOfEntities);
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
@@ -301,7 +313,19 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void UpdateArray()
+        {
+            UpdateHelper(src => src.ToArray());
+        }
+
+        [Fact]
         public void UpdateList()
+        {
+            UpdateHelper(src => src.ToList());
+        }
+
+        private void UpdateHelper<T>(Func<IEnumerable<User>, T> helper)
+            where T : class
         {
             const int numberOfEntities = 10;
 
@@ -313,7 +337,7 @@ namespace Dapper.Tests.Contrib
             {
                 connection.DeleteAll<User>();
 
-                var total = connection.Insert(users);
+                var total = connection.Insert(helper(users));
                 total.IsEqualTo(numberOfEntities);
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
@@ -321,14 +345,26 @@ namespace Dapper.Tests.Contrib
                 {
                     user.Name = user.Name + " updated";
                 }
-                connection.Update(users);
+                connection.Update(helper(users));
                 var name = connection.Query<User>("select * from users").First().Name;
                 name.Contains("updated").IsTrue();
             }
         }
 
         [Fact]
+        public void DeleteArray()
+        {
+            DeleteHelper(src => src.ToArray());
+        }
+
+        [Fact]
         public void DeleteList()
+        {
+            DeleteHelper(src => src.ToList());
+        }
+
+        private void DeleteHelper<T>(Func<IEnumerable<User>, T> helper)
+            where T : class
         {
             const int numberOfEntities = 10;
 
@@ -340,17 +376,16 @@ namespace Dapper.Tests.Contrib
             {
                 connection.DeleteAll<User>();
 
-                var total = connection.Insert(users);
+                var total = connection.Insert(helper(users));
                 total.IsEqualTo(numberOfEntities);
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
 
                 var usersToDelete = users.Take(10).ToList();
-                connection.Delete(usersToDelete);
+                connection.Delete(helper(usersToDelete));
                 users = connection.Query<User>("select * from users").ToList();
                 users.Count.IsEqualTo(numberOfEntities - 10);
             }
-
         }
 
         [Fact]

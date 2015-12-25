@@ -295,7 +295,12 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
-            if (type.IsArray || type.IsGenericType())
+            if (type.IsArray)
+            {
+                isList = true;
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
             {
                 isList = true;
                 type = type.GetGenericArguments()[0];
@@ -365,8 +370,14 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
-            if (type.IsArray || type.IsGenericType())
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
                 type = type.GetGenericArguments()[0];
+            }
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
@@ -420,8 +431,14 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
-            if (type.IsArray || type.IsGenericType())
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
                 type = type.GetGenericArguments()[0];
+            }
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
