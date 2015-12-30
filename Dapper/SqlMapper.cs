@@ -413,6 +413,19 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteImpl(cnn, ref command);
         }
+
+        /// <summary>
+        /// Execute parameterized SQL
+        /// </summary>
+        /// <returns>Number of rows affected</returns>
+        public static int Execute(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteImpl(transaction.Connection, ref command);
+        }
+
         /// <summary>
         /// Execute parameterized SQL
         /// </summary>
@@ -439,12 +452,36 @@ namespace Dapper
         /// Execute parameterized SQL that selects a single value
         /// </summary>
         /// <returns>The first cell selected</returns>
+        public static object ExecuteScalar(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImpl<object>(transaction.Connection, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
         public static T ExecuteScalar<T>(
             this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null
         )
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return ExecuteScalarImpl<T>(cnn, ref command);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL that selects a single value
+        /// </summary>
+        /// <returns>The first cell selected</returns>
+        public static T ExecuteScalar<T>(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return ExecuteScalarImpl<T>(transaction.Connection, ref command);
         }
 
         /// <summary>
@@ -570,6 +607,35 @@ namespace Dapper
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
         /// or <see cref="DataSet"/>.
         /// </remarks>
+        /// <example>
+        /// <code>
+        /// <![CDATA[
+        /// DataTable table = new DataTable("MyTable");
+        /// using (var reader = ExecuteReader(cnn, sql, param))
+        /// {
+        ///     table.Load(reader);
+        /// }
+        /// ]]>
+        /// </code>
+        /// </example>
+        public static IDataReader ExecuteReader(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+)
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            IDbCommand dbcmd;
+            var reader = ExecuteReaderImpl(transaction.Connection, ref command, CommandBehavior.Default, out dbcmd);
+            return new WrappedReader(dbcmd, reader);
+        }
+
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>
+        /// </summary>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="DataSet"/>.
+        /// </remarks>
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
             IDbCommand dbcmd;
@@ -601,6 +667,15 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Return a sequence of dynamic objects with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static IEnumerable<dynamic> Query(this IDbTransaction transaction, string sql, object param = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return Query<DapperRow>(transaction.Connection, sql, param as object, transaction, buffered, commandTimeout, commandType);
+        }
+
+        /// <summary>
         /// Return a dynamic object with properties matching the columns
         /// </summary>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
@@ -608,6 +683,16 @@ namespace Dapper
         {
             return QueryFirst<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QueryFirst(this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QueryFirst<DapperRow>(transaction.Connection, sql, param as object, transaction, commandTimeout, commandType);
+        }
+
         /// <summary>
         /// Return a dynamic object with properties matching the columns
         /// </summary>
@@ -616,6 +701,16 @@ namespace Dapper
         {
             return QueryFirstOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QueryFirstOrDefault(this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QueryFirstOrDefault<DapperRow>(transaction.Connection, sql, param as object, transaction, commandTimeout, commandType);
+        }
+
         /// <summary>
         /// Return a dynamic object with properties matching the columns
         /// </summary>
@@ -624,6 +719,16 @@ namespace Dapper
         {
             return QuerySingle<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QuerySingle(this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QuerySingle<DapperRow>(transaction.Connection, sql, param as object, transaction, commandTimeout, commandType);
+        }
+
         /// <summary>
         /// Return a dynamic object with properties matching the columns
         /// </summary>
@@ -631,6 +736,15 @@ namespace Dapper
         public static dynamic QuerySingleOrDefault(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             return QuerySingleOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+        }
+
+        /// <summary>
+        /// Return a dynamic object with properties matching the columns
+        /// </summary>
+        /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public static dynamic QuerySingleOrDefault(this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return QuerySingleOrDefault<DapperRow>(transaction.Connection, sql, param as object, transaction, commandTimeout, commandType);
         }
 
         /// <summary>
@@ -649,6 +763,21 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Executes a query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<T> Query<T>(
+            this IDbTransaction transaction, string sql, object param = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var data = QueryImpl<T>(transaction.Connection, command, typeof(T));
+            return command.Buffered ? data.ToList() : data;
+        }
+
+        /// <summary>
         /// Executes a single-row query, returning the data typed as per T
         /// </summary>
         /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
@@ -660,6 +789,20 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<T>(cnn, Row.First, ref command, typeof(T));
+        }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QueryFirst<T>(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(transaction.Connection, Row.First, ref command, typeof(T));
         }
         /// <summary>
         /// Executes a single-row query, returning the data typed as per T
@@ -674,6 +817,21 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<T>(cnn, Row.FirstOrDefault, ref command, typeof(T));
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QueryFirstOrDefault<T>(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(transaction.Connection, Row.FirstOrDefault, ref command, typeof(T));
+        }
+
         /// <summary>
         /// Executes a single-row query, returning the data typed as per T
         /// </summary>
@@ -687,6 +845,21 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<T>(cnn, Row.Single, ref command, typeof(T));
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QuerySingle<T>(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(transaction.Connection, Row.Single, ref command, typeof(T));
+        }
+
         /// <summary>
         /// Executes a single-row query, returning the data typed as per T
         /// </summary>
@@ -699,6 +872,20 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<T>(cnn, Row.SingleOrDefault, ref command, typeof(T));
+        }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per T
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static T QuerySingleOrDefault<T>(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<T>(transaction.Connection, Row.SingleOrDefault, ref command, typeof(T));
         }
 
         /// <summary>
@@ -716,6 +903,23 @@ namespace Dapper
             var data = QueryImpl<object>(cnn, command, type);
             return command.Buffered ? data.ToList() : data;
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static IEnumerable<object> Query(
+            this IDbTransaction transaction, Type type, string sql, object param = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var data = QueryImpl<object>(transaction.Connection, command, type);
+            return command.Buffered ? data.ToList() : data;
+        }
+
         /// <summary>
         /// Executes a single-row query, returning the data typed as per the Type suggested
         /// </summary>
@@ -730,6 +934,22 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType,  CommandFlags.None);
             return QueryRowImpl<object>(cnn, Row.First, ref command, type);
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QueryFirst(
+            this IDbTransaction transaction, Type type, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(transaction.Connection, Row.First, ref command, type);
+        }
+
         /// <summary>
         /// Executes a single-row query, returning the data typed as per the Type suggested
         /// </summary>
@@ -744,6 +964,22 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<object>(cnn, Row.FirstOrDefault, ref command, type);
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QueryFirstOrDefault(
+            this IDbTransaction transaction, Type type, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(transaction.Connection, Row.FirstOrDefault, ref command, type);
+        }
+
         /// <summary>
         /// Executes a single-row query, returning the data typed as per the Type suggested
         /// </summary>
@@ -758,6 +994,22 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<object>(cnn, Row.Single, ref command, type);
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QuerySingle(
+            this IDbTransaction transaction, Type type, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(transaction.Connection, Row.Single, ref command, type);
+        }
+
         /// <summary>
         /// Executes a single-row query, returning the data typed as per the Type suggested
         /// </summary>
@@ -772,6 +1024,22 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
             return QueryRowImpl<object>(cnn, Row.SingleOrDefault, ref command, type);
         }
+
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as per the Type suggested
+        /// </summary>
+        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public static object QuerySingleOrDefault(
+            this IDbTransaction transaction, Type type, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
+            return QueryRowImpl<object>(transaction.Connection, Row.SingleOrDefault, ref command, type);
+        }
+
         /// <summary>
         /// Executes a query, returning the data typed as per T
         /// </summary>
@@ -841,6 +1109,18 @@ namespace Dapper
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             return QueryMultipleImpl(cnn, ref command);
         }
+
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn
+        /// </summary>
+        public static GridReader QueryMultiple(
+            this IDbTransaction transaction, string sql, object param = null, int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
+            return QueryMultipleImpl(transaction.Connection, ref command);
+        }
+
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn
         /// </summary>
@@ -1075,6 +1355,28 @@ namespace Dapper
         /// <summary>
         /// Maps a query to objects
         /// </summary>
+        /// <typeparam name="TFirst">The first type in the record set</typeparam>
+        /// <typeparam name="TSecond">The second type in the record set</typeparam>
+        /// <typeparam name="TReturn">The return type</typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(
+            this IDbTransaction transaction, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            return MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(transaction.Connection, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        }
+
+        /// <summary>
+        /// Maps a query to objects
+        /// </summary>
         /// <typeparam name="TFirst"></typeparam>
         /// <typeparam name="TSecond"></typeparam>
         /// <typeparam name="TThird"></typeparam>
@@ -1095,6 +1397,30 @@ namespace Dapper
         {
             return MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
         }
+
+        /// <summary>
+        /// Maps a query to objects
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(
+            this IDbTransaction transaction, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            return MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(transaction.Connection, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        }
+
 
         /// <summary>
         /// Perform a multi mapping query with 4 input parameters
@@ -1119,6 +1445,30 @@ namespace Dapper
         )
         {
             return MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        }
+
+        /// <summary>
+        /// Perform a multi mapping query with 4 input parameters
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TFourth"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(
+            this IDbTransaction transaction, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+        )
+        {
+            return MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(transaction.Connection, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
         /// <summary>
@@ -1148,6 +1498,31 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Perform a multi mapping query with 5 input parameters
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TFourth"></typeparam>
+        /// <typeparam name="TFifth"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
+            this IDbTransaction transaction, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+)
+        {
+            return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(transaction.Connection, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        }
+
+        /// <summary>
         /// Perform a multi mapping query with 6 input parameters
         /// </summary>
         /// <typeparam name="TFirst"></typeparam>
@@ -1174,6 +1549,31 @@ namespace Dapper
             return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
+        /// <summary>
+        /// Perform a multi mapping query with 6 input parameters
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TFourth"></typeparam>
+        /// <typeparam name="TFifth"></typeparam>
+        /// <typeparam name="TSixth"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(
+            this IDbTransaction transaction, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null
+)
+        {
+            return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(transaction.Connection, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        }
 
         /// <summary>
         /// Perform a multi mapping query with 7 input parameters
@@ -1202,6 +1602,31 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Perform a multi mapping query with 7 input parameters
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TThird"></typeparam>
+        /// <typeparam name="TFourth"></typeparam>
+        /// <typeparam name="TFifth"></typeparam>
+        /// <typeparam name="TSixth"></typeparam>
+        /// <typeparam name="TSeventh"></typeparam>
+        /// <typeparam name="TReturn"></typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="commandType"></param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbTransaction transaction, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(transaction.Connection, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        }
+
+        /// <summary>
         /// Perform a multi mapping query with arbitrary input parameters
         /// </summary>
         /// <typeparam name="TReturn">The return type</typeparam>
@@ -1220,6 +1645,27 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var results = MultiMapImpl<TReturn>(cnn, command, types, map, splitOn, null, null, true);
+            return buffered ? results.ToList() : results;
+        }
+
+        /// <summary>
+        /// Perform a multi mapping query with arbitrary input parameters
+        /// </summary>
+        /// <typeparam name="TReturn">The return type</typeparam>
+        /// <param name="transaction"></param>
+        /// <param name="sql"></param>
+        /// <param name="types">array of types in the record set</param>
+        /// <param name="map"></param>
+        /// <param name="param"></param>
+        /// <param name="buffered"></param>
+        /// <param name="splitOn">The Field we should split and read the second object from (default: id)</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <returns></returns>
+        public static IEnumerable<TReturn> Query<TReturn>(this IDbTransaction transaction, string sql, Type[] types, Func<object[], TReturn> map, object param = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var results = MultiMapImpl<TReturn>(transaction.Connection, command, types, map, splitOn, null, null, true);
             return buffered ? results.ToList() : results;
         }
 
