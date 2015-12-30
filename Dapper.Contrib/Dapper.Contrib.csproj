@@ -40,6 +40,12 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Dapper.Contrib.XML</DocumentationFile>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Dapper.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -54,10 +60,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dapper NET40\Dapper NET40.csproj">
-      <Project>{daf737e1-05b5-4189-a5aa-dac6233b64d7}</Project>
-      <Name>Dapper NET40</Name>
+    <ProjectReference Include="..\Dapper NET40 SNK\Dapper NET40 SNK.csproj">
+      <Project>{437f12a2-6ab5-43bf-86ba-dd62de17c2a7}</Project>
+      <Name>Dapper NET40 SNK</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Dapper.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
