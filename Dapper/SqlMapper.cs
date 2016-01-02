@@ -1,6 +1,6 @@
 /*
  License: http://www.apache.org/licenses/LICENSE-2.0
- Home page: http://code.google.com/p/dapper-dot-net/
+ Home page: https://github.com/StackExchange/dapper-dot-net
  */
 
 #if COREFX
@@ -37,12 +37,13 @@ namespace Dapper
     /// </summary>
     public static partial class SqlMapper
     {
-        static int GetColumnHash(IDataReader reader)
+        static int GetColumnHash(IDataReader reader, int startBound = 0, int length = -1)
         {
             unchecked
             {
-                int colCount = reader.FieldCount, hash = colCount;
-                for (int i = 0; i < colCount; i++)
+                int max = length < 0 ? reader.FieldCount : startBound + length;
+                int hash = (-37 * startBound) + max;
+                for (int i = startBound; i < max; i++)
                 {   
                     object tmp = reader.GetName(i);
                     hash = -79 * ((hash * 31) + (tmp?.GetHashCode() ?? 0)) + (reader.GetFieldType(i)?.GetHashCode() ?? 0);
@@ -111,6 +112,7 @@ namespace Dapper
         public static void PurgeQueryCache()
         {
             _queryCache.Clear();
+            TypeDeserializerCache.Purge();
             OnQueryCachePurged();
         }
 
@@ -122,6 +124,7 @@ namespace Dapper
                 if (entry.Key.type == type)
                     _queryCache.TryRemove(entry.Key, out cache);
             }
+            TypeDeserializerCache.Purge(type);
         }
 
         /// <summary>
@@ -2639,6 +2642,12 @@ namespace Dapper
         /// <param name="returnNullIfFirstMissing"></param>
         /// <returns></returns>
         public static Func<IDataReader, object> GetTypeDeserializer(
+            Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
+        )
+        {
+            return TypeDeserializerCache.GetReader(type, reader, startBound, length, returnNullIfFirstMissing);
+        }
+        private static Func<IDataReader, object> GetTypeDeserializerImpl(
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
