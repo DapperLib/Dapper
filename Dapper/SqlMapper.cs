@@ -43,9 +43,9 @@ namespace Dapper
             {
                 int colCount = reader.FieldCount, hash = colCount;
                 for (int i = 0; i < colCount; i++)
-                {   // binding code is only interested in names - not types
+                {   
                     object tmp = reader.GetName(i);
-                    hash = (hash * 31) + (tmp?.GetHashCode() ?? 0);
+                    hash = -79 * ((hash * 31) + (tmp?.GetHashCode() ?? 0)) + (reader.GetFieldType(i)?.GetHashCode() ?? 0);
                 }
                 return hash;
             }
@@ -1616,7 +1616,7 @@ namespace Dapper
             }
             return GetStructDeserializer(type, underlyingType ?? type, startBound);
         }
-        static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
+        private static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
         {
             return reader => handler.Parse(type, reader.GetValue(startBound));
         }

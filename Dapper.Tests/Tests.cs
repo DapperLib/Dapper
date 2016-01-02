@@ -2945,7 +2945,7 @@ end");
         [FactMySql]
         public void Issue426_SO34439033_DateTimeGainsTicks()
         {
-            using (var conn = GetMySqlConnection())
+            using (var conn = GetMySqlConnection(true, true, true))
             {
                 try { conn.Execute("drop table Issue426_Test"); } catch { }
                 try { conn.Execute("create table Issue426_Test (Id int not null, Time time not null)"); } catch { }
