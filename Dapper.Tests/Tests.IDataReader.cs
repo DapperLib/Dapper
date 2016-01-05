@@ -35,6 +35,65 @@ namespace Dapper.Tests
             ReferenceEquals(origParser, secondParser).IsEqualTo(true);
             ReferenceEquals(secondParser, thirdParser).IsEqualTo(false);
         }
+
+        [Fact]
+        public void DiscriminatedUnion()
+        {
+            List<Discriminated_BaseType> result = new List<Discriminated_BaseType>();
+            using (var reader = connection.ExecuteReader(@"
+select 'abc' as Name, 1 as Type, 3.0 as Value
+union all
+select 'def' as Name, 2 as Type, 4.0 as Value"))
+            {
+                if (reader.Read())
+                {
+                    var toFoo = reader.GetRowParser(typeof(Discriminated_Foo));
+                    var toBar = reader.GetRowParser(typeof(Discriminated_Bar));
+
+                    var col = reader.GetOrdinal("Type");
+                    do
+                    {
+                        switch (reader.GetInt32(col))
+                        {
+                            case 1:
+                                result.Add((Discriminated_BaseType)toFoo(reader));
+                                break;
+                            case 2:
+                                result.Add((Discriminated_BaseType)toBar(reader));
+                                break;
+                        }
+                    } while (reader.Read());
+                }
+            }
+
+            result.Count.IsEqualTo(2);
+            result[0].Type.IsEqualTo(1);
+            result[1].Type.IsEqualTo(2);
+            var foo = (Discriminated_Foo)result[0];
+            foo.Name.IsEqualTo("abc");
+            var bar = (Discriminated_Bar)result[1];
+            bar.Value.IsEqualTo((float)4.0);
+        }
+
+        abstract class Discriminated_BaseType
+        {
+            public abstract int Type { get; }
+        }
+        class Discriminated_Foo : Discriminated_BaseType
+        {
+            public string Name { get; set; }
+            public override int Type {
+                get { return 1; }
+            }
+        }
+        class Discriminated_Bar : Discriminated_BaseType
+        {
+            public float Value { get; set; }
+            public override int Type
+            {
+                get { return 2; }
+            }
+        }
         public class HazNameId
         {
             public string Name { get; set; }
