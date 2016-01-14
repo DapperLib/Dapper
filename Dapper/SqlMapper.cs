@@ -2651,7 +2651,8 @@ namespace Dapper
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
-            var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", typeof(object), new[] { typeof(IDataReader) }, true);
+            var returnType = type.IsValueType() ? typeof(object) : type;
+            var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", returnType, new[] { typeof(IDataReader) }, true);
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(type);
@@ -2958,7 +2959,8 @@ namespace Dapper
             }
             il.Emit(OpCodes.Ret);
 
-            return (Func<IDataReader, object>)dm.CreateDelegate(typeof(Func<IDataReader, object>));
+            var funcType = System.Linq.Expressions.Expression.GetFuncType(typeof(IDataReader), returnType);
+            return (Func<IDataReader, object>)dm.CreateDelegate(funcType);
         }
 
         private static void FlexibleConvertBoxedFromHeadOfStack(ILGenerator il, Type from, Type to, Type via)

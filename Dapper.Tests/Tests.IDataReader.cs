@@ -14,6 +14,10 @@ namespace Dapper.Tests
             var origReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
             var origParser = origReader.GetRowParser(typeof(HazNameId));
 
+            var typedParser = origReader.GetRowParser<HazNameId>();
+
+            ReferenceEquals(origParser, typedParser).IsEqualTo(true);
+
             var list = origReader.Parse<HazNameId>().ToList();
             list.Count.IsEqualTo(1);
             list[0].Name.IsEqualTo("abc");
@@ -47,8 +51,8 @@ select 'def' as Name, 2 as Type, 4.0 as Value"))
             {
                 if (reader.Read())
                 {
-                    var toFoo = reader.GetRowParser(typeof(Discriminated_Foo));
-                    var toBar = reader.GetRowParser(typeof(Discriminated_Bar));
+                    var toFoo = reader.GetRowParser<Discriminated_BaseType>(typeof(Discriminated_Foo));
+                    var toBar = reader.GetRowParser<Discriminated_BaseType>(typeof(Discriminated_Bar));
 
                     var col = reader.GetOrdinal("Type");
                     do
@@ -56,10 +60,10 @@ select 'def' as Name, 2 as Type, 4.0 as Value"))
                         switch (reader.GetInt32(col))
                         {
                             case 1:
-                                result.Add((Discriminated_BaseType)toFoo(reader));
+                                result.Add(toFoo(reader));
                                 break;
                             case 2:
-                                result.Add((Discriminated_BaseType)toBar(reader));
+                                result.Add(toBar(reader));
                                 break;
                         }
                     } while (reader.Read());

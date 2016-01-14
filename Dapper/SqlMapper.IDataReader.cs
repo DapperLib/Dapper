@@ -49,5 +49,19 @@ namespace Dapper
         {
             return GetDeserializer(type, reader, startIndex, length, returnNullIfFirstMissing);
         }
+        public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
+            int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        {
+            if (concreteType == null) concreteType = typeof(T);
+            var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
+            if (concreteType.IsValueType())
+            {
+                return _ => (T)func(_);
+            }
+            else
+            {
+                return (Func<IDataReader, T>)(Delegate)func;
+            }
+        }
     }
 }
