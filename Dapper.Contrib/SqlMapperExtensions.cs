@@ -154,7 +154,7 @@ namespace Dapper.Contrib.Extensions
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
-        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
@@ -208,7 +208,7 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
         public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
@@ -286,7 +286,7 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
-        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
         public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
@@ -357,7 +357,7 @@ namespace Dapper.Contrib.Extensions
         /// <typeparam name="T">Type to be updated</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToUpdate">Entity to be updated</param>
-        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
@@ -421,7 +421,7 @@ namespace Dapper.Contrib.Extensions
         /// <typeparam name="T">Type of entity</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToDelete">Entity to delete</param>
-        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if not found</returns>
         public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
@@ -469,7 +469,7 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <typeparam name="T">Type of entity</typeparam>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="transaction">The transaction to run under, null (the defualt) if none</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if none found</returns>
         public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
