@@ -141,9 +141,9 @@ namespace Dapper.Tests.Contrib
             {
                 var guid = Guid.NewGuid().ToString();
                 var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
-                var originalxCount = connection.Query<int>("Select Count(*) From objectx").First();
+                var originalxCount = connection.Query<int>("Select Count(*) From ObjectX").First();
                 connection.Insert(o1);
-                var list1 = connection.Query<ObjectX>("select * from objectx").ToList();
+                var list1 = connection.Query<ObjectX>("select * from ObjectX").ToList();
                 list1.Count.IsEqualTo(originalxCount + 1);
                 o1 = connection.Get<ObjectX>(guid);
                 o1.ObjectXId.IsEqualTo(guid);
@@ -157,9 +157,9 @@ namespace Dapper.Tests.Contrib
 
                 const int id = 42;
                 var o2 = new ObjectY { ObjectYId = id, Name = "Foo" };
-                var originalyCount = connection.Query<int>("Select Count(*) From objecty").First();
+                var originalyCount = connection.Query<int>("Select Count(*) From ObjectY").First();
                 connection.Insert(o2);
-                var list2 = connection.Query<ObjectY>("select * from objecty").ToList();
+                var list2 = connection.Query<ObjectY>("select * from ObjectY").ToList();
                 list2.Count.IsEqualTo(originalyCount + 1);
                 o2 = connection.Get<ObjectY>(id);
                 o2.ObjectYId.IsEqualTo(id);
@@ -231,7 +231,7 @@ namespace Dapper.Tests.Contrib
             {
                 connection.Insert(new Stuff { Name = "First item" });
                 connection.Insert(new Stuff { Name = "Second item", Created = DateTime.Now });
-                var stuff = connection.Query<Stuff>("select * from stuff").ToList();
+                var stuff = connection.Query<Stuff>("select * from Stuff").ToList();
                 stuff.First().Created.IsNull();
                 stuff.Last().Created.IsNotNull();
 
@@ -307,7 +307,7 @@ namespace Dapper.Tests.Contrib
 
                 var total = connection.Insert(helper(users));
                 total.IsEqualTo(numberOfEntities);
-                users = connection.Query<User>("select * from users").ToList();
+                users = connection.Query<User>("select * from Users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
             }
         }
@@ -339,14 +339,14 @@ namespace Dapper.Tests.Contrib
 
                 var total = connection.Insert(helper(users));
                 total.IsEqualTo(numberOfEntities);
-                users = connection.Query<User>("select * from users").ToList();
+                users = connection.Query<User>("select * from Users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
                 foreach (var user in users)
                 {
                     user.Name = user.Name + " updated";
                 }
                 connection.Update(helper(users));
-                var name = connection.Query<User>("select * from users").First().Name;
+                var name = connection.Query<User>("select * from Users").First().Name;
                 name.Contains("updated").IsTrue();
             }
         }
@@ -378,12 +378,12 @@ namespace Dapper.Tests.Contrib
 
                 var total = connection.Insert(helper(users));
                 total.IsEqualTo(numberOfEntities);
-                users = connection.Query<User>("select * from users").ToList();
+                users = connection.Query<User>("select * from Users").ToList();
                 users.Count.IsEqualTo(numberOfEntities);
 
                 var usersToDelete = users.Take(10).ToList();
                 connection.Delete(helper(usersToDelete));
-                users = connection.Query<User>("select * from users").ToList();
+                users = connection.Query<User>("select * from Users").ToList();
                 users.Count.IsEqualTo(numberOfEntities - 10);
             }
         }
