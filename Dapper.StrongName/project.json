@@ -15,6 +15,9 @@
   "compile": [
     "../Dapper/**/*.cs"
   ],
+  "compileExclude": [
+    "../Dapper/obj/"
+  ],
   "compilationOptions": {
     "keyFile": "../Dapper.snk",
     "warningsAsErrors": true

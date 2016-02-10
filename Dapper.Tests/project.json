@@ -75,7 +75,7 @@
         "System.Linq": "4.0.1-*",
         "System.Runtime": "4.0.21-*",
         "System.Threading": "4.0.11-*",
-        "xunit": "2.1.0"
+        "xunit": "2.2.0-beta1-build3239"
       }
     },
     "dnx451": {
@@ -117,8 +117,8 @@
         "define": [ "COREFX", "ASYNC", "DNX" ]
       },
       "dependencies": {
-        "xunit": "2.1.0",
-        "xunit.runner.dnx": "2.1.0-*"
+        "xunit": "2.2.0-beta1-build3239",
+        "xunit.runner.dnx": "2.1.0-rc1-build204"
       }
     }
   }
