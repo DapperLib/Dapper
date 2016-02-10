@@ -1,6 +1,6 @@
 {
   "sdk": {
-    "version": "1.0.0-rc1-final"
+    "version": "1.0.0-rc1-update1"
   },
   "projects": [
       "Dapper", "Dapper.EntityFramework", "Dapper.Contrib", "Dapper.Rainbow", "Dapper.SqlBuilder", "Dapper.Tests"

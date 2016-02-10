@@ -15,6 +15,9 @@
   "compile": [
     "../Dapper/**/*.cs"
   ],
+  "compileExclude": [
+    "../Dapper/obj/"
+  ],
   "compilationOptions": {
     "keyFile": "../Dapper.snk",
     "warningsAsErrors": true
@@ -33,7 +36,7 @@
         "System.Data": "4.0.0.0"
       }
     },
-    "dnx451": {
+    "net451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0"
