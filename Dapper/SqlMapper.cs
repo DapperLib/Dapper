@@ -331,10 +331,12 @@ namespace Dapper
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
 
+        private const string ObsoleteInternalUsageOnly = "This method is for internal use only";
+
         /// <summary>
         /// Get the DbType that maps to a given value
         /// </summary>
-        [Obsolete("This method is for internal use only")]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
 #if !COREFX
         [Browsable(false)]
 #endif
@@ -347,7 +349,12 @@ namespace Dapper
             return LookupDbType(value.GetType(), "n/a", false, out handler);
 
         }
-        internal static DbType LookupDbType(Type type, string name, bool demand, out ITypeHandler handler)
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
+#if !COREFX
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static DbType LookupDbType(Type type, string name, bool demand, out ITypeHandler handler)
         {
             DbType dbType;
             handler = null;
@@ -1707,7 +1714,7 @@ namespace Dapper
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("This method is for internal usage only", false)]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
         public static char ReadChar(object value)
         {
             if (value == null || value is DBNull) throw new ArgumentNullException(nameof(value));
@@ -1723,7 +1730,7 @@ namespace Dapper
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("This method is for internal usage only", false)]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
         public static char? ReadNullableChar(object value)
         {
             if (value == null || value is DBNull) return null;
@@ -1740,7 +1747,7 @@ namespace Dapper
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("This method is for internal usage only", true)]
+        [Obsolete(ObsoleteInternalUsageOnly, true)]
         public static IDbDataParameter FindOrAddParameter(IDataParameterCollection parameters, IDbCommand command, string name)
         {
             IDbDataParameter result;
@@ -1764,7 +1771,7 @@ namespace Dapper
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("This method is for internal usage only", false)]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
         public static void PackListParameters(IDbCommand command, string namePrefix, object value)
         {
             // initially we tried TVP, however it performs quite poorly.
@@ -1928,7 +1935,7 @@ namespace Dapper
         /// <summary>
         /// Convert numeric values to their string form for SQL literal purposes
         /// </summary>
-        [Obsolete("This is intended for internal usage only")]
+        [Obsolete(ObsoleteInternalUsageOnly)]
         public static string Format(object value)
         {
             if (value == null)
@@ -2143,7 +2150,9 @@ namespace Dapper
                     continue;
                 }
                 ITypeHandler handler;
+#pragma warning disable 618
                 DbType dbType = LookupDbType(prop.PropertyType, prop.Name, true, out handler);
+#pragma warning restore 618
                 if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
                     // this actually represents special handling for list types;
@@ -3161,7 +3170,7 @@ namespace Dapper
         /// <summary>
         /// Throws a data exception, only used internally
         /// </summary>
-        [Obsolete("Intended for internal use only")]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
         public static void ThrowDataException(Exception ex, int index, IDataReader reader, object value)
         {
             Exception toThrow;

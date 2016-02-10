@@ -233,7 +233,12 @@ namespace Dapper
                 var isCustomQueryParameter = val is SqlMapper.ICustomQueryParameter;
 
                 SqlMapper.ITypeHandler handler = null;
-                if (dbType == null && val != null && !isCustomQueryParameter) dbType = SqlMapper.LookupDbType(val.GetType(), name, true, out handler);
+                if (dbType == null && val != null && !isCustomQueryParameter)
+                {
+#pragma warning disable 618
+                    dbType = SqlMapper.LookupDbType(val.GetType(), name, true, out handler);
+#pragma warning disable 618
+                }
                 if (isCustomQueryParameter)
                 {
                     ((SqlMapper.ICustomQueryParameter)val).AddParameter(command, name);
@@ -468,7 +473,11 @@ namespace Dapper
                 else
                 {
                     SqlMapper.ITypeHandler handler;
-                    dbType = (!dbType.HasValue) ? SqlMapper.LookupDbType(targetMemberType, targetMemberType?.Name, true, out handler) : dbType;
+                    dbType = (!dbType.HasValue)
+#pragma warning disable 618
+                    ? SqlMapper.LookupDbType(targetMemberType, targetMemberType?.Name, true, out handler)
+#pragma warning restore 618
+                    : dbType;
 
                     // CameFromTemplate property would not apply here because this new param
                     // Still needs to be added to the command
