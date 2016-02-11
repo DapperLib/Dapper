@@ -60,7 +60,7 @@
         "Simple.Data.Core": "1.0.0-rc3",
         "Simple.Data.SqlServer": "1.0.0-rc3",
         "Soma": "1.8.0.7",
-        "System.Data.SqlServerCe_unofficial": "4.0.8482.1",
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "xunit": "1.9.2"
       }
     },
