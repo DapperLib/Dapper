@@ -3084,7 +3084,7 @@ end");
                 value.IsEqualTo(9);
             }
         }
-        
+
         [Fact]
         public void PseudoPositionalParameters_Dynamic()
         {
@@ -3150,6 +3150,123 @@ end");
             }
         }
 
+        [Fact]
+        public void Issue457_NullParameterValues()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ? -- ODBC parameter
+SET @customerCode = ? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                var row = connection.QuerySingle(sql, new
+                {
+                    since,
+                    customerCode = code
+                });
+                var a = (DateTime?)row.Since;
+                var b = (string)row.Code;
+
+                a.IsEqualTo(since);
+                b.IsEqualTo(code);
+            }
+        }
+
+        [Fact]
+        public void Issue457_NullParameterValues_Named()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ?since? -- ODBC parameter
+SET @customerCode = ?customerCode? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                var row = connection.QuerySingle(sql, new
+                {
+                    since,
+                    customerCode = code
+                });
+                var a = (DateTime?)row.Since;
+                var b = (string)row.Code;
+
+                a.IsEqualTo(since);
+                b.IsEqualTo(code);
+            }
+        }
+#if ASYNC
+        [Fact]
+        public async void Issue457_NullParameterValues_MultiAsync()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ? -- ODBC parameter
+SET @customerCode = ? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                using (var multi = await connection.QueryMultipleAsync(sql, new
+                {
+                    since,
+                    customerCode = code
+                }))
+                {
+                    var row = await multi.ReadSingleAsync();
+                    var a = (DateTime?)row.Since;
+                    var b = (string)row.Code;
+
+                    a.IsEqualTo(since);
+                    b.IsEqualTo(code);
+                }
+            }
+        }
+
+        [Fact]
+        public async void Issue457_NullParameterValues_MultiAsync_Named()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ?since? -- ODBC parameter
+SET @customerCode = ?customerCode? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                using (var multi = await connection.QueryMultipleAsync(sql, new
+                {
+                    since,
+                    customerCode = code
+                }))
+                {
+                    var row = await multi.ReadSingleAsync();
+                    var a = (DateTime?)row.Since;
+                    var b = (string)row.Code;
+
+                    a.IsEqualTo(since);
+                    b.IsEqualTo(code);
+                }
+            }
+        }
+#endif
+#endif
+
+#if !COREFX
         [Fact]
         public void SO29596645_TvpProperty()
         {
