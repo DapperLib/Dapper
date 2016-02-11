@@ -107,7 +107,7 @@
         "Soma": "1.8.0.7",
         "Susanoo.Core": "1.2.4",
         "Susanoo.SqlServer": "1.2.4",
-        "System.Data.SqlServerCe_unofficial": "4.0.8482.1",
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "xunit": "2.1.0"
       }
     },
@@ -169,7 +169,7 @@
         "Soma": "1.8.0.7",
         "Susanoo.Core": "1.2.4",
         "Susanoo.SqlServer": "1.2.4",
-        "System.Data.SqlServerCe_unofficial": "4.0.8482.1",
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "xunit": "2.2.0-beta1-build3239",
         "xunit.runner.dnx": "2.1.0-rc1-build204"
       }
