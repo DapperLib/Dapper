@@ -192,7 +192,7 @@ namespace Dapper.Tests
             }
         }
 
-#if EXTERNALS
+#if !COREFX
         [Fact]
         public async Task ExecuteReaderOpenAsync()
         {

@@ -114,7 +114,7 @@ SELECT * FROM @ExplicitConstructors"
             }
         }
 
-#if EXTERNALS
+#if LINQ2SQL
         class NoDefaultConstructorWithBinary
         {
             public System.Data.Linq.Binary Value { get; set; }

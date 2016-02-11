@@ -1,4 +1,4 @@
-﻿#if EXTERNALS
+﻿#if ENTITY_FRAMEWORK
 using System.Data.Common;
 using System.Data.Entity;
 

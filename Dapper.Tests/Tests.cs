@@ -26,15 +26,19 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using Xunit;
 using System.Data.Common;
-#if EXTERNALS
+#if FIREBIRD
 using FirebirdSql.Data.FirebirdClient;
+#endif
+#if ENTITY_FRAMEWORK
 using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
+#endif
+#if SQL_CE
 using System.Data.SqlServerCe;
+#endif
 using SqlServerTypes;
 #if POSTGRESQL
 using Npgsql;
-#endif
 #endif
 
 #if COREFX
@@ -116,10 +120,16 @@ namespace Dapper.Tests
 #endif
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
             Console.WriteLine("Using Connectionstring: {0}", ConnectionString);
-#if EXTERNALS && !DNX
+#if !COREFX
             Console.Write("Loading native assemblies for SQL types...");
-            Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);
-            Console.WriteLine("done.");
+            try {
+                Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);
+                Console.WriteLine("done.");
+            } catch(Exception ex)
+            {
+                Console.WriteLine("failed.");
+                Console.Error.WriteLine(ex.Message);
+            }
 #endif
         }
 
@@ -726,7 +736,7 @@ select * from @bar", new { foo }).Single();
             list.First().Base2.IsEqualTo("Four");
         }
 
-#if EXTERNALS
+#if !COREFX
         [Fact]
         public void ExecuteReader()
         {
@@ -739,7 +749,9 @@ select * from @bar", new { foo }).Single();
             ((int)dt.Rows[0][0]).IsEqualTo(3);
             ((int)dt.Rows[0][1]).IsEqualTo(4);
         }
+#endif
 
+#if SQL_CE
         [Fact]
         public void MultiRSSqlCE()
         {
@@ -784,7 +796,8 @@ select * from @bar", new { foo }).Single();
             public int ID { get; set; }
             public string Name { get; set; }
         }
-        
+#endif
+#if LINQ2SQL
         [Fact]
         public void TestLinqBinaryToClass()
         {
@@ -2226,7 +2239,7 @@ end");
         class PracticeRebateOrders
         {
             public string fTaxInvoiceNumber;
-#if EXTERNALS
+#if !COREFX
             [System.Xml.Serialization.XmlElementAttribute(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
 #endif
             public string TaxInvoiceNumber { get { return fTaxInvoiceNumber; } set { fTaxInvoiceNumber = value; } }
@@ -2385,7 +2398,7 @@ end");
             int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
             k.IsNull();
 
-#if EXTERNALS
+#if ENTITY_FRAMEWORK
             Dapper.EntityFramework.Handlers.Register();
             var geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326);
             var geo2 = connection.ExecuteScalar<DbGeography>("select @geo", new { geo });
@@ -3022,7 +3035,7 @@ end");
             public DateTime? DoB { get; set; }
             public DateTime? DoB2 { get; set; }
         }
-#if EXTERNALS
+#if FIREBIRD
         [Fact(Skip="Bug in Firebird; a PR to fix it has been submitted")]
         public void Issue178_Firebird()
         {
@@ -3059,7 +3072,9 @@ end");
                 count.IsEqualTo(1);
             }
         }
-        
+#endif
+
+#if OLEDB
         [Fact]
         public void PseudoPositionalParameters_Simple()
         {
@@ -3204,9 +3219,9 @@ end");
                             };
         
         [Fact]
-        public void TestPostresqlArrayParameters()
+        public void TestPostgresqlArrayParameters()
         {
-            using (var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest;Encoding=UNICODE"))
+            using (var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest")) // ;Encoding=UNICODE
             {
                 conn.Open();
                 IDbTransaction transaction = conn.BeginTransaction();
