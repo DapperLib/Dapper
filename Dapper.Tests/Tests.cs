@@ -120,7 +120,7 @@ namespace Dapper.Tests
 #endif
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
             Console.WriteLine("Using Connectionstring: {0}", ConnectionString);
-#if !COREFX
+#if !(COREFX || DNX)
             Console.Write("Loading native assemblies for SQL types...");
             try {
                 Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);

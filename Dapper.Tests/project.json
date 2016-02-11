@@ -129,6 +129,7 @@
     "dnx451": {
       "compilationOptions": {
         "define": [
+          "DNX",
           "ASYNC",
           "MYSQL",
           "ENTITY_FRAMEWORK",
