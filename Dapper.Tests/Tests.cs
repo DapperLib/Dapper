@@ -74,12 +74,12 @@ namespace Dapper.Tests
     public partial class TestSuite : IDisposable
     {
         public static string ConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+            IsAppVeyor
                 ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
                 : "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
 
         public static string OleDbConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+            IsAppVeyor
                 ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2014;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
                 : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
@@ -2931,7 +2931,7 @@ end");
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
         {
             string cs = IsAppVeyor
-                ? "Server=localhost;Database=tests;Uid=root;Pwd=Password12!;"
+                ? "Server=localhost;Database=test;Uid=root;Pwd=Password12!;"
                 : "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
             var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs);
             csb.AllowZeroDateTime = allowZeroDatetime;
@@ -3360,7 +3360,7 @@ SELECT @since as [Since], @customerCode as [Code]";
         static NpgsqlConnection OpenPostgresqlConnection()
         {
             string cs = IsAppVeyor
-                ? "Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=dappertest"
+                ? "Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test"
                 : "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"; // ;Encoding = UNICODE
             var conn = new NpgsqlConnection(cs);
             conn.Open();

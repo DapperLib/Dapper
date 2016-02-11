@@ -93,6 +93,8 @@ namespace Dapper.Tests.Contrib
 
     public abstract partial class TestSuite
     {
+        protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
+
         public abstract IDbConnection GetConnection();
 
         private IDbConnection GetOpenConnection()
