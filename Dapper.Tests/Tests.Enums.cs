@@ -56,6 +56,23 @@ namespace Dapper.Tests
             obj.B.IsEqualTo(EnumParam.B);
             obj.C.IsEqualTo((EnumParam)0);
         }
+
+        [Fact]
+        public void TestEnumParameterUsesTypeMapper()
+        {
+            SqlMapper.AddTypeHandler(ItemTypeHandler.Default);
+            var result = connection.QuerySingle<string>("SELECT @Foo", new {Item.Foo});
+            "F".IsEqualTo(result);
+        }
+
+        [Fact]
+        public void TestEnumResultUsesTypeMapper()
+        {
+            SqlMapper.AddTypeHandler(ItemTypeHandler.Default);
+            var result = connection.QuerySingle<Item>("SELECT 'F'");
+            Item.Foo.IsEqualTo(result);
+        }
+
         enum EnumParam : short
         {
             None, A, B
@@ -87,6 +104,46 @@ namespace Dapper.Tests
         class TestEnumClassNoNull
         {
             public TestEnum EnumEnum { get; set; }
+        }
+
+        enum Item
+        {
+            None,
+            Foo,
+            Bar
+        }
+
+        class ItemTypeHandler : SqlMapper.TypeHandler<Item>
+        {
+            public static readonly ItemTypeHandler Default = new ItemTypeHandler();
+
+            public override Item Parse(object value)
+            {
+                var c = ((string) value)[0];
+                switch (c)
+                {
+                    case 'F': return Item.Foo;
+                    case 'B': return Item.Bar;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            public override void SetValue(IDbDataParameter parameter, Item value)
+            {
+                parameter.DbType = DbType.AnsiStringFixedLength;
+                parameter.Size = 1;
+                parameter.Value = Format(value);
+            }
+
+            private string Format(Item value)
+            {
+                switch (value)
+                {
+                    case Item.Foo: return "F";
+                    case Item.Bar: return "B";
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
         }
     }
 }
