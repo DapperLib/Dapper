@@ -78,7 +78,8 @@
           "MASSIVE",
           "ORMLITE",
           "SOMA",
-          "SIMPLEDATA"
+          "SIMPLEDATA",
+          "XUNIT2"
         ]
       },
       "frameworkAssemblies": {
@@ -139,7 +140,8 @@
           "MASSIVE",
           "ORMLITE",
           "SOMA",
-          "SIMPLEDATA"
+          "SIMPLEDATA",
+          "XUNIT2"
         ]
       },
       "frameworkAssemblies": {

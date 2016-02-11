@@ -3218,12 +3218,11 @@ end");
                                 new Cat() { Breed = "Persian", Name="MAGNA"}
                             };
         
-        [Fact]
+        [FactPostgresqlAttribute]
         public void TestPostgresqlArrayParameters()
         {
-            using (var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest")) // ;Encoding=UNICODE
+            using (var conn = OpenPostgresqlConnection())
             {
-                conn.Open();
                 IDbTransaction transaction = conn.BeginTransaction();
                 conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
                 conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", Cats);
@@ -3234,6 +3233,32 @@ end");
                 r.Count(c => c.Id == 3).IsEqualTo(1);
                 r.Count(c => c.Id == 5).IsEqualTo(1);
                 transaction.Rollback();
+            }
+        }
+        static NpgsqlConnection OpenPostgresqlConnection()
+        {
+            var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"); // ;Encoding=UNICODE
+            conn.Open();
+            return conn;
+        }
+        public class FactPostgresqlAttribute : FactAttribute
+        {
+            public override string Skip
+            {
+                get { return unavailable ?? base.Skip; }
+                set { base.Skip = value; }
+            }
+            private static string unavailable;
+            static FactPostgresqlAttribute()
+            {
+                try
+                {
+                    using (OpenPostgresqlConnection()) { }
+                }
+                catch (Exception ex)
+                {
+                    unavailable = $"Postgresql is unavailable: {ex.Message}";
+                }
             }
         }
 #endif
