@@ -2923,11 +2923,16 @@ end");
         {
             TestDateTime(connection);
         }
+
+        private static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
+        
 #if MYSQL
         private static MySql.Data.MySqlClient.MySqlConnection GetMySqlConnection(bool open = true,
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
         {
-            const string cs = "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
+            string cs = IsAppVeyor
+                ? "Server=localhost;Database=tests;Uid=root;Pwd=Password12!;"
+                : "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
             var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs);
             csb.AllowZeroDateTime = allowZeroDatetime;
             csb.ConvertZeroDateTime = convertZeroDatetime;
@@ -3354,7 +3359,10 @@ SELECT @since as [Since], @customerCode as [Code]";
         }
         static NpgsqlConnection OpenPostgresqlConnection()
         {
-            var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"); // ;Encoding=UNICODE
+            string cs = IsAppVeyor
+                ? "Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=dappertest"
+                : "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"; // ;Encoding = UNICODE
+            var conn = new NpgsqlConnection(cs);
             conn.Open();
             return conn;
         }
