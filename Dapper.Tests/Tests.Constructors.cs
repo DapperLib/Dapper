@@ -135,6 +135,76 @@ SELECT * FROM @ExplicitConstructors"
         }
 #endif
 
+        [Fact]
+        public void Issue461_TypeHandlerWorksInConstructor()
+        {
+            // SqlMapper.AddTypeHandler(new Issue461_DateTimeOffsetHandler());
+
+            connection.Execute(@"CREATE TABLE #Issue461 (
+                                      Id                VARCHAR(50),
+                                      SomeValue         VARCHAR(50),
+                                      SomeDateValue     DATETIMEOFFSET
+                                    )");
+            var when = new DateTimeOffset(2016, 02, 15, 16, 0, 0, TimeSpan.FromHours(2));
+            connection.Execute(
+                "INSERT INTO #Issue461 (Id, SomeValue, SomeDateValue) VALUES (@Id, @SomeValue, @SomeDateValue)",
+                new
+                {
+                    Id = "id",
+                    SomeValue = "what up?",
+                    SomeDateValue = when
+                });
+
+            var parameterlessWorks = connection.QuerySingle<Issue461_ParameterlessTypeConstructor>("SELECT * FROM #Issue461");
+            parameterlessWorks.Id.IsEqualTo("id");
+            parameterlessWorks.SomeValue.IsEqualTo("what up?");
+            parameterlessWorks.SomeDateValue.IsEqualTo(when);
+
+            //throws about not being able to find constructor (It expects the DateTime field to be a string still)
+            var parameterDoesNot = connection.QuerySingle<Issue461_ParameterisedTypeConstructor>("SELECT * FROM #Issue461");
+            parameterDoesNot.Id.IsEqualTo("id");
+            parameterDoesNot.SomeValue.IsEqualTo("what up?");
+            parameterDoesNot.SomeDateValue.IsEqualTo(when);
+
+
+        }
+
+        //class Issue461_DateTimeOffsetHandler : SqlMapper.TypeHandler<DateTimeOffset>
+        //{
+        //    public override void SetValue(IDbDataParameter parameter, DateTimeOffset value)
+        //    {
+        //        parameter.Value = value.ToString();
+        //    }
+
+        //    public override DateTimeOffset Parse(object value)
+        //    {
+        //        return DateTimeOffset.Parse(value.ToString());
+        //    }
+        //}
+
+        class Issue461_ParameterlessTypeConstructor
+        {
+            public string Id { get; set; }
+
+            public string SomeValue { get; set; }
+            public DateTimeOffset SomeDateValue { get; set; }
+        }
+
+        class Issue461_ParameterisedTypeConstructor
+        {
+            public Issue461_ParameterisedTypeConstructor(string id, string someValue, DateTimeOffset someDateValue)
+            {
+                Id = id;
+                SomeValue = someValue;
+                SomeDateValue = someDateValue;
+            }
+
+            public string Id { get; }
+
+            public string SomeValue { get; }
+            public DateTimeOffset SomeDateValue { get; }
+        }
+
         public class AbstractInheritance
         {
             public abstract class Order

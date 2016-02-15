@@ -36,7 +36,8 @@
           "MASSIVE",
           "ORMLITE",
           "SOMA",
-          "SIMPLEDATA"
+          "SIMPLEDATA",
+          "SQLITE"
         ]
       },
       "frameworkAssemblies": {
@@ -61,7 +62,8 @@
         "Simple.Data.SqlServer": "1.0.0-rc3",
         "Soma": "1.8.0.7",
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        "xunit": "1.9.2"
+        "xunit": "1.9.2",
+        "System.Data.SQLite": "1.0.99"
       }
     },
     "net45": {
@@ -79,7 +81,8 @@
           "ORMLITE",
           "SOMA",
           "SIMPLEDATA",
-          "XUNIT2"
+          "XUNIT2",
+          "SQLITE"
         ]
       },
       "frameworkAssemblies": {
@@ -108,7 +111,8 @@
         "Susanoo.Core": "1.2.4",
         "Susanoo.SqlServer": "1.2.4",
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        "xunit": "2.1.0"
+        "xunit": "2.1.0",
+        "System.Data.SQLite":  "1.0.99"
       }
     },
     "dotnet5.4": {
