@@ -59,7 +59,8 @@
         "System.Data.Linq": "4.0.0.0",
         "System.Runtime": "4.0.0.0",
         "System.Transactions": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Threading.Tasks": "4.0.0.0"
       },
       "dependencies": {
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
