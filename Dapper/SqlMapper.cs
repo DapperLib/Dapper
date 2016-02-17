@@ -270,6 +270,11 @@ namespace Dapper
             AddTypeHandlerImpl(type, handler, true);
         }
 
+        internal static bool HasTypeHandler(Type type)
+        {
+            return typeHandlers.ContainsKey(type);
+        }
+
         /// <summary>
         /// Configure the specified type to be processed by a custom handler
         /// </summary>
