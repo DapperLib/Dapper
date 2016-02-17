@@ -335,7 +335,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = GetOpenConnection())
             {
                 var ex = Xunit.Assert.Throws(SqlClientExceptionType, () => { connection.Insert(new Vehicle { Name = "Prado" }); });
-                Xunit.Assert.Contains("Vehicles", ex.Message);
+                Xunit.Assert.Contains("vehicles", ex.Message.ToLower());
             }
         }
 
