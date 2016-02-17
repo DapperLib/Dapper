@@ -5,7 +5,7 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "summary": "Dapper.Contrib",
   "description": "The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional \"dirty\" tracking of interface-based entities.",
-  "version": "1.50-beta3",
+  "version": "1.50-beta8",
   "title": "Dapper.Contrib",
   "tags": [ "orm", "sql", "micro-orm", "dapper" ],
   "copyright": "2015 Stack Exchange, Inc.",
