@@ -26,6 +26,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using Xunit;
 using System.Data.Common;
+using System.Text.RegularExpressions;
 #if FIREBIRD
 using FirebirdSql.Data.FirebirdClient;
 #endif
@@ -157,6 +158,99 @@ namespace Dapper.Tests
             results.Sort();
             results[0].IsEqualTo("a");
             results[1].IsEqualTo("b");
+        }
+
+        [Fact]
+        public void TestListExpansionPadding_Enabled()
+        {
+            TestListExpansionPadding(true);
+        }
+        [Fact]
+        public void TestListExpansionPadding_Disabled()
+        {
+            TestListExpansionPadding(false);
+        }
+
+        private void TestListExpansionPadding(bool enabled)
+        {
+            bool oldVal = SqlMapper.Settings.PadListExpansions;
+            try
+            {
+                SqlMapper.Settings.PadListExpansions = enabled;
+                connection.ExecuteScalar<int>(@"
+create table #ListExpansion(id int not null identity(1,1), value int null);
+insert #ListExpansion (value) values (null);
+declare @loop int = 0;
+while (@loop < 12)
+begin -- double it
+	insert #ListExpansion (value) select value from #ListExpansion;
+	set @loop = @loop + 1;
+end
+
+select count(1) as [Count] from #ListExpansion").IsEqualTo(4096);
+
+                var list = new List<int>();
+                int nextId = 1, batchCount;
+                var rand = new Random(12345);
+                const int SQL_SERVER_MAX_PARAMS = 2095;
+                TestListForExpansion(list, enabled); // test while empty
+                while (list.Count < SQL_SERVER_MAX_PARAMS)
+                {
+                    try
+                    {
+                        if (list.Count <= 20) batchCount = 1;
+                        else if (list.Count <= 200) batchCount = rand.Next(1, 40);
+                        else batchCount = rand.Next(1, 100);
+
+                        for (int j = 0; j < batchCount && list.Count < SQL_SERVER_MAX_PARAMS; j++)
+                            list.Add(nextId++);
+
+                        TestListForExpansion(list, enabled);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Failure with {list.Count} items: {ex.Message}", ex);
+                    }
+                }
+            }
+            finally
+            {
+                SqlMapper.Settings.PadListExpansions = oldVal;
+            }
+        }
+
+        private void TestListForExpansion(List<int> list, bool enabled)
+        {
+            var row = connection.QuerySingle(@"
+declare @hits int;
+select @hits = count(1) from #ListExpansion where id in @ids ;
+declare @query nvarchar(max) = N' in @ids '; -- ok, I confess to being pleased with this hack ;p
+select @hits as [Hits], @query as [Query];
+", new { ids = list });
+            int hits = row.Hits;
+            string query = row.Query;
+            int argCount = Regex.Matches(query, "@ids[0-9]").Count;
+            int expectedCount = GetExpectedListExpansionCount(list.Count, enabled);
+            hits.IsEqualTo(list.Count);
+            argCount.IsEqualTo(expectedCount);
+        }
+
+        static int GetExpectedListExpansionCount(int count, bool enabled)
+        {
+            if (!enabled) return count;
+
+            if (count <= 5 || count > 2070) return count;
+
+            int padFactor;
+            if (count <= 150) padFactor = 10;
+            else if (count <= 750) padFactor = 50;
+            else if (count <= 2000) padFactor = 100;
+            else if (count <= 2070) padFactor = 10;
+            else padFactor = 200;
+
+            int blocks = count / padFactor, delta = count % padFactor;
+            if (delta != 0) blocks++;
+            return blocks * padFactor;
         }
 
         [Fact]

@@ -1769,6 +1769,33 @@ namespace Dapper
             return result;
         }
 
+        internal static int GetListPaddingExtraCount(int count)
+        {
+            switch(count)
+            {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                    return 0; // no padding
+            }
+            if (count < 0) return 0;
+
+            int padFactor;
+            if (count <= 150) padFactor = 10;
+            else if (count <= 750) padFactor = 50;
+            else if (count <= 2000) padFactor = 100; // note: max param count for SQL Server
+            else if (count <= 2070) padFactor = 10; // try not to over-pad as we approach that limit
+            else if (count <= 2100) return 0; // just don't pad between 2070 and 2100, to minimize the crazy
+            else padFactor = 200; // above that, all bets are off!
+
+            // if we have 17, factor = 10; 17 % 10 = 7, we need 3 more
+            int intoBlock = count % padFactor;
+            return intoBlock == 0 ? 0 : (padFactor - intoBlock);
+        }
+
         /// <summary>
         /// Internal use only
         /// </summary>
@@ -1800,8 +1827,12 @@ namespace Dapper
                 {
                     foreach (var item in list)
                     {
-                        if (count++ == 0)
+                        if (++count == 1) // first item: fetch some type info
                         {
+                            if(item == null)
+                            {
+                                throw new NotSupportedException("The first item in a list-expansion cannot be null");
+                            }
                             if (!isDbString)
                             {
                                 ITypeHandler handler;
@@ -1809,7 +1840,7 @@ namespace Dapper
                             }
                         }
                         var listParam = command.CreateParameter();
-                        listParam.ParameterName = namePrefix + count;
+                        listParam.ParameterName = namePrefix + count.ToString();
                         if (isString)
                         {
                             listParam.Size = DbString.DefaultLength;
@@ -1831,6 +1862,20 @@ namespace Dapper
                                 listParam.DbType = dbType;
                             }
                             command.Parameters.Add(listParam);
+                        }
+                    }
+                    if (Settings.PadListExpansions && !isDbString)
+                    {
+                        int padCount = GetListPaddingExtraCount(count);
+                        for(int i = 0; i < padCount; i++)
+                        {
+                            count++;
+                            var padParam = command.CreateParameter();
+                            padParam.ParameterName = namePrefix + count.ToString();
+                            if(isString) padParam.Size = DbString.DefaultLength;
+                            padParam.DbType = dbType;
+                            padParam.Value = DBNull.Value;
+                            command.Parameters.Add(padParam);
                         }
                     }
                 }
