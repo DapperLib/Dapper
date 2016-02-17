@@ -33,7 +33,7 @@
 
 
             /// <summary>
-            /// Should list expansions be padded with null-valued parrameters, to prevent qurey-plan saturation? For example,
+            /// Should list expansions be padded with null-valued parameters, to prevent query-plan saturation? For example,
             /// an 'in @foo' expansion with 7, 8 or 9 values will be sent as a list of 10 values, with 3, 2 or 1 of them null.
             /// The padding size is relative to the size of the list; "next 10" under 150, "next 50" under 500,
             /// "next 100" under 1500, etc.
