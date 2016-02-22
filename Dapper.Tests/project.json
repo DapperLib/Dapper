@@ -36,8 +36,7 @@
           "MASSIVE",
           "ORMLITE",
           "SOMA",
-          "SIMPLEDATA",
-          "SQLITE"
+          "SIMPLEDATA"
         ]
       },
       "frameworkAssemblies": {
@@ -81,8 +80,7 @@
           "ORMLITE",
           "SOMA",
           "SIMPLEDATA",
-          "XUNIT2",
-          "SQLITE"
+          "XUNIT2"
         ]
       },
       "frameworkAssemblies": {
@@ -117,10 +115,11 @@
     },
     "dotnet5.4": {
       "compilationOptions": {
-        "define": [ "ASYNC", "COREFX" ]
+        "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
       },
       "dependencies": {
         "Microsoft.CSharp": "4.0.1-*",
+        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
         "System.Collections": "4.0.11-*",
         "System.Console": "4.0.0-*",
         "System.Data.SqlClient": "4.0.0-*",
@@ -147,7 +146,8 @@
           "ORMLITE",
           "SOMA",
           "SIMPLEDATA",
-          "XUNIT2"
+          "XUNIT2",
+          "SQLITE"
         ]
       },
       "frameworkAssemblies": {
@@ -163,6 +163,7 @@
         },
         "EntityFramework": "6.1.3",
         "FirebirdSql.Data.FirebirdClient": "4.10.0",
+        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "Microsoft.SqlServer.Types": "11.0.2",
         "MySql.Data": "6.9.8",
@@ -183,9 +184,10 @@
     },
     "dnxcore50": {
       "compilationOptions": {
-        "define": [ "COREFX", "ASYNC", "DNX" ]
+        "define": [ "COREFX", "ASYNC", "DNX", "XUNIT2", "SQLITE" ]
       },
       "dependencies": {
+        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
         "System.Text.RegularExpressions": "4.0.11-*",
         "xunit": "2.2.0-beta1-build3239",
         "xunit.runner.dnx": "2.1.0-rc1-build204"

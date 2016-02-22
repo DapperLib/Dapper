@@ -41,6 +41,12 @@ using SqlServerTypes;
 #if POSTGRESQL
 using Npgsql;
 #endif
+#if SQLITE
+using Microsoft.Data.Sqlite;
+#endif
+#if ASYNC
+using System.Threading.Tasks;
+#endif
 
 #if COREFX
 namespace System.ComponentModel {
@@ -3530,6 +3536,107 @@ insert TPTable (Value) values (2), (568)");
         {
             public int Pid { get; set; }
             public int Value { get; set; }
+        }
+#endif
+
+#if SQLITE
+        [FactSqlite]
+        public void Issue466_SqliteHatesOptimizations()
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                SqlMapper.ResetTypeHandlers();
+                var row = connection.Query<HazNameId>("select 42 as Id").First();
+                row.Id.IsEqualTo(42);
+                row = connection.Query<HazNameId>("select 42 as Id").First();
+                row.Id.IsEqualTo(42);
+
+                SqlMapper.ResetTypeHandlers();
+                row = connection.QueryFirst<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+                row = connection.QueryFirst<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+            }
+        }
+
+#if ASYNC
+        [FactSqlite]
+        public async Task Issue466_SqliteHatesOptimizations_Async()
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                SqlMapper.ResetTypeHandlers();
+                var row = (await connection.QueryAsync<HazNameId>("select 42 as Id")).First();
+                row.Id.IsEqualTo(42);
+                row = (await connection.QueryAsync<HazNameId>("select 42 as Id")).First();
+                row.Id.IsEqualTo(42);
+
+                SqlMapper.ResetTypeHandlers();
+                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+            }
+        }
+
+        [FactSqlite]
+        public void Isse467_SqliteLikesParametersWithPrefix()
+        {
+            Isse467_SqliteParameterNaming(true);
+        }
+        [FactSqlite]
+        public void Isse467_SqliteHatesParametersWithoutPrefix()
+        { // see issue 375 / 467
+#if DNX
+            try {
+                Isse467_SqliteParameterNaming(false);
+                throw new Exception("Expected failure");
+            } catch(InvalidOperationException ex)
+            {
+                ex.Message.IsEqualTo("Must add values for the following parameters: @foo");
+            }
+#else
+            Isse467_SqliteParameterNaming(false);
+#endif
+        }
+        private void Isse467_SqliteParameterNaming(bool prefix)
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "select @foo";
+                cmd.Parameters.Add(prefix ? "@foo" : "foo", SqliteType.Integer).Value = 42;
+                var i = Convert.ToInt32(cmd.ExecuteScalar());
+                i.IsEqualTo(42);
+            }
+        }
+#endif
+
+        public class FactSqliteAttribute : FactAttribute
+        {
+            public override string Skip
+            {
+                get { return unavailable ?? base.Skip; }
+                set { base.Skip = value; }
+            }
+            private static string unavailable;
+            static FactSqliteAttribute()
+            {
+                try
+                {
+                    using (GetSqliteConnection()) { }
+                }
+                catch (Exception ex)
+                {
+                    unavailable = $"Sqlite is unavailable: {ex.Message}";
+                }
+            }
+        }
+        protected static SqliteConnection GetSqliteConnection(bool open = true)
+        {
+            var connection = new SqliteConnection("Data Source=:memory:");
+            if (open) connection.Open();
+            return connection;
         }
 #endif
     }

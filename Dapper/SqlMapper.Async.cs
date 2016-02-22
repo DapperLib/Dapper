@@ -194,6 +194,16 @@ namespace Dapper
             return QueryRowAsync<object>(cnn, Row.SingleOrDefault, type, command);
         }
 
+
+        private static Task<DbDataReader> ExecuteReaderWithFlagsFallbackAsync(DbCommand cmd, bool wasClosed, CommandBehavior behavior, CancellationToken cancellationToken)
+        {
+            var task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
+            if (task.Status == TaskStatus.Faulted && DisableCommandBehaviorOptimizations(behavior, task.Exception.InnerException))
+            { // we can retry; this time it will have different flags
+                task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
+            }
+            return task;
+        }
         private static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
@@ -207,7 +217,7 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync(cancel).ConfigureAwait(false);
-                    reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult), cancel).ConfigureAwait(false);
+                    reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
@@ -269,9 +279,9 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await ((DbConnection)cnn).OpenAsync(cancel).ConfigureAwait(false);
-                    reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, (row & Row.Single) != 0
+                    reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, (row & Row.Single) != 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
-                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow), cancel).ConfigureAwait(false);
+                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancel).ConfigureAwait(false);
 
                     T result = default(T);
                     if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
@@ -644,7 +654,7 @@ namespace Dapper
             {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult), command.CancellationToken).ConfigureAwait(false))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                     var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
@@ -691,7 +701,7 @@ namespace Dapper
             try {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult), command.CancellationToken).ConfigureAwait(false)) {
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false)) {
                     var results = MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;
                 }
@@ -741,7 +751,7 @@ namespace Dapper
             {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
-                reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.SequentialAccess), command.CancellationToken).ConfigureAwait(false);
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
@@ -818,7 +828,7 @@ namespace Dapper
             {
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, CommandBehavior.Default), command.CancellationToken).ConfigureAwait(false);
+                var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.Default, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 return reader;
             }
