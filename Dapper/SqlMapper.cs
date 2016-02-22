@@ -1723,9 +1723,28 @@ namespace Dapper
         public static char ReadChar(object value)
         {
             if (value == null || value is DBNull) throw new ArgumentNullException(nameof(value));
+            if (value is char) return (char)value;
             string s = value as string;
             if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", nameof(value));
             return s[0];
+        }
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+#if !COREFX
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
+        public static TimeSpan ReadTimeSpan(object value)
+        {
+            if (value == null || value is DBNull) throw new ArgumentNullException(nameof(value));
+            if (value is TimeSpan) return (TimeSpan)value;
+            if (value is long) return new TimeSpan((long)value);
+            if (value is string) return TimeSpan.Parse((string)value, CultureInfo.InvariantCulture);
+            return (TimeSpan)value; // we expect this to fail; we just want the error message
         }
 
         /// <summary>
@@ -1739,9 +1758,21 @@ namespace Dapper
         public static char? ReadNullableChar(object value)
         {
             if (value == null || value is DBNull) return null;
-            string s = value as string;
-            if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", nameof(value));
-            return s[0];
+            return ReadChar(value);
+        }
+
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+#if !COREFX
+        [Browsable(false)]
+#endif
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
+        public static TimeSpan? ReadNullableTimeSpan(object value)
+        {
+            if (value == null || value is DBNull) return null;
+            return ReadTimeSpan(value);
         }
 
 
@@ -2567,6 +2598,14 @@ namespace Dapper
             {
                 return r => ReadNullableChar(r.GetValue(index));
             }
+            if (type == typeof(TimeSpan))
+            {
+                return r => ReadTimeSpan(r.GetValue(index));
+            }
+            if (type == typeof(TimeSpan?))
+            {
+                return r => ReadNullableTimeSpan(r.GetValue(index));
+            }
             if (type.FullName == LinqBinary)
             {
                 return r => Activator.CreateInstance(type, r.GetValue(index));
@@ -2871,6 +2910,11 @@ namespace Dapper
                     {
                         il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
                             memberType == typeof(char) ? nameof(SqlMapper.ReadChar) : nameof(SqlMapper.ReadNullableChar), BindingFlags.Static | BindingFlags.Public), null); // stack is now [target][target][typed-value]
+                    }
+                    else if (memberType == typeof(TimeSpan) || memberType == typeof(TimeSpan?))
+                    {
+                        il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
+                            memberType == typeof(TimeSpan) ? nameof(SqlMapper.ReadTimeSpan) : nameof(SqlMapper.ReadNullableTimeSpan), BindingFlags.Static | BindingFlags.Public), null); // stack is now [target][target][typed-value]
                     }
                     else
                     {

@@ -3077,6 +3077,29 @@ end");
                 
             }
         }
+        [FactMySql]
+        public void TestStringTimespansFromMySql()
+        {
+            using (var conn = GetOpenConnection())
+            {
+                try { conn.Execute(@"drop table issue465table"); }
+                catch { }
+                conn.Execute(@"create table issue465table (
+    id integer primary key,
+    duration text not null,
+);
+insert into issue465table(id, duration) values (1, '0.01:00:00');");
+                var row = conn.QuerySingle<Issue465Row>(
+                    "select * from issue465table");
+                row.Id.IsEqualTo(1);
+                row.Duration.IsEqualTo(TimeSpan.FromHours(1));
+            }
+        }
+        public class Issue465Row
+        {
+            public long Id { get; set; }
+            public TimeSpan Duration { get; set; }
+        }
 
         public class Issue426_Test
         {
