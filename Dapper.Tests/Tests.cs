@@ -1614,6 +1614,23 @@ end");
         }
 
         [Fact]
+        public void SO35554284_QueryMultipleUntilConsumed()
+        {
+            using (var reader = connection.QueryMultiple("select 1 as Id; select 2 as Id; select 3 as Id;"))
+            {
+                List<HazNameId> items = new List<HazNameId>();
+                while (!reader.IsConsumed)
+                {
+                    items.AddRange(reader.Read<HazNameId>());
+                }
+                items.Count.IsEqualTo(3);
+                items[0].Id.IsEqualTo(1);
+                items[1].Id.IsEqualTo(2);
+                items[2].Id.IsEqualTo(3);
+            }
+        }
+
+        [Fact]
         public void QueryMultipleInvalidFromClosed()
         {
             using (var conn = GetClosedConnection())
