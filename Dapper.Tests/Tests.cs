@@ -8,6 +8,10 @@ using IDbTransaction = System.Data.Common.DbTransaction;
 using IDataReader = System.Data.Common.DbDataReader;
 #endif
 
+#if SQLITE && (NET40 || NET45)
+using SqliteConnection = System.Data.SQLite.SQLiteConnection;
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -42,7 +46,11 @@ using SqlServerTypes;
 using Npgsql;
 #endif
 #if SQLITE
+#if NET40 || NET45
+using System.Data.SQLite;
+#else
 using Microsoft.Data.Sqlite;
+#endif
 #endif
 #if ASYNC
 using System.Threading.Tasks;
@@ -2110,6 +2118,43 @@ end");
         }
 
         [Fact]
+        public void DapperEnumValue_SqlServer()
+        {
+            DapperEnumValue(connection);
+        }
+
+#if SQLITE
+        [FactSqlite]
+        public void DapperEnumValue_Sqlite()
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                DapperEnumValue(connection);
+            }
+        }
+#endif
+#if MYSQL
+        [FactMySql]
+        public void DapperEnumValue_Mysql()
+        {
+            using (var connection = GetMySqlConnection())
+            {
+                DapperEnumValue(connection);
+            }
+        }
+#endif
+        private static void DapperEnumValue(IDbConnection connection)
+        {
+            var v = connection.QuerySingle<AnEnum>("select @v", new { v = AnEnum.B });
+            v.IsEqualTo(AnEnum.B);
+
+            var args = new DynamicParameters();
+            args.Add("v", AnEnum.B);
+            v = connection.QuerySingle<AnEnum>("select @v", args);
+            v.IsEqualTo(AnEnum.B);
+        }
+
+        [Fact]
         public void LiteralReplacementEnumAndString()
         {
             var args = new { x = AnEnum.B, y = 123.45M, z = AnotherEnum.A };
@@ -3578,6 +3623,7 @@ insert TPTable (Value) values (2), (568)");
                 row.Id.IsEqualTo(42);
             }
         }
+#endif
 
         [FactSqlite]
         public void Isse467_SqliteLikesParametersWithPrefix()
@@ -3585,19 +3631,9 @@ insert TPTable (Value) values (2), (568)");
             Isse467_SqliteParameterNaming(true);
         }
         [FactSqlite]
-        public void Isse467_SqliteHatesParametersWithoutPrefix()
-        { // see issue 375 / 467
-#if DNX
-            try {
-                Isse467_SqliteParameterNaming(false);
-                throw new Exception("Expected failure");
-            } catch(InvalidOperationException ex)
-            {
-                ex.Message.IsEqualTo("Must add values for the following parameters: @foo");
-            }
-#else
+        public void Isse467_SqliteLikesParametersWithoutPrefix()
+        { // see issue 375 / 467; note: fixed from RC2 onwards
             Isse467_SqliteParameterNaming(false);
-#endif
         }
         private void Isse467_SqliteParameterNaming(bool prefix)
         {
@@ -3605,13 +3641,16 @@ insert TPTable (Value) values (2), (568)");
             {
                 var cmd = connection.CreateCommand();
                 cmd.CommandText = "select @foo";
-                cmd.Parameters.Add(prefix ? "@foo" : "foo", SqliteType.Integer).Value = 42;
+#if NET40 || NET45
+                const DbType type = DbType.Int32;
+#else
+                const SqliteType type = SqliteType.Integer;
+#endif
+                cmd.Parameters.Add(prefix ? "@foo" : "foo", type).Value = 42;
                 var i = Convert.ToInt32(cmd.ExecuteScalar());
                 i.IsEqualTo(42);
             }
         }
-#endif
-
         public class FactSqliteAttribute : FactAttribute
         {
             public override string Skip
@@ -3639,5 +3678,5 @@ insert TPTable (Value) values (2), (568)");
             return connection;
         }
 #endif
-    }
+            }
 }
