@@ -2104,13 +2104,17 @@ end");
             B = 1
         }
 
-        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1613")]
+        [Fact]
         public void AdoNetEnumValue()
         {
             using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = "select @foo";
-                cmd.Parameters.AddWithValue("@foo", AnEnum.B);
+                var p = cmd.CreateParameter();
+                p.ParameterName = "@foo";
+                p.DbType = DbType.Int32; // it turns out that this is the key piece; setting the DbType
+                p.Value = AnEnum.B;         
+                cmd.Parameters.Add(p);
                 object value = cmd.ExecuteScalar();
                 AnEnum val = (AnEnum)value;
                 val.IsEqualTo(AnEnum.B);
@@ -2145,13 +2149,27 @@ end");
 #endif
         private static void DapperEnumValue(IDbConnection connection)
         {
-            var v = connection.QuerySingle<AnEnum>("select @v", new { v = AnEnum.B });
+            // test passing as AsEnum, reading as int
+            var v = (AnEnum)connection.QuerySingle<int>("select @v, @y, @z", new { v = AnEnum.B, y = (AnEnum?)AnEnum.B, z = (AnEnum?)null });
             v.IsEqualTo(AnEnum.B);
 
             var args = new DynamicParameters();
             args.Add("v", AnEnum.B);
-            v = connection.QuerySingle<AnEnum>("select @v", args);
+            args.Add("y", AnEnum.B);
+            args.Add("z", null);
+            v = (AnEnum)connection.QuerySingle<int>("select @v, @y, @z", args);
             v.IsEqualTo(AnEnum.B);
+
+            // test passing as int, reading as AnEnum
+            var k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", new { v = (int)AnEnum.B, y = (int?)(int)AnEnum.B, z = (int?)null });
+            k.IsEqualTo((int)AnEnum.B);
+
+            args = new DynamicParameters();
+            args.Add("v", (int)AnEnum.B);
+            args.Add("y", (int)AnEnum.B);
+            args.Add("z", null);
+            k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", args);
+            k.IsEqualTo((int)AnEnum.B);
         }
 
         [Fact]

@@ -44,7 +44,9 @@ namespace Dapper
         }
         internal static void Set(IDbDataParameter parameter, DataTable table, string typeName)
         {
+#pragma warning disable 0618
             parameter.Value = SqlMapper.SanitizeParameterValue(table);
+#pragma warning restore 0618
             if (string.IsNullOrEmpty(typeName) && table != null)
             {
                 typeName = table.GetTypeName();

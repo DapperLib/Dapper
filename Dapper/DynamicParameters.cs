@@ -267,7 +267,9 @@ namespace Dapper
                     p.Direction = param.ParameterDirection;
                     if (handler == null)
                     {
+#pragma warning disable 0618
                         p.Value = SqlMapper.SanitizeParameterValue(val);
+#pragma warning restore 0618
                         if (dbType != null && p.DbType != dbType)
                         {
                             p.DbType = dbType.Value;
