@@ -2295,7 +2295,7 @@ namespace Dapper
                 il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
                 il.Emit(OpCodes.Ldloc_0); // stack is now [parameters] [[parameters]] [parameter] [parameter] [typed-param]
                 il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [typed-value]
-                bool checkForNull = true;
+                bool checkForNull;
                 if (prop.PropertyType.IsValueType())
                 {
                     var propType = prop.PropertyType;
@@ -2308,10 +2308,11 @@ namespace Dapper
                         {
                             // Nullable<SomeEnum>; we want to box as the underlying type; that's just *hard*; for
                             // simplicity, box as Nullable<SomeEnum> and call SanitizeParameterValue
-                            callSanitize = true;
+                            callSanitize = checkForNull = true;
                         }
                         else
                         {
+                            checkForNull = false;
                             // non-nullable enum; we can do that! just box to the wrong type! (no, really)
                             switch (TypeExtensions.GetTypeCode(Enum.GetUnderlyingType(propType)))
                             {
@@ -2326,9 +2327,9 @@ namespace Dapper
                             }
                         }                        
                     }
-                    else if (nullType == null)
-                    {   // struct but not Nullable<T>; boxed value cannot be null
-                        checkForNull = false;
+                    else
+                    {
+                        checkForNull = nullType != null;
                     }
                     il.Emit(OpCodes.Box, propType); // stack is [parameters] [[parameters]] [parameter] [parameter] [boxed-value]
                     if (callSanitize)
@@ -2337,6 +2338,9 @@ namespace Dapper
                         il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SanitizeParameterValue)), null);
                         // stack is [parameters] [[parameters]] [parameter] [parameter] [boxed-value]
                     }
+                } else
+                {
+                    checkForNull = true; // if not a value-type, need to check
                 }
                 if (checkForNull)
                 {
