@@ -3696,5 +3696,17 @@ insert TPTable (Value) values (2), (568)");
             return connection;
         }
 #endif
-            }
+        [Fact]
+        public void GetOnlyProperties()
+        {
+            var obj = connection.QuerySingle<HazGetOnly>("select 42 as [Id], 'def' as [Name];");
+            obj.Id.IsEqualTo(42);
+            obj.Name.IsEqualTo("def");
+        }
+        class HazGetOnly
+        {
+            public int Id { get; }
+            public string Name { get; } = "abc";
+        }
+    }
 }

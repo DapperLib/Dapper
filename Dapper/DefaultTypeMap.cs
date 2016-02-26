@@ -164,13 +164,25 @@ namespace Dapper
             if (property != null)
                 return new SimpleMemberMap(columnName, property);
 
+            // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
+            var backingFieldName = $"<{columnName}>k__BackingField";
+
+            // preference order is:
+            // exact match over underscre match, backing fields over regular fields, exact case over wrong case
             var field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
+               ?? _fields.FirstOrDefault(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
 
             if (field == null && MatchNamesWithUnderscores)
             {
-                field = _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
-                    ?? _fields.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
+                var effectiveColumnName = columnName.Replace("_", "");
+                backingFieldName = $"<{effectiveColumnName}>k__BackingField";
+
+                field = _fields.FirstOrDefault(p => string.Equals(p.Name, effectiveColumnName, StringComparison.Ordinal))
+                    ?? _fields.FirstOrDefault(p => string.Equals(p.Name, effectiveColumnName, StringComparison.OrdinalIgnoreCase))
+                    ?? _fields.FirstOrDefault(p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
+                    ?? _fields.FirstOrDefault(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
             }
 
             if (field != null)

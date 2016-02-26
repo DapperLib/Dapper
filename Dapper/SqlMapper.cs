@@ -2798,7 +2798,7 @@ namespace Dapper
         )
         {
             var returnType = type.IsValueType() ? typeof(object) : type;
-            var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", returnType, new[] { typeof(IDataReader) }, true);
+            var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", returnType, new[] { typeof(IDataReader) }, type, true);
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(type);
