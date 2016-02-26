@@ -370,6 +370,10 @@ namespace Dapper
             {
                 type = Enum.GetUnderlyingType(type);
             }
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeMap.TryGetValue(type, out dbType))
             {
                 return dbType;
@@ -377,10 +381,6 @@ namespace Dapper
             if (type.FullName == LinqBinary)
             {
                 return DbType.Binary;
-            }
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
