@@ -44,7 +44,8 @@
         "System.Configuration": "4.0.0.0",
         "System.Data": "4.0.0.0",
         "System.Data.Linq": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       },
       "dependencies": {
         "Dapper.EntityFramework": {
@@ -90,7 +91,8 @@
         "System.Data": "4.0.0.0",
         "System.Data.Linq": "4.0.0.0",
         "System.Runtime": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       },
       "dependencies": {
         "Dapper.EntityFramework": {
@@ -129,6 +131,8 @@
         "System.Runtime": "4.0.21-*",
         "System.Text.RegularExpressions": "4.0.11-*",
         "System.Threading": "4.0.11-*",
+        "System.Xml.XDocument": "4.0.11-*",
+        "System.Xml.XmlDocument": "4.0.1-*",
         "xunit": "2.2.0-beta1-build3239"
       }
     },
@@ -157,7 +161,8 @@
         "System.Data": "4.0.0.0",
         "System.Data.Linq": "4.0.0.0",
         "System.Runtime": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       },
       "dependencies": {
         "Dapper.EntityFramework": {
@@ -191,6 +196,7 @@
       "dependencies": {
         "Microsoft.Data.Sqlite": "1.0.0-rc2-15948",
         "System.Text.RegularExpressions": "4.0.11-*",
+        "System.Xml.XmlDocument": "4.0.1-*",
         "xunit": "2.2.0-beta1-build3239",
         "xunit.runner.dnx": "2.1.0-rc1-build204"
       }

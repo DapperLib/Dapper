@@ -28,6 +28,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace Dapper
 {
@@ -233,6 +235,9 @@ namespace Dapper
             typeHandlers = new Dictionary<Type, ITypeHandler>();
 #if !COREFX
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
+            AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
+            AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
+            AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
             try // see https://github.com/StackExchange/dapper-dot-net/issues/424
             {
                 AddSqlDataRecordsTypeHandler(clone);
