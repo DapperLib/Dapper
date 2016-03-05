@@ -5,7 +5,7 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "summary": "A high performance Micro-ORM",
   "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-  "version": "1.50-beta7",
+  "version": "1.50-beta8",
   "title": "Dapper dot net (strong named)",
   "tags": [ "orm", "sql", "micro-orm" ],
   "copyright": "2015 Stack Exchange, Inc.",
@@ -15,6 +15,9 @@
   "compile": [
     "../Dapper/**/*.cs"
   ],
+  "compileExclude": [
+    "../Dapper/obj/"
+  ],
   "compilationOptions": {
     "keyFile": "../Dapper.snk",
     "warningsAsErrors": true
@@ -22,7 +25,9 @@
   "frameworks": {
     "net40": {
       "frameworkAssemblies": {
-        "System.Data": "4.0.0.0"
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       }
     },
     "net45": {
@@ -30,13 +35,16 @@
         "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
-        "System.Data": "4.0.0.0"
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       }
     },
-    "dnx451": {
+    "net451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       },
       "compilationOptions": {
         "define": [ "ASYNC" ]
@@ -59,7 +67,9 @@
         "System.Text.RegularExpressions": "4.0.11-*",
         "System.Threading": "4.0.11-*",
         "System.Threading.ThreadPool": "4.0.10-*",
-        "System.Collections.NonGeneric": "4.0.1-*"
+        "System.Collections.NonGeneric": "4.0.1-*",
+        "System.Xml.XDocument": "4.0.11-*",
+        "System.Xml.XmlDocument": "4.0.1-*"
       }
     }
   }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "test": {
+      "commandName": "test",
+      "sdkVersion": "dnx-coreclr-win-x86.1.0.0-rc1-update1"
+    }
+  }
+}

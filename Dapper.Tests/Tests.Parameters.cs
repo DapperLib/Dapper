@@ -9,7 +9,7 @@ using System.Dynamic;
 using System.Linq;
 using Xunit;
 
-#if EXTERNALS
+#if ENTITY_FRAMEWORK
 using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 #endif
@@ -114,7 +114,7 @@ namespace Dapper.Tests
         }
 
 
-#if EXTERNALS
+#if !COREFX
         [Fact]
         public void TestTVPWithAnonymousObject()
         {
@@ -346,7 +346,9 @@ namespace Dapper.Tests
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
         }
-        
+#endif
+
+#if !COREFX
         [Fact]
         public void SupportInit()
         {
@@ -354,7 +356,9 @@ namespace Dapper.Tests
             obj.Value.Equals("abc");
             obj.Flags.Equals(31);
         }
-        
+#endif
+
+#if ENTITY_FRAMEWORK
         class HazGeo
         {
             public int Id { get; set; }
@@ -444,7 +448,11 @@ namespace Dapper.Tests
             public int Id { get; set; }
             public SqlHierarchyId Path { get; set; }
         }
-        
+
+#endif
+
+#if OLEDB
+
         // see http://stackoverflow.com/q/18847510/23354
         [Fact]
         public void TestOleDbParameters()

@@ -9,20 +9,34 @@ using Dapper.Tests.Linq2Sql;
 using Dapper.Contrib.Extensions;
 
 
-#if EXTERNALS
+#if SOMA
 using Soma.Core;
-using Dapper.Tests.NHibernate;
-using System.Data.Linq;
-using Massive;
+#endif
+#if NHIBERNATE
 using NHibernate.Criterion;
 using NHibernate.Linq;
+using Dapper.Tests.NHibernate;
+#endif
+#if LINQ2SQL
+using System.Data.Linq;
+#endif
+#if MASSIVE
+using Massive;
+#endif
+#if ORMLITE
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.SqlServer;
-using BLToolkit.Data;
-using Dapper.Tests.EntityFramework;
-using Susanoo;
 using ServiceStack.OrmLite.Converters;
 using ServiceStack.OrmLite.Dapper;
+#endif
+#if BLTOOLKIT
+using BLToolkit.Data;
+#endif
+#if ENTITY_FRAMEWORK
+using Dapper.Tests.EntityFramework;
+#endif
+#if SUSANOO
+using Susanoo;
 #endif
 
 
@@ -76,14 +90,16 @@ namespace Dapper.Tests
                 }
             }
         }
-#if EXTERNALS
+#if LINQ2SQL
         static DataClassesDataContext GetL2SContext(SqlConnection connection)
         {
             return new DataClassesDataContext(connection);
         }
+#endif
 
+#if SOMA
 
-		internal class SomaConfig : Soma.Core.MsSqlConfig
+        internal class SomaConfig : Soma.Core.MsSqlConfig
 		{
 			public override string ConnectionString => TestSuite.ConnectionString;
 
@@ -94,119 +110,160 @@ namespace Dapper.Tests
             static readonly Action<PreparedStatement> noOp = x => { };
 		}
 #endif
-
+        static void Try(Action action, string blame)
+        {
+            try
+            {
+                action();
+            } catch(Exception ex)
+            {
+                Console.Error.WriteLine($"{blame}: {ex.Message}");
+            }
+        }
         public void Run(int iterations)
         {
             using (var connection = TestSuite.GetOpenConnection())
             {
                 var tests = new Tests();
-#if EXTERNALS
-                var l2scontext1 = GetL2SContext(connection);
-                tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq 2 SQL");
+#if LINQ2SQL
+                Try(() =>
+                {
+                    var l2scontext1 = GetL2SContext(connection);
+                    tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq 2 SQL");
 
-                var l2scontext2 = GetL2SContext(connection);
-                var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
-                tests.Add(id => compiledGetPost(l2scontext2, id), "Linq 2 SQL Compiled");
+                    var l2scontext2 = GetL2SContext(connection);
+                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
+                    tests.Add(id => compiledGetPost(l2scontext2, id), "Linq 2 SQL Compiled");
 
-                var l2scontext3 = GetL2SContext(connection);
-                tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).First(), "Linq 2 SQL ExecuteQuery");
-
-                var entityContext = new EFContext(connection);
-                tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework");
-
-                
-                var entityContext2 = new EFContext(connection);
-                tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity framework SqlQuery");
-
-                //var entityContext3 = new EFContext(connection);
-                //tests.Add(id => entityFrameworkCompiled(entityContext3, id), "Entity framework CompiledQuery");
-
-                //var entityContext4 = new EFContext(connection);
-                //tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)).First(), "Entity framework ESQL");
-
-                var entityContext5 = new EFContext(connection);
-                tests.Add(id => entityContext5.Posts.AsNoTracking().First(p => p.Id == id), "Entity framework No Tracking");
+                    var l2scontext3 = GetL2SContext(connection);
+                    tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).First(), "Linq 2 SQL ExecuteQuery");
+                }, "LINQ-to-SQL");
 #endif
-                var mapperConnection = TestSuite.GetOpenConnection();
-                tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
-                tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
-                tests.Add(id => mapperConnection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = id }), "Mapper QueryFirstOrDefault");
+
+#if ENTITY_FRAMEWORK
+                Try(() =>
+                {
+                    var entityContext = new EFContext(connection);
+                    tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework");
 
 
-                var mapperConnection2 = TestSuite.GetOpenConnection();
-                tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
-                tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dynamic Mapper Query (non-buffered)");
-                tests.Add(id => mapperConnection2.QueryFirstOrDefault("select * from Posts where Id = @Id", new { Id = id }), "Dynamic Mapper QueryQueryFirstOrDefault");
+                    var entityContext2 = new EFContext(connection);
+                    tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity framework SqlQuery");
 
-                // dapper.contrib
-                var mapperConnection3 = TestSuite.GetOpenConnection();
-                tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Cotrib");
+                    //var entityContext3 = new EFContext(connection);
+                    //tests.Add(id => entityFrameworkCompiled(entityContext3, id), "Entity framework CompiledQuery");
 
-#if EXTERNALS
-                // massive
-                var massiveModel = new DynamicModel(TestSuite.ConnectionString);
-                var massiveConnection = TestSuite.GetOpenConnection();
-                tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
+                    //var entityContext4 = new EFContext(connection);
+                    //tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)).First(), "Entity framework ESQL");
 
-                // PetaPoco test with all default options
-                var petapoco = new PetaPoco.Database(TestSuite.ConnectionString, "System.Data.SqlClient");
-                petapoco.OpenSharedConnection();
-                tests.Add(id => petapoco.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Normal)");
+                    var entityContext5 = new EFContext(connection);
+                    tests.Add(id => entityContext5.Posts.AsNoTracking().First(p => p.Id == id), "Entity framework No Tracking");
+                }, "Entity Framework");
+#endif
+                Try(() =>
+                {
+                    var mapperConnection = TestSuite.GetOpenConnection();
+                    tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
+                    tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
+                    tests.Add(id => mapperConnection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = id }), "Mapper QueryFirstOrDefault");
 
-                // PetaPoco with some "smart" functionality disabled
-                var petapocoFast = new PetaPoco.Database(TestSuite.ConnectionString, "System.Data.SqlClient");
-                petapocoFast.OpenSharedConnection();
-                petapocoFast.EnableAutoSelect = false;
-                petapocoFast.EnableNamedParams = false;
-                petapocoFast.ForceDateTimesToUtc = false;
-                tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Fast)");
+
+                    var mapperConnection2 = TestSuite.GetOpenConnection();
+                    tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
+                    tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dynamic Mapper Query (non-buffered)");
+                    tests.Add(id => mapperConnection2.QueryFirstOrDefault("select * from Posts where Id = @Id", new { Id = id }), "Dynamic Mapper QueryQueryFirstOrDefault");
+
+                    // dapper.contrib
+                    var mapperConnection3 = TestSuite.GetOpenConnection();
+                    tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Contrib");
+                }, "Dapper");
+
+#if MASSIVE
+                Try(() =>
+                {
+                    // massive
+                    var massiveModel = new DynamicModel(TestSuite.ConnectionString);
+                    var massiveConnection = TestSuite.GetOpenConnection();
+                    tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
+                }, "Massive");
+#endif
+
+#if PETAPOCO
+                Try(() =>
+                {
+                    // PetaPoco test with all default options
+                    var petapoco = new PetaPoco.Database(TestSuite.ConnectionString, "System.Data.SqlClient");
+                    petapoco.OpenSharedConnection();
+                    tests.Add(id => petapoco.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Normal)");
+
+                    // PetaPoco with some "smart" functionality disabled
+                    var petapocoFast = new PetaPoco.Database(TestSuite.ConnectionString, "System.Data.SqlClient");
+                    petapocoFast.OpenSharedConnection();
+                    petapocoFast.EnableAutoSelect = false;
+                    petapocoFast.EnableNamedParams = false;
+                    petapocoFast.ForceDateTimesToUtc = false;
+                    tests.Add(id => petapocoFast.Fetch<Post>("SELECT * from Posts where Id=@0", id).First(), "PetaPoco (Fast)");
+                }, "PetaPoco");
+#endif
 
 #if SUBSONIC
-                // Subsonic ActiveRecord 
-                tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
+                Try(() =>
+                    {
+                    // Subsonic ActiveRecord 
+                    tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
 
-                // Subsonic coding horror
-                SubSonic.tempdbDB db = new SubSonic.tempdbDB();
-                tests.Add(id => new SubSonic.Query.CodingHorror(db.Provider, "select * from Posts where Id = @0", id).ExecuteTypedList<Post>(), "SubSonic Coding Horror");
+                    // Subsonic coding horror
+                    SubSonic.tempdbDB db = new SubSonic.tempdbDB();
+                    tests.Add(id => new SubSonic.Query.CodingHorror(db.Provider, "select * from Posts where Id = @0", id).ExecuteTypedList<Post>(), "SubSonic Coding Horror");
+                }, "Subsonic");
 #endif
                 // NHibernate
 
 #if NHIBERNATE
-                var nhSession1 = NHibernateHelper.OpenSession();
-                tests.Add(id => nhSession1.CreateSQLQuery(@"select * from Posts where Id = :id")
-                    .SetInt32("id", id)
-                    .List(), "NHibernate SQL");
+                Try(() => {
+                    var nhSession1 = NHibernateHelper.OpenSession();
+                    tests.Add(id => nhSession1.CreateSQLQuery(@"select * from Posts where Id = :id")
+                        .SetInt32("id", id)
+                        .List(), "NHibernate SQL");
 
-                var nhSession2 = NHibernateHelper.OpenSession();
-                tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
-                    .SetInt32("id", id)
-                    .List(), "NHibernate HQL");
+                    var nhSession2 = NHibernateHelper.OpenSession();
+                    tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
+                        .SetInt32("id", id)
+                        .List(), "NHibernate HQL");
 
-                var nhSession3 = NHibernateHelper.OpenSession();
-                tests.Add(id => nhSession3.CreateCriteria<Post>()
-                    .Add(Restrictions.IdEq(id))
-                    .List(), "NHibernate Criteria");
+                    var nhSession3 = NHibernateHelper.OpenSession();
+                    tests.Add(id => nhSession3.CreateCriteria<Post>()
+                        .Add(Restrictions.IdEq(id))
+                        .List(), "NHibernate Criteria");
 
-                var nhSession4 = NHibernateHelper.OpenSession();
-                tests.Add(id => nhSession4
-                    .Query<Post>()
-                    .First(p => p.Id == id), "NHibernate LINQ");
+                    var nhSession4 = NHibernateHelper.OpenSession();
+                    tests.Add(id => nhSession4
+                        .Query<Post>()
+                        .First(p => p.Id == id), "NHibernate LINQ");
 
-                var nhSession5 = NHibernateHelper.OpenSession();
-                tests.Add(id => nhSession5.Get<Post>(id), "NHibernate Session.Get");
+                    var nhSession5 = NHibernateHelper.OpenSession();
+                    tests.Add(id => nhSession5.Get<Post>(id), "NHibernate Session.Get");
+                }, "NHibernate");
 #endif
+#if BLTOOLKIT
                 // bltoolkit
                 var db1 = new DbManager(TestSuite.GetOpenConnection());
                 tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
-
+#endif
 #if SIMPLEDATA
                 // Simple.Data
-                var sdb = Simple.Data.Database.OpenConnection(TestSuite.ConnectionString);
-                tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
+                Try(() =>
+                {
+                    var sdb = Simple.Data.Database.OpenConnection(TestSuite.ConnectionString);
+                    tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
+                }, "Simple.Data");
 #endif
+
+#if SUSANOO
                 //Susanoo
                 var susanooDb = new DatabaseManager("Smackdown.Properties.Settings.tempdbConnectionString");
                 var susanooDb2 = new DatabaseManager("Smackdown.Properties.Settings.tempdbConnectionString");
+
 
                 var susanooPreDefinedCommand =
                     CommandManager.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
@@ -237,19 +294,23 @@ namespace Dapper.Tests
                 tests.Add(Id =>
                     susanooPreDefinedCommand
                         .Execute(susanooDb, new { Id }).First(), "Susanoo Mapping Static");
+#endif
 
+#if SOMA
                 // Soma
+
                 // DISABLED: assembly fail loading FSharp.PowerPack, Version=2.0.0.0
                 // var somadb = new Soma.Core.Db(new SomaConfig());
                 // tests.Add(id => somadb.Find<Post>(id), "Soma");
-
+#endif
 #if ORMLITE
                 //ServiceStack's OrmLite:
-                OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
-                IDbCommand ormLiteCmd = TestSuite.GetOpenConnection().CreateCommand();
-                tests.Add(id => ormLiteCmd.QueryById<Post>(id), "OrmLite QueryById");
+
+                // DISABLED: can't find QueryById
+                //OrmLiteConfig.DialectProvider = SqlServerOrmLiteDialectProvider.Instance; //Using SQL Server
+                //IDbCommand ormLiteCmd = TestSuite.GetOpenConnection().CreateCommand();
+                // tests.Add(id => ormLiteCmd.QueryById<Post>(id), "OrmLite QueryById");
 #endif
-#endif // EXTERNALS
                 // HAND CODED 
 
                 var postCommand = new SqlCommand();
@@ -315,6 +376,8 @@ namespace Dapper.Tests
                     }
                 }, "DataTable via IDataReader.GetValues");
 #endif
+                Console.WriteLine();
+                Console.WriteLine("Running...");
                 tests.Run(iterations);
             }
         }

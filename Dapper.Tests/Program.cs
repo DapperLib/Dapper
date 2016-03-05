@@ -2,13 +2,15 @@
 
 namespace Dapper.Tests
 {
-#if EXTERNALS
+#if ORMLITE
     [ServiceStack.DataAnnotations.Alias("Posts")]
-	[Soma.Core.Table(Name = "Posts")]
+#endif
+#if SOMA
+    [Soma.Core.Table(Name = "Posts")]
 #endif
     public class Post
     {
-#if EXTERNALS
+#if SOMA
 		[Soma.Core.Id(Soma.Core.IdKind.Identity)]
 #endif
         public int Id { get; set; }

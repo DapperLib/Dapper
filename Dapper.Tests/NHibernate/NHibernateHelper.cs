@@ -1,4 +1,4 @@
-﻿#if EXTERNALS
+﻿#if NHIBERNATE
 using NHibernate;
 using NHibernate.Cfg;
 

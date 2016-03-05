@@ -23,7 +23,7 @@ namespace Dapper
         static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
         static SqlDataRecordListTVPParameter()
         {
-            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public);
+            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty(nameof(System.Data.SqlClient.SqlParameter.TypeName), BindingFlags.Instance | BindingFlags.Public);
             if (prop != null && prop.PropertyType == typeof(string) && prop.CanWrite)
             {
                 setTypeName = (Action<System.Data.SqlClient.SqlParameter, string>)

@@ -28,7 +28,9 @@ namespace Dapper
 
             void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
+#pragma warning disable 0618
                 parameter.Value = SanitizeParameterValue(value);
+#pragma warning restore 0618
                 if (parameter is System.Data.SqlClient.SqlParameter && !(value is DBNull))
                 {
                     ((System.Data.SqlClient.SqlParameter)parameter).SqlDbType = SqlDbType.Udt;

@@ -5,7 +5,7 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "summary": "A high performance Micro-ORM",
   "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-  "version": "1.50-beta7",
+  "version": "1.50-beta8",
   "title": "Dapper dot net",
   "tags": [ "orm", "sql", "micro-orm" ],
   "copyright": "2015 Stack Exchange, Inc.",
@@ -19,7 +19,8 @@
     "net40": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       }
     },
     "net45": {
@@ -28,13 +29,15 @@
       },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       }
     },
-    "dnx451": {
+    "net451": {
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       },
       "compilationOptions": {
         "define": [ "ASYNC" ]
@@ -46,18 +49,20 @@
       },
       "dependencies": {
         "Microsoft.CSharp": "4.0.1-*",
-        "System.Runtime": "4.0.21-*",
         "System.Collections": "4.0.11-*",
         "System.Collections.Concurrent": "4.0.11-*",
+        "System.Collections.NonGeneric": "4.0.1-*",
         "System.Data.SqlClient": "4.0.0-*",
         "System.Linq": "4.0.1-*",
         "System.Reflection.Emit.ILGeneration": "4.0.1-*",
         "System.Reflection.Emit.Lightweight": "4.0.1-*",
         "System.Reflection.TypeExtensions": "4.1.0-*",
+        "System.Runtime": "4.0.21-*",
         "System.Text.RegularExpressions": "4.0.11-*",
         "System.Threading": "4.0.11-*",
         "System.Threading.ThreadPool": "4.0.10-*",
-        "System.Collections.NonGeneric": "4.0.1-*"
+        "System.Xml.XDocument": "4.0.11-*",
+        "System.Xml.XmlDocument": "4.0.1-*"
       }
     }
   }

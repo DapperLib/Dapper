@@ -29,7 +29,7 @@ namespace Dapper.Tests.Contrib
     {
         const string DbName = "tempdb";
         public static string ConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+            IsAppVeyor
                 ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
                 : $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
         public override IDbConnection GetConnection() => new SqlConnection(ConnectionString);
@@ -67,7 +67,7 @@ namespace Dapper.Tests.Contrib
         const string DbName = "DapperContribTests";
 
         public static string ConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+            IsAppVeyor
                 ? @"Server=localhost;Uid=root;Pwd=Password12!;"
                 : $"Server=localhost;Uid=root;Pwd=Password12!;";
 

@@ -8,6 +8,10 @@ using IDbTransaction = System.Data.Common.DbTransaction;
 using IDataReader = System.Data.Common.DbDataReader;
 #endif
 
+#if SQLITE && (NET40 || NET45)
+using SqliteConnection = System.Data.SQLite.SQLiteConnection;
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -26,15 +30,30 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using Xunit;
 using System.Data.Common;
-#if EXTERNALS
+using System.Text.RegularExpressions;
+#if FIREBIRD
 using FirebirdSql.Data.FirebirdClient;
+#endif
+#if ENTITY_FRAMEWORK
 using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
+#endif
+#if SQL_CE
 using System.Data.SqlServerCe;
+#endif
 using SqlServerTypes;
 #if POSTGRESQL
 using Npgsql;
 #endif
+#if SQLITE
+#if NET40 || NET45
+using System.Data.SQLite;
+#else
+using Microsoft.Data.Sqlite;
+#endif
+#endif
+#if ASYNC
+using System.Threading.Tasks;
 #endif
 
 #if COREFX
@@ -70,12 +89,12 @@ namespace Dapper.Tests
     public partial class TestSuite : IDisposable
     {
         public static string ConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+            IsAppVeyor
                 ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
                 : "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
 
         public static string OleDbConnectionString =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPVEYOR"))
+            IsAppVeyor
                 ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2014;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
                 : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
@@ -116,10 +135,16 @@ namespace Dapper.Tests
 #endif
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
             Console.WriteLine("Using Connectionstring: {0}", ConnectionString);
-#if EXTERNALS && !DNX
+#if !(COREFX || DNX)
             Console.Write("Loading native assemblies for SQL types...");
-            Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);
-            Console.WriteLine("done.");
+            try {
+                Utilities.LoadNativeAssemblies(AppDomain.CurrentDomain.BaseDirectory);
+                Console.WriteLine("done.");
+            } catch(Exception ex)
+            {
+                Console.WriteLine("failed.");
+                Console.Error.WriteLine(ex.Message);
+            }
 #endif
         }
 
@@ -147,6 +172,99 @@ namespace Dapper.Tests
             results.Sort();
             results[0].IsEqualTo("a");
             results[1].IsEqualTo("b");
+        }
+
+        [Fact]
+        public void TestListExpansionPadding_Enabled()
+        {
+            TestListExpansionPadding(true);
+        }
+        [Fact]
+        public void TestListExpansionPadding_Disabled()
+        {
+            TestListExpansionPadding(false);
+        }
+
+        private void TestListExpansionPadding(bool enabled)
+        {
+            bool oldVal = SqlMapper.Settings.PadListExpansions;
+            try
+            {
+                SqlMapper.Settings.PadListExpansions = enabled;
+                connection.ExecuteScalar<int>(@"
+create table #ListExpansion(id int not null identity(1,1), value int null);
+insert #ListExpansion (value) values (null);
+declare @loop int = 0;
+while (@loop < 12)
+begin -- double it
+	insert #ListExpansion (value) select value from #ListExpansion;
+	set @loop = @loop + 1;
+end
+
+select count(1) as [Count] from #ListExpansion").IsEqualTo(4096);
+
+                var list = new List<int>();
+                int nextId = 1, batchCount;
+                var rand = new Random(12345);
+                const int SQL_SERVER_MAX_PARAMS = 2095;
+                TestListForExpansion(list, enabled); // test while empty
+                while (list.Count < SQL_SERVER_MAX_PARAMS)
+                {
+                    try
+                    {
+                        if (list.Count <= 20) batchCount = 1;
+                        else if (list.Count <= 200) batchCount = rand.Next(1, 40);
+                        else batchCount = rand.Next(1, 100);
+
+                        for (int j = 0; j < batchCount && list.Count < SQL_SERVER_MAX_PARAMS; j++)
+                            list.Add(nextId++);
+
+                        TestListForExpansion(list, enabled);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Failure with {list.Count} items: {ex.Message}", ex);
+                    }
+                }
+            }
+            finally
+            {
+                SqlMapper.Settings.PadListExpansions = oldVal;
+            }
+        }
+
+        private void TestListForExpansion(List<int> list, bool enabled)
+        {
+            var row = connection.QuerySingle(@"
+declare @hits int;
+select @hits = count(1) from #ListExpansion where id in @ids ;
+declare @query nvarchar(max) = N' in @ids '; -- ok, I confess to being pleased with this hack ;p
+select @hits as [Hits], @query as [Query];
+", new { ids = list });
+            int hits = row.Hits;
+            string query = row.Query;
+            int argCount = Regex.Matches(query, "@ids[0-9]").Count;
+            int expectedCount = GetExpectedListExpansionCount(list.Count, enabled);
+            hits.IsEqualTo(list.Count);
+            argCount.IsEqualTo(expectedCount);
+        }
+
+        static int GetExpectedListExpansionCount(int count, bool enabled)
+        {
+            if (!enabled) return count;
+
+            if (count <= 5 || count > 2070) return count;
+
+            int padFactor;
+            if (count <= 150) padFactor = 10;
+            else if (count <= 750) padFactor = 50;
+            else if (count <= 2000) padFactor = 100;
+            else if (count <= 2070) padFactor = 10;
+            else padFactor = 200;
+
+            int blocks = count / padFactor, delta = count % padFactor;
+            if (delta != 0) blocks++;
+            return blocks * padFactor;
         }
 
         [Fact]
@@ -726,7 +844,7 @@ select * from @bar", new { foo }).Single();
             list.First().Base2.IsEqualTo("Four");
         }
 
-#if EXTERNALS
+#if !COREFX
         [Fact]
         public void ExecuteReader()
         {
@@ -739,7 +857,9 @@ select * from @bar", new { foo }).Single();
             ((int)dt.Rows[0][0]).IsEqualTo(3);
             ((int)dt.Rows[0][1]).IsEqualTo(4);
         }
+#endif
 
+#if SQL_CE
         [Fact]
         public void MultiRSSqlCE()
         {
@@ -784,7 +904,8 @@ select * from @bar", new { foo }).Single();
             public int ID { get; set; }
             public string Name { get; set; }
         }
-        
+#endif
+#if LINQ2SQL
         [Fact]
         public void TestLinqBinaryToClass()
         {
@@ -1507,6 +1628,23 @@ end");
         }
 
         [Fact]
+        public void SO35554284_QueryMultipleUntilConsumed()
+        {
+            using (var reader = connection.QueryMultiple("select 1 as Id; select 2 as Id; select 3 as Id;"))
+            {
+                List<HazNameId> items = new List<HazNameId>();
+                while (!reader.IsConsumed)
+                {
+                    items.AddRange(reader.Read<HazNameId>());
+                }
+                items.Count.IsEqualTo(3);
+                items[0].Id.IsEqualTo(1);
+                items[1].Id.IsEqualTo(2);
+                items[2].Id.IsEqualTo(3);
+            }
+        }
+
+        [Fact]
         public void QueryMultipleInvalidFromClosed()
         {
             using (var conn = GetClosedConnection())
@@ -1966,17 +2104,72 @@ end");
             B = 1
         }
 
-        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1613")]
+        [Fact]
         public void AdoNetEnumValue()
         {
             using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = "select @foo";
-                cmd.Parameters.AddWithValue("@foo", AnEnum.B);
+                var p = cmd.CreateParameter();
+                p.ParameterName = "@foo";
+                p.DbType = DbType.Int32; // it turns out that this is the key piece; setting the DbType
+                p.Value = AnEnum.B;         
+                cmd.Parameters.Add(p);
                 object value = cmd.ExecuteScalar();
                 AnEnum val = (AnEnum)value;
                 val.IsEqualTo(AnEnum.B);
             }
+        }
+
+        [Fact]
+        public void DapperEnumValue_SqlServer()
+        {
+            DapperEnumValue(connection);
+        }
+
+#if SQLITE
+        [FactSqlite]
+        public void DapperEnumValue_Sqlite()
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                DapperEnumValue(connection);
+            }
+        }
+#endif
+#if MYSQL
+        [FactMySql]
+        public void DapperEnumValue_Mysql()
+        {
+            using (var connection = GetMySqlConnection())
+            {
+                DapperEnumValue(connection);
+            }
+        }
+#endif
+        private static void DapperEnumValue(IDbConnection connection)
+        {
+            // test passing as AsEnum, reading as int
+            var v = (AnEnum)connection.QuerySingle<int>("select @v, @y, @z", new { v = AnEnum.B, y = (AnEnum?)AnEnum.B, z = (AnEnum?)null });
+            v.IsEqualTo(AnEnum.B);
+
+            var args = new DynamicParameters();
+            args.Add("v", AnEnum.B);
+            args.Add("y", AnEnum.B);
+            args.Add("z", null);
+            v = (AnEnum)connection.QuerySingle<int>("select @v, @y, @z", args);
+            v.IsEqualTo(AnEnum.B);
+
+            // test passing as int, reading as AnEnum
+            var k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", new { v = (int)AnEnum.B, y = (int?)(int)AnEnum.B, z = (int?)null });
+            k.IsEqualTo((int)AnEnum.B);
+
+            args = new DynamicParameters();
+            args.Add("v", (int)AnEnum.B);
+            args.Add("y", (int)AnEnum.B);
+            args.Add("z", null);
+            k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", args);
+            k.IsEqualTo((int)AnEnum.B);
         }
 
         [Fact]
@@ -2226,7 +2419,7 @@ end");
         class PracticeRebateOrders
         {
             public string fTaxInvoiceNumber;
-#if EXTERNALS
+#if !COREFX
             [System.Xml.Serialization.XmlElementAttribute(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
 #endif
             public string TaxInvoiceNumber { get { return fTaxInvoiceNumber; } set { fTaxInvoiceNumber = value; } }
@@ -2385,7 +2578,7 @@ end");
             int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
             k.IsNull();
 
-#if EXTERNALS
+#if ENTITY_FRAMEWORK
             Dapper.EntityFramework.Handlers.Register();
             var geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326);
             var geo2 = connection.ExecuteScalar<DbGeography>("select @geo", new { geo });
@@ -2910,11 +3103,16 @@ end");
         {
             TestDateTime(connection);
         }
+
+        private static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
+        
 #if MYSQL
         private static MySql.Data.MySqlClient.MySqlConnection GetMySqlConnection(bool open = true,
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
         {
-            const string cs = "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
+            string cs = IsAppVeyor
+                ? "Server=localhost;Database=test;Uid=root;Pwd=Password12!;"
+                : "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
             var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs);
             csb.AllowZeroDateTime = allowZeroDatetime;
             csb.ConvertZeroDateTime = convertZeroDatetime;
@@ -3022,7 +3220,7 @@ end");
             public DateTime? DoB { get; set; }
             public DateTime? DoB2 { get; set; }
         }
-#if EXTERNALS
+#if FIREBIRD
         [Fact(Skip="Bug in Firebird; a PR to fix it has been submitted")]
         public void Issue178_Firebird()
         {
@@ -3059,7 +3257,9 @@ end");
                 count.IsEqualTo(1);
             }
         }
-        
+#endif
+
+#if OLEDB
         [Fact]
         public void PseudoPositionalParameters_Simple()
         {
@@ -3069,7 +3269,7 @@ end");
                 value.IsEqualTo(9);
             }
         }
-        
+
         [Fact]
         public void PseudoPositionalParameters_Dynamic()
         {
@@ -3135,6 +3335,123 @@ end");
             }
         }
 
+        [Fact]
+        public void Issue457_NullParameterValues()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ? -- ODBC parameter
+SET @customerCode = ? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                var row = connection.QuerySingle(sql, new
+                {
+                    since,
+                    customerCode = code
+                });
+                var a = (DateTime?)row.Since;
+                var b = (string)row.Code;
+
+                a.IsEqualTo(since);
+                b.IsEqualTo(code);
+            }
+        }
+
+        [Fact]
+        public void Issue457_NullParameterValues_Named()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ?since? -- ODBC parameter
+SET @customerCode = ?customerCode? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                var row = connection.QuerySingle(sql, new
+                {
+                    since,
+                    customerCode = code
+                });
+                var a = (DateTime?)row.Since;
+                var b = (string)row.Code;
+
+                a.IsEqualTo(since);
+                b.IsEqualTo(code);
+            }
+        }
+#if ASYNC
+        [Fact]
+        public async void Issue457_NullParameterValues_MultiAsync()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ? -- ODBC parameter
+SET @customerCode = ? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                using (var multi = await connection.QueryMultipleAsync(sql, new
+                {
+                    since,
+                    customerCode = code
+                }))
+                {
+                    var row = await multi.ReadSingleAsync();
+                    var a = (DateTime?)row.Since;
+                    var b = (string)row.Code;
+
+                    a.IsEqualTo(since);
+                    b.IsEqualTo(code);
+                }
+            }
+        }
+
+        [Fact]
+        public async void Issue457_NullParameterValues_MultiAsync_Named()
+        {
+            const string sql = @"
+DECLARE @since DATETIME, @customerCode nvarchar(10)
+SET @since = ?since? -- ODBC parameter
+SET @customerCode = ?customerCode? -- ODBC parameter
+
+SELECT @since as [Since], @customerCode as [Code]";
+
+            using (var connection = ConnectViaOledb())
+            {
+                DateTime? since = null; // DateTime.Now.Date;
+                string code = null;  // "abc";
+                using (var multi = await connection.QueryMultipleAsync(sql, new
+                {
+                    since,
+                    customerCode = code
+                }))
+                {
+                    var row = await multi.ReadSingleAsync();
+                    var a = (DateTime?)row.Since;
+                    var b = (string)row.Code;
+
+                    a.IsEqualTo(since);
+                    b.IsEqualTo(code);
+                }
+            }
+        }
+#endif
+#endif
+
+#if !COREFX
         [Fact]
         public void SO29596645_TvpProperty()
         {
@@ -3203,12 +3520,11 @@ end");
                                 new Cat() { Breed = "Persian", Name="MAGNA"}
                             };
         
-        [Fact]
-        public void TestPostresqlArrayParameters()
+        [FactPostgresqlAttribute]
+        public void TestPostgresqlArrayParameters()
         {
-            using (var conn = new NpgsqlConnection("Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest;Encoding=UNICODE"))
+            using (var conn = OpenPostgresqlConnection())
             {
-                conn.Open();
                 IDbTransaction transaction = conn.BeginTransaction();
                 conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
                 conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", Cats);
@@ -3221,6 +3537,176 @@ end");
                 transaction.Rollback();
             }
         }
+        static NpgsqlConnection OpenPostgresqlConnection()
+        {
+            string cs = IsAppVeyor
+                ? "Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test"
+                : "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"; // ;Encoding = UNICODE
+            var conn = new NpgsqlConnection(cs);
+            conn.Open();
+            return conn;
+        }
+        public class FactPostgresqlAttribute : FactAttribute
+        {
+            public override string Skip
+            {
+                get { return unavailable ?? base.Skip; }
+                set { base.Skip = value; }
+            }
+            private static string unavailable;
+            static FactPostgresqlAttribute()
+            {
+                try
+                {
+                    using (OpenPostgresqlConnection()) { }
+                }
+                catch (Exception ex)
+                {
+                    unavailable = $"Postgresql is unavailable: {ex.Message}";
+                }
+            }
+        }
 #endif
+
+#if ASYNC
+        [Fact]
+        public async void SO35470588_WrongValuePidValue()
+        {
+            // nuke, rebuild, and populate the table
+            try { connection.Execute("drop table TPTable"); } catch { }
+            connection.Execute(@"
+create table TPTable (Pid int not null primary key identity(1,1), Value int not null);
+insert TPTable (Value) values (2), (568)");
+
+            // fetch the data using the query in the question, then force to a dictionary
+            var rows = (await connection.QueryAsync<TPTable>("select * from TPTable"))
+                .ToDictionary(x => x.Pid);
+
+            // check the number of rows
+            rows.Count.IsEqualTo(2);
+
+            // check row 1
+            var row = rows[1];
+            row.Pid.IsEqualTo(1);
+            row.Value.IsEqualTo(2);
+
+            // check row 2
+            row = rows[2];
+            row.Pid.IsEqualTo(2);
+            row.Value.IsEqualTo(568);
+        }
+        public class TPTable
+        {
+            public int Pid { get; set; }
+            public int Value { get; set; }
+        }
+#endif
+
+#if SQLITE
+        [FactSqlite]
+        public void Issue466_SqliteHatesOptimizations()
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                SqlMapper.ResetTypeHandlers();
+                var row = connection.Query<HazNameId>("select 42 as Id").First();
+                row.Id.IsEqualTo(42);
+                row = connection.Query<HazNameId>("select 42 as Id").First();
+                row.Id.IsEqualTo(42);
+
+                SqlMapper.ResetTypeHandlers();
+                row = connection.QueryFirst<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+                row = connection.QueryFirst<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+            }
+        }
+
+#if ASYNC
+        [FactSqlite]
+        public async Task Issue466_SqliteHatesOptimizations_Async()
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                SqlMapper.ResetTypeHandlers();
+                var row = (await connection.QueryAsync<HazNameId>("select 42 as Id")).First();
+                row.Id.IsEqualTo(42);
+                row = (await connection.QueryAsync<HazNameId>("select 42 as Id")).First();
+                row.Id.IsEqualTo(42);
+
+                SqlMapper.ResetTypeHandlers();
+                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id");
+                row.Id.IsEqualTo(42);
+            }
+        }
+#endif
+
+        [FactSqlite]
+        public void Isse467_SqliteLikesParametersWithPrefix()
+        {
+            Isse467_SqliteParameterNaming(true);
+        }
+        [FactSqlite]
+        public void Isse467_SqliteLikesParametersWithoutPrefix()
+        { // see issue 375 / 467; note: fixed from RC2 onwards
+            Isse467_SqliteParameterNaming(false);
+        }
+        private void Isse467_SqliteParameterNaming(bool prefix)
+        {
+            using (var connection = GetSqliteConnection())
+            {
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "select @foo";
+#if NET40 || NET45
+                const DbType type = DbType.Int32;
+#else
+                const SqliteType type = SqliteType.Integer;
+#endif
+                cmd.Parameters.Add(prefix ? "@foo" : "foo", type).Value = 42;
+                var i = Convert.ToInt32(cmd.ExecuteScalar());
+                i.IsEqualTo(42);
+            }
+        }
+        public class FactSqliteAttribute : FactAttribute
+        {
+            public override string Skip
+            {
+                get { return unavailable ?? base.Skip; }
+                set { base.Skip = value; }
+            }
+            private static string unavailable;
+            static FactSqliteAttribute()
+            {
+                try
+                {
+                    using (GetSqliteConnection()) { }
+                }
+                catch (Exception ex)
+                {
+                    unavailable = $"Sqlite is unavailable: {ex.Message}";
+                }
+            }
+        }
+        protected static SqliteConnection GetSqliteConnection(bool open = true)
+        {
+            var connection = new SqliteConnection("Data Source=:memory:");
+            if (open) connection.Open();
+            return connection;
+        }
+#endif
+        [Fact]
+        public void GetOnlyProperties()
+        {
+            var obj = connection.QuerySingle<HazGetOnly>("select 42 as [Id], 'def' as [Name];");
+            obj.Id.IsEqualTo(42);
+            obj.Name.IsEqualTo("def");
+        }
+        class HazGetOnly
+        {
+            public int Id { get; }
+            public string Name { get; } = "abc";
+        }
     }
 }
