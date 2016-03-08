@@ -1003,26 +1003,27 @@ public partial class OracleAdapter : ISqlAdapter
 
     public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        string command = CreateInsertSql(tableName, columnList, parameterList, keyProperties);
-        var results = connection.Query(command, entityToInsert, transaction, commandTimeout: commandTimeout).ToList();
+        var parameters = new DynamicParameters(entityToInsert);
+        string command = CreateInsertSql(tableName, columnList, parameterList, keyProperties, parameters);
+
+        connection.Execute(command, parameters, transaction, commandTimeout: commandTimeout);
 
         // Return the key by assigning the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
-        foreach (var p in keyProperties)
+        foreach (var property in keyProperties)
         {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
-            p.SetValue(entityToInsert, value, null);
-            if (id == 0)
-                id = Convert.ToInt32(value);
+            int value = parameters.Get<int>($"newid_{property.Name}");
+            property.SetValue(entityToInsert, value, null);
+            if (id == 0) { id = value; }
         }
         return id;
     }
 
-    protected static string CreateInsertSql(string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties)
+    protected string CreateInsertSql(string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, DynamicParameters parameters)
     {
         StringBuilder sb = new StringBuilder();
         sb.AppendFormat("INSERT INTO {0} ({1}) VALUES ({2})", tableName, columnList, parameterList);
-        
+
         // If no primary key then safe to assume a join table with not too much data to return
         if (!keyProperties.Any())
             sb.Append(" RETURNING *");
@@ -1036,6 +1037,12 @@ public partial class OracleAdapter : ISqlAdapter
                     sb.Append(", ");
                 first = false;
                 sb.Append(property.Name);
+                sb.Append(" INTO ");
+
+                string parameterName = $"newid_{property.Name}";
+
+                AppendParameter(sb, parameterName);
+                parameters.Add(parameterName, dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             }
         }
         return sb.ToString();

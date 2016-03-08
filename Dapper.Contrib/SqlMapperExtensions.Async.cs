@@ -477,17 +477,18 @@ public partial class OracleAdapter
 {
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        string command = CreateInsertSql(tableName, columnList, parameterList, keyProperties);
-        var results = await connection.QueryAsync(command, entityToInsert, transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
+        var parameters = new DynamicParameters(entityToInsert);
+        string command = CreateInsertSql(tableName, columnList, parameterList, keyProperties, parameters);
+
+        await connection.ExecuteAsync(command, parameters, transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
 
         // Return the key by assigning the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
-        foreach (var p in keyProperties)
+        foreach (var property in keyProperties)
         {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
-            p.SetValue(entityToInsert, value, null);
-            if (id == 0)
-                id = Convert.ToInt32(value);
+            int value = parameters.Get<int>($"newid_{property.Name}");
+            property.SetValue(entityToInsert, value, null);
+            if (id == 0) { id = value; }
         }
         return id;
     }
