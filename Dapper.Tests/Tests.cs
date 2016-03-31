@@ -236,16 +236,19 @@ select count(1) as [Count] from #ListExpansion").IsEqualTo(4096);
         private void TestListForExpansion(List<int> list, bool enabled)
         {
             var row = connection.QuerySingle(@"
-declare @hits int;
+declare @hits int, @misses int, @count int;
+select @count = count(1) from #ListExpansion;
 select @hits = count(1) from #ListExpansion where id in @ids ;
+select @misses = count(1) from #ListExpansion where not id in @ids ;
 declare @query nvarchar(max) = N' in @ids '; -- ok, I confess to being pleased with this hack ;p
-select @hits as [Hits], @query as [Query];
+select @hits as [Hits], (@count - @misses) as [Misses], @query as [Query];
 ", new { ids = list });
-            int hits = row.Hits;
+            int hits = row.Hits, misses = row.Misses;
             string query = row.Query;
             int argCount = Regex.Matches(query, "@ids[0-9]").Count;
             int expectedCount = GetExpectedListExpansionCount(list.Count, enabled);
             hits.IsEqualTo(list.Count);
+            misses.IsEqualTo(list.Count);
             argCount.IsEqualTo(expectedCount);
         }
 

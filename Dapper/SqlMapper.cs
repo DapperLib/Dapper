@@ -1862,6 +1862,7 @@ namespace Dapper
                 DbType dbType = 0;
                 if (list != null)
                 {
+                    object lastValue = null;
                     foreach (var item in list)
                     {
                         if (++count == 1) // first item: fetch some type info
@@ -1876,24 +1877,29 @@ namespace Dapper
                                 dbType = LookupDbType(item.GetType(), "", true, out handler);
                             }
                         }
-                        var listParam = command.CreateParameter();
-                        listParam.ParameterName = namePrefix + count.ToString();
-                        if (isString)
-                        {
-                            listParam.Size = DbString.DefaultLength;
-                            if (item != null && ((string) item).Length > DbString.DefaultLength)
-                            {
-                                listParam.Size = -1;
-                            }
-                        }
+                        var nextName = namePrefix + count.ToString();
                         if (isDbString && item as DbString != null)
                         {
                             var str = item as DbString;
-                            str.AddParameter(command, listParam.ParameterName);
+                            str.AddParameter(command, nextName);
                         }
                         else
                         {
-                            listParam.Value = SanitizeParameterValue(item);
+                            var listParam = command.CreateParameter();
+                            listParam.ParameterName = nextName;
+                            if (isString)
+                            {
+                                listParam.Size = DbString.DefaultLength;
+                                if (item != null && ((string)item).Length > DbString.DefaultLength)
+                                {
+                                    listParam.Size = -1;
+                                }
+                            }
+
+                            var tmp = listParam.Value = SanitizeParameterValue(item);
+                            if (tmp != null && !(tmp is DBNull))
+                                lastValue = tmp; // only interested in non-trivial values for padding
+
                             if (listParam.DbType != dbType)
                             {
                                 listParam.DbType = dbType;
@@ -1901,17 +1907,17 @@ namespace Dapper
                             command.Parameters.Add(listParam);
                         }
                     }
-                    if (Settings.PadListExpansions && !isDbString)
+                    if (Settings.PadListExpansions && !isDbString && lastValue != null)
                     {
                         int padCount = GetListPaddingExtraCount(count);
-                        for(int i = 0; i < padCount; i++)
+                        for (int i = 0; i < padCount; i++)
                         {
                             count++;
                             var padParam = command.CreateParameter();
                             padParam.ParameterName = namePrefix + count.ToString();
                             if(isString) padParam.Size = DbString.DefaultLength;
                             padParam.DbType = dbType;
-                            padParam.Value = DBNull.Value;
+                            padParam.Value = lastValue;
                             command.Parameters.Add(padParam);
                         }
                     }
