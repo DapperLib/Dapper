@@ -66,10 +66,10 @@ namespace Dapper.Tests.Contrib
     {
         const string DbName = "DapperContribTests";
 
-        public static string ConnectionString =>
+        public static string ConnectionString { get; private set; } =
             IsAppVeyor
-                ? @"Server=localhost;Uid=root;Pwd=Password12!;"
-                : $"Server=localhost;Uid=root;Pwd=Password12!;";
+                ? "Server=localhost;Uid=root;Pwd=Password12!;"
+                : "Server=localhost;Uid=test;Pwd=pass;";
 
         public override IDbConnection GetConnection()
         {
