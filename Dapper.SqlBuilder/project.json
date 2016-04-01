@@ -5,7 +5,7 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "summary": "Dapper.SqlBuilder",
   "description": "The Dapper SqlBuilder component, for building SQL queries dynamically.",
-  "version": "1.50-beta8",
+  "version": "1.50-beta9",
   "title": "Dapper SqlBuilder component",
   "tags": [ "orm", "sql", "micro-orm", "query", "sql-builder" ],
   "copyright": "2015 Stack Exchange, Inc.",
