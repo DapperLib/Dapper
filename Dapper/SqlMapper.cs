@@ -235,15 +235,17 @@ namespace Dapper
             typeHandlers = new Dictionary<Type, ITypeHandler>();
 #if !COREFX
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
-            AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
-            AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
-            AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
             try // see https://github.com/StackExchange/dapper-dot-net/issues/424
             {
                 AddSqlDataRecordsTypeHandler(clone);
-            } catch { }
-            allowedCommandBehaviors = DefaultAllowedCommandBehaviors;
+            }
+            catch { }
 #endif
+            AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
+            AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
+            AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
+
+            allowedCommandBehaviors = DefaultAllowedCommandBehaviors;
         }
 #if !COREFX
         [MethodImpl(MethodImplOptions.NoInlining)]
