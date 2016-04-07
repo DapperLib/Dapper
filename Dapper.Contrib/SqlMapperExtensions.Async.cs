@@ -33,18 +33,27 @@ namespace Dapper.Contrib.Extensions
         public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
+
+            var adapter = GetFormatter(connection);
+
             string sql;
             if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
             {
                 var key = GetSingleKey<T>(nameof(GetAsync));
                 var name = GetTableName(type);
 
-                sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
-                GetQueries[type.TypeHandle] = sql;
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("select * from {0} where {1} = ", name, key.Name);
+                adapter.AppendParameter(sb, "id");
+
+                GetQueries[type.TypeHandle] = sql = sb.ToString();
             }
 
             var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            // DynamicParameters does not require the parameter prefix.
+            // https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests/Tests.cs#L615
+            dynParms.Add("id", id);
 
             if (!type.IsInterface())
                 return (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
@@ -153,6 +162,18 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
+            if (sqlAdapter.SequenceSupported)
+            {
+                foreach (var property in keyProperties)
+                {
+                    var sequenceName = GetSequenceName(property);
+                    if (!string.IsNullOrWhiteSpace(sequenceName))
+                    {
+                        sqlAdapter.AppendColumnName(sbColumnList, property.Name);
+                        sbColumnList.Append(", ");
+                    }
+                }
+            }
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
@@ -162,10 +183,23 @@ namespace Dapper.Contrib.Extensions
             }
 
             var sbParameterList = new StringBuilder(null);
+
+            if (sqlAdapter.SequenceSupported)
+            {
+                foreach (var property in keyProperties)
+                {
+                    var sequenceName = GetSequenceName(property);
+                    if (!string.IsNullOrWhiteSpace(sequenceName))
+                    {
+                        sqlAdapter.AppendSequenceNextValue(sbParameterList, sequenceName);
+                        sbParameterList.Append(", ");
+                    }
+                }
+            }
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                sbParameterList.AppendFormat("@{0}", property.Name);
+                sqlAdapter.AppendParameter(sbParameterList, property.Name);
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -281,10 +315,12 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" AND ");
             }
@@ -404,7 +440,7 @@ public partial class PostgresAdapter
 
         var results = await connection.QueryAsync(sb.ToString(), entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
-        // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
+        // Return the key by assigning the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
         var values = results.First();
         foreach (var p in propertyInfos)
@@ -435,4 +471,27 @@ public partial class SQLiteAdapter
         return id;
     }
 }
+
+
+public partial class OracleAdapter
+{
+    public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
+        var parameters = new DynamicParameters(entityToInsert);
+        string command = CreateInsertSql(tableName, columnList, parameterList, keyProperties, parameters);
+
+        await connection.ExecuteAsync(command, parameters, transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
+
+        // Return the key by assigning the corresponding property in the object - by product is that it supports compound primary keys
+        var id = 0;
+        foreach (var property in keyProperties)
+        {
+            int value = parameters.Get<int>($"newid_{property.Name}");
+            property.SetValue(entityToInsert, value, null);
+            if (id == 0) { id = value; }
+        }
+        return id;
+    }
+}
+
 #endif
