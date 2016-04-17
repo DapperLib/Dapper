@@ -31,12 +31,14 @@ foreach {
 
 # Restore packages and build product
 & dotnet restore "Dapper"
+& dotnet restore "Dapper.Contrib"
 if ($LASTEXITCODE -ne 0)
 {
     throw "dotnet restore failed with exit code $LASTEXITCODE"
 }
 
 & dotnet pack "Dapper" --configuration Release --output "artifacts\packages"
+& dotnet pack "Dapper.Contrib" --configuration Release --output "artifacts\packages"
 
 #restore, compile, and run tests
 & dotnet restore "Dapper.Tests" -f "artifacts\packages"
