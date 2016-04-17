@@ -30,8 +30,7 @@ foreach {
 }
 
 # Restore packages and build product
-& dotnet restore "Dapper"
-& dotnet restore "Dapper.Contrib"
+& dotnet restore -v Minimal # Restore all packages
 if ($LASTEXITCODE -ne 0)
 {
     throw "dotnet restore failed with exit code $LASTEXITCODE"
@@ -40,13 +39,18 @@ if ($LASTEXITCODE -ne 0)
 & dotnet pack "Dapper" --configuration Release --output "artifacts\packages"
 & dotnet pack "Dapper.Contrib" --configuration Release --output "artifacts\packages"
 
-#restore, compile, and run tests
-& dotnet restore "Dapper.Tests" -f "artifacts\packages"
-& dotnet restore "Dapper.Tests.Contrib" -f "artifacts\packages"
-dir "*.Tests*" | where {$_.PsIsContainer} |
+# Build all
+# Note the exclude: https://github.com/dotnet/cli/issues/1342
+dir "Dapper*" | where {$_.PsIsContainer -and $_ -NotLike "*.EntityFramework.StrongName" } |
 foreach {
     pushd "$_"
     & dotnet build
+    popd
+}
+# Run tests
+dir "*.Tests*" | where {$_.PsIsContainer} |
+foreach {
+    pushd "$_"
     & dotnet test
     popd
 }
