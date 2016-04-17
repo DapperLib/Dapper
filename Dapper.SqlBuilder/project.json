@@ -34,12 +34,13 @@
         "System.Data.Linq": "4.0.0.0"
       }
     },
-    "dotnet5.4": {
+    "netstandard1.3": {
       "compilationOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
-      "dependencies": {
-      }
+        "dependencies": {
+            "Microsoft.CSharp": "4.0.1-rc2-24015"
+        }
     }
   }
 }

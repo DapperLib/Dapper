@@ -50,27 +50,20 @@
         "define": [ "ASYNC" ]
       }
     },
-    "dotnet5.4": {
+    "netstandard1.3": {
       "compilationOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
-      "dependencies": {
-        "Microsoft.CSharp": "4.0.1-*",
-        "System.Runtime": "4.0.21-*",
-        "System.Collections": "4.0.11-*",
-        "System.Collections.Concurrent": "4.0.11-*",
-        "System.Data.SqlClient": "4.0.0-*",
-        "System.Linq": "4.0.1-*",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-*",
-        "System.Reflection.Emit.Lightweight": "4.0.1-*",
-        "System.Reflection.TypeExtensions": "4.1.0-*",
-        "System.Text.RegularExpressions": "4.0.11-*",
-        "System.Threading": "4.0.11-*",
-        "System.Threading.ThreadPool": "4.0.10-*",
-        "System.Collections.NonGeneric": "4.0.1-*",
-        "System.Xml.XDocument": "4.0.11-*",
-        "System.Xml.XmlDocument": "4.0.1-*"
-      }
+        "dependencies": {
+            "NETStandard.Library": "1.5.0-rc2-24015",
+            "System.Data.SqlClient": "4.1.0-rc2-24015",
+            "System.Dynamic.Runtime": "4.0.11-rc2-24015",
+            "System.Reflection.Emit": "4.0.1-rc2-24015",
+            "System.Reflection.Emit.Lightweight": "4.0.1-rc2-24015",
+            "System.Xml.XmlDocument": "4.0.1-rc2-24015",
+            "System.Collections.NonGeneric": "4.0.1-rc2-24015",
+            "System.Reflection.TypeExtensions": "4.1.0-rc2-24015"
+        }
     }
   }
 }
