@@ -15,3 +15,4 @@ NuGet.exe
 Test.DB.*
 TestResults/
 Dapper.Tests/*.sdf
+.dotnet/*
