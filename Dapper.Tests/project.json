@@ -170,7 +170,7 @@
         },
         "EntityFramework": "6.1.3",
         "FirebirdSql.Data.FirebirdClient": "4.10.0",
-        "Microsoft.Data.Sqlite": "1.0.0-rc2-15948",
+        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
         "Microsoft.SqlServer.Compact": "4.0.8876.1",
         "Microsoft.SqlServer.Types": "11.0.2",
         "MySql.Data": "6.9.8",
@@ -194,7 +194,7 @@
         "define": [ "COREFX", "ASYNC", "DNX", "XUNIT2", "SQLITE" ]
       },
       "dependencies": {
-        "Microsoft.Data.Sqlite": "1.0.0-rc2-15948",
+        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
         "System.Text.RegularExpressions": "4.0.11-beta-23516",
         "System.Xml.XmlDocument": "4.0.1-beta-23516",
         "xunit": "2.2.0-beta1-build3239",

@@ -2131,7 +2131,7 @@ end");
         }
 
 #if SQLITE
-        [FactSqlite]
+        [FactSqlite(Skip = "Fixed in RC2 but not nuget.org, re-enable then.")]
         public void DapperEnumValue_Sqlite()
         {
             using (var connection = GetSqliteConnection())
@@ -3675,7 +3675,7 @@ insert TPTable (Value) values (2), (568)");
         {
             Isse467_SqliteParameterNaming(true);
         }
-        [FactSqlite]
+        [FactSqlite(Skip = "Fixed in RC2 but not nuget.org, re-enable then.")]
         public void Isse467_SqliteLikesParametersWithoutPrefix()
         { // see issue 375 / 467; note: fixed from RC2 onwards
             Isse467_SqliteParameterNaming(false);
