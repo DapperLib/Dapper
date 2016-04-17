@@ -8,7 +8,7 @@
   "version": "1.50-beta9",
   "title": "Dapper dot net",
   "tags": [ "orm", "sql", "micro-orm" ],
-  "copyright": "2015 Stack Exchange, Inc.",
+  "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
   },
   "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",
@@ -48,21 +48,21 @@
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-*",
-        "System.Collections": "4.0.11-*",
-        "System.Collections.Concurrent": "4.0.11-*",
-        "System.Collections.NonGeneric": "4.0.1-*",
-        "System.Data.SqlClient": "4.0.0-*",
-        "System.Linq": "4.0.1-*",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-*",
-        "System.Reflection.Emit.Lightweight": "4.0.1-*",
-        "System.Reflection.TypeExtensions": "4.1.0-*",
-        "System.Runtime": "4.0.21-*",
-        "System.Text.RegularExpressions": "4.0.11-*",
-        "System.Threading": "4.0.11-*",
-        "System.Threading.ThreadPool": "4.0.10-*",
-        "System.Xml.XDocument": "4.0.11-*",
-        "System.Xml.XmlDocument": "4.0.1-*"
+        "Microsoft.CSharp": "4.0.1-beta-23516",
+        "System.Collections": "4.0.11-beta-23516",
+        "System.Collections.Concurrent": "4.0.11-beta-23516",
+        "System.Collections.NonGeneric": "4.0.1-beta-23516",
+        "System.Data.SqlClient": "4.0.0-beta-23516",
+        "System.Linq": "4.0.1-beta-23516",
+        "System.Reflection.Emit.ILGeneration": "4.0.1-beta-23516",
+        "System.Reflection.Emit.Lightweight": "4.0.1-beta-23516",
+        "System.Reflection.TypeExtensions": "4.1.0-beta-23516",
+        "System.Runtime": "4.0.21-beta-23516",
+        "System.Text.RegularExpressions": "4.0.11-beta-23516",
+        "System.Threading": "4.0.11-beta-23516",
+        "System.Threading.ThreadPool": "4.0.10-beta-23516",
+        "System.Xml.XDocument": "4.0.11-beta-23516",
+        "System.Xml.XmlDocument": "4.0.1-beta-23516"
       }
     }
   }

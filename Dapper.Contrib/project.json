@@ -8,7 +8,7 @@
   "version": "1.50-beta9",
   "title": "Dapper.Contrib",
   "tags": [ "orm", "sql", "micro-orm", "dapper" ],
-  "copyright": "2015 Stack Exchange, Inc.",
+  "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
       "version": "1.50-*",
@@ -45,10 +45,10 @@
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
-        "System.Reflection.Emit": "4.0.1-*",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-*",
-        "System.Reflection.Emit.Lightweight": "4.0.1-*",
-        "System.Runtime": "4.0.21-*"
+        "System.Reflection.Emit": "4.0.1-beta-23516",
+        "System.Reflection.Emit.ILGeneration": "4.0.1-beta-23516",
+        "System.Reflection.Emit.Lightweight": "4.0.1-beta-23516",
+        "System.Runtime": "4.0.21-beta-23516"
       }
     }
   }

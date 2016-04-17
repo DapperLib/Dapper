@@ -8,7 +8,7 @@
   "version": "1.50-beta9",
   "title": "Dapper entity framework type handlers (with a strong name)",
   "tags": [ "orm", "sql", "micro-orm" ],
-  "copyright": "2015 Stack Exchange, Inc.",
+  "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper.StrongName": {
       "version": "1.50-*",

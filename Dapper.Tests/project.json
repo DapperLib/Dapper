@@ -6,7 +6,7 @@
   "description": "Dapper Core Test Suite",
   "title": "Dapper.Tests",
   "version": "1.0.0-*",
-  "copyright": "2015 Stack Exchange, Inc.",
+  "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
       "version": "1.50-*",
@@ -122,17 +122,17 @@
         "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-*",
-        "Microsoft.Data.Sqlite": "1.0.0-rc2-15948",
-        "System.Collections": "4.0.11-*",
-        "System.Console": "4.0.0-*",
-        "System.Data.SqlClient": "4.0.0-*",
-        "System.Linq": "4.0.1-*",
-        "System.Runtime": "4.0.21-*",
-        "System.Text.RegularExpressions": "4.0.11-*",
-        "System.Threading": "4.0.11-*",
-        "System.Xml.XDocument": "4.0.11-*",
-        "System.Xml.XmlDocument": "4.0.1-*",
+        "Microsoft.CSharp": "4.0.1-beta-23516",
+        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
+        "System.Collections": "4.0.11-beta-23516",
+        "System.Console": "4.0.0-beta-23516",
+        "System.Data.SqlClient": "4.0.0-beta-23516",
+        "System.Linq": "4.0.1-beta-23516",
+        "System.Runtime": "4.0.21-beta-23516",
+        "System.Text.RegularExpressions": "4.0.11-beta-23516",
+        "System.Threading": "4.0.11-beta-23516",
+        "System.Xml.XDocument": "4.0.11-beta-23516",
+        "System.Xml.XmlDocument": "4.0.1-beta-23516",
         "xunit": "2.2.0-beta1-build3239"
       }
     },
@@ -184,7 +184,7 @@
         "Soma": "1.8.0.7",
         "Susanoo.Core": "1.2.4",
         "Susanoo.SqlServer": "1.2.4",
-        "System.Text.RegularExpressions": "4.0.11-*",
+        "System.Text.RegularExpressions": "4.0.11-beta-23516",
         "xunit": "2.2.0-beta1-build3239",
         "xunit.runner.dnx": "2.1.0-rc1-build204"
       }
@@ -195,8 +195,8 @@
       },
       "dependencies": {
         "Microsoft.Data.Sqlite": "1.0.0-rc2-15948",
-        "System.Text.RegularExpressions": "4.0.11-*",
-        "System.Xml.XmlDocument": "4.0.1-*",
+        "System.Text.RegularExpressions": "4.0.11-beta-23516",
+        "System.Xml.XmlDocument": "4.0.1-beta-23516",
         "xunit": "2.2.0-beta1-build3239",
         "xunit.runner.dnx": "2.1.0-rc1-build204"
       }

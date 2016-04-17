@@ -6,7 +6,7 @@
   "description": "Dapper Contrib Test Suite",
   "title": "Dapper.Contrib.Tests",
   "version": "1.0.0",
-  "copyright": "2015 Stack Exchange, Inc.",
+  "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
       "version": "1.50-*",
@@ -73,14 +73,14 @@
         "define": [ "ASYNC", "COREFX", "XUNIT2" ]
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-*",
+        "Microsoft.CSharp": "4.0.1-beta-23516",
         "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
-        "System.Collections": "4.0.11-*",
-        "System.Console": "4.0.0-*",
-        "System.Data.SqlClient": "4.0.0-*",
-        "System.Linq": "4.0.1-*",
-        "System.Runtime": "4.0.21-*",
-        "System.Threading": "4.0.11-*",
+        "System.Collections": "4.0.11-beta-23516",
+        "System.Console": "4.0.0-beta-23516",
+        "System.Data.SqlClient": "4.0.0-beta-23516",
+        "System.Linq": "4.0.1-beta-23516",
+        "System.Runtime": "4.0.21-beta-23516",
+        "System.Threading": "4.0.11-beta-23516",
         "xunit": "2.1.0"
       }
     },
@@ -98,7 +98,7 @@
         "MySql.Data": "6.9.8",
         "System.Data.SQLite.Core": "1.0.98.1",
         "xunit": "2.1.0",
-        "xunit.runner.dnx": "2.1.0-*"
+        "xunit.runner.dnx": "2.1.0-rc1-build204"
       }
     },
     "dnxcore50": {
@@ -107,9 +107,9 @@
       },
       "dependencies": {
         "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
-        "System.Runtime": "4.0.21-*",
+        "System.Runtime": "4.0.21-beta-23516",
         "xunit": "2.1.0",
-        "xunit.runner.dnx": "2.1.0-*"
+        "xunit.runner.dnx": "2.1.0-rc1-build204"
       }
     }
   }
