@@ -22,7 +22,7 @@
     "compilationOptions": {
         "warningsAsErrors": true,
         "emitEntryPoint": true,
-        "debugType": "full"
+        "debugType": "portable"
     },
     "testRunner": "xunit",
     "frameworks": {
@@ -133,6 +133,7 @@
         }
     },
     "runtimes": {
-        "win7-x64": { }
+        "win7-x64": { },
+        "osx.10.11-x64": {}
     }
 }

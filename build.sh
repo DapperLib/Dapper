@@ -34,8 +34,6 @@ sed -i '' "s/99.99.99-rc2/1.0.0-$BuildSemanticVersion/g" */*/project.json
 
 # Restore packages and build product
 dotnet restore -v Minimal # Restore all packages
-dotnet pack "Dapper" --configuration Release --output "artifacts/packages"
-dotnet pack "Dapper.Contrib" --configuration Release --output "artifacts/packages"
 
 # Build all
 # Note the exclude: https://github.com/dotnet/cli/issues/1342
@@ -43,7 +41,7 @@ for d in Dapper*/; do
     if [ "$d" != "*.EntityFramework.StrongName" ]; then
         echo "Building $d"
         pushd "$d"
-        dotnet build
+        dotnet build -f netstandard1.3
         popd
     fi
 done
@@ -52,7 +50,7 @@ done
 for d in *.Tests*/; do 
     echo "Testing $d"
     pushd "$d"
-    dotnet test
+    dotnet test -f netcoreapp1.0
     popd
 done
 
