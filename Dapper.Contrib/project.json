@@ -40,16 +40,13 @@
       "dependencies": {
       }
     },
-    "dotnet5.4": {
+    "netstandard1.3": {
       "compilationOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
-      "dependencies": {
-        "System.Reflection.Emit": "4.0.1-*",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-*",
-        "System.Reflection.Emit.Lightweight": "4.0.1-*",
-        "System.Runtime": "4.0.21-*"
-      }
+        "dependencies": {
+            "Microsoft.CSharp": "4.0.1-rc2-24015"  
+        }
     }
   }
 }
