@@ -4,7 +4,7 @@
     "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
     "description": "Dapper Contrib Test Suite",
-    "title": "Dapper.Contrib.Tests",
+    "title": "Dapper.Tests.Contrib",
     "version": "1.0.0",
     "copyright": "2015 Stack Exchange, Inc.",
     "dependencies": {
@@ -92,15 +92,14 @@
                 "define": [ "COREFX", "ASYNC", "XUNIT2" ]
             },
             "dependencies": {
-                "Microsoft.NETCore.App": "1.0.0-rc2-24015",
+                "Microsoft.NETCore.App": {
+                    "version": "1.0.0-rc2-24015",
+                    "type": "platform"
+                },
                 "Microsoft.Data.Sqlite": "1.0.0-rc2-20597",
                 "xunit": "2.1.0",
                 "dotnet-test-xunit": "1.0.0-rc2-*"
             }
         }
-    },
-    "runtimes": {
-        "win7-x64": { },
-        "osx.10.11-x64": {}
     }
 }

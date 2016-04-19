@@ -125,15 +125,14 @@
                 "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
             },
             "dependencies": {
-                "Microsoft.NETCore.App": "1.0.0-rc2-24015",
+                "Microsoft.NETCore.App": {
+                    "version": "1.0.0-rc2-24015",
+                    "type": "platform"
+                },
                 "Microsoft.Data.Sqlite": "1.0.0-rc2-20597",
                 "xunit": "2.1.0",
                 "dotnet-test-xunit": "1.0.0-rc2-*"
             }
         }
-    },
-    "runtimes": {
-        "win7-x64": { },
-        "osx.10.11-x64": {}
     }
 }
