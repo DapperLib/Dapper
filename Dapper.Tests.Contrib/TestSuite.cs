@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-
+using Dapper.Contrib;
 using Dapper.Contrib.Extensions;
-
 #if COREFX
 using System.Reflection;
 using IDbConnection = System.Data.Common.DbConnection;
@@ -91,9 +90,25 @@ namespace Dapper.Tests.Contrib
         public int Order { get; set; }
     }
 
+    public class Vehicle
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Computed { get; set; }
+    }
+
+    public class ObjectXWithoutAttribute
+    {
+        public string ObjectXId { get; set; }
+        public string Name { get; set; }
+        public string NotWritable { get; set; }
+    }
+
     public abstract partial class TestSuite
     {
         protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
+
+        protected abstract Type SqlClientExceptionType { get; }
 
         public abstract IDbConnection GetConnection();
 
@@ -174,7 +189,36 @@ namespace Dapper.Tests.Contrib
                 o2.IsNull();
             }
         }
-        
+
+        [Fact]
+        public void InsertGetUpdateDeleteWithExplicitKey_UsingBuilder()
+        {
+            TypeMappers
+                .MapType<ObjectXWithoutAttribute>()
+                .TableName("ObjectX")
+                .For(x => x.ObjectXId).ExplicitKey()
+                .For(x => x.NotWritable).NotWritable();
+
+            using (var connection = GetOpenConnection())
+            {
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectXWithoutAttribute { ObjectXId = guid, Name = "Foo" };
+                var originalxCount = connection.Query<int>("Select Count(*) From ObjectX").First();
+                connection.Insert(o1);
+                var list1 = connection.Query<ObjectXWithoutAttribute>("select * from ObjectX").ToList();
+                list1.Count.IsEqualTo(originalxCount + 1);
+                o1 = connection.Get<ObjectXWithoutAttribute>(guid);
+                o1.ObjectXId.IsEqualTo(guid);
+                o1.Name = "Bar";
+                connection.Update(o1);
+                o1 = connection.Get<ObjectXWithoutAttribute>(guid);
+                o1.Name.IsEqualTo("Bar");
+                connection.Delete(o1);
+                o1 = connection.Get<ObjectXWithoutAttribute>(guid);
+                o1.IsNull();
+            }
+        }
+
         [Fact]
         public void GetAllWithExplicitKey()
         {
@@ -257,6 +301,44 @@ namespace Dapper.Tests.Contrib
                 connection.Get<Car>(id).IsNull();
             }
         }
+
+
+        public class VehicleMapper : TypeMapper<Vehicle>
+        {
+            public VehicleMapper()
+            {
+                this
+                    .TableName("Automobiles")
+                    .For(x => x.Computed).Computed();
+            }
+        }
+
+        [Fact]
+        public void TableName_UsingBuilder()
+        {
+            TypeMappers.Register(new VehicleMapper());
+            using (var connection = GetOpenConnection())
+            {
+                // tests against "Automobiles" table (Table attribute)
+                var id = connection.Insert(new Vehicle { Name = "Prado" });
+                var car = connection.Get<Vehicle>(id);
+                car.IsNotNull();
+                car.Name.IsEqualTo("Prado");
+                connection.Get<Vehicle>(id).Name.IsEqualTo("Prado");
+                connection.Update(new Vehicle { Id = (int)id, Name = "Prado Landcruiser" }).IsEqualTo(true);
+                connection.Get<Vehicle>(id).Name.IsEqualTo("Prado Landcruiser");
+                connection.Delete(new Vehicle { Id = (int)id }).IsEqualTo(true);
+                connection.Get<Vehicle>(id).IsNull();
+            }
+            TypeMappers.ResetTypeMapping<Vehicle>();
+
+            using (var connection = GetOpenConnection())
+            {
+                var ex = Xunit.Assert.Throws(SqlClientExceptionType, () => { connection.Insert(new Vehicle { Name = "Prado" }); });
+                Xunit.Assert.Contains("vehicles", ex.Message.ToLower());
+            }
+        }
+
 
         [Fact]
         public void TestSimpleGet()

@@ -686,6 +686,20 @@ namespace Dapper.Contrib.Extensions
     public class ComputedAttribute : Attribute
     {
     }
+
+    public static partial class SqlMapperExtensions
+    {
+        internal static ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> InternalKeyProperties { get { return KeyProperties; } }
+        internal static ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> InternalExplicitKeyProperties { get { return ExplicitKeyProperties; } }
+        internal static ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> InternalComputedProperties { get { return ComputedProperties; } }
+        internal static ConcurrentDictionary<RuntimeTypeHandle, string> InternalTypeTableName { get { return TypeTableName; } }
+        internal static ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> InternalTypeProperties { get { return TypeProperties; } }
+
+        internal static List<PropertyInfo> InternalTypePropertiesCache(Type type)
+        {
+            return TypePropertiesCache(type);
+        }
+    }
 }
 
 public partial interface ISqlAdapter

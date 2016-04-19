@@ -33,7 +33,7 @@ namespace Dapper.Tests.Contrib
                 ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
                 : $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
         public override IDbConnection GetConnection() => new SqlConnection(ConnectionString);
-
+        protected override Type SqlClientExceptionType { get { return typeof(System.Data.SqlClient.SqlException); } }
         static SqlServerTestSuite()
         {
             using (var connection = new SqlConnection(ConnectionString))
@@ -76,7 +76,7 @@ namespace Dapper.Tests.Contrib
             if (_skip) throw new SkipTestException("Skipping MySQL Tests - no server.");
             return new MySqlConnection(ConnectionString);
         }
-
+        protected override Type SqlClientExceptionType { get { return typeof(MySql.Data.MySqlClient.MySqlException); } }
         private static readonly bool _skip;
 
         static MySqlServerTestSuite()
@@ -127,7 +127,7 @@ namespace Dapper.Tests.Contrib
         const string FileName = "Test.DB.sqlite";
         public static string ConnectionString => $"Filename={FileName};";
         public override IDbConnection GetConnection() => new SqliteConnection(ConnectionString);
-
+        protected override Type SqlClientExceptionType { get { return typeof(System.Data.SQLite.SQLiteException); } }
         static SQLiteTestSuite()
         {
             if (File.Exists(FileName))
@@ -157,7 +157,8 @@ namespace Dapper.Tests.Contrib
         const string FileName = "Test.DB.sdf";
         public static string ConnectionString => $"Data Source={FileName};";
         public override IDbConnection GetConnection() => new SqlCeConnection(ConnectionString);
-            
+        protected override Type SqlClientExceptionType { get { return typeof (System.Data.SqlServerCe.SqlCeException); } }
+
         static SqlCETestSuite()
         {
             if (File.Exists(FileName))
