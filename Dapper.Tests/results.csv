@@ -1,0 +1,16 @@
+Linq 2 SQL Compiled took 00:00:02.4046968
+Dapper.Contrib took 00:00:02.5120652
+Dapper Query (non-buffered) took 00:00:02.5645060
+Dynamic Dapper Query (non-buffered) took 00:00:02.6203242
+Linq 2 SQL took 00:00:02.8905114
+Entity framework took 00:00:03.2372788
+Entity framework No Tracking took 00:00:03.4365880
+DataTable via IDataReader.GetValues took 00:00:10.4463680
+Dynamic Massive ORM Query took 00:00:10.5296852
+Linq 2 SQL ExecuteQuery took 00:00:10.5791866
+Dapper QueryFirstOrDefault took 00:00:10.6108092
+Dynamic Dapper QueryQueryFirstOrDefault took 00:00:10.6412243
+Entity framework SqlQuery took 00:00:11.3150902
+hand coded took 00:00:18.4229773
+Dynamic Dapper Query (buffered) took 00:00:20.3125847
+Dapper Query (buffered) took 00:00:21.2165193

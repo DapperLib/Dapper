@@ -1,8 +1,15 @@
 {
   "sdk": {
-    "version": "1.0.0-rc1-update1"
+    "version": "1.0.0-rc1-update1",
+    "architecture": "x86",
+    "runtime": "clr"
   },
   "projects": [
-      "Dapper", "Dapper.EntityFramework", "Dapper.Contrib", "Dapper.Rainbow", "Dapper.SqlBuilder", "Dapper.Tests"
+    "Dapper",
+    "Dapper.EntityFramework",
+    "Dapper.Contrib",
+    "Dapper.Rainbow",
+    "Dapper.SqlBuilder",
+    "Dapper.Tests"
   ]
 }
