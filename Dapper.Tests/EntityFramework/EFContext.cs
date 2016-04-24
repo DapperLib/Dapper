@@ -13,7 +13,7 @@ namespace Dapper.Tests.EntityFramework
             Configuration.LazyLoadingEnabled = false;
             Configuration.ProxyCreationEnabled = false;
             Configuration.ValidateOnSaveEnabled = false;
-
+            
         }
         public DbSet<Post> Posts { get;set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)

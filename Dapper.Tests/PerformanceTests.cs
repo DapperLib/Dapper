@@ -4,7 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
-
+using System.Text;
 using Dapper.Tests.Linq2Sql;
 using Dapper.Contrib.Extensions;
 
@@ -83,11 +83,13 @@ namespace Dapper.Tests
                         test.Watch.Stop();
                     }
                 }
-
+                var builder = new StringBuilder();
                 foreach (var test in this.OrderBy(t => t.Watch.Elapsed))
                 {
+                    builder.AppendLine(test.Name + " took " + test.Watch.Elapsed);
                     Console.WriteLine(test.Name + " took " + test.Watch.Elapsed);
                 }
+                System.IO.File.WriteAllText("results.txt", builder.ToString());
             }
         }
 #if LINQ2SQL
@@ -129,10 +131,10 @@ namespace Dapper.Tests
                 Try(() =>
                 {
                     var l2scontext1 = GetL2SContext(connection);
-                    tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq 2 SQL");
+                    tests.Add(id => l2scontext1.Posts.First(p => p.Id > id), "Linq 2 SQL");
 
                     var l2scontext2 = GetL2SContext(connection);
-                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
+                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id > id));
                     tests.Add(id => compiledGetPost(l2scontext2, id), "Linq 2 SQL Compiled");
 
                     var l2scontext3 = GetL2SContext(connection);
@@ -141,10 +143,10 @@ namespace Dapper.Tests
 #endif
 
 #if ENTITY_FRAMEWORK
-                var entityContext = new EFContext(connection);
+                
                 Try(() =>
                 {
-                    
+                    var entityContext = new EFContext(connection);
                     tests.Add(id => entityContext.Posts.First(p => p.Id > id), "Entity framework");
 
 
