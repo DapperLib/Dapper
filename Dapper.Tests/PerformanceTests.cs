@@ -4,7 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
-
+using System.Text;
 using Dapper.Tests.Linq2Sql;
 using Dapper.Contrib.Extensions;
 
@@ -70,24 +70,26 @@ namespace Dapper.Tests
                 {
                     test.Iteration(iterations + 1);
                     test.Watch = new Stopwatch();
-                    test.Watch.Reset();
+                    //test.Watch.Reset();
                 }
 
                 var rand = new Random();
                 for (int i = 1; i <= iterations; i++)
                 {
-                    foreach (var test in this.OrderBy(ignore => rand.Next()))
+                    foreach (var test in this)
                     {
                         test.Watch.Start();
                         test.Iteration(i);
                         test.Watch.Stop();
                     }
                 }
-
-                foreach (var test in this.OrderBy(t => t.Watch.ElapsedMilliseconds))
+                var builder = new StringBuilder();
+                foreach (var test in this.OrderBy(t => t.Watch.Elapsed))
                 {
-                    Console.WriteLine(test.Name + " took " + test.Watch.ElapsedMilliseconds + "ms");
+                    builder.AppendLine(test.Name + " took " + test.Watch.Elapsed);
+                    Console.WriteLine(test.Name + " took " + test.Watch.Elapsed);
                 }
+                System.IO.File.WriteAllText("results.txt", builder.ToString());
             }
         }
 #if LINQ2SQL
@@ -129,49 +131,51 @@ namespace Dapper.Tests
                 Try(() =>
                 {
                     var l2scontext1 = GetL2SContext(connection);
-                    tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq 2 SQL");
+                    tests.Add(id => l2scontext1.Posts.First(p => p.Id > id), "Linq 2 SQL");
 
                     var l2scontext2 = GetL2SContext(connection);
-                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
+                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id > id));
                     tests.Add(id => compiledGetPost(l2scontext2, id), "Linq 2 SQL Compiled");
 
                     var l2scontext3 = GetL2SContext(connection);
-                    tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).First(), "Linq 2 SQL ExecuteQuery");
+                    tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id > {0}", id).First(), "Linq 2 SQL ExecuteQuery");
                 }, "LINQ-to-SQL");
 #endif
 
 #if ENTITY_FRAMEWORK
+                
                 Try(() =>
                 {
                     var entityContext = new EFContext(connection);
-                    tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity framework");
+                    tests.Add(id => entityContext.Posts.First(p => p.Id > id), "Entity framework");
 
 
-                    var entityContext2 = new EFContext(connection);
-                    tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity framework SqlQuery");
+                    //var entityContext2 = new EFContext(connection);
+                    tests.Add(id => entityContext.Posts.SqlQuery("select * from Posts where Id > {0}", id).First(), "Entity framework SqlQuery");
+
 
                     //var entityContext3 = new EFContext(connection);
-                    //tests.Add(id => entityFrameworkCompiled(entityContext3, id), "Entity framework CompiledQuery");
+                    //tests.Add(id => entityContext.Posts.FirstOrDefault(x=>x.Id==id), "Entity framework Normal");
 
                     //var entityContext4 = new EFContext(connection);
-                    //tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)).First(), "Entity framework ESQL");
+                    //tests.Add(id => entityContext.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)).First(), "Entity framework ESQL");
 
-                    var entityContext5 = new EFContext(connection);
-                    tests.Add(id => entityContext5.Posts.AsNoTracking().First(p => p.Id == id), "Entity framework No Tracking");
+                    //var entityContext5 = new EFContext(connection);
+                    tests.Add(id => entityContext.Posts.AsNoTracking().First(p => p.Id > id), "Entity framework No Tracking");
                 }, "Entity Framework");
 #endif
                 Try(() =>
                 {
                     var mapperConnection = TestSuite.GetOpenConnection();
-                    tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Mapper Query (buffered)");
-                    tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Mapper Query (non-buffered)");
-                    tests.Add(id => mapperConnection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = id }), "Mapper QueryFirstOrDefault");
+                    tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id > @Id", new { Id = id }, buffered: true).First(), "Dapper Query (buffered)");
+                    tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id > @Id", new { Id = id }, buffered: false).First(), "Dapper Query (non-buffered)");
+                    tests.Add(id => mapperConnection.QueryFirstOrDefault<Post>("select * from Posts where Id > @Id", new { Id = id }), "Dapper QueryFirstOrDefault");
 
 
                     var mapperConnection2 = TestSuite.GetOpenConnection();
-                    tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dynamic Mapper Query (buffered)");
-                    tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dynamic Mapper Query (non-buffered)");
-                    tests.Add(id => mapperConnection2.QueryFirstOrDefault("select * from Posts where Id = @Id", new { Id = id }), "Dynamic Mapper QueryQueryFirstOrDefault");
+                    tests.Add(id => mapperConnection2.Query("select * from Posts where Id > @Id", new { Id = id }, buffered: true).First(), "Dynamic Dapper Query (buffered)");
+                    tests.Add(id => mapperConnection2.Query("select * from Posts where Id > @Id", new { Id = id }, buffered: false).First(), "Dynamic Dapper Query (non-buffered)");
+                    tests.Add(id => mapperConnection2.QueryFirstOrDefault("select * from Posts where Id > @Id", new { Id = id }), "Dynamic Dapper QueryQueryFirstOrDefault");
 
                     // dapper.contrib
                     var mapperConnection3 = TestSuite.GetOpenConnection();
@@ -184,7 +188,7 @@ namespace Dapper.Tests
                     // massive
                     var massiveModel = new DynamicModel(TestSuite.ConnectionString);
                     var massiveConnection = TestSuite.GetOpenConnection();
-                    tests.Add(id => massiveModel.Query("select * from Posts where Id = @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
+                    tests.Add(id => massiveModel.Query("select * from Posts where Id > @0", massiveConnection, id).First(), "Dynamic Massive ORM Query");
                 }, "Massive");
 #endif
 
@@ -316,7 +320,7 @@ namespace Dapper.Tests
                 var postCommand = new SqlCommand();
                 postCommand.Connection = connection;
                 postCommand.CommandText = @"select Id, [Text], [CreationDate], LastChangeDate, 
-                Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id = @Id";
+                Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id > @Id";
                 var idParam = postCommand.Parameters.Add("@Id", System.Data.SqlDbType.Int);
 
                 tests.Add(id =>
@@ -325,22 +329,24 @@ namespace Dapper.Tests
 
                 using (var reader = postCommand.ExecuteReader())
                 {
-                    reader.Read();
-                    var post = new Post();
-                    post.Id = reader.GetInt32(0);
-                    post.Text = reader.GetNullableString(1);
-                    post.CreationDate = reader.GetDateTime(2);
-                    post.LastChangeDate = reader.GetDateTime(3);
+                    while (reader.Read())
+                    {
+                        var post = new Post();
+                        post.Id = reader.GetInt32(0);
+                        post.Text = reader.GetNullableString(1);
+                        post.CreationDate = reader.GetDateTime(2);
+                        post.LastChangeDate = reader.GetDateTime(3);
 
-                    post.Counter1 = reader.GetNullableValue<int>(4);
-                    post.Counter2 = reader.GetNullableValue<int>(5);
-                    post.Counter3 = reader.GetNullableValue<int>(6);
-                    post.Counter4 = reader.GetNullableValue<int>(7);
-                    post.Counter5 = reader.GetNullableValue<int>(8);
-                    post.Counter6 = reader.GetNullableValue<int>(9);
-                    post.Counter7 = reader.GetNullableValue<int>(10);
-                    post.Counter8 = reader.GetNullableValue<int>(11);
-                    post.Counter9 = reader.GetNullableValue<int>(12);
+                        post.Counter1 = reader.GetNullableValue<int>(4);
+                        post.Counter2 = reader.GetNullableValue<int>(5);
+                        post.Counter3 = reader.GetNullableValue<int>(6);
+                        post.Counter4 = reader.GetNullableValue<int>(7);
+                        post.Counter5 = reader.GetNullableValue<int>(8);
+                        post.Counter6 = reader.GetNullableValue<int>(9);
+                        post.Counter7 = reader.GetNullableValue<int>(10);
+                        post.Counter8 = reader.GetNullableValue<int>(11);
+                        post.Counter9 = reader.GetNullableValue<int>(12);
+                    }
                 }
             }, "hand coded");
 
