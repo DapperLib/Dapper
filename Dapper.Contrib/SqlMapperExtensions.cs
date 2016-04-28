@@ -43,14 +43,14 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
         private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
-        private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
+        public static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
             = new Dictionary<string, ISqlAdapter>
             {
-                {"sqlconnection", new SqlServerAdapter()},
-                {"sqlceconnection", new SqlCeServerAdapter()},
-                {"npgsqlconnection", new PostgresAdapter()},
-                {"sqliteconnection", new SQLiteAdapter()},
-                {"mysqlconnection", new MySqlAdapter()},
+                ["sqlconnection"] = new SqlServerAdapter(),
+                ["sqlceconnection"] = new SqlCeServerAdapter(),
+                ["npgsqlconnection"] = new PostgresAdapter(),
+                ["sqliteconnection"] = new SQLiteAdapter(),
+                ["mysqlconnection"] = new MySqlAdapter(),
             };
 
         private static List<PropertyInfo> ComputedPropertiesCache(Type type)
@@ -699,7 +699,7 @@ public partial interface ISqlAdapter
 
 public partial class SqlServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public virtual int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList});select SCOPE_IDENTITY() id";
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
@@ -717,12 +717,12 @@ public partial class SqlServerAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public virtual void AppendColumnName(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("[{0}]", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public virtual void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
     }
@@ -730,7 +730,7 @@ public partial class SqlServerAdapter : ISqlAdapter
 
 public partial class SqlCeServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public virtual int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
@@ -748,12 +748,12 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public virtual void AppendColumnName(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("[{0}]", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public virtual void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
     }
@@ -761,7 +761,7 @@ public partial class SqlCeServerAdapter : ISqlAdapter
 
 public partial class MySqlAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public virtual int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
@@ -778,12 +778,12 @@ public partial class MySqlAdapter : ISqlAdapter
         return Convert.ToInt32(id);
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public virtual void AppendColumnName(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("`{0}`", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public virtual void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
     }
@@ -792,7 +792,7 @@ public partial class MySqlAdapter : ISqlAdapter
 
 public partial class PostgresAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public virtual int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
         sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
@@ -828,12 +828,12 @@ public partial class PostgresAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public virtual void AppendColumnName(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("\"{0}\"", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public virtual void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
     }
@@ -841,7 +841,7 @@ public partial class PostgresAdapter : ISqlAdapter
 
 public partial class SQLiteAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public virtual int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList}); SELECT last_insert_rowid() id";
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
@@ -856,12 +856,12 @@ public partial class SQLiteAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public virtual void AppendColumnName(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("\"{0}\"", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public virtual void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
     }
