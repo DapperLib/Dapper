@@ -16,7 +16,7 @@
     }
   },
   "compile": [
-    "../Dapper.EntityFramework/**/*.cs"
+    "../Dapper.EntityFramework/*.cs"
   ],
   "compilationOptions": {
     "warningsAsErrors": true
