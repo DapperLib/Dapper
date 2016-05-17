@@ -2953,8 +2953,7 @@ end");
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
         }
-
-        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1612")]
+        
         public void Issue261_Decimals()
         {
             var parameters = new DynamicParameters();
@@ -2964,7 +2963,6 @@ end");
             var c = parameters.Get<Decimal>("c");
             c.IsEqualTo(11.884M);
         }
-        [FactUnlessCoreCLR("https://github.com/dotnet/corefx/issues/1612")]
         public void Issue261_Decimals_ADONET_SetViaBaseClass()
         {
             Issue261_Decimals_ADONET(true);
