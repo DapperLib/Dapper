@@ -44,9 +44,9 @@
       "compilationOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
-        "dependencies": {
-            "Microsoft.CSharp": "4.0.1-rc2-24015"
-        }
+      "dependencies": {
+        "Microsoft.CSharp": "4.0.1-rc2-24027"
+      }
     }
   }
 }
