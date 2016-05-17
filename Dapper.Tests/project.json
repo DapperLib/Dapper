@@ -1,138 +1,146 @@
 ﻿{
-    "authors": [ "Marc Gravell", "Nick Craver" ],
+  "packOptions": {
+    "summary": "Dapper.Tests",
+    "tags": [ "orm", "sql", "micro-orm" ],
     "owners": [ "marc.gravell", "nick.craver" ],
     "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-    "description": "Dapper Core Test Suite",
-    "title": "Dapper.Tests",
-    "version": "1.0.0-*",
-    "copyright": "2015 Stack Exchange, Inc.",
-    "dependencies": {
-        "Dapper": {
-            "version": "1.50-*",
-            "target": "project"
-        },
-        "Dapper.Contrib": {
-            "target": "project"
-        }
-    },
-    //"commands": {
-    //  "perf": "Dapper.Tests"
-    //},
-    "compilationOptions": {
-        "warningsAsErrors": true,
-        "emitEntryPoint": true,
-        "debugType": "portable"
-    },
-    "testRunner": "xunit",
-    "frameworks": {
-        //"net40": {
-        //  "compilationOptions": {
-        //    "define": [
-        //      "MYSQL",
-        //      "ENTITY_FRAMEWORK",
-        //      "LINQ2SQL",
-        //      "FIREBIRD",
-        //      "SQL_CE",
-        //      "OLEDB",
-        //      "MASSIVE",
-        //      "ORMLITE",
-        //      "SOMA",
-        //      "SIMPLEDATA",
-        //      "SQLITE"
-        //    ]
-        //  },
-        //  "frameworkAssemblies": {
-        //    "System.Configuration": "4.0.0.0",
-        //    "System.Data": "4.0.0.0",
-        //    "System.Data.Linq": "4.0.0.0",
-        //    "System.Xml": "4.0.0.0",
-        //    "System.Xml.Linq": "4.0.0.0"
-        //  },
-        //  "dependencies": {
-        //    "Dapper.EntityFramework": {
-        //      "target": "project"
-        //    },
-        //    "EntityFramework": "6.1.3",
-        //    "FirebirdSql.Data.FirebirdClient": "4.10.0",
-        //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        //    "Microsoft.SqlServer.Types": "11.0.2",
-        //    "MySql.Data": "6.9.8",
-        //    "NHibernate": "4.0.4.4000",
-        //    "ServiceStack.OrmLite": "4.0.48",
-        //    "ServiceStack.OrmLite.SqlServer": "4.0.48",
-        //    "Simple.Data.Ado": "1.0.0-rc3",
-        //    "Simple.Data.Core": "1.0.0-rc3",
-        //    "Simple.Data.SqlServer": "1.0.0-rc3",
-        //    "Soma": "1.8.0.7",
-        //    "System.Data.SQLite": "1.0.99",
-        //    "xunit": "1.9.2"
-        //  }
-        //},
-        //"net45": {
-        //  "compilationOptions": {
-        //    "define": [
-        //      "ASYNC",
-        //      "MYSQL",
-        //      "ENTITY_FRAMEWORK",
-        //      "LINQ2SQL",
-        //      "FIREBIRD",
-        //      "SQL_CE",
-        //      "POSTGRESQL",
-        //      "OLEDB",
-        //      "MASSIVE",
-        //      "ORMLITE",
-        //      "SOMA",
-        //      "SIMPLEDATA",
-        //      "SQLITE",
-        //      "XUNIT2"
-        //    ]
-        //  },
-        //  "frameworkAssemblies": {
-        //    "System.Configuration": "4.0.0.0",
-        //    "System.Data": "4.0.0.0",
-        //    "System.Data.Linq": "4.0.0.0",
-        //    "System.Runtime": "4.0.0.0",
-        //    "System.Xml": "4.0.0.0",
-        //    "System.Xml.Linq": "4.0.0.0"
-        //  },
-        //  "dependencies": {
-        //    "Dapper.EntityFramework": {
-        //      "target": "project"
-        //    },
-        //    "EntityFramework": "6.1.3",
-        //    "FirebirdSql.Data.FirebirdClient": "4.10.0",
-        //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        //    "Microsoft.SqlServer.Types": "11.0.2",
-        //    "MySql.Data": "6.9.8",
-        //    "NHibernate": "4.0.4.4000",
-        //    "Npgsql": "3.0.5",
-        //    "ServiceStack.OrmLite": "4.0.48",
-        //    "ServiceStack.OrmLite.SqlServer": "4.0.48",
-        //    "Simple.Data.Ado": "2.0.0-alpha1",
-        //    "Simple.Data.Core": "2.0.0-alpha1",
-        //    "Simple.Data.SqlServer": "2.0.0-alpha1",
-        //    "Soma": "1.8.0.7",
-        //    "Susanoo.Core": "1.2.4",
-        //    "Susanoo.SqlServer": "1.2.4",
-        //    "System.Data.SQLite": "1.0.99",
-        //    "xunit": "2.1.0"
-        //  }
-        //},
-        "netcoreapp1.0": {
-            "imports": [ "dnxcore50", "portable-net45+win8" ],
-            "compilationOptions": {
-                "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
-            },
-            "dependencies": {
-                "Microsoft.NETCore.App": {
-                    "version": "1.0.0-rc2-24015",
-                    "type": "platform"
-                },
-                "Microsoft.Data.Sqlite": "1.0.0-rc2-20597",
-                "xunit": "2.1.0",
-                "dotnet-test-xunit": "1.0.0-rc2-*"
-            }
-        }
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
     }
+  },
+  "authors": [ "Marc Gravell", "Nick Craver" ],
+  "description": "Dapper Core Test Suite",
+  "title": "Dapper.Tests",
+  "version": "1.0.0-*",
+  "copyright": "2015 Stack Exchange, Inc.",
+  "dependencies": {
+    "Dapper": {
+      "version": "1.50-*",
+      "target": "project"
+    },
+    "Dapper.Contrib": {
+      "target": "project"
+    }
+  },
+  //"commands": {
+  //  "perf": "Dapper.Tests"
+  //},
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "emitEntryPoint": true,
+    "debugType": "portable"
+  },
+  "testRunner": "xunit",
+  "frameworks": {
+    //"net40": {
+    //  "compilationOptions": {
+    //    "define": [
+    //      "MYSQL",
+    //      "ENTITY_FRAMEWORK",
+    //      "LINQ2SQL",
+    //      "FIREBIRD",
+    //      "SQL_CE",
+    //      "OLEDB",
+    //      "MASSIVE",
+    //      "ORMLITE",
+    //      "SOMA",
+    //      "SIMPLEDATA",
+    //      "SQLITE"
+    //    ]
+    //  },
+    //  "frameworkAssemblies": {
+    //    "System.Configuration": "4.0.0.0",
+    //    "System.Data": "4.0.0.0",
+    //    "System.Data.Linq": "4.0.0.0",
+    //    "System.Xml": "4.0.0.0",
+    //    "System.Xml.Linq": "4.0.0.0"
+    //  },
+    //  "dependencies": {
+    //    "Dapper.EntityFramework": {
+    //      "target": "project"
+    //    },
+    //    "EntityFramework": "6.1.3",
+    //    "FirebirdSql.Data.FirebirdClient": "4.10.0",
+    //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
+    //    "Microsoft.SqlServer.Types": "11.0.2",
+    //    "MySql.Data": "6.9.8",
+    //    "NHibernate": "4.0.4.4000",
+    //    "ServiceStack.OrmLite": "4.0.48",
+    //    "ServiceStack.OrmLite.SqlServer": "4.0.48",
+    //    "Simple.Data.Ado": "1.0.0-rc3",
+    //    "Simple.Data.Core": "1.0.0-rc3",
+    //    "Simple.Data.SqlServer": "1.0.0-rc3",
+    //    "Soma": "1.8.0.7",
+    //    "System.Data.SQLite": "1.0.99",
+    //    "xunit": "1.9.2"
+    //  }
+    //},
+    //"net45": {
+    //  "compilationOptions": {
+    //    "define": [
+    //      "ASYNC",
+    //      "MYSQL",
+    //      "ENTITY_FRAMEWORK",
+    //      "LINQ2SQL",
+    //      "FIREBIRD",
+    //      "SQL_CE",
+    //      "POSTGRESQL",
+    //      "OLEDB",
+    //      "MASSIVE",
+    //      "ORMLITE",
+    //      "SOMA",
+    //      "SIMPLEDATA",
+    //      "SQLITE",
+    //      "XUNIT2"
+    //    ]
+    //  },
+    //  "frameworkAssemblies": {
+    //    "System.Configuration": "4.0.0.0",
+    //    "System.Data": "4.0.0.0",
+    //    "System.Data.Linq": "4.0.0.0",
+    //    "System.Runtime": "4.0.0.0",
+    //    "System.Xml": "4.0.0.0",
+    //    "System.Xml.Linq": "4.0.0.0"
+    //  },
+    //  "dependencies": {
+    //    "Dapper.EntityFramework": {
+    //      "target": "project"
+    //    },
+    //    "EntityFramework": "6.1.3",
+    //    "FirebirdSql.Data.FirebirdClient": "4.10.0",
+    //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
+    //    "Microsoft.SqlServer.Types": "11.0.2",
+    //    "MySql.Data": "6.9.8",
+    //    "NHibernate": "4.0.4.4000",
+    //    "Npgsql": "3.0.5",
+    //    "ServiceStack.OrmLite": "4.0.48",
+    //    "ServiceStack.OrmLite.SqlServer": "4.0.48",
+    //    "Simple.Data.Ado": "2.0.0-alpha1",
+    //    "Simple.Data.Core": "2.0.0-alpha1",
+    //    "Simple.Data.SqlServer": "2.0.0-alpha1",
+    //    "Soma": "1.8.0.7",
+    //    "Susanoo.Core": "1.2.4",
+    //    "Susanoo.SqlServer": "1.2.4",
+    //    "System.Data.SQLite": "1.0.99",
+    //    "xunit": "2.1.0"
+    //  }
+    //},
+    "netcoreapp1.0": {
+      "imports": [ "dnxcore50", "portable-net45+win8" ],
+      "buildOptions": {
+        "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
+      },
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "version": "1.0.0-rc2-24015",
+          "type": "platform"
+        },
+        "Microsoft.Data.Sqlite": "1.0.0-rc2-20597",
+        "xunit": "2.1.0",
+        "dotnet-test-xunit": "1.0.0-rc2-*"
+      }
+    }
+  }
 }

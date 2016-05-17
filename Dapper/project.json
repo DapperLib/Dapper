@@ -1,18 +1,24 @@
 ﻿{
-  "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
-  "owners": [ "marc.gravell", "nick.craver" ],
-  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "summary": "A high performance Micro-ORM",
-  "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
+  "packOptions": {
+    "summary": "A high performance Micro-ORM",
+    "tags": [ "orm", "sql", "micro-orm" ],
+    "owners": [ "marc.gravell", "nick.craver" ],
+    "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
+    }
+  },
   "version": "1.50-beta10",
+  "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
+  "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
   "title": "Dapper dot net",
-  "tags": [ "orm", "sql", "micro-orm" ],
   "copyright": "2015 Stack Exchange, Inc.",
   "dependencies": {
   },
-  "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",
-  "compilationOptions": {
+  "buildOptions": {
     "warningsAsErrors": true
   },
   "frameworks": {
@@ -24,7 +30,7 @@
       }
     },
     "net45": {
-      "compilationOptions": {
+      "buildOptions": {
         "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
@@ -34,17 +40,17 @@
       }
     },
     "net451": {
+      "buildOptions": {
+        "define": [ "ASYNC" ]
+      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0",
         "System.Xml.Linq": "4.0.0.0"
-      },
-      "compilationOptions": {
-        "define": [ "ASYNC" ]
       }
     },
     "netstandard1.3": {
-      "compilationOptions": {
+      "buildOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
