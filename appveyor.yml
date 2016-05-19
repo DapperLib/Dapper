@@ -1,0 +1,26 @@
+version: 1.0.{build}
+branches:
+  only:
+  - netstandard
+clone_depth: 1
+init:
+- cmd: SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
+environment:
+  Appveyor: true
+  MYSQL_ENV_MYSQL_USER: root
+  MYSQL_ENV_MYSQL_PASSWORD: Password12!
+  PGUSER: postgres
+  PGPASSWORD: Password12!
+  MYSQL_PATH: C:\Program Files\MySql\MySQL Server 5.6
+  POSTGRES_PATH: C:\Program Files\PostgreSQL\9.4
+  MYSQL_PWD: Password12!
+services:
+- mssql2014
+- mysql56
+- postgresql94
+build_script:
+- ps: >-
+    createdb test
+
+    .\build.ps1
+test: off
