@@ -15,7 +15,7 @@
   "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
   "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
   "title": "Dapper dot net",
-  "copyright": "2015 Stack Exchange, Inc.",
+  "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
   },
   "buildOptions": {
