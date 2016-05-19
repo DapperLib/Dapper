@@ -37,16 +37,10 @@ if ($LASTEXITCODE -ne 0)
     throw "dotnet restore failed with exit code $LASTEXITCODE"
 }
 
-& $dotnet pack "Dapper" --configuration Release --output "artifacts\packages"
-& $dotnet pack "Dapper.Contrib" --configuration Release --output "artifacts\packages"
-
 # Build all
-# Note the exclude: https://github.com/dotnet/cli/issues/1342
-dir "Dapper*" | where {$_.PsIsContainer -and $_ -NotLike "*.EntityFramework.StrongName" } |
-foreach {
-    pushd "$_"
-    & $dotnet build
-    popd
+dir "Dapper*" | where {$_.PsIsContainer} |
+foreach {    
+    & $dotnet build "$_"
 }
 # Run tests
 dir "*.Tests*" | where {$_.PsIsContainer} |
@@ -54,6 +48,11 @@ foreach {
     pushd "$_"
     & $dotnet test
     popd
+}
+# Package all
+dir "Dapper*" | where {$_.PsIsContainer -and $_ -NotLike "*.Tests*" } |
+foreach {    
+    & $dotnet pack "$_" -c Release -o .\.nupkg\
 }
 
 ls */*/project.json | foreach { echo $_.FullName} |
