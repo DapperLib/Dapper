@@ -21,7 +21,7 @@
   "buildOptions": {
     "keyFile": "../Dapper.snk",
     "warningsAsErrors": true,
-    "compile:": {
+    "compile": {
       "include": [
         "../Dapper/**/*.cs"
       ],
