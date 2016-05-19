@@ -1,13 +1,19 @@
 ﻿{
+  "packOptions": {
+    "summary": "Dapper.Contrib",
+    "tags": [ "orm", "sql", "micro-orm", "dapper" ],
+    "owners": [ "johandanforth", "marc.gravell", "nick.craver" ],
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
+    }
+  },
   "authors": [ "Sam Saffron", "Johan Danforth" ],
-  "owners": [ "johandanforth", "marc.gravell", "nick.craver" ],
-  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "summary": "Dapper.Contrib",
   "description": "The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional \"dirty\" tracking of interface-based entities.",
-  "version": "1.50-beta9",
+  "version": "1.50-beta10",
   "title": "Dapper.Contrib",
-  "tags": [ "orm", "sql", "micro-orm", "dapper" ],
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
@@ -15,12 +21,16 @@
       "target": "project"
     }
   },
-  "compile": [
-    "**/*.cs",
-    "../Dapper/TypeExtensions.cs"
-  ],
-  "compilationOptions": {
-    "warningsAsErrors": true
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "compile": {
+      "include:": [
+        "**/*.cs"
+      ],
+      "includeFiles": [
+        "../Dapper/TypeExtensions.cs"
+      ] 
+    }
   },
   "frameworks": {
     "net40": {
@@ -30,7 +40,7 @@
       }
     },
     "net45": {
-      "compilationOptions": {
+      "buildOptions": {
         "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
@@ -40,15 +50,12 @@
       "dependencies": {
       }
     },
-    "dotnet5.4": {
-      "compilationOptions": {
+    "netstandard1.3": {
+      "buildOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
-        "System.Reflection.Emit": "4.0.1-beta-23516",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-beta-23516",
-        "System.Reflection.Emit.Lightweight": "4.0.1-beta-23516",
-        "System.Runtime": "4.0.21-beta-23516"
+        "Microsoft.CSharp": "4.0.1-rc2-24027"
       }
     }
   }

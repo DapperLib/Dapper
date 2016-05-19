@@ -1,13 +1,19 @@
 ﻿{
+  "packOptions": {
+    "summary": "Adds support for DbGeography, etc.",
+    "tags": [ "orm", "sql", "micro-orm" ],
+    "owners": [ "marc.gravell", "nick.craver" ],
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
+    }
+  },
   "authors": [ "Marc Gravell", "Nick Craver" ],
-  "owners": [ "marc.gravell", "nick.craver" ],
-  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "summary": "Adds support for DbGeography, etc.",
   "description": "Extension handlers for entity framework",
-  "version": "1.50-beta9",
+  "version": "1.50-beta10",
   "title": "Dapper entity framework type handlers (with a strong name)",
-  "tags": [ "orm", "sql", "micro-orm" ],
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper.StrongName": {
@@ -15,11 +21,16 @@
       "target": "project"
     }
   },
-  "compile": [
-    "../Dapper.EntityFramework/**/*.cs"
-  ],
-  "compilationOptions": {
-    "warningsAsErrors": true
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "compile": {
+      "include": [
+        "../Dapper.EntityFramework/**/*.cs"
+      ],
+      "exclude": [
+        "../Dapper.EntityFramework/obj/"
+      ]
+    }
   },
   "frameworks": {
     "net40": {
@@ -35,7 +46,7 @@
       }
     },
     "net45": {
-      "compilationOptions": {
+      "buildOptions": {
         "keyFile": "../Dapper.snk",
         "define": [ "ASYNC" ]
       },

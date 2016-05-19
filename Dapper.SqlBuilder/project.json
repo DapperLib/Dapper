@@ -1,13 +1,19 @@
 ﻿{
+  "packOptions": {
+    "summary": "Dapper.SqlBuilder",
+    "tags": [ "orm", "sql", "micro-orm", "query", "sql-builder" ],
+    "owners": [ "AEckenberger", "nick.craver" ],
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
+    }
+  },
   "authors": [ "Sam Saffron, Johan Danforth" ],
-  "owners": [ "AEckenberger", "nick.craver" ],
-  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "summary": "Dapper.SqlBuilder",
   "description": "The Dapper SqlBuilder component, for building SQL queries dynamically.",
-  "version": "1.50-beta9",
+  "version": "1.50-beta10",
   "title": "Dapper SqlBuilder component",
-  "tags": [ "orm", "sql", "micro-orm", "query", "sql-builder" ],
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
@@ -15,7 +21,7 @@
       "target": "project"
     }
   },
-  "compilationOptions": {
+  "buildOptions": {
     "warningsAsErrors": true
   },
   "frameworks": {
@@ -26,7 +32,7 @@
       }
     },
     "net45": {
-      "compilationOptions": {
+      "buildOptions": {
         "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
@@ -34,11 +40,12 @@
         "System.Data.Linq": "4.0.0.0"
       }
     },
-    "dotnet5.4": {
-      "compilationOptions": {
+    "netstandard1.3": {
+      "buildOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
+        "Microsoft.CSharp": "4.0.1-rc2-24027"
       }
     }
   }

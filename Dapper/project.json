@@ -1,18 +1,24 @@
 ﻿{
+  "packOptions": {
+    "summary": "A high performance Micro-ORM",
+    "tags": [ "orm", "sql", "micro-orm" ],
+    "owners": [ "marc.gravell", "nick.craver" ],
+    "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
+    }
+  },
+  "version": "1.50-beta10",
   "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
-  "owners": [ "marc.gravell", "nick.craver" ],
-  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "summary": "A high performance Micro-ORM",
   "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-  "version": "1.50-beta9",
   "title": "Dapper dot net",
-  "tags": [ "orm", "sql", "micro-orm" ],
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
   },
-  "releaseNotes": "http://stackexchange.github.io/dapper-dot-net/",
-  "compilationOptions": {
+  "buildOptions": {
     "warningsAsErrors": true
   },
   "frameworks": {
@@ -24,7 +30,7 @@
       }
     },
     "net45": {
-      "compilationOptions": {
+      "buildOptions": {
         "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
@@ -34,35 +40,28 @@
       }
     },
     "net451": {
+      "buildOptions": {
+        "define": [ "ASYNC" ]
+      },
       "frameworkAssemblies": {
         "System.Data": "4.0.0.0",
         "System.Xml": "4.0.0.0",
         "System.Xml.Linq": "4.0.0.0"
-      },
-      "compilationOptions": {
-        "define": [ "ASYNC" ]
       }
     },
-    "dotnet5.4": {
-      "compilationOptions": {
+    "netstandard1.3": {
+      "buildOptions": {
         "define": [ "ASYNC", "COREFX" ]
       },
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-23516",
-        "System.Collections": "4.0.11-beta-23516",
-        "System.Collections.Concurrent": "4.0.11-beta-23516",
-        "System.Collections.NonGeneric": "4.0.1-beta-23516",
-        "System.Data.SqlClient": "4.0.0-beta-23516",
-        "System.Linq": "4.0.1-beta-23516",
-        "System.Reflection.Emit.ILGeneration": "4.0.1-beta-23516",
-        "System.Reflection.Emit.Lightweight": "4.0.1-beta-23516",
-        "System.Reflection.TypeExtensions": "4.1.0-beta-23516",
-        "System.Runtime": "4.0.21-beta-23516",
-        "System.Text.RegularExpressions": "4.0.11-beta-23516",
-        "System.Threading": "4.0.11-beta-23516",
-        "System.Threading.ThreadPool": "4.0.10-beta-23516",
-        "System.Xml.XDocument": "4.0.11-beta-23516",
-        "System.Xml.XmlDocument": "4.0.1-beta-23516"
+        "NETStandard.Library": "1.5.0-rc2-24027",
+        "System.Data.SqlClient": "4.1.0-rc2-24027",
+        "System.Dynamic.Runtime": "4.0.11-rc2-24027",
+        "System.Reflection.Emit": "4.0.1-rc2-24027",
+        "System.Reflection.Emit.Lightweight": "4.0.1-rc2-24027",
+        "System.Xml.XmlDocument": "4.0.1-rc2-24027",
+        "System.Collections.NonGeneric": "4.0.1-rc2-24027",
+        "System.Reflection.TypeExtensions": "4.1.0-rc2-24027"
       }
     }
   }

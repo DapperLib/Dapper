@@ -1,10 +1,18 @@
 ﻿{
+  "packOptions": {
+    "summary": "Dapper Contrib Test Suite",
+    "tags": [ "orm", "sql", "micro-orm" ],
+    "owners": [ "johandanforth", "marc.gravell", "nick.craver" ],
+    "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/StackExchange/dapper-dot-net"
+    }
+  },
   "authors": [ "Sam Saffron", "Johan Danforth" ],
-  "owners": [ "johandanforth", "marc.gravell", "nick.craver" ],
-  "projectUrl": "https://github.com/StackExchange/dapper-dot-net",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "description": "Dapper Contrib Test Suite",
-  "title": "Dapper.Contrib.Tests",
+  "title": "Dapper.Tests.Contrib",
   "version": "1.0.0",
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
@@ -21,95 +29,88 @@
       "target": "project"
     }
   },
-  "compile": [
-    "**/*.cs",
-    "../Dapper.Tests/Assert.cs",
-    "../Dapper.Tests/XunitSkippable.cs",
-    "../Dapper/TypeExtensions.cs"
-  ],
-  "commands": {
-    "test": "xunit.runner.dnx"
+  "buildOptions": {
+    "warningsAsErrors": true,
+    "emitEntryPoint": true,
+    "debugType": "portable",
+    "compile": {
+      "include:": [
+        "**/*.cs"
+      ],
+      "includeFiles": [
+        "../Dapper.Tests/Assert.cs",
+        "../Dapper.Tests/XunitSkippable.cs",
+        "../Dapper/TypeExtensions.cs"
+      ]
+    } 
   },
-  "compilationOptions": {
-    "warningsAsErrors": true
-  },
+  "testRunner": "xunit",
   "frameworks": {
-    "net40": {
-      "frameworkAssemblies": {
-        "System.Configuration": "4.0.0.0",
-        "System.Data": "4.0.0.0",
-        "System.Data.Linq": "4.0.0.0",
-        "System.Transactions": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
-      },
-      "dependencies": {
-        "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        "MySql.Data": "6.9.8",
-        "System.Data.SQLite.Core": "1.0.98.1",
-        "xunit": "1.9.2"
-      }
-    },
-    "net45": {
-      "compilationOptions": {
-        "define": [ "ASYNC", "XUNIT2" ]
-      },
-      "frameworkAssemblies": {
-        "System.Configuration": "4.0.0.0",
-        "System.Data": "4.0.0.0",
-        "System.Data.Linq": "4.0.0.0",
-        "System.Runtime": "4.0.0.0",
-        "System.Transactions": "4.0.0.0",
-        "System.Xml": "4.0.0.0"
-      },
-      "dependencies": {
-        "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        "MySql.Data": "6.9.8",
-        "System.Data.SQLite.Core": "1.0.98.1",
-        "xunit": "2.1.0"
-      }
-    },
-    "dotnet5.4": {
-      "compilationOptions": {
-        "define": [ "ASYNC", "COREFX", "XUNIT2" ]
-      },
-      "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-23516",
-        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
-        "System.Collections": "4.0.11-beta-23516",
-        "System.Console": "4.0.0-beta-23516",
-        "System.Data.SqlClient": "4.0.0-beta-23516",
-        "System.Linq": "4.0.1-beta-23516",
-        "System.Runtime": "4.0.21-beta-23516",
-        "System.Threading": "4.0.11-beta-23516",
-        "xunit": "2.1.0"
-      }
-    },
-    "dnx451": {
-      "compilationOptions": {
-        "define": [ "ASYNC", "XUNIT2" ]
-      },
-      "frameworkAssemblies": {
-        "System.Configuration": "4.0.0.0",
-        "System.Data.Linq": "4.0.0.0",
-        "System.Transactions": "4.0.0.0"
-      },
-      "dependencies": {
-        "Microsoft.SqlServer.Compact": "4.0.8876.1",
-        "MySql.Data": "6.9.8",
-        "System.Data.SQLite.Core": "1.0.98.1",
-        "xunit": "2.1.0",
-        "xunit.runner.dnx": "2.1.0-rc1-build204"
-      }
-    },
-    "dnxcore50": {
-      "compilationOptions": {
+    //"net40": {
+    //  "frameworkAssemblies": {
+    //    "System.Configuration": "4.0.0.0",
+    //    "System.Data": "4.0.0.0",
+    //    "System.Data.Linq": "4.0.0.0",
+    //    "System.Transactions": "4.0.0.0",
+    //    "System.Xml": "4.0.0.0"
+    //  },
+    //  "dependencies": {
+    //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
+    //    "MySql.Data": "6.9.8",
+    //    "System.Data.SQLite.Core": "1.0.98.1",
+    //    "xunit": "1.9.2"
+    //  }
+    //},
+    //"net45": {
+    //  "compilationOptions": {
+    //    "define": [ "ASYNC", "XUNIT2" ]
+    //  },
+    //  "frameworkAssemblies": {
+    //    "System.Configuration": "4.0.0.0",
+    //    "System.Data": "4.0.0.0",
+    //    "System.Data.Linq": "4.0.0.0",
+    //    "System.Runtime": "4.0.0.0",
+    //    "System.Transactions": "4.0.0.0",
+    //    "System.Xml": "4.0.0.0"
+    //  },
+    //  "dependencies": {
+    //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
+    //    "MySql.Data": "6.9.8",
+    //    "System.Data.SQLite.Core": "1.0.98.1",
+    //    "xunit": "2.1.0"
+    //  }
+    //},
+
+    //"dnx451": {
+    //  "compilationOptions": {
+    //    "define": [ "ASYNC", "XUNIT2" ]
+    //  },
+    //  "frameworkAssemblies": {
+    //    "System.Configuration": "4.0.0.0",
+    //    "System.Data.Linq": "4.0.0.0",
+    //    "System.Transactions": "4.0.0.0"
+    //  },
+    //  "dependencies": {
+    //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
+    //    "MySql.Data": "6.9.8",
+    //    "System.Data.SQLite.Core": "1.0.98.1",
+    //    "xunit": "2.1.0",
+    //    "xunit.runner.dnx": "2.1.0-*"
+    //  }
+    //},
+    "netcoreapp1.0": {
+      "imports": [ "dnxcore50", "portable-net45+win8" ],
+      "buildOptions": {
         "define": [ "COREFX", "ASYNC", "XUNIT2" ]
       },
       "dependencies": {
-        "Microsoft.Data.Sqlite": "1.0.0-rc1-final",
-        "System.Runtime": "4.0.21-beta-23516",
+        "Microsoft.NETCore.App": {
+          "version": "1.0.0-rc2-3002702",
+          "type": "platform"
+        },
+        "Microsoft.Data.Sqlite": "1.0.0-rc2-final",
         "xunit": "2.1.0",
-        "xunit.runner.dnx": "2.1.0-rc1-build204"
+        "dotnet-test-xunit": "1.0.0-rc2-*"
       }
     }
   }
