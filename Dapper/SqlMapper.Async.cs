@@ -9,13 +9,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if COREFX
-using IDbTransaction = System.Data.Common.DbTransaction;
-using IDbConnection = System.Data.Common.DbConnection;
-using IDbCommand = System.Data.Common.DbCommand;
-using IDataReader = System.Data.Common.DbDataReader;
-#endif
-
 namespace Dapper
 {
     public static partial class SqlMapper

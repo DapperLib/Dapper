@@ -7,8 +7,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 
 #if COREFX
-using IDbDataParameter = System.Data.Common.DbParameter;
-using IDbCommand = System.Data.Common.DbCommand;
 using ApplicationException = System.InvalidOperationException;
 #endif
 

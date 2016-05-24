@@ -10,8 +10,6 @@ using System.Reflection.Emit;
 using Dapper;
 
 #if COREFX
-using IDbTransaction = System.Data.Common.DbTransaction;
-using IDbConnection = System.Data.Common.DbConnection;
 using DataException = System.InvalidOperationException;
 #else
 using System.Threading;

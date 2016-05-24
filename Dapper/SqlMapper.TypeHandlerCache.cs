@@ -2,10 +2,6 @@
 using System.ComponentModel;
 using System.Data;
 
-#if COREFX
-using IDbDataParameter = System.Data.Common.DbParameter;
-#endif
-
 namespace Dapper
 {
     partial class SqlMapper

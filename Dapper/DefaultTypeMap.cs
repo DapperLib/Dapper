@@ -195,6 +195,9 @@ namespace Dapper
         /// </summary>
         public static bool MatchNamesWithUnderscores { get; set; }
 
+        /// <summary>
+        /// The settable properties for this typemap
+        /// </summary>
         public List<PropertyInfo> Properties { get; }
     }
 }

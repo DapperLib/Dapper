@@ -1,9 +1,6 @@
 ﻿using System.Data;
 using System.Xml;
 using System.Xml.Linq;
-#if COREFX
-using IDbDataParameter = System.Data.Common.DbParameter;
-#endif
 
 namespace Dapper
 {

@@ -1,8 +1,4 @@
-﻿#if COREFX
-using IDataReader = System.Data.Common.DbDataReader;
-#endif
-
-using System;
+﻿using System;
 using System.Data;
 using System.Collections;
 using System.Collections.Generic;

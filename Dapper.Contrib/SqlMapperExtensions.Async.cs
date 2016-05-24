@@ -1,19 +1,13 @@
 ﻿#if ASYNC
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 
-#if COREFX
-using IDbTransaction = System.Data.Common.DbTransaction;
-using IDbConnection = System.Data.Common.DbConnection;
-using DataException = System.InvalidOperationException;
-#else
-using System.Data;
-#endif
 
 namespace Dapper.Contrib.Extensions
 {
