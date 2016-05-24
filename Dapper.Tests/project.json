@@ -74,9 +74,10 @@
     //    "xunit": "1.9.2"
     //  }
     //},
-    //"net45": {
-    //  "compilationOptions": {
+    //"net451": {
+    //  "buildOptions": {
     //    "define": [
+    //      "NET45",
     //      "ASYNC",
     //      "MYSQL",
     //      "ENTITY_FRAMEWORK",
@@ -97,7 +98,7 @@
     //    "System.Configuration": "4.0.0.0",
     //    "System.Data": "4.0.0.0",
     //    "System.Data.Linq": "4.0.0.0",
-    //    "System.Runtime": "4.0.0.0",
+    //    "System.Runtime": "4.0.10.0",
     //    "System.Xml": "4.0.0.0",
     //    "System.Xml.Linq": "4.0.0.0"
     //  },
@@ -121,7 +122,8 @@
     //    "Susanoo.Core": "1.2.4",
     //    "Susanoo.SqlServer": "1.2.4",
     //    "System.Data.SQLite": "1.0.99",
-    //    "xunit": "2.1.0"
+    //    "xunit": "2.1.0",
+    //    "dotnet-test-xunit": "1.0.0-rc3-*"
     //  }
     //},
     "netcoreapp1.0": {
@@ -136,7 +138,7 @@
         },
         "Microsoft.Data.Sqlite": "1.0.0-rc2-20597",
         "xunit": "2.1.0",
-        "dotnet-test-xunit": "1.0.0-rc2-*"
+        "dotnet-test-xunit": "1.0.0-rc3-*"
       }
     }
   }

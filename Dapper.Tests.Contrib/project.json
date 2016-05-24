@@ -80,9 +80,8 @@
     //    "xunit": "2.1.0"
     //  }
     //},
-
-    //"dnx451": {
-    //  "compilationOptions": {
+    //"net451": {
+    //  "buildOptions": {
     //    "define": [ "ASYNC", "XUNIT2" ]
     //  },
     //  "frameworkAssemblies": {
@@ -95,7 +94,7 @@
     //    "MySql.Data": "6.9.8",
     //    "System.Data.SQLite.Core": "1.0.98.1",
     //    "xunit": "2.1.0",
-    //    "xunit.runner.dnx": "2.1.0-*"
+    //    "dotnet-test-xunit": "1.0.0-rc3-*"
     //  }
     //},
     "netcoreapp1.0": {
@@ -110,7 +109,7 @@
         },
         "Microsoft.Data.Sqlite": "1.0.0-rc2-final",
         "xunit": "2.1.0",
-        "dotnet-test-xunit": "1.0.0-rc2-*"
+        "dotnet-test-xunit": "1.0.0-rc3-*"
       }
     }
   }
