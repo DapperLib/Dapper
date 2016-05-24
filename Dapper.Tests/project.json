@@ -24,9 +24,6 @@
       "target": "project"
     }
   },
-  //"commands": {
-  //  "perf": "Dapper.Tests"
-  //},
   "buildOptions": {
     "warningsAsErrors": true,
     "emitEntryPoint": true,
@@ -134,7 +131,7 @@
       },
       "dependencies": {
         "Microsoft.NETCore.App": {
-          "version": "1.0.0-rc2-24015",
+          "version": "1.0.0-rc2-3002702",
           "type": "platform"
         },
         "Microsoft.Data.Sqlite": "1.0.0-rc2-20597",
