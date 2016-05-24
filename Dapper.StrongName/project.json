@@ -19,6 +19,7 @@
   "dependencies": {
   },
   "buildOptions": {
+    "xmlDoc": true,
     "keyFile": "../Dapper.snk",
     "warningsAsErrors": true,
     "compile": {
@@ -28,7 +29,7 @@
       "exclude": [
         "../Dapper/obj/"
       ]
-    } 
+    }
   },
   "frameworks": {
     "net40": {

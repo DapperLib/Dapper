@@ -777,7 +777,7 @@ namespace Dapper
         /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
         /// <remarks>
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
-        /// or <see cref="DataSet"/>.
+        /// or <see cref="T:DataSet"/>.
         /// </remarks>
         /// <example>
         /// <code>
@@ -804,7 +804,7 @@ namespace Dapper
         /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
         /// <remarks>
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
-        /// or <see cref="DataSet"/>.
+        /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command)
         {

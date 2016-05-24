@@ -19,6 +19,7 @@
   "dependencies": {
   },
   "buildOptions": {
+    "xmlDoc": true,
     "warningsAsErrors": true
   },
   "frameworks": {

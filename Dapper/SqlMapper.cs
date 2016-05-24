@@ -354,6 +354,10 @@ namespace Dapper
             return LookupDbType(value.GetType(), "n/a", false, out handler);
 
         }
+
+        /// <summary>
+        /// OBSOLETE: For internal usage only. Lookup the DbType and handler for a given Type and member
+        /// </summary>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
 #if !COREFX
         [Browsable(false)]
@@ -554,7 +558,7 @@ namespace Dapper
         /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
         /// <remarks>
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
-        /// or <see cref="DataSet"/>.
+        /// or <see cref="T:DataSet"/>.
         /// </remarks>
         /// <example>
         /// <code>
@@ -583,7 +587,7 @@ namespace Dapper
         /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
         /// <remarks>
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
-        /// or <see cref="DataSet"/>.
+        /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
@@ -597,7 +601,7 @@ namespace Dapper
         /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
         /// <remarks>
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
-        /// or <see cref="DataSet"/>.
+        /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
@@ -804,7 +808,7 @@ namespace Dapper
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// <returns>A single instance or null of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public static T QueryFirst<T>(this IDbConnection cnn, CommandDefinition command)
@@ -815,7 +819,7 @@ namespace Dapper
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// <returns>A single or null instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public static T QueryFirstOrDefault<T>(this IDbConnection cnn, CommandDefinition command)
@@ -826,7 +830,7 @@ namespace Dapper
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// <returns>A single instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public static T QuerySingle<T>(this IDbConnection cnn, CommandDefinition command)
@@ -837,7 +841,7 @@ namespace Dapper
         /// Executes a query, returning the data typed as per T
         /// </summary>
         /// <remarks>the dynamic param may seem a bit odd, but this works around a major usability issue in vs, if it is Object vs completion gets annoying. Eg type new [space] get new object</remarks>
-        /// <returns>A sequence of data of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
+        /// <returns>A single instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public static T QuerySingleOrDefault<T>(this IDbConnection cnn, CommandDefinition command)
@@ -1970,6 +1974,9 @@ namespace Dapper
 
         }
 
+        /// <summary>
+        /// OBSOLETE: For internal usage only. Sanitizes the paramter value with proper type casting.
+        /// </summary>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
         public static object SanitizeParameterValue(object value)
         {
