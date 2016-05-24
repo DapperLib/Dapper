@@ -1,3 +1,6 @@
+param(
+    [parameter(Position=0)][string] $PreReleaseSuffix = ''
+)
 $solutionPath = split-path $MyInvocation.MyCommand.Definition
 $getDotNet = join-path $solutionPath "tools\install.ps1"
 
@@ -39,20 +42,26 @@ if ($LASTEXITCODE -ne 0)
 
 # Build all
 dir "Dapper*" | where {$_.PsIsContainer} |
-foreach {    
-    & $dotnet build "$_"
+foreach {
+    if ($PreReleaseSuffix) {
+        & $dotnet build "$_" --version-suffix "$PreReleaseSuffix"
+    } else {
+        & $dotnet build "$_"
+    }
 }
 # Run tests
 dir "*.Tests*" | where {$_.PsIsContainer} |
 foreach {
-    pushd "$_"
-    & $dotnet test
-    popd
+    & $dotnet test "$_"
 }
 # Package all
 dir "Dapper*" | where {$_.PsIsContainer -and $_ -NotLike "*.Tests*" } |
-foreach {    
-    & $dotnet pack "$_" -c Release -o .\.nupkg\
+foreach {
+    if ($PreReleaseSuffix) {
+        & $dotnet pack "$_" -c Release -o .\.nupkg\ --version-suffix "$PreReleaseSuffix"   
+    } else {
+        & $dotnet pack "$_" -c Release -o .\.nupkg\
+    }
 }
 
 ls */*/project.json | foreach { echo $_.FullName} |

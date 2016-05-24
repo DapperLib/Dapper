@@ -17,7 +17,6 @@
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
-      "version": "1.50-*",
       "target": "project"
     },
     "Dapper.Contrib": {

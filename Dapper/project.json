@@ -11,7 +11,7 @@
       "url": "https://github.com/StackExchange/dapper-dot-net"
     }
   },
-  "version": "1.50-rc2",
+  "version": "1.50-*",
   "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
   "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
   "title": "Dapper dot net",
