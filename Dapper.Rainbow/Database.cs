@@ -8,10 +8,6 @@ using System.Text;
 using System.Data.Common;
 using System.Reflection.Emit;
 
-#if COREFX
-using IDbTransaction = System.Data.Common.DbTransaction;
-#endif
-
 namespace Dapper
 {
     /// <summary>

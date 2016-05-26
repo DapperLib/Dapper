@@ -14,14 +14,6 @@ using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 #endif
 
-#if COREFX
-using IDbCommand = System.Data.Common.DbCommand;
-using IDbDataParameter = System.Data.Common.DbParameter;
-using IDbConnection = System.Data.Common.DbConnection;
-using IDbTransaction = System.Data.Common.DbTransaction;
-using IDataReader = System.Data.Common.DbDataReader;
-#endif
-
 namespace Dapper.Tests
 {
     public partial class TestSuite

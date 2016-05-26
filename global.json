@@ -1,6 +1,13 @@
 {
-
+  "sdk": {
+    "version": "1.0.0-preview1-002702"
+  },
   "projects": [
-      "Dapper", "Dapper.EntityFramework", "Dapper.Contrib", "Dapper.Rainbow", "Dapper.SqlBuilder", "Dapper.Tests"
+    "Dapper",
+    "Dapper.EntityFramework",
+    "Dapper.Contrib",
+    "Dapper.Rainbow",
+    "Dapper.SqlBuilder",
+    "Dapper.Tests"
   ]
 }

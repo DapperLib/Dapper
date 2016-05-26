@@ -6,7 +6,6 @@ using Xunit;
 using Xunit.Sdk;
 #if COREFX
 using Microsoft.Data.Sqlite;
-using IDbConnection = System.Data.Common.DbConnection;
 #else
 using System.Data.SQLite;
 using System.Data.SqlServerCe;

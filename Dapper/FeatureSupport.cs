@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Data;
 
-#if COREFX
-using IDbConnection = System.Data.Common.DbConnection;
-#endif
 namespace Dapper
 {
     /// <summary>

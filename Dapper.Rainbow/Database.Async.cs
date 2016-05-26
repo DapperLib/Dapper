@@ -6,10 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-#if COREFX
-using IDbTransaction = System.Data.Common.DbTransaction;
-#endif
-
 namespace Dapper
 {
     public abstract partial class Database<TDatabase> where TDatabase : Database<TDatabase>, new()

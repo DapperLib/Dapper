@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Data;
 
-#if COREFX
-using IDataReader = System.Data.Common.DbDataReader;
-#endif
-
 namespace Dapper
 {
     partial class SqlMapper

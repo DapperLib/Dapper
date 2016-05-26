@@ -1,13 +1,5 @@
 ﻿//#define POSTGRESQL // uncomment to run postgres tests
 
-#if COREFX
-using IDbCommand = System.Data.Common.DbCommand;
-using IDbDataParameter = System.Data.Common.DbParameter;
-using IDbConnection = System.Data.Common.DbConnection;
-using IDbTransaction = System.Data.Common.DbTransaction;
-using IDataReader = System.Data.Common.DbDataReader;
-#endif
-
 #if SQLITE && (NET40 || NET45)
 using SqliteConnection = System.Data.SQLite.SQLiteConnection;
 #endif
@@ -1847,60 +1839,6 @@ end");
             Dapper.SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
         }
 
-#if COREFX
-        class TransactedConnection : IDbConnection
-        {
-            IDbConnection _conn;
-            IDbTransaction _tran;
-
-            public TransactedConnection(IDbConnection conn, IDbTransaction tran)
-            {
-                _conn = conn;
-                _tran = tran;
-            }
-
-            public override string ConnectionString { get { return _conn.ConnectionString; } set { _conn.ConnectionString = value; } }
-            public override int ConnectionTimeout => _conn.ConnectionTimeout;
-            public override string Database => _conn.Database;
-            public override ConnectionState State => _conn.State;
-
-            protected override IDbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
-            {
-                return _tran;
-            }
-            
-            public override void ChangeDatabase(string databaseName)
-            {
-                _conn.ChangeDatabase(databaseName);
-            }
-            public override string DataSource => _conn.DataSource;
-
-            public override string ServerVersion => _conn.ServerVersion;
-
-            public override void Close()
-            {
-                _conn.Close();
-            }
-            protected override IDbCommand CreateDbCommand()
-            {
-                // The command inherits the "current" transaction.
-                var command = _conn.CreateCommand();
-                command.Transaction = _tran;
-                return command;
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                if(disposing) _conn.Dispose();
-                base.Dispose(disposing);
-            }
-
-            public override void Open()
-            {
-                _conn.Open();
-            }
-        }
-#else
         class TransactedConnection : IDbConnection
         {
             IDbConnection _conn;
@@ -1955,7 +1893,6 @@ end");
                 _conn.Open();
             }
         }
-#endif
 
         [Fact]
         public void TestDapperTableMetadataRetrieval()

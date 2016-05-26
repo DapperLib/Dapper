@@ -6,10 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-#if COREFX
-using IDbCommand = System.Data.Common.DbCommand;
-using IDataReader = System.Data.Common.DbDataReader;
-#endif
+
 namespace Dapper
 {
     partial class SqlMapper

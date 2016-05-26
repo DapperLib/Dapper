@@ -12,12 +12,12 @@
   },
   "authors": [ "Sam Saffron", "Johan Danforth" ],
   "description": "The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional \"dirty\" tracking of interface-based entities.",
-  "version": "1.50-rc2",
+  "version": "1.50.0-*",
   "title": "Dapper.Contrib",
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
-      "version": "1.50-*",
+      "version": "1.50.0-*",
       "target": "project"
     }
   },

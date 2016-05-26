@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Data;
 
-#if COREFX
-using IDbCommand = System.Data.Common.DbCommand;
-#endif
-
 namespace Dapper
 {
     /// <summary>

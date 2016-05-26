@@ -13,12 +13,13 @@
   },
   "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver" ],
   "description": "A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..",
-  "version": "1.50-rc2",
+  "version": "1.50.0-*",
   "title": "Dapper dot net (strong named)",
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
   },
   "buildOptions": {
+    "xmlDoc": true,
     "keyFile": "../Dapper.snk",
     "warningsAsErrors": true,
     "compile": {
@@ -28,7 +29,7 @@
       "exclude": [
         "../Dapper/obj/"
       ]
-    } 
+    }
   },
   "frameworks": {
     "net40": {

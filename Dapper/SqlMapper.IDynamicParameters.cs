@@ -1,9 +1,5 @@
 ﻿using System.Data;
 
-#if COREFX
-using IDbCommand = System.Data.Common.DbCommand;
-#endif
-
 namespace Dapper
 {
     partial class SqlMapper

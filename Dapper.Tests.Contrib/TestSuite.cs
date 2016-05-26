@@ -5,10 +5,7 @@ using System.Linq;
 
 using Dapper.Contrib.Extensions;
 
-#if COREFX
-using System.Reflection;
-using IDbConnection = System.Data.Common.DbConnection;
-#else
+#if !COREFX
 using System.Data.SqlServerCe;
 using System.Transactions;
 #endif

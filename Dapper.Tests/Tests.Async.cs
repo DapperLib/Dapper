@@ -8,10 +8,6 @@ using System.Threading;
 using System.Data.SqlClient;
 using Xunit;
 
-#if COREFX
-using IDbConnection = System.Data.Common.DbConnection;
-#endif
-
 namespace Dapper.Tests
 {
     public partial class TestSuite
