@@ -135,5 +135,21 @@ end");
             var retVal = p.Get<int>("RetVal");
             retVal.IsEqualTo(3);
         }
+        
+        [Fact]
+        public void Issue524_QueryMultiple_Cast()
+        { // aka: Read<int> should work even if the data is a <long>
+            
+            // using regular API
+            connection.Query<int>("select cast(42 as bigint)").IsEqualTo(42);
+            connection.QuerySingle<int>("select cast(42 as bigint)").IsEqualTo(42);
+            
+            // using multi-reader API
+            using(var reader = connection.QueryMultiple("select cast(42 as bigint); select cast(42 as bigint)"))
+            {
+                reader.Read<int>().Single().IsEqualTo(42);
+                reader.ReadSingle<int>().IsEqualTo(42);
+            }
+        }
     }
 }
