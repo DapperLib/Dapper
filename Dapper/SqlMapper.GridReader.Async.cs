@@ -181,7 +181,7 @@ namespace Dapper
                 }
                 else
                 {
-                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity);
+                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity, type);
                     if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
                     return Task.FromResult(result);
                 }

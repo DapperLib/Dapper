@@ -141,7 +141,7 @@ end");
         { // aka: Read<int> should work even if the data is a <long>
             
             // using regular API
-            connection.Query<int>("select cast(42 as bigint)").IsEqualTo(42);
+            connection.Query<int>("select cast(42 as bigint)").Single().IsEqualTo(42);
             connection.QuerySingle<int>("select cast(42 as bigint)").IsEqualTo(42);
             
             // using multi-reader API
