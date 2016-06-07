@@ -992,5 +992,56 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
             var value = dbParams.Get<int>("Field1");
             value.IsEqualTo(1);
         }
+
+        [Fact]
+        public void RunAllStringSplitTestsDisabled()
+        {
+            RunAllStringSplitTests(-1, 1500);
+        }
+        [FactRequiredCompatibilityLevel(FactRequiredCompatibilityLevelAttribute.SqlServer2016)]
+        public void RunAllStringSplitTestsEnabled()
+        {
+            RunAllStringSplitTests(10, 4500);
+        }
+        private void RunAllStringSplitTests(int stringSplit, int max = 150)
+        {
+            int oldVal = SqlMapper.Settings.InListStringSplitCount;
+            try
+            {
+                SqlMapper.Settings.InListStringSplitCount = stringSplit;
+                try { connection.Execute("drop table #splits"); } catch { }
+                int count = connection.QuerySingle<int>("create table #splits (i int not null);"
+                    + string.Concat(Enumerable.Range(-max, max * 3).Select(i => $"insert #splits (i) values ({i});"))
+                    + "select count(1) from #splits");
+                count.IsEqualTo(3 * max);
+
+                for (int i = 0; i < max; Incr(ref i))
+                {
+                    try
+                    {
+                        var vals = Enumerable.Range(1, i);
+                        var list = connection.Query<int>("select i from #splits where i in @vals", new { vals }).AsList();
+                        list.Count.IsEqualTo(i);
+                        list.Sum().IsEqualTo(vals.Sum());
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Error when i={i}: {ex.Message}", ex);
+                    }
+                }
+            }
+            finally
+            {
+                SqlMapper.Settings.InListStringSplitCount = oldVal;
+            }
+        }
+        static void Incr(ref int i)
+        {
+            if (i <= 15) i++;
+            else if (i <= 80) i += 5;
+            else if (i <= 200) i += 10;
+            else if (i <= 1000) i += 50;
+            else i += 100;
+        }
     }
 }

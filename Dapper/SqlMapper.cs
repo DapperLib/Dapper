@@ -1831,6 +1831,7 @@ namespace Dapper
             return intoBlock == 0 ? 0 : (padFactor - intoBlock);
         }
 
+        private static string GetInListRegex(string name) => @"([?@:]" + Regex.Escape(name) + @")(?!\w)(\s+(?i)unknown(?-i))?";
         /// <summary>
         /// Internal use only
         /// </summary>
@@ -1858,7 +1859,12 @@ namespace Dapper
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
                 DbType dbType = 0;
-                if (list != null)
+
+                int splitAt = SqlMapper.Settings.InListStringSplitCount;
+                bool viaSplit = splitAt >= 0
+                    && TryStringSplit(ref list, splitAt, namePrefix, command);
+
+                if (list != null && !viaSplit)
                 {
                     object lastValue = null;
                     foreach (var item in list)
@@ -1921,57 +1927,134 @@ namespace Dapper
                     }
                 }
 
-                var regexIncludingUnknown = @"([?@:]" + Regex.Escape(namePrefix) + @")(?!\w)(\s+(?i)unknown(?-i))?";
-                if (count == 0)
+                
+                if(viaSplit)
                 {
-                    command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
-                    {
-                        var variableName = match.Groups[1].Value;
-                        if (match.Groups[2].Success)
-                        {
-                            // looks like an optimize hint; leave it alone!
-                            return match.Value;
-                        }
-                        else
-                        {
-                            return "(SELECT " + variableName + " WHERE 1 = 0)";
-                        }
-                    }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
-                    var dummyParam = command.CreateParameter();
-                    dummyParam.ParameterName = namePrefix;
-                    dummyParam.Value = DBNull.Value;
-                    command.Parameters.Add(dummyParam);
+                    // already done
                 }
                 else
                 {
-                    command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                    var regexIncludingUnknown = GetInListRegex(namePrefix);
+                    if (count == 0)
                     {
-                        var variableName = match.Groups[1].Value;
-                        if (match.Groups[2].Success)
+                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
                         {
+                            var variableName = match.Groups[1].Value;
+                            if (match.Groups[2].Success)
+                            {
+                            // looks like an optimize hint; leave it alone!
+                            return match.Value;
+                            }
+                            else
+                            {
+                                return "(SELECT " + variableName + " WHERE 1 = 0)";
+                            }
+                        }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+                        var dummyParam = command.CreateParameter();
+                        dummyParam.ParameterName = namePrefix;
+                        dummyParam.Value = DBNull.Value;
+                        command.Parameters.Add(dummyParam);
+                    }
+                    else
+                    {
+                        command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+                        {
+                            var variableName = match.Groups[1].Value;
+                            if (match.Groups[2].Success)
+                            {
                             // looks like an optimize hint; expand it
                             var suffix = match.Groups[2].Value;
 
-                            var sb = GetStringBuilder().Append(variableName).Append(1).Append(suffix);
-                            for (int i = 2; i <= count; i++)
-                            {
-                                sb.Append(',').Append(variableName).Append(i).Append(suffix);
+                                var sb = GetStringBuilder().Append(variableName).Append(1).Append(suffix);
+                                for (int i = 2; i <= count; i++)
+                                {
+                                    sb.Append(',').Append(variableName).Append(i).Append(suffix);
+                                }
+                                return sb.__ToStringRecycle();
                             }
-                            return sb.__ToStringRecycle();
-                        }
-                        else
-                        {
-                            var sb = GetStringBuilder().Append('(').Append(variableName).Append(1);
-                            for (int i = 2; i <= count; i++)
+                            else
                             {
-                                sb.Append(',').Append(variableName).Append(i);
+                                var sb = GetStringBuilder().Append('(').Append(variableName).Append(1);
+                                for (int i = 2; i <= count; i++)
+                                {
+                                    sb.Append(',').Append(variableName).Append(i);
+                                }
+                                return sb.Append(')').__ToStringRecycle();
                             }
-                            return sb.Append(')').__ToStringRecycle();
-                        }
-                    }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+                        }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+                    }
                 }
             }
+        }
 
+        private static bool TryStringSplit(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command)
+        {
+            if (list == null || splitAt < 0) return false;
+            if (list is IEnumerable<int>) return TryStringSplit<int>(ref list, splitAt, namePrefix, command, "int not null",
+                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+            if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint not null",
+                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+            if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint not null",
+                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));            
+            if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint not null",
+                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+            return false;
+        }
+        private static bool TryStringSplit<T>(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, string colType,
+            Action<StringBuilder, T> append)
+        {
+            ICollection<T> typed = list as ICollection<T>; 
+            if(typed == null)
+            {
+                typed = ((IEnumerable<T>)list).ToList();
+                list = typed; // because we still need to be able to iterate it, even if we fail here
+            }
+            if (typed.Count < splitAt) return false;
+            
+            string varName = null;
+            var regexIncludingUnknown = GetInListRegex(namePrefix);
+            var sql = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
+            {
+                var variableName = match.Groups[1].Value;
+                if (match.Groups[2].Success)
+                {
+                    // looks like an optimize hint; leave it alone!
+                    return match.Value;
+                }
+                else
+                {
+                    varName = variableName;
+                    return $"(SELECT val from {variableName}_TSS)";
+                }
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+            if (varName == null) return false; // couldn't resolve the var!
+
+            command.CommandText = $"declare {varName}_TSS table(val {colType});insert {varName}_TSS (val) select value from string_split({varName},',');" + sql;
+            var concatenatedParam = command.CreateParameter();
+            concatenatedParam.ParameterName = namePrefix;
+            concatenatedParam.DbType = DbType.AnsiString;
+            concatenatedParam.Size = -1;
+            string val;
+            using (var iter = typed.GetEnumerator())
+            {
+                if(iter.MoveNext())
+                {
+                    var sb = GetStringBuilder();
+                    append(sb, iter.Current);
+                    while(iter.MoveNext())
+                    {
+                        append(sb.Append(','), iter.Current);
+                    }
+                    val = sb.ToString();
+                }
+                else
+                {
+                    val = "";
+                }
+            }
+            concatenatedParam.Value = val;
+            command.Parameters.Add(concatenatedParam);
+            return true;
         }
 
         /// <summary>
