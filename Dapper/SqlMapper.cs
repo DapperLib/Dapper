@@ -2024,7 +2024,7 @@ namespace Dapper
                 else
                 {
                     varName = variableName;
-                    return $"(SELECT val from {variableName}_TSS)";
+                    return $"(select val from {variableName}_TSS)";
                 }
             }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
             if (varName == null) return false; // couldn't resolve the var!
