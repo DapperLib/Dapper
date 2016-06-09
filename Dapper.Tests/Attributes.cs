@@ -28,7 +28,30 @@ namespace Dapper.Tests
         }
         public string Url { get; private set; }
     }
-    public class FactUnlessCaseSensitiveDatabaseAttribute : FactAttribute
+    public class FactRequiredCompatibilityLevelAttribute : FactAttribute
+    {
+        public FactRequiredCompatibilityLevelAttribute(int level) : base()
+        {
+            if (DetectedLevel < level)
+            {
+                Skip = $"Compatibility level {level} required; detected {DetectedLevel}";
+            }
+        }
+        public const int SqlServer2016 = 130;
+        public static readonly int DetectedLevel;
+        static FactRequiredCompatibilityLevelAttribute()
+        {
+            using (var conn = TestSuite.GetOpenConnection())
+            {
+                try
+                {
+                    DetectedLevel = conn.QuerySingle<int>("SELECT compatibility_level FROM sys.databases where name = DB_NAME()");
+                }
+                catch { }
+            }
+        }
+    }
+        public class FactUnlessCaseSensitiveDatabaseAttribute : FactAttribute
     {
         public FactUnlessCaseSensitiveDatabaseAttribute() : base()
         {
