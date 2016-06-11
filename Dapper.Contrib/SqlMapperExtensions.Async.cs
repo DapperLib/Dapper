@@ -203,7 +203,7 @@ namespace Dapper.Contrib.Extensions
                 type = type.GetGenericArguments()[0];
             }
 
-            var keyProperties = KeyPropertiesCache(type);
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418/#530, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
             if (!keyProperties.Any() && !explicitKeyProperties.Any())
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
@@ -264,7 +264,7 @@ namespace Dapper.Contrib.Extensions
                 type = type.GetGenericArguments()[0];
             }
 
-            var keyProperties = KeyPropertiesCache(type);
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418/#530, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
             if (!keyProperties.Any() && !explicitKeyProperties.Any())
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");

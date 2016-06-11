@@ -15,6 +15,35 @@ namespace Dapper.Tests.Contrib
 {
     public abstract partial class TestSuite
     {
+        [Fact]
+        public async Task Issue530()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                //update first (will fail) then insert
+                //added for bug #418/#530
+                var updateObject = new ObjectX
+                {
+                    ObjectXId = Guid.NewGuid().ToString(),
+                    Name = "Someone"
+                };
+                var updates = await connection.UpdateAsync(updateObject);
+                updates.IsFalse();
+
+                await connection.DeleteAllAsync<ObjectX>();
+
+                var objectXId = Guid.NewGuid().ToString();
+                var insertObject = new ObjectX
+                {
+                    ObjectXId = objectXId,
+                    Name = "Someone else"
+                };
+                await connection.InsertAsync(insertObject);
+                var list = await connection.GetAllAsync<ObjectX>();
+                list.Count().IsEqualTo(1);
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
