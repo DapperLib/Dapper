@@ -31,7 +31,7 @@
     "emitEntryPoint": true,
     "debugType": "portable",
     "compile": {
-      "include:": [
+      "include": [
         "**/*.cs"
       ],
       "includeFiles": [
