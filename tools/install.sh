@@ -47,7 +47,7 @@ say_err() {
 say() {
     # using stream 3 (defined in the beginning) to not interfere with stdout of functions
     # which may be used as return value
-    printf "%b\n" "${cyan:-}dotnet_install:${normal:-} $1" >&3
+    printf "%b\n" "${cyan:-}dotnet-install:${normal:-} $1" >&3
 }
 
 say_verbose() {
@@ -66,6 +66,11 @@ get_current_os_name() {
     else
         # Detect Distro
         if [ "$(cat /etc/*-release | grep -cim1 ubuntu)" -eq 1 ]; then
+            if [ "$(cat /etc/*-release | grep -cim1 16.04)" -eq 1 ]; then
+                echo "ubuntu.16.04"
+                return 0
+            fi
+
             echo "ubuntu"
             return 0
         elif [ "$(cat /etc/*-release | grep -cim1 centos)" -eq 1 ]; then
@@ -77,6 +82,16 @@ get_current_os_name() {
         elif [ "$(cat /etc/*-release | grep -cim1 debian)" -eq 1 ]; then
             echo "debian"
             return 0
+        elif [ "$(cat /etc/*-release | grep -cim1 fedora)" -eq 1 ]; then
+            if [ "$(cat /etc/*-release | grep -cim1 23)" -eq 1 ]; then
+                echo "fedora.23"
+                return 0
+            fi
+        elif [ "$(cat /etc/*-release | grep -cim1 opensuse)" -eq 1 ]; then
+            if [ "$(cat /etc/*-release | grep -cim1 13.2)" -eq 1 ]; then
+                echo "opensuse.13.2"
+                return 0
+            fi
         fi
     fi
     
@@ -121,7 +136,6 @@ check_pre_reqs() {
         [ -z "$($LDCONFIG_COMMAND -p | grep libssl)" ] && say_err "Unable to locate libssl. Install libssl to continue" && failing=true
         [ -z "$($LDCONFIG_COMMAND -p | grep libcurl)" ] && say_err "Unable to locate libcurl. Install libcurl to continue" && failing=true
         [ -z "$($LDCONFIG_COMMAND -p | grep libicu)" ] && say_err "Unable to locate libicu. Install libicu to continue" && failing=true
-        [ -z "$($LDCONFIG_COMMAND -p | grep gettext)" ] && say_err "Unable to locate gettext. Install gettext to continue" && failing=true
     fi
 
     if [ "$failing" = true ]; then
@@ -245,7 +259,7 @@ is_dotnet_package_installed() {
     
     local install_root=$1
     local relative_path_to_package=$2
-    local specific_version=$3
+    local specific_version=${3//[$'\t\r\n']}
     
     local dotnet_package_path=$(combine_paths $(combine_paths $install_root $relative_path_to_package) $specific_version)
     say_verbose "is_dotnet_package_installed: dotnet_package_path=$dotnet_package_path"
@@ -270,7 +284,12 @@ get_latest_version_info() {
     
     local osname=$(get_current_os_name)
     
-    local version_file_url="$azure_feed/$azure_channel/dnvm/latest.$osname.$normalized_architecture.version"
+    local version_file_url=null
+    if [ "$shared_runtime" = true ]; then
+        version_file_url="$azure_feed/$azure_channel/dnvm/latest.sharedfx.$osname.$normalized_architecture.version"
+    else
+        version_file_url="$azure_feed/Sdk/$azure_channel/latest.version"
+    fi
     say_verbose "get_latest_version_info: latest url: $version_file_url"
     
     download $version_file_url
@@ -288,17 +307,13 @@ get_azure_channel_from_channel() {
             echo "dev"
             return 0
             ;;
-        preview|beta)
-            echo "beta"
-            return 0
-            ;;
         production)
             say_err "Production channel does not exist yet"
             return 1
     esac
     
-    say_err "``$1`` is an invalid channel name. Use one of the following: ``future``, ``preview``, ``production``"
-    return 1
+	echo $channel
+    return 0
 }
 
 # args:
@@ -343,11 +358,17 @@ construct_download_link() {
     local azure_feed=$1
     local azure_channel=$2
     local normalized_architecture=$3
-    local specific_version=$4
+    local specific_version=${4//[$'\t\r\n']}
     
     local osname=$(get_current_os_name)
     
-    local download_link="$azure_feed/$azure_channel/Binaries/$specific_version/dotnet-dev-$osname-$normalized_architecture.$specific_version.tar.gz"
+    local download_link=null
+    if [ "$shared_runtime" = true ]; then
+        download_link="$azure_feed/$azure_channel/Binaries/$specific_version/dotnet-$osname-$normalized_architecture.$specific_version.tar.gz"
+    else
+        download_link="$azure_feed/Sdk/$specific_version/dotnet-dev-$osname-$normalized_architecture.$specific_version.tar.gz"
+    fi
+    
     echo "$download_link"
     return 0
 }
@@ -358,7 +379,7 @@ get_user_share_path() {
     if [ ! -z "${DOTNET_INSTALL_DIR:-}" ]; then
         echo $DOTNET_INSTALL_DIR
     else
-        echo "/usr/local/share/dotnet"
+        echo "$HOME/.dotnet"
     fi
     return 0
 }
@@ -528,7 +549,7 @@ local_version_file_relative_path="/.version"
 bin_folder_relative_path=""
 temporary_file_template="${TMPDIR:-/tmp}/dotnet.XXXXXXXXX"
 
-channel="preview"
+channel="rel-1.0.0"
 version="Latest"
 install_dir="<auto>"
 architecture="<auto>"
@@ -537,6 +558,7 @@ dry_run=false
 no_path=false
 azure_feed="https://dotnetcli.blob.core.windows.net/dotnet"
 verbose=false
+shared_runtime=false
 
 while [ $# -ne 0 ]
 do
@@ -557,6 +579,9 @@ do
         --arch|--architecture|-[Aa]rch|-[Aa]rchitecture)
             shift
             architecture="$1"
+            ;;
+        --shared-runtime|-[Ss]hared[Rr]untime)
+            shared_runtime=true
             ;;
         --debug-symbols|-[Dd]ebug[Ss]ymbols)
             debug_symbols=true
@@ -591,6 +616,8 @@ do
             echo "      -InstallDir"
             echo "  --architecture <ARCHITECTURE>  Architecture of .NET Tools. Currently only x64 is supported."
             echo "      --arch,-Architecture,-Arch"
+            echo "  --shared-runtime               Installs just the shared runtime bits, not the entire SDK."
+            echo "      -SharedRuntime"
             echo "  --debug-symbols,-DebugSymbols  Specifies if symbols should be included in the installation."
             echo "  --dry-run,-DryRun              Do not perform installation. Display download link."
             echo "  --no-path, -NoPath             Do not set PATH for the current process."
@@ -619,7 +646,7 @@ calculate_vars
 if [ "$dry_run" = true ]; then
     say "Payload URL: $download_link"
     say "Repeatable invocation: ./$(basename $0) --version $specific_version --channel $channel --install-dir $install_dir"
-    return 0
+    exit 0
 fi
 
 check_pre_reqs
@@ -628,9 +655,9 @@ install_dotnet
 bin_path=$(get_absolute_path $(combine_paths $install_root $bin_folder_relative_path))
 if [ "$no_path" = false ]; then
     say "Adding to current process PATH: ``$bin_path``. Note: This change will be visible only when sourcing script."
-    export PATH=$PATH:$bin_path
+    export PATH=$bin_path:$PATH
 else
     say "Binaries of dotnet can be found in $bin_path"
 fi
 
-say "Installation finished successfuly."
+say "Installation finished successfully."
