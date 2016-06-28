@@ -24,6 +24,7 @@
   "buildOptions": {
     "xmlDoc": true,
     "warningsAsErrors": true,
+    "keyFile": "../Dapper.snk",
     "compile": {
       "include": [
         "../Dapper.EntityFramework/**/*.cs"
@@ -48,7 +49,6 @@
     },
     "net45": {
       "buildOptions": {
-        "keyFile": "../Dapper.snk",
         "define": [ "ASYNC" ]
       },
       "frameworkAssemblies": {
