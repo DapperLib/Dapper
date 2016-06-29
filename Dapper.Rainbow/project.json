@@ -24,7 +24,7 @@
   "buildOptions": {
     "warningsAsErrors": true,
     "compile": {
-      "include:": [
+      "include": [
         "**/*.cs"
       ],
       "includeFiles": [
