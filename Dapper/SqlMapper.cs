@@ -1990,13 +1990,13 @@ namespace Dapper
         private static bool TryStringSplit(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command)
         {
             if (list == null || splitAt < 0) return false;
-            if (list is IEnumerable<int>) return TryStringSplit<int>(ref list, splitAt, namePrefix, command, "int not null",
+            if (list is IEnumerable<int>) return TryStringSplit<int>(ref list, splitAt, namePrefix, command, "int",
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint not null",
+            if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint",
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint not null",
+            if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint",
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));            
-            if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint not null",
+            if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint",
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             return false;
         }
@@ -2024,12 +2024,12 @@ namespace Dapper
                 else
                 {
                     varName = variableName;
-                    return "(select val from " + variableName + "_TSS)";
+                    return "(select cast([value] as " + colType + ") from string_split(" + variableName + ",','))";
                 }
             }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
             if (varName == null) return false; // couldn't resolve the var!
 
-            command.CommandText = "declare " + varName + "_TSS table(val " + colType + ");insert " + varName + "_TSS (val) select value from string_split(" + varName + ",',');" + sql;
+            command.CommandText = sql;
             var concatenatedParam = command.CreateParameter();
             concatenatedParam.ParameterName = namePrefix;
             concatenatedParam.DbType = DbType.AnsiString;
