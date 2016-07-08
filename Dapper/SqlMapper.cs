@@ -3,6 +3,23 @@
  Home page: https://github.com/StackExchange/dapper-dot-net
  */
 
+<<<<<<< HEAD
+=======
+#define CustomizedDapper
+
+#if COREFX
+using IDbDataParameter = System.Data.Common.DbParameter;
+using IDataParameter = System.Data.Common.DbParameter;
+using IDbTransaction = System.Data.Common.DbTransaction;
+using IDbConnection = System.Data.Common.DbConnection;
+using IDbCommand = System.Data.Common.DbCommand;
+using IDataReader = System.Data.Common.DbDataReader;
+using IDataRecord = System.Data.Common.DbDataReader;
+using IDataParameterCollection = System.Data.Common.DbParameterCollection;
+using DataException = System.InvalidOperationException;
+#endif
+
+>>>>>>> refs/remotes/origin/master
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -532,7 +549,11 @@ namespace Dapper
                                 cmd.Parameters.Clear(); // current code is Add-tastic
                             }
                             info.ParamReader(cmd, obj);
+#if CustomizedDapper
+                            CustomizedDapper.DbHelper.InternalCommandExecuteWrap(cmd, x => x.ExecuteNonQuery());
+#else
                             total += cmd.ExecuteNonQuery();
+#endif
                         }
                     }
                     command.OnCompleted();
@@ -908,14 +929,22 @@ namespace Dapper
         {
             try
             {
+#if CustomizedDapper
+                return CustomizedDapper.DbHelper.InternalCommandExecuteWrap(cmd, x => x.ExecuteReader(GetBehavior(wasClosed, behavior)));
+#else
                 return cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
+#endif
             }
             catch (ArgumentException ex)
             { // thanks, Sqlite!
                 if (DisableCommandBehaviorOptimizations(behavior, ex))
                 {
                     // we can retry; this time it will have different flags
+#if CustomizedDapper
+                    return CustomizedDapper.DbHelper.InternalCommandExecuteWrap(cmd, x => x.ExecuteReader(GetBehavior(wasClosed, behavior)));
+#else
                     return cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
+#endif
                 }
                 throw;
             }
@@ -2669,7 +2698,11 @@ namespace Dapper
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
+#if CustomizedDapper
+                result = CustomizedDapper.DbHelper.InternalCommandExecuteWrap(cmd, x => x.ExecuteScalar());
+#else
                 result =cmd.ExecuteScalar();
+#endif
                 command.OnCompleted();
             }
             finally
