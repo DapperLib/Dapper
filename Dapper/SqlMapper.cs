@@ -2024,12 +2024,12 @@ namespace Dapper
                 else
                 {
                     varName = variableName;
-                    return $"(select val from {variableName}_TSS)";
+                    return "(select val from " + variableName + "_TSS)";
                 }
             }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
             if (varName == null) return false; // couldn't resolve the var!
 
-            command.CommandText = $"declare {varName}_TSS table(val {colType});insert {varName}_TSS (val) select value from string_split({varName},',');" + sql;
+            command.CommandText = "declare " + varName + "_TSS table(val " + colType + ");insert " + varName + "_TSS (val) select value from string_split(" + varName + ",',');" + sql;
             var concatenatedParam = command.CreateParameter();
             concatenatedParam.ParameterName = namePrefix;
             concatenatedParam.DbType = DbType.AnsiString;
@@ -2237,7 +2237,7 @@ namespace Dapper
             {
                 filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
             }
-            var dm = new DynamicMethod($"ParamInfo{Guid.NewGuid()}", null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
+            var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();
 
@@ -2897,7 +2897,7 @@ namespace Dapper
         )
         {
             var returnType = type.IsValueType() ? typeof(object) : type;
-            var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", returnType, new[] { typeof(IDataReader) }, type, true);
+            var dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), returnType, new[] { typeof(IDataReader) }, type, true);
             var il = dm.GetILGenerator();
             il.DeclareLocal(typeof(int));
             il.DeclareLocal(type);
@@ -2971,7 +2971,7 @@ namespace Dapper
                     var ctor = typeMap.FindConstructor(names, types);
                     if (ctor == null)
                     {
-                        string proposedTypes = $"({string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray())})";
+                        string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
                         throw new InvalidOperationException($"A parameterless default constructor or one matching signature {proposedTypes} is required for {type.FullName} materialization");
                     }
 

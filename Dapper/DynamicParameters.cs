@@ -403,7 +403,7 @@ namespace Dapper
             if (setter != null) goto MAKECALLBACK;
 
             // Come on let's build a method, let's build it, let's build it now!
-            var dm = new DynamicMethod($"ExpressionParam{Guid.NewGuid()}", null, new[] { typeof(object), GetType() }, true);
+            var dm = new DynamicMethod("ExpressionParam" + Guid.NewGuid().ToString(), null, new[] { typeof(object), GetType() }, true);
             var il = dm.GetILGenerator();
 
             il.Emit(OpCodes.Ldarg_0); // [object]

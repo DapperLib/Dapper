@@ -165,7 +165,7 @@ namespace Dapper
                 return new SimpleMemberMap(columnName, property);
 
             // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
-            var backingFieldName = $"<{columnName}>k__BackingField";
+            var backingFieldName = "<" + columnName + ">k__BackingField";
 
             // preference order is:
             // exact match over underscre match, exact case over wrong case, backing fields over regular fields, match-inc-underscores over match-exc-underscores
@@ -177,7 +177,7 @@ namespace Dapper
             if (field == null && MatchNamesWithUnderscores)
             {
                 var effectiveColumnName = columnName.Replace("_", "");
-                backingFieldName = $"<{effectiveColumnName}>k__BackingField";
+                backingFieldName = "<" +effectiveColumnName + ">k__BackingField";
 
                 field = _fields.FirstOrDefault(p => string.Equals(p.Name, effectiveColumnName, StringComparison.Ordinal))
                     ?? _fields.FirstOrDefault(p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
