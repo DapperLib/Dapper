@@ -647,6 +647,8 @@ namespace Dapper
             {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+                //temporary fix to allow cancelling query with multimap
+                using (var reg = command.CancellationToken.Register(() => cmd.Cancel()))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
@@ -694,7 +696,10 @@ namespace Dapper
             try {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false)) {
+                //temporary fix to allow cancelling query with multimap
+                using (var reg = command.CancellationToken.Register(() => cmd.Cancel()))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                {
                     var results = MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;
                 }
