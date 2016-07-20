@@ -3074,12 +3074,12 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
   truncate table bar;
   insert bar (id, bool_val) values (1, null);
   insert bar (id, bool_val) values (2, 0);
-  insert bar (id, bool_val) values (3, 2);
+  insert bar (id, bool_val) values (3, 1);
   insert bar (id, bool_val) values (4, null);
-  insert bar (id, bool_val) values (5, 3);
+  insert bar (id, bool_val) values (5, 1);
   insert bar (id, bool_val) values (6, 0);
   insert bar (id, bool_val) values (7, null);
-  insert bar (id, bool_val) values (8, 5);");
+  insert bar (id, bool_val) values (8, 1);");
 
                 var rows = conn.Query<MySqlHasBool>("select * from bar;").ToDictionary(x => x.Id);
 
