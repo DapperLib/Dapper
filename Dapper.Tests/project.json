@@ -22,8 +22,8 @@
     "Dapper.Contrib": {
       "target": "project"
     },
-    "xunit": "2.2.0-beta2-build3300",
-    "dotnet-test-xunit": "2.2.0-preview2-build1029"
+    "xunit": "2.1.0",
+    "xunit.assert":  "2.1.0"
   },
   "buildOptions": {
     "warningsAsErrors": true,
@@ -33,7 +33,7 @@
   "testRunner": "xunit",
   "frameworks": {
     //"net40": {
-    //  "compilationOptions": {
+    //  "buildOptions": {
     //    "define": [
     //      "MYSQL",
     //      "ENTITY_FRAMEWORK",
@@ -71,73 +71,71 @@
     //    "Simple.Data.Core": "1.0.0-rc3",
     //    "Simple.Data.SqlServer": "1.0.0-rc3",
     //    "Soma": "1.8.0.7",
-    //    "System.Data.SQLite": "1.0.99",
-    //    "xunit": "1.9.2"
+    //    "System.Data.SQLite": "1.0.99"
     //  }
     //},
-    //"net451": {
-    //  "buildOptions": {
-    //    "define": [
-    //      "NET45",
-    //      "ASYNC",
-    //      "MYSQL",
-    //      "ENTITY_FRAMEWORK",
-    //      "LINQ2SQL",
-    //      "FIREBIRD",
-    //      "SQL_CE",
-    //      "POSTGRESQL",
-    //      "OLEDB",
-    //      "MASSIVE",
-    //      "ORMLITE",
-    //      "SOMA",
-    //      "SIMPLEDATA",
-    //      "SQLITE",
-    //      "XUNIT2"
-    //    ]
-    //  },
-    //  "frameworkAssemblies": {
-    //    "System.Configuration": "4.0.0.0",
-    //    "System.Data": "4.0.0.0",
-    //    "System.Data.Linq": "4.0.0.0",
-    //    "System.Runtime": "4.0.10.0",
-    //    "System.Xml": "4.0.0.0",
-    //    "System.Xml.Linq": "4.0.0.0"
-    //  },
-    //  "dependencies": {
-    //    "Dapper.EntityFramework": {
-    //      "target": "project"
-    //    },
-    //    "EntityFramework": "6.1.3",
-    //    "FirebirdSql.Data.FirebirdClient": "4.10.0",
-    //    "Microsoft.SqlServer.Compact": "4.0.8876.1",
-    //    "Microsoft.SqlServer.Types": "11.0.2",
-    //    "MySql.Data": "6.9.8",
-    //    "NHibernate": "4.0.4.4000",
-    //    "Npgsql": "3.0.5",
-    //    "ServiceStack.OrmLite": "4.0.48",
-    //    "ServiceStack.OrmLite.SqlServer": "4.0.48",
-    //    "Simple.Data.Ado": "2.0.0-alpha1",
-    //    "Simple.Data.Core": "2.0.0-alpha1",
-    //    "Simple.Data.SqlServer": "2.0.0-alpha1",
-    //    "Soma": "1.8.0.7",
-    //    "Susanoo.Core": "1.2.4",
-    //    "Susanoo.SqlServer": "1.2.4",
-    //    "System.Data.SQLite": "1.0.99",
-    //    "xunit": "2.1.0",
-    //    "dotnet-test-xunit": "1.0.0-rc3-*"
-    //  }
-    //},
-    "netcoreapp1.0": {
+    "net451": {
       "buildOptions": {
-        "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
+        "define": [
+          "NET45",
+          "ASYNC",
+          "MYSQL",
+          "ENTITY_FRAMEWORK",
+          "LINQ2SQL",
+          "FIREBIRD",
+          "SQL_CE",
+          "POSTGRESQL",
+          "OLEDB",
+          "MASSIVE",
+          "ORMLITE",
+          "SOMA",
+          "SIMPLEDATA",
+          "SQLITE",
+          "XUNIT2"
+        ]
+      },
+      "frameworkAssemblies": {
+        "System.Configuration": "4.0.0.0",
+        "System.Data": "4.0.0.0",
+        "System.Data.Linq": "4.0.0.0",
+        "System.Runtime": "4.0.10.0",
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
       },
       "dependencies": {
-        "Microsoft.NETCore.App": {
-          "version": "1.0.0",
-          "type": "platform"
+        "Dapper.EntityFramework": {
+          "target": "project"
         },
-        "Microsoft.Data.Sqlite": "1.0.0"
+        "EntityFramework": "6.1.3",
+        "FirebirdSql.Data.FirebirdClient": "4.10.0",
+        "Microsoft.SqlServer.Compact": "4.0.8876.1",
+        "Microsoft.SqlServer.Types": "11.0.2",
+        "MySql.Data": "6.9.8",
+        "NHibernate": "4.0.4.4000",
+        "Npgsql": "3.0.5",
+        "ServiceStack.OrmLite": "4.0.48",
+        "ServiceStack.OrmLite.SqlServer": "4.0.48",
+        "Simple.Data.Ado": "2.0.0-alpha1",
+        "Simple.Data.Core": "2.0.0-alpha1",
+        "Simple.Data.SqlServer": "2.0.0-alpha1",
+        "Soma": "1.8.0.7",
+        "Susanoo.Core": "1.2.4",
+        "Susanoo.SqlServer": "1.2.4",
+        "System.Data.SQLite": "1.0.99"
       }
     }
+    //,
+    //"netcoreapp1.0": {
+    //  "buildOptions": {
+    //    "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
+    //  },
+    //  "dependencies": {
+    //    "Microsoft.NETCore.App": {
+    //      "version": "1.0.0",
+    //      "type": "platform"
+    //    },
+    //    "Microsoft.Data.Sqlite": "1.0.0"
+    //  }
+    //}
   }
 }

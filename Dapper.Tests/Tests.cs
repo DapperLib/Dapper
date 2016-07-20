@@ -3058,6 +3058,45 @@ end");
             if (open) conn.Open();
             return conn;
         }
+
+        [FactMySql]
+        public void Issue552_SignedUnsignedBooleans()
+        {
+
+            using (var conn = GetMySqlConnection(true, false, false))
+            {
+                conn.Execute(@"
+CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
+  `id` INT NOT NULL,
+  `bool_val` BOOL NULL,
+  PRIMARY KEY (`id`));
+  
+  truncate table bar;
+  insert bar (id, bool_val) values (1, null);
+  insert bar (id, bool_val) values (2, 0);
+  insert bar (id, bool_val) values (3, 2);
+  insert bar (id, bool_val) values (4, null);
+  insert bar (id, bool_val) values (5, 3);
+  insert bar (id, bool_val) values (6, 0);
+  insert bar (id, bool_val) values (7, null);
+  insert bar (id, bool_val) values (8, 5);");
+
+                var rows = conn.Query<MySqlHasBool>("select * from bar;").ToDictionary(x => x.Id);
+
+                rows[1].Bool_Val.IsNull();
+                rows[2].Bool_Val.IsEqualTo(false);
+                rows[3].Bool_Val.IsEqualTo(true);
+                rows[4].Bool_Val.IsNull();
+                rows[5].Bool_Val.IsEqualTo(true);
+                rows[6].Bool_Val.IsEqualTo(false);
+                rows[7].Bool_Val.IsNull();
+                rows[8].Bool_Val.IsEqualTo(true);
+            }
+        }
+        class MySqlHasBool {
+            public int Id {get;set;}
+            public bool? Bool_Val {get;set;}
+        }
         [FactMySql]
         public void Issue295_NullableDateTime_MySql_Default()
         {
