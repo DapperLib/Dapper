@@ -3302,7 +3302,19 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 }
             }
         }
-        
+
+        [Fact]
+        public void Issue569_SO38527197_PseudoPositionalParameters_In()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                int[] ids = { 1, 2, 5, 7 };
+                var list = connection.Query<int>("select * from string_split('1,2,3,4,5',',') where value in ?ids?", new { ids }).AsList();
+                list.Sort();
+                string.Join(",", list).IsEqualTo("1,2,5");
+            }
+        }
+
         [Fact]
         public void PseudoPositionalParameters_ExecSingle()
         {

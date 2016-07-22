@@ -1831,7 +1831,9 @@ namespace Dapper
             return intoBlock == 0 ? 0 : (padFactor - intoBlock);
         }
 
-        private static string GetInListRegex(string name) => @"([?@:]" + Regex.Escape(name) + @")(?!\w)(\s+(?i)unknown(?-i))?";
+        private static string GetInListRegex(string name, bool byPosition) => byPosition
+            ? (@"(\?)" + Regex.Escape(name) + @"\?(?!\w)(\s+(?i)unknown(?-i))?")
+            : (@"([?@:]" + Regex.Escape(name) + @")(?!\w)(\s+(?i)unknown(?-i))?");
         /// <summary>
         /// Internal use only
         /// </summary>
@@ -1854,6 +1856,7 @@ namespace Dapper
             }
             else
             {
+                bool byPosition = ShouldPassByPosition(command.CommandText);
                 var list = value as IEnumerable;
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
@@ -1862,7 +1865,7 @@ namespace Dapper
 
                 int splitAt = SqlMapper.Settings.InListStringSplitCount;
                 bool viaSplit = splitAt >= 0
-                    && TryStringSplit(ref list, splitAt, namePrefix, command);
+                    && TryStringSplit(ref list, splitAt, namePrefix, command, byPosition);
 
                 if (list != null && !viaSplit)
                 {
@@ -1934,7 +1937,7 @@ namespace Dapper
                 }
                 else
                 {
-                    var regexIncludingUnknown = GetInListRegex(namePrefix);
+                    var regexIncludingUnknown = GetInListRegex(namePrefix, byPosition);
                     if (count == 0)
                     {
                         command.CommandText = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
@@ -1974,10 +1977,13 @@ namespace Dapper
                             }
                             else
                             {
-                                var sb = GetStringBuilder().Append('(').Append(variableName).Append(1);
+
+                                var sb = GetStringBuilder().Append('(').Append(variableName);
+                                if(!byPosition) sb.Append(1);
                                 for (int i = 2; i <= count; i++)
                                 {
-                                    sb.Append(',').Append(variableName).Append(i);
+                                    sb.Append(',').Append(variableName);
+                                    if (!byPosition) sb.Append(i);
                                 }
                                 return sb.Append(')').__ToStringRecycle();
                             }
@@ -1987,20 +1993,20 @@ namespace Dapper
             }
         }
 
-        private static bool TryStringSplit(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command)
+        private static bool TryStringSplit(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, bool byPosition)
         {
             if (list == null || splitAt < 0) return false;
-            if (list is IEnumerable<int>) return TryStringSplit<int>(ref list, splitAt, namePrefix, command, "int",
+            if (list is IEnumerable<int>) return TryStringSplit<int>(ref list, splitAt, namePrefix, command, "int", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint",
+            if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint",
+            if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));            
-            if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint",
+            if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             return false;
         }
-        private static bool TryStringSplit<T>(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, string colType,
+        private static bool TryStringSplit<T>(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
             ICollection<T> typed = list as ICollection<T>; 
@@ -2012,7 +2018,7 @@ namespace Dapper
             if (typed.Count < splitAt) return false;
             
             string varName = null;
-            var regexIncludingUnknown = GetInListRegex(namePrefix);
+            var regexIncludingUnknown = GetInListRegex(namePrefix, byPosition);
             var sql = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
             {
                 var variableName = match.Groups[1].Value;
