@@ -46,7 +46,6 @@
         "System.Configuration": "4.0.0.0",
         "System.Data": "4.0.0.0",
         "System.Data.Linq": "4.0.0.0",
-        "System.Runtime": "4.0.0.0",
         "System.Xml": "4.0.0.0"
       },
       "dependencies": {
