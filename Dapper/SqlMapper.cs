@@ -38,7 +38,7 @@ namespace Dapper
                 int max = length < 0 ? reader.FieldCount : startBound + length;
                 int hash = (-37 * startBound) + max;
                 for (int i = startBound; i < max; i++)
-                {   
+                {
                     object tmp = reader.GetName(i);
                     hash = -79 * ((hash * 31) + (tmp?.GetHashCode() ?? 0)) + (reader.GetFieldType(i)?.GetHashCode() ?? 0);
                 }
@@ -1930,7 +1930,7 @@ namespace Dapper
                     }
                 }
 
-                
+
                 if(viaSplit)
                 {
                     // already done
@@ -2001,7 +2001,7 @@ namespace Dapper
             if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint", byPosition,
-                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));            
+                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             return false;
@@ -2009,14 +2009,14 @@ namespace Dapper
         private static bool TryStringSplit<T>(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
-            ICollection<T> typed = list as ICollection<T>; 
+            ICollection<T> typed = list as ICollection<T>;
             if(typed == null)
             {
                 typed = ((IEnumerable<T>)list).ToList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
             }
             if (typed.Count < splitAt) return false;
-            
+
             string varName = null;
             var regexIncludingUnknown = GetInListRegex(namePrefix, byPosition);
             var sql = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
@@ -2402,7 +2402,7 @@ namespace Dapper
                     var propType = prop.PropertyType;
                     var nullType = Nullable.GetUnderlyingType(propType);
                     bool callSanitize = false;
-                    
+
                     if((nullType ?? propType).IsEnum())
                     {
                         if(nullType != null)
@@ -2426,7 +2426,7 @@ namespace Dapper
                                 case TypeCode.UInt32: propType = typeof(uint); break;
                                 case TypeCode.UInt64: propType = typeof(ulong); break;
                             }
-                        }                        
+                        }
                     }
                     else
                     {

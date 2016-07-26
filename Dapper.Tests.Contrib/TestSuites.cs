@@ -156,7 +156,7 @@ namespace Dapper.Tests.Contrib
         const string FileName = "Test.DB.sdf";
         public static string ConnectionString => $"Data Source={FileName};";
         public override IDbConnection GetConnection() => new SqlCeConnection(ConnectionString);
-            
+
         static SqlCETestSuite()
         {
             if (File.Exists(FileName))

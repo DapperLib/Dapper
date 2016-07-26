@@ -40,7 +40,7 @@
             /// </summary>
             /// <remarks>
             /// Caution: this should be treated with care if your DB provider (or the specific configuration) allows for null
-            /// equality (aka "ansi nulls off"), as this may change the intent of your query; as such, this is disabled by 
+            /// equality (aka "ansi nulls off"), as this may change the intent of your query; as such, this is disabled by
             /// default and must be enabled.
             /// </remarks>
             public static bool PadListExpansions { get; set; }

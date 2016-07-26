@@ -48,7 +48,7 @@ namespace Dapper.Contrib.Extensions
                 {"sqlceconnection", new SqlCeServerAdapter()},
                 {"npgsqlconnection", new PostgresAdapter()},
                 {"sqliteconnection", new SQLiteAdapter()},
-                {"mysqlconnection", new MySqlAdapter()},
+                {"mysqlconnection", new MySqlAdapter()}
             };
 
         private static List<PropertyInfo> ComputedPropertiesCache(Type type)
@@ -144,10 +144,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts".  
+        /// Returns a single entity by a single id from table "Ts".
         /// Id must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -199,10 +199,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entites from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -258,7 +258,7 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
+                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework
                 var tableAttr = type
 #if COREFX
                     .GetTypeInfo()
@@ -392,7 +392,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection); 
+            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count; i++)
             {
@@ -484,7 +484,7 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
-        
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             var name = GetDatabaseType?.Invoke(connection).ToLower()
@@ -591,7 +591,7 @@ namespace Dapper.Contrib.Extensions
 
             private static void CreateProperty<T>(TypeBuilder typeBuilder, string propertyName, Type propType, MethodInfo setIsDirtyMethod, bool isIdentity)
             {
-                //Define the field and the property 
+                //Define the field and the property
                 var field = typeBuilder.DefineField("_" + propertyName, propType, FieldAttributes.Private);
                 var property = typeBuilder.DefineProperty(propertyName,
                                                System.Reflection.PropertyAttributes.None,
@@ -689,7 +689,7 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
-    
+
     //new methods for issue #336
     void AppendColumnName(StringBuilder sb, string columnName);
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);

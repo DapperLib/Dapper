@@ -17,7 +17,7 @@ namespace Dapper.Tests
         {
             Xunit.Assert.True(a > b, $"{a} should be larger than {b}");
         }
- 
+
         public static void IsMoreThan(this long a, int b)
         {
             Xunit.Assert.True(a > b, $"{a} should be larger than {b}");

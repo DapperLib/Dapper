@@ -32,7 +32,7 @@ namespace Dapper.Tests.Contrib
         public int ObjectYId { get; set; }
         public string Name { get; set; }
     }
-    
+
     [Table("ObjectZ")]
     public class ObjectZ
     {
@@ -131,7 +131,7 @@ namespace Dapper.Tests.Contrib
         }
 
         /// <summary>
-        /// Tests for issue #351 
+        /// Tests for issue #351
         /// </summary>
         [Fact]
         public void InsertGetUpdateDeleteWithExplicitKey()
@@ -171,7 +171,7 @@ namespace Dapper.Tests.Contrib
                 o2.IsNull();
             }
         }
-        
+
         [Fact]
         public void GetAllWithExplicitKey()
         {
@@ -208,7 +208,7 @@ namespace Dapper.Tests.Contrib
                 //o2.IsNull();
             }
         }
-        
+
         [Fact]
         public void ShortIdentity()
         {

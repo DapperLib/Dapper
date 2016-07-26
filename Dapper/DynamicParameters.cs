@@ -493,7 +493,7 @@ namespace Dapper
         }
 
         private List<Action> outputCallbacks;
-        
+
         void SqlMapper.IParameterCallbacks.OnCompleted()
         {
             foreach (var param in (from p in parameters select p.Value))

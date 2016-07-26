@@ -29,11 +29,11 @@ namespace Dapper
             IsAnsi = IsAnsiDefault;
         }
         /// <summary>
-        /// Ansi vs Unicode 
+        /// Ansi vs Unicode
         /// </summary>
         public bool IsAnsi { get; set; }
         /// <summary>
-        /// Fixed length 
+        /// Fixed length
         /// </summary>
         public bool IsFixedLength { get; set; }
         /// <summary>

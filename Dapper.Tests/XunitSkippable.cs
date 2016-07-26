@@ -33,7 +33,7 @@ namespace Dapper.Tests
             yield return new SkippableFactTestCase(_diagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), testMethod);
         }
     }
-    
+
     public class SkippableFactTestCase : XunitTestCase
     {
         [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]

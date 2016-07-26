@@ -118,7 +118,7 @@ namespace Dapper
                     // [original prop val, current prop val]
 
                     il.EmitCall(OpCodes.Call, typeof(Snapshot<T>).GetMethod("AreEqual", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(new Type[] { prop.PropertyType }), null);
-                    // [result] 
+                    // [result]
 
                     Label skip = il.DefineLabel();
                     il.Emit(OpCodes.Brtrue_S, skip);

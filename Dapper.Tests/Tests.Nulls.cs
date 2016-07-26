@@ -70,7 +70,7 @@ select * from @data").ToDictionary(_ => _.Id);
             public string C { get; set; }
             public AnEnum D { get; set; }
             public AnEnum? E { get; set; }
-            
+
 			public NullTestClass()
             {
                 A = 2;

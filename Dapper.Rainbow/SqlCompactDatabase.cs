@@ -43,7 +43,7 @@ namespace Dapper
             TDatabase db = new TDatabase();
             db.InitDatabase(connection, 0);
             return db;
-        }        
+        }
 
         internal override Action<TDatabase> CreateTableConstructorForTable()
         {
