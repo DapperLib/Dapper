@@ -3316,6 +3316,38 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         }
 
         [Fact]
+        public void PseudoPositional_CanUseVariable()
+        {
+            using (var connection = ConnectViaOledb())
+            {
+                int id = 42;
+                var row = connection.QuerySingle("declare @id int = ?id?; select @id as [A], @id as [B];", new { id });
+                int a = (int)row.A;
+                int b = (int)row.B;
+                a.IsEqualTo(42);
+                b.IsEqualTo(42);
+            }
+        }
+        [Fact]
+        public void PseudoPositional_CannotUseParameterMultipleTimes()
+        {
+
+            using (var connection = ConnectViaOledb())
+            {
+                try
+                {
+                    int id = 42;
+                    var row = connection.QuerySingle("select ?id? as [A], ?id? as [B];", new { id });
+                    Assert.Fail();
+                }
+                catch (InvalidOperationException ex) when (ex.Message == "When passing parameters by position, each parameter can only be referenced once")
+                {
+                    // that's a win
+                }
+            }
+        }
+
+        [Fact]
         public void PseudoPositionalParameters_ExecSingle()
         {
             using (var connection = ConnectViaOledb())
