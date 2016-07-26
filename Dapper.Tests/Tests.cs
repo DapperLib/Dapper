@@ -2526,6 +2526,22 @@ end");
 #endif
         }
 
+#if ENTITY_FRAMEWORK
+        public void Issue570_DbGeo_HasValues()
+        {
+            Dapper.EntityFramework.Handlers.Register();
+            string redmond = "POINT (122.1215 47.6740)";
+            DbGeography point = DbGeography.PointFromText(redmond, DbGeography.DefaultCoordinateSystemId);
+            DbGeography orig = point.Buffer(20);
+
+
+            var fromDb = connection.QuerySingle<DbGeography>("declare @geos table(geo geography); insert @geos(geo) values(@val); select * from @geos",
+                new { val = orig });
+
+            fromDb.Area.IsNotNull();
+            fromDb.Area.IsEqualTo(orig.Area);
+        }
+#endif
         [Fact]
         public void Issue142_FailsNamedStatus()
         {
