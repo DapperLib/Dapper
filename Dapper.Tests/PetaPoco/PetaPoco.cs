@@ -716,16 +716,16 @@ namespace PetaPoco
 			T val = SingleOrDefault<T>(sql, args);
 			if (val != null)
 				return val;
-			else
-				throw new InvalidOperationException("The sequence contains no elements");
+
+		    throw new InvalidOperationException("The sequence contains no elements");
 		}
 		public T First<T>(string sql, params object[] args) where T : new()
 		{
 			T val = FirstOrDefault<T>(sql, args);
 			if (val != null)
 				return val;
-			else
-				throw new InvalidOperationException("The sequence contains no elements");
+
+		    throw new InvalidOperationException("The sequence contains no elements");
 		}
 
 		public T Single<T>(Sql sql) where T : new()
@@ -979,20 +979,21 @@ namespace PetaPoco
 				// Common primary key types
 				if (type == typeof(long))
 					return (long)pk == 0;
-				else if (type == typeof(ulong))
-					return (ulong)pk == 0;
-				else if (type == typeof(int))
-					return (int)pk == 0;
-				else if (type == typeof(uint))
-					return (int)pk == 0;
 
-				// Create a default instance and compare
+			    if (type == typeof(ulong))
+			        return (ulong)pk == 0;
+
+			    if (type == typeof(int))
+			        return (int)pk == 0;
+
+			    if (type == typeof(uint))
+			        return (int)pk == 0;
+
+			    // Create a default instance and compare
 				return pk == Activator.CreateInstance(pk.GetType());
 			}
-			else
-			{
-				return pk == null;
-			}
+
+		    return pk == null;
 		}
 
 		public bool IsNew(object poco)

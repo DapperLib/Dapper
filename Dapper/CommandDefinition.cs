@@ -17,10 +17,8 @@ namespace Dapper
             {
                 return new CommandDefinition(parameters);
             }
-            else
-            {
-                return default(CommandDefinition);
-            }
+
+            return default(CommandDefinition);
         }
 
         internal void OnCompleted()

@@ -128,10 +128,8 @@ namespace Dapper
             {
                 return _ => (T)func(_);
             }
-            else
-            {
-                return (Func<IDataReader, T>)(Delegate)func;
-            }
+
+            return (Func<IDataReader, T>)(Delegate)func;
         }
     }
 }
