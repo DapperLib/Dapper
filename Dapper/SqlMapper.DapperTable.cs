@@ -41,7 +41,7 @@ namespace Dapper
                 fieldNameLookup[name] = oldLen;
                 return oldLen;
             }
-            
+
             internal bool FieldExists(string key) => key != null && fieldNameLookup.ContainsKey(key);
 
             public int FieldCount => fieldNames.Length;

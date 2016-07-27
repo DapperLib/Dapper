@@ -38,7 +38,7 @@ namespace Dapper
                 int max = length < 0 ? reader.FieldCount : startBound + length;
                 int hash = (-37 * startBound) + max;
                 for (int i = startBound; i < max; i++)
-                {   
+                {
                     object tmp = reader.GetName(i);
                     hash = -79 * ((hash * 31) + (tmp?.GetHashCode() ?? 0)) + (reader.GetFieldType(i)?.GetHashCode() ?? 0);
                 }
@@ -1623,7 +1623,8 @@ namespace Dapper
                 {
                     throw new InvalidOperationException("When passing parameters by position, each parameter can only be referenced once");
                 }
-                else if (parameters.TryGetValue(key, out param))
+
+                if (parameters.TryGetValue(key, out param))
                 {
                     if(firstMatch)
                     {
@@ -1636,11 +1637,8 @@ namespace Dapper
                     consumed.Add(key);
                     return "?";
                 }
-                else
-                {
-                    // otherwise, leave alone for simple debugging
-                    return match.Value;
-                }
+                // otherwise, leave alone for simple debugging
+                return match.Value;
             });
         }
 
@@ -1680,8 +1678,8 @@ namespace Dapper
             } catch { }
             if (hasFields)
                 return new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
-            else
-                return new InvalidOperationException("No columns were selected");
+
+            return new InvalidOperationException("No columns were selected");
         }
 
         internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
@@ -1930,7 +1928,7 @@ namespace Dapper
                     }
                 }
 
-                
+
                 if(viaSplit)
                 {
                     // already done
@@ -1948,10 +1946,8 @@ namespace Dapper
                             // looks like an optimize hint; leave it alone!
                             return match.Value;
                             }
-                            else
-                            {
-                                return "(SELECT " + variableName + " WHERE 1 = 0)";
-                            }
+
+                            return "(SELECT " + variableName + " WHERE 1 = 0)";
                         }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
                         var dummyParam = command.CreateParameter();
                         dummyParam.ParameterName = namePrefix;
@@ -2001,7 +1997,7 @@ namespace Dapper
             if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint", byPosition,
-                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));            
+                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint", byPosition,
                 (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
             return false;
@@ -2009,14 +2005,14 @@ namespace Dapper
         private static bool TryStringSplit<T>(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
-            ICollection<T> typed = list as ICollection<T>; 
+            ICollection<T> typed = list as ICollection<T>;
             if(typed == null)
             {
                 typed = ((IEnumerable<T>)list).ToList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
             }
             if (typed.Count < splitAt) return false;
-            
+
             string varName = null;
             var regexIncludingUnknown = GetInListRegex(namePrefix, byPosition);
             var sql = Regex.Replace(command.CommandText, regexIncludingUnknown, match =>
@@ -2027,11 +2023,9 @@ namespace Dapper
                     // looks like an optimize hint; leave it alone!
                     return match.Value;
                 }
-                else
-                {
-                    varName = variableName;
-                    return "(select cast([value] as " + colType + ") from string_split(" + variableName + ",','))";
-                }
+
+                varName = variableName;
+                return "(select cast([value] as " + colType + ") from string_split(" + variableName + ",','))";
             }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
             if (varName == null) return false; // couldn't resolve the var!
 
@@ -2127,71 +2121,66 @@ namespace Dapper
             {
                 return "null";
             }
-            else
+
+            switch (TypeExtensions.GetTypeCode(value.GetType()))
             {
-                switch (TypeExtensions.GetTypeCode(value.GetType()))
-                {
 #if !COREFX
-                    case TypeCode.DBNull:
-                        return "null";
+                case TypeCode.DBNull:
+                    return "null";
 #endif
-                    case TypeCode.Boolean:
-                        return ((bool)value) ? "1" : "0";
-                    case TypeCode.Byte:
-                        return ((byte)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.SByte:
-                        return ((sbyte)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.UInt16:
-                        return ((ushort)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Int16:
-                        return ((short)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.UInt32:
-                        return ((uint)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Int32:
-                        return ((int)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.UInt64:
-                        return ((ulong)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Int64:
-                        return ((long)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Single:
-                        return ((float)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Double:
-                        return ((double)value).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Decimal:
-                        return ((decimal)value).ToString(CultureInfo.InvariantCulture);
-                    default:
-                        var multiExec = GetMultiExec(value);
-                        if(multiExec != null)
+                case TypeCode.Boolean:
+                    return ((bool)value) ? "1" : "0";
+                case TypeCode.Byte:
+                    return ((byte)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.SByte:
+                    return ((sbyte)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.UInt16:
+                    return ((ushort)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.Int16:
+                    return ((short)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.UInt32:
+                    return ((uint)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.Int32:
+                    return ((int)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.UInt64:
+                    return ((ulong)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.Int64:
+                    return ((long)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.Single:
+                    return ((float)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.Double:
+                    return ((double)value).ToString(CultureInfo.InvariantCulture);
+                case TypeCode.Decimal:
+                    return ((decimal)value).ToString(CultureInfo.InvariantCulture);
+                default:
+                    var multiExec = GetMultiExec(value);
+                    if(multiExec != null)
+                    {
+                        StringBuilder sb = null;
+                        bool first = true;
+                        foreach (object subval in multiExec)
                         {
-                            StringBuilder sb = null;
-                            bool first = true;
-                            foreach (object subval in multiExec)
-                            {
-                                if(first)
-                                {
-                                    sb = GetStringBuilder().Append('(');
-                                    first = false;
-                                }
-                                else
-                                {
-                                    sb.Append(',');
-                                }
-                                sb.Append(Format(subval));
-                            }
                             if(first)
                             {
-                                return "(select null where 1=0)";
+                                sb = GetStringBuilder().Append('(');
+                                first = false;
                             }
                             else
                             {
-                                return sb.Append(')').__ToStringRecycle();
+                                sb.Append(',');
                             }
+                            sb.Append(Format(subval));
                         }
-                        throw new NotSupportedException(value.GetType().Name);
-                }
+                        if(first)
+                        {
+                            return "(select null where 1=0)";
+                        }
+
+                        return sb.Append(')').__ToStringRecycle();
+                    }
+                    throw new NotSupportedException(value.GetType().Name);
             }
         }
-
 
         internal static void ReplaceLiterals(IParameterLookup parameters, IDbCommand command, IList<LiteralToken> tokens)
         {
@@ -2402,7 +2391,7 @@ namespace Dapper
                     var propType = prop.PropertyType;
                     var nullType = Nullable.GetUnderlyingType(propType);
                     bool callSanitize = false;
-                    
+
                     if((nullType ?? propType).IsEnum())
                     {
                         if(nullType != null)
@@ -2426,7 +2415,7 @@ namespace Dapper
                                 case TypeCode.UInt32: propType = typeof(uint); break;
                                 case TypeCode.UInt64: propType = typeof(ulong); break;
                             }
-                        }                        
+                        }
                     }
                     else
                     {

@@ -201,7 +201,7 @@ namespace Dapper.Tests
             ((int)dt.Rows[0][0]).IsEqualTo(3);
             ((int)dt.Rows[0][1]).IsEqualTo(4);
         }
-        
+
         [Fact]
         public async Task ExecuteReaderClosedAsync()
         {
@@ -276,7 +276,7 @@ namespace Dapper.Tests
             await connection.ExecuteAsync("insert #literalin (id) values (@id)", new[] {
                 new { id = 1 },
                 new { id = 2 },
-                new { id = 3 },
+                new { id = 3 }
             });
             var count = (await connection.QueryAsync<int>("select count(1) from #literalin where id in {=ids}",
                 new { ids = new[] { 1, 3, 4 } })).Single();
@@ -340,7 +340,7 @@ namespace Dapper.Tests
             c.IsEqualTo(123);
             d.IsEqualTo(456);
         }
- 
+
         class BasicType
         {
             public string Value { get; set; }
@@ -350,7 +350,7 @@ namespace Dapper.Tests
         public async Task TypeBasedViaTypeAsync()
         {
             Type type = GetSomeType();
-            
+
             dynamic actual = (await marsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" })).FirstOrDefault();
             ((object)actual).GetType().IsEqualTo(type);
             int a = actual.A;

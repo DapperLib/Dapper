@@ -16,7 +16,7 @@ namespace Dapper.Tests.Contrib
     public abstract partial class TestSuite
     {
         /// <summary>
-        /// Tests for issue #351 
+        /// Tests for issue #351
         /// </summary>
         [Fact]
         public async Task InsertGetUpdateDeleteWithExplicitKeyAsync()

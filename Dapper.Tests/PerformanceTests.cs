@@ -64,8 +64,8 @@ namespace Dapper.Tests
             }
 
             public void Run(int iterations)
-            { 
-                // warmup 
+            {
+                // warmup
                 foreach (var test in this)
                 {
                     test.Iteration(iterations + 1);
@@ -209,7 +209,7 @@ namespace Dapper.Tests
 #if SUBSONIC
                 Try(() =>
                     {
-                    // Subsonic ActiveRecord 
+                    // Subsonic ActiveRecord
                     tests.Add(id => SubSonic.Post.SingleOrDefault(x => x.Id == id), "SubSonic ActiveRecord.SingleOrDefault");
 
                     // Subsonic coding horror
@@ -311,7 +311,7 @@ namespace Dapper.Tests
                 //IDbCommand ormLiteCmd = TestSuite.GetOpenConnection().CreateCommand();
                 // tests.Add(id => ormLiteCmd.QueryById<Post>(id), "OrmLite QueryById");
 #endif
-                // HAND CODED 
+                // HAND CODED
 
                 var postCommand = new SqlCommand();
                 postCommand.Connection = connection;
@@ -361,7 +361,7 @@ namespace Dapper.Tests
                         {"Counter6", typeof (int)},
                         {"Counter7", typeof (int)},
                         {"Counter8", typeof (int)},
-                        {"Counter9", typeof (int)},
+                        {"Counter9", typeof (int)}
                     }
                 };
                 tests.Add(id =>
@@ -386,7 +386,7 @@ namespace Dapper.Tests
 
     static class SqlDataReaderHelper
     {
-        public static string GetNullableString(this SqlDataReader reader, int index) 
+        public static string GetNullableString(this SqlDataReader reader, int index)
         {
             object tmp = reader.GetValue(index);
             if (tmp != DBNull.Value)

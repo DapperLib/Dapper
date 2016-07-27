@@ -257,7 +257,7 @@ namespace Massive
         }
         public virtual string PrimaryKeyField { get; set; }
         /// <summary>
-        /// Conventionally introspects the object passed in for a field that 
+        /// Conventionally introspects the object passed in for a field that
         /// looks like a PK. If you've named your PrimaryKeyField, this becomes easy
         /// </summary>
         public virtual bool HasPrimaryKey(object o)
@@ -388,7 +388,7 @@ namespace Massive
             return Execute(CreateDeleteCommand(where: where, key: key, args: args));
         }
         /// <summary>
-        /// Returns all records complying with the passed-in WHERE clause and arguments, 
+        /// Returns all records complying with the passed-in WHERE clause and arguments,
         /// ordered as specified, limited (TOP) by limit.
         /// </summary>
         public virtual IEnumerable<dynamic> All(string where = "", string orderBy = "", int limit = 0, string columns = "*", params object[] args)
@@ -396,7 +396,7 @@ namespace Massive
             string sql = limit > 0 ? "SELECT TOP " + limit + " {0} FROM {1} " : "SELECT {0} FROM {1} ";
             if (!string.IsNullOrEmpty(where))
                 sql += where.Trim().StartsWith("where", StringComparison.CurrentCultureIgnoreCase) ? where : "WHERE " + where;
-            if (!String.IsNullOrEmpty(orderBy))
+            if (!string.IsNullOrEmpty(orderBy))
                 sql += orderBy.Trim().StartsWith("order by", StringComparison.CurrentCultureIgnoreCase) ? orderBy : " ORDER BY " + orderBy;
             return Query(string.Format(sql, columns, TableName), args);
         }
@@ -408,7 +408,7 @@ namespace Massive
         {
             dynamic result = new ExpandoObject();
             var countSQL = string.Format("SELECT COUNT({0}) FROM {1}", PrimaryKeyField, TableName);
-            if (String.IsNullOrEmpty(orderBy))
+            if (string.IsNullOrEmpty(orderBy))
                 orderBy = PrimaryKeyField;
 
             if (!string.IsNullOrEmpty(where))

@@ -605,7 +605,7 @@ namespace PetaPoco
 			return true;
 		}
 
-		// Fetch a page	
+		// Fetch a page
 		public Page<T> Page<T>(long page, long itemsPerPage, string sql, params object[] args) where T : new()
 		{
 			// Add auto select clause
@@ -716,16 +716,16 @@ namespace PetaPoco
 			T val = SingleOrDefault<T>(sql, args);
 			if (val != null)
 				return val;
-			else
-				throw new InvalidOperationException("The sequence contains no elements");
+
+		    throw new InvalidOperationException("The sequence contains no elements");
 		}
 		public T First<T>(string sql, params object[] args) where T : new()
 		{
 			T val = FirstOrDefault<T>(sql, args);
 			if (val != null)
 				return val;
-			else
-				throw new InvalidOperationException("The sequence contains no elements");
+
+		    throw new InvalidOperationException("The sequence contains no elements");
 		}
 
 		public T Single<T>(Sql sql) where T : new()
@@ -745,7 +745,7 @@ namespace PetaPoco
 			return First<T>(sql.SQL, sql.Arguments);
 		}
 
-		// Insert a poco into a table.  If the poco has a property with the same name 
+		// Insert a poco into a table.  If the poco has a property with the same name
 		// as the primary key the id of the new record is assigned to it.  Either way,
 		// the new id is returned.
 		public object Insert(string tableName, string primaryKeyName, object poco)
@@ -979,20 +979,21 @@ namespace PetaPoco
 				// Common primary key types
 				if (type == typeof(long))
 					return (long)pk == 0;
-				else if (type == typeof(ulong))
-					return (ulong)pk == 0;
-				else if (type == typeof(int))
-					return (int)pk == 0;
-				else if (type == typeof(uint))
-					return (int)pk == 0;
 
-				// Create a default instance and compare
+			    if (type == typeof(ulong))
+			        return (ulong)pk == 0;
+
+			    if (type == typeof(int))
+			        return (int)pk == 0;
+
+			    if (type == typeof(uint))
+			        return (int)pk == 0;
+
+			    // Create a default instance and compare
 				return pk == Activator.CreateInstance(pk.GetType());
 			}
-			else
-			{
-				return pk == null;
-			}
+
+		    return pk == null;
 		}
 
 		public bool IsNew(object poco)
@@ -1283,7 +1284,7 @@ namespace PetaPoco
 
 		// ShareableConnection represents either a shared connection used by a transaction,
 		// or a one-off connection if not in a transaction.
-		// Non-shared connections are disposed 
+		// Non-shared connections are disposed
 		class ShareableConnection : IDisposable
 		{
 			public ShareableConnection(Database db)
@@ -1420,17 +1421,17 @@ namespace PetaPoco
 
 		public Sql OrderBy(params object[] args)
 		{
-			return Append(new Sql("ORDER BY " + String.Join(", ", (from x in args select x.ToString()).ToArray())));
+			return Append(new Sql("ORDER BY " + string.Join(", ", (from x in args select x.ToString()).ToArray())));
 		}
 
 		public Sql Select(params object[] args)
 		{
-			return Append(new Sql("SELECT " + String.Join(", ", (from x in args select x.ToString()).ToArray())));
+			return Append(new Sql("SELECT " + string.Join(", ", (from x in args select x.ToString()).ToArray())));
 		}
 
 		public Sql From(params object[] args)
 		{
-			return Append(new Sql("FROM " + String.Join(", ", (from x in args select x.ToString()).ToArray())));
+			return Append(new Sql("FROM " + string.Join(", ", (from x in args select x.ToString()).ToArray())));
 		}
 
 		static bool Is(Sql sql, string sqltype)
@@ -1440,7 +1441,7 @@ namespace PetaPoco
 
 		public void Build(StringBuilder sb, List<object> args, Sql lhs)
 		{
-			if (!String.IsNullOrEmpty(_sql))
+			if (!string.IsNullOrEmpty(_sql))
 			{
 				// Add SQL to the string
 				if (sb.Length > 0)

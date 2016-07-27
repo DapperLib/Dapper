@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace SqlServerTypes
 {
     /// <summary>
-    /// Utility methods related to CLR Types for SQL Server 
+    /// Utility methods related to CLR Types for SQL Server
     /// </summary>
     internal class Utilities
     {

@@ -135,7 +135,7 @@ namespace Dapper.Tests
             }
         }
 
-        // SQL Server specific test to demonstrate TVP 
+        // SQL Server specific test to demonstrate TVP
         [Fact]
         public void TestTVP()
         {
@@ -200,7 +200,7 @@ namespace Dapper.Tests
 
             }
         }
-        
+
         [Fact]
         public void TestTVPWithAdditionalParams()
         {
@@ -266,7 +266,7 @@ namespace Dapper.Tests
                 ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
             }
         }
-        
+
         [Fact]
         public void SO29533765_DataTableParametersViaDynamicParameters()
         {
@@ -286,7 +286,7 @@ namespace Dapper.Tests
             count = connection.Query<int>("select count(1) from @ids", args).First();
             count.IsEqualTo(3);
         }
-        
+
         [Fact]
         public void SO26468710_InWithTVPs()
         {
@@ -307,7 +307,7 @@ namespace Dapper.Tests
             select * from @tmp t inner join @ids i on i.id = t.id", new { ids }).Sum();
             sum.IsEqualTo(9);
         }
-        
+
         [Fact]
         public void DataTableParametersWithExtendedProperty()
         {
@@ -363,7 +363,7 @@ namespace Dapper.Tests
             public SqlGeography Geo { get; set; }
             public SqlGeometry Geometry { get; set; }
         }
-        
+
         [Fact]
         public void DBGeography_SO24405645_SO24402424()
         {
@@ -384,7 +384,7 @@ namespace Dapper.Tests
             row.Geo.IsNotNull();
             row.Geometry.IsNotNull();
         }
-        
+
         [Fact]
         public void SqlGeography_SO25538154()
         {
@@ -404,7 +404,7 @@ namespace Dapper.Tests
             row.Geo.IsNotNull();
             row.Geometry.IsNotNull();
         }
-        
+
         [Fact]
         public void NullableSqlGeometry()
         {
@@ -422,7 +422,7 @@ namespace Dapper.Tests
             row.Id.IsEqualTo(1);
             row.Geometry.IsNull();
         }
-        
+
         [Fact]
         public void SqlHierarchyId_SO18888911()
         {

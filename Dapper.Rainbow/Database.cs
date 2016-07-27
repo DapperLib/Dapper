@@ -87,7 +87,7 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Grab a record with a particular Id from the DB 
+            /// Grab a record with a particular Id from the DB
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
@@ -127,7 +127,7 @@ namespace Dapper
                         if (attr==null || (!attr.Value))
                         {
                             paramNames.Add(prop.Name);
-                        }                        
+                        }
                     }
                     paramNameCache[o.GetType()] = paramNames;
                 }

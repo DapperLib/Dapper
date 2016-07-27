@@ -9,7 +9,7 @@ namespace Dapper.Tests.Contrib
     {
         static void Main(string[] args)
         {
-            
+
         }
     }
 }

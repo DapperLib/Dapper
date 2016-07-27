@@ -91,7 +91,7 @@ namespace Dapper
                 int i = 0;
                 for (; i < ctorParameters.Length; i++)
                 {
-                    if (!String.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
                         break;
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;

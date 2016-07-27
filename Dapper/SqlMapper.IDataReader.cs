@@ -50,7 +50,7 @@ namespace Dapper
                 } while (reader.Read());
             }
         }
-        
+
         /// <summary>
         /// Gets the row parser for a specific row on a data reader. This allows for type switching every row based on, for example, a TypeId column.
         /// You could return a collection of the base type but have each more specific.
@@ -128,10 +128,8 @@ namespace Dapper
             {
                 return _ => (T)func(_);
             }
-            else
-            {
-                return (Func<IDataReader, T>)(Delegate)func;
-            }
+
+            return (Func<IDataReader, T>)(Delegate)func;
         }
     }
 }

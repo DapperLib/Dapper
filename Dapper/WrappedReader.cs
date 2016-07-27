@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dapper
 {
-    internal class WrappedReader : IDataReader, IWrappedDataReader
+    internal class WrappedReader : IWrappedDataReader
     {
         private IDataReader reader;
         private IDbCommand cmd;

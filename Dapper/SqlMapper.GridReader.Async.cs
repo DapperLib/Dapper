@@ -179,12 +179,10 @@ namespace Dapper
                 {
                     return ReadBufferedAsync<T>(gridIndex, deserializer.Func, typedIdentity);
                 }
-                else
-                {
-                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity, type);
-                    if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
-                    return Task.FromResult(result);
-                }
+
+                var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity, type);
+                if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
+                return Task.FromResult(result);
             }
 
             private Task<T> ReadRowAsyncImpl<T>(Type type, Row row)

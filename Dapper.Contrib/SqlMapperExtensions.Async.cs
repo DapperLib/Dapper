@@ -14,9 +14,9 @@ namespace Dapper.Contrib.Extensions
     public static partial class SqlMapperExtensions
     {
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
+        /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type.
         /// Id must be marked with [Key] attribute.
-        /// Created entity is tracked/intercepted for changes and used by the Update() extension. 
+        /// Created entity is tracked/intercepted for changes and used by the Update() extension.
         /// </summary>
         /// <typeparam name="T">Interface type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -62,10 +62,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entites from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -306,12 +306,12 @@ namespace Dapper.Contrib.Extensions
 
 public partial interface ISqlAdapter
 {
-    Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
+    Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
 }
 
 public partial class SqlServerAdapter
 {
-    public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, String tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var cmd = $"INSERT INTO {tableName} ({columnList}) values ({parameterList}); SELECT SCOPE_IDENTITY() id";
         var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout);
@@ -373,7 +373,7 @@ public partial class MySqlAdapter
 }
 
 public partial class PostgresAdapter
-{ 
+{
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();

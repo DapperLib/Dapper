@@ -59,7 +59,7 @@ namespace System.ComponentModel {
     }
 }
 namespace System
-{   
+{
     public enum GenericUriParserOptions
     {
         Default
@@ -501,7 +501,7 @@ WHERE (first_name LIKE {0} OR last_name LIKE {0});";
             string use_end_only = @"CONCAT(@search_term, '%')";
             string use_both = @"CONCAT('%', @search_term, '%')";
 
-            // if true, slower query due to not being able to use indices, but will allow searching inside strings 
+            // if true, slower query due to not being able to use indices, but will allow searching inside strings
             bool allow_start_wildcards = false;
 
             string query = string.Format(formatted, allow_start_wildcards ? use_both : use_end_only);
@@ -884,7 +884,7 @@ select * from @bar", new { foo }).Single();
                 cnn.Close();
             }
         }
-        
+
         public class PostCE
         {
             public int ID { get; set; }
@@ -912,7 +912,7 @@ select * from @bar", new { foo }).Single();
 
             output.ToArray().IsSequenceEqualTo(orig);
         }
-        
+
         [Fact]
         public void TestLinqBinaryRaw()
         {
@@ -966,7 +966,7 @@ end");
                     c = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true },
                     d = new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false },
                     e = new DbString { Value = "abcde", IsAnsi = true },
-                    f = new DbString { Value = "abcde", IsAnsi = false },
+                    f = new DbString { Value = "abcde", IsAnsi = false }
                 }).First();
             ((int)obj.a).IsEqualTo(10);
             ((int)obj.b).IsEqualTo(20);
@@ -1119,7 +1119,7 @@ end");
             }
             catch (ArgumentException)
             {
-                // expecting an app exception due to multi mapping being bodged 
+                // expecting an app exception due to multi mapping being bodged
             }
 
             try
@@ -1128,7 +1128,7 @@ end");
             }
             catch (ArgumentException)
             {
-                // expecting an app exception due to multi mapping being bodged 
+                // expecting an app exception due to multi mapping being bodged
             }
         }
 
@@ -1977,7 +1977,7 @@ end");
             row.C.Equals(0.0M);
             row.D.IsNull();
         }
-        
+
         private static CultureInfo ActiveCulture
         {
 #if COREFX
@@ -2053,7 +2053,7 @@ end");
                 var p = cmd.CreateParameter();
                 p.ParameterName = "@foo";
                 p.DbType = DbType.Int32; // it turns out that this is the key piece; setting the DbType
-                p.Value = AnEnum.B;         
+                p.Value = AnEnum.B;
                 cmd.Parameters.Add(p);
                 object value = cmd.ExecuteScalar();
                 AnEnum val = (AnEnum)value;
@@ -2170,7 +2170,7 @@ end");
             connection.Execute("insert #literalin (id) values (@id)", new[] {
                 new { id = 1 },
                 new { id = 2 },
-                new { id = 3 },
+                new { id = 3 }
             });
             var count = connection.Query<int>("select count(1) from #literalin where id in {=ids}",
                 new { ids = new[] { 1, 3, 4 } }).Single();
@@ -2212,7 +2212,7 @@ end");
             public decimal C { get; set; }
             public decimal? D { get; set; }
         }
-        
+
         [Fact]
         public void GuidIn_SO_24177902()
         {
@@ -2292,7 +2292,7 @@ end");
             a.IsEqualTo(456);
             b.IsEqualTo("def");
         }
-        
+
         private T CheetViaDynamic<T>(T template, string query, object args)
         {
             return connection.Query<T>(query, args).SingleOrDefault();
@@ -2371,8 +2371,8 @@ end");
             public static readonly RatingValueHandler Default = new RatingValueHandler();
             public override RatingValue Parse(object value)
             {
-                if (value is Int32)
-                    return new RatingValue() { Value = (Int32)value };
+                if (value is int)
+                    return new RatingValue() { Value = (int)value };
 
                 throw new FormatException("Invalid conversion to RatingValue");
             }
@@ -2386,13 +2386,13 @@ end");
         }
         public class RatingValue
         {
-            public Int32 Value { get; set; }
+            public int Value { get; set; }
             // ... some other properties etc ...
         }
 
         public class MyResult
         {
-            public String CategoryName { get; set; }
+            public string CategoryName { get; set; }
             public RatingValue CategoryRating { get; set; }
         }
 
@@ -2435,24 +2435,24 @@ end");
             foo.Value.IsEqualTo(200);
         }
 
-        public class StringListTypeHandler : Dapper.SqlMapper.TypeHandler<List<String>>
+        public class StringListTypeHandler : Dapper.SqlMapper.TypeHandler<List<string>>
         {
             private StringListTypeHandler() { }
             public static readonly StringListTypeHandler Default = new StringListTypeHandler();
             //Just a simple List<string> type handler implementation
             public override void SetValue(IDbDataParameter parameter, List<string> value)
             {
-                parameter.Value = String.Join(",", value);
+                parameter.Value = string.Join(",", value);
             }
 
             public override List<string> Parse(object value)
             {
-                return ((value as String) ?? "").Split(',').ToList();
+                return ((value as string) ?? "").Split(',').ToList();
             }
         }
         public class MyObjectWithStringList
         {
-            public List<String> Names { get; set; }
+            public List<string> Names { get; set; }
         }
 
         [Fact]
@@ -2473,9 +2473,9 @@ end");
             connection.Execute("CREATE TABLE #Issue253 (Names VARCHAR(50) NOT NULL);");
             try
             {
-                String names = "Sam,Kyro";
-                List<String> names_list = names.Split(',').ToList();
-                var foo = connection.Query<String>("INSERT INTO #Issue253 (Names) VALUES (@Names); SELECT Names FROM #Issue253;", new { Names = names_list }).Single();
+                string names = "Sam,Kyro";
+                List<string> names_list = names.Split(',').ToList();
+                var foo = connection.Query<string>("INSERT INTO #Issue253 (Names) VALUES (@Names); SELECT Names FROM #Issue253;", new { Names = names_list }).Single();
                 foo.IsEqualTo(names);
             }
             finally
@@ -2579,7 +2579,7 @@ end");
             {
                 NotNullable = new LocalDate { Year = 2014, Month = 7, Day = 25 },
                 NullableNotNull = new LocalDate { Year = 2014, Month = 7, Day = 26 },
-                NullableIsNull = null,
+                NullableIsNull = null
             };
 
             var result = connection.Query<LocalDateResult>("SELECT @NotNullable AS NotNullable, @NullableNotNull AS NullableNotNull, @NullableIsNull AS NullableIsNull", param).Single();
@@ -2693,7 +2693,7 @@ end");
             TestBigIntForEverythingWorks_SqlLite_ByDataType<float>("float(24)");
             TestBigIntForEverythingWorks_SqlLite_ByDataType<double>("float(53)");
         }
-        
+
         private void TestBigIntForEverythingWorks_SqlLite_ByDataType<T>(string dbType)
         {
             using (var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
@@ -2906,14 +2906,14 @@ end");
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
         }
-        
+
         public void Issue261_Decimals()
         {
             var parameters = new DynamicParameters();
             parameters.Add("c", dbType: DbType.Decimal, direction: ParameterDirection.Output, precision: 10, scale: 5);
             connection.Execute("create proc #Issue261 @c decimal(10,5) OUTPUT as begin set @c=11.884 end");
             connection.Execute("#Issue261", parameters, commandType: CommandType.StoredProcedure);
-            var c = parameters.Get<Decimal>("c");
+            var c = parameters.Get<decimal>("c");
             c.IsEqualTo(11.884M);
         }
         public void Issue261_Decimals_ADONET_SetViaBaseClass()
@@ -3059,7 +3059,7 @@ end");
         }
 
         private static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
-        
+
 #if MYSQL
         private static MySql.Data.MySqlClient.MySqlConnection GetMySqlConnection(bool open = true,
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
@@ -3142,18 +3142,18 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 try { conn.Execute("create table Issue426_Test (Id int not null, Time time not null)"); } catch { }
                 const long ticks = 553440000000;
                 const int Id = 426;
-               
+
                 var localObj = new Issue426_Test
                 {
                     Id = Id,
                     Time = TimeSpan.FromTicks(ticks) // from code example
                 };
                 conn.Execute("replace into Issue426_Test values (@Id,@Time)", localObj);
-                
+
                 var dbObj = conn.Query<Issue426_Test>("select * from Issue426_Test where Id = @id", new { id = Id }).Single();
                 dbObj.Id.IsEqualTo(Id);
                 dbObj.Time.Value.Ticks.IsEqualTo(ticks);
-                
+
             }
         }
 
@@ -3301,7 +3301,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 value.IsEqualTo(9);
             }
         }
-        
+
         [Fact]
         public void PseudoPositionalParameters_ReusedParameter()
         {
@@ -3376,7 +3376,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 sum.IsEqualTo(6);
             }
         }
-        
+
         [Fact]
         public void PseudoPositionalParameters_ExecMulti()
         {
@@ -3386,7 +3386,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 {
                     new { x = 1, y = 1 },
                     new { x = 3, y = 1 },
-                    new { x = 6, y = 1 },
+                    new { x = 6, y = 1 }
                 };
                 connection.Execute("create table #named_multi(val int not null)");
                 int count = connection.Execute("insert #named_multi (val) values (?x?)", data);
@@ -3580,7 +3580,7 @@ SELECT @since as [Since], @customerCode as [Code]";
                                 new Cat() { Breed = "Javanese", Name="MADISON"},
                                 new Cat() { Breed = "Persian", Name="MAGNA"}
                             };
-        
+
         [FactPostgresqlAttribute]
         public void TestPostgresqlArrayParameters()
         {

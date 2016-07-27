@@ -16,7 +16,7 @@ namespace Dapper
     /// <summary>
     /// A bag of parameters that can be passed to the Dapper Query and Execute methods
     /// </summary>
-    public partial class DynamicParameters : SqlMapper.IDynamicParameters, SqlMapper.IParameterLookup, SqlMapper.IParameterCallbacks
+    public partial class DynamicParameters : SqlMapper.IParameterLookup, SqlMapper.IParameterCallbacks
     {
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         static Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
@@ -384,9 +384,10 @@ namespace Dapper
                 {
                     break;
                 }
-                else if (diving == null ||
+
+                if (diving == null ||
                     (!(diving.Member is PropertyInfo) &&
-                    !(diving.Member is FieldInfo)))
+                     !(diving.Member is FieldInfo)))
                 {
                     @throw();
                 }
@@ -493,7 +494,7 @@ namespace Dapper
         }
 
         private List<Action> outputCallbacks;
-        
+
         void SqlMapper.IParameterCallbacks.OnCompleted()
         {
             foreach (var param in (from p in parameters select p.Value))

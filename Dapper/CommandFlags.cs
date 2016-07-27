@@ -24,7 +24,7 @@ namespace Dapper
         /// <summary>
         /// Should the plan cache be bypassed?
         /// </summary>
-        NoCache = 4,
+        NoCache = 4
     }
 
 }

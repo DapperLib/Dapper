@@ -336,10 +336,8 @@ namespace Dapper
             {
                 return ExecuteMultiImplAsync(cnn, command, multiExec);
             }
-            else
-            {
-                return ExecuteImplAsync(cnn, command, param);
-            }
+
+            return ExecuteImplAsync(cnn, command, param);
         }
 
         private struct AsyncExecState

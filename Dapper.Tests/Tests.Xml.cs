@@ -11,12 +11,12 @@ namespace Dapper.Tests
         {
             var xml = new XmlDocument();
             xml.LoadXml("<abc/>");
-            
+
             var foo = new Foo
             {
                 A = xml,
                 B = XDocument.Parse("<def/>"),
-                C = XElement.Parse("<ghi/>") 
+                C = XElement.Parse("<ghi/>")
             };
             var bar = connection.QuerySingle<Foo>("select @a as [A], @b as [B], @c as [C]", new { a = foo.A, b = foo.B, c = foo.C });
             bar.A.DocumentElement.Name.IsEqualTo("abc");
