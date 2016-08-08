@@ -12,12 +12,12 @@
   },
   "authors": [ "Marc Gravell", "Nick Craver" ],
   "description": "Extension handlers for entity framework",
-  "version": "1.50.0-*",
+  "version": "1.50.2-*",
   "title": "Dapper entity framework type handlers",
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
-      "version": "1.50.0-*",
+      "version": "1.50.2-*",
       "target": "project"
     }
   },
@@ -46,7 +46,6 @@
         "System.Configuration": "4.0.0.0",
         "System.Data": "4.0.0.0",
         "System.Data.Linq": "4.0.0.0",
-        "System.Runtime": "4.0.0.0",
         "System.Xml": "4.0.0.0"
       },
       "dependencies": {

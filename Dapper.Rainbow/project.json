@@ -17,7 +17,7 @@
   "copyright": "2012 Sam Saffron",
   "dependencies": {
     "Dapper": {
-      "version": "1.50.0-*",
+      "version": "1.50.2-*",
       "target": "project"
     }
   },

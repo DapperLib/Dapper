@@ -12,12 +12,12 @@
   },
   "authors": [ "Sam Saffron, Johan Danforth" ],
   "description": "The Dapper SqlBuilder component, for building SQL queries dynamically.",
-  "version": "1.50.0-*",
+  "version": "1.50.2-*",
   "title": "Dapper SqlBuilder component",
   "copyright": "2016 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
-      "version": "1.50.0-*",
+      "version": "1.50.2-*",
       "target": "project"
     }
   },
