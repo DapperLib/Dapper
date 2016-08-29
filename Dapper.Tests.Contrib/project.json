@@ -40,7 +40,7 @@
         "../Dapper.Tests/XunitSkippable.cs",
         "../Dapper/TypeExtensions.cs"
       ]
-    } 
+    }
   },
   "testRunner": "xunit",
   "frameworks": {
@@ -108,7 +108,9 @@
           "version": "1.0.0",
           "type": "platform"
         },
-        "Microsoft.Data.Sqlite": "1.0.0"
+        "Microsoft.Data.Sqlite": "1.0.0",
+        "xunit": "2.1.0",
+        "dotnet-test-xunit": "1.0.0-rc3-*"
       }
     }
   }
