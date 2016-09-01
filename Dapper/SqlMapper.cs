@@ -1265,14 +1265,17 @@ namespace Dapper
             return buffered ? results.ToList() : results;
         }
 
-        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize, IDbCommand ownedCommand)
         {
             object param = command.Parameters;
             identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
-            IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
+            if (ownedCommand != null)
+            {
+                ownedReader = reader;
+            }
 
             bool wasClosed = cnn != null && cnn.State == ConnectionState.Closed;
             try
@@ -1344,7 +1347,7 @@ namespace Dapper
         {
             return (close ? (@default | CommandBehavior.CloseConnection) : @default) & allowedCommandBehaviors;
         }
-        static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize, IDbCommand ownedCommand = null)
         {
             if (types.Length < 1)
             {
@@ -1355,8 +1358,11 @@ namespace Dapper
             identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
-            IDbCommand ownedCommand = null;
             IDataReader ownedReader = null;
+            if (ownedCommand != null)
+            {
+                ownedReader = reader;
+            }
 
             bool wasClosed = cnn != null && cnn.State == ConnectionState.Closed;
             try
