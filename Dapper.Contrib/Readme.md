@@ -4,7 +4,7 @@ Dapper.Contrib - more extensions for dapper
 Features
 --------
 Dapper.Contrib contains a number of helper methods for inserting, getting,
-updating and deleting files.
+updating and deleting records.
 
 The full list of extension methods in Dapper.Contrib right now are:
 
