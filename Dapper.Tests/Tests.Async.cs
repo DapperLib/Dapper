@@ -21,6 +21,34 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public async Task TestBasicStringUsageQueryFirstAsync()
+        {
+            var str = await connection.QueryFirstAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new {txt = "def"}));
+            str.IsEqualTo("abc");
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageQueryFirstOrDefaultAsync()
+        {
+            var str = await connection.QueryFirstOrDefaultAsync<string>(new CommandDefinition("select null as [Value] union all select @txt", new {txt = "def"}));
+            str.IsNull();
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageQuerySingleAsync()
+        {
+            var str = await connection.QuerySingleAsync<string>(new CommandDefinition("select 'abc' as [Value]"));
+            str.IsEqualTo("abc");
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageQuerySingleOrDefaultAsync()
+        {
+            var str = await connection.QuerySingleAsync<string>(new CommandDefinition("select null as [Value]"));
+            str.IsNull();
+        }
+
+        [Fact]
         public async Task TestBasicStringUsageAsyncNonBuffered()
         {
             var query = await connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags: CommandFlags.None));
