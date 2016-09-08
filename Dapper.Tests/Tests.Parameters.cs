@@ -1043,5 +1043,22 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
             else if (i <= 1000) i += 50;
             else i += 100;
         }
+
+        [Fact]
+        public void Issue601_InternationalParameterNamesWork()
+        {
+            // regular parameter
+            var result = connection.QuerySingle<int>("select @æøå٦", new { æøå٦ = 42 });
+            result.IsEqualTo(42);
+
+#if OLEDB
+            // pseudo-positional
+            using (var connection = ConnectViaOledb())
+            {
+                int value = connection.QuerySingle<int>("select ?æøå٦?", new { æøå٦ = 42 });
+            }
+#endif
+        }
+
     }
 }
