@@ -670,19 +670,29 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
+            
+            var cmd = default(DbCommand);
+            var reader = default(DbDataReader);
             try
             {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
-                {
-                    if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
-                    return command.Buffered ? results.ToList() : results;
-                }
-            } finally
+
+                cmd = (DbCommand) command.SetupCommand(cnn, info.ParamReader);
+                reader = await cmd.ExecuteReaderAsync(wasClosed ? CommandBehavior.CloseConnection | CommandBehavior.SequentialAccess : CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
+
+                if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
+                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true, command.Buffered ? null : cmd);
+                return command.Buffered ? results.ToList() : results;
+            }
+            finally
             {
-                if (wasClosed) cnn.Close();
+                if (command.Buffered)
+                {
+                    cmd?.Dispose();
+                    reader?.Dispose();
+                }
+
+                if (wasClosed) cnn.Close();               
             }
         }
 
@@ -718,15 +728,26 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
-            try {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
-                using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false)) {
-                    var results = MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
-                    return command.Buffered ? results.ToList() : results;
-                }
+
+            var cmd = default(DbCommand);
+            var reader = default(DbDataReader);
+            try
+            {
+                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
+                cmd = (DbCommand) command.SetupCommand(cnn, info.ParamReader);
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false)) {
+                
+                var results = MultiMapImpl<TReturn>(null,  CommandDefinition.ForCallback(command.Parameters), types, map, splitOn, reader, identity, true, command.Buffered ? null : cmd);
+                return command.Buffered ? results.ToList() : results;
             }
-            finally {
+            finally 
+            {
+                if (command.Buffered)
+                {
+                    cmd?.Dispose();
+                    reader?.Dispose();
+                }
+
                 if (wasClosed) cnn.Close();
             }
         }
