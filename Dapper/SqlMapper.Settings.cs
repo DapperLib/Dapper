@@ -21,6 +21,7 @@ namespace Dapper
             /// <summary>
             /// Gets or sets whether dapper should use the CommandBehavior.SingleResult optimization
             /// </summary>
+            /// <remarks>Note that a consequence of enabling this option is that errors that happen <b>after</b> the first select may not be reported</remarks>
             public static bool UseSingleResultOptimization
             {
                 get { return (AllowedCommandBehaviors & CommandBehavior.SingleResult) != 0; }
@@ -29,6 +30,7 @@ namespace Dapper
             /// <summary>
             /// Gets or sets whether dapper should use the CommandBehavior.SingleRow optimization
             /// </summary>
+            /// <remarks>Note that on some DB providers this optimization can have adverse performance impact</remarks>
             public static bool UseSingleRowOptimization
             {
                 get { return (AllowedCommandBehaviors & CommandBehavior.SingleRow) != 0; }
