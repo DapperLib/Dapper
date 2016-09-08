@@ -1024,7 +1024,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, (row & Row.Single) != 0
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, (row & Row.Single) == 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
                     : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
