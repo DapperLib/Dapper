@@ -1,4 +1,7 @@
-﻿namespace Dapper
+﻿using System;
+using System.Data;
+
+namespace Dapper
 {
     partial class SqlMapper
     {
@@ -7,6 +10,45 @@
         /// </summary>
         public static class Settings
         {
+            // disable single result by default; prevents errors AFTER the select being detected properly
+            const CommandBehavior DefaultAllowedCommandBehaviors = ~CommandBehavior.SingleResult;
+            internal static CommandBehavior AllowedCommandBehaviors { get; private set; } = DefaultAllowedCommandBehaviors;
+            private static void SetAllowedCommandBehaviors(CommandBehavior behavior, bool enabled)
+            {
+                if (enabled) AllowedCommandBehaviors |= behavior;
+                else AllowedCommandBehaviors &= ~behavior;
+            }
+            /// <summary>
+            /// Gets or sets whether dapper should use the CommandBehavior.SingleResult optimization
+            /// </summary>
+            public static bool UseSingleResultOptimization
+            {
+                get { return (AllowedCommandBehaviors & CommandBehavior.SingleResult) != 0; }
+                set { SetAllowedCommandBehaviors(CommandBehavior.SingleResult, value); }
+            }
+            /// <summary>
+            /// Gets or sets whether dapper should use the CommandBehavior.SingleRow optimization
+            /// </summary>
+            public static bool UseSingleRowOptimization
+            {
+                get { return (AllowedCommandBehaviors & CommandBehavior.SingleRow) != 0; }
+                set { SetAllowedCommandBehaviors(CommandBehavior.SingleRow, value); }
+            }
+            internal static bool DisableCommandBehaviorOptimizations(CommandBehavior behavior, Exception ex)
+            {
+                if (AllowedCommandBehaviors == DefaultAllowedCommandBehaviors
+                    && (behavior & (CommandBehavior.SingleResult | CommandBehavior.SingleRow)) != 0)
+                {
+                    if (ex.Message.Contains(nameof(CommandBehavior.SingleResult))
+                        || ex.Message.Contains(nameof(CommandBehavior.SingleRow)))
+                    { // some providers just just allow these, so: try again without them and stop issuing them
+                        SetAllowedCommandBehaviors(CommandBehavior.SingleResult | CommandBehavior.SingleRow, false);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             static Settings()
             {
                 SetDefaults();
