@@ -777,12 +777,10 @@ SET @AddressPersonId = @PersonId", p))
         {
             try
             {
-                var data = (await connection.QueryAsync<int>("select 1 union all select 2")).ToList();
+                var data = (await connection.QueryAsync<int>("select 1 union all select 2; RAISERROR('after select', 16, 1);")).ToList();
                 Assert.Fail();
-            }catch(SqlException ex)
-            {
-                Console.WriteLine(ex.Message);
             }
+            catch (SqlException ex) when (ex.Message == "after select") { }
         }
     }
 }
