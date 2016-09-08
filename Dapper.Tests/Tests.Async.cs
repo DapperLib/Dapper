@@ -771,6 +771,19 @@ SET @AddressPersonId = @PersonId", p))
                 reader.Read().IsFalse();
             }
         }
+
+        [Fact]
+        public async Task Issue563_QueryAsyncShouldThrowException()
+        {
+            try
+            {
+                var data = (await connection.QueryAsync<int>("select 1 union all select 2")).ToList();
+                Assert.Fail();
+            }catch(SqlException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
     }
 }
 #endif
