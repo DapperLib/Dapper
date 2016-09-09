@@ -218,7 +218,7 @@ namespace Dapper
         private static Task<DbDataReader> ExecuteReaderWithFlagsFallbackAsync(DbCommand cmd, bool wasClosed, CommandBehavior behavior, CancellationToken cancellationToken)
         {
             var task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
-            if (task.Status == TaskStatus.Faulted && DisableCommandBehaviorOptimizations(behavior, task.Exception.InnerException))
+            if (task.Status == TaskStatus.Faulted && Settings.DisableCommandBehaviorOptimizations(behavior, task.Exception.InnerException))
             { // we can retry; this time it will have different flags
                 task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
             }

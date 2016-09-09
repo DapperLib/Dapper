@@ -122,7 +122,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Return a count of all the cached queries by dapper
+        /// Return a count of all the cached queries by Dapper
         /// </summary>
         /// <returns></returns>
         public static int GetCachedSQLCount()
@@ -131,7 +131,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Return a list of all the queries cached by dapper
+        /// Return a list of all the queries cached by Dapper
         /// </summary>
         /// <param name="ignoreHitCountAbove"></param>
         /// <returns></returns>
@@ -236,8 +236,6 @@ namespace Dapper
             AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
-
-            allowedCommandBehaviors = DefaultAllowedCommandBehaviors;
         }
 #if !COREFX
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -912,7 +910,7 @@ namespace Dapper
             }
             catch (ArgumentException ex)
             { // thanks, Sqlite!
-                if (DisableCommandBehaviorOptimizations(behavior, ex))
+                if (Settings.DisableCommandBehaviorOptimizations(behavior, ex))
                 {
                     // we can retry; this time it will have different flags
                     return cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
@@ -1324,25 +1322,10 @@ namespace Dapper
                 }
             }
         }
-        const CommandBehavior DefaultAllowedCommandBehaviors = ~((CommandBehavior)0);
-        static CommandBehavior allowedCommandBehaviors = DefaultAllowedCommandBehaviors;
-        private static bool DisableCommandBehaviorOptimizations(CommandBehavior behavior, Exception ex)
-        {
-            if(allowedCommandBehaviors == DefaultAllowedCommandBehaviors
-                && (behavior & (CommandBehavior.SingleResult | CommandBehavior.SingleRow)) != 0)
-            {
-                if (ex.Message.Contains(nameof(CommandBehavior.SingleResult))
-                    || ex.Message.Contains(nameof(CommandBehavior.SingleRow)))
-                { // some providers just just allow these, so: try again without them and stop issuing them
-                    allowedCommandBehaviors = ~(CommandBehavior.SingleResult | CommandBehavior.SingleRow);
-                    return true;
-                }
-            }
-            return false;
-        }
+
         private static CommandBehavior GetBehavior(bool close, CommandBehavior @default)
         {
-            return (close ? (@default | CommandBehavior.CloseConnection) : @default) & allowedCommandBehaviors;
+            return (close ? (@default | CommandBehavior.CloseConnection) : @default) & Settings.AllowedCommandBehaviors;
         }
         static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
         {
