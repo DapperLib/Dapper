@@ -247,7 +247,7 @@ Dapper allow you to pass in IEnumerable<int> and will automatically parameterize
 For example:
 
 ```csharp
-connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 });
+connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[] { 1, 2, 3 } });
 ```
 
 Will be translated to:
