@@ -168,9 +168,23 @@ namespace Dapper
         /// <summary>
         /// Execute a single-row query asynchronously using .NET 4.5 Task.
         /// </summary>
+        public static Task<T> QueryFirstAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowAsync<T>(cnn, Row.First, typeof(T), command);
+        }
+        /// <summary>
+        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// </summary>
         public static Task<object> QueryFirstOrDefaultAsync(this IDbConnection cnn, Type type, CommandDefinition command)
         {
             return QueryRowAsync<object>(cnn, Row.FirstOrDefault, type, command);
+        }
+        /// <summary>
+        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// </summary>
+        public static Task<T> QueryFirstOrDefaultAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowAsync<T>(cnn, Row.FirstOrDefault, typeof(T), command);
         }
         /// <summary>
         /// Execute a single-row query asynchronously using .NET 4.5 Task.
@@ -182,16 +196,29 @@ namespace Dapper
         /// <summary>
         /// Execute a single-row query asynchronously using .NET 4.5 Task.
         /// </summary>
+        public static Task<T> QuerySingleAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowAsync<T>(cnn, Row.Single, typeof(T), command);
+        }
+        /// <summary>
+        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// </summary>
         public static Task<object> QuerySingleOrDefaultAsync(this IDbConnection cnn, Type type, CommandDefinition command)
         {
             return QueryRowAsync<object>(cnn, Row.SingleOrDefault, type, command);
         }
-
+        /// <summary>
+        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// </summary>
+        public static Task<T> QuerySingleOrDefaultAsync<T>(this IDbConnection cnn, CommandDefinition command)
+        {
+            return QueryRowAsync<T>(cnn, Row.SingleOrDefault, typeof(T), command);
+        }
 
         private static Task<DbDataReader> ExecuteReaderWithFlagsFallbackAsync(DbCommand cmd, bool wasClosed, CommandBehavior behavior, CancellationToken cancellationToken)
         {
             var task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
-            if (task.Status == TaskStatus.Faulted && DisableCommandBehaviorOptimizations(behavior, task.Exception.InnerException))
+            if (task.Status == TaskStatus.Faulted && Settings.DisableCommandBehaviorOptimizations(behavior, task.Exception.InnerException))
             { // we can retry; this time it will have different flags
                 task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
             }

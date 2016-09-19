@@ -143,7 +143,7 @@ namespace Dapper
         
         public SqlBuilder OrWhere(string sql, dynamic parameters = null)
         {
-            AddClause("where", sql, parameters, " AND ", "WHERE ", "\n", true);
+            AddClause("where", sql, parameters, " OR ", "WHERE ", "\n", true);
             return this;
         }
         
