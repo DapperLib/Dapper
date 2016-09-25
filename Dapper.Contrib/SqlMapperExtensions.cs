@@ -32,6 +32,7 @@ namespace Dapper.Contrib.Extensions
 
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
         public delegate string TableNameMapperDelegate(Type type);
+        public delegate List<PropertyMap> ColumnNameMapperDelegate(Type type);
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>>();
@@ -70,7 +71,7 @@ namespace Dapper.Contrib.Extensions
             return computedProperties;
         }
 
-        public static Func<Type, List<PropertyMap>> GetKeyProperties;
+        public static ColumnNameMapperDelegate GetKeyProperties = DefaultGetKeyProperties;
         private static List<PropertyMap> DefaultGetKeyProperties(Type type)
         {
             var allProperties = TypePropertiesCache(type);
@@ -88,7 +89,8 @@ namespace Dapper.Contrib.Extensions
             }
 
             var explicitKeyProperties = TypePropertiesCache(type)
-                                            .Where(p => p.PropertyInfo.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
+                                            .Where(p => !keyProperties.Contains(p)
+                                                        && p.PropertyInfo.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
                                             .ToList();
 
 
@@ -111,7 +113,7 @@ namespace Dapper.Contrib.Extensions
             return keyProperties;
         }
 
-        public static Func<Type, List<PropertyMap>> GetAllColumns = DefaultGetAllColumns;
+        public static ColumnNameMapperDelegate GetAllColumns = DefaultGetAllColumns;
         private static List<PropertyMap> DefaultGetAllColumns(Type type)
         {
             return type.GetProperties()
@@ -146,7 +148,7 @@ namespace Dapper.Contrib.Extensions
             return properties.ToList();
         }
 
-        public static Func<Type, List<PropertyMap>> GetPersistentProperties;
+        public static ColumnNameMapperDelegate GetPersistentProperties = DefaultGetPersistentProperties;
         private static List<PropertyMap> DefaultGetPersistentProperties(Type type)
         {
             var keyProperties = KeyPropertiesCache(type)
@@ -176,7 +178,7 @@ namespace Dapper.Contrib.Extensions
             var keys = KeyPropertiesCache(type);
             var keyCount = keys.Count;
             if (keyCount > 1)
-                throw new DataException($"{method}<T> only supports an entity with a single key property, as defined by GetKeyProperties. By defualt, this is determined by [Key] or [ExplicitKey] attributes");
+                throw new DataException($"{method}<T> only supports an entity with a single key property, as defined by GetKeyProperties. By default, this is determined by [Key] or [ExplicitKey] attributes");
             if (keyCount == 0)
                 throw new DataException($"{method}<T> only supports an entity with a key property, as defined by GetKeyProperties. By defualt, this is determined by [Key] or [ExplicitKey] attributes");
 
@@ -184,10 +186,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts".  
+        /// Returns a single entity by a single id from table "Ts".
         /// Id must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -239,10 +241,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entites from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -298,7 +300,7 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
+                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework
                 var tableAttr = type
 #if COREFX
                     .GetTypeInfo()
@@ -517,7 +519,7 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
-        
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             var name = GetDatabaseType?.Invoke(connection).ToLower()
@@ -624,7 +626,7 @@ namespace Dapper.Contrib.Extensions
 
             private static void CreateProperty<T>(TypeBuilder typeBuilder, string propertyName, Type propType, MethodInfo setIsDirtyMethod, bool isIdentity)
             {
-                //Define the field and the property 
+                //Define the field and the property
                 var field = typeBuilder.DefineField("_" + propertyName, propType, FieldAttributes.Private);
                 var property = typeBuilder.DefineProperty(propertyName,
                                                System.Reflection.PropertyAttributes.None,
@@ -722,7 +724,7 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert);
-    
+
     //new methods for issue #336
     void AppendColumnName(StringBuilder sb, string columnName);
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
@@ -903,4 +905,3 @@ public class PropertyMap
     public string ColumnName { get; private set; }
     public PropertyInfo PropertyInfo { get; private set; }
 }
-
