@@ -33,7 +33,18 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(GetAsync));
                 var name = GetTableName(type);
 
-                sql = $"SELECT * FROM {name} WHERE {key.ColumnName} = @id";
+                var adapter = GetFormatter(connection);
+                var aliasedColumns = new StringBuilder();
+                var allCols = GetAllColumns(type);
+                for (var i=0; i<allCols.Count; i++)
+                {
+                    var col = allCols[i];
+                    adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
+                    if (i < allCols.Count - 1)
+                        aliasedColumns.Append(",");
+                }
+
+                sql = $"select {aliasedColumns} from {name} where {key.ColumnName} = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -83,7 +94,18 @@ namespace Dapper.Contrib.Extensions
                 GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
-                sql = "SELECT * FROM " + name;
+                var adapter = GetFormatter(connection);
+                var aliasedColumns = new StringBuilder();
+                var allCols = GetAllColumns(type);
+                for (var i=0; i<allCols.Count; i++)
+                {
+                    var col = allCols[i];
+                    adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
+                    if (i < allCols.Count - 1)
+                        aliasedColumns.Append(",");
+                }
+
+                sql = $"select {aliasedColumns} from {name}";
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
@@ -157,7 +179,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < persistentProperties.Count; i++)
             {
                 var property = persistentProperties.ElementAt(i);
-                sbParameterList.AppendFormat("@{0}", property.ColumnName);
+                sbParameterList.AppendFormat("@{0}", property.PropertyInfo.Name);
                 if (i < persistentProperties.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -217,7 +239,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < persistentProperties.Count; i++)
             {
                 var property = persistentProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName);
+                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName, property.PropertyInfo.Name);
                 if (i < persistentProperties.Count - 1)
                     sb.AppendFormat(", ");
             }
@@ -225,7 +247,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName);
+                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName, property.PropertyInfo.Name);
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }

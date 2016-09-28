@@ -30,7 +30,7 @@ namespace Dapper.Tests.Contrib
         public static string ConnectionString =>
             IsAppVeyor
                 ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
-                : $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
+                : $"Data Source=localhost\\bluezinc;Initial Catalog={DbName};Integrated Security=True";
         public override IDbConnection GetConnection() => new SqlConnection(ConnectionString);
 
         static SqlServerTestSuite()
@@ -56,6 +56,8 @@ namespace Dapper.Tests.Contrib
                 connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
                 dropTable("ObjectZ");
                 connection.Execute(@"CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
+                dropTable("StrangelyMappedThing");
+                connection.Execute(@"CREATE TABLE StrangelyMappedThing (strangeId int not null, strangeName nvarchar(100) not null);");
             }
         }
     }
@@ -104,6 +106,8 @@ namespace Dapper.Tests.Contrib
                     connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
                     dropTable("ObjectZ");
                     connection.Execute(@"CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
+                    dropTable("StrangelyMappedThing");
+                    connection.Execute(@"CREATE TABLE StrangelyMappedThing (strangeId int not null, strangeName nvarchar(100) not null);");
                 }
             }
             catch (MySqlException e)
@@ -145,6 +149,7 @@ namespace Dapper.Tests.Contrib
                 connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@"CREATE TABLE ObjectY (ObjectYId integer not null, Name nvarchar(100) not null) ");
                 connection.Execute(@"CREATE TABLE ObjectZ (Id integer not null, Name nvarchar(100) not null) ");
+                connection.Execute(@"CREATE TABLE StrangelyMappedThing (strangeId int not null, strangeName nvarchar(100) not null);");
             }
         }
     }
@@ -156,7 +161,7 @@ namespace Dapper.Tests.Contrib
         const string FileName = "Test.DB.sdf";
         public static string ConnectionString => $"Data Source={FileName};";
         public override IDbConnection GetConnection() => new SqlCeConnection(ConnectionString);
-            
+
         static SqlCETestSuite()
         {
             if (File.Exists(FileName))
@@ -176,6 +181,7 @@ namespace Dapper.Tests.Contrib
                 connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null) ");
                 connection.Execute(@"CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null) ");
+                connection.Execute(@"CREATE TABLE StrangelyMappedThing (strangeId int not null, strangeName nvarchar(100) not null);");
             }
             Console.WriteLine("Created database");
         }
