@@ -56,8 +56,8 @@ namespace Dapper.Contrib.Extensions
             return new PropertyMap(propInfo.Name, propInfo);
         }
 
-        public static ColumnNameMapperDelegate GetKeyProperties = DefaultGetKeyProperties;
-        private static List<PropertyMap> DefaultGetKeyProperties(Type type)
+        public static ColumnNameMapperDelegate GetKeyColumns = DefaultGetKeyColumns;
+        private static List<PropertyMap> DefaultGetKeyColumns(Type type)
         {
             var allProperties = TypePropertiesCache(type);
             var keyProperties = allProperties.Where(p => p.PropertyInfo.GetCustomAttributes(true)
@@ -92,7 +92,7 @@ namespace Dapper.Contrib.Extensions
                 return pi.ToList();
             }
 
-            var keyProperties = GetKeyProperties(type);
+            var keyProperties = GetKeyColumns(type);
 
             KeyProperties[type.TypeHandle] = keyProperties;
             return keyProperties;
@@ -128,13 +128,13 @@ namespace Dapper.Contrib.Extensions
                 return pis.ToList();
             }
 
-            var properties = GetPersistentProperties(type);
+            var properties = GetPersistentColumns(type);
             PersistentProperties[type.TypeHandle] = properties;
             return properties.ToList();
         }
 
-        public static ColumnNameMapperDelegate GetPersistentProperties = DefaultGetPersistentProperties;
-        private static List<PropertyMap> DefaultGetPersistentProperties(Type type)
+        public static ColumnNameMapperDelegate GetPersistentColumns = DefaultGetPersistentColumns;
+        private static List<PropertyMap> DefaultGetPersistentColumns(Type type)
         {
             var keyProperties = KeyPropertiesCache(type)
                                                 .Where(k => !k.PropertyInfo.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))

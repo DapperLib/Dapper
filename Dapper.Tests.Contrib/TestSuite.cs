@@ -192,13 +192,13 @@ namespace Dapper.Tests.Contrib
                     t => t == typeof(StrangelyMappedThing) ? new List<PropertyMap> {idCol, nameCol}
                                                            : origGetAll(t);
 
-                var origGetPersistent = SqlMapperExtensions.GetPersistentProperties;
-                SqlMapperExtensions.GetPersistentProperties =
+                var origGetPersistent = SqlMapperExtensions.GetPersistentColumns;
+                SqlMapperExtensions.GetPersistentColumns =
                     t => t == typeof(StrangelyMappedThing) ? new List<PropertyMap> {idCol, nameCol}
                                                            : origGetPersistent(t);
 
-                var origGetKey = SqlMapperExtensions.GetKeyProperties;
-                SqlMapperExtensions.GetKeyProperties =
+                var origGetKey = SqlMapperExtensions.GetKeyColumns;
+                SqlMapperExtensions.GetKeyColumns =
                     t => t == typeof(StrangelyMappedThing) ? new List<PropertyMap> {idCol}
                                                            : origGetKey(t);
 
