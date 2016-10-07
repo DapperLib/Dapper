@@ -64,7 +64,7 @@ namespace Dapper
                 _builder = builder;
             }
 
-            private static readonly Regex _regex = new Regex(@"\/\*\*.+\*\*\/", RegexOptions.Compiled | RegexOptions.Multiline);
+            private static readonly Regex _regex = new Regex(@"\/\*\*.+?\*\*\/", RegexOptions.Compiled | RegexOptions.Multiline);
 
             void ResolveSql()
             {
