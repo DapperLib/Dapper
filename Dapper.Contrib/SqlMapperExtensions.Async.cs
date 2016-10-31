@@ -14,31 +14,24 @@ namespace Dapper.Contrib.Extensions
     public static partial class SqlMapperExtensions
     {
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
-        /// Id must be marked with [Key] attribute.
+        /// Returns a single entity by a key from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
+        /// Keys must be marked with [Key] or [ExplicitKey] attributes.
         /// Created entity is tracked/intercepted for changes and used by the Update() extension. 
         /// </summary>
         /// <typeparam name="T">Interface type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
+        /// <param name="keyObject">Single or composite Key object that represents the entity to get</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic keyObject, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            string sql;
-            if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
-            {
-                var key = GetSingleKey<T>(nameof(GetAsync));
-                var name = GetTableName(type);
 
-                sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
-                GetQueries[type.TypeHandle] = sql;
-            }
+            List<PropertyInfo> keyProperties = GetAllKeys(type);
 
-            var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            var sql = GenerateGetQuery(connection, type, keyProperties);
+            DynamicParameters dynParms = GenerateGetParams(type, keyObject, keyProperties);
 
             if (!type.IsInterface())
                 return (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
@@ -80,7 +73,6 @@ namespace Dapper.Contrib.Extensions
             string sql;
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out sql))
             {
-                GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
                 sql = "SELECT * FROM " + name;
