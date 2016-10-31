@@ -18,24 +18,16 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         /// <typeparam name="T">Interface type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
+        /// <param name="keyObject">Single or composite Key object that represents the entity to get</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic keyObject, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
-            {
-                var key = GetSingleKey<T>(nameof(GetAsync));
-                var name = GetTableName(type);
-
-                sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
-                GetQueries[type.TypeHandle] = sql;
-            }
-
-            var dynParams = new DynamicParameters();
-            dynParams.Add("@id", id);
+            List<PropertyInfo> keyProperties = GetAllKeys(type);
+            DynamicParameters dynParams = GenerateGetParams(type, keyObject, keyProperties);
+            string sql = GenerateGetQuery(connection, type, keyProperties);
 
             if (!type.IsInterface)
                 return (await connection.QueryAsync<T>(sql, dynParams, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
@@ -85,7 +77,6 @@ namespace Dapper.Contrib.Extensions
 
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
-                GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
                 sql = "SELECT * FROM " + name;

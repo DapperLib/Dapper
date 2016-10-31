@@ -141,47 +141,109 @@ namespace Dapper.Contrib.Extensions
             return writeAttribute.Write;
         }
 
-        private static PropertyInfo GetSingleKey<T>(string method)
+        private static List<PropertyInfo> GetAllKeys(Type type)
         {
-            var type = typeof(T);
-            var keys = KeyPropertiesCache(type);
-            var explicitKeys = ExplicitKeyPropertiesCache(type);
-            var keyCount = keys.Count + explicitKeys.Count;
-            if (keyCount > 1)
-                throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property. [Key] Count: {keys.Count}, [ExplicitKey] Count: {explicitKeys.Count}");
-            if (keyCount == 0)
-                throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
 
-            return keys.Count > 0 ? keys[0] : explicitKeys[0];
+            keyProperties.AddRange(explicitKeyProperties);
+
+            if (!keyProperties.Any())
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
+            return keyProperties;
+        }
+
+        private static string GenerateGetQuery(IDbConnection connection, Type type, List<PropertyInfo> keyProperties)
+        {
+            string sql;
+            // Generate query
+            if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
+            {
+                var name = GetTableName(type);
+
+                if (keyProperties.Count == 1)
+                {
+                    var key = keyProperties.First();
+                    sql = $"select * from {name} where {key.Name} = @{key.Name}";
+                }
+                else
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendFormat("select * from {0} where ", name);
+
+                    var adapter = GetFormatter(connection);
+
+                    for (var i = 0; i < keyProperties.Count; i++)
+                    {
+                        var property = keyProperties.ElementAt(i);
+                        adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                        if (i < keyProperties.Count - 1)
+                            sb.AppendFormat(" and ");
+                    }
+
+                    sql = sb.ToString();
+                }
+
+                GetQueries[type.TypeHandle] = sql;
+            }
+
+            return sql;
+        }
+
+        private static DynamicParameters GenerateGetParams(Type type, dynamic keyObject, List<PropertyInfo> keyProperties)
+        {
+            var dynParms = new DynamicParameters();
+            Type keyObjectType = keyObject?.GetType();
+
+
+            if (keyProperties.Count == 1 && (keyObjectType == null || keyObjectType.IsValueType))
+            {
+                dynParms.Add($"@{keyProperties.First().Name}", keyObject);
+            }
+            else
+            {
+                if (keyObjectType == null || keyObjectType.IsValueType)
+                    throw new ArgumentException($"They key object passed cannot be null or value type for composite key in {type.Name}");
+
+                var isParamSameType = keyObjectType.Equals(type);
+                var keyTypeProperties = isParamSameType ? null : keyObjectType.GetProperties();
+
+                for (var i = 0; i < keyProperties.Count; i++)
+                {
+                    var property = keyProperties.ElementAt(i);
+
+                    var paramProperty = isParamSameType ? property : // if key object passed is the same type as expected result, use property
+                        keyTypeProperties.FirstOrDefault(p => p.Name.Equals(property.Name, StringComparison.CurrentCultureIgnoreCase));
+
+                    if (paramProperty == null)
+                        throw new ArgumentException($"The key object passed does not contain {property.Name} property.");
+
+                    dynParms.Add($"@{property.Name}", paramProperty.GetValue(keyObject, null));
+                }
+            }
+
+            return dynParms;
         }
 
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts".  
-        /// Id must be marked with [Key] attribute.
+        /// Returns a single entity by a key from table "Ts".  
+        /// Keys must be marked with [Key] or [ExplicitKey] attributes.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
         /// for optimal performance. 
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="id">Id of the entity to get, must be marked with [Key] attribute</param>
+        /// <param name="keyObject">Single or composite Key object that represents the entity to get</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static T Get<T>(this IDbConnection connection, dynamic keyObject, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-
-            if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
-            {
-                var key = GetSingleKey<T>(nameof(Get));
-                var name = GetTableName(type);
-
-                sql = $"select * from {name} where {key.Name} = @id";
-                GetQueries[type.TypeHandle] = sql;
-            }
-
-            var dynParams = new DynamicParameters();
-            dynParams.Add("@id", id);
+            List<PropertyInfo> keyProperties = GetAllKeys(type);
+            string sql = GenerateGetQuery(connection, type, keyProperties);
+            DynamicParameters dynParams = GenerateGetParams(type, keyObject, keyProperties);
 
             T obj;
 
@@ -236,7 +298,6 @@ namespace Dapper.Contrib.Extensions
 
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
-                GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
                 sql = "select * from " + name;
@@ -420,10 +481,7 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
-            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
-            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
-                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+            var keyProperties = GetAllKeys(type);
 
             var name = GetTableName(type);
 
@@ -431,7 +489,6 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("update {0} set ", name);
 
             var allProperties = TypePropertiesCache(type);
-            keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
@@ -489,13 +546,9 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
-            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
-            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
-                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+            var keyProperties = GetAllKeys(type);
 
             var name = GetTableName(type);
-            keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
