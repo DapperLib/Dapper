@@ -50,7 +50,7 @@
 #>
 [cmdletbinding()]
 param(
-   [string]$Channel="rel-1.0.0",
+   [string]$Channel="preview",
    [string]$Version="Latest",
    [string]$InstallDir="<auto>",
    [string]$Architecture="<auto>",
@@ -123,7 +123,7 @@ function Get-Latest-Version-Info([string]$AzureFeed, [string]$AzureChannel, [str
         $VersionFileUrl = "$AzureFeed/$AzureChannel/dnvm/latest.sharedfx.win.$CLIArchitecture.version"
     }
     else {
-        $VersionFileUrl = "$AzureFeed/Sdk/$AzureChannel/latest.version"
+        $VersionFileUrl = "$AzureFeed/$AzureChannel/dnvm/latest.win.$CLIArchitecture.version"
     }
     
     $Response = Invoke-WebRequest -UseBasicParsing $VersionFileUrl
@@ -147,8 +147,10 @@ function Get-Azure-Channel-From-Channel([string]$Channel) {
     # For compatibility with build scripts accept also directly Azure channels names
     switch ($Channel.ToLower()) {
         { ($_ -eq "future") -or ($_ -eq "dev") } { return "dev" }
+        { ($_ -eq "beta") } { return "beta" }
+        { ($_ -eq "preview") } { return "preview" }
         { $_ -eq "production" } { throw "Production channel does not exist yet" }
-        default { return $_ }
+        default { throw "``$Channel`` is an invalid channel name. Use one of the following: ``future``, ``preview``, ``production``" }
     }
 }
 
@@ -169,16 +171,19 @@ function Get-Download-Links([string]$AzureFeed, [string]$AzureChannel, [string]$
     Say-Invocation $MyInvocation
     
     $ret = @()
-    
+    $files = @()
     if ($SharedRuntime) {
-        $PayloadURL = "$AzureFeed/$AzureChannel/Binaries/$SpecificVersion/dotnet-win-$CLIArchitecture.$SpecificVersion.zip"
+        $files += "dotnet";
     }
     else {
-        $PayloadURL = "$AzureFeed/Sdk/$SpecificVersion/dotnet-dev-win-$CLIArchitecture.$SpecificVersion.zip"
+        $files += "dotnet-dev";
     }
-
-    Say-Verbose "Constructed payload URL: $PayloadURL"
-    $ret += $PayloadURL
+    
+    foreach ($file in $files) {
+        $PayloadURL = "$AzureFeed/$AzureChannel/Binaries/$SpecificVersion/$file-win-$CLIArchitecture.$SpecificVersion.zip"
+        Say-Verbose "Constructed payload URL: $PayloadURL"
+        $ret += $PayloadURL
+    }
 
     return $ret
 }
