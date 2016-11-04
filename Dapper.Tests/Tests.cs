@@ -3769,5 +3769,34 @@ insert TPTable (Value) values (2), (568)");
             public int Id { get; }
             public string Name { get; } = "abc";
         }
+
+        [Fact]
+        public void GuidBytesWork()
+        {
+            var guid = Guid.Parse("00112233-4455-6677-8899-aabbccddeeff");
+            var bytes = BitConverter.ToString(guid.ToByteArray());
+            try { connection.Execute("drop table GuidBytes"); } catch { }
+            connection.Execute("create table GuidBytes(a uniqueidentifier not null, b binary(16) not null)");
+            connection.Execute("insert GuidBytes(a,b) values (@a, @b)", new { a = guid, b = guid });
+
+            // via <Guid>
+            var guid2 = connection.QuerySingle<Guid>("select a from GuidBytes");
+            guid2.IsEqualTo(guid);
+
+            guid2 = connection.QuerySingle<Guid>("select b from GuidBytes");
+            guid2.IsEqualTo(guid);
+
+            // via <HasGuid>
+            guid2 = connection.QuerySingle<HazGUid>("select a as [Value] from GuidBytes").Value;
+            guid2.IsEqualTo(guid);
+
+            guid2 = connection.QuerySingle<HazGUid>("select b as [Value] from GuidBytes").Value;
+            guid2.IsEqualTo(guid);
+        }
+
+        public class HazGUid
+        {
+            public Guid Value { get; set; }
+        }
     }
 }
