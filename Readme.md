@@ -268,6 +268,40 @@ Dapper allows you to map a single row to multiple objects. This is a key feature
 
 Example:
 
+Consider 2 classes: `Post` and `User`
+
+```csharp
+class Post
+{
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string Content { get; set; }
+    public User Owner { get; set; }
+}
+
+class User
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+```
+
+Now let us say that we want to map a query that joins both the posts and the users table. Until now if we needed to combine the result of 2 queries, we'd need a new object to express it but it makes more sense in this case to put the `User` object inside the `Post` object.
+
+This is the user case for multi mapping. You tell dapper that the query returns a `Post` and a `User` object and then give it a function describing what you want to do with each of the rows containing both a `Post` and a `User` object. In our case, we want to take the user object and put it inside the post object. So we write the function: 
+
+```csharp
+(post, user) => { post.Owner = user; return post; }
+```
+
+The 3 type arguments to the `Query` method specify what objects dapper should use to deserialize the row and what is going to be returned. We're going to interpret both rows as a combination of `Post` and `User` and we're returning back a `Post` object. Hence the type declaration becomes
+
+```csharp
+<Post, User, Post>
+```
+
+Everything put together, looks like this:
+
 ```csharp
 var sql = 
 @"select * from #Posts p 
@@ -283,7 +317,7 @@ post.Owner.Name.IsEqualTo("Sam");
 post.Owner.Id.IsEqualTo(99);
 ```
 
-**important note** Dapper assumes your Id columns are named "Id" or "id", if your primary key is different or you would like to split the wide row at point other than "Id", use the optional 'splitOn' parameter.
+Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`, if your primary key is different or you would like to split the wide row at point other than `Id`, use the optional `splitOn` parameter.
 
 Multiple Results
 ---------------------
