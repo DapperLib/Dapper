@@ -215,6 +215,9 @@ namespace Dapper
                     typeof(TSixth),
                     typeof(TSeventh)
                 }, gridIndex);
+
+                IsConsumed = true;
+
                 try
                 {
                     foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
