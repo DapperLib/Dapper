@@ -2484,6 +2484,52 @@ end");
             }
         }
 
+
+        public class RecordingTypeHandler<T> : Dapper.SqlMapper.TypeHandler<T>
+        {
+            public override void SetValue(IDbDataParameter parameter, T value)
+            {
+                SetValueWasCalled = true;
+                parameter.Value = value;
+            }
+
+            public override T Parse(object value)
+            {
+                ParseWasCalled = true;
+                return (T)value;
+            }
+
+            public bool SetValueWasCalled { get; set; }
+            public bool ParseWasCalled { get; set; }
+        }
+
+        [Fact]
+        public void Test_RemoveTypeMap()
+        {
+            Dapper.SqlMapper.ResetTypeHandlers();
+            Dapper.SqlMapper.RemoveTypeMap(typeof(DateTime));
+
+            var dateTimeHandler = new RecordingTypeHandler<DateTime>();
+            Dapper.SqlMapper.AddTypeHandler(dateTimeHandler);
+
+            connection.Execute("CREATE TABLE #Test_RemoveTypeMap (x datetime NOT NULL);");
+
+            try
+            {
+                connection.Execute(@"INSERT INTO #Test_RemoveTypeMap VALUES (@Now)", new { DateTime.Now });
+                connection.Query<DateTime>("SELECT * FROM #Test_RemoveTypeMap");
+
+                dateTimeHandler.ParseWasCalled.IsTrue();
+                dateTimeHandler.SetValueWasCalled.IsTrue();
+            }
+            finally
+            {
+                connection.Execute("DROP TABLE #Test_RemoveTypeMap");
+                Dapper.SqlMapper.AddTypeMap(typeof(DateTime), DbType.DateTime); // or an option to reset type map?
+            }
+            
+        }
+
         [Fact]
         public void Issue130_IConvertible()
         {
