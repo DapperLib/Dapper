@@ -195,15 +195,23 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                var adapter = GetFormatter(connection);
                 var aliasedColumns = new StringBuilder();
-                var allCols = GetAllColumns(type);
-                for (var i=0; i<allCols.Count; i++)
+
+                if(GetPersistentColumns == DefaultGetPersistentColumns)
                 {
-                    var col = allCols[i];
-                    adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
-                    if (i < allCols.Count - 1)
-                        aliasedColumns.Append(",");
+                    aliasedColumns.Append("*");
+                }
+                else
+                {
+                    var adapter = GetFormatter(connection);
+                    var allCols = GetAllColumns(type);
+                    for (var i=0; i<allCols.Count; i++)
+                    {
+                        var col = allCols[i];
+                        adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
+                        if (i < allCols.Count - 1)
+                            aliasedColumns.Append(",");
+                    }
                 }
 
                 sql = $"select {aliasedColumns} from {name} where {key.ColumnName} = @id";

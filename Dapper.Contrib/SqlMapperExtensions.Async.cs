@@ -14,9 +14,9 @@ namespace Dapper.Contrib.Extensions
     public static partial class SqlMapperExtensions
     {
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
+        /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type.
         /// Id must be marked with [Key] attribute.
-        /// Created entity is tracked/intercepted for changes and used by the Update() extension. 
+        /// Created entity is tracked/intercepted for changes and used by the Update() extension.
         /// </summary>
         /// <typeparam name="T">Interface type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -33,15 +33,23 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(GetAsync));
                 var name = GetTableName(type);
 
-                var adapter = GetFormatter(connection);
                 var aliasedColumns = new StringBuilder();
-                var allCols = GetAllColumns(type);
-                for (var i=0; i<allCols.Count; i++)
+
+                if(GetPersistentColumns == DefaultGetPersistentColumns)
                 {
-                    var col = allCols[i];
-                    adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
-                    if (i < allCols.Count - 1)
-                        aliasedColumns.Append(",");
+                    aliasedColumns.Append("*");
+                }
+                else
+                {                
+                    var adapter = GetFormatter(connection);
+                    var allCols = GetAllColumns(type);
+                    for (var i=0; i<allCols.Count; i++)
+                    {
+                        var col = allCols[i];
+                        adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
+                        if (i < allCols.Count - 1)
+                            aliasedColumns.Append(",");
+                    }
                 }
 
                 sql = $"select {aliasedColumns} from {name} where {key.ColumnName} = @id";
@@ -73,10 +81,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entites from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -231,7 +239,7 @@ namespace Dapper.Contrib.Extensions
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
-            
+
             var persistentProperties = PersistentPropertiesCache(type);
 
             var adapter = GetFormatter(connection);
@@ -334,7 +342,7 @@ public partial class SqlServerAdapter
         if (first == null || first.id == null) return 0;
 
         var id = (int)first.id;
-        
+
         if (!keyProperties.Any()) return id;
 
         var idp = keyProperties.First().PropertyInfo;
@@ -354,7 +362,7 @@ public partial class SqlCeServerAdapter
 
         if (r.First() == null || r.First().id == null) return 0;
         var id = (int)r.First().id;
-        
+
         if (!keyProperties.Any()) return id;
 
         var idp = keyProperties.First().PropertyInfo;
@@ -385,7 +393,7 @@ public partial class MySqlAdapter
 }
 
 public partial class PostgresAdapter
-{ 
+{
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
