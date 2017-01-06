@@ -1762,41 +1762,6 @@ namespace Dapper
             return s[0];
         }
 
-        /// <summary>
-        /// Internal use only
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-#if !COREFX
-        [Browsable(false)]
-#endif
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete(ObsoleteInternalUsageOnly, false)]
-        public static Guid ReadGuid(object value)
-        {
-            if (value == null || value is DBNull) throw new ArgumentNullException(nameof(value));
-
-            if (value is byte[]) return new Guid((byte[])value);
-            if (value is string) return Guid.Parse((string)value);
-            return (Guid)value;
-        }
-
-        /// <summary>
-        /// Internal use only
-        /// </summary>
-#if !COREFX
-        [Browsable(false)]
-#endif
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete(ObsoleteInternalUsageOnly, false)]
-        public static Guid? ReadNullableGuid(object value)
-        {
-            if (value == null || value is DBNull) return null;
-
-            if (value is byte[]) return new Guid((byte[])value);
-            if (value is string) return Guid.Parse((string)value);
-            return (Guid)value;
-        }
 
         /// <summary>
         /// Internal use only
@@ -2758,14 +2723,6 @@ namespace Dapper
             {
                 return r => ReadNullableChar(r.GetValue(index));
             }
-            if (type == typeof(Guid))
-            { // this *does* need special handling, though
-                return r => ReadGuid(r.GetValue(index));
-            }
-            if (type == typeof(Guid?))
-            {
-                return r => ReadNullableGuid(r.GetValue(index));
-            }
             if (type.FullName == LinqBinary)
             {
                 return r => Activator.CreateInstance(type, r.GetValue(index));
@@ -3070,11 +3027,6 @@ namespace Dapper
                     {
                         il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
                             memberType == typeof(char) ? nameof(SqlMapper.ReadChar) : nameof(SqlMapper.ReadNullableChar), BindingFlags.Static | BindingFlags.Public), null); // stack is now [target][target][typed-value]
-                    }
-                    else if (memberType == typeof(Guid) || memberType == typeof(Guid?))
-                    {
-                        il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
-                            memberType == typeof(Guid) ? nameof(SqlMapper.ReadGuid) : nameof(SqlMapper.ReadNullableGuid), BindingFlags.Static | BindingFlags.Public), null); // stack is now [target][target][typed-value]
                     }
                     else
                     {
