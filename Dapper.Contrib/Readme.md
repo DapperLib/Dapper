@@ -119,6 +119,16 @@ Dapper.Contrib makes use of some optional attributes:
         public string Name { get; set; }
     }
     ```
+* `[Column("column_name")]` - use another column name instead of the name of the property
+
+	```csharp
+    public class Employee
+    {
+    	public int Id { get; set; }
+		[Column("custom_name")]
+        public string Name { get; set; }
+    }
+    ```
 * `[Key]` - this property is the identity/key (unless it is named "Id")
 * `[Write(true/false)]` -  this property is (not) writeable
 * `[Computed]` - this property is computed and should not be part of updates
