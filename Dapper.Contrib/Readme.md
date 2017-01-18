@@ -124,8 +124,8 @@ Dapper.Contrib makes use of some optional attributes:
 	```csharp
     public class Employee
     {
-    	public int Id { get; set; }
-		[Column("custom_name")]
+        public int Id { get; set; }
+        [Column("custom_name")]
         public string Name { get; set; }
     }
     ```
