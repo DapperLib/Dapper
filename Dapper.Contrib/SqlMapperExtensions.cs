@@ -33,14 +33,15 @@ namespace Dapper.Contrib.Extensions
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
         public delegate string TableNameMapperDelegate(Type type);
 
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+		private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
+		private static readonly ConcurrentDictionary<RuntimeTypeHandle, Dictionary<string, string>> TypePropertyColumnName = new ConcurrentDictionary<RuntimeTypeHandle, Dictionary<string, string>>();
 
-        private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
+		private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
             = new Dictionary<string, ISqlAdapter>
             {
@@ -247,7 +248,7 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         public static TableNameMapperDelegate TableNameMapper;
 
-        private static string GetTableName(Type type)
+		private static string GetTableName(Type type)
         {
             string name;
             if (TypeTableName.TryGetValue(type.TypeHandle, out name)) return name;
@@ -276,18 +277,44 @@ namespace Dapper.Contrib.Extensions
 
             TypeTableName[type.TypeHandle] = name;
             return name;
-        }
+		}
+
+		private static string GetColumnName(PropertyInfo property)
+		{
+			string name;
+			Type type = property.DeclaringType;
+			Dictionary<string, string> propertyColumnName = null;
+
+			if (TypePropertyColumnName.TryGetValue(property.DeclaringType.TypeHandle, out propertyColumnName))
+				if (propertyColumnName.TryGetValue(property.Name, out name))
+					return name;
+
+			//NOTE: This as dynamic trick should be able to handle both our own Columns-attribute as well as the one in EntityFramework 
+			var columnAttr = property.GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "ColumnAttribute") as dynamic;
+
+			if (columnAttr != null)
+				name = columnAttr.Name;
+			else
+				name = property.Name;
+
+			if (propertyColumnName == null)
+				TypePropertyColumnName[property.DeclaringType.TypeHandle] = new Dictionary<string, string>();
+
+			TypePropertyColumnName[property.DeclaringType.TypeHandle].Add(property.Name, name);
+
+			return name;
+		}
 
 
-        /// <summary>
-        /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
-        /// </summary>
-        /// <param name="connection">Open SqlConnection</param>
-        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
-        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
-        /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+		/// <summary>
+		/// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
+		/// </summary>
+		/// <param name="connection">Open SqlConnection</param>
+		/// <param name="entityToInsert">Entity to insert, can be list of entities</param>
+		/// <param name="transaction">The transaction to run under, null (the default) if none</param>
+		/// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+		/// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
+		public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var isList = false;
 
@@ -316,7 +343,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                adapter.AppendColumnName(sbColumnList, property.Name);  //fix for issue #336
+                adapter.AppendColumnName(sbColumnList, GetColumnName(property));  //fix for issue #336
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbColumnList.Append(", ");
             }
@@ -397,7 +424,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, GetColumnName(property));  //fix for issue #336
                 if (i < nonIdProps.Count - 1)
                     sb.AppendFormat(", ");
             }
@@ -405,7 +432,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, GetColumnName(property));  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }
@@ -454,7 +481,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, GetColumnName(property));  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }
@@ -684,6 +711,16 @@ namespace Dapper.Contrib.Extensions
     public class ComputedAttribute : Attribute
     {
     }
+
+	[AttributeUsage(AttributeTargets.Property)]
+	public class ColumnAttribute : Attribute
+	{
+		public ColumnAttribute(string columnName)
+		{
+			Name = columnName;
+		}
+		public string Name { get; set; }
+	}
 }
 
 public partial interface ISqlAdapter
