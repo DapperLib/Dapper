@@ -1,5 +1,20 @@
-Dapper - a simple object mapper for .Net
+# Dapper - a simple object mapper for .Net
 ========================================
+[![licence badge]][licence]
+[![stars badge]][stars]
+[![forks badge]][forks]
+[![issues badge]][issues]
+
+[licence badge]:https://img.shields.io/badge/license-apache2-blue.svg
+[stars badge]:https://img.shields.io/github/stars/StackExchange/dapper-dot-net.svg
+[forks badge]:https://img.shields.io/github/forks/StackExchange/dapper-dot-net.svg
+[issues badge]:https://img.shields.io/github/issues/StackExchange/dapper-dot-net.svg
+
+[licence]:https://github.com/StackExchange/dapper-dot-net/blob/master/LICENSE.md
+[stars]:https://github.com/StackExchange/dapper-dot-net/stargazers
+[forks]:https://github.com/StackExchange/dapper-dot-net/network
+[issues]:https://github.com/StackExchange/dapper-dot-net/issues
+
 
 Release Notes
 -------------
