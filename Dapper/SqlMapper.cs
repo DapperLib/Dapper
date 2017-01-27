@@ -261,6 +261,22 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Removes the specified type from the Type/DbType mapping table
+        /// </summary>
+        public static void RemoveTypeMap(Type type)
+        {
+            // use clone, mutate, replace to avoid threading issues
+            var snapshot = typeMap;
+
+            if (!snapshot.ContainsKey(type)) return; // nothing to do
+
+            var newCopy = new Dictionary<Type, DbType>(snapshot);
+            newCopy.Remove(type);
+
+            typeMap = newCopy;
+        }
+
+        /// <summary>
         /// Configure the specified type to be processed by a custom handler
         /// </summary>
         public static void AddTypeHandler(Type type, ITypeHandler handler)
