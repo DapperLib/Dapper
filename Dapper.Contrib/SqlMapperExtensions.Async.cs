@@ -403,7 +403,7 @@ public partial class PostgresAdapter
         var values = results.First();
         foreach (var p in propertyInfos)
         {
-            var value = values[p.Name.ToLower()];
+            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
