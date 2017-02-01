@@ -400,7 +400,6 @@ public partial class PostgresAdapter
 
         // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
-        var values = results.First();
         foreach (var p in propertyInfos)
         {
             var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
