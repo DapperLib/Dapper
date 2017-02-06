@@ -374,6 +374,50 @@ Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString 
 
 On SQL Server it is crucial to use the unicode when querying unicode and ansi when querying non unicode.
 
+Type Switching Per Row
+---------------------
+
+Usually you'll want to treat all rows from a given table as the same data type. However, there are some circumstances where it's useful to be able to parse different rows as different data types. This is where `IDataReader.GetRowParser` comes in handy.
+
+Imagine you have a database table named "Shapes" with the columns: `Id`, `Type`, and `Data`, and you want to parse its rows into `Circle`, `Square`, or `Triangle` objects based on the value of the Type column.
+
+```csharp
+var shapes = new List<IShape>();
+using (var reader = connection.ExecuteReader("select * from Shapes"))
+{
+    // Generate a row parser for each type you expect.
+    // The generic type <IShape> is what the parser will return.
+    // The argument (typeof(*)) is the concrete type to parse.
+    var circleParser = reader.GetRowParser<IShape>(typeof(Circle));
+    var squareParser = reader.GetRowParser<IShape>(typeof(Square));
+    var triangleParser = reader.GetRowParser<IShape>(typeof(Triangle));
+  	
+  	var typeColumnIndex = reader.GetOrdinal("Type");
+  	
+  	while (reader.Read())
+    {
+        IShape shape;
+        var type = (ShapeType)reader.GetInt32(typeColumnIndex);
+        switch (type)
+        {
+          	case ShapeType.Circle:
+            	shape = circleParser(reader);
+            	break;
+            case ShapeType.Square:
+            	shape = squareParser(reader);
+            	break;
+          	case ShapeType.Triangle:
+            	shape = triangleParser(reader);
+            	break;
+          	default:
+            	throw new NotImplementedException();
+        }
+      
+      	shapes.Add(shape);
+    }
+}
+```
+
 Limitations and caveats
 ---------------------
 Dapper caches information about every query it runs, this allow it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a ConcurrentDictionary object. The objects it stores are never flushed. If you are generating SQL strings on the fly without using parameters it is possible you will hit memory issues. We may convert the dictionaries to an LRU Cache.
