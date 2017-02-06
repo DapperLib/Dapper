@@ -16,3 +16,5 @@ Test.DB.*
 TestResults/
 Dapper.Tests/*.sdf
 .dotnet/*
+.idea.*/
+Dapper.userprefs

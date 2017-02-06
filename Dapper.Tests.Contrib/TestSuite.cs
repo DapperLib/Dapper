@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-
+using System.Reflection;
 using Dapper.Contrib.Extensions;
 
 #if !COREFX
@@ -88,6 +88,13 @@ namespace Dapper.Tests.Contrib
         public int Order { get; set; }
     }
 
+    [Table("StrangelyMappedThing")]
+    public class StrangelyMappedThing
+    {
+        public int WeirdId { get; set; }
+        public string WonderfullName { get; set; }
+    }
+
     public abstract partial class TestSuite
     {
         protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
@@ -169,6 +176,48 @@ namespace Dapper.Tests.Contrib
                 connection.Delete(o2);
                 o2 = connection.Get<ObjectY>(id);
                 o2.IsNull();
+            }
+        }
+
+        [Fact]
+        public void InsertGetUpdateDeleteWithOverriddenColumnMaps()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var idCol = new PropertyMap("strangeId", typeof(StrangelyMappedThing).GetProperty("WeirdId"));
+                var nameCol = new PropertyMap("strangeName", typeof(StrangelyMappedThing).GetProperty("WonderfullName"));
+
+                var origGetAll = SqlMapperExtensions.GetAllColumns;
+                SqlMapperExtensions.GetAllColumns =
+                    t => t == typeof(StrangelyMappedThing) ? new List<PropertyMap> {idCol, nameCol}
+                                                           : origGetAll(t);
+
+                var origGetPersistent = SqlMapperExtensions.GetPersistentColumns;
+                SqlMapperExtensions.GetPersistentColumns =
+                    t => t == typeof(StrangelyMappedThing) ? new List<PropertyMap> {idCol, nameCol}
+                                                           : origGetPersistent(t);
+
+                var origGetKey = SqlMapperExtensions.GetKeyColumns;
+                SqlMapperExtensions.GetKeyColumns =
+                    t => t == typeof(StrangelyMappedThing) ? new List<PropertyMap> {idCol}
+                                                           : origGetKey(t);
+
+                const int id = 1;
+                const string wonderfulName = "foo";
+                var o1 = new StrangelyMappedThing {WeirdId = id, WonderfullName = wonderfulName};
+                var originalxCount = connection.Query<int>("Select Count(*) From StrangelyMappedThing").First();
+                connection.Insert(o1);
+                var list1 = connection.Query<StrangelyMappedThing>("select * from StrangelyMappedThing").ToList();
+                list1.Count.IsEqualTo(originalxCount + 1);
+                o1 = connection.Get<StrangelyMappedThing>(id);
+                o1.WeirdId.IsEqualTo(id);
+                o1.WonderfullName = "bar";
+                connection.Update(o1);
+                o1 = connection.Get<StrangelyMappedThing>(id);
+                o1.WonderfullName.IsEqualTo("bar");
+                connection.Delete(o1);
+                o1 = connection.Get<StrangelyMappedThing>(id);
+                o1.IsNull();
             }
         }
         

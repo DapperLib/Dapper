@@ -41,7 +41,7 @@
         "../Dapper.Tests/XunitSkippable.cs",
         "../Dapper/TypeExtensions.cs"
       ]
-    } 
+    }
   },
   "testRunner": "xunit",
   "frameworks": {

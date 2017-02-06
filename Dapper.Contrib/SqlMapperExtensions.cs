@@ -32,11 +32,11 @@ namespace Dapper.Contrib.Extensions
 
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
         public delegate string TableNameMapperDelegate(Type type);
+        public delegate List<PropertyMap> ColumnNameMapperDelegate(Type type);
 
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>> PersistentProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyMap>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
@@ -52,73 +52,98 @@ namespace Dapper.Contrib.Extensions
                 {"fbconnection", new FbAdapter() }
             };
 
-        private static List<PropertyInfo> ComputedPropertiesCache(Type type)
+        private static PropertyMap MapProperty(PropertyInfo propInfo)
         {
-            IEnumerable<PropertyInfo> pi;
-            if (ComputedProperties.TryGetValue(type.TypeHandle, out pi))
-            {
-                return pi.ToList();
-            }
-
-            var computedProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ComputedAttribute)).ToList();
-
-            ComputedProperties[type.TypeHandle] = computedProperties;
-            return computedProperties;
+            return new PropertyMap(propInfo.Name, propInfo);
         }
 
-        private static List<PropertyInfo> ExplicitKeyPropertiesCache(Type type)
+        public static ColumnNameMapperDelegate GetKeyColumns = DefaultGetKeyColumns;
+        private static List<PropertyMap> DefaultGetKeyColumns(Type type)
         {
-            IEnumerable<PropertyInfo> pi;
-            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out pi))
-            {
-                return pi.ToList();
-            }
-
-            var explicitKeyProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute)).ToList();
-
-            ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
-            return explicitKeyProperties;
-        }
-
-        private static List<PropertyInfo> KeyPropertiesCache(Type type)
-        {
-
-            IEnumerable<PropertyInfo> pi;
-            if (KeyProperties.TryGetValue(type.TypeHandle, out pi))
-            {
-                return pi.ToList();
-            }
-
             var allProperties = TypePropertiesCache(type);
-            var keyProperties = allProperties.Where(p =>
-            {
-                return p.GetCustomAttributes(true).Any(a => a is KeyAttribute);
-            }).ToList();
+            var keyProperties = allProperties.Where(p => p.PropertyInfo.GetCustomAttributes(true)
+                                             .Any(a => a is KeyAttribute))
+                                             .ToList();
 
             if (keyProperties.Count == 0)
             {
-                var idProp = allProperties.FirstOrDefault(p => p.Name.ToLower() == "id");
-                if (idProp != null && !idProp.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
+                var idProp = allProperties.FirstOrDefault(p => p.PropertyInfo.Name.ToLower() == "id");
+                if (idProp != null)
                 {
                     keyProperties.Add(idProp);
                 }
             }
 
+            var explicitKeyProperties = TypePropertiesCache(type)
+                                            .Where(p => !keyProperties.Contains(p)
+                                                        && p.PropertyInfo.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
+                                            .ToList();
+
+
+            keyProperties.AddRange(explicitKeyProperties);
+
+            return keyProperties;
+        }
+
+        private static List<PropertyMap> KeyPropertiesCache(Type type)
+        {
+            IEnumerable<PropertyMap> pi;
+            if (KeyProperties.TryGetValue(type.TypeHandle, out pi))
+            {
+                return pi.ToList();
+            }
+
+            var keyProperties = GetKeyColumns(type);
+
             KeyProperties[type.TypeHandle] = keyProperties;
             return keyProperties;
         }
 
-        private static List<PropertyInfo> TypePropertiesCache(Type type)
+        public static ColumnNameMapperDelegate GetAllColumns = DefaultGetAllColumns;
+        private static List<PropertyMap> DefaultGetAllColumns(Type type)
         {
-            IEnumerable<PropertyInfo> pis;
+            return type.GetProperties()
+                       .Where(p => IsWriteable(p) && !IsComputed(p))
+                       .Select(MapProperty)
+                       .ToList();
+        }
+
+        private static List<PropertyMap> TypePropertiesCache(Type type)
+        {
+            IEnumerable<PropertyMap> pis;
             if (TypeProperties.TryGetValue(type.TypeHandle, out pis))
             {
                 return pis.ToList();
             }
 
-            var properties = type.GetProperties().Where(IsWriteable).ToArray();
+            var properties = GetAllColumns(type);
             TypeProperties[type.TypeHandle] = properties;
             return properties.ToList();
+        }
+
+        private static List<PropertyMap> PersistentPropertiesCache(Type type)
+        {
+            IEnumerable<PropertyMap> pis;
+            if (PersistentProperties.TryGetValue(type.TypeHandle, out pis))
+            {
+                return pis.ToList();
+            }
+
+            var properties = GetPersistentColumns(type);
+            PersistentProperties[type.TypeHandle] = properties;
+            return properties.ToList();
+        }
+
+        public static ColumnNameMapperDelegate GetPersistentColumns = DefaultGetPersistentColumns;
+        private static List<PropertyMap> DefaultGetPersistentColumns(Type type)
+        {
+            var keyProperties = KeyPropertiesCache(type)
+                                                .Where(k => !k.PropertyInfo.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
+                                                .Select(k => k.PropertyInfo);
+
+            return TypePropertiesCache(type)
+                                    .Where(t => !keyProperties.Contains(t.PropertyInfo))
+                                    .ToList();
         }
 
         private static bool IsWriteable(PropertyInfo pi)
@@ -130,25 +155,30 @@ namespace Dapper.Contrib.Extensions
             return writeAttribute.Write;
         }
 
-        private static PropertyInfo GetSingleKey<T>(string method)
+        private static bool IsComputed(PropertyInfo pi)
+        {
+            var attributes = pi.GetCustomAttributes(typeof(ComputedAttribute), false).AsList();
+            return attributes.Any();
+        }
+
+        private static PropertyMap GetSingleKey<T>(string method)
         {
             var type = typeof (T);
             var keys = KeyPropertiesCache(type);
-            var explicitKeys = ExplicitKeyPropertiesCache(type);
-            var keyCount = keys.Count + explicitKeys.Count;
+            var keyCount = keys.Count;
             if (keyCount > 1)
-                throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property");
+                throw new DataException($"{method}<T> only supports an entity with a single key property, as defined by GetKeyProperties. By default, this is determined by [Key] or [ExplicitKey] attributes");
             if (keyCount == 0)
-                throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
+                throw new DataException($"{method}<T> only supports an entity with a key property, as defined by GetKeyProperties. By defualt, this is determined by [Key] or [ExplicitKey] attributes");
 
-            return keys.Any() ? keys.First() : explicitKeys.First();
+            return keys.First();
         }
 
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts".  
+        /// Returns a single entity by a single id from table "Ts".
         /// Id must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -166,7 +196,26 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                sql = $"select * from {name} where {key.Name} = @id";
+                var aliasedColumns = new StringBuilder();
+
+                if(GetPersistentColumns == DefaultGetPersistentColumns)
+                {
+                    aliasedColumns.Append("*");
+                }
+                else
+                {
+                    var adapter = GetFormatter(connection);
+                    var allCols = GetAllColumns(type);
+                    for (var i=0; i<allCols.Count; i++)
+                    {
+                        var col = allCols[i];
+                        adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
+                        if (i < allCols.Count - 1)
+                            aliasedColumns.Append(",");
+                    }
+                }
+
+                sql = $"select {aliasedColumns} from {name} where {key.ColumnName} = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -186,8 +235,8 @@ namespace Dapper.Contrib.Extensions
 
                 foreach (var property in TypePropertiesCache(type))
                 {
-                    var val = res[property.Name];
-                    property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    var val = res[property.ColumnName];
+                    property.PropertyInfo.SetValue(obj, Convert.ChangeType(val, property.PropertyInfo.PropertyType), null);
                 }
 
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
@@ -200,10 +249,10 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entites from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -221,7 +270,19 @@ namespace Dapper.Contrib.Extensions
                 GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
-                sql = "select * from " + name;
+                var adapter = GetFormatter(connection);
+                var aliasedColumns = new StringBuilder();
+                var allCols = GetAllColumns(type);
+                for (var i=0; i<allCols.Count; i++)
+                {
+                    var col = allCols[i];
+                    adapter.AppendAliasedColumn(aliasedColumns, col.ColumnName, col.PropertyInfo.Name);
+                    if (i < allCols.Count - 1)
+                        aliasedColumns.Append(",");
+                }
+
+                sql = $"select {aliasedColumns} from {name}";
+
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
@@ -234,8 +295,8 @@ namespace Dapper.Contrib.Extensions
                 var obj = ProxyGenerator.GetInterfaceProxy<T>();
                 foreach (var property in TypePropertiesCache(type))
                 {
-                    var val = res[property.Name];
-                    property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    var val = res[property.ColumnName];
+                    property.PropertyInfo.SetValue(obj, Convert.ChangeType(val, property.PropertyInfo.PropertyType), null);
                 }
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
                 list.Add(obj);
@@ -259,7 +320,7 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
+                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework
                 var tableAttr = type
 #if COREFX
                     .GetTypeInfo()
@@ -307,27 +368,25 @@ namespace Dapper.Contrib.Extensions
 
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
-            var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
-            var computedProperties = ComputedPropertiesCache(type);
-            var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+            var persistentProperties = PersistentPropertiesCache(type);
 
             var adapter = GetFormatter(connection);
 
-            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
+            for (var i = 0; i < persistentProperties.Count; i++)
             {
-                var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                adapter.AppendColumnName(sbColumnList, property.Name);  //fix for issue #336
-                if (i < allPropertiesExceptKeyAndComputed.Count - 1)
+                var property = persistentProperties.ElementAt(i);
+                adapter.AppendColumnName(sbColumnList, property.ColumnName);  //fix for issue #336
+                if (i < persistentProperties.Count - 1)
                     sbColumnList.Append(", ");
             }
 
             var sbParameterList = new StringBuilder(null);
-            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
+            for (var i = 0; i < persistentProperties.Count; i++)
             {
-                var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                sbParameterList.AppendFormat("@{0}", property.Name);
-                if (i < allPropertiesExceptKeyAndComputed.Count - 1)
+                var property = persistentProperties.ElementAt(i);
+                sbParameterList.AppendFormat("@{0}", property.PropertyInfo.Name);
+                if (i < persistentProperties.Count - 1)
                     sbParameterList.Append(", ");
             }
 
@@ -378,35 +437,32 @@ namespace Dapper.Contrib.Extensions
                 type = type.GetGenericArguments()[0];
             }
 
-            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
-            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
-            if (!keyProperties.Any() && !explicitKeyProperties.Any())
-                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+            var keyProperties = KeyPropertiesCache(type);  //added ToList() due to issue #418, must work on a list copy
+
+            if (!keyProperties.Any())
+                throw new ArgumentException("Entity must have at least one key property, defined by GetKeyProperties. By default, use [Key] or [ExplicitKey] attributes");
 
             var name = GetTableName(type);
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
 
-            var allProperties = TypePropertiesCache(type);
-            keyProperties.AddRange(explicitKeyProperties);
-            var computedProperties = ComputedPropertiesCache(type);
-            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+            var persistentProperties = PersistentPropertiesCache(type);
 
-            var adapter = GetFormatter(connection); 
+            var adapter = GetFormatter(connection);
 
-            for (var i = 0; i < nonIdProps.Count; i++)
+            for (var i = 0; i < persistentProperties.Count; i++)
             {
-                var property = nonIdProps.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
-                if (i < nonIdProps.Count - 1)
+                var property = persistentProperties.ElementAt(i);
+                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName, property.PropertyInfo.Name);  //fix for issue #336
+                if (i < persistentProperties.Count - 1)
                     sb.AppendFormat(", ");
             }
             sb.Append(" where ");
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName, property.PropertyInfo.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }
@@ -439,13 +495,11 @@ namespace Dapper.Contrib.Extensions
                 type = type.GetGenericArguments()[0];
             }
 
-            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
-            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
-            if (!keyProperties.Any() && !explicitKeyProperties.Any())
-                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+            var keyProperties = KeyPropertiesCache(type);
+            if (!keyProperties.Any())
+                throw new ArgumentException("Entity must have at least one key property, defined by GetKeyProperties. By default, use [Key] or [ExplicitKey] attributes");
 
             var name = GetTableName(type);
-            keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
@@ -455,7 +509,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property.ColumnName, property.PropertyInfo.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }
@@ -485,7 +539,7 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
-        
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             var name = GetDatabaseType?.Invoke(connection).ToLower()
@@ -592,7 +646,7 @@ namespace Dapper.Contrib.Extensions
 
             private static void CreateProperty<T>(TypeBuilder typeBuilder, string propertyName, Type propType, MethodInfo setIsDirtyMethod, bool isIdentity)
             {
-                //Define the field and the property 
+                //Define the field and the property
                 var field = typeBuilder.DefineField("_" + propertyName, propType, FieldAttributes.Private);
                 var property = typeBuilder.DefineProperty(propertyName,
                                                System.Reflection.PropertyAttributes.None,
@@ -689,16 +743,17 @@ namespace Dapper.Contrib.Extensions
 
 public partial interface ISqlAdapter
 {
-    int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
-    
+    int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert);
+
     //new methods for issue #336
     void AppendColumnName(StringBuilder sb, string columnName);
-    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
+    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName);
+    void AppendAliasedColumn(StringBuilder sb, string columnName, string propertyName);
 }
 
 public partial class SqlServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList});select SCOPE_IDENTITY() id";
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
@@ -707,10 +762,9 @@ public partial class SqlServerAdapter : ISqlAdapter
         if (first == null || first.id == null) return 0;
 
         var id = (int)first.id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+        if (!keyProperties.Any()) return id;
 
-        var idProperty = propertyInfos.First();
+        var idProperty = keyProperties.First().PropertyInfo;
         idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
 
         return id;
@@ -721,15 +775,20 @@ public partial class SqlServerAdapter : ISqlAdapter
         sb.AppendFormat("[{0}]", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName);
+    }
+
+    public void AppendAliasedColumn(StringBuilder sb, string columnName, string propertyName)
+    {
+        sb.AppendFormat("[{0}] as [{1}]", columnName, propertyName);
     }
 }
 
 public partial class SqlCeServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
@@ -738,10 +797,9 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         if (r.First().id == null) return 0;
         var id = (int) r.First().id;
 
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+         if (!keyProperties.Any()) return id;
 
-        var idProperty = propertyInfos.First();
+        var idProperty = keyProperties.First().PropertyInfo;
         idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
 
         return id;
@@ -752,15 +810,20 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         sb.AppendFormat("[{0}]", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName);
+    }
+
+    public void AppendAliasedColumn(StringBuilder sb, string columnName, string propertyName)
+    {
+        sb.AppendFormat("[{0}] as [{1}]", columnName, propertyName);
     }
 }
 
 public partial class MySqlAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
@@ -768,10 +831,9 @@ public partial class MySqlAdapter : ISqlAdapter
 
         var id = r.First().id;
         if (id == null) return 0;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return Convert.ToInt32(id);
+        if (!keyProperties.Any()) return Convert.ToInt32(id);
 
-        var idp = propertyInfos.First();
+        var idp = keyProperties.First().PropertyInfo;
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
 
         return Convert.ToInt32(id);
@@ -782,34 +844,38 @@ public partial class MySqlAdapter : ISqlAdapter
         sb.AppendFormat("`{0}`", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
     {
-        sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
+        sb.AppendFormat("`{0}` = @{1}", columnName, propertyName);
+    }
+
+    public void AppendAliasedColumn(StringBuilder sb, string columnName, string propertyName)
+    {
+        sb.AppendFormat("`{0}` as `{1}`", columnName, propertyName);
     }
 }
 
 
 public partial class PostgresAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
         sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
         // If no primary key then safe to assume a join table with not too much data to return
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any())
+        if (!keyProperties.Any())
             sb.Append(" RETURNING *");
         else
         {
             sb.Append(" RETURNING ");
             var first = true;
-            foreach (var property in propertyInfos)
+            foreach (var property in keyProperties)
             {
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                sb.Append(property.ColumnName);
             }
         }
 
@@ -817,10 +883,10 @@ public partial class PostgresAdapter : ISqlAdapter
 
         // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
-        foreach (var p in propertyInfos)
+        foreach (var p in keyProperties)
         {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
-            p.SetValue(entityToInsert, value, null);
+            var value = ((IDictionary<string, object>)results.First())[p.ColumnName.ToLower()];
+            p.PropertyInfo.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
         }
@@ -832,24 +898,28 @@ public partial class PostgresAdapter : ISqlAdapter
         sb.AppendFormat("\"{0}\"", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+        sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName);
+    }
+
+    public void AppendAliasedColumn(StringBuilder sb, string columnName, string propertyName)
+    {
+        sb.AppendFormat("\"{0}\" as \"{1}\"", columnName, propertyName);
     }
 }
 
 public partial class SQLiteAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IList<PropertyMap> keyProperties, object entityToInsert)
     {
         var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList}); SELECT last_insert_rowid() id";
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
 
         var id = (int)multi.Read().First().id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (!propertyInfos.Any()) return id;
+        if (!keyProperties.Any()) return id;
 
-        var idProperty = propertyInfos.First();
+        var idProperty = keyProperties.First().PropertyInfo;
         idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
 
         return id;
@@ -860,10 +930,26 @@ public partial class SQLiteAdapter : ISqlAdapter
         sb.AppendFormat("\"{0}\"", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+        sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName);
     }
+
+    public void AppendAliasedColumn(StringBuilder sb, string columnName, string propertyName)
+    {
+        sb.AppendFormat("\"{0}\" as \"{1}\"", columnName, propertyName);
+    }
+}
+
+public class PropertyMap
+{
+    public PropertyMap(string columnName, PropertyInfo propInfo)
+    {
+        ColumnName = columnName;
+        PropertyInfo = propInfo;
+    }
+    public string ColumnName { get; private set; }
+    public PropertyInfo PropertyInfo { get; private set; }
 }
 
 public partial class FbAdapter : ISqlAdapter
