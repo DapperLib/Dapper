@@ -364,6 +364,73 @@ int b = p.Get<int>("@b");
 int c = p.Get<int>("@c"); 
 ```
 
+Template parameter objects
+---------------------
+By using a template object with your DynamicParameters(), all public properties of your template will get automatically mapped as input parameters.
+For example:
+```csharp
+var p = new DynamicParameters();
+p.Add("@a", 11);
+p.Add("@b", 12);
+
+cnn.Execute(@"select @a + @b", p); 
+```
+Can be written as:
+
+```csharp
+class TwoNumbers
+{
+    public int a { get; set; }
+    public int b { get; set; }
+}
+
+var numbers = new TwoNumbers() { a = 11, b = 12 };
+cnn.Execute("select @a + @b", new DynamicParameters(numbers)); 
+```
+
+Auto-updating Output Parameters
+---------------------
+Dapper can automatically apply updates to a target object by mapping output parameters to your target instance.
+
+Using a template object:
+```csharp
+class ThreeNumbers
+{
+    public int a { get; set; }
+    public int b { get; set; }
+    public int c { get; set; }
+}
+
+var numbers = new ThreeNumbers() { a = 11, b = 12 };
+var p = new DynamicParameters(numbers);
+p.Output(numbers, n => n.c);
+
+cnn.Execute("set @c = @a + @b", p);
+
+numbers.c.IsEqualTo(23);
+```
+
+When more precise control over the input parameters is required, for example when calling stored procedures; you can bypass using a template object:
+```csharp
+cnn.Execute(@"
+create proc #Square 
+	@a int,
+	@c int output
+as 
+begin
+	set @c = @a * @a
+end");
+
+var numbers = new ThreeNumbers();
+var p = new DynamicParameters();
+p.Add("@a", 11);
+p.Output(numbers, n => n.c);
+
+cnn.Execute("#Square", p, commandType: CommandType.StoredProcedure);
+
+numbers.c.IsEqualTo(121);
+```
+
 Ansi Strings and varchar
 ---------------------
 Dapper supports varchar params, if you are executing a where clause on a varchar column using a param be sure to pass it in this way:
