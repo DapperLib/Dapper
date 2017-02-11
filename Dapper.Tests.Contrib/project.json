@@ -109,7 +109,8 @@
           "version": "1.0.0",
           "type": "platform"
         },
-        "Microsoft.Data.Sqlite": "1.0.0"
+        "Microsoft.Data.Sqlite": "1.0.0",
+        "Npgsql": "3.2.0"
       }
     }
   }
