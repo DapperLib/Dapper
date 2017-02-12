@@ -14,7 +14,7 @@
   "description": "Extension handlers for entity framework",
   "version": "1.50.2-*",
   "title": "Dapper entity framework type handlers (with a strong name)",
-  "copyright": "2016 Stack Exchange, Inc.",
+  "copyright": "2017 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper.StrongName": {
       "version": "1.50.2-*",

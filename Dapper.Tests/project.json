@@ -14,7 +14,7 @@
   "description": "Dapper Core Test Suite",
   "title": "Dapper.Tests",
   "version": "1.0.0-*",
-  "copyright": "2016 Stack Exchange, Inc.",
+  "copyright": "2017 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
       "target": "project"

@@ -14,7 +14,7 @@
   "description": "The official collection of get, insert, update and delete helpers for dapper.net. Also handles lists of entities and optional \"dirty\" tracking of interface-based entities.",
   "version": "1.50.2-*",
   "title": "Dapper.Contrib",
-  "copyright": "2016 Stack Exchange, Inc.",
+  "copyright": "2017 Stack Exchange, Inc.",
   "dependencies": {
     "Dapper": {
       "version": "1.50.2-*",
