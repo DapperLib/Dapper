@@ -554,7 +554,7 @@ namespace Dapper.Tests.Contrib
         {
             using (var connection = GetOpenConnection())
             {
-                connection.Get<IUser>(3).IsNull();
+                connection.Get<IUser>(9999).IsNull();
                 User user = new User { Name = "Adamb", Age = 10 };
                 int id = (int)connection.Insert(user);
                 user.Id.IsEqualTo(id);
@@ -577,9 +577,9 @@ namespace Dapper.Tests.Contrib
 
                 var builder = new SqlBuilder();
                 var justId = builder.AddTemplate("SELECT /**select**/ FROM Users");
-                var all = builder.AddTemplate("SELECT Name, /**select**/, Age FROM Users");
+                var all = builder.AddTemplate($"SELECT {QuoteColumnName("Name")}, /**select**/, {QuoteColumnName("Age")} FROM Users");
 
-                builder.Select("Id");
+                builder.Select(QuoteColumnName("Id"));
 
                 var ids = connection.Query<int>(justId.RawSql, justId.Parameters);
                 var users = connection.Query<User>(all.RawSql, all.Parameters);
@@ -596,7 +596,7 @@ namespace Dapper.Tests.Contrib
         public void BuilderTemplateWithoutComposition()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new { age = 5 });
+            var template = builder.AddTemplate($"SELECT COUNT(*) FROM Users WHERE {QuoteColumnName("Age")} = @age", new { age = 5 });
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");
@@ -609,6 +609,11 @@ namespace Dapper.Tests.Contrib
                 if (connection.Query<int>(template.RawSql, template.Parameters).Single() != 1)
                     throw new Exception("Query failed");
             }
+        }
+
+        protected virtual string QuoteColumnName(string name)
+        {
+            return name;
         }
 
         [Fact]
