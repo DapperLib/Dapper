@@ -13,8 +13,37 @@ using Xunit;
 
 namespace Dapper.Tests.Contrib
 {
+    [Table("ObjectW")]
+    public class ObjectW
+    {
+        [ExplicitKey]
+        public Guid ObjectWId { get; set; }
+        public string Name { get; set; }
+    }
+
     public abstract partial class TestSuite
     {
+        [Fact]
+        public async Task Issue703()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                //update first (will fail) then insert
+                //added for bug #418/#703
+                var objectW = new ObjectW
+                {
+                    ObjectWId = Guid.NewGuid(),
+                    Name = "Someone"
+                };
+                var updates = await connection.UpdateAsync(objectW);
+                updates.IsFalse();
+ 
+                await connection.InsertAsync(objectW);
+                var list = await connection.GetAllAsync<ObjectW>();
+                list.Count().IsEqualTo(1);
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>

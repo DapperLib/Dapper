@@ -56,6 +56,8 @@ namespace Dapper.Tests.Contrib
                 connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
                 dropTable("ObjectZ");
                 connection.Execute(@"CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
+                dropTable("ObjectW");
+                connection.Execute(@"CREATE TABLE ObjectW (ObjectWId uniqueidentifier not null, Name nvarchar(100) not null);");
             }
         }
     }

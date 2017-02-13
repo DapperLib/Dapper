@@ -63,7 +63,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ComputedAttribute)).ToList();
 
             ComputedProperties[type.TypeHandle] = computedProperties;
-            return computedProperties;
+            return computedProperties.ToList();
         }
 
         private static List<PropertyInfo> ExplicitKeyPropertiesCache(Type type)
@@ -77,7 +77,7 @@ namespace Dapper.Contrib.Extensions
             var explicitKeyProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute)).ToList();
 
             ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
-            return explicitKeyProperties;
+            return explicitKeyProperties.ToList();
         }
 
         private static List<PropertyInfo> KeyPropertiesCache(Type type)
@@ -105,7 +105,7 @@ namespace Dapper.Contrib.Extensions
             }
 
             KeyProperties[type.TypeHandle] = keyProperties;
-            return keyProperties;
+            return keyProperties.ToList();
         }
 
         private static List<PropertyInfo> TypePropertiesCache(Type type)
