@@ -209,15 +209,15 @@ namespace Dapper
                         });
                     }
                 }
-            }
 
-            // Now that any template parameters have been added to the command, let's place our output callbacks
-            var tmp = outputCallbacks;
-            if (tmp != null)
-            {
-                foreach (var generator in tmp)
+                // Now that the parameters are added to the command, let's place our output callbacks
+                var tmp = outputCallbacks;
+                if (tmp != null)
                 {
-                    generator();
+                    foreach (var generator in tmp)
+                    {
+                        generator();
+                    }
                 }
             }
 
@@ -463,13 +463,11 @@ namespace Dapper
 
                 if (parameters.TryGetValue(dynamicParamName, out parameter))
                 {
-                    parameter.ParameterDirection = ParameterDirection.InputOutput;
-                    parameter.Size = sizeToSet;
+                    parameter.ParameterDirection = parameter.AttachedParam.Direction = ParameterDirection.InputOutput;
 
-                    if (parameter.AttachedParam != null)
+                    if (parameter.AttachedParam.Size == 0)
                     {
-                        parameter.AttachedParam.Direction = ParameterDirection.InputOutput;
-                        parameter.AttachedParam.Size = parameter.AttachedParam.Size == 0 ? sizeToSet : parameter.AttachedParam.Size;
+                        parameter.Size = parameter.AttachedParam.Size = sizeToSet;
                     }
                 }
                 else
