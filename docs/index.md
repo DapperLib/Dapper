@@ -4,7 +4,7 @@
 
 A brief guide is available [on github](https://github.com/StackExchange/dapper-dot-net/blob/master/Readme.md)
 
-More examples coming soon on Stack Overflow docs
+More examples coming soon on Stack Overflow docs.
 
 Questions on Stack Overflow should be tagged [`dapper`](http://stackoverflow.com/questions/tagged/dapper)
 
