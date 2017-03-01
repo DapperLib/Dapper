@@ -4,7 +4,7 @@ Dapper - a simple object mapper for .Net
 Release Notes
 -------------
 
-[Located at stackexchange.github.io/Dapper](http://stackexchange.github.io/Dapper/)
+[Located at stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
 
 
 Features
