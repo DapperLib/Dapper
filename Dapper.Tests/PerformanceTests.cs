@@ -255,7 +255,7 @@ namespace Dapper.Tests
                 Try(() =>
                 {
                     var sdb = Simple.Data.Database.OpenConnection(TestSuite.ConnectionString);
-                    tests.Add(id => sdb.Posts.FindById(id), "Simple.Data");
+                    tests.Add(id => sdb.Posts.FindById(id).FirstOrDefault(), "Simple.Data");
                 }, "Simple.Data");
 #endif
 
