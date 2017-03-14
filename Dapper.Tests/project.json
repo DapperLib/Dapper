@@ -23,7 +23,8 @@
       "target": "project"
     },
     "xunit": "2.2.0-beta2-build3300",
-    "dotnet-test-xunit": "2.2.0-preview2-build1029"
+    "dotnet-test-xunit": "2.2.0-preview2-build1029",
+    "Belgrade.Sql.Client": "0.6.2"
   },
   "buildOptions": {
     "warningsAsErrors": true,
@@ -91,7 +92,8 @@
           "SOMA",
           "SIMPLEDATA",
           "SQLITE",
-          "XUNIT2"
+          "XUNIT2",
+          "BELGRADE"
         ]
       },
       "frameworkAssemblies": {
@@ -130,7 +132,7 @@
         "dnxcore50"
       ],
       "buildOptions": {
-        "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE" ]
+        "define": [ "ASYNC", "COREFX", "XUNIT2", "SQLITE","BELGRADE" ]
       },
       "dependencies": {
         "Microsoft.NETCore.App": {
