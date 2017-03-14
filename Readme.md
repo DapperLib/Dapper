@@ -16,8 +16,6 @@ It provides 3 helpers:
 Execute a query and map the results to a strongly typed List
 ------------------------------------------------------------
 
-Note: all extension methods assume the connection is already open, they will fail if the connection is closed.
-
 ```csharp
 public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
 ```
