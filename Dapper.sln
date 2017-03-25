@@ -1,35 +1,42 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A34907DF-958A-4E4C-8491-84CF303FD13E}"
 	ProjectSection(SolutionItems) = preProject
 		build.ps1 = build.ps1
 		build.sh = build.sh
-		global.json = global.json
 		License.txt = License.txt
-		NuGet.Config = NuGet.Config
 		Readme.md = Readme.md
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper", "Dapper\Dapper.xproj", "{FAC24C3F-68F9-4247-A4B9-21D487E99275}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper", "Dapper\Dapper.csproj", "{FAC24C3F-68F9-4247-A4B9-21D487E99275}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.StrongName", "Dapper.StrongName\Dapper.StrongName.xproj", "{549C51A1-222B-4E12-96F1-3AEFF45A7709}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.StrongName", "Dapper\Dapper.StrongName.csproj", "{549C51A1-222B-4E12-96F1-3AEFF45A7709}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.Tests", "Dapper.Tests\Dapper.Tests.xproj", "{052C0817-DB26-4925-8929-8C5E42D148D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests", "Dapper.Tests\Dapper.Tests.csproj", "{052C0817-DB26-4925-8929-8C5E42D148D5}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.Contrib", "Dapper.Contrib\Dapper.Contrib.xproj", "{4E409F8F-CFBB-4332-8B0A-FD5A283051FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Contrib", "Dapper.Contrib\Dapper.Contrib.csproj", "{4E409F8F-CFBB-4332-8B0A-FD5A283051FD}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.EntityFramework", "Dapper.EntityFramework\Dapper.EntityFramework.xproj", "{BE401F7B-8611-4A1E-AEAA-5CB700128C16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.EntityFramework", "Dapper.EntityFramework\Dapper.EntityFramework.csproj", "{BE401F7B-8611-4A1E-AEAA-5CB700128C16}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.Tests.Contrib", "Dapper.Tests.Contrib\Dapper.Tests.Contrib.xproj", "{DAB3C5B7-BCD1-4A5F-BB6B-50D2BB63DB4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests.Contrib", "Dapper.Tests.Contrib\Dapper.Tests.Contrib.csproj", "{DAB3C5B7-BCD1-4A5F-BB6B-50D2BB63DB4A}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.SqlBuilder", "Dapper.SqlBuilder\Dapper.SqlBuilder.xproj", "{196928F0-7052-4585-90E8-817BD720F5E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.SqlBuilder", "Dapper.SqlBuilder\Dapper.SqlBuilder.csproj", "{196928F0-7052-4585-90E8-817BD720F5E3}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.EntityFramework.StrongName", "Dapper.EntityFramework.StrongName\Dapper.EntityFramework.StrongName.xproj", "{1A70B6D7-244E-41ED-8FF5-6F0E8E26A764}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Rainbow", "Dapper.Rainbow\Dapper.Rainbow.csproj", "{8A74F0B6-188F-45D2-8A4B-51E4F211805A}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapper.Rainbow", "Dapper.Rainbow\Dapper.Rainbow.xproj", "{8A74F0B6-188F-45D2-8A4B-51E4F211805A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.build.props = Directory.build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{568BD46C-1C65-4D44-870C-12CD72563262}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.EntityFramework.StrongName", "Dapper.EntityFramework\Dapper.EntityFramework.StrongName.csproj", "{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests.Performance", "Dapper.Tests.Performance\Dapper.Tests.Performance.csproj", "{F017075A-2969-4A8E-8971-26F154EB420F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,16 +72,32 @@ Global
 		{196928F0-7052-4585-90E8-817BD720F5E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{196928F0-7052-4585-90E8-817BD720F5E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{196928F0-7052-4585-90E8-817BD720F5E3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1A70B6D7-244E-41ED-8FF5-6F0E8E26A764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1A70B6D7-244E-41ED-8FF5-6F0E8E26A764}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1A70B6D7-244E-41ED-8FF5-6F0E8E26A764}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1A70B6D7-244E-41ED-8FF5-6F0E8E26A764}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8A74F0B6-188F-45D2-8A4B-51E4F211805A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8A74F0B6-188F-45D2-8A4B-51E4F211805A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A74F0B6-188F-45D2-8A4B-51E4F211805A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A74F0B6-188F-45D2-8A4B-51E4F211805A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F017075A-2969-4A8E-8971-26F154EB420F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F017075A-2969-4A8E-8971-26F154EB420F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F017075A-2969-4A8E-8971-26F154EB420F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F017075A-2969-4A8E-8971-26F154EB420F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FAC24C3F-68F9-4247-A4B9-21D487E99275} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{549C51A1-222B-4E12-96F1-3AEFF45A7709} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{052C0817-DB26-4925-8929-8C5E42D148D5} = {568BD46C-1C65-4D44-870C-12CD72563262}
+		{4E409F8F-CFBB-4332-8B0A-FD5A283051FD} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{BE401F7B-8611-4A1E-AEAA-5CB700128C16} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{DAB3C5B7-BCD1-4A5F-BB6B-50D2BB63DB4A} = {568BD46C-1C65-4D44-870C-12CD72563262}
+		{196928F0-7052-4585-90E8-817BD720F5E3} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{8A74F0B6-188F-45D2-8A4B-51E4F211805A} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{F017075A-2969-4A8E-8971-26F154EB420F} = {568BD46C-1C65-4D44-870C-12CD72563262}
 	EndGlobalSection
 EndGlobal

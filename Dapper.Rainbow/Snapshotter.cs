@@ -36,8 +36,7 @@ namespace Dapper
             {
                 return Diff(memberWiseClone, trackedObject);
             }
-
-
+            
             private static T Clone(T myObject)
             {
                 cloner = cloner ?? GenerateCloner();
@@ -54,7 +53,6 @@ namespace Dapper
                 }
                 return dm;
             }
-
 
             static List<PropertyInfo> RelevantProperties()
             {
@@ -80,7 +78,6 @@ namespace Dapper
 
             private static Func<T, T, List<Change>> GenerateDiffer()
             {
-
                 var dm = new DynamicMethod("DoDiff", typeof(List<Change>), new[] { typeof(T), typeof(T) }, true);
 
                 var il = dm.GetILGenerator();
@@ -164,7 +161,7 @@ namespace Dapper
             }
 
 
-            // adapted from http://stackoverflow.com/a/966466/17174
+            // adapted from https://stackoverflow.com/a/966466/17174
             private static Func<T, T> GenerateCloner()
             {
                 var dm = new DynamicMethod("DoClone", typeof(T), new Type[] { typeof(T) }, true);

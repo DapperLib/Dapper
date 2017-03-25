@@ -19,14 +19,14 @@ namespace Dapper.Tests.Contrib
     // the entire set of tests without declarations per method
     // If we want to support a new provider, they need only be added here - not in multiple places
 
-#if XUNIT2
     [XunitTestCaseDiscoverer("Dapper.Tests.SkippableFactDiscoverer", "Dapper.Tests.Contrib")]
-    public class SkippableFactAttribute : FactAttribute { }
-#endif
+    public class SkippableFactAttribute : FactAttribute
+    {
+    }
 
     public class SqlServerTestSuite : TestSuite
     {
-        const string DbName = "tempdb";
+        private const string DbName = "tempdb";
         public static string ConnectionString =>
             IsAppVeyor
                 ? @"Server=(local)\SQL2014;Database=tempdb;User ID=sa;Password=Password12!"
@@ -115,10 +115,8 @@ namespace Dapper.Tests.Contrib
             }
         }
     }
-#endif
 
-#if !COREFX && !DNX451
-    // This doesn't work on DNX right now due to:
+    // This doesn't work on COREFX right now due to:
     // In Visual Studio: Interop loads (works from console, though)
     // In general: parameter names, see https://github.com/StackExchange/dapper-dot-net/issues/375
     public class SQLiteTestSuite : TestSuite
@@ -148,9 +146,7 @@ namespace Dapper.Tests.Contrib
             }
         }
     }
-#endif
 
-#if !COREFX
     public class SqlCETestSuite : TestSuite
     {
         const string FileName = "Test.DB.sdf";

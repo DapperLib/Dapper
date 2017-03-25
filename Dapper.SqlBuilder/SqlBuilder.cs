@@ -21,7 +21,7 @@ namespace Dapper
             private readonly string _joiner;
             private readonly string _prefix;
             private readonly string _postfix;
-            
+
             public Clauses(string joiner, string prefix = "", string postfix = "")
             {
                 _joiner = joiner;
@@ -56,7 +56,7 @@ namespace Dapper
             private readonly SqlBuilder _builder;
             private readonly object _initParams;
             private int _dataSeq = -1; // Unresolved
-            
+
             public Template(SqlBuilder builder, string sql, dynamic parameters)
             {
                 _initParams = parameters;
@@ -110,73 +110,73 @@ namespace Dapper
             clauses.Add(new Clause { Sql = sql, Parameters = parameters, IsInclusive = isInclusive });
             _seq++;
         }
-        
+
         public SqlBuilder Intersect(string sql, dynamic parameters = null)
         {
             AddClause("intersect", sql, parameters, "\nINTERSECT\n ", "\n ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder InnerJoin(string sql, dynamic parameters = null)
         {
             AddClause("innerjoin", sql, parameters, "\nINNER JOIN ", "\nINNER JOIN ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder LeftJoin(string sql, dynamic parameters = null)
         {
             AddClause("leftjoin", sql, parameters, "\nLEFT JOIN ", "\nLEFT JOIN ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder RightJoin(string sql, dynamic parameters = null)
         {
             AddClause("rightjoin", sql, parameters, "\nRIGHT JOIN ", "\nRIGHT JOIN ", "\n", false);
             return this;
         }
-  
+
         public SqlBuilder Where(string sql, dynamic parameters = null)
         {
             AddClause("where", sql, parameters, " AND ", "WHERE ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder OrWhere(string sql, dynamic parameters = null)
         {
             AddClause("where", sql, parameters, " OR ", "WHERE ", "\n", true);
             return this;
         }
-        
+
         public SqlBuilder OrderBy(string sql, dynamic parameters = null)
         {
             AddClause("orderby", sql, parameters, " , ", "ORDER BY ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder Select(string sql, dynamic parameters = null)
         {
             AddClause("select", sql, parameters, " , ", "", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder AddParameters(dynamic parameters)
         {
             AddClause("--parameters", "", parameters, "", "", "", false);
             return this;
         }
-        
+
         public SqlBuilder Join(string sql, dynamic parameters = null)
         {
             AddClause("join", sql, parameters, "\nJOIN ", "\nJOIN ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder GroupBy(string sql, dynamic parameters = null)
         {
             AddClause("groupby", sql, parameters, " , ", "\nGROUP BY ", "\n", false);
             return this;
         }
-        
+
         public SqlBuilder Having(string sql, dynamic parameters = null)
         {
             AddClause("having", sql, parameters, "\nAND ", "HAVING ", "\n", false);

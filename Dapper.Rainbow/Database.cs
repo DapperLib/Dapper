@@ -106,7 +106,7 @@ namespace Dapper
                 return database.Query<T>("select * from " + TableName);
             }
 
-            static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
+            private static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
 
             internal static List<string> GetParamNames(object o)
             {
@@ -127,7 +127,7 @@ namespace Dapper
                         if (attr==null || (!attr.Value))
                         {
                             paramNames.Add(prop.Name);
-                        }                        
+                        }
                     }
                     paramNameCache[o.GetType()] = paramNames;
                 }
@@ -142,9 +142,9 @@ namespace Dapper
 			}
 		}
 
-        DbConnection _connection;
-        int _commandTimeout;
-        DbTransaction _transaction;
+        private DbConnection _connection;
+        private int _commandTimeout;
+        private DbTransaction _transaction;
 
         public static TDatabase Init(DbConnection connection, int commandTimeout)
         {
@@ -240,7 +240,7 @@ namespace Dapper
             return (Action<TDatabase>)dm.CreateDelegate(typeof(Action<TDatabase>));
         }
 
-        static ConcurrentDictionary<Type, string> tableNameMap = new ConcurrentDictionary<Type, string>();
+        private static ConcurrentDictionary<Type, string> tableNameMap = new ConcurrentDictionary<Type, string>();
         private string DetermineTableName<T>(string likelyTableName)
         {
             string name;
