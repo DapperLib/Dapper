@@ -44,6 +44,8 @@ namespace Dapper.Tests
 #endif
             EnsureDBSetup();
             RunPerformanceTests();
+            Console.WriteLine("Press any key to close...");
+            Console.ReadKey();
         }
 
         private static void EnsureDBSetup()
@@ -83,7 +85,7 @@ begin
 	while @i <= 5001
 	begin 
 		
-		insert Posts ([Text],CreationDate, LastChangeDate) values (replicate('x', 2000), GETDATE(), GETDATE())
+		insert Posts ([Text],CreationDate, LastChangeDate,Counter1,Counter2,Counter3,Counter4,Counter5 ,Counter6 ,Counter7 ,Counter8 ,Counter9 ) values (replicate('x', 2000), GETDATE(), GETDATE(),1,2,3,4,5,6,7,8,9)
 		set @id = @@IDENTITY
 		
 		set @i = @i + 1
