@@ -13,8 +13,6 @@ namespace Dapper.Tests
                 // I can see this happening...
                 connection.QuerySingle<int>("select @id", (id: 42, name: "Fred"));
                 Assert.Fail();
-                ValueTuple<int, int> b = (24, 13);
-                b.Item1.IsEqualTo(24);
             }
             catch (NotSupportedException ex)
             {
