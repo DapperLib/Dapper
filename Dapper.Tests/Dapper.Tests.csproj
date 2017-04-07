@@ -27,6 +27,7 @@
     <PackageReference Include="xunit.runner.console" Version="2.2.0" />
     <PackageReference Include="xunit" Version="2.2.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.3.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.3.0"/>
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
