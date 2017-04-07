@@ -34,6 +34,26 @@ namespace Dapper.Tests
             val.name.IsEqualTo("Fred");
         }
 
+
+        [Fact]
+        public void TupleReturnValue_TooManyColumns_Ignored()
+        {
+            var val = connection.QuerySingle<(int id, string name)>("select 42, 'Fred', 123");
+            val.id.IsEqualTo(42);
+            val.name.IsEqualTo("Fred");
+        }
+
+
+        [Fact]
+        public void TupleReturnValue_TooFewColumns_Unmapped()
+        {
+            // I'm very wary of making this throw, but I can also see some sense in pointing out the oddness
+            var val = connection.QuerySingle<(int id, string name, int extra)>("select 42, 'Fred'");
+            val.id.IsEqualTo(42);
+            val.name.IsEqualTo("Fred");
+            val.extra.IsEqualTo(0);
+        }
+
         [Fact]
         public void TupleReturnValue_Works_NamesIgnored()
         {
