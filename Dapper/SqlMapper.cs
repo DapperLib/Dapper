@@ -2237,9 +2237,8 @@ namespace Dapper
         static List<IMemberMap> GetValueTupleMembers(Type type, string[] names)
         {
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
-            int keep = Math.Min(fields.Length, names.Length);
-            var result = new List<IMemberMap>(keep);
-            for(int i = 0; i < keep; i++)
+            var result = new List<IMemberMap>(names.Length);
+            for(int i = 0; i < names.Length; i++)
             {
                 FieldInfo field = null;
                 string name = "Item" + (i + 1).ToString(CultureInfo.InvariantCulture);
@@ -2251,10 +2250,7 @@ namespace Dapper
                         break;
                     }
                 }
-                if (field != null)
-                {
-                    result.Add(new SimpleMemberMap(string.IsNullOrWhiteSpace(names[i]) ? name : names[i], field));
-                }
+                result.Add(field == null ? null : new SimpleMemberMap(string.IsNullOrWhiteSpace(names[i]) ? name : names[i], field));
             }
             return result;
         }
