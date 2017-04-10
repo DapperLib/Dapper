@@ -6,16 +6,8 @@ param(
 $packageOutputFolder = "$PSScriptRoot\.nupkgs"
 
 # Restore packages and build product
-Write-Host "Restoring..." -ForegroundColor "Green"
-& dotnet restore -v Minimal # Restore all packages
-if ($LASTEXITCODE -ne 0)
-{
-    throw "dotnet restore failed with exit code $LASTEXITCODE"
-}
-
-# Build all
 Write-Host "Building..." -ForegroundColor "Green"
-msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo /t:Build /p:Configuration=Debug "/p:PackageVersionSuffix=$PreReleaseSuffix"
+msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo "/t:Restore;Build" /p:Configuration=Debug "/p:PackageVersionSuffix=$PreReleaseSuffix"
 
 # Run tests
 if ($SkipTests)

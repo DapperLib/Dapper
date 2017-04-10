@@ -38,9 +38,9 @@
     This is a temporary workaround for Nuget Issue #4853 - https://github.com/NuGet/Home/issues/4853#issuecomment-292719597 
     Ideally this belongs into Directory.build.targets, but that doesn't work either - https://github.com/Microsoft/msbuild/issues/1721
   -->
-  <Target Name="_CleanNuSpec" DependsOnTargets="_GenerateProjectRestoreGraph">
+  <Target Name="_CleanNuSpec">
     <PropertyGroup>
-      <_NuSpecPrefix>$(RestoreOutputAbsolutePath)$(_RestoreProjectName).$(_RestoreProjectVersion)</_NuSpecPrefix>
+      <_NuSpecPrefix>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)$(MSBuildProjectName).$(PackageVersion)</_NuSpecPrefix>
       <_NuSpec>$(_NuSpecPrefix).nuspec</_NuSpec>
       <_NuSpecPatched>$(_NuSpecPrefix).patched.nuspec</_NuSpecPatched>
     </PropertyGroup>
