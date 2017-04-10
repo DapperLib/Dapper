@@ -16,3 +16,4 @@ Test.DB.*
 TestResults/
 Dapper.Tests/*.sdf
 .dotnet/*
+.vscode/*

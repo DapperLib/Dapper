@@ -1,5 +1,6 @@
 param(
-    [parameter(Position=0)][string] $PreReleaseSuffix = ''
+    [parameter(Position=0)][string] $PreReleaseSuffix = '',
+    [switch] $SkipTests = $false
 )
 
 $packageOutputFolder = "$PSScriptRoot\.nupkgs"
@@ -14,29 +15,22 @@ if ($LASTEXITCODE -ne 0)
 
 # Build all
 Write-Host "Building..." -ForegroundColor "Green"
-Get-ChildItem "Dapper*.csproj" -Recurse |
-ForEach-Object {
-    if ($PreReleaseSuffix) {
-        & dotnet build "$_" --version-suffix "$PreReleaseSuffix"
-    } else {
-        & dotnet build "$_"
-    }
-}
+msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo /t:Build /p:Configuration=Debug "/p:PackageVersionSuffix=$PreReleaseSuffix"
 
 # Run tests
-Write-Host "Running Tests..." -ForegroundColor "Green"
-Get-ChildItem "Dapper.Test*.csproj" -Recurse |
-ForEach-Object {
-    & dotnet test "$_"
+if ($SkipTests)
+{
+    Write-Host "Skipping Tests..." -ForegroundColor "Yellow"
+}
+else
+{
+    Write-Host "Running Tests..." -ForegroundColor "Green"
+    Get-ChildItem "Dapper.Test*.csproj" -Recurse |
+    ForEach-Object {
+        & dotnet test "$_"
+    }
 }
 
 # Package all
 Write-Host "Packaging..." -ForegroundColor "Green"
-Get-ChildItem "Dapper*.csproj" -Recurse | Where-Object { $_.Name -NotLike "*.Tests*" } |
-ForEach-Object {
-    if ($PreReleaseSuffix) {
-        & dotnet pack "$_" -c Release -o "$packageOutputFolder" --version-suffix "$PreReleaseSuffix"   
-    } else {
-        & dotnet pack "$_" -c Release -o "$packageOutputFolder"
-    }
-}
+msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo "/t:Build;PackWithFrameworkAssemblies" /p:Configuration=Release "/p:PackageOutputPath=$packageOutputFolder" "/p:PackageVersionSuffix=$PreReleaseSuffix"

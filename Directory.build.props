@@ -33,4 +33,66 @@
     <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.0.2" />
     <DotNetCliToolReference Include="dotnet-sourcelink-git" Version="2.0.2" />
   </ItemGroup>
+
+  <!--
+    This is a temporary workaround for Nuget Issue #4853 - https://github.com/NuGet/Home/issues/4853#issuecomment-292719597 
+    Ideally this belongs into Directory.build.targets, but that doesn't work either - https://github.com/Microsoft/msbuild/issues/1721
+  -->
+  <Target Name="_CleanNuSpec" DependsOnTargets="_GenerateProjectRestoreGraph">
+    <PropertyGroup>
+      <_NuSpecPrefix>$(RestoreOutputAbsolutePath)$(_RestoreProjectName).$(_RestoreProjectVersion)</_NuSpecPrefix>
+      <_NuSpec>$(_NuSpecPrefix).nuspec</_NuSpec>
+      <_NuSpecPatched>$(_NuSpecPrefix).patched.nuspec</_NuSpecPatched>
+    </PropertyGroup>
+    <Delete Files="$(_NuSpec)" Condition="Exists('$(_NuSpec)')" />
+    <Delete Files="$(_NuSpecPatched)" Condition="Exists('$(_NuSpecPatched)')" />
+  </Target>
+  <Target Name="_ExtractReferences">
+    <ItemGroup>
+      <_ExtractReferenceTarget Include="$(TargetFrameworks)" />
+    </ItemGroup>
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="ExtractReferencesPerTarget" Properties="TargetFramework=%(_ExtractReferenceTarget.Identity)">
+      <Output TaskParameter="TargetOutputs" ItemName="_Reference" />
+    </MSBuild>
+  </Target>
+  <Target Name="ExtractReferencesPerTarget" Outputs="@(_AssemblyReference)">
+    <ItemGroup>
+      <_AssemblyReference Include="@(Reference)" Condition="'%(Reference.NuSpecFrameworkAssembly)' == 'true'">
+        <NuSpecFrameworkAssembly>$(TargetFramework)</NuSpecFrameworkAssembly>
+      </_AssemblyReference>
+    </ItemGroup>
+  </Target>  
+  <UsingTask TaskName="AddFrameworkAssemblies" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >  
+    <ParameterGroup>
+      <NuSpecFile ParameterType="System.String" Required="true" />
+      <PatchedNuSpecFile ParameterType="System.String" Required="true" />
+      <References ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+    </ParameterGroup>  
+    <Task>  
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var content = System.IO.File.ReadAllText(NuSpecFile);
+        
+        var end = content.IndexOf("</metadata>");
+        var newContent = content.Substring(0, end);
+        newContent += "<frameworkAssemblies>\n";
+        foreach (var r in References)
+        {
+          var targetFrameworksStr = r.GetMetadata("NuSpecFrameworkAssembly");
+          foreach (var targetFramework in (targetFrameworksStr ?? "").Split(new char[] {',', ' ', ';'}, System.StringSplitOptions.RemoveEmptyEntries))
+          {
+            newContent += "    <frameworkAssembly assemblyName=\"" + r.ItemSpec + "\" targetFramework=\"" + targetFramework + "\" />\n";
+          }
+        }
+        newContent += "  </frameworkAssemblies>\n  ";
+        newContent += content.Substring(end);
+
+        File.WriteAllText(PatchedNuSpecFile, newContent);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="PackWithFrameworkAssemblies" DependsOnTargets="_CleanNuSpec;_ExtractReferences;Pack" Condition="'$(IsPackable)' == 'true'">
+    <Message Text="Repackaging -> '$(MSBuildProjectName)' from '$(_NuSpecPatched)'" Importance="high" Condition=" '@(_Reference)' != '' " />
+    <AddFrameworkAssemblies NuSpecFile="$(_NuSpec)" PatchedNuSpecFile="$(_NuSpecPatched)" References="@(_Reference)" Condition=" '@(_Reference)' != '' " />
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" Properties="NuspecFile=$(_NuSpecPatched)" Condition=" '@(_Reference)' != '' " />
+  </Target>
 </Project>

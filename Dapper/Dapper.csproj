@@ -8,9 +8,15 @@
     <TargetFrameworks>net40;net45;net451;netstandard1.3</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451' ">
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>

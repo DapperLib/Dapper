@@ -12,10 +12,18 @@
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <PackageReference Include="EntityFramework" Version="6.1.3" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="11.0.2" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
+    <Reference Include="System.Data">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
+    <Reference Include="System.Data.Linq">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
