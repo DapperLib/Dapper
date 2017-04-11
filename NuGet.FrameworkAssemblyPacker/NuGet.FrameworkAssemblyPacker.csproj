@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.3</TargetFramework>
+    <MinClientVersion>4.0</MinClientVersion>
+    <IsTool>true</IsTool>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <DebugType>embedded</DebugType>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="NuGet.FrameworkAssemblyPacker.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.1.1012" />
+  </ItemGroup>
+</Project>

@@ -7,7 +7,7 @@ $packageOutputFolder = "$PSScriptRoot\.nupkgs"
 
 # Restore packages and build product
 Write-Host "Building..." -ForegroundColor "Green"
-msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo "/t:Restore;Build" /p:Configuration=Debug "/p:PackageVersionSuffix=$PreReleaseSuffix"
+dotnet msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo "/t:Restore;Build" /p:Configuration=Debug "/p:PackageVersionSuffix=$PreReleaseSuffix"
 
 # Run tests
 if ($SkipTests)
@@ -25,4 +25,4 @@ else
 
 # Package all
 Write-Host "Packaging..." -ForegroundColor "Green"
-msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo "/t:Build;PackWithFrameworkAssemblies" /p:Configuration=Release "/p:PackageOutputPath=$packageOutputFolder" "/p:PackageVersionSuffix=$PreReleaseSuffix"
+dotnet msbuild "$PSScriptRoot\Dapper.sln" /m /v:m /nologo "/t:Restore;Build;Pack" /p:Configuration=Release "/p:PackageOutputPath=$packageOutputFolder" "/p:PackageVersionSuffix=$PreReleaseSuffix"

@@ -1,0 +1,35 @@
+<Project>
+
+  <Target Name="_ExtractReferences">
+    <ItemGroup>
+      <_ExtractReferenceTarget Include="$(TargetFrameworks)" />
+    </ItemGroup>
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="_ExtractReferencesPerTarget" Properties="TargetFramework=%(_ExtractReferenceTarget.Identity)">
+      <Output TaskParameter="TargetOutputs" ItemName="_FrameworkAssembly" />
+    </MSBuild>
+  </Target>
+
+  <Target Name="_ExtractReferencesPerTarget" Outputs="@(_FrameworkAssembly)">
+    <ItemGroup>
+      <_FrameworkAssembly Include="@(Reference)" Condition="'%(Reference.PackAsFrameworkAssembly)' == 'true'">
+        <TargetFramework>$(TargetFramework)</TargetFramework>
+      </_FrameworkAssembly>
+    </ItemGroup>
+  </Target>
+
+  <UsingTask
+    TaskName="NuGet.FrameworkAssemblyPacker.AddFrameworkAssemblies" 
+    AssemblyFile="$(MSBuildThisFileDirectory)\NuGet.FrameworkAssemblyPacker.dll" />
+
+  <Target Name="PackWithFrameworkAssemblies" DependsOnTargets="_ExtractReferences;$(PackDependsOn)" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'">
+    <PropertyGroup>
+      <_NuSpecPrefix>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)$(MSBuildProjectName).$(PackageVersion)</_NuSpecPrefix>
+      <_NuSpec>$(_NuSpecPrefix).nuspec</_NuSpec>
+      <_NuSpecPatched>$(_NuSpecPrefix).patched.nuspec</_NuSpecPatched>
+    </PropertyGroup>
+    <Message Text="Repackaging -> '$(MSBuildProjectName)' from '$(_NuSpecPatched)'" Importance="high" Condition=" '@(_FrameworkAssembly)' != '' " />
+    <AddFrameworkAssemblies NuSpecFile="$(_NuSpec)" PatchedNuSpecFile="$(_NuSpecPatched)" FrameworkAssemblies="@(_FrameworkAssembly)" Condition=" '@(_FrameworkAssembly)' != '' " />
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" Properties="NuspecFile=$(_NuSpecPatched)" Condition=" '@(_FrameworkAssembly)' != '' " />
+  </Target>
+
+</Project>

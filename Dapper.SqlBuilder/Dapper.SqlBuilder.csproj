@@ -15,10 +15,10 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net45' ">
     <Reference Include="System.Data">
-      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+      <PackAsFrameworkAssembly>true</PackAsFrameworkAssembly>
     </Reference>
     <Reference Include="System.Data.Linq">
-      <NuSpecFrameworkAssembly>true</NuSpecFrameworkAssembly>
+      <PackAsFrameworkAssembly>true</PackAsFrameworkAssembly>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
