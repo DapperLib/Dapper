@@ -7,7 +7,7 @@ $packageOutputFolder = "$PSScriptRoot\.nupkgs"
 
 # Restore packages and build product
 Write-Host "Restoring..." -ForegroundColor "Green"
-& dotnet restore -v Minimal # Restore all packages
+& dotnet msbuild /t:Restore /nologo /m /v:m "/p:PackageVersionSuffix=$PreReleaseSuffix" # Restore all packages
 if ($LASTEXITCODE -ne 0)
 {
     throw "dotnet restore failed with exit code $LASTEXITCODE"
