@@ -11,7 +11,7 @@
 
   <Target Name="_ExtractReferencesPerTarget" Outputs="@(_FrameworkAssembly)">
     <ItemGroup>
-      <_FrameworkAssembly Include="@(Reference)" Condition="'%(Reference.PackAsFrameworkAssembly)' == 'true'">
+      <_FrameworkAssembly Include="@(Reference)" Condition="'%(Reference.Pack)' == 'true'">
         <TargetFramework>$(TargetFramework)</TargetFramework>
       </_FrameworkAssembly>
     </ItemGroup>

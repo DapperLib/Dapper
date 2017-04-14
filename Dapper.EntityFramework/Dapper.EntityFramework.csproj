@@ -13,16 +13,16 @@
     <PackageReference Include="EntityFramework" Version="6.1.3" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="11.0.2" />
     <Reference Include="System.Configuration">
-      <PackAsFrameworkAssembly>true</PackAsFrameworkAssembly>
+      <Pack>true</Pack>
     </Reference>
     <Reference Include="System.Data">
-      <PackAsFrameworkAssembly>true</PackAsFrameworkAssembly>
+      <Pack>true</Pack>
     </Reference>
     <Reference Include="System.Data.Linq">
-      <PackAsFrameworkAssembly>true</PackAsFrameworkAssembly>
+      <Pack>true</Pack>
     </Reference>
     <Reference Include="System.Xml">
-      <PackAsFrameworkAssembly>true</PackAsFrameworkAssembly>
+      <Pack>true</Pack>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
