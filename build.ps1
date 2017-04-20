@@ -35,7 +35,7 @@ else
 
 # Package all
 if ($PreReleaseSuffix) {
-    & dotnet pack -c Release -o "$packageOutputFolder" --no-build --version-suffix "$PreReleaseSuffix"
+    & dotnet pack -c Release -o "$packageOutputFolder" --no-build --version-suffix "$PreReleaseSuffix" /p:NuGetBuildTasksPackTargets="asasda"
 } else {
-    & dotnet pack -c Release -o "$packageOutputFolder" --no-build
+    & dotnet pack -c Release -o "$packageOutputFolder" --no-build /p:NuGetBuildTasksPackTargets="asasda"
 }
