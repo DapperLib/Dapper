@@ -26,6 +26,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
     <PackageReference Include="xunit.runner.console" Version="2.2.0" />
     <PackageReference Include="xunit" Version="2.2.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.3.0" />
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
@@ -36,10 +37,11 @@
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
     <PackageReference Include="MySql.Data" Version="7.0.7-m61" />
     <PackageReference Include="Npgsql" Version="3.2.2" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.104" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.104" />    
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
+    
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System" />

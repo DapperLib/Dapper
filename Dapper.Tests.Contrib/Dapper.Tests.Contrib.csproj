@@ -17,6 +17,7 @@
     <None Remove="Test.DB.sdf" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="System.Data.SqlClient" Version="4.3.0" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
