@@ -125,5 +125,10 @@ namespace Dapper
                     && parametersType == other.parametersType;
             }
         }
+
+        /// <summary>
+        /// Exposes a pass-thru identity map (useful for using with multi-map and tuples)
+        /// </summary>
+        public static Func<T, T> Map<T>() where T : struct => x => x;
     }
 }

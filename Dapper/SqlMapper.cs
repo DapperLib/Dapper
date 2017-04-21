@@ -1271,6 +1271,23 @@ namespace Dapper
             return buffered ? results.ToList() : results;
         }
 
+        /// <summary>
+        /// Perform a multi mapping query with arbitrary input parameters expressed as tuples
+        /// </summary>
+        public static IEnumerable<TReturn> Query<TTuple, TReturn>(this IDbConnection cnn, string sql, Func<TTuple, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+            where TTuple : struct
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var results = MultiMapImpl<TTuple, TReturn>(cnn, command, map, splitOn, null, null, true);
+            return buffered ? results.ToList() : results;
+        }
+        /// <summary>
+        /// Perform a multi mapping query with arbitrary input parameters expressed as tuples
+        /// </summary>
+        public static IEnumerable<TTuple> QuerySplit<TTuple>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+            where TTuple : struct
+            => Query<TTuple, TTuple>(cnn, sql, t => t, param, transaction, buffered, splitOn, commandTimeout, commandType);
+
         static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
             this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
         {
@@ -1343,6 +1360,103 @@ namespace Dapper
         {
             return (close ? (@default | CommandBehavior.CloseConnection) : @default) & Settings.AllowedCommandBehaviors;
         }
+
+        static class TupleCache<T>
+        {
+            private static readonly Type[] _types;
+            private static readonly ConstructorInfo _ctor;
+            public static Type[] GetTypes()
+                => _types ?? throw new InvalidOperationException($"Type {typeof(T)} is not a tuple");
+            public static ConstructorInfo Constructor
+                => _ctor ?? throw new InvalidOperationException($"Type {typeof(T)} is not a tuple");
+
+            static TupleCache()
+            {
+                var type = typeof(T);
+                if(IsValueTuple(type))
+                {
+                    foreach(var ctor in type.GetConstructors())
+                    {
+                        var parameters = ctor.GetParameters();
+                        if(parameters.Length != 0)
+                        {
+                            Type[] types = new Type[parameters.Length];
+                            for (int i = 0; i < types.Length; i++)
+                                types[i] = parameters[i].ParameterType;
+                            _types = types;
+                            _ctor = ctor;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        static IEnumerable<TReturn> MultiMapImpl<TTuple, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TTuple, TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+            where TTuple : struct
+        {
+            Type[] types = TupleCache<TTuple>.GetTypes();
+            if (types.Length < 1)
+            {
+                throw new ArgumentException("you must provide at least one type to deserialize");
+            }
+
+            object param = command.Parameters;
+            identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
+            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
+
+            IDbCommand ownedCommand = null;
+            IDataReader ownedReader = null;
+
+            bool wasClosed = cnn != null && cnn.State == ConnectionState.Closed;
+            try
+            {
+                if (reader == null)
+                {
+                    ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
+                    if (wasClosed) cnn.Open();
+                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                    reader = ownedReader;
+                }
+                DeserializerState deserializer;
+                Func<IDataReader, object>[] otherDeserializers;
+
+                int hash = GetColumnHash(reader);
+                if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
+                {
+                    var deserializers = GenerateDeserializers(types, splitOn, reader);
+                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
+                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+                    SetQueryCache(identity, cinfo);
+                }
+
+                Func<IDataReader, TReturn> mapIt = GenerateMapper<TTuple, TReturn>(deserializer.Func, otherDeserializers, TupleCache<TTuple>.Constructor, map);
+
+                if (mapIt != null)
+                {
+                    while (reader.Read())
+                    {
+                        yield return mapIt(reader);
+                    }
+                    if (finalize)
+                    {
+                        while (reader.NextResult()) { }
+                        command.OnCompleted();
+                    }
+                }
+            }
+            finally
+            {
+                try
+                {
+                    ownedReader?.Dispose();
+                }
+                finally
+                {
+                    ownedCommand?.Dispose();
+                    if (wasClosed) cnn.Close();
+                }
+            }
+        }
         static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
         {
             if (types.Length < 1)
@@ -1407,7 +1521,20 @@ namespace Dapper
                 }
             }
         }
-
+        private static Func<IDataReader, TReturn> GenerateMapper<TTuple, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, ConstructorInfo ctor, Func<TTuple, TReturn> map)
+            where TTuple : struct
+        {
+            return r =>
+            {
+                // unoptimized, obvs!
+                object[] args = new object[1 + otherDeserializers.Length];
+                args[0] = deserializer(r);
+                for (int i = 1; i < args.Length; i++)
+                    args[i] = otherDeserializers[i - 1](r);
+                var tuple = (TTuple)ctor.Invoke(args);
+                return map(tuple);
+            };            
+        }
         private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
         {
             switch (otherDeserializers.Length)

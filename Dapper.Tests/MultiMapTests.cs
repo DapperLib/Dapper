@@ -29,13 +29,13 @@ namespace Dapper.Tests
             parents[3].Children.Select(c => c.Id).SequenceEqual(new[] { 5 }).IsTrue();
         }
 
-        private class Parent
+        internal class Parent
         {
             public int Id { get; set; }
             public readonly List<Child> Children = new List<Child>();
         }
 
-        private class Child
+        internal class Child
         {
             public int Id { get; set; }
         }
