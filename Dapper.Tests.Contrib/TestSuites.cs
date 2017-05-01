@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.IO;
 using Xunit;
 using Xunit.Sdk;
+using Npgsql;
 #if COREFX
 using Microsoft.Data.Sqlite;
 #else
@@ -23,6 +24,43 @@ namespace Dapper.Tests.Contrib
     [XunitTestCaseDiscoverer("Dapper.Tests.SkippableFactDiscoverer", "Dapper.Tests.Contrib")]
     public class SkippableFactAttribute : FactAttribute { }
 #endif
+
+    public class PostgresTestSuite : TestSuite
+    {
+        public static string ConnectionString => $"Server=localhost;Username=postgres;Password=password123;Database=DapperContribTests";
+        public override IDbConnection GetConnection() => new NpgsqlConnection(ConnectionString);
+
+        static PostgresTestSuite()
+        {
+            using (var connection = new NpgsqlConnection(ConnectionString))
+            {
+                // ReSharper disable once AccessToDisposedClosure
+                Action<string> dropTable = name => connection.Execute($@"DROP TABLE IF EXISTS {name};");
+                connection.Open();
+                dropTable("Stuff");
+                connection.Execute(@"CREATE TABLE Stuff (""TheId"" smallserial not null PRIMARY KEY, ""Name"" varchar(100) not null, ""Created"" timestamp null);");
+                dropTable("People");
+                connection.Execute(@"CREATE TABLE People (""Id"" serial not null PRIMARY KEY, ""Name"" varchar(100) not null);");
+                dropTable("Users");
+                connection.Execute(@"CREATE TABLE Users (""Id"" serial not null PRIMARY KEY, ""Name"" varchar(100) not null, ""Age"" int not null);");
+                dropTable("Automobiles");
+                connection.Execute(@"CREATE TABLE Automobiles (""Id"" serial not null PRIMARY KEY, ""Name"" varchar(100) not null);");
+                dropTable("Results");
+                connection.Execute(@"CREATE TABLE Results (""Id"" serial not null PRIMARY KEY, ""Name"" varchar(100) not null, ""Order"" int not null);");
+                dropTable("ObjectX");
+                connection.Execute(@"CREATE TABLE ObjectX (""ObjectXId"" varchar(100) not null, ""Name"" varchar(100) not null);");
+                dropTable("ObjectY");
+                connection.Execute(@"CREATE TABLE ObjectY (""ObjectYId"" int not null, ""Name"" varchar(100) not null);");
+                dropTable("ObjectZ");
+                connection.Execute(@"CREATE TABLE ObjectZ (""Id"" int not null, ""Name"" varchar(100) not null);");
+            }
+        }
+
+        protected override string QuoteColumnName(string name)
+        {
+            return $"\"{name}\"";
+        }
+    }
 
     public class SqlServerTestSuite : TestSuite
     {

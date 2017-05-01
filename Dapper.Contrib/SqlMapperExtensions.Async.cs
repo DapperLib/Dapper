@@ -33,8 +33,10 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(GetAsync));
                 var name = GetTableName(type);
 
-                sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
-                GetQueries[type.TypeHandle] = sql;
+                var adapter = GetFormatter(connection);
+                var queryBuilder = new StringBuilder($"select * from {name} where ");
+                adapter.AppendColumnNameEqualsValue(queryBuilder, key.Name, "id");
+                GetQueries[type.TypeHandle] = sql = queryBuilder.ToString();
             }
 
             var dynParms = new DynamicParameters();
@@ -275,12 +277,14 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
+            var adapter = GetFormatter(connection);
+
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" AND ");
+                    sb.AppendFormat(" and ");
             }
             var deleted = await connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;
@@ -392,18 +396,17 @@ public partial class PostgresAdapter
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                AppendColumnName(sb, property.Name);
             }
         }
 
-        var results = await connection.QueryAsync(sb.ToString(), entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
+        var results = (await connection.QueryAsync(sb.ToString(), entityToInsert, transaction, commandTimeout).ConfigureAwait(false)).ToList();
 
         // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
-        var values = results.First();
         foreach (var p in propertyInfos)
         {
-            var value = values[p.Name.ToLower()];
+            var value = ((IDictionary<string, object>)results.First())[p.Name];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
