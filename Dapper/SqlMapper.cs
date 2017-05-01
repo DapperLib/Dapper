@@ -1316,7 +1316,8 @@ namespace Dapper
                 {
                     while (reader.Read())
                     {
-                        yield return mapIt(reader);
+                        var result = mapIt(reader);
+                       if (result != null) yield return result;
                     }
                     if(finalize)
                     {
@@ -1385,7 +1386,8 @@ namespace Dapper
                 {
                     while (reader.Read())
                     {
-                        yield return mapIt(reader);
+                        var result = mapIt(reader);
+                        if (result != null) yield return result;
                     }
                     if (finalize)
                     {

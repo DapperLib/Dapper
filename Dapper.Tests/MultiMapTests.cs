@@ -464,6 +464,91 @@ Order by p.Id";
             }
         }
 
+        private class TestMultiMapRemovesNullMapResults_User
+        {
+            public Int32 UserId { get; set; }
+            public List<TestMultiMapRemovesNullMapResults_Post> Posts;
+
+            TestMultiMapRemovesNullMapResults_User()
+            {
+                Posts = new List<TestMultiMapRemovesNullMapResults_Post>();
+            }
+
+        }
+
+        private class TestMultiMapRemovesNullMapResults_Post
+        {
+            public Int32 PostId { get; set; }
+            
+        }
+
+
+        [Fact]
+        public void TestMultiMapRemovesNullMapResults()
+        {
+            const string createSql = @"
+                create table #Users (Id int, Name varchar(20))
+                create table #Posts (Id int, OwnerId int, Content varchar(20))
+
+                insert #Users values(96, 'Foo')
+                insert #Users values(97, 'Far')
+                insert #Users values(98, 'Baz')
+                insert #Users values(99, 'qux')
+
+                insert #Posts values(1, 96, 'Foos Post1')
+                insert #Posts values(2, 96, 'Foos Post2')
+                insert #Posts values(3, 97, 'Bars Post1')
+                insert #Posts values(4, 97, 'Bars Post2')
+                insert #Posts values(5, 98, 'Bazs Post1')
+
+";
+            connection.Execute(createSql);
+
+            const string sql =
+ @"select u.Id UserId, p.Id PostId from #Users u 
+left join #Posts p on u.Id = p.OwnerId 
+Order by u.Id, p.Id
+";
+            var resultDict = new Dictionary<int, TestMultiMapRemovesNullMapResults_User>();
+            var result = connection.Query<TestMultiMapRemovesNullMapResults_User, TestMultiMapRemovesNullMapResults_Post, TestMultiMapRemovesNullMapResults_User>(
+                sql,
+                (u, p) => {
+                    if (resultDict.ContainsKey(u.UserId))
+                    {
+                        resultDict[u.UserId].Posts.Add(p);
+                        return null;
+                    }
+
+                    resultDict.Add(u.UserId, u);
+                    u.Posts.Add(p);
+
+                    return u;
+                },
+                splitOn: "UserId");
+
+            connection.Execute("drop table #Users drop table #Posts");
+
+            var resultList = result.ToList();
+            resultList.Count.IsEqualTo(4);
+
+            resultList[0].UserId.IsEqualTo(96);
+            resultList[0].Posts.Count.IsEqualTo(2);
+            resultList[0].Posts.First().PostId.IsEqualTo(1);
+            resultList[0].Posts.Last().PostId.IsEqualTo(2);
+
+            resultList[1].UserId.IsEqualTo(97);
+            resultList[1].Posts.Count.IsEqualTo(2);
+            resultList[1].Posts.First().PostId.IsEqualTo(3);
+            resultList[1].Posts.Last().PostId.IsEqualTo(4);
+
+            resultList[2].UserId.IsEqualTo(98);
+            resultList[2].Posts.Count.IsEqualTo(1);
+            resultList[2].Posts.First().PostId.IsEqualTo(5);
+
+            resultList[3].UserId.IsEqualTo(99);
+            resultList[3].Posts.Count.IsEqualTo(0);
+        }
+
         [Fact]
         public void TestMultiMapGridReader()
         {
