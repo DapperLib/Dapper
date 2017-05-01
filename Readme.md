@@ -240,7 +240,7 @@ new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 
 List Support
 ------------
-Dapper allow you to pass in IEnumerable<int> and will automatically parameterize your query.
+Dapper allows you to pass in IEnumerable<int> and will automatically parameterize your query.
 
 For example:
 
@@ -315,7 +315,7 @@ post.Owner.Name.IsEqualTo("Sam");
 post.Owner.Id.IsEqualTo(99);
 ```
 
-Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`, if your primary key is different or you would like to split the wide row at point other than `Id`, use the optional `splitOn` parameter.
+Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`. If your primary key is different or you would like to split the row at a point other than `Id`, use the optional `splitOn` parameter.
 
 Multiple Results
 ---------------------
