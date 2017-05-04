@@ -35,8 +35,8 @@ Write-Host "Packaging..." -ForegroundColor "Green"
 Get-ChildItem "Dapper*.csproj" -Recurse | Where-Object { $_.Name -NotLike "*.Tests*" } |
 ForEach-Object {
     if ($PreReleaseSuffix) {
-        & dotnet pack "$_" -c Release -o "$packageOutputFolder" --version-suffix "$PreReleaseSuffix"   
+        & dotnet pack "$_" -c Release -o "$packageOutputFolder" --version-suffix "$PreReleaseSuffix" /p:NuGetBuildTasksPackTargets="000"
     } else {
-        & dotnet pack "$_" -c Release -o "$packageOutputFolder"
+        & dotnet pack "$_" -c Release -o "$packageOutputFolder" /p:NuGetBuildTasksPackTargets="000" 
     }
 }

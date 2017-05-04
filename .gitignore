@@ -2,6 +2,7 @@
 .vs/
 bin/
 obj/
+objStrong/
 /*.user
 _Resharper*
 .hgtags
