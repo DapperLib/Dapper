@@ -17,6 +17,15 @@ using System.Threading;
 
 namespace Dapper.Contrib.Extensions
 {
+    public static class Utility
+    {
+        public static string PascalCaseToSnakeCase(string pascalCaseString)
+        {
+            return string.Concat(pascalCaseString.Select((character, index)
+                => index > 0 && char.IsUpper(character) ? "_" + character.ToString() : character.ToString())).ToLower();
+        }
+    }
+
     public static partial class SqlMapperExtensions
     {
         // ReSharper disable once MemberCanBePrivate.Global
@@ -317,7 +326,15 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                adapter.AppendColumnName(sbColumnList, property.Name);  //fix for issue #336
+
+                var columnName = property.Name;
+
+                if (DefaultTypeMap.MatchNamesWithUnderscores)
+                {
+                    columnName = Utility.PascalCaseToSnakeCase(columnName);
+                }
+
+                adapter.AppendColumnName(sbColumnList, columnName);  //fix for issue #336
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbColumnList.Append(", ");
             }
@@ -692,8 +709,8 @@ public partial interface ISqlAdapter
     int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
     
     //new methods for issue #336
-    void AppendColumnName(StringBuilder sb, string columnName);
-    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
+    void AppendColumnName(StringBuilder sb, string propertyName);
+    void AppendColumnNameEqualsValue(StringBuilder sb, string propertyName);
 }
 
 public partial class SqlServerAdapter : ISqlAdapter
@@ -716,14 +733,28 @@ public partial class SqlServerAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public void AppendColumnName(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+        
         sb.AppendFormat("[{0}]", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string propertyName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
+        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName);
     }
 }
 
@@ -747,13 +778,27 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public void AppendColumnName(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("[{0}]", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
     }
 }
@@ -777,13 +822,27 @@ public partial class MySqlAdapter : ISqlAdapter
         return Convert.ToInt32(id);
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public void AppendColumnName(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("`{0}`", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
     }
 }
@@ -827,13 +886,27 @@ public partial class PostgresAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public void AppendColumnName(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("\"{0}\"", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
     }
 }
@@ -855,13 +928,27 @@ public partial class SQLiteAdapter : ISqlAdapter
         return id;
     }
 
-    public void AppendColumnName(StringBuilder sb, string columnName)
+    public void AppendColumnName(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("\"{0}\"", columnName);
     }
 
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string propertyName)
     {
+        var columnName = propertyName;
+
+        if (DefaultTypeMap.MatchNamesWithUnderscores)
+        {
+            columnName = Dapper.Contrib.Extensions.Utility.PascalCaseToSnakeCase(propertyName);
+        }
+
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
     }
 }
