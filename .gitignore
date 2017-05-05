@@ -2,13 +2,13 @@
 .vs/
 bin/
 obj/
-objStrong/
 /*.user
 _Resharper*
 .hgtags
 NuGet.exe
 *.user
 *.nupkg
+.nupkgs/
 .docstats
 *.ide/
 *.lock.json
