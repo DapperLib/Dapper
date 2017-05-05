@@ -6,8 +6,8 @@ using System.Reflection;
 using System.Text;
 using System.Collections.Concurrent;
 using System.Reflection.Emit;
-
 using Dapper;
+using static Dapper.Contrib.Extensions.SqlMapperExtensions;
 
 #if COREFX
 using DataException = System.InvalidOperationException;
@@ -32,6 +32,7 @@ namespace Dapper.Contrib.Extensions
 
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
         public delegate string TableNameMapperDelegate(Type type);
+        public delegate string ColumNameMapperDelegate(PropertyInfo propertyInfo);
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
@@ -39,6 +40,9 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
+
+        private static readonly ConcurrentDictionary<PropertyInfo, string> PropertyInfoToColumnName = new ConcurrentDictionary<PropertyInfo, string>();
+
 
         private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
@@ -51,6 +55,28 @@ namespace Dapper.Contrib.Extensions
                 {"mysqlconnection", new MySqlAdapter()},
                 {"fbconnection", new FbAdapter() }
             };
+
+
+        public static ColumNameMapperDelegate ColumnNameMapper;
+        private static string PropertyInfoToColumnNameCache(PropertyInfo propertyInfo)
+        {
+            string name = null;
+            if (PropertyInfoToColumnName.TryGetValue(propertyInfo, out name))
+            {
+                return name;
+            }
+            if (ColumnNameMapper == null)
+            {
+                name = propertyInfo.Name;
+            }
+            else
+            {
+                name = ColumnNameMapper(propertyInfo);
+            }
+            PropertyInfoToColumnName[propertyInfo] = name;
+            return name;
+        }
+
 
         private static List<PropertyInfo> ComputedPropertiesCache(Type type)
         {
@@ -132,7 +158,7 @@ namespace Dapper.Contrib.Extensions
 
         private static PropertyInfo GetSingleKey<T>(string method)
         {
-            var type = typeof (T);
+            var type = typeof(T);
             var keys = KeyPropertiesCache(type);
             var explicitKeys = ExplicitKeyPropertiesCache(type);
             var keyCount = keys.Count + explicitKeys.Count;
@@ -166,7 +192,7 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                sql = $"select * from {name} where {key.Name} = @id";
+                sql = $"SELECT * FROM {name} WHERE {PropertyInfoToColumnNameCache(key)} = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -186,7 +212,7 @@ namespace Dapper.Contrib.Extensions
 
                 foreach (var property in TypePropertiesCache(type))
                 {
-                    var val = res[property.Name];
+                    var val = res[PropertyInfoToColumnNameCache(property)];
                     property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
                 }
 
@@ -221,7 +247,7 @@ namespace Dapper.Contrib.Extensions
                 GetSingleKey<T>(nameof(GetAll));
                 var name = GetTableName(type);
 
-                sql = "select * from " + name;
+                sql = "SELECT * FROM " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
@@ -234,7 +260,7 @@ namespace Dapper.Contrib.Extensions
                 var obj = ProxyGenerator.GetInterfaceProxy<T>();
                 foreach (var property in TypePropertiesCache(type))
                 {
-                    var val = res[property.Name];
+                    var val = res[PropertyInfoToColumnNameCache(property)];
                     property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
                 }
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
@@ -317,7 +343,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed.ElementAt(i);
-                adapter.AppendColumnName(sbColumnList, property.Name);  //fix for issue #336
+                adapter.AppendColumnName(sbColumnList, PropertyInfoToColumnNameCache(property));  //fix for issue #336
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbColumnList.Append(", ");
             }
@@ -338,12 +364,12 @@ namespace Dapper.Contrib.Extensions
             if (!isList)    //single entity
             {
                 returnVal = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
-                    sbParameterList.ToString(), keyProperties, entityToInsert);
+                    sbParameterList.ToString(), keyProperties, ColumnNameMapper, entityToInsert);
             }
             else
             {
                 //insert list of entities
-                var cmd = $"insert into {name} ({sbColumnList}) values ({sbParameterList})";
+                var cmd = $"INSERT INTO {name} ({sbColumnList}) VALUES ({sbParameterList})";
                 returnVal = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
             }
             if (wasClosed) connection.Close();
@@ -386,29 +412,29 @@ namespace Dapper.Contrib.Extensions
             var name = GetTableName(type);
 
             var sb = new StringBuilder();
-            sb.AppendFormat("update {0} set ", name);
+            sb.AppendFormat("UPDATE {0} SET ", name);
 
             var allProperties = TypePropertiesCache(type);
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection); 
+            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, PropertyInfoToColumnNameCache(property));  //fix for issue #336
                 if (i < nonIdProps.Count - 1)
                     sb.AppendFormat(", ");
             }
-            sb.Append(" where ");
+            sb.Append(" WHERE ");
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, PropertyInfoToColumnNameCache(property));  //fix for issue #336
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" and ");
+                    sb.AppendFormat(" AND ");
             }
             var updated = connection.Execute(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
             return updated > 0;
@@ -448,16 +474,16 @@ namespace Dapper.Contrib.Extensions
             keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
-            sb.AppendFormat("delete from {0} where ", name);
+            sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
             var adapter = GetFormatter(connection);
 
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties.ElementAt(i);
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, PropertyInfoToColumnNameCache(property));  //fix for issue #336
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" and ");
+                    sb.AppendFormat(" AND ");
             }
             var deleted = connection.Execute(sb.ToString(), entityToDelete, transaction, commandTimeout);
             return deleted > 0;
@@ -475,7 +501,7 @@ namespace Dapper.Contrib.Extensions
         {
             var type = typeof(T);
             var name = GetTableName(type);
-            var statement = $"delete from {name}";
+            var statement = $"DELETE FROM {name}";
             var deleted = connection.Execute(statement, null, transaction, commandTimeout);
             return deleted > 0;
         }
@@ -485,7 +511,7 @@ namespace Dapper.Contrib.Extensions
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
-        
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
             var name = GetDatabaseType?.Invoke(connection).ToLower()
@@ -689,8 +715,8 @@ namespace Dapper.Contrib.Extensions
 
 public partial interface ISqlAdapter
 {
-    int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert);
-    
+    int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, ColumNameMapperDelegate columnNameMapper, object entityToInsert);
+
     //new methods for issue #336
     void AppendColumnName(StringBuilder sb, string columnName);
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
@@ -698,9 +724,9 @@ public partial interface ISqlAdapter
 
 public partial class SqlServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, ColumNameMapperDelegate columnNameMapper, object entityToInsert)
     {
-        var cmd = $"insert into {tableName} ({columnList}) values ({parameterList});select SCOPE_IDENTITY() id";
+        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList});SELECT SCOPE_IDENTITY() [id]";
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
 
         var first = multi.Read().FirstOrDefault();
@@ -729,14 +755,14 @@ public partial class SqlServerAdapter : ISqlAdapter
 
 public partial class SqlCeServerAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, ColumNameMapperDelegate columnNameMapper, object entityToInsert)
     {
-        var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
+        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-        var r = connection.Query("select @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ToList();
+        var r = connection.Query("SELECT @@IDENTITY [id]", transaction: transaction, commandTimeout: commandTimeout).ToList();
 
         if (r.First().id == null) return 0;
-        var id = (int) r.First().id;
+        var id = (int)r.First().id;
 
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (!propertyInfos.Any()) return id;
@@ -760,7 +786,7 @@ public partial class SqlCeServerAdapter : ISqlAdapter
 
 public partial class MySqlAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, ColumNameMapperDelegate columnNameMapper, object entityToInsert)
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
@@ -791,10 +817,10 @@ public partial class MySqlAdapter : ISqlAdapter
 
 public partial class PostgresAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, ColumNameMapperDelegate columnNameMapper, object entityToInsert)
     {
         var sb = new StringBuilder();
-        sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        sb.AppendFormat("INSERT INTO {0} ({1}) VALUES ({2})", tableName, columnList, parameterList);
 
         // If no primary key then safe to assume a join table with not too much data to return
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
@@ -809,7 +835,7 @@ public partial class PostgresAdapter : ISqlAdapter
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                sb.AppendFormat("\"{0}\"", columnNameMapper(property));
             }
         }
 
@@ -819,7 +845,7 @@ public partial class PostgresAdapter : ISqlAdapter
         var id = 0;
         foreach (var p in propertyInfos)
         {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
+            var value = ((IDictionary<string, object>)results.First())[columnNameMapper(p)];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
@@ -840,7 +866,7 @@ public partial class PostgresAdapter : ISqlAdapter
 
 public partial class SQLiteAdapter : ISqlAdapter
 {
-    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, ColumNameMapperDelegate columnNameMapper, object entityToInsert)
     {
         var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList}); SELECT last_insert_rowid() id";
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
