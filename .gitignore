@@ -16,4 +16,5 @@ NuGet.exe
 Test.DB.*
 TestResults/
 Dapper.Tests/*.sdf
+Dapper.Tests/SqlServerTypes/
 .dotnet/*

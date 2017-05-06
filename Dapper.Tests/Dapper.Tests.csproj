@@ -57,10 +57,10 @@
 
   <PropertyGroup>
     <PostBuildEvent>
-      if not exist "$(TargetDir)x86" md "$(TargetDir)x86"
-      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.314.76\NativeBinaries\x86\*.*" "$(TargetDir)x86"
-      if not exist "$(TargetDir)x64" md "$(TargetDir)x64"
-      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.314.76\NativeBinaries\x64\*.*" "$(TargetDir)x64"
+      if not exist "$(MSBuildProjectDirectory)\SqlServerTypes\x86" md "$(MSBuildProjectDirectory)\SqlServerTypes\x86"
+      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.314.76\NativeBinaries\x86\*.*" "$(MSBuildProjectDirectory)\SqlServerTypes\x86"
+      if not exist "$(MSBuildProjectDirectory)\SqlServerTypes\x64" md "$(MSBuildProjectDirectory)\SqlServerTypes\x64"
+      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.314.76\NativeBinaries\x64\*.*" "$(MSBuildProjectDirectory)\SqlServerTypes\x64"
     </PostBuildEvent>
   </PropertyGroup>
 </Project>
