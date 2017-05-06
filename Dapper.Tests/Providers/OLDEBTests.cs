@@ -10,7 +10,7 @@ namespace Dapper.Tests
     {
         public static string OleDbConnectionString =>
             IsAppVeyor
-                ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2014;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
+                ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2016;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
                 : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
 
         public OleDbConnection GetOleDbConnection()
