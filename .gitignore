@@ -8,6 +8,7 @@ _Resharper*
 NuGet.exe
 *.user
 *.nupkg
+.nupkgs/
 .docstats
 *.ide/
 *.lock.json

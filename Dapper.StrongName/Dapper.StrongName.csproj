@@ -9,6 +9,9 @@
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Dapper\**\*.cs" Exclude="..\Dapper\obj\**\*.cs" />
+  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451' ">
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
