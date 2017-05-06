@@ -39,9 +39,9 @@ namespace Dapper
                 }
             }
 
-            public bool TryGetValue(string name, out object value)
+            public bool TryGetValue(string key, out object value)
             {
-                var index = table.IndexOfName(name);
+                var index = table.IndexOfName(key);
                 if (index < 0)
                 { // doesn't exist
                     value = null;

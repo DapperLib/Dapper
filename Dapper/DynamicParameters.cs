@@ -24,12 +24,12 @@ namespace Dapper
         Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
         List<object> templates;
 
-        object SqlMapper.IParameterLookup.this[string member]
+        object SqlMapper.IParameterLookup.this[string name]
         {
             get
             {
                 ParamInfo param;
-                return parameters.TryGetValue(member, out param) ? param.Value : null;
+                return parameters.TryGetValue(name, out param) ? param.Value : null;
             }
         }
 

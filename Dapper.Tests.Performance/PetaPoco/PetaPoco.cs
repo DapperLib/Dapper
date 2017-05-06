@@ -1112,7 +1112,7 @@ namespace PetaPoco
 					{
 						var colattr = (Column)ColAttrs[0];
 						pc.ColumnName = colattr.Name;
-						if ((colattr as ResultColumn) != null)
+						if (colattr is ResultColumn)
 							pc.ResultColumn = true;
 					}
 					if (pc.ColumnName == null)
