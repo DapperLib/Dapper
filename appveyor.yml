@@ -1,9 +1,5 @@
 image: Visual Studio 2017
 
-init:
-- git config --global core.autocrlf input
-- ps: $env:Path += ";C:\Program Files\PostgreSQL\9.6\bin\"
-
 skip_branch_with_pr: true
 skip_tags: true
 skip_commits:
@@ -26,11 +22,12 @@ environment:
   MYSQL_ENV_MYSQL_PASSWORD: Password12!
   MYSQL_ENV_MYSQL_DATABASE: test
 services:
-- mssql2016
-- mysql
-- postgresql
+  - mssql2016
+  - mysql
+  - postgresql
 
 init:
+  - git config --global core.autocrlf input
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
 
 nuget:
@@ -46,7 +43,7 @@ build_script:
 
 test: off
 artifacts:
-- path: .\.nupkgs\*.nupkg
+  - path: .\.nupkgs\*.nupkg
   
 #deploy:
 #- provider: NuGet
