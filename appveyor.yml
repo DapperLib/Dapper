@@ -20,9 +20,9 @@ environment:
   POSTGRES_PATH: C:\Program Files\PostgreSQL\9.4
   MYSQL_PWD: Password12!
 services:
-- mssql2014
-- mysql56
-- postgresql94
+- mssql2016
+- mysql
+- postgresql
 
 nuget:
   disable_publish_on_pr: true
