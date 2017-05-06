@@ -31,11 +31,11 @@ namespace Dapper.Tests
                 if (!_nativeAssembliesLoaded)
                 {
                     var nativeBinaryPath = IntPtr.Size > 4
-                        ? Path.Combine(rootApplicationPath, @"SqlServerTypes\x64\")
-                        : Path.Combine(rootApplicationPath, @"SqlServerTypes\x86\");
-
-                    LoadNativeAssembly(nativeBinaryPath, "msvcr100.dll");
-                    LoadNativeAssembly(nativeBinaryPath, "SqlServerSpatial110.dll");
+                        ? Path.Combine(rootApplicationPath, @"x64\")
+                        : Path.Combine(rootApplicationPath, @"x86\");
+                    Console.Write("(from: " + nativeBinaryPath + ")...");
+                    LoadNativeAssembly(nativeBinaryPath, "msvcr120.dll");
+                    LoadNativeAssembly(nativeBinaryPath, "SqlServerSpatial140.dll");
                     _nativeAssembliesLoaded = true;
                 }
             }
