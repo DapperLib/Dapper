@@ -1,10 +1,15 @@
-version: 1.0.{build}
-branches:
-  only:
-  - netstandard
-clone_depth: 1
+image: Visual Studio 2017
+
 init:
+- git config --global core.autocrlf input
 - cmd: SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
+
+skip_branch_with_pr: true
+skip_tags: true
+skip_commits:
+  files:
+    - '**/*.md'
+
 environment:
   Appveyor: true
   MYSQL_ENV_MYSQL_USER: root
@@ -18,9 +23,23 @@ services:
 - mssql2014
 - mysql56
 - postgresql94
+
+nuget:
+  disable_publish_on_pr: true
+
 build_script:
 - ps: >-
     createdb test
-
-    .\build.ps1
+    .\build.ps1 -BuildNumber "$env:APPVEYOR_BUILD_NUMBER" -Version "$env:APPVEYOR_REPO_TAG_NAME" -PullRequestNumber "$env:APPVEYOR_PULL_REQUEST_NUMBER" -CreatePackages $true
 test: off
+artifacts:
+- path: .\.nupkgs\*.nupkg
+  
+#deploy:
+#- provider: NuGet
+#  server: https://www.myget.org/F/stackoverflow/api/v2
+#  on:
+#    branch: master  
+#  api_key:
+#    secure: P/UHxq2DEs0GI1SoDXDesHjRVsSVgdywz5vmsnhFQQY5aJgO3kP+QfhwfhXz19Rw
+#  symbol_server: https://www.myget.org/F/stackoverflow/symbols/api/v2/package
