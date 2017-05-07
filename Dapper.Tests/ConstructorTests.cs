@@ -88,7 +88,7 @@ SELECT * FROM @ExplicitConstructors"
             public int Field { get; set; }
             public int Field_1 { get; set; }
 
-            private bool WentThroughProperConstructor;
+            private readonly bool WentThroughProperConstructor;
 
             public _ExplicitConstructors() { }
 
@@ -103,7 +103,7 @@ SELECT * FROM @ExplicitConstructors"
                 return WentThroughProperConstructor;
             }
         }
-        
+
 #if LINQ2SQL
         private class NoDefaultConstructorWithBinary
         {

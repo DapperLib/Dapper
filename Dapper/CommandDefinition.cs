@@ -135,8 +135,7 @@ namespace Dapper
         {
             if (commandType == null)
                 return null; // GIGO
-            Action<IDbCommand> action;
-            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out action))
+            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out Action<IDbCommand> action))
             {
                 return action;
             }
@@ -176,12 +175,11 @@ namespace Dapper
         private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
         {
             var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-            if (prop != null && prop.CanWrite && prop.PropertyType == expectedType && prop.GetIndexParameters().Length == 0)
+            if (prop?.CanWrite == true && prop.PropertyType == expectedType && prop.GetIndexParameters().Length == 0)
             {
                 return prop.GetSetMethod();
             }
             return null;
         }
     }
-
 }

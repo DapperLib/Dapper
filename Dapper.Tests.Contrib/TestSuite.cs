@@ -227,7 +227,7 @@ namespace Dapper.Tests.Contrib
                 connection.Insert(new Stuff { Name = "First item" });
                 connection.Insert(new Stuff { Name = "Second item", Created = DateTime.Now });
                 var stuff = connection.Query<Stuff>("select * from Stuff").ToList();
-                stuff.First().Created.IsNull();
+                stuff[0].Created.IsNull();
                 stuff.Last().Created.IsNotNull();
             }
         }

@@ -3,7 +3,7 @@ using System.Data;
 #if !COREFX
 namespace Dapper
 {
-    sealed class DataTableHandler : SqlMapper.ITypeHandler
+    internal sealed class DataTableHandler : SqlMapper.ITypeHandler
     {
         public object Parse(Type destinationType, object value)
         {

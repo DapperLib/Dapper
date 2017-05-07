@@ -6,7 +6,7 @@ namespace Dapper.Tests.Providers
 {
     public class EntityFrameworkTests : TestBase
     {
-        public EntityFrameworkTests() 
+        public EntityFrameworkTests()
         {
             EntityFramework.Handlers.Register();
         }

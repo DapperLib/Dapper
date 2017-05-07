@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Identity of a cached query in Dapper, used for extensibility

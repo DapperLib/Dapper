@@ -15,8 +15,7 @@ namespace Dapper.Tests
             var parents = connection.Query<Parent, Child, Parent>(@"select 1 as [Id], 1 as [Id] union all select 1,2 union all select 2,3 union all select 1,4 union all select 3,5",
                 (parent, child) =>
                 {
-                    Parent found;
-                    if (!lookup.TryGetValue(parent.Id, out found))
+                    if (!lookup.TryGetValue(parent.Id, out Parent found))
                     {
                         lookup.Add(parent.Id, found = parent);
                     }
@@ -63,7 +62,7 @@ left join #Users u on u.Id = p.OwnerId
 Order by p.Id";
 
                 var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
-                var p = data.First();
+                var p = data[0];
 
                 p.Content.IsEqualTo("Sams Post1");
                 p.Id.IsEqualTo(1);
@@ -210,7 +209,7 @@ left join #Users u on u.Id = p.OwnerId
 Order by p.Id";
 
             var data = connection.Query<dynamic, dynamic, dynamic>(sql, (post, user) => { post.Owner = user; return post; }).ToList();
-            var p = data.First();
+            var p = data[0];
 
             // hairy extension method support for dynamics
             ((string)p.Content).IsEqualTo("Sams Post1");
@@ -436,7 +435,7 @@ Order by p.Id";
 
                 var data = connection.Query<ReviewBoard>(sql, types, mapper).ToList();
 
-                var p = data.First();
+                var p = data[0];
                 p.Id.IsEqualTo(1);
                 p.Name.IsEqualTo("Review Board 1");
                 p.User1.Id.IsEqualTo(1);
@@ -495,7 +494,7 @@ Order by p.Id
             for (int i = 0; i < 2; i++)
             {
                 var data = grid.Read<Post, User, Post>((post, user) => { post.Owner = user; return post; }).ToList();
-                var p = data.First();
+                var p = data[0];
 
                 p.Content.IsEqualTo("Sams Post1");
                 p.Id.IsEqualTo(1);

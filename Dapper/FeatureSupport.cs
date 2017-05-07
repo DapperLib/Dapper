@@ -6,7 +6,7 @@ namespace Dapper
     /// <summary>
     /// Handles variances in features per DBMS
     /// </summary>
-    class FeatureSupport
+    internal class FeatureSupport
     {
         private static readonly FeatureSupport
             Default = new FeatureSupport(false),
@@ -21,6 +21,7 @@ namespace Dapper
             if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return Postgres;
             return Default;
         }
+
         private FeatureSupport(bool arrays)
         {
             Arrays = arrays;

@@ -68,6 +68,7 @@ namespace Massive
             }
             return result;
         }
+
         public static dynamic RecordToExpando(this IDataReader rdr)
         {
             dynamic e = new ExpandoObject();
@@ -112,9 +113,9 @@ namespace Massive
     /// </summary>
     public class DynamicModel
     {
-        DbProviderFactory _factory;
+        private readonly DbProviderFactory _factory;
 #pragma warning disable 0649
-        string _connectionString;
+        private string _connectionString;
 #pragma warning restore 0649
 
         public DynamicModel(string connectionStringName = "", string tableName = "", string primaryKeyField = "")
@@ -149,20 +150,20 @@ namespace Massive
                 var rdr = CreateCommand(sql, conn, args).ExecuteReader();
                 while (rdr.Read())
                 {
-                    yield return rdr.RecordToExpando(); ;
+                    yield return rdr.RecordToExpando();
                 }
             }
         }
+
         public virtual IEnumerable<dynamic> Query(string sql, DbConnection connection, params object[] args)
         {
             using (var rdr = CreateCommand(sql, connection, args).ExecuteReader())
             {
                 while (rdr.Read())
                 {
-                    yield return rdr.RecordToExpando(); ;
+                    yield return rdr.RecordToExpando();
                 }
             }
-
         }
         /// <summary>
         /// Returns a single result
@@ -179,7 +180,7 @@ namespace Massive
         /// <summary>
         /// Creates a DBCommand that you can use for loving your database.
         /// </summary>
-        DbCommand CreateCommand(string sql, DbConnection conn, params object[] args)
+        private DbCommand CreateCommand(string sql, DbConnection conn, params object[] args)
         {
             var result = _factory.CreateCommand();
             result.Connection = conn;
@@ -230,6 +231,7 @@ namespace Massive
             var commands = BuildCommands(things);
             return Execute(commands);
         }
+
         public virtual int Execute(DbCommand command)
         {
             return Execute(new DbCommand[] { command });
@@ -255,6 +257,7 @@ namespace Massive
             }
             return result;
         }
+
         public virtual string PrimaryKeyField { get; set; }
         /// <summary>
         /// Conventionally introspects the object passed in for a field that 
@@ -270,10 +273,10 @@ namespace Massive
         /// </summary>
         public virtual object GetPrimaryKey(object o)
         {
-            object result = null;
-            o.ToDictionary().TryGetValue(PrimaryKeyField, out result);
+            o.ToDictionary().TryGetValue(PrimaryKeyField, out object result);
             return result;
         }
+
         public virtual string TableName { get; set; }
         /// <summary>
         /// Creates a command for use with transactions - internal stuff mostly, but here for you to play with
@@ -285,7 +288,7 @@ namespace Massive
             var settings = (IDictionary<string, object>)expando;
             var sbKeys = new StringBuilder();
             var sbVals = new StringBuilder();
-            var stub = "INSERT INTO {0} ({1}) \r\n VALUES ({2})";
+            const string stub = "INSERT INTO {0} ({1}) \r\n VALUES ({2})";
             result = CreateCommand(stub, null);
             int counter = 0;
             foreach (var item in settings)
@@ -299,10 +302,13 @@ namespace Massive
             {
                 var keys = sbKeys.ToString().Substring(0, sbKeys.Length - 1);
                 var vals = sbVals.ToString().Substring(0, sbVals.Length - 1);
-                var sql = string.Format(stub, TableName, keys, vals);
-                result.CommandText = sql;
+                result.CommandText = string.Format(stub, TableName, keys, vals);
             }
-            else throw new InvalidOperationException("Can't parse this object to the database - there are no properties set");
+            else
+            {
+                throw new InvalidOperationException("Can't parse this object to the database - there are no properties set");
+            }
+
             return result;
         }
         /// <summary>
@@ -313,7 +319,7 @@ namespace Massive
             var expando = o.ToExpando();
             var settings = (IDictionary<string, object>)expando;
             var sbKeys = new StringBuilder();
-            var stub = "UPDATE {0} SET {1} WHERE {2} = @{3}";
+            const string stub = "UPDATE {0} SET {1} WHERE {2} = @{3}";
             var args = new List<object>();
             var result = CreateCommand(stub, null);
             int counter = 0;
@@ -335,7 +341,11 @@ namespace Massive
                 var keys = sbKeys.ToString().Substring(0, sbKeys.Length - 4);
                 result.CommandText = string.Format(stub, TableName, keys, PrimaryKeyField, counter);
             }
-            else throw new InvalidOperationException("No parsable object was sent in - could not divine any name/value pairs");
+            else
+            {
+                throw new InvalidOperationException("No parsable object was sent in - could not divine any name/value pairs");
+            }
+
             return result;
         }
         /// <summary>
@@ -420,7 +430,7 @@ namespace Massive
             }
             var sql = string.Format("SELECT {0} FROM (SELECT ROW_NUMBER() OVER (ORDER BY {2}) AS Row, {0} FROM {3} {4}) AS Paged ", columns, pageSize, orderBy, TableName, where);
             var pageStart = (currentPage - 1) * pageSize;
-            sql += string.Format(" WHERE Row >={0} AND Row <={1}", pageStart, (pageStart + pageSize));
+            sql += string.Format(" WHERE Row >={0} AND Row <={1}", pageStart, pageStart + pageSize);
             countSQL += where;
             result.TotalRecords = Scalar(countSQL, args);
             result.TotalPages = result.TotalRecords / pageSize;

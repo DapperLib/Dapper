@@ -5,7 +5,7 @@ using System.Linq;
 using System.Globalization;
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query
@@ -13,8 +13,8 @@ namespace Dapper
         public partial class GridReader : IDisposable
         {
             private IDataReader reader;
-            private Identity identity;
-            private bool addToCache;
+            private readonly Identity identity;
+            private readonly bool addToCache;
 
             internal GridReader(IDbCommand command, IDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
             {
@@ -29,80 +29,66 @@ namespace Dapper
             /// Read the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public IEnumerable<dynamic> Read(bool buffered = true)
-            {
-                return ReadImpl<dynamic>(typeof(DapperRow), buffered);
-            }
+            public IEnumerable<dynamic> Read(bool buffered = true) =>
+                ReadImpl<dynamic>(typeof(DapperRow), buffered);
 
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadFirst()
-            {
-                return ReadRow<dynamic>(typeof(DapperRow), Row.First);
-            }
+            public dynamic ReadFirst() =>
+                ReadRow<dynamic>(typeof(DapperRow), Row.First);
+
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadFirstOrDefault()
-            {
-                return ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
-            }
+            public dynamic ReadFirstOrDefault() =>
+                ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
+
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadSingle()
-            {
-                return ReadRow<dynamic>(typeof(DapperRow), Row.Single);
-            }
+            public dynamic ReadSingle() =>
+                ReadRow<dynamic>(typeof(DapperRow), Row.Single);
+
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadSingleOrDefault()
-            {
-                return ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
-            }
+            public dynamic ReadSingleOrDefault() =>
+                ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
 
             /// <summary>
             /// Read the next grid of results
             /// </summary>
-            public IEnumerable<T> Read<T>(bool buffered = true)
-            {
-                return ReadImpl<T>(typeof(T), buffered);
-            }
+            public IEnumerable<T> Read<T>(bool buffered = true) =>
+                ReadImpl<T>(typeof(T), buffered);
 
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
-            public T ReadFirst<T>()
-            {
-                return ReadRow<T>(typeof(T), Row.First);
-            }
+            public T ReadFirst<T>() =>
+                ReadRow<T>(typeof(T), Row.First);
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
-            public T ReadFirstOrDefault<T>()
-            {
-                return ReadRow<T>(typeof(T), Row.FirstOrDefault);
-            }
+            public T ReadFirstOrDefault<T>() =>
+                ReadRow<T>(typeof(T), Row.FirstOrDefault);
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
-            public T ReadSingle<T>()
-            {
-                return ReadRow<T>(typeof(T), Row.Single);
-            }
+            public T ReadSingle<T>() =>
+                ReadRow<T>(typeof(T), Row.Single);
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
-            public T ReadSingleOrDefault<T>()
-            {
-                return ReadRow<T>(typeof(T), Row.SingleOrDefault);
-            }
+            public T ReadSingleOrDefault<T>() =>
+                ReadRow<T>(typeof(T), Row.SingleOrDefault);
 
             /// <summary>
             /// Read the next grid of results
@@ -121,6 +107,7 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.First);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -129,6 +116,7 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.FirstOrDefault);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -137,6 +125,7 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.Single);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -202,7 +191,6 @@ namespace Dapper
                 NextResult();
                 return result;
             }
-
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Delegate func, string splitOn)
             {
@@ -282,6 +270,7 @@ namespace Dapper
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(func, splitOn);
                 return buffered ? result.ToList() : result;
             }
+
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
@@ -290,6 +279,7 @@ namespace Dapper
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(func, splitOn);
                 return buffered ? result.ToList() : result;
             }
+
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
@@ -331,8 +321,9 @@ namespace Dapper
                     }
                 }
             }
+
             private int gridIndex, readCount;
-            private IParameterCallbacks callbacks;
+            private readonly IParameterCallbacks callbacks;
 
             /// <summary>
             /// Has the underlying reader been consumed?
@@ -362,6 +353,7 @@ namespace Dapper
                     Dispose();
                 }
             }
+
             /// <summary>
             /// Dispose the grid, closing and disposing both the underlying reader and command.
             /// </summary>

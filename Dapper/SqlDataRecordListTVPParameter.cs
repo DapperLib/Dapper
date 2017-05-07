@@ -8,7 +8,7 @@ namespace Dapper
     /// <summary>
     /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a SqlDataRecordListTVPParameter
     /// </summary>
-    sealed class SqlDataRecordListTVPParameter : SqlMapper.ICustomQueryParameter
+    internal sealed class SqlDataRecordListTVPParameter : SqlMapper.ICustomQueryParameter
     {
         private readonly IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data;
         private readonly string typeName;
@@ -20,7 +20,9 @@ namespace Dapper
             this.data = data;
             this.typeName = typeName;
         }
-        static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
+
+        private static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
+
         static SqlDataRecordListTVPParameter()
         {
             var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty(nameof(System.Data.SqlClient.SqlParameter.TypeName), BindingFlags.Instance | BindingFlags.Public);
@@ -30,6 +32,7 @@ namespace Dapper
                     Delegate.CreateDelegate(typeof(Action<System.Data.SqlClient.SqlParameter, string>), prop.GetSetMethod());
             }
         }
+
         void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
         {
             var param = command.CreateParameter();
@@ -37,11 +40,11 @@ namespace Dapper
             Set(param, data, typeName);
             command.Parameters.Add(param);
         }
+
         internal static void Set(IDbDataParameter parameter, IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
         {
             parameter.Value = (object)data ?? DBNull.Value;
-            var sqlParam = parameter as System.Data.SqlClient.SqlParameter;
-            if (sqlParam != null)
+            if (parameter is System.Data.SqlClient.SqlParameter sqlParam)
             {
                 sqlParam.SqlDbType = SqlDbType.Structured;
                 sqlParam.TypeName = typeName;

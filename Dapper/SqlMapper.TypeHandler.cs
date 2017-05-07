@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Base-class for simple type-handlers

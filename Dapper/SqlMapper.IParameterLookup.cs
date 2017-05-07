@@ -1,6 +1,6 @@
 ﻿namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Extends IDynamicParameters providing by-name lookup of parameter values

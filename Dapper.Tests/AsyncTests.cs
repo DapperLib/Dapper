@@ -12,7 +12,7 @@ namespace Dapper.Tests
     public class Tests : TestBase
     {
         private SqlConnection _marsConnection;
-        private SqlConnection marsConnection => _marsConnection ?? (_marsConnection = GetOpenConnection(true));
+        private SqlConnection MarsConnection => _marsConnection ?? (_marsConnection = GetOpenConnection(true));
 
         [Fact]
         public async Task TestBasicStringUsageAsync()
@@ -108,7 +108,7 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        public void TestExecuteClosedConnAsync()
+        public void TestExecuteClosedConnAsyncInner()
         {
             var query = connection.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
             var val = query.Result;
@@ -323,15 +323,15 @@ namespace Dapper.Tests
         public async Task RunSequentialVersusParallelAsync()
         {
             var ids = Enumerable.Range(1, 20000).Select(id => new { id }).ToArray();
-            await marsConnection.ExecuteAsync(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None)).ConfigureAwait(false);
+            await MarsConnection.ExecuteAsync(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None)).ConfigureAwait(false);
 
             var watch = Stopwatch.StartNew();
-            await marsConnection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.None)).ConfigureAwait(false);
+            await MarsConnection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.None)).ConfigureAwait(false);
             watch.Stop();
             Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
 
             watch = Stopwatch.StartNew();
-            await marsConnection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined)).ConfigureAwait(false);
+            await MarsConnection.ExecuteAsync(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined)).ConfigureAwait(false);
             watch.Stop();
             Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
         }
@@ -340,15 +340,15 @@ namespace Dapper.Tests
         public void RunSequentialVersusParallelSync()
         {
             var ids = Enumerable.Range(1, 20000).Select(id => new { id }).ToArray();
-            marsConnection.Execute(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None));
+            MarsConnection.Execute(new CommandDefinition("select @id", ids.Take(5), flags: CommandFlags.None));
 
             var watch = Stopwatch.StartNew();
-            marsConnection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.None));
+            MarsConnection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.None));
             watch.Stop();
             Console.WriteLine("No pipeline: {0}ms", watch.ElapsedMilliseconds);
 
             watch = Stopwatch.StartNew();
-            marsConnection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined));
+            MarsConnection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined));
             watch.Stop();
             Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
         }
@@ -365,7 +365,7 @@ namespace Dapper.Tests
             int c, d;
             SqlMapper.PurgeQueryCache();
             int before = SqlMapper.GetCachedSQLCount();
-            using (var multi = marsConnection.QueryMultiple(cmdDef))
+            using (var multi = MarsConnection.QueryMultiple(cmdDef))
             {
                 c = multi.Read<int>().Single();
                 d = multi.Read<int>().Single();
@@ -387,7 +387,7 @@ namespace Dapper.Tests
         {
             Type type = Common.GetSomeType();
 
-            dynamic actual = (await marsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false)).FirstOrDefault();
+            dynamic actual = (await MarsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false)).FirstOrDefault();
             ((object)actual).GetType().IsEqualTo(type);
             int a = actual.A;
             string b = actual.B;
@@ -400,7 +400,7 @@ namespace Dapper.Tests
         {
             Type type = Common.GetSomeType();
 
-            dynamic actual = await marsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false);
+            dynamic actual = await MarsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false);
             ((object)actual).GetType().IsEqualTo(type);
             int a = actual.A;
             string b = actual.B;
@@ -715,7 +715,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
 
                 var data = (await connection.QueryAsync<ReviewBoard>(sql, types, mapper).ConfigureAwait(false)).ToList();
 
-                var p = data.First();
+                var p = data[0];
                 p.Id.IsEqualTo(1);
                 p.Name.IsEqualTo("Review Board 1");
                 p.User1.Id.IsEqualTo(1);

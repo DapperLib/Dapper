@@ -4,7 +4,7 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Not intended for direct usage

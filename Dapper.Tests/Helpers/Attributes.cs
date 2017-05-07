@@ -15,7 +15,7 @@ namespace Dapper.Tests
             this.Url = url;
         }
 
-        public string Url { get; private set; }
+        public string Url { get; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]

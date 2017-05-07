@@ -224,6 +224,7 @@ namespace Dapper
             }
             return task;
         }
+
         private static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
@@ -282,10 +283,10 @@ namespace Dapper
                 {
                     using (reader) { } // dispose if non-null
                     if (wasClosed) cnn.Close();
-
                 }
             }
         }
+
         private static async Task<T> QueryRowAsync<T>(this IDbConnection cnn, Row row, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
@@ -379,6 +380,7 @@ namespace Dapper
                 Task = task;
             }
         }
+
         private static async Task<int> ExecuteMultiImplAsync(IDbConnection cnn, CommandDefinition command, IEnumerable multiExec)
         {
             bool isFirst = true;
@@ -472,6 +474,7 @@ namespace Dapper
             }
             return total;
         }
+
         private static async Task<int> ExecuteImplAsync(IDbConnection cnn, CommandDefinition command, object param)
         {
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param?.GetType(), null);
@@ -785,10 +788,10 @@ namespace Dapper
                 if (reader != null)
                 {
                     if (!reader.IsClosed)
-                        try
-                        { cmd.Cancel(); }
-                        catch
-                        { /* don't spoil the existing exception */ }
+                    {
+                        try { cmd.Cancel(); }
+                        catch { /* don't spoil the existing exception */ }
+                    }
                     reader.Dispose();
                 }
                 cmd?.Dispose();
@@ -796,7 +799,6 @@ namespace Dapper
                 throw;
             }
         }
-
 
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>
@@ -858,7 +860,6 @@ namespace Dapper
                 cmd?.Dispose();
             }
         }
-
 
         /// <summary>
         /// Execute parameterized SQL that selects a single value

@@ -34,7 +34,6 @@ namespace Dapper.Tests
             val.name.IsEqualTo("Fred");
         }
 
-
         [Fact]
         public void TupleReturnValue_TooManyColumns_Ignored()
         {
@@ -42,7 +41,6 @@ namespace Dapper.Tests
             val.id.IsEqualTo(42);
             val.name.IsEqualTo("Fred");
         }
-
 
         [Fact]
         public void TupleReturnValue_TooFewColumns_Unmapped()
@@ -61,6 +59,5 @@ namespace Dapper.Tests
             val.id.IsEqualTo(42);
             val.name.IsEqualTo("Fred");
         }
-
     }
 }

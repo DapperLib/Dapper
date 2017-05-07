@@ -33,8 +33,7 @@ namespace Dapper.EntityFramework
                 parsed = SqlGeography.STGeomFromWKB(new SqlBytes(value.AsBinary()), value.CoordinateSystemId);
             }
             parameter.Value = parsed ?? DBNull.Value;
-            var sqlParameter = parameter as SqlParameter;
-            if (sqlParameter != null)
+            if (parameter is SqlParameter sqlParameter)
             {
                 sqlParameter.UdtTypeName = "geography";
             }
@@ -47,9 +46,8 @@ namespace Dapper.EntityFramework
         public override DbGeography Parse(object value)
         {
             if (value == null || value is DBNull) return null;
-            if (value is SqlGeography)
+            if (value is SqlGeography geo)
             {
-                var geo = (SqlGeography)value;
                 return DbGeography.FromBinary(geo.STAsBinary().Value);
             }
             return DbGeography.FromText(value.ToString());

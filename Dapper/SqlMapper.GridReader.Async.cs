@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
-        partial class GridReader
+        public partial class GridReader
         {
-            CancellationToken cancel;
+            private readonly CancellationToken cancel;
             internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
                 : this(command, reader, identity, dynamicParams, addToCache)
             {
@@ -37,6 +37,7 @@ namespace Dapper
             {
                 return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.First);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
@@ -45,6 +46,7 @@ namespace Dapper
             {
                 return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
@@ -53,6 +55,7 @@ namespace Dapper
             {
                 return ReadRowAsyncImpl<dynamic>(typeof(DapperRow), Row.Single);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
             /// </summary>
@@ -79,6 +82,7 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object>(type, Row.First);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -87,6 +91,7 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object>(type, Row.FirstOrDefault);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -95,6 +100,7 @@ namespace Dapper
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object>(type, Row.Single);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -119,6 +125,7 @@ namespace Dapper
             {
                 return ReadRowAsyncImpl<T>(typeof(T), Row.First);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -126,6 +133,7 @@ namespace Dapper
             {
                 return ReadRowAsyncImpl<T>(typeof(T), Row.FirstOrDefault);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -133,6 +141,7 @@ namespace Dapper
             {
                 return ReadRowAsyncImpl<T>(typeof(T), Row.Single);
             }
+
             /// <summary>
             /// Read an individual row of the next grid of results
             /// </summary>
@@ -189,8 +198,7 @@ namespace Dapper
 
             private Task<T> ReadRowAsyncImpl<T>(Type type, Row row)
             {
-                var dbReader = reader as DbDataReader;
-                if (dbReader != null) return ReadRowAsyncImplViaDbReader<T>(dbReader, type, row);
+                if (reader is DbDataReader dbReader) return ReadRowAsyncImplViaDbReader<T>(dbReader, type, row);
 
                 // no async API available; use non-async and fake it
                 return Task.FromResult<T>(ReadRow<T>(type, row));
@@ -232,7 +240,7 @@ namespace Dapper
                 try
                 {
                     var reader = (DbDataReader)this.reader;
-                    List<T> buffer = new List<T>();
+                    var buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         buffer.Add((T)deserializer(reader));
@@ -248,7 +256,6 @@ namespace Dapper
                 }
             }
         }
-
     }
 }
 #endif

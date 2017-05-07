@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
 #if !COREFX
         /// <summary>
@@ -21,6 +21,7 @@ namespace Dapper
                 if (string.IsNullOrEmpty(udtTypeName)) throw new ArgumentException("Cannot be null or empty", udtTypeName);
                 this.udtTypeName = udtTypeName;
             }
+
             object ITypeHandler.Parse(Type destinationType, object value)
             {
                 return value is DBNull ? null : value;

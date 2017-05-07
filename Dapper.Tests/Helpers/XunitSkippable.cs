@@ -85,8 +85,7 @@ namespace Dapper.Tests
 
         public bool QueueMessage(IMessageSinkMessage message)
         {
-            var testFailed = message as ITestFailed;
-            if (testFailed != null)
+            if (message is ITestFailed testFailed)
             {
                 var exceptionType = testFailed.ExceptionTypes.FirstOrDefault();
                 if (exceptionType == typeof(SkipTestException).FullName)

@@ -13,9 +13,11 @@ namespace Dapper.Tests
             string cs = IsAppVeyor
                 ? "Server=localhost;Database=test;Uid=root;Pwd=Password12!;"
                 : "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
-            var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs);
-            csb.AllowZeroDateTime = allowZeroDatetime;
-            csb.ConvertZeroDateTime = convertZeroDatetime;
+            var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs)
+            {
+                AllowZeroDateTime = allowZeroDatetime,
+                ConvertZeroDateTime = convertZeroDatetime
+            };
             var conn = new MySql.Data.MySqlClient.MySqlConnection(csb.ConnectionString);
             if (open) conn.Open();
             return conn;

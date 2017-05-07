@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Implements this interface to provide custom member mapping

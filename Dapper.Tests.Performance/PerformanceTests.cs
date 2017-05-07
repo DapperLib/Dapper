@@ -50,6 +50,7 @@ namespace Dapper.Tests.Performance
             {
                 Add(new Test(iteration, name));
             }
+
             public void AddAsync(Func<int, Task> iterationAsync, string name)
             {
                 Add(new Test(iterationAsync, name));
@@ -156,7 +157,6 @@ namespace Dapper.Tests.Performance
                     tests.Add(id => mapperConnection.Query<Post>("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dapper: Query (non-buffered)");
                     tests.Add(id => mapperConnection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = id }), "Dapper: QueryFirstOrDefault");
 
-
                     var mapperConnection2 = GetOpenConnection();
                     tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: true).First(), "Dapper: Dynamic Query (buffered)");
                     tests.Add(id => mapperConnection2.Query("select * from Posts where Id = @Id", new { Id = id }, buffered: false).First(), "Dapper: Dynamic Query (non-buffered)");
@@ -218,7 +218,7 @@ namespace Dapper.Tests.Performance
                     var nhSession5 = NHibernateHelper.OpenSession();
                     tests.Add(id => nhSession5.Get<Post>(id), "NHibernate: Session.Get");
                 }, "NHibernate");
-                
+
                 // Simple.Data
                 Try(() =>
                 {
@@ -289,12 +289,14 @@ namespace Dapper.Tests.Performance
                     var db = dbFactory.Open();
                     tests.Add(id => db.SingleById<Post>(id), "ServiceStack.OrmLite: SingleById");
                 }, "ServiceStack.OrmLite");
-                
+
                 // Hand Coded
-                var postCommand = new SqlCommand();
-                postCommand.Connection = connection;
-                postCommand.CommandText = @"select Id, [Text], [CreationDate], LastChangeDate, 
-                Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id = @Id";
+                var postCommand = new SqlCommand()
+                {
+                    Connection = connection,
+                    CommandText = @"select Id, [Text], [CreationDate], LastChangeDate, 
+                Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id = @Id"
+                };
                 var idParam = postCommand.Parameters.Add("@Id", SqlDbType.Int);
 
                 tests.Add(id =>
@@ -336,7 +338,6 @@ namespace Dapper.Tests.Performance
                 //// BLToolkit - doesn't import correctly in the new .csproj world
                 //var db1 = new DbManager(GetOpenConnection());
                 //tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
-
 
 #if !COREFX
                 var table = new DataTable

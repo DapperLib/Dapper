@@ -105,8 +105,8 @@ namespace Dapper.Tests
                 users.Count.IsEqualTo(2);
                 posts.Count.IsEqualTo(3);
 
-                ((int)users.First().Id).IsEqualTo(2);
-                ((int)posts.First().Id).IsEqualTo(3);
+                ((int)users[0].Id).IsEqualTo(2);
+                ((int)posts[0].Id).IsEqualTo(3);
             }
             finally
             {
@@ -138,7 +138,7 @@ end");
 
         [Fact]
         public void Issue524_QueryMultiple_Cast()
-        { 
+        {
             // aka: Read<int> should work even if the data is a <long>
             // using regular API
             connection.Query<int>("select cast(42 as bigint)").Single().IsEqualTo(42);

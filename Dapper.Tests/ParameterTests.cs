@@ -482,7 +482,7 @@ namespace Dapper.Tests
 
         private class SO29596645_RuleTableValuedParameters : SqlMapper.IDynamicParameters
         {
-            private string parameterName;
+            private readonly string parameterName;
 
             public SO29596645_RuleTableValuedParameters(string parameterName)
             {
@@ -506,7 +506,7 @@ namespace Dapper.Tests
 
         private class SO29596645_OrganisationDTO
         {
-            public SO29596645_RuleTableValuedParameters Rules { get; private set; }
+            public SO29596645_RuleTableValuedParameters Rules { get; }
 
             public SO29596645_OrganisationDTO()
             {
@@ -1074,11 +1074,13 @@ end");
                 get { return null; }
                 set { }
             }
+
             public object this[object field, int index]
             {
                 get { return null; }
                 set { }
             }
+
             public int B { get; set; }
         }
 

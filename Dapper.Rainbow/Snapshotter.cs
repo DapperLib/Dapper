@@ -66,7 +66,7 @@ namespace Dapper
             {
                 return Diff(memberWiseClone, trackedObject);
             }
-            
+
             private static T Clone(T myObject)
             {
                 cloner = cloner ?? GenerateCloner();
@@ -84,18 +84,18 @@ namespace Dapper
                 return dm;
             }
 
-            static List<PropertyInfo> RelevantProperties()
+            private static List<PropertyInfo> RelevantProperties()
             {
                 return typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(p =>
-                        p.GetSetMethod(true) != null &&
-                        p.GetGetMethod(true) != null &&
-                        (p.PropertyType == typeof(string) ||
-                         p.PropertyType.IsValueType() ||
-                         (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                        p.GetSetMethod(true) != null
+                        && p.GetGetMethod(true) != null
+                        && (p.PropertyType == typeof(string)
+                             || p.PropertyType.IsValueType()
+                             || (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
                         ).ToList();
             }
-            
+
             private static bool AreEqual<U>(U first, U second)
             {
                 if (EqualityComparer<U>.Default.Equals(first, default(U)) && EqualityComparer<U>.Default.Equals(second, default(U))) return true;
@@ -186,7 +186,6 @@ namespace Dapper
 
                 return (Func<T, T, List<Change>>)dm.CreateDelegate(typeof(Func<T, T, List<Change>>));
             }
-
 
             // adapted from https://stackoverflow.com/a/966466/17174
             private static Func<T, T> GenerateCloner()

@@ -4,7 +4,7 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Parses a data reader to a sequence of data of the supplied type. Used for deserializing a reader without a connection, etc.
@@ -50,7 +50,7 @@ namespace Dapper
                 } while (reader.Read());
             }
         }
-        
+
         /// <summary>
         /// Gets the row parser for a specific row on a data reader. This allows for type switching every row based on, for example, a TypeId column.
         /// You could return a collection of the base type but have each more specific.
@@ -122,7 +122,7 @@ namespace Dapper
         public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            if (concreteType == null) concreteType = typeof(T);
+            concreteType = concreteType ?? typeof(T);
             var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
             if (concreteType.IsValueType())
             {

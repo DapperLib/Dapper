@@ -46,9 +46,8 @@ namespace Dapper.EntityFramework
         public override DbGeometry Parse(object value)
         {
             if (value == null || value is DBNull) return null;
-            if (value is SqlGeometry)
+            if (value is SqlGeometry geo)
             {
-                var geo = (SqlGeometry)value;
                 return DbGeometry.FromBinary(geo.STAsBinary().Value);
             }
             return DbGeometry.FromText(value.ToString());
