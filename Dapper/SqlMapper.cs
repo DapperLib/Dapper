@@ -1579,7 +1579,7 @@ namespace Dapper
                     else
                     {
                         var literals = GetLiteralTokens(identity.sql);
-                        reader = CreateParamInfoGenerator(identity, false, true, literals);
+                        reader = CreateParamInfoGeneratorImp(identity, false, true, literals);
                     }
                     if((identity.commandType == null || identity.commandType == CommandType.Text) && ShouldPassByPosition(identity.sql))
                     {
@@ -2230,7 +2230,7 @@ namespace Dapper
         /// </summary>
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused)
         {
-            return CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
+            return CreateParamInfoGeneratorImp(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
         }
         static bool IsValueTuple(Type type) => type != null && type.IsValueType() && type.FullName.StartsWith("System.ValueTuple`");
 
@@ -2255,7 +2255,17 @@ namespace Dapper
             return result;
         }
 
-        internal static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
+        internal static Func<Identity, bool, bool, IList<LiteralToken>, Action<IDbCommand, object>> CreateParamInfoGeneratorImp = DefaultParamInfoGeneratorBuilder;
+        /// <summary>
+        /// set or get paramInfo generator builder
+        /// </summary>
+        public static Func<Identity, bool, bool, IList<LiteralToken>, Action<IDbCommand, object>> ParamInfoGeneratorBuilder
+        {
+            get { return CreateParamInfoGeneratorImp; }
+            set { CreateParamInfoGeneratorImp = value ?? DefaultParamInfoGeneratorBuilder; }
+        }
+
+        internal static Action<IDbCommand, object> DefaultParamInfoGeneratorBuilder(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
             Type type = identity.parametersType;
 
@@ -2924,7 +2934,16 @@ namespace Dapper
             }
             return found;
         }
-        private static Func<IDataReader, object> GetTypeDeserializerImpl(
+        private static Func<Type, IDataReader, int, int, bool, Func<IDataReader, object>> GetTypeDeserializerImpl = DefaultTypeDeserializerBuilder;
+        /// <summary>
+        /// set or get type deserializer builder
+        /// </summary>
+        public static Func<Type, IDataReader, int, int, bool, Func<IDataReader, object>> TypeDeserializerBuilder
+        {
+            get { return GetTypeDeserializerImpl; }
+            set { GetTypeDeserializerImpl = value ?? DefaultTypeDeserializerBuilder; }
+        }
+        private static Func<IDataReader, object> DefaultTypeDeserializerBuilder(
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {

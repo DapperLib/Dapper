@@ -180,7 +180,7 @@ namespace Dapper
                     {
                         if (!paramReaderCache.TryGetValue(newIdent, out appender))
                         {
-                            appender = SqlMapper.CreateParamInfoGenerator(newIdent, true, RemoveUnused, literals);
+                            appender = SqlMapper.CreateParamInfoGeneratorImp(newIdent, true, RemoveUnused, literals);
                             paramReaderCache[newIdent] = appender;
                         }
                     }
