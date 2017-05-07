@@ -30,7 +30,7 @@ namespace Dapper.Tests
             }
         }
 
-        [FactMySql]
+        [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/552, not resolved on the MySQL end.")]
         public void Issue552_SignedUnsignedBooleans()
         {
             using (var conn = GetMySqlConnection(true, false, false))
