@@ -26,73 +26,73 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read the next grid of results, returned as a dynamic object
+            /// Read the next grid of results, returned as a dynamic object.
             /// </summary>
+            /// <param name="buffered">Whether the results should be buffered in memory.</param>
             /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public IEnumerable<dynamic> Read(bool buffered = true) =>
-                ReadImpl<dynamic>(typeof(DapperRow), buffered);
+            public IEnumerable<dynamic> Read(bool buffered = true) => ReadImpl<dynamic>(typeof(DapperRow), buffered);
 
             /// <summary>
-            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// Read an individual row of the next grid of results, returned as a dynamic object.
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadFirst() =>
-                ReadRow<dynamic>(typeof(DapperRow), Row.First);
+            public dynamic ReadFirst() => ReadRow<dynamic>(typeof(DapperRow), Row.First);
 
             /// <summary>
-            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// Read an individual row of the next grid of results, returned as a dynamic object.
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadFirstOrDefault() =>
-                ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
+            public dynamic ReadFirstOrDefault() => ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
 
             /// <summary>
-            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// Read an individual row of the next grid of results, returned as a dynamic object.
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadSingle() =>
-                ReadRow<dynamic>(typeof(DapperRow), Row.Single);
+            public dynamic ReadSingle() => ReadRow<dynamic>(typeof(DapperRow), Row.Single);
 
             /// <summary>
-            /// Read an individual row of the next grid of results, returned as a dynamic object
+            /// Read an individual row of the next grid of results, returned as a dynamic object.
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadSingleOrDefault() =>
-                ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
+            public dynamic ReadSingleOrDefault() => ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
 
             /// <summary>
-            /// Read the next grid of results
+            /// Read the next grid of results.
             /// </summary>
-            public IEnumerable<T> Read<T>(bool buffered = true) =>
-                ReadImpl<T>(typeof(T), buffered);
+            /// <typeparam name="T">The type to read.</typeparam>
+            /// <param name="buffered">Whether the results should be buffered in memory.</param>
+            public IEnumerable<T> Read<T>(bool buffered = true) => ReadImpl<T>(typeof(T), buffered);
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
-            public T ReadFirst<T>() =>
-                ReadRow<T>(typeof(T), Row.First);
+            /// <typeparam name="T">The type to read.</typeparam>
+            public T ReadFirst<T>() => ReadRow<T>(typeof(T), Row.First);
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
-            public T ReadFirstOrDefault<T>() =>
-                ReadRow<T>(typeof(T), Row.FirstOrDefault);
+            /// <typeparam name="T">The type to read.</typeparam>
+            public T ReadFirstOrDefault<T>() => ReadRow<T>(typeof(T), Row.FirstOrDefault);
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
-            public T ReadSingle<T>() =>
-                ReadRow<T>(typeof(T), Row.Single);
+            /// <typeparam name="T">The type to read.</typeparam>
+            public T ReadSingle<T>() => ReadRow<T>(typeof(T), Row.Single);
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
-            public T ReadSingleOrDefault<T>() =>
-                ReadRow<T>(typeof(T), Row.SingleOrDefault);
+            /// <typeparam name="T">The type to read.</typeparam>
+            public T ReadSingleOrDefault<T>() => ReadRow<T>(typeof(T), Row.SingleOrDefault);
 
             /// <summary>
-            /// Read the next grid of results
+            /// Read the next grid of results.
             /// </summary>
+            /// <param name="type">The type to read.</param>
+            /// <param name="buffered">Whether to buffer the results.</param>
+            /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public IEnumerable<object> Read(Type type, bool buffered = true)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
@@ -100,8 +100,10 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
+            /// <param name="type">The type to read.</param>
+            /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadFirst(Type type)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
@@ -109,8 +111,10 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
+            /// <param name="type">The type to read.</param>
+            /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadFirstOrDefault(Type type)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
@@ -118,8 +122,10 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
+            /// <param name="type">The type to read.</param>
+            /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadSingle(Type type)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
@@ -127,8 +133,10 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read an individual row of the next grid of results
+            /// Read an individual row of the next grid of results.
             /// </summary>
+            /// <param name="type">The type to read.</param>
+            /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadSingleOrDefault(Type type)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
@@ -150,7 +158,7 @@ namespace Dapper
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
-                var result = ReadDeferred<T>(gridIndex, deserializer.Func, typedIdentity, type);
+                var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
                 return buffered ? result.ToList() : result;
             }
 
@@ -174,10 +182,12 @@ namespace Dapper
                         cache.Deserializer = deserializer;
                     }
                     object val = deserializer.Func(reader);
-                    if(val == null || val is T)
+                    if (val == null || val is T)
                     {
                         result = (T)val;
-                    } else {
+                    }
+                    else
+                    {
                         var convertToType = Nullable.GetUnderlyingType(type) ?? type;
                         result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
@@ -236,8 +246,14 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read multiple objects from a single record set on the grid
+            /// Read multiple objects from a single record set on the grid.
             /// </summary>
+            /// <typeparam name="TFirst">The first type in the record set.</typeparam>
+            /// <typeparam name="TSecond">The second type in the record set.</typeparam>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
@@ -245,8 +261,15 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Read multiple objects from a single record set on the grid
+            /// Read multiple objects from a single record set on the grid.
             /// </summary>
+            /// <typeparam name="TFirst">The first type in the record set.</typeparam>
+            /// <typeparam name="TSecond">The second type in the record set.</typeparam>
+            /// <typeparam name="TThird">The third type in the record set.</typeparam>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
@@ -256,6 +279,14 @@ namespace Dapper
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
+            /// <typeparam name="TFirst">The first type in the record set.</typeparam>
+            /// <typeparam name="TSecond">The second type in the record set.</typeparam>
+            /// <typeparam name="TThird">The third type in the record set.</typeparam>
+            /// <typeparam name="TFourth">The fourth type in the record set.</typeparam>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
@@ -265,6 +296,15 @@ namespace Dapper
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
+            /// <typeparam name="TFirst">The first type in the record set.</typeparam>
+            /// <typeparam name="TSecond">The second type in the record set.</typeparam>
+            /// <typeparam name="TThird">The third type in the record set.</typeparam>
+            /// <typeparam name="TFourth">The fourth type in the record set.</typeparam>
+            /// <typeparam name="TFifth">The fifth type in the record set.</typeparam>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(func, splitOn);
@@ -274,6 +314,16 @@ namespace Dapper
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
+            /// <typeparam name="TFirst">The first type in the record set.</typeparam>
+            /// <typeparam name="TSecond">The second type in the record set.</typeparam>
+            /// <typeparam name="TThird">The third type in the record set.</typeparam>
+            /// <typeparam name="TFourth">The fourth type in the record set.</typeparam>
+            /// <typeparam name="TFifth">The fifth type in the record set.</typeparam>
+            /// <typeparam name="TSixth">The sixth type in the record set.</typeparam>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(func, splitOn);
@@ -283,6 +333,17 @@ namespace Dapper
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
+            /// <typeparam name="TFirst">The first type in the record set.</typeparam>
+            /// <typeparam name="TSecond">The second type in the record set.</typeparam>
+            /// <typeparam name="TThird">The third type in the record set.</typeparam>
+            /// <typeparam name="TFourth">The fourth type in the record set.</typeparam>
+            /// <typeparam name="TFifth">The fifth type in the record set.</typeparam>
+            /// <typeparam name="TSixth">The sixth type in the record set.</typeparam>
+            /// <typeparam name="TSeventh">The seventh type in the record set.</typeparam>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(func, splitOn);
@@ -292,13 +353,18 @@ namespace Dapper
             /// <summary>
             /// Read multiple objects from a single record set on the grid
             /// </summary>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="types">The types to read from the result set.</param>
+            /// <param name="map">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
             public IEnumerable<TReturn> Read<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn = "id", bool buffered = true)
             {
-                var result = MultiReadInternal<TReturn>(types, map, splitOn);
+                var result = MultiReadInternal(types, map, splitOn);
                 return buffered ? result.ToList() : result;
             }
 
-            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Identity typedIdentity, Type effectiveType)
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Type effectiveType)
             {
                 try
                 {
