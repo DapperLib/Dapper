@@ -1975,24 +1975,27 @@ namespace Dapper
         private static bool TryStringSplit(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, bool byPosition)
         {
             if (list == null || splitAt < 0) return false;
-            if (list is IEnumerable<int>) return TryStringSplit<int>(ref list, splitAt, namePrefix, command, "int", byPosition,
-                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<long>) return TryStringSplit<long>(ref list, splitAt, namePrefix, command, "bigint", byPosition,
-                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<short>) return TryStringSplit<short>(ref list, splitAt, namePrefix, command, "smallint", byPosition,
-                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            if (list is IEnumerable<byte>) return TryStringSplit<byte>(ref list, splitAt, namePrefix, command, "tinyint", byPosition,
-                (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+            switch (list)
+            {
+                case IEnumerable<int> l:
+                    return TryStringSplit(ref l, splitAt, namePrefix, command, "int", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+                case IEnumerable<long> l:
+                    return TryStringSplit(ref l, splitAt, namePrefix, command, "bigint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+                case IEnumerable<short> l:
+                    return TryStringSplit(ref l, splitAt, namePrefix, command, "smallint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+                case IEnumerable<byte> l:
+                    return TryStringSplit(ref l, splitAt, namePrefix, command, "tinyint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
+            }
             return false;
         }
 
-        private static bool TryStringSplit<T>(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
+        private static bool TryStringSplit<T>(ref IEnumerable<T> list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
-            ICollection<T> typed = list as ICollection<T>;
-            if(typed == null)
+            var typed = list as ICollection<T>;
+            if (typed == null)
             {
-                typed = ((IEnumerable<T>)list).ToList();
+                typed = list.ToList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
             }
             if (typed.Count < splitAt) return false;
