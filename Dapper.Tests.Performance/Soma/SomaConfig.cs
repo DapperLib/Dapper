@@ -9,6 +9,6 @@ namespace Dapper.Tests.Performance.Soma
 
         public override Action<PreparedStatement> Logger => noOp;
 
-        private static readonly Action<PreparedStatement> noOp = x => { };
+        private static readonly Action<PreparedStatement> noOp = x => { /* nope */ };
     }
 }

@@ -90,7 +90,7 @@ SELECT * FROM @ExplicitConstructors"
 
             private readonly bool WentThroughProperConstructor;
 
-            public _ExplicitConstructors() { }
+            public _ExplicitConstructors() { /* yep */ }
 
             [ExplicitConstructor]
             public _ExplicitConstructors(string foo, int bar)

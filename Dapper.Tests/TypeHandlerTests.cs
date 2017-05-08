@@ -69,7 +69,7 @@ namespace Dapper.Tests
 
         public class LocalDateHandler : SqlMapper.TypeHandler<LocalDate>
         {
-            private LocalDateHandler() { }
+            private LocalDateHandler() { /* private constructor */ }
 
             // Make the field type ITypeHandler to ensure it cannot be used with SqlMapper.AddTypeHandler<T>(TypeHandler<T>)
             // by mistake.

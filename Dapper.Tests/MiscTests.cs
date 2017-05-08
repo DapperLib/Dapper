@@ -471,7 +471,9 @@ select * from @bar", new { foo }).Single();
             private int b { get; set; }
             public int GetB() { return b; }
             public int c = 0;
+#pragma warning disable RCS1169 // Mark field as read-only.
             private int d = 0;
+#pragma warning restore RCS1169 // Mark field as read-only.
             public int GetD() { return d; }
             public int e { get; set; }
             private string f

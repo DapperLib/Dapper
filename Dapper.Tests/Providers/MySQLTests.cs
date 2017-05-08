@@ -176,7 +176,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             {
                 try
                 {
-                    using (GetMySqlConnection(true)) { }
+                    using (GetMySqlConnection(true)) { /* just trying to see if it works */ }
                 }
                 catch (Exception ex)
                 {

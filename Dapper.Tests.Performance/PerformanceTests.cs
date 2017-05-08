@@ -51,7 +51,7 @@ namespace Dapper.Tests.Performance
                 Add(new Test(iteration, name));
             }
 
-            public void AddAsync(Func<int, Task> iterationAsync, string name)
+            public void AsyncAdd(Func<int, Task> iterationAsync, string name)
             {
                 Add(new Test(iterationAsync, name));
             }
@@ -230,7 +230,7 @@ namespace Dapper.Tests.Performance
                 Try(() =>
                 {
                     var query = new Belgrade.SqlClient.SqlDb.QueryMapper(ConnectionString);
-                    tests.AddAsync(id => query.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + id,
+                    tests.AsyncAdd(id => query.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + id,
                         reader =>
                         {
                             var post = new Post();

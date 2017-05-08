@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
+#pragma warning disable RCS1023 // Format empty block.
 namespace PetaPoco
 {
 	// Poco's marked [Explicit] require all column properties to be marked
@@ -37,8 +38,8 @@ namespace PetaPoco
 	public class ResultColumn : Column
 	{
 		public ResultColumn() { }
-		public ResultColumn(string name) : base(name) { }
-	}
+        public ResultColumn(string name) : base(name) { }
+    }
 
 	// Specify the table name of a poco
 	[AttributeUsage(AttributeTargets.Class)]
@@ -1287,7 +1288,7 @@ namespace PetaPoco
 				_db.CloseSharedConnection();
 			}
 		}
-        
+
         // Member variables
         private readonly string _connectionString;
         private readonly string _providerName;
@@ -1441,4 +1442,5 @@ namespace PetaPoco
 		}
 	}
 }
+#pragma warning restore RCS1023 // Format empty block.
 #endif

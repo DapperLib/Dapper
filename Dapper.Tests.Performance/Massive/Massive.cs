@@ -8,6 +8,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 
+#pragma warning disable RCS1141 // Add parameter to documentation comment.
 namespace Massive
 {
     public static class ObjectExtensions
@@ -115,7 +116,9 @@ namespace Massive
     {
         private readonly DbProviderFactory _factory;
 #pragma warning disable 0649
+#pragma warning disable RCS1169 // Mark field as read-only.
         private string _connectionString;
+#pragma warning restore RCS1169 // Mark field as read-only.
 #pragma warning restore 0649
 
         public DynamicModel(string connectionStringName = "", string tableName = "", string primaryKeyField = "")
@@ -450,4 +453,5 @@ namespace Massive
         }
     }
 }
+#pragma warning restore RCS1141 // Add parameter to documentation comment.
 #endif

@@ -791,7 +791,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 var data = (await connection.QueryAsync<int>("select 1 union all select 2; RAISERROR('after select', 16, 1);").ConfigureAwait(false)).ToList();
                 Assert.Fail();
             }
-            catch (SqlException ex) when (ex.Message == "after select") { }
+            catch (SqlException ex) when (ex.Message == "after select") { /* swallow only this */ }
         }
     }
 }

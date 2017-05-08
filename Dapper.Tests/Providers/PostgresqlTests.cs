@@ -71,7 +71,7 @@ namespace Dapper.Tests
             {
                 try
                 {
-                    using (GetOpenNpgsqlConnection()) { }
+                    using (GetOpenNpgsqlConnection()) { /* just trying to see if it works */ }
                 }
                 catch (Exception ex)
                 {

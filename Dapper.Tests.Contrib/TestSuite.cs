@@ -469,7 +469,7 @@ namespace Dapper.Tests.Contrib
 
                         var name = type.Name + "s";
                         if (type.IsInterface() && name.StartsWith("I"))
-                            name = name.Substring(1);
+                            return name.Substring(1);
                         return name;
                 }
             };
