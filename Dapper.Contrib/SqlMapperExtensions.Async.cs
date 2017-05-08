@@ -112,6 +112,7 @@ namespace Dapper.Contrib.Extensions
         /// <summary>
         /// Inserts an entity into table "Ts" asynchronously using .NET 4.5 Task and returns identity id.
         /// </summary>
+        /// <typeparam name="T">The type being inserted.</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>

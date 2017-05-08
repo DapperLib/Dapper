@@ -297,6 +297,7 @@ namespace Dapper.Contrib.Extensions
         /// <summary>
         /// Inserts an entity into table "Ts" and returns identity id or number if inserted rows if inserting a list.
         /// </summary>
+        /// <typeparam name="T">The type to insert.</typeparam>
         /// <param name="connection">Open SqlConnection</param>
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
