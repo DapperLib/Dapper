@@ -13,8 +13,10 @@ namespace Dapper
         private readonly IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data;
         private readonly string typeName;
         /// <summary>
-        /// Create a new instance of SqlDataRecordListTVPParameter
+        /// Create a new instance of <see cref="SqlDataRecordListTVPParameter"/>.
         /// </summary>
+        /// <param name="data">The data records to convert into TVPs.</param>
+        /// <param name="typeName">The parameter type name.</param>
         public SqlDataRecordListTVPParameter(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
         {
             this.data = data;

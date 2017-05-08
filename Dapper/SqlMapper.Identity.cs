@@ -6,32 +6,27 @@ namespace Dapper
     public static partial class SqlMapper
     {
         /// <summary>
-        /// Identity of a cached query in Dapper, used for extensibility
+        /// Identity of a cached query in Dapper, used for extensibility.
         /// </summary>
         public class Identity : IEquatable<Identity>
         {
-            internal Identity ForGrid(Type primaryType, int gridIndex)
-            {
-                return new Identity(sql, commandType, connectionString, primaryType, parametersType, null, gridIndex);
-            }
+            internal Identity ForGrid(Type primaryType, int gridIndex) =>
+                new Identity(sql, commandType, connectionString, primaryType, parametersType, null, gridIndex);
 
-            internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex)
-            {
-                return new Identity(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
-            }
+            internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex) =>
+                new Identity(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
+
             /// <summary>
-            /// Create an identity for use with DynamicParameters, internal use only
+            /// Create an identity for use with DynamicParameters, internal use only.
             /// </summary>
-            /// <param name="type"></param>
+            /// <param name="type">The parameters type to create an <see cref="Identity"/> for.</param>
             /// <returns></returns>
-            public Identity ForDynamicParameters(Type type)
-            {
-                return new Identity(sql, commandType, connectionString, this.type, type, null, -1);
-            }
+            public Identity ForDynamicParameters(Type type) =>
+                new Identity(sql, commandType, connectionString, this.type, type, null, -1);
 
             internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes)
-                : this(sql, commandType, connection.ConnectionString, type, parametersType, otherTypes, 0)
-            { }
+                : this(sql, commandType, connection.ConnectionString, type, parametersType, otherTypes, 0) { /* base call */ }
+
             private Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex)
             {
                 this.sql = sql;
@@ -43,19 +38,19 @@ namespace Dapper
                 unchecked
                 {
                     hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
-                    hashCode = hashCode * 23 + commandType.GetHashCode();
-                    hashCode = hashCode * 23 + gridIndex.GetHashCode();
-                    hashCode = hashCode * 23 + (sql?.GetHashCode() ?? 0);
-                    hashCode = hashCode * 23 + (type?.GetHashCode() ?? 0);
+                    hashCode = (hashCode * 23) + commandType.GetHashCode();
+                    hashCode = (hashCode * 23) + gridIndex.GetHashCode();
+                    hashCode = (hashCode * 23) + (sql?.GetHashCode() ?? 0);
+                    hashCode = (hashCode * 23) + (type?.GetHashCode() ?? 0);
                     if (otherTypes != null)
                     {
                         foreach (var t in otherTypes)
                         {
-                            hashCode = hashCode * 23 + (t?.GetHashCode() ?? 0);
+                            hashCode = (hashCode * 23) + (t?.GetHashCode() ?? 0);
                         }
                     }
-                    hashCode = hashCode * 23 + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
-                    hashCode = hashCode * 23 + (parametersType?.GetHashCode() ?? 0);
+                    hashCode = (hashCode * 23) + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
+                    hashCode = (hashCode * 23) + (parametersType?.GetHashCode() ?? 0);
                 }
             }
 
@@ -63,10 +58,7 @@ namespace Dapper
             /// Whether this <see cref="Identity"/> equals another.
             /// </summary>
             /// <param name="obj">The other <see cref="object"/> to compare to.</param>
-            public override bool Equals(object obj)
-            {
-                return Equals(obj as Identity);
-            }
+            public override bool Equals(object obj) => Equals(obj as Identity);
 
             /// <summary>
             /// The raw SQL command.

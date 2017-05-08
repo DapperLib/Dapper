@@ -14,8 +14,9 @@ namespace Dapper
         {
             private readonly string udtTypeName;
             /// <summary>
-            /// Creates a new instance of UdtTypeHandler with the specified UdtTypeName
+            /// Creates a new instance of UdtTypeHandler with the specified <see cref="UdtTypeHandler"/>.
             /// </summary>
+            /// <param name="udtTypeName">The user defined type name.</param>
             public UdtTypeHandler(string udtTypeName)
             {
                 if (string.IsNullOrEmpty(udtTypeName)) throw new ArgumentException("Cannot be null or empty", udtTypeName);

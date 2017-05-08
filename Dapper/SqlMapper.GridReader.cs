@@ -192,7 +192,7 @@ namespace Dapper
                         result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
                     if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);
-                    while (reader.Read()) { }
+                    while (reader.Read()) { /* ignore subsequent rows */ }
                 }
                 else if((row & Row.FirstOrDefault) == 0) // demanding a row, and don't have one
                 {

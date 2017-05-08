@@ -14,12 +14,16 @@ namespace Dapper
         private readonly string typeName;
 
         /// <summary>
-        /// Create a new instance of TableValuedParameter
+        /// Create a new instance of <see cref="TableValuedParameter"/>.
         /// </summary>
-        public TableValuedParameter(DataTable table) : this(table, null) { }
+        /// <param name="table">The <see cref="DataTable"/> to create this parameter for</param>
+        public TableValuedParameter(DataTable table) : this(table, null) { /* run base */ }
+
         /// <summary>
-        /// Create a new instance of TableValuedParameter
+        /// Create a new instance of <see cref="TableValuedParameter"/>.
         /// </summary>
+        /// <param name="table">The <see cref="DataTable"/> to create this parameter for.</param>
+        /// <param name="typeName">The name of the type this parameter is for.</param>
         public TableValuedParameter(DataTable table, string typeName)
         {
             this.table = table;
@@ -54,13 +58,10 @@ namespace Dapper
             {
                 typeName = table.GetTypeName();
             }
-            if (!string.IsNullOrEmpty(typeName))
+            if (!string.IsNullOrEmpty(typeName) && (parameter is System.Data.SqlClient.SqlParameter sqlParam))
             {
-                if (parameter is System.Data.SqlClient.SqlParameter sqlParam)
-                {
-                    setTypeName?.Invoke(sqlParam, typeName);
-                    sqlParam.SqlDbType = SqlDbType.Structured;
-                }
+                setTypeName?.Invoke(sqlParam, typeName);
+                sqlParam.SqlDbType = SqlDbType.Structured;
             }
         }
     }

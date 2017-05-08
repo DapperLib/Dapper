@@ -23,7 +23,7 @@ namespace Dapper
             private sealed class DeadValue
             {
                 public static readonly DeadValue Default = new DeadValue();
-                private DeadValue() { }
+                private DeadValue() { /* hiding constructor */ }
             }
 
             int ICollection<KeyValuePair<string, object>>.Count

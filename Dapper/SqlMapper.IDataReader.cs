@@ -9,9 +9,11 @@ namespace Dapper
         /// <summary>
         /// Parses a data reader to a sequence of data of the supplied type. Used for deserializing a reader without a connection, etc.
         /// </summary>
+        /// <typeparam name="T">The type to parse from the <paramref name="reader"/>.</typeparam>
+        /// <param name="reader">The data reader to parse results from.</param>
         public static IEnumerable<T> Parse<T>(this IDataReader reader)
         {
-            if(reader.Read())
+            if (reader.Read())
             {
                 var deser = GetDeserializer(typeof(T), reader, 0, -1, false);
                 do
@@ -24,6 +26,8 @@ namespace Dapper
         /// <summary>
         /// Parses a data reader to a sequence of data of the supplied type (as object). Used for deserializing a reader without a connection, etc.
         /// </summary>
+        /// <param name="reader">The data reader to parse results from.</param>
+        /// <param name="type">The type to parse from the <paramref name="reader"/>.</param>
         public static IEnumerable<object> Parse(this IDataReader reader, Type type)
         {
             if (reader.Read())
@@ -39,6 +43,7 @@ namespace Dapper
         /// <summary>
         /// Parses a data reader to a sequence of dynamic. Used for deserializing a reader without a connection, etc.
         /// </summary>
+        /// <param name="reader">The data reader to parse results from.</param>
         public static IEnumerable<dynamic> Parse(this IDataReader reader)
         {
             if (reader.Read())
@@ -71,11 +76,12 @@ namespace Dapper
         /// Gets the row parser for a specific row on a data reader. This allows for type switching every row based on, for example, a TypeId column.
         /// You could return a collection of the base type but have each more specific.
         /// </summary>
-        /// <param name="reader">The data reader to get the parser for the current row from</param>
-        /// <param name="concreteType">The type to get the parser for</param>
-        /// <param name="startIndex">The start column index of the object (default 0)</param>
-        /// <param name="length">The length of columns to read (default -1 = all fields following startIndex)</param>
-        /// <param name="returnNullIfFirstMissing">Return null if we can't find the first column? (default false)</param>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="reader">The data reader to get the parser for the current row from.</param>
+        /// <param name="concreteType">The type to get the parser for.</param>
+        /// <param name="startIndex">The start column index of the object (default: 0).</param>
+        /// <param name="length">The length of columns to read (default: -1 = all fields following startIndex).</param>
+        /// <param name="returnNullIfFirstMissing">Return null if we can't find the first column? (default: false).</param>
         /// <returns>A parser for this specific object from this row.</returns>
         /// <example>
         /// var result = new List&lt;BaseType&gt;();

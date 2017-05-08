@@ -15,6 +15,7 @@ namespace Dapper
         /// <summary>
         /// Gets the feature set based on the passed connection
         /// </summary>
+        /// <param name="connection">The connection to get supported features for.</param>
         public static FeatureSupport Get(IDbConnection connection)
         {
             string name = connection?.GetType().Name;
@@ -26,6 +27,7 @@ namespace Dapper
         {
             Arrays = arrays;
         }
+
         /// <summary>
         /// True if the db supports array columns e.g. Postgresql
         /// </summary>

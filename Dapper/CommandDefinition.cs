@@ -73,9 +73,28 @@ namespace Dapper
         /// </summary>
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
 
+#if ASYNC
         /// <summary>
         /// Initialize the command definition
         /// </summary>
+        /// <param name="commandText">The text for this command.</param>
+        /// <param name="parameters">The parameters for this command.</param>
+        /// <param name="transaction">The transaction for this command to participate in.</param>
+        /// <param name="commandTimeout">The timeout (in seconds) for this command.</param>
+        /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
+        /// <param name="flags">The behavior flags for this command.</param>
+        /// <param name="cancellationToken">The cancellation token for this command.</param>
+#else
+        /// <summary>
+        /// Initialize the command definition
+        /// </summary>
+        /// <param name="commandText">The text for this command.</param>
+        /// <param name="parameters">The parameters for this command.</param>
+        /// <param name="transaction">The transaction for this command to participate in.</param>
+        /// <param name="commandTimeout">The timeout (in seconds) for this command.</param>
+        /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
+        /// <param name="flags">The behavior flags for this command.</param>
+#endif
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
 #if ASYNC

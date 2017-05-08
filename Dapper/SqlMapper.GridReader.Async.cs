@@ -213,7 +213,7 @@ namespace Dapper
                     }
                     result = (T)deserializer.Func(reader);
                     if ((row & Row.Single) != 0 && await reader.ReadAsync(cancel).ConfigureAwait(false)) ThrowMultipleRows(row);
-                    while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { }
+                    while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent rows */ }
                 }
                 else if ((row & Row.FirstOrDefault) == 0) // demanding a row, and don't have one
                 {
