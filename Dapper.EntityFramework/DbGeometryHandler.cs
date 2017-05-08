@@ -8,23 +8,25 @@ using System.Data.SqlTypes;
 namespace Dapper.EntityFramework
 {
     /// <summary>
-    /// Type-handler for the DbGeometry spatial type
+    /// Type-handler for the DbGeometry spatial type.
     /// </summary>
     public class DbGeometryHandler : SqlMapper.TypeHandler<DbGeometry>
     {
         /// <summary>
-        /// Create a new handler instance
+        /// Create a new handler instance.
         /// </summary>
-        protected DbGeometryHandler() { }
+        protected DbGeometryHandler() { /* create new */ }
+
         /// <summary>
-        /// Default handler instance
+        /// Default handler instance.
         /// </summary>
         public static readonly DbGeometryHandler Default = new DbGeometryHandler();
+
         /// <summary>
-        /// Assign the value of a parameter before a command executes
+        /// Assign the value of a parameter before a command executes.
         /// </summary>
-        /// <param name="parameter">The parameter to configure</param>
-        /// <param name="value">Parameter value</param>
+        /// <param name="parameter">The parameter to configure.</param>
+        /// <param name="value">Parameter value.</param>
         public override void SetValue(IDbDataParameter parameter, DbGeometry value)
         {
             object parsed = null;
@@ -38,11 +40,12 @@ namespace Dapper.EntityFramework
                 ((SqlParameter)parameter).UdtTypeName = "geometry";
             }
         }
+
         /// <summary>
-        /// Parse a database value back to a typed value
+        /// Parse a database value back to a typed value.
         /// </summary>
-        /// <param name="value">The value from the database</param>
-        /// <returns>The typed value</returns>
+        /// <param name="value">The value from the database.</param>
+        /// <returns>The typed value.</returns>
         public override DbGeometry Parse(object value)
         {
             if (value == null || value is DBNull) return null;

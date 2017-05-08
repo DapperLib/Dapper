@@ -8,23 +8,25 @@ using System.Data.SqlTypes;
 namespace Dapper.EntityFramework
 {
     /// <summary>
-    /// Type-handler for the DbGeography spatial type
+    /// Type-handler for the DbGeography spatial type.
     /// </summary>
     public class DbGeographyHandler : SqlMapper.TypeHandler<DbGeography>
     {
         /// <summary>
-        /// Create a new handler instance
+        /// Create a new handler instance.
         /// </summary>
-        protected DbGeographyHandler() { }
+        protected DbGeographyHandler() { /* create new */ }
+
         /// <summary>
         /// Default handler instance
         /// </summary>
         public static readonly DbGeographyHandler Default = new DbGeographyHandler();
+
         /// <summary>
-        /// Assign the value of a parameter before a command executes
+        /// Assign the value of a parameter before a command executes.
         /// </summary>
-        /// <param name="parameter">The parameter to configure</param>
-        /// <param name="value">Parameter value</param>
+        /// <param name="parameter">The parameter to configure.</param>
+        /// <param name="value">Parameter value.</param>
         public override void SetValue(IDbDataParameter parameter, DbGeography value)
         {
             object parsed = null;
@@ -38,11 +40,12 @@ namespace Dapper.EntityFramework
                 sqlParameter.UdtTypeName = "geography";
             }
         }
+
         /// <summary>
-        /// Parse a database value back to a typed value
+        /// Parse a database value back to a typed value.
         /// </summary>
-        /// <param name="value">The value from the database</param>
-        /// <returns>The typed value</returns>
+        /// <param name="value">The value from the database.</param>
+        /// <returns>The typed value.</returns>
         public override DbGeography Parse(object value)
         {
             if (value == null || value is DBNull) return null;
