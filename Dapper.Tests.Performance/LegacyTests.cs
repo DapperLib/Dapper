@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 
 namespace Dapper.Tests.Performance
 {
-    public partial class PerformanceTests
+    public class LegacyTests
     {
         private class Test
         {
@@ -81,7 +81,10 @@ namespace Dapper.Tests.Performance
 
                 foreach (var test in this.OrderBy(t => t.Watch.ElapsedMilliseconds))
                 {
-                    Console.WriteLine(test.Name + " took " + test.Watch.ElapsedMilliseconds + "ms");
+                    var ms = test.Watch.ElapsedMilliseconds.ToString();
+                    Console.Write(ms);
+                    Program.WriteColor("ms ".PadRight(8 - ms.Length), ConsoleColor.DarkGray);
+                    Console.WriteLine(test.Name);
                 }
             }
         }
@@ -114,6 +117,8 @@ namespace Dapper.Tests.Performance
         {
             using (var connection = GetOpenConnection())
             {
+#pragma warning disable IDE0017 // Simplify object initialization
+#pragma warning disable RCS1121 // Use [] instead of calling 'First'.
                 var tests = new Tests();
 
                 // Linq2SQL
@@ -252,35 +257,37 @@ namespace Dapper.Tests.Performance
                 }, "Belgrade Sql Client");
 
                 //Susanoo
-                var susanooDb = new DatabaseManager(connection);
+                Try(() => {
+                    var susanooDb = new DatabaseManager(connection);
 
-                var susanooPreDefinedCommand =
-                    CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                        .DefineResults<Post>()
-                        .Realize();
+                    var susanooPreDefinedCommand =
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<Post>()
+                            .Realize();
 
-                var susanooDynamicPreDefinedCommand =
-                    CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                        .DefineResults<dynamic>()
-                        .Realize();
+                    var susanooDynamicPreDefinedCommand =
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<dynamic>()
+                            .Realize();
 
-                tests.Add(Id =>
-                    CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                        .DefineResults<Post>()
-                        .Realize()
-                        .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Cache Retrieval");
+                    tests.Add(Id =>
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<Post>()
+                            .Realize()
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Cache Retrieval");
 
-                tests.Add(Id =>
-                    CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                        .DefineResults<dynamic>()
-                        .Realize()
-                        .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Cache Retrieval");
+                    tests.Add(Id =>
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<dynamic>()
+                            .Realize()
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Cache Retrieval");
 
-                tests.Add(Id => susanooDynamicPreDefinedCommand
-                        .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Static");
+                    tests.Add(Id => susanooDynamicPreDefinedCommand
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Static");
 
-                tests.Add(Id => susanooPreDefinedCommand
-                        .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Static");
+                    tests.Add(Id => susanooPreDefinedCommand
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Static");
+                }, "Susanoo");
 
                 //ServiceStack's OrmLite:
                 Try(() =>
@@ -291,38 +298,73 @@ namespace Dapper.Tests.Performance
                 }, "ServiceStack.OrmLite");
 
                 // Hand Coded
-                var postCommand = new SqlCommand()
-                {
-                    Connection = connection,
-                    CommandText = @"select Id, [Text], [CreationDate], LastChangeDate, 
+                Try(() => {
+                    var postCommand = new SqlCommand()
+                    {
+                        Connection = connection,
+                        CommandText = @"select Id, [Text], [CreationDate], LastChangeDate, 
                 Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id = @Id"
-                };
-                var idParam = postCommand.Parameters.Add("@Id", SqlDbType.Int);
+                    };
+                    var idParam = postCommand.Parameters.Add("@Id", SqlDbType.Int);
 
-                tests.Add(id =>
-            {
-                idParam.Value = id;
+                    tests.Add(id =>
+                    {
+                        idParam.Value = id;
 
-                using (var reader = postCommand.ExecuteReader())
-                {
-                    reader.Read();
-                    var post = new Post();
-                    post.Id = reader.GetInt32(0);
-                    post.Text = reader.GetNullableString(1);
-                    post.CreationDate = reader.GetDateTime(2);
-                    post.LastChangeDate = reader.GetDateTime(3);
+                        using (var reader = postCommand.ExecuteReader())
+                        {
+                            reader.Read();
+                            var post = new Post();
+                            post.Id = reader.GetInt32(0);
+                            post.Text = reader.GetNullableString(1);
+                            post.CreationDate = reader.GetDateTime(2);
+                            post.LastChangeDate = reader.GetDateTime(3);
 
-                    post.Counter1 = reader.GetNullableValue<int>(4);
-                    post.Counter2 = reader.GetNullableValue<int>(5);
-                    post.Counter3 = reader.GetNullableValue<int>(6);
-                    post.Counter4 = reader.GetNullableValue<int>(7);
-                    post.Counter5 = reader.GetNullableValue<int>(8);
-                    post.Counter6 = reader.GetNullableValue<int>(9);
-                    post.Counter7 = reader.GetNullableValue<int>(10);
-                    post.Counter8 = reader.GetNullableValue<int>(11);
-                    post.Counter9 = reader.GetNullableValue<int>(12);
-                }
-            }, "Hand Coded");
+                            post.Counter1 = reader.GetNullableValue<int>(4);
+                            post.Counter2 = reader.GetNullableValue<int>(5);
+                            post.Counter3 = reader.GetNullableValue<int>(6);
+                            post.Counter4 = reader.GetNullableValue<int>(7);
+                            post.Counter5 = reader.GetNullableValue<int>(8);
+                            post.Counter6 = reader.GetNullableValue<int>(9);
+                            post.Counter7 = reader.GetNullableValue<int>(10);
+                            post.Counter8 = reader.GetNullableValue<int>(11);
+                            post.Counter9 = reader.GetNullableValue<int>(12);
+                        }
+                    }, "Hand Coded");
+
+#if !COREFX
+                    var table = new DataTable
+                    {
+                        Columns =
+                    {
+                        {"Id", typeof (int)},
+                        {"Text", typeof (string)},
+                        {"CreationDate", typeof (DateTime)},
+                        {"LastChangeDate", typeof (DateTime)},
+                        {"Counter1", typeof (int)},
+                        {"Counter2", typeof (int)},
+                        {"Counter3", typeof (int)},
+                        {"Counter4", typeof (int)},
+                        {"Counter5", typeof (int)},
+                        {"Counter6", typeof (int)},
+                        {"Counter7", typeof (int)},
+                        {"Counter8", typeof (int)},
+                        {"Counter9", typeof (int)},
+                    }
+                    };
+                    tests.Add(id =>
+                    {
+                        idParam.Value = id;
+                        object[] values = new object[13];
+                        using (var reader = postCommand.ExecuteReader())
+                        {
+                            reader.Read();
+                            reader.GetValues(values);
+                            table.Rows.Add(values);
+                        }
+                    }, "DataTable via IDataReader.GetValues");
+#endif
+                }, "Hand Coded");
 
                 // Subsonic isn't maintained anymore - doesn't import correctly
                 //Try(() =>
@@ -339,41 +381,11 @@ namespace Dapper.Tests.Performance
                 //var db1 = new DbManager(GetOpenConnection());
                 //tests.Add(id => db1.SetCommand("select * from Posts where Id = @id", db1.Parameter("id", id)).ExecuteList<Post>(), "BLToolkit");
 
-#if !COREFX
-                var table = new DataTable
-                {
-                    Columns =
-                    {
-                        {"Id", typeof (int)},
-                        {"Text", typeof (string)},
-                        {"CreationDate", typeof (DateTime)},
-                        {"LastChangeDate", typeof (DateTime)},
-                        {"Counter1", typeof (int)},
-                        {"Counter2", typeof (int)},
-                        {"Counter3", typeof (int)},
-                        {"Counter4", typeof (int)},
-                        {"Counter5", typeof (int)},
-                        {"Counter6", typeof (int)},
-                        {"Counter7", typeof (int)},
-                        {"Counter8", typeof (int)},
-                        {"Counter9", typeof (int)},
-                    }
-                };
-                tests.Add(id =>
-                {
-                    idParam.Value = id;
-                    object[] values = new object[13];
-                    using (var reader = postCommand.ExecuteReader())
-                    {
-                        reader.Read();
-                        reader.GetValues(values);
-                        table.Rows.Add(values);
-                    }
-                }, "DataTable via IDataReader.GetValues");
-#endif
                 Console.WriteLine();
                 Console.WriteLine("Running...");
                 await tests.RunAsync(iterations).ConfigureAwait(false);
+#pragma warning restore RCS1121 // Use [] instead of calling 'First'.
+#pragma warning restore IDE0017 // Simplify object initialization
             }
         }
     }

@@ -1,37 +1,78 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using BenchmarkDotNet.Running;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Reflection;
+using static System.Console;
 
 namespace Dapper.Tests.Performance
 {
-    // Note: VSTest injects an entry point in .NET Core land...so we have to split this out into
-    // a separate project...so here we are.
-    // See https://github.com/Microsoft/vstest/issues/636 for details
     public static class Program
     {
-        public static void Main()
+        public static void Main(string[] args)
         {
 #if DEBUG
-            var fg = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Warning: DEBUG configuration; performance may be impacted");
-            Console.ForegroundColor = fg;
-            Console.WriteLine();
+            WriteLineColor("Warning: DEBUG configuration; performance may be impacted!", ConsoleColor.Red);
+            WriteLine();
 #endif
-            Console.WriteLine("Using ConnectionString: " + PerformanceTests.ConnectionString);
+            WriteLine("Welcome to Dapper's ORM performance benchmark suite, based on BenchmarkDotNet.");
+            Write("  If you find a problem, please report it at: ");
+            WriteLineColor("https://github.com/StackExchange/Dapper", ConsoleColor.Blue);
+            WriteLine("  Or if you're up to it, please submit a pull request! We welcome new additions.");
+            WriteLine();
 
+            if (args.Length == 0)
+            {
+                WriteLine("Optional arguments:");
+                WriteColor("  --all", ConsoleColor.Blue);
+                WriteLine(": run all benchmarks");
+                WriteColor("  --legacy", ConsoleColor.Blue);
+                WriteLine(": run the legacy benchmark suite/format", ConsoleColor.Gray);
+                WriteLine();
+            }
+            WriteLine("Using ConnectionString: " + BenchmarkBase.ConnectionString);
             EnsureDBSetup();
-            RunPerformanceTestsAsync().GetAwaiter().GetResult();
+            WriteLine("Database setup complete.");
+
+            if (args.Any(a => a == "--all"))
+            {
+                WriteLine("Iterations: " + BenchmarkBase.Iterations);
+                var benchmarks = new List<Benchmark>();
+                var benchTypes = Assembly.GetEntryAssembly().DefinedTypes.Where(t => t.IsSubclassOf(typeof(BenchmarkBase)));
+                WriteLineColor("Running full benchmarks suite", ConsoleColor.Green);
+                foreach (var b in benchTypes)
+                {
+                    benchmarks.AddRange(BenchmarkConverter.TypeToBenchmarks(b));
+                }
+                BenchmarkRunner.Run(benchmarks.ToArray(), null);
+            }
+            else if (args.Any(a => a == "--legacy"))
+            {
+                var test = new LegacyTests();
+                const int iterations = 500;
+                WriteLineColor($"Running legacy benchmarks: {iterations} iterations that load up a Post entity.", ConsoleColor.Green);
+                test.RunAsync(iterations).GetAwaiter().GetResult();
+                WriteLine();
+                WriteLineColor("Run complete.", ConsoleColor.Green);
+            }
+            else
+            {
+                WriteLine("Iterations: " + BenchmarkBase.Iterations);
+                BenchmarkSwitcher.FromAssembly(typeof(Program).GetTypeInfo().Assembly).Run(args);
+            }
         }
 
         private static void EnsureDBSetup()
         {
-            using (var cnn = PerformanceTests.GetOpenConnection())
+            using (var cnn = new SqlConnection(BenchmarkBase.ConnectionString))
             {
+                cnn.Open();
                 var cmd = cnn.CreateCommand();
                 cmd.CommandText = @"
-if (OBJECT_ID('Posts') is null)
-begin
-	create table Posts
+If (Object_Id('Posts') Is Null)
+Begin
+	Create Table Posts
 	(
 		Id int identity primary key, 
 		[Text] varchar(max) not null, 
@@ -46,38 +87,36 @@ begin
 		Counter7 int,
 		Counter8 int,
 		Counter9 int
-	)
+	);
 	   
-	set nocount on 
+	Set NoCount On;
+	Declare @i int = 0;
 
-	declare @i int
-	declare @c int
-
-	declare @id int
-
-	set @i = 0
-
-	while @i <= 5001
-	begin 
-		
-		insert Posts ([Text],CreationDate, LastChangeDate) values (replicate('x', 2000), GETDATE(), GETDATE())
-		set @id = @@IDENTITY
-		
-		set @i = @i + 1
-	end
-end
+	While @i <= 5001
+	Begin
+		Insert Posts ([Text],CreationDate, LastChangeDate) values (replicate('x', 2000), GETDATE(), GETDATE());
+		Set @i = @i + 1;
+	End
+End
 ";
                 cmd.Connection = cnn;
                 cmd.ExecuteNonQuery();
             }
         }
 
-        private static async Task RunPerformanceTestsAsync()
+        public static void WriteLineColor(string message, ConsoleColor color)
         {
-            var test = new PerformanceTests();
-            const int iterations = 500;
-            Console.WriteLine("Running {0} iterations that load up a post entity", iterations);
-            await test.RunAsync(iterations).ConfigureAwait(false);
+            var orig = ForegroundColor;
+            ForegroundColor = color;
+            WriteLine(message);
+            ForegroundColor = orig;
+        }
+        public static void WriteColor(string message, ConsoleColor color)
+        {
+            var orig = ForegroundColor;
+            ForegroundColor = color;
+            Write(message);
+            ForegroundColor = orig;
         }
     }
 }
