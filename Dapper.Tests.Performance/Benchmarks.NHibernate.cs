@@ -24,7 +24,7 @@ namespace Dapper.Tests.Performance
             _get = NHibernateHelper.OpenSession();
         }
 
-        [Benchmark(Description = "NHibernate: SQL", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "SQL", OperationsPerInvoke = Iterations)]
         public Post SQL()
         {
             Step();
@@ -34,7 +34,7 @@ namespace Dapper.Tests.Performance
                 .List<Post>()[0];
         }
 
-        [Benchmark(Description = "NHibernate: HQL", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "HQL", OperationsPerInvoke = Iterations)]
         public Post HQL()
         {
             Step();
@@ -43,7 +43,7 @@ namespace Dapper.Tests.Performance
                 .List<Post>()[0];
         }
 
-        [Benchmark(Description = "NHibernate: Criteria", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Criteria", OperationsPerInvoke = Iterations)]
         public Post Criteria()
         {
             Step();
@@ -52,14 +52,14 @@ namespace Dapper.Tests.Performance
                 .List<Post>()[0];
         }
 
-        [Benchmark(Description = "NHibernate: LINQ", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "LINQ", OperationsPerInvoke = Iterations)]
         public Post LINQ()
         {
             Step();
             return _linq.Query<Post>().First(p => p.Id == i);
         }
 
-        [Benchmark(Description = "NHibernate: Get<T>", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Get<T>", OperationsPerInvoke = Iterations)]
         public Post Get()
         {
             Step();

@@ -16,7 +16,7 @@ namespace Dapper.Tests.Performance
             _db = dbFactory.Open();
         }
 
-        [Benchmark(Description = "ServiceStack.OrmLite: SingleById", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "SingleById", OperationsPerInvoke = Iterations)]
         public Post Query()
         {
             Step();

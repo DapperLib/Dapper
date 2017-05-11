@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
-    public class EntityFrameworkBenchmarks : BenchmarkBase
+    public class EF6Benchmarks : BenchmarkBase
     {
         private EntityFramework.EFContext Context;
         private static readonly Func<DataClassesDataContext, int, Linq2Sql.Post> compiledQuery =
@@ -19,21 +19,21 @@ namespace Dapper.Tests.Performance
             Context = new EntityFramework.EFContext(_connection);
         }
 
-        [Benchmark(Description = "EF6: Normal", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Normal", OperationsPerInvoke = Iterations)]
         public Post Normal()
         {
             Step();
             return Context.Posts.First(p => p.Id == i);
         }
 
-        [Benchmark(Description = "EF6: SqlQuery", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "SqlQuery", OperationsPerInvoke = Iterations)]
         public Post SqlQuery()
         {
             Step();
             return Context.Database.SqlQuery<Post>("select * from Posts where Id = {0}", i).First();
         }
 
-        [Benchmark(Description = "EF6: No Tracking", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "No Tracking", OperationsPerInvoke = Iterations)]
         public Post NoTracking()
         {
             Step();

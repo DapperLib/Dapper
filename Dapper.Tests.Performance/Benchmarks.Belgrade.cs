@@ -15,12 +15,12 @@ namespace Dapper.Tests.Performance
             _mapper = new QueryMapper(ConnectionString);
         }
 
-        [Benchmark(Description = "Belgrade: ExecuteReader", OperationsPerInvoke = Iterations)]
-        public Task ExecuteReader()
+        [Benchmark(Description = "ExecuteReader", OperationsPerInvoke = Iterations)]
+        public async Task ExecuteReader()
         {
             Step();
             // TODO: How do you get a Post out of this thing?
-            return _mapper.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + i,
+            await _mapper.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + i,
                         reader =>
                         {
                             var post = new Post();

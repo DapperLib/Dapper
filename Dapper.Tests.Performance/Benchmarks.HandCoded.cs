@@ -47,8 +47,8 @@ namespace Dapper.Tests.Performance
 #endif
         }
 
-        [Benchmark(Description = "HandCoded: SqlCommand", OperationsPerInvoke = Iterations)]
-        public dynamic SqlCommand()
+        [Benchmark(Description = "SqlCommand", OperationsPerInvoke = Iterations, Baseline = true)]
+        public Post SqlCommand()
         {
             Step();
             _idParam.Value = i;
@@ -75,8 +75,8 @@ namespace Dapper.Tests.Performance
             }
         }
 
-        [Benchmark(Description = "HandCoded: DataTable", OperationsPerInvoke = Iterations)]
-        public dynamic DataTable()
+        [Benchmark(Description = "DataTable", OperationsPerInvoke = Iterations)]
+        public dynamic DataTableDynamic()
         {
             Step();
             _idParam.Value = i;
