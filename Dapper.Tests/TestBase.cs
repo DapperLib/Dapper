@@ -78,7 +78,7 @@ namespace Dapper.Tests
 
         public void Dispose()
         {
-            connection?.Dispose();
+            _connection?.Dispose();
         }
     }
 }
