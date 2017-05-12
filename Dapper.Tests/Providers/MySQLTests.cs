@@ -90,7 +90,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             }
         }
 
-        [FactMySql]
+        [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/295, AllowZeroDateTime=True is not supported")]
         public void Issue295_NullableDateTime_MySql_AllowZeroDatetime()
         {
             using (var conn = GetMySqlConnection(true, false, true))
@@ -99,7 +99,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             }
         }
 
-        [FactMySql]
+        [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/295, AllowZeroDateTime=True is not supported")]
         public void Issue295_NullableDateTime_MySql_ConvertAllowZeroDatetime()
         {
             using (var conn = GetMySqlConnection(true, true, true))
