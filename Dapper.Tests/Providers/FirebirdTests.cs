@@ -1,5 +1,4 @@
-﻿#if FIREBIRD
-using FirebirdSql.Data.FirebirdClient;
+﻿using FirebirdSql.Data.FirebirdClient;
 using System.Data;
 using System.Linq;
 using Xunit;
@@ -46,4 +45,3 @@ namespace Dapper.Tests.Providers
         }
     }
 }
-#endif

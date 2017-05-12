@@ -1,18 +1,16 @@
-﻿#if SQLITE
+﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Data.SQLite;
-using System.Data;
 using Xunit;
 
 namespace Dapper.Tests
 {
     public class SqliteTests : TestBase
     {
-        protected static SQLiteConnection GetSQLiteConnection(bool open = true)
+        protected static SqliteConnection GetSQLiteConnection(bool open = true)
         {
-            var connection = new SQLiteConnection("Data Source=:memory:");
+            var connection = new SqliteConnection("Data Source=:memory:");
             if (open) connection.Open();
             return connection;
         }
@@ -82,11 +80,7 @@ namespace Dapper.Tests
             {
                 var cmd = connection.CreateCommand();
                 cmd.CommandText = "select @foo";
-#if NET45
-                const DbType type = DbType.Int32;
-#else
                 const SqliteType type = SqliteType.Integer;
-#endif
                 cmd.Parameters.Add(prefix ? "@foo" : "foo", type).Value = 42;
                 var i = Convert.ToInt32(cmd.ExecuteScalar());
                 i.IsEqualTo(42);
@@ -119,4 +113,3 @@ namespace Dapper.Tests
         }
     }
 }
-#endif

@@ -103,7 +103,7 @@ namespace Dapper.Tests
         private class PracticeRebateOrders
         {
             public string fTaxInvoiceNumber;
-#if !COREFX
+#if !NETCOREAPP1_0
             [System.Xml.Serialization.XmlElement(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
 #endif
             public string TaxInvoiceNumber

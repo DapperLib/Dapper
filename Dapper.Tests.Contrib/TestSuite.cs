@@ -5,9 +5,11 @@ using System.Linq;
 
 using Dapper.Contrib.Extensions;
 
-#if !COREFX
-using System.Data.SqlServerCe;
+#if !NETCOREAPP1_0
 using System.Transactions;
+#endif
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
+using System.Data.SqlServerCe;
 #endif
 using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
 
@@ -420,7 +422,7 @@ namespace Dapper.Tests.Contrib
             }
         }
 
-#if !COREFX
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
         [Fact(Skip = "Not parallel friendly - thinking about how to test this")]
         public void InsertWithCustomDbType()
         {
@@ -525,7 +527,7 @@ namespace Dapper.Tests.Contrib
             }
         }
 
-#if !COREFX
+#if !NETCOREAPP1_0
         [Fact]
         public void TransactionScope()
         {
@@ -632,4 +634,3 @@ namespace Dapper.Tests.Contrib
         }
     }
 }
-

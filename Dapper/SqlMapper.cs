@@ -19,7 +19,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
-#if COREFX
+#if NETSTANDARD1_3
 using DataException = System.InvalidOperationException;
 #endif
 
@@ -217,7 +217,7 @@ namespace Dapper
         private static void ResetTypeHandlers(bool clone)
         {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
-#if !COREFX
+#if !NETSTANDARD1_3
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
             try
             {
@@ -230,7 +230,7 @@ namespace Dapper
             AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
         }
 
-#if !COREFX
+#if !NETSTANDARD1_3
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void AddSqlDataRecordsTypeHandler(bool clone)
         {
@@ -348,7 +348,7 @@ namespace Dapper
         /// </summary>
         /// <param name="value">The object to get a corresponding database type for.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -367,7 +367,7 @@ namespace Dapper
         /// <param name="demand">Whether to demand a value (throw if missing).</param>
         /// <param name="handler">The handler for <paramref name="type"/>.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -397,7 +397,7 @@ namespace Dapper
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
-#if !COREFX
+#if !NETSTANDARD1_3 && !NETSTANDARD2_0
             switch (type.FullName)
             {
                 case "Microsoft.SqlServer.Types.SqlGeography":
@@ -1864,7 +1864,7 @@ namespace Dapper
         /// Internal use only.
         /// </summary>
         /// <param name="value">The object to convert to a character.</param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1881,7 +1881,7 @@ namespace Dapper
         /// Internal use only.
         /// </summary>
         /// <param name="value">The object to convert to a character.</param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1900,7 +1900,7 @@ namespace Dapper
         /// <param name="parameters">The parameter collection to search in.</param>
         /// <param name="command">The command for this fetch.</param>
         /// <param name="name">The name of the parameter to get.</param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1958,7 +1958,7 @@ namespace Dapper
         /// <param name="command">The command to pack parameters for.</param>
         /// <param name="namePrefix">The name prefix for these parameters.</param>
         /// <param name="value">The parameter value can be an <see cref="IEnumerable{T}"/></param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -2257,7 +2257,7 @@ namespace Dapper
             {
                 switch (TypeExtensions.GetTypeCode(value.GetType()))
                 {
-#if !COREFX
+#if !NETSTANDARD1_3
                     case TypeCode.DBNull:
                         return "null";
 #endif
@@ -3080,7 +3080,7 @@ namespace Dapper
             int index = startBound;
             ConstructorInfo specializedConstructor = null;
 
-#if !COREFX
+#if !NETSTANDARD1_3
             bool supportInitialize = false;
 #endif
             Dictionary<Type, LocalBuilder> structLocals = null;
@@ -3115,7 +3115,7 @@ namespace Dapper
 
                     il.Emit(OpCodes.Newobj, explicitConstr);
                     il.Emit(OpCodes.Stloc_1);
-#if !COREFX
+#if !NETSTANDARD1_3
                     supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                     if (supportInitialize)
                     {
@@ -3137,7 +3137,7 @@ namespace Dapper
                     {
                         il.Emit(OpCodes.Newobj, ctor);
                         il.Emit(OpCodes.Stloc_1);
-#if !COREFX
+#if !NETSTANDARD1_3
                         supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                         if (supportInitialize)
                         {
@@ -3354,7 +3354,7 @@ namespace Dapper
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
-#if !COREFX
+#if !NETSTANDARD1_3
                 if (supportInitialize)
                 {
                     il.Emit(OpCodes.Ldloc_1);
@@ -3626,7 +3626,7 @@ namespace Dapper
 
         private static IEqualityComparer<string> connectionStringComparer = StringComparer.Ordinal;
 
-#if !COREFX
+#if !NETSTANDARD1_3
         /// <summary>
         /// Key used to indicate the type name associated with a DataTable.
         /// </summary>

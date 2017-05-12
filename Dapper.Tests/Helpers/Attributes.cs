@@ -5,20 +5,6 @@ using Xunit;
 namespace Dapper.Tests
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class FactUnlessCoreCLRAttribute : FactAttribute
-    {
-        public FactUnlessCoreCLRAttribute(string url)
-        {
-#if COREFX
-            Skip = $"CoreFX: {url}";
-#endif
-            this.Url = url;
-        }
-
-        public string Url { get; }
-    }
-
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class FactLongRunningAttribute : FactAttribute
     {
         public FactLongRunningAttribute()

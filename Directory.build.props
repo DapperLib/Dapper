@@ -30,11 +30,8 @@
     <Reference Include="System.Core" Pack="false" />
   </ItemGroup>
   
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451'">
+  <PropertyGroup Condition=" '$(TargetFramework)' != 'net40'">
     <DefineConstants>$(DefineConstants);ASYNC</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <DefineConstants>$(DefineConstants);ASYNC;COREFX</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup>

@@ -218,7 +218,7 @@ namespace Dapper.Tests
             }
         }
 
-#if !COREFX
+#if !NETCOREAPP1_0
         [Fact]
         public async Task ExecuteReaderOpenAsync()
         {
@@ -318,8 +318,8 @@ namespace Dapper.Tests
                 new { ids = new[] { 1, 3, 4 } }).ConfigureAwait(false)).Single();
             count.IsEqualTo(2);
         }
-
-        [Fact]
+        
+        [FactLongRunning]
         public async Task RunSequentialVersusParallelAsync()
         {
             var ids = Enumerable.Range(1, 20000).Select(id => new { id }).ToArray();
@@ -336,7 +336,7 @@ namespace Dapper.Tests
             Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
         }
 
-        [Fact]
+        [FactLongRunning]
         public void RunSequentialVersusParallelSync()
         {
             var ids = Enumerable.Range(1, 20000).Select(id => new { id }).ToArray();

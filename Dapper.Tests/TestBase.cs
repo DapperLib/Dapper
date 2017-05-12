@@ -2,7 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
-#if !COREFX
+#if !NETCOREAPP1_0
 using System.Threading;
 #endif
 
@@ -45,7 +45,7 @@ namespace Dapper.Tests
 
         protected static CultureInfo ActiveCulture
         {
-#if COREFX
+#if NETCOREAPP1_0
             get { return CultureInfo.CurrentCulture; }
             set { CultureInfo.CurrentCulture = value; }
 #else
@@ -58,8 +58,8 @@ namespace Dapper.Tests
         {
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
             Console.WriteLine("Using Connectionstring: {0}", ConnectionString);
-#if COREFX
-            Console.WriteLine("CoreCLR");
+#if NETCOREAPP1_0
+            Console.WriteLine("CoreCLR (netcoreapp1.0)");
 #else
             Console.WriteLine(".NET: " + Environment.Version);
             Console.Write("Loading native assemblies for SQL types...");

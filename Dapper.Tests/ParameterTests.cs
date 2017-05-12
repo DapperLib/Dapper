@@ -10,6 +10,7 @@ using System.Linq;
 using Xunit;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 #if ENTITY_FRAMEWORK
 using System.Data.Entity.Spatial;
@@ -217,7 +218,7 @@ namespace Dapper.Tests
                 .IsEqualTo(str);
         }
 
-#if !COREFX
+#if !NETCOREAPP1_0
         [Fact]
         public void TestTVPWithAnonymousObject()
         {
@@ -491,7 +492,7 @@ namespace Dapper.Tests
 
             public void AddParameters(IDbCommand command, SqlMapper.Identity identity)
             {
-                Console.WriteLine("> AddParameters");
+                Debug.WriteLine("> AddParameters");
                 var lazy = (SqlCommand)command;
                 lazy.Parameters.AddWithValue("Id", 7);
                 var table = new DataTable
@@ -500,7 +501,7 @@ namespace Dapper.Tests
                     Rows = { { 4 }, { 9 } }
                 };
                 lazy.Parameters.AddWithValue("Rules", table);
-                Console.WriteLine("< AddParameters");
+                Debug.WriteLine("< AddParameters");
             }
         }
 
