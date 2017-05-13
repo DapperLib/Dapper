@@ -25,9 +25,9 @@ namespace Dapper.Tests
         [FactMySql]
         public void DapperEnumValue_Mysql()
         {
-            using (var connection = GetMySqlConnection())
+            using (var conn = GetMySqlConnection())
             {
-                Common.DapperEnumValue(connection);
+                Common.DapperEnumValue(conn);
             }
         }
 
@@ -76,7 +76,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         {
             using (var conn = GetMySqlConnection(true, false, false))
             {
-                Common.TestDateTime(connection);
+                Common.TestDateTime(conn);
             }
         }
 
@@ -85,25 +85,25 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         {
             using (var conn = GetMySqlConnection(true, true, false))
             {
-                Common.TestDateTime(connection);
+                Common.TestDateTime(conn);
             }
         }
 
-        [FactMySql]
+        [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/295, AllowZeroDateTime=True is not supported")]
         public void Issue295_NullableDateTime_MySql_AllowZeroDatetime()
         {
             using (var conn = GetMySqlConnection(true, false, true))
             {
-                Common.TestDateTime(connection);
+                Common.TestDateTime(conn);
             }
         }
 
-        [FactMySql]
+        [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/295, AllowZeroDateTime=True is not supported")]
         public void Issue295_NullableDateTime_MySql_ConvertAllowZeroDatetime()
         {
             using (var conn = GetMySqlConnection(true, true, true))
             {
-                Common.TestDateTime(connection);
+                Common.TestDateTime(conn);
             }
         }
 
