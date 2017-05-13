@@ -12,50 +12,47 @@ namespace Dapper.Tests.Performance
             BaseSetup();
         }
 
-        [Benchmark(Description = "Dapper: Query<T> (buffered)", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Query<T> (buffered)", OperationsPerInvoke = Iterations)]
         public Post QueryBuffered()
         {
             Step();
             return _connection.Query<Post>("select * from Posts where Id = @Id", new { Id = i }, buffered: true).First();
         }
-
-        [Benchmark(Description = "Dapper: Query<T> (unbuffered)", OperationsPerInvoke = Iterations)]
-        public Post QueryUnbuffered()
-        {
-            Step();
-            return _connection.Query<Post>("select * from Posts where Id = @Id", new { Id = i }, buffered: false).First();
-        }
-
-        [Benchmark(Description = "Dapper: QueryFirstOrDefault<T>", OperationsPerInvoke = Iterations)]
-        public Post QueryFirstOrDefault()
-        {
-            Step();
-            return _connection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = i });
-        }
-
-        [Benchmark(Description = "Dapper: Query<dyanmic> (buffered)", OperationsPerInvoke = Iterations)]
-        public object QueryBufferedDynamic()
+        [Benchmark(Description = "Query<dyanmic> (buffered)", OperationsPerInvoke = Iterations)]
+        public dynamic QueryBufferedDynamic()
         {
             Step();
             return _connection.Query("select * from Posts where Id = @Id", new { Id = i }, buffered: true).First();
         }
 
-        [Benchmark(Description = "Dapper: Query<dyanmic> (unbuffered)", OperationsPerInvoke = Iterations)]
-        public object QueryUnbufferedDynamic()
+        [Benchmark(Description = "Query<T> (unbuffered)", OperationsPerInvoke = Iterations)]
+        public Post QueryUnbuffered()
+        {
+            Step();
+            return _connection.Query<Post>("select * from Posts where Id = @Id", new { Id = i }, buffered: false).First();
+        }
+        [Benchmark(Description = "Query<dyanmic> (unbuffered)", OperationsPerInvoke = Iterations)]
+        public dynamic QueryUnbufferedDynamic()
         {
             Step();
             return _connection.Query("select * from Posts where Id = @Id", new { Id = i }, buffered: false).First();
         }
 
-        [Benchmark(Description = "Dapper: QueryFirstOrDefault<dyanmic>", OperationsPerInvoke = Iterations)]
-        public object QueryFirstOrDefaultDynamic()
+        [Benchmark(Description = "QueryFirstOrDefault<T>", OperationsPerInvoke = Iterations)]
+        public Post QueryFirstOrDefault()
+        {
+            Step();
+            return _connection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = i });
+        }
+        [Benchmark(Description = "QueryFirstOrDefault<dyanmic>", OperationsPerInvoke = Iterations)]
+        public dynamic QueryFirstOrDefaultDynamic()
         {
             Step();
             return _connection.QueryFirstOrDefault("select * from Posts where Id = @Id", new { Id = i }).First();
         }
-
-        [Benchmark(Description = "Dapper: Contrib Get<T>", OperationsPerInvoke = Iterations)]
-        public object ContribGet()
+        
+        [Benchmark(Description = "Contrib Get<T>", OperationsPerInvoke = Iterations)]
+        public Post ContribGet()
         {
             Step();
             return _connection.Get<Post>(i);

@@ -13,8 +13,8 @@ namespace Dapper.Tests.Performance
             _sdb = Simple.Data.Database.OpenConnection(ConnectionString);
         }
 
-        [Benchmark(Description = "Soma: FindById", OperationsPerInvoke = Iterations)]
-        public dynamic Query()
+        [Benchmark(Description = "FindById (dynamic)", OperationsPerInvoke = Iterations)]
+        public dynamic QueryDynamic()
         {
             Step();
             return _sdb.Posts.FindById(i).FirstOrDefault();
