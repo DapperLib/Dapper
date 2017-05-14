@@ -224,7 +224,7 @@ The performance tests are broken in to 3 lists:
 	</tr>
 </table>
 
-Performance benchmarks are available [here](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests.Performance/PerformanceTests.cs).
+Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (ctrl F5).
 
@@ -425,7 +425,7 @@ Dapper's simplicity means that many feature that ORMs ship with are stripped out
 
 Will Dapper work with my DB provider?
 ---------------------
-Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](http://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
+Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](https://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
 
 Do you have a comprehensive list of examples?
 ---------------------
