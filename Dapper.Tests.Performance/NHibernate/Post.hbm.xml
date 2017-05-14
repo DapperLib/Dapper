@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping namespace="Dapper.Tests.Performance" assembly="Dapper.Tests.Performance" xmlns="urn:nhibernate-mapping-2.2" default-lazy="false">
+  <class name="Post" table="Posts" schema="dbo">
+    <id name="Id" access="property" column="Id">
+      <generator class="native" />
+    </id>
+    <property name="Counter1" type="Int32" column="Counter1" />
+    <property name="Counter2" type="Int32" column="Counter2" />
+    <property name="Counter3" type="Int32" column="Counter3" />
+    <property name="Counter4" type="Int32" column="Counter4" />
+    <property name="Counter5" type="Int32" column="Counter5" />
+    <property name="Counter6" type="Int32" column="Counter6" />
+    <property name="Counter7" type="Int32" column="Counter7" />
+    <property name="Counter8" type="Int32" column="Counter8" />
+    <property name="Counter9" type="Int32" column="Counter9" />
+    <property name="CreationDate" type="DateTime" column="CreationDate" />
+    <property name="LastChangeDate" type="DateTime" column="LastChangeDate" />
+    <property name="Text" type="String" column="Text" />
+  </class>
+</hibernate-mapping>

@@ -1,10 +1,11 @@
 Dapper - a simple object mapper for .Net
 ========================================
+[![Build status](https://ci.appveyor.com/api/projects/status/8rbgoxqio76ynj4h?svg=true)](https://ci.appveyor.com/project/StackExchange/dapper)
 
 Release Notes
 -------------
 
-[link](http://stackexchange.github.io/dapper-dot-net/)
+[Located at stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
 
 
 Features
@@ -15,8 +16,6 @@ It provides 3 helpers:
 
 Execute a query and map the results to a strongly typed List
 ------------------------------------------------------------
-
-Note: all extension methods assume the connection is already open, they will fail if the connection is closed.
 
 ```csharp
 public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
@@ -225,7 +224,7 @@ The performance tests are broken in to 3 lists:
 	</tr>
 </table>
 
-Performance benchmarks are available [here](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests/PerformanceTests.cs).
+Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (ctrl F5).
 
@@ -242,7 +241,7 @@ new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 
 List Support
 ------------
-Dapper allow you to pass in IEnumerable<int> and will automatically parameterize your query.
+Dapper allows you to pass in IEnumerable<int> and will automatically parameterize your query.
 
 For example:
 
@@ -317,7 +316,7 @@ post.Owner.Name.IsEqualTo("Sam");
 post.Owner.Id.IsEqualTo(99);
 ```
 
-Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`, if your primary key is different or you would like to split the wide row at point other than `Id`, use the optional `splitOn` parameter.
+Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`. If your primary key is different or you would like to split the row at a point other than `Id`, use the optional `splitOn` parameter.
 
 Multiple Results
 ---------------------
@@ -374,6 +373,50 @@ Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString 
 
 On SQL Server it is crucial to use the unicode when querying unicode and ansi when querying non unicode.
 
+Type Switching Per Row
+---------------------
+
+Usually you'll want to treat all rows from a given table as the same data type. However, there are some circumstances where it's useful to be able to parse different rows as different data types. This is where `IDataReader.GetRowParser` comes in handy.
+
+Imagine you have a database table named "Shapes" with the columns: `Id`, `Type`, and `Data`, and you want to parse its rows into `Circle`, `Square`, or `Triangle` objects based on the value of the Type column.
+
+```csharp
+var shapes = new List<IShape>();
+using (var reader = connection.ExecuteReader("select * from Shapes"))
+{
+    // Generate a row parser for each type you expect.
+    // The generic type <IShape> is what the parser will return.
+    // The argument (typeof(*)) is the concrete type to parse.
+    var circleParser = reader.GetRowParser<IShape>(typeof(Circle));
+    var squareParser = reader.GetRowParser<IShape>(typeof(Square));
+    var triangleParser = reader.GetRowParser<IShape>(typeof(Triangle));
+  	
+  	var typeColumnIndex = reader.GetOrdinal("Type");
+  	
+  	while (reader.Read())
+    {
+        IShape shape;
+        var type = (ShapeType)reader.GetInt32(typeColumnIndex);
+        switch (type)
+        {
+          	case ShapeType.Circle:
+            	shape = circleParser(reader);
+            	break;
+            case ShapeType.Square:
+            	shape = squareParser(reader);
+            	break;
+          	case ShapeType.Triangle:
+            	shape = triangleParser(reader);
+            	break;
+          	default:
+            	throw new NotImplementedException();
+        }
+      
+      	shapes.Add(shape);
+    }
+}
+```
+
 Limitations and caveats
 ---------------------
 Dapper caches information about every query it runs, this allow it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a ConcurrentDictionary object. The objects it stores are never flushed. If you are generating SQL strings on the fly without using parameters it is possible you will hit memory issues. We may convert the dictionaries to an LRU Cache.
@@ -382,16 +425,16 @@ Dapper's simplicity means that many feature that ORMs ship with are stripped out
 
 Will Dapper work with my DB provider?
 ---------------------
-Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](http://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
+Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](https://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests/Tests.cs)
+Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests)
 
 Who is using this?
 ---------------------
 Dapper is in production use at:
 
-[Stack Overflow](http://stackoverflow.com/), [helpdesk](https://www.jitbit.com/web-helpdesk/)
+[Stack Overflow](https://stackoverflow.com/), [helpdesk](https://www.jitbit.com/web-helpdesk/)
 
 (if you would like to be listed here let me know)

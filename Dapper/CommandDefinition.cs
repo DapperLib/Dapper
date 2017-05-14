@@ -73,9 +73,28 @@ namespace Dapper
         /// </summary>
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
 
+#if ASYNC
         /// <summary>
         /// Initialize the command definition
         /// </summary>
+        /// <param name="commandText">The text for this command.</param>
+        /// <param name="parameters">The parameters for this command.</param>
+        /// <param name="transaction">The transaction for this command to participate in.</param>
+        /// <param name="commandTimeout">The timeout (in seconds) for this command.</param>
+        /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
+        /// <param name="flags">The behavior flags for this command.</param>
+        /// <param name="cancellationToken">The cancellation token for this command.</param>
+#else
+        /// <summary>
+        /// Initialize the command definition
+        /// </summary>
+        /// <param name="commandText">The text for this command.</param>
+        /// <param name="parameters">The parameters for this command.</param>
+        /// <param name="transaction">The transaction for this command to participate in.</param>
+        /// <param name="commandTimeout">The timeout (in seconds) for this command.</param>
+        /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
+        /// <param name="flags">The behavior flags for this command.</param>
+#endif
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
 #if ASYNC
@@ -135,8 +154,7 @@ namespace Dapper
         {
             if (commandType == null)
                 return null; // GIGO
-            Action<IDbCommand> action;
-            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out action))
+            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out Action<IDbCommand> action))
             {
                 return action;
             }
@@ -176,12 +194,11 @@ namespace Dapper
         private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
         {
             var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-            if (prop != null && prop.CanWrite && prop.PropertyType == expectedType && prop.GetIndexParameters().Length == 0)
+            if (prop?.CanWrite == true && prop.PropertyType == expectedType && prop.GetIndexParameters().Length == 0)
             {
                 return prop.GetSetMethod();
             }
             return null;
         }
     }
-
 }

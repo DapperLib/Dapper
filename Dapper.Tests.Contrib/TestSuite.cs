@@ -9,11 +9,7 @@ using Dapper.Contrib.Extensions;
 using System.Data.SqlServerCe;
 using System.Transactions;
 #endif
-#if XUNIT2
 using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
-#else
-using Xunit;
-#endif
 
 namespace Dapper.Tests.Contrib
 {
@@ -32,7 +28,7 @@ namespace Dapper.Tests.Contrib
         public int ObjectYId { get; set; }
         public string Name { get; set; }
     }
-    
+
     [Table("ObjectZ")]
     public class ObjectZ
     {
@@ -171,7 +167,7 @@ namespace Dapper.Tests.Contrib
                 o2.IsNull();
             }
         }
-        
+
         [Fact]
         public void GetAllWithExplicitKey()
         {
@@ -208,7 +204,7 @@ namespace Dapper.Tests.Contrib
                 //o2.IsNull();
             }
         }
-        
+
         [Fact]
         public void ShortIdentity()
         {
@@ -231,9 +227,8 @@ namespace Dapper.Tests.Contrib
                 connection.Insert(new Stuff { Name = "First item" });
                 connection.Insert(new Stuff { Name = "Second item", Created = DateTime.Now });
                 var stuff = connection.Query<Stuff>("select * from Stuff").ToList();
-                stuff.First().Created.IsNull();
+                stuff[0].Created.IsNull();
                 stuff.Last().Created.IsNotNull();
-
             }
         }
 
@@ -342,7 +337,7 @@ namespace Dapper.Tests.Contrib
                 users.Count.IsEqualTo(numberOfEntities);
                 foreach (var user in users)
                 {
-                    user.Name = user.Name + " updated";
+                    user.Name += " updated";
                 }
                 connection.Update(helper(users));
                 var name = connection.Query<User>("select * from Users").First().Name;
@@ -474,7 +469,7 @@ namespace Dapper.Tests.Contrib
 
                         var name = type.Name + "s";
                         if (type.IsInterface() && name.StartsWith("I"))
-                            name = name.Substring(1);
+                            return name.Substring(1);
                         return name;
                 }
             };
@@ -509,7 +504,6 @@ namespace Dapper.Tests.Contrib
                 for (var i = 0; i < numberOfEntities; i++)
                     iusers[i].Age.IsEqualTo(i);
             }
-
         }
 
         [Fact]
@@ -622,7 +616,6 @@ namespace Dapper.Tests.Contrib
                 var result = connection.Get<Result>(id);
                 result.Order.IsEqualTo(1);
             }
-
         }
 
         [Fact]
