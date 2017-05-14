@@ -19,21 +19,21 @@ namespace Dapper.Tests.Performance
             Context = new EntityFramework.EFContext(_connection);
         }
 
-        [Benchmark(Description = "Normal", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Normal")]
         public Post Normal()
         {
             Step();
             return Context.Posts.First(p => p.Id == i);
         }
 
-        [Benchmark(Description = "SqlQuery", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "SqlQuery")]
         public Post SqlQuery()
         {
             Step();
             return Context.Database.SqlQuery<Post>("select * from Posts where Id = {0}", i).First();
         }
 
-        [Benchmark(Description = "No Tracking", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "No Tracking")]
         public Post NoTracking()
         {
             Step();

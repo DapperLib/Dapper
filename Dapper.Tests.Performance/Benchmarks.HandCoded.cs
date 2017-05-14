@@ -47,7 +47,7 @@ namespace Dapper.Tests.Performance
 #endif
         }
 
-        [Benchmark(Description = "SqlCommand", OperationsPerInvoke = Iterations, Baseline = true)]
+        [Benchmark(Description = "SqlCommand", Baseline = true)]
         public Post SqlCommand()
         {
             Step();
@@ -75,7 +75,7 @@ namespace Dapper.Tests.Performance
             }
         }
 
-        [Benchmark(Description = "DataTable", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "DataTable")]
         public dynamic DataTableDynamic()
         {
             Step();

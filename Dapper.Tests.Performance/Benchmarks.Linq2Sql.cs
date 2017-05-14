@@ -19,21 +19,21 @@ namespace Dapper.Tests.Performance
             Linq2SqlContext = new DataClassesDataContext(_connection);
         }
 
-        [Benchmark(Description = "Normal", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Normal")]
         public Linq2Sql.Post Normal()
         {
             Step();
             return Linq2SqlContext.Posts.First(p => p.Id == i);
         }
 
-        [Benchmark(Description = "Compiled", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Compiled")]
         public Linq2Sql.Post Compiled()
         {
             Step();
             return compiledQuery(Linq2SqlContext, i);
         }
 
-        [Benchmark(Description = "ExecuteQuery", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "ExecuteQuery")]
         public Post ExecuteQuery()
         {
             Step();

@@ -21,14 +21,14 @@ namespace Dapper.Tests.Performance
             _dbFast.ForceDateTimesToUtc = false;
         }
 
-        [Benchmark(Description = "Fetch<Post>", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Fetch<Post>")]
         public Post Fetch()
         {
             Step();
             return _db.Fetch<Post>("SELECT * from Posts where Id=@0", i).First();
         }
 
-        [Benchmark(Description = "Fetch<Post> (Fast)", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Fetch<Post> (Fast)")]
         public Post FetchFast()
         {
             Step();
