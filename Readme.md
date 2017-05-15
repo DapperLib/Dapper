@@ -8,6 +8,16 @@ Release Notes
 [Located at stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
 
 
+Installation
+--------
+
+Nuget: https://www.nuget.org/packages/Dapper
+
+For Mysql Connection:
+https://www.nuget.org/packages/MySql.Data/
+
+*If you use .Net core api 1.1 download the latest 6.9.9(tested) or 7.0.7 version
+
 Features
 --------
 Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will extend your `IDbConnection` interface.
