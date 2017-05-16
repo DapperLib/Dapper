@@ -55,11 +55,24 @@ namespace Dapper
             /// </summary>
             /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
             /// <returns></returns>
-            public virtual int? Insert(dynamic data)
+            public virtual int? Insert(dynamic data, params string[] ignore)
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
-                paramNames.Remove("Id");
+				
+				if (ignore.Length > 0)
+				{
+					paramNames = new List<string>();
+					foreach (var prop in o.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public))
+					{
+						paramNames.Add(prop.Name);
+					}
+
+					foreach (var field in ignore)
+					{
+						paramNames.Remove(field);
+					}
+				}
 
                 string cols = string.Join(",", paramNames);
                 string colsParams = string.Join(",", paramNames.Select(p => "@" + p));
