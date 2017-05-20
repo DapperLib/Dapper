@@ -1021,6 +1021,18 @@ SELECT value FROM @table WHERE value IN @myIds";
         }
 
         [Fact]
+        public void Test_AddDynamicParametersRepeatedIfParamTypeIsDbStiringShouldWork()
+        {
+            var foo = new DbString() { Value = "123" };
+
+            var args = new DynamicParameters();
+            args.AddDynamicParams(new { Foo = foo });
+            args.AddDynamicParams(new { Foo = foo });
+            int i = connection.Query<int>("select @Foo", args).Single();
+            i.IsEqualTo(123);
+        }
+
+        [Fact]
         public void AllowIDictionaryParameters()
         {
             var parameters = new Dictionary<string, object>
