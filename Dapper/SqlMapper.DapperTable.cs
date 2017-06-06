@@ -5,6 +5,17 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
+        private static IEqualityComparer<string> DefaultFieldNameComparer = StringComparer.Ordinal;
+
+        /// <summary>
+        /// Ability to override default field comparer (EX: enable case insensitive comparison)
+        /// </summary>
+        /// <param name="comparer"></param>
+        public static void SetFieldNameComparer(IEqualityComparer<string> comparer)
+        {
+            DefaultFieldNameComparer = comparer;
+        }
+
         private sealed class DapperTable
         {
             private string[] fieldNames;
@@ -16,7 +27,7 @@ namespace Dapper
             {
                 this.fieldNames = fieldNames ?? throw new ArgumentNullException(nameof(fieldNames));
 
-                fieldNameLookup = new Dictionary<string, int>(fieldNames.Length, StringComparer.Ordinal);
+                fieldNameLookup = new Dictionary<string, int>(fieldNames.Length, DefaultFieldNameComparer);
                 // if there are dups, we want the **first** key to be the "winner" - so iterate backwards
                 for (int i = fieldNames.Length - 1; i >= 0; i--)
                 {
