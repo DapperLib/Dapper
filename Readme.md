@@ -120,109 +120,39 @@ The performance tests are broken in to 3 lists:
 
 ### Performance of SELECT mapping over 500 iterations - POCO serialization
 
-<table>
-  <tr>
-  	<th>Method</th>
-		<th>Duration</th>		
-		<th>Remarks</th>
-	</tr>
-	<tr>
-		<td>Hand coded (using a <code>SqlDataReader</code>)</td>
-		<td>47ms</td>
-		<td rowspan="9"><a href="http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed">Can be faster</a></td>
-	</tr>
-	<tr>
-		<td>Dapper <code>ExecuteMapperQuery<Post></code></td>
-		<td>49ms</td>
-	</tr>
-	<tr>
-		<td><a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (QueryById)</td>
-		<td>50ms</td>
-	</tr>
-	<tr>
-		<td><a href="http://www.toptensoftware.com/petapoco/">PetaPoco</a></td>
-		<td>52ms</td>
-	</tr>
-	<tr>
-		<td>BLToolkit</td>
-		<td>80ms</td>
-	</tr>
-	<tr>
-		<td>SubSonic CodingHorror</td>
-		<td>107ms</td>
-	</tr>
-	<tr>
-		<td>NHibernate SQL</td>
-		<td>104ms</td>
-	</tr>
-	<tr>
-		<td>Linq 2 SQL <code>ExecuteQuery</code></td>
-		<td>181ms</td>
-	</tr>
-	<tr>
-		<td>Entity framework <code>ExecuteStoreQuery</code></td>
-		<td>631ms</td>
-	</tr>
-</table>
+
+
+| Method                                              | Duration | Remarks |
+| --------------------------------------------------- | -------- | ------- |
+| Hand coded (using a `SqlDataReader`)                | 47ms     | 
+| Dapper `ExecuteMapperQuery`                         | 49ms     |
+| [ServiceStack.OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) (QueryById) | 50ms |
+| [PetaPoco](http://www.toptensoftware.com/petapoco/) | 52ms     | [Can be faster](http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed) |
+| BLToolkit                                           | 80ms     |
+| SubSonic CodingHorror                               | 107ms    |
+| NHibernate SQL                                      | 104ms    |
+| Linq 2 SQL `ExecuteQuery`                           | 181ms    |
+| Entity framework `ExecuteStoreQuery`                | 631ms    |
 
 ### Performance of SELECT mapping over 500 iterations - dynamic serialization
 
-<table>
-	<tr>
-		<th>Method</th>
-		<th>Duration</th>		
-		<th>Remarks</th>
-	</tr>
-	<tr>
-		<td>Dapper <code>ExecuteMapperQuery</code> (dynamic)</td>
-		<td>48ms</td>
-		<td rowspan="3">&nbsp;</td>
-	</tr>
-	<tr>
-		<td><a href="https://github.com/FransBouma/Massive">Massive</a></td>
-		<td>52ms</td>
-	</tr>
-	<tr>
-		<td><a href="https://github.com/markrendle/Simple.Data">Simple.Data</a></td>
-		<td>95ms</td>
-	</tr>
-</table>
+| Method                                                   | Duration | Remarks |
+| -------------------------------------------------------- | -------- | ------- |
+| Dapper `ExecuteMapperQuery` (dynamic)                    | 48ms     |
+| [Massive](https://github.com/FransBouma/Massive)         | 52ms     |
+| [Simple.Data](https://github.com/markrendle/Simple.Data) | 95ms     |
 
 
 ### Performance of SELECT mapping over 500 iterations - typical usage
 
-<table>
-	<tr>
-		<th>Method</th>
-		<th>Duration</th>		
-		<th>Remarks</th>
-	</tr>
-	<tr>
-		<td>Linq 2 SQL CompiledQuery</td>
-		<td>81ms</td>
-		<td>Not super typical involves complex code</td>
-	</tr>
-	<tr>
-		<td>NHibernate HQL</td>
-		<td>118ms</td>
-		<td>&nbsp;</td>
-	</tr>
-	<tr>
-		<td>Linq 2 SQL</td>
-		<td>559ms</td>
-		<td>&nbsp;</td>
-	</tr>
-	<tr>
-		<td>Entity framework</td>
-		<td>859ms</td>
-		<td>&nbsp;</td>
-	</tr>
-	<tr>
-		<td>SubSonic ActiveRecord.SingleOrDefault</td>
-		<td>3619ms</td>
-		<td>&nbsp;</td>
-	</tr>
-</table>
+| Method                                | Duration | Remarks |
+| ------------------------------------- | -------- | ------- |
+| Linq 2 SQL CompiledQuery              | 81ms     | Not super typical involves complex code |
+| NHibernate HQL                        | 118ms    |
+| Linq 2 SQL                            | 559ms    |
+| Entity framework                      | 859ms    |
+| SubSonic ActiveRecord.SingleOrDefault | 3619ms   |
+
 
 Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
 
