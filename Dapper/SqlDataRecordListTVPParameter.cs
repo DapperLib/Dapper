@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-
+using System.Reflection;
+#if !COREFX
 namespace Dapper
 {
     /// <summary>
@@ -20,6 +21,18 @@ namespace Dapper
         {
             this.data = data;
             this.typeName = typeName;
+        }
+
+        private static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
+
+        static SqlDataRecordListTVPParameter()
+        {
+            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty(nameof(System.Data.SqlClient.SqlParameter.TypeName), BindingFlags.Instance | BindingFlags.Public);
+            if (prop != null && prop.PropertyType == typeof(string) && prop.CanWrite)
+            {
+                setTypeName = (Action<System.Data.SqlClient.SqlParameter, string>)
+                    Delegate.CreateDelegate(typeof(Action<System.Data.SqlClient.SqlParameter, string>), prop.GetSetMethod());
+            }
         }
 
         void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
@@ -41,3 +54,4 @@ namespace Dapper
         }
     }
 }
+#endif
