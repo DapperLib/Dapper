@@ -219,22 +219,24 @@ namespace Dapper
             typeHandlers = new Dictionary<Type, ITypeHandler>();
 #if !COREFX
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
-#endif
             try
             {
                 AddSqlDataRecordsTypeHandler(clone);
             }
             catch { /* https://github.com/StackExchange/dapper-dot-net/issues/424 */ }
+#endif
             AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
         }
 
+#if !COREFX
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void AddSqlDataRecordsTypeHandler(bool clone)
         {
             AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), clone);
         }
+#endif
 
         /// <summary>
         /// Configure the specified type to be mapped to a given db-type.
@@ -3660,15 +3662,15 @@ namespace Dapper
         /// <param name="table">The <see cref="DataTable"/> that has a type name associated with it.</param>
         public static string GetTypeName(this DataTable table) =>
             table?.ExtendedProperties[DataTableTypeNameKey] as string;
-#endif
 
         /// <summary>
-        /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a TableValuedParameter.
+        /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a <see cref="TableValuedParameter"/>.
         /// </summary>
-        /// <param name="list">The list of records to convert to TVPs.</param>
+        /// <param name="list">Thhe list of records to convert to TVPs.</param>
         /// <param name="typeName">The sql parameter type name.</param>
         public static ICustomQueryParameter AsTableValuedParameter(this IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName = null) =>
             new SqlDataRecordListTVPParameter(list, typeName);
+#endif
 
         // one per thread
         [ThreadStatic]
