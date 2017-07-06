@@ -658,5 +658,84 @@ namespace Dapper.Tests
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
         }
+
+        [Fact]
+        public void Issue461_TypeHandlerWorksInConstructor()
+        {
+            SqlMapper.AddTypeHandler(new Issue461_BlargHandler());
+
+            connection.Execute(@"CREATE TABLE #Issue461 (
+                                      Id                int not null IDENTITY(1,1),
+                                      SomeValue         nvarchar(50),
+                                      SomeBlargValue    nvarchar(200),
+                                    )");
+            const string Expected = "abc123def";
+            var blarg = new Blarg(Expected);
+            connection.Execute(
+                "INSERT INTO #Issue461 (SomeValue, SomeBlargValue) VALUES (@value, @blarg)",
+                new { value = "what up?", blarg });
+
+            // test: without constructor
+            var parameterlessWorks = connection.QuerySingle<Issue461_ParameterlessTypeConstructor>("SELECT * FROM #Issue461");
+            parameterlessWorks.Id.IsEqualTo(1);
+            parameterlessWorks.SomeValue.IsEqualTo("what up?");
+            parameterlessWorks.SomeBlargValue.Value.IsEqualTo(Expected);
+
+            // test: via constructor
+            var parameterDoesNot = connection.QuerySingle<Issue461_ParameterisedTypeConstructor>("SELECT * FROM #Issue461");
+            parameterDoesNot.Id.IsEqualTo(1);
+            parameterDoesNot.SomeValue.IsEqualTo("what up?");
+            parameterDoesNot.SomeBlargValue.Value.IsEqualTo(Expected);
+        }
+
+        // I would usually expect this to be a struct; using a class
+        // so that we can't pass unexpectedly due to forcing an unsafe cast - want
+        // to see an InvalidCastException if it is wrong
+        private class Blarg
+        {
+            public Blarg(string value) { Value = value; }
+            public string Value { get; }
+            public override string ToString()
+            {
+                return Value;
+            }
+        }
+
+        private class Issue461_BlargHandler : SqlMapper.TypeHandler<Blarg>
+        {
+            public override void SetValue(IDbDataParameter parameter, Blarg value)
+            {
+                parameter.Value = ((object)value.Value) ?? DBNull.Value;
+            }
+
+            public override Blarg Parse(object value)
+            {
+                string s = (value == null || value is DBNull) ? null : Convert.ToString(value);
+                return new Blarg(s);
+            }
+        }
+
+        private class Issue461_ParameterlessTypeConstructor
+        {
+            public int Id { get; set; }
+
+            public string SomeValue { get; set; }
+            public Blarg SomeBlargValue { get; set; }
+        }
+
+        private class Issue461_ParameterisedTypeConstructor
+        {
+            public Issue461_ParameterisedTypeConstructor(int id, string someValue, Blarg someBlargValue)
+            {
+                Id = id;
+                SomeValue = someValue;
+                SomeBlargValue = someBlargValue;
+            }
+
+            public int Id { get; }
+
+            public string SomeValue { get; }
+            public Blarg SomeBlargValue { get; }
+        }
     }
 }
