@@ -6,36 +6,40 @@ namespace Dapper.Tests
 {
     public partial class DataReaderTests : TestBase
     {
-        [Fact]
-        public void GetSameReaderForSameShape()
+        [Collection("QueryCacheTests")]
+        public class DataReaderQueryCacheTests : TestBase
         {
-            var origReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
-            var origParser = origReader.GetRowParser(typeof(HazNameId));
+            [Fact]
+            public void GetSameReaderForSameShape()
+            {
+                var origReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
+                var origParser = origReader.GetRowParser(typeof(HazNameId));
 
-            var typedParser = origReader.GetRowParser<HazNameId>();
+                var typedParser = origReader.GetRowParser<HazNameId>();
 
-            ReferenceEquals(origParser, typedParser).IsEqualTo(true);
+                ReferenceEquals(origParser, typedParser).IsEqualTo(true);
 
-            var list = origReader.Parse<HazNameId>().ToList();
-            list.Count.IsEqualTo(1);
-            list[0].Name.IsEqualTo("abc");
-            list[0].Id.IsEqualTo(123);
-            origReader.Dispose();
+                var list = origReader.Parse<HazNameId>().ToList();
+                list.Count.IsEqualTo(1);
+                list[0].Name.IsEqualTo("abc");
+                list[0].Id.IsEqualTo(123);
+                origReader.Dispose();
 
-            var secondReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
-            var secondParser = secondReader.GetRowParser(typeof(HazNameId));
-            var thirdParser = secondReader.GetRowParser(typeof(HazNameId), 1);
+                var secondReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
+                var secondParser = secondReader.GetRowParser(typeof(HazNameId));
+                var thirdParser = secondReader.GetRowParser(typeof(HazNameId), 1);
 
-            list = secondReader.Parse<HazNameId>().ToList();
-            list.Count.IsEqualTo(1);
-            list[0].Name.IsEqualTo("abc");
-            list[0].Id.IsEqualTo(123);
-            secondReader.Dispose();
+                list = secondReader.Parse<HazNameId>().ToList();
+                list.Count.IsEqualTo(1);
+                list[0].Name.IsEqualTo("abc");
+                list[0].Id.IsEqualTo(123);
+                secondReader.Dispose();
 
-            // now: should be different readers, but same parser
-            ReferenceEquals(origReader, secondReader).IsEqualTo(false);
-            ReferenceEquals(origParser, secondParser).IsEqualTo(true);
-            ReferenceEquals(secondParser, thirdParser).IsEqualTo(false);
+                // now: should be different readers, but same parser
+                ReferenceEquals(origReader, secondReader).IsEqualTo(false);
+                ReferenceEquals(origParser, secondParser).IsEqualTo(true);
+                ReferenceEquals(secondParser, thirdParser).IsEqualTo(false);
+            }
         }
 
         [Fact]

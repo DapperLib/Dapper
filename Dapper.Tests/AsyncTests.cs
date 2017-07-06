@@ -353,28 +353,35 @@ namespace Dapper.Tests
             Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
         }
 
-        [Fact]
-        public void AssertNoCacheWorksForQueryMultiple()
+        [Collection("QueryCacheTests")]
+        public class AsyncQueryCacheTests : TestBase
         {
-            const int a = 123, b = 456;
-            var cmdDef = new CommandDefinition(@"select @a; select @b;", new
-            {
-                a, b
-            }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
+            private SqlConnection _marsConnection;
+            private SqlConnection MarsConnection => _marsConnection ?? (_marsConnection = GetOpenConnection(true));
 
-            int c, d;
-            SqlMapper.PurgeQueryCache();
-            int before = SqlMapper.GetCachedSQLCount();
-            using (var multi = MarsConnection.QueryMultiple(cmdDef))
+            [Fact]
+            public void AssertNoCacheWorksForQueryMultiple()
             {
-                c = multi.Read<int>().Single();
-                d = multi.Read<int>().Single();
+                const int a = 123, b = 456;
+                var cmdDef = new CommandDefinition(@"select @a; select @b;", new
+                {
+                    a, b
+                }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
+
+                int c, d;
+                SqlMapper.PurgeQueryCache();
+                int before = SqlMapper.GetCachedSQLCount();
+                using (var multi = MarsConnection.QueryMultiple(cmdDef))
+                {
+                    c = multi.Read<int>().Single();
+                    d = multi.Read<int>().Single();
+                }
+                int after = SqlMapper.GetCachedSQLCount();
+                before.IsEqualTo(0);
+                after.IsEqualTo(0);
+                c.IsEqualTo(123);
+                d.IsEqualTo(456);
             }
-            int after = SqlMapper.GetCachedSQLCount();
-            before.IsEqualTo(0);
-            after.IsEqualTo(0);
-            c.IsEqualTo(123);
-            d.IsEqualTo(456);
         }
 
         private class BasicType
