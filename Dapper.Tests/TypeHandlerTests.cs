@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection("TypeHandlerTests")]
     public class TypeHandlerTests : TestBase
     {
         [Fact]

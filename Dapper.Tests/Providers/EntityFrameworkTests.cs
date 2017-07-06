@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Dapper.Tests.Providers
 {
+    [Collection("TypeHandlerTests")]
     public class EntityFrameworkTests : TestBase
     {
         public EntityFrameworkTests()
