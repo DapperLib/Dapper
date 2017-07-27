@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
+using System.Linq.Expressions;
 
 namespace Dapper.Contrib.Extensions
 {
@@ -228,6 +229,75 @@ namespace Dapper.Contrib.Extensions
             {
                 var property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);
+                if (i < keyProperties.Count - 1)
+                    sb.AppendFormat(" and ");
+            }
+            var updated = await connection.ExecuteAsync(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction).ConfigureAwait(false);
+            return updated > 0;
+        }
+
+        /// <summary>
+        /// Updates entity in table "Ts" asynchronously using .NET 4.5 Task, checks if the entity is modified if the entity is tracked by the Get() extension, updates only selected columns.
+        /// </summary>
+        /// <typeparam name="T">Type to be updated</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToUpdate">Entity to be updated</param>
+        /// <param name="fieldsToUpdate">Select columns/fields to update</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
+        /// <example>
+        /// <code>
+        ///     Update&lt;Poco&gt;(conn, poco, t=> new { t.Prop1, t.Prop2 } );
+        /// </code>
+        /// </example>
+        public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, Expression<Func<T, object>> fieldsToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            if ((entityToUpdate is IProxy proxy) && !proxy.IsDirty)
+            {
+                return false;
+            }
+
+            var type = typeof(T);
+
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
+                type = type.GetGenericArguments()[0];
+            }
+
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
+            var name = GetTableName(type);
+
+            var sb = new StringBuilder();
+            sb.AppendFormat("update {0} set ", name);
+
+            var allProperties = GetFields<T>(fieldsToUpdate);
+            keyProperties.AddRange(explicitKeyProperties);
+            var computedProperties = ComputedPropertiesCache(type);
+            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+
+            var adapter = GetFormatter(connection);
+
+            for (var i = 0; i < nonIdProps.Count; i++)
+            {
+                var property = nonIdProps[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                if (i < nonIdProps.Count - 1)
+                    sb.AppendFormat(", ");
+            }
+            sb.Append(" where ");
+            for (var i = 0; i < keyProperties.Count; i++)
+            {
+                var property = keyProperties[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.AppendFormat(" and ");
             }

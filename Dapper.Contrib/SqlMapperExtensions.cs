@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Reflection.Emit;
 
 using Dapper;
+using System.Linq.Expressions;
 
 #if COREFX
 using DataException = System.InvalidOperationException;
@@ -158,6 +159,38 @@ namespace Dapper.Contrib.Extensions
                 throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
 
             return keys.Count > 0 ? keys[0] : explicitKeys[0];
+        }
+
+        private static List<PropertyInfo> GetFields<T>(Expression<Func<T, object>> expression)
+        {
+            MemberExpression body = expression.Body as MemberExpression;
+            var fields = new List<PropertyInfo>();
+            if (body == null)
+            {
+                if (expression.Body is NewExpression newExpression)
+                    foreach (var argument in newExpression.Arguments)
+                    {
+                        if (argument is MemberExpression memberExression)
+                        {
+                            if (!(memberExression.Member is PropertyInfo propInfo))
+                                throw new ArgumentException($"Expression '{memberExression.Member.Name}' refers to a field, not a property.");
+                            var type = typeof(T);
+#if COREFX
+                            if (type != propInfo.DeclaringType && !type.GetTypeInfo().IsSubclassOf(propInfo.DeclaringType))
+#else
+                            if (type != propInfo.DeclaringType && !type.IsSubclassOf(propInfo.DeclaringType))
+#endif
+                                throw new ArgumentException($"Expresion refers to a property that is not from type {type}.");
+                            fields.Add(memberExression.Member as PropertyInfo);
+                        }
+                        else
+                        {
+                            throw new ArgumentException($"Expression does not refer to existing property.");
+                        }
+                    }
+            }
+
+            return fields;
         }
 
         /// <summary>
@@ -403,6 +436,75 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("update {0} set ", name);
 
             var allProperties = TypePropertiesCache(type);
+            keyProperties.AddRange(explicitKeyProperties);
+            var computedProperties = ComputedPropertiesCache(type);
+            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+
+            var adapter = GetFormatter(connection);
+
+            for (var i = 0; i < nonIdProps.Count; i++)
+            {
+                var property = nonIdProps[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                if (i < nonIdProps.Count - 1)
+                    sb.AppendFormat(", ");
+            }
+            sb.Append(" where ");
+            for (var i = 0; i < keyProperties.Count; i++)
+            {
+                var property = keyProperties[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                if (i < keyProperties.Count - 1)
+                    sb.AppendFormat(" and ");
+            }
+            var updated = connection.Execute(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
+            return updated > 0;
+        }
+
+        /// <summary>
+        /// Updates entity in table "Ts", checks if the entity is modified if the entity is tracked by the Get() extension, updates only selected columns (fields).
+        /// </summary>
+        /// <typeparam name="T">Type to be updated</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToUpdate">Entity to be updated</param>
+        /// <param name="fieldsToUpdate">Select columns/fields to update</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
+        /// <example>
+        /// <code>
+        ///     Update&lt;Poco&gt;(conn, poco, t=> new { t.Prop1, t.Prop2 } );
+        /// </code>
+        /// </example>
+        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, Expression<Func<T, object>> fieldsToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            if ((entityToUpdate is IProxy proxy) && !proxy.IsDirty)
+            {
+                return false;
+            }
+
+            var type = typeof(T);
+
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
+                type = type.GetGenericArguments()[0];
+            }
+
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
+            var name = GetTableName(type);
+
+            var sb = new StringBuilder();
+            sb.AppendFormat("update {0} set ", name);
+
+            var allProperties = GetFields<T>(fieldsToUpdate);
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
