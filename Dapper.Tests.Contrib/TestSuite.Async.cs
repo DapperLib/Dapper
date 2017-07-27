@@ -122,6 +122,56 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public async Task InsertGetUpdateWithSelectedFieldsAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                connection.Get<User>(3).IsNull();
+
+                //insert with computed attribute that should be ignored
+                connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
+
+                var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+
+                //get a user with "isdirty" tracking
+                var user = connection.Get<IUser>(id);
+                user.Name.IsEqualTo("Adam");
+                (await connection.UpdateAsync(user).ConfigureAwait(false)).IsEqualTo(false);    //returns false if not updated, based on tracking
+                user.Name = "Bob";
+                (await connection.UpdateAsync(user, t => new { t.Name }).ConfigureAwait(false)).IsEqualTo(true);    //returns true if updated, based on tracking
+                user = connection.Get<IUser>(id);
+                user.Name.IsEqualTo("Bob");
+                user.Age = 12;
+                user.Name = "John";
+                (await connection.UpdateAsync(user, t => new { t.Age }).ConfigureAwait(false)).IsEqualTo(true);    //returns true if updated, based on tracking
+                user = connection.Get<IUser>(id);
+                user.Name.IsEqualTo("Bob"); // name must remain the same
+                user.Age.IsEqualTo(12); // name must remain the same
+
+                //get a user with no tracking
+                var notrackedUser = connection.Get<User>(id);
+                notrackedUser.Name.IsEqualTo("Bob");
+
+                (await connection.UpdateAsync(notrackedUser, t => new { t.Name }).ConfigureAwait(false)).IsEqualTo(true);   //returns true, even though user was not changed
+                notrackedUser.Name = "Cecil";
+                (await connection.UpdateAsync(notrackedUser, t => new { t.Name }).ConfigureAwait(false)).IsEqualTo(true);
+                connection.Get<User>(id).Name.IsEqualTo("Cecil");
+                notrackedUser.Name = "John2";
+                notrackedUser.Age = 16;
+                (await connection.UpdateAsync(notrackedUser, t => new { t.Age }).ConfigureAwait(false)).IsEqualTo(true);
+                connection.Get<User>(id).Age.IsEqualTo(16);
+                connection.Get<User>(id).Name.IsEqualTo("Cecil");
+
+                connection.Query<User>("select * from Users").Count().IsEqualTo(1);
+                connection.Delete(user).IsEqualTo(true);
+                connection.Query<User>("select * from Users").Count().IsEqualTo(0);
+
+                connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+            }
+        }
+
+        [Fact]
         public async Task InsertCheckKeyAsync()
         {
             using (var connection = GetOpenConnection())
@@ -255,6 +305,60 @@ namespace Dapper.Tests.Contrib
                     user.Name += " updated";
                 }
                 await connection.UpdateAsync(helper(users)).ConfigureAwait(false);
+                var name = connection.Query<User>("select * from Users").First().Name;
+                name.Contains("updated").IsTrue();
+            }
+        }
+
+        [Fact]
+        public async Task UpdateListWithSelectedFieldsAsync()
+        {
+            const int numberOfEntities = 10;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from Users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                foreach (var user in users)
+                {
+                    user.Name += " updated";
+                }
+                await connection.UpdateAsync(users, t => new { t[0].Name }).ConfigureAwait(false);
+                var name = connection.Query<User>("select * from Users").First().Name;
+                name.Contains("updated").IsTrue();
+            }
+        }
+
+        [Fact]
+        public async Task UpdateArrayWithSelectedFieldsAsync()
+        {
+            const int numberOfEntities = 10;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from Users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                foreach (var user in users)
+                {
+                    user.Name += " updated";
+                }
+                await connection.UpdateAsync(users.ToArray(), t => new { t[0].Name }).ConfigureAwait(false);
                 var name = connection.Query<User>("select * from Users").First().Name;
                 name.Contains("updated").IsTrue();
             }

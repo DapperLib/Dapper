@@ -175,10 +175,17 @@ namespace Dapper.Contrib.Extensions
                             if (!(memberExression.Member is PropertyInfo propInfo))
                                 throw new ArgumentException($"Expression '{memberExression.Member.Name}' refers to a field, not a property.");
                             var type = typeof(T);
+                            
 #if COREFX
-                            if (type != propInfo.DeclaringType && !type.GetTypeInfo().IsSubclassOf(propInfo.DeclaringType))
+                            if (type != propInfo.DeclaringType &&
+                                !type.GetTypeInfo().IsSubclassOf(propInfo.DeclaringType) &&
+                                !type.GenericTypeArguments.Contains(propInfo.DeclaringType) && //if generic list
+                                (type.IsArray && type.GetElementType() != propInfo.DeclaringType)) //if array
 #else
-                            if (type != propInfo.DeclaringType && !type.IsSubclassOf(propInfo.DeclaringType))
+                            if (type != propInfo.DeclaringType &&
+                                !type.IsSubclassOf(propInfo.DeclaringType) &&
+                                !type.GetGenericArguments().Contains(propInfo.DeclaringType) && //if generic list
+                                (type.IsArray && type.GetElementType() != propInfo.DeclaringType)) //if array
 #endif
                                 throw new ArgumentException($"Expresion refers to a property that is not from type {type}.");
                             fields.Add(memberExression.Member as PropertyInfo);
@@ -473,7 +480,7 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         /// <example>
         /// <code>
-        ///     Update&lt;Poco&gt;(conn, poco, t=> new { t.Prop1, t.Prop2 } );
+        ///     Update&lt;Poco&gt;(poco, t=> new { t.Prop1, t.Prop2 } );
         /// </code>
         /// </example>
         public static bool Update<T>(this IDbConnection connection, T entityToUpdate, Expression<Func<T, object>> fieldsToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class

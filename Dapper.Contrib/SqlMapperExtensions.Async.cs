@@ -248,7 +248,7 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         /// <example>
         /// <code>
-        ///     Update&lt;Poco&gt;(conn, poco, t=> new { t.Prop1, t.Prop2 } );
+        ///     Update&lt;Poco&gt;(poco, t=> new { t.Prop1, t.Prop2 } );
         /// </code>
         /// </example>
         public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, Expression<Func<T, object>> fieldsToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class

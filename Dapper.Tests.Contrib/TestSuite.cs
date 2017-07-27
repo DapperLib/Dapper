@@ -168,6 +168,44 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        public void InsertGetUpdateDeleteWithExplicitKeyWithSelectedField()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var guid = Guid.NewGuid().ToString();
+                var o1 = new ObjectX { ObjectXId = guid, Name = "Foo" };
+                var originalxCount = connection.Query<int>("Select Count(*) From ObjectX").First();
+                connection.Insert(o1);
+                var list1 = connection.Query<ObjectX>("select * from ObjectX").ToList();
+                list1.Count.IsEqualTo(originalxCount + 1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.ObjectXId.IsEqualTo(guid);
+                o1.Name = "Bar";
+                connection.Update(o1, t=>new { t.Name });
+                o1 = connection.Get<ObjectX>(guid);
+                o1.Name.IsEqualTo("Bar");
+                connection.Delete(o1);
+                o1 = connection.Get<ObjectX>(guid);
+                o1.IsNull();
+
+                const int id = 42;
+                var o2 = new ObjectY { ObjectYId = id, Name = "Foo" };
+                var originalyCount = connection.Query<int>("Select Count(*) From ObjectY").First();
+                connection.Insert(o2);
+                var list2 = connection.Query<ObjectY>("select * from ObjectY").ToList();
+                list2.Count.IsEqualTo(originalyCount + 1);
+                o2 = connection.Get<ObjectY>(id);
+                o2.ObjectYId.IsEqualTo(id);
+                o2.Name = "Bar";
+                connection.Update(o2, t => new { t.Name });
+                o2 = connection.Get<ObjectY>(id);
+                o2.Name.IsEqualTo("Bar");
+                connection.Delete(o2);
+                o2 = connection.Get<ObjectY>(id);
+                o2.IsNull();
+            }
+        }
+
         [Fact]
         public void GetAllWithExplicitKey()
         {
@@ -346,6 +384,60 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void UpdateListWithSelectedFields()
+        {
+            const int numberOfEntities = 10;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from Users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                foreach (var user in users)
+                {
+                    user.Name += " updated";
+                }
+                connection.Update(users, t=>new { t[0].Name });
+                var name = connection.Query<User>("select * from Users").First().Name;
+                name.Contains("updated").IsTrue();
+            }
+        }
+        
+        [Fact]
+        public void UpdateArrayWithSelectedFields()
+        {
+            const int numberOfEntities = 10;
+
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+
+                var total = connection.Insert(users);
+                total.IsEqualTo(numberOfEntities);
+                users = connection.Query<User>("select * from Users").ToList();
+                users.Count.IsEqualTo(numberOfEntities);
+                foreach (var user in users)
+                {
+                    user.Name += " updated";
+                }
+                connection.Update(users.ToArray(), t => new { t[0].Name });
+                var name = connection.Query<User>("select * from Users").First().Name;
+                name.Contains("updated").IsTrue();
+            }
+        }
+
+        [Fact]
         public void DeleteArray()
         {
             DeleteHelper(src => src.ToArray());
@@ -410,6 +502,55 @@ namespace Dapper.Tests.Contrib
                 connection.Update(notrackedUser).IsEqualTo(true);   //returns true, even though user was not changed
                 notrackedUser.Name = "Cecil";
                 connection.Update(notrackedUser).IsEqualTo(true);
+                connection.Get<User>(id).Name.IsEqualTo("Cecil");
+
+                connection.Query<User>("select * from Users").Count().IsEqualTo(1);
+                connection.Delete(user).IsEqualTo(true);
+                connection.Query<User>("select * from Users").Count().IsEqualTo(0);
+
+                connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+            }
+        }
+
+        [Fact]
+        public void InsertGetUpdateWithSelectedFields()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                connection.Get<User>(3).IsNull();
+
+                //insert with computed attribute that should be ignored
+                connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
+
+                var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+
+                //get a user with "isdirty" tracking
+                var user = connection.Get<IUser>(id);
+                user.Name.IsEqualTo("Adam");
+                connection.Update(user).IsEqualTo(false);    //returns false if not updated, based on tracking
+                user.Name = "Bob";
+                connection.Update(user, t => new { t.Name }).IsEqualTo(true);    //returns true if updated, based on tracking
+                user = connection.Get<IUser>(id);
+                user.Name.IsEqualTo("Bob");
+                user.Age = 12;
+                user.Name = "John";
+                connection.Update(user, t => new { t.Age }).IsEqualTo(true);    //returns true if updated, based on tracking
+                user = connection.Get<IUser>(id);
+                user.Name.IsEqualTo("Bob"); // name must remain the same
+                user.Age.IsEqualTo(12); // name must remain the same
+
+                //get a user with no tracking
+                var notrackedUser = connection.Get<User>(id);
+                notrackedUser.Name.IsEqualTo("Bob");
+                connection.Update(notrackedUser, t=> new { t.Name }).IsEqualTo(true);   //returns true, even though user was not changed
+                notrackedUser.Name = "Cecil";
+                connection.Update(notrackedUser, t=> new { t.Name }).IsEqualTo(true);
+                connection.Get<User>(id).Name.IsEqualTo("Cecil");
+                notrackedUser.Name = "John2";
+                notrackedUser.Age = 16;
+                connection.Update(notrackedUser, t => new { t.Age }).IsEqualTo(true);
+                connection.Get<User>(id).Age.IsEqualTo(16);
                 connection.Get<User>(id).Name.IsEqualTo("Cecil");
 
                 connection.Query<User>("select * from Users").Count().IsEqualTo(1);

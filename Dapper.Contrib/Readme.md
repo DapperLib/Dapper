@@ -88,6 +88,12 @@ Update one specific entity
 connection.Update(new Car() { Id = 1, Name = "Saab" });
 ```
 
+or with column selection
+
+```csharp
+connection.Update(new Car() { Id = 1, Name = "Saab" }, t=> new { t=> t.Name, t.Age });
+```
+
 or update a list of entities.
 
 ```csharp

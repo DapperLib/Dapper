@@ -39,6 +39,7 @@ namespace Dapper.Tests
         public SqlConnection GetClosedConnection()
         {
             var conn = new SqlConnection(ConnectionString);
+            
             if (conn.State != ConnectionState.Closed) throw new InvalidOperationException("should be closed!");
             return conn;
         }
