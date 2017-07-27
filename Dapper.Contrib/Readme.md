@@ -14,7 +14,9 @@ IEnumerable<T> GetAll<T>();
 int Insert<T>(T obj);
 int Insert<T>(Enumerable<T> list);
 bool Update<T>(T obj);
+bool Update<T>(T obj, Expression<Func<T, object>> columnsToUpdate);
 bool Update<T>(Enumerable<T> list);
+bool Update<T>(Enumerable<T> list, Expression<Func<Enumerable<T>, object>> columnsToUpdate);
 bool Delete<T>(T obj);
 bool Delete<T>(Enumerable<T> list);
 bool DeleteAll<T>();
@@ -88,19 +90,19 @@ Update one specific entity
 connection.Update(new Car() { Id = 1, Name = "Saab" });
 ```
 
-or with column selection
+or with selected columns to update
 
 ```csharp
 connection.Update(new Car() { Id = 1, Name = "Saab" }, t=> new { t=> t.Name, t.Age });
 ```
 
-or update a list of entities.
+or update a list of entities
 
 ```csharp
 connection.Update(cars);
 ```
 
-with column selection
+with selected columns to update.
 
 ```csharp
 connection.Update(cars, t=> new { t[0].Name });
