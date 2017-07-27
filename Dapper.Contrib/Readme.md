@@ -100,6 +100,12 @@ or update a list of entities.
 connection.Update(cars);
 ```
 
+with column selection
+
+```csharp
+connection.Update(cars, t=> new { t[0].Name });
+```
+
 `Delete` methods
 -------
 Delete an entity by the specified `[Key]` property
