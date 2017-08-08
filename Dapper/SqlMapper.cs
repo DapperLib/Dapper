@@ -30,6 +30,10 @@ namespace Dapper
     /// </summary>
     public static partial class SqlMapper
     {
+        private class PropertyInfoByNameComparer : IComparer<PropertyInfo>
+        {
+            public int Compare(PropertyInfo x, PropertyInfo y) => string.CompareOrdinal(x.Name, y.Name);
+        }
         private static int GetColumnHash(IDataReader reader, int startBound = 0, int length = -1)
         {
             unchecked
@@ -2221,7 +2225,13 @@ namespace Dapper
 
         private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
         {
-            return parameters.Where(p => Regex.IsMatch(sql, @"[?@:]" + p.Name + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant));
+            var list = new List<PropertyInfo>(16);
+            foreach (var p in parameters)
+            {
+                if (Regex.IsMatch(sql, @"[?@:]" + p.Name + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
+                    list.Add(p);
+            }
+            return list;
         }
 
         // look for ? / @ / : *by itself*
@@ -2360,7 +2370,7 @@ namespace Dapper
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused) =>
             CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
 
-        private static bool IsValueTuple(Type type) => type?.IsValueType() == true && type.FullName.StartsWith("System.ValueTuple`");
+        private static bool IsValueTuple(Type type) => type?.IsValueType() == true && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal);
 
         private static List<IMemberMap> GetValueTupleMembers(Type type, string[] names)
         {
@@ -2419,19 +2429,27 @@ namespace Dapper
             il.Emit(OpCodes.Ldarg_0); // stack is now [command]
             il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetProperty(nameof(IDbCommand.Parameters)).GetGetMethod(), null); // stack is now [parameters]
 
-            var propsArr = type.GetProperties().Where(p => p.GetIndexParameters().Length == 0).ToArray();
+            var allTypeProps = type.GetProperties();
+            var propsList = new List<PropertyInfo>(allTypeProps.Length);
+			for(int i = 0; i < allTypeProps.Length; ++i)
+            {
+                var p = allTypeProps[i];
+                if (p.GetIndexParameters().Length == 0)
+                    propsList.Add(p);
+            }
+
             var ctors = type.GetConstructors();
             ParameterInfo[] ctorParams;
             IEnumerable<PropertyInfo> props = null;
             // try to detect tuple patterns, e.g. anon-types, and use that to choose the order
             // otherwise: alphabetical
-            if (ctors.Length == 1 && propsArr.Length == (ctorParams = ctors[0].GetParameters()).Length)
+            if (ctors.Length == 1 && propsList.Count == (ctorParams = ctors[0].GetParameters()).Length)
             {
                 // check if reflection was kind enough to put everything in the right order for us
                 bool ok = true;
-                for (int i = 0; i < propsArr.Length; i++)
+                for (int i = 0; i < propsList.Count; i++)
                 {
-                    if (!string.Equals(propsArr[i].Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(propsList[i].Name, ctorParams[i].Name, StringComparison.OrdinalIgnoreCase))
                     {
                         ok = false;
                         break;
@@ -2440,7 +2458,7 @@ namespace Dapper
                 if(ok)
                 {
                     // pre-sorted; the reflection gods have smiled upon us
-                    props = propsArr;
+                    props = propsList;
                 }
                 else { // might still all be accounted for; check the hard way
                     var positionByName = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
@@ -2448,13 +2466,13 @@ namespace Dapper
                     {
                         positionByName[param.Name] = param.Position;
                     }
-                    if (positionByName.Count == propsArr.Length)
+                    if (positionByName.Count == propsList.Count)
                     {
-                        int[] positions = new int[propsArr.Length];
+                        int[] positions = new int[propsList.Count];
                         ok = true;
-                        for (int i = 0; i < propsArr.Length; i++)
+                        for (int i = 0; i < propsList.Count; i++)
                         {
-                            if (!positionByName.TryGetValue(propsArr[i].Name, out int pos))
+                            if (!positionByName.TryGetValue(propsList[i].Name, out int pos))
                             {
                                 ok = false;
                                 break;
@@ -2463,13 +2481,17 @@ namespace Dapper
                         }
                         if (ok)
                         {
-                            Array.Sort(positions, propsArr);
-                            props = propsArr;
+                            props = propsList.ToArray();
+                            Array.Sort(positions, (PropertyInfo[]) props);
                         }
                     }
                 }
             }
-            props = props ?? propsArr.OrderBy(x => x.Name);
+            if(props == null)
+            {
+                propsList.Sort(new PropertyInfoByNameComparer());
+                props = propsList;
+            }
             if (filterParams)
             {
                 props = FilterParameters(props, identity.sql);
@@ -2681,7 +2703,7 @@ namespace Dapper
             // stack is currently [parameters]
             il.Emit(OpCodes.Pop); // stack is now empty
 
-            if(literals.Count != 0 && propsArr != null)
+            if(literals.Count != 0 && propsList != null)
             {
                 il.Emit(OpCodes.Ldarg_0); // command
                 il.Emit(OpCodes.Ldarg_0); // command, command
@@ -2694,12 +2716,12 @@ namespace Dapper
                     // find the best member, preferring case-sensitive
                     PropertyInfo exact = null, fallback = null;
                     string huntName = literal.Member;
-                    for(int i = 0; i < propsArr.Length;i++)
+                    for(int i = 0; i < propsList.Count; i++)
                     {
-                        string thisName = propsArr[i].Name;
+                        string thisName = propsList[i].Name;
                         if(string.Equals(thisName, huntName, StringComparison.OrdinalIgnoreCase))
                         {
-                            fallback = propsArr[i];
+                            fallback = propsList[i];
                             if(string.Equals(thisName, huntName, StringComparison.Ordinal))
                             {
                                 exact = fallback;
