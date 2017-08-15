@@ -24,41 +24,45 @@ namespace Dapper.Tests
             }
         }
 
-        [FactSqlite]
-        public void Issue466_SqliteHatesOptimizations()
+        [Collection("TypeHandlerTests")]
+        public class SqliteTypeHandlerTests : TestBase
         {
-            using (var connection = GetSQLiteConnection())
+            [FactSqlite]
+            public void Issue466_SqliteHatesOptimizations()
             {
-                SqlMapper.ResetTypeHandlers();
-                var row = connection.Query<HazNameId>("select 42 as Id").First();
-                row.Id.IsEqualTo(42);
-                row = connection.Query<HazNameId>("select 42 as Id").First();
-                row.Id.IsEqualTo(42);
+                using (var connection = GetSQLiteConnection())
+                {
+                    SqlMapper.ResetTypeHandlers();
+                    var row = connection.Query<HazNameId>("select 42 as Id").First();
+                    row.Id.IsEqualTo(42);
+                    row = connection.Query<HazNameId>("select 42 as Id").First();
+                    row.Id.IsEqualTo(42);
 
-                SqlMapper.ResetTypeHandlers();
-                row = connection.QueryFirst<HazNameId>("select 42 as Id");
-                row.Id.IsEqualTo(42);
-                row = connection.QueryFirst<HazNameId>("select 42 as Id");
-                row.Id.IsEqualTo(42);
+                    SqlMapper.ResetTypeHandlers();
+                    row = connection.QueryFirst<HazNameId>("select 42 as Id");
+                    row.Id.IsEqualTo(42);
+                    row = connection.QueryFirst<HazNameId>("select 42 as Id");
+                    row.Id.IsEqualTo(42);
+                }
             }
-        }
 
-        [FactSqlite]
-        public async Task Issue466_SqliteHatesOptimizations_Async()
-        {
-            using (var connection = GetSQLiteConnection())
+            [FactSqlite]
+            public async Task Issue466_SqliteHatesOptimizations_Async()
             {
-                SqlMapper.ResetTypeHandlers();
-                var row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
-                row.Id.IsEqualTo(42);
-                row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
-                row.Id.IsEqualTo(42);
+                using (var connection = GetSQLiteConnection())
+                {
+                    SqlMapper.ResetTypeHandlers();
+                    var row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
+                    row.Id.IsEqualTo(42);
+                    row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
+                    row.Id.IsEqualTo(42);
 
-                SqlMapper.ResetTypeHandlers();
-                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
-                row.Id.IsEqualTo(42);
-                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
-                row.Id.IsEqualTo(42);
+                    SqlMapper.ResetTypeHandlers();
+                    row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
+                    row.Id.IsEqualTo(42);
+                    row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
+                    row.Id.IsEqualTo(42);
+                }
             }
         }
 

@@ -8,46 +8,96 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection("TypeHandlerTests")]
     public class TypeHandlerTests : TestBase
     {
-        [Fact]
-        public void TestChangingDefaultStringTypeMappingToAnsiString()
+        [Collection("QueryCacheTests")]
+        public class TypeHandlerQueryCacheTests : TestBase
         {
-            const string sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
-            var param = new { testParam = "TestString" };
+            [Fact]
+            public void TestChangingDefaultStringTypeMappingToAnsiString()
+            {
+                const string sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
+                var param = new { testParam = "TestString" };
 
-            var result01 = connection.Query<string>(sql, param).FirstOrDefault();
-            result01.IsEqualTo("nvarchar");
+                var result01 = connection.Query<string>(sql, param).FirstOrDefault();
+                result01.IsEqualTo("nvarchar");
 
-            SqlMapper.PurgeQueryCache();
+                SqlMapper.PurgeQueryCache();
 
-            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
-            var result02 = connection.Query<string>(sql, param).FirstOrDefault();
-            result02.IsEqualTo("varchar");
+                SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+                var result02 = connection.Query<string>(sql, param).FirstOrDefault();
+                result02.IsEqualTo("varchar");
 
-            SqlMapper.PurgeQueryCache();
-            SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+                SqlMapper.PurgeQueryCache();
+                SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+            }
+
+            [Fact]
+            public void TestChangingDefaultStringTypeMappingToAnsiStringFirstOrDefault()
+            {
+                const string sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
+                var param = new { testParam = "TestString" };
+
+                var result01 = connection.QueryFirstOrDefault<string>(sql, param);
+                result01.IsEqualTo("nvarchar");
+
+                SqlMapper.PurgeQueryCache();
+
+                SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+                var result02 = connection.QueryFirstOrDefault<string>(sql, param);
+                result02.IsEqualTo("varchar");
+
+                SqlMapper.PurgeQueryCache();
+                SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+            }
+
+            [Fact]
+            public void TestCustomTypeMap()
+            {
+                // default mapping
+                var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+                item.A.IsEqualTo("AVal");
+                item.B.IsEqualTo("BVal");
+
+                // custom mapping
+                var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
+                    (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName));
+                SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
+
+                item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+                item.A.IsEqualTo("BVal");
+                item.B.IsEqualTo("AVal");
+
+                // reset to default
+                SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
+                item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+                item.A.IsEqualTo("AVal");
+                item.B.IsEqualTo("BVal");
+            }
+
+            private static string GetDescriptionFromAttribute(MemberInfo member)
+            {
+                if (member == null) return null;
+#if NETCOREAPP1_0
+            var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
+            return (string)data?.ConstructorArguments.Single().Value;
+#else
+                var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
+                return attrib?.Description;
+#endif
+            }
+
+            public class TypeWithMapping
+            {
+                [Description("B")]
+                public string A { get; set; }
+
+                [Description("A")]
+                public string B { get; set; }
+            }
         }
-
-        [Fact]
-        public void TestChangingDefaultStringTypeMappingToAnsiStringFirstOrDefault()
-        {
-            const string sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
-            var param = new { testParam = "TestString" };
-
-            var result01 = connection.QueryFirstOrDefault<string>(sql, param);
-            result01.IsEqualTo("nvarchar");
-
-            SqlMapper.PurgeQueryCache();
-
-            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
-            var result02 = connection.QueryFirstOrDefault<string>(sql, param);
-            result02.IsEqualTo("varchar");
-
-            SqlMapper.PurgeQueryCache();
-            SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
-        }
-
+        
         [Fact]
         public void Issue136_ValueTypeHandlers()
         {
@@ -518,51 +568,6 @@ namespace Dapper.Tests
             public int Z { get; set; }
         }
 
-        [Fact]
-        public void TestCustomTypeMap()
-        {
-            // default mapping
-            var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("AVal");
-            item.B.IsEqualTo("BVal");
-
-            // custom mapping
-            var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
-                (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName));
-            SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
-
-            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("BVal");
-            item.B.IsEqualTo("AVal");
-
-            // reset to default
-            SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
-            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("AVal");
-            item.B.IsEqualTo("BVal");
-        }
-
-        private static string GetDescriptionFromAttribute(MemberInfo member)
-        {
-            if (member == null) return null;
-#if NETCOREAPP1_0
-            var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
-            return (string)data?.ConstructorArguments.Single().Value;
-#else
-            var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
-            return attrib?.Description;
-#endif
-        }
-
-        public class TypeWithMapping
-        {
-            [Description("B")]
-            public string A { get; set; }
-
-            [Description("A")]
-            public string B { get; set; }
-        }
-
         public class WrongTypes
         {
             public int A { get; set; }
@@ -657,6 +662,85 @@ namespace Dapper.Tests
             var returned = connection.Query<DateTime>(sql, new { date }).Single();
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
+        }
+
+        [Fact]
+        public void Issue461_TypeHandlerWorksInConstructor()
+        {
+            SqlMapper.AddTypeHandler(new Issue461_BlargHandler());
+
+            connection.Execute(@"CREATE TABLE #Issue461 (
+                                      Id                int not null IDENTITY(1,1),
+                                      SomeValue         nvarchar(50),
+                                      SomeBlargValue    nvarchar(200),
+                                    )");
+            const string Expected = "abc123def";
+            var blarg = new Blarg(Expected);
+            connection.Execute(
+                "INSERT INTO #Issue461 (SomeValue, SomeBlargValue) VALUES (@value, @blarg)",
+                new { value = "what up?", blarg });
+
+            // test: without constructor
+            var parameterlessWorks = connection.QuerySingle<Issue461_ParameterlessTypeConstructor>("SELECT * FROM #Issue461");
+            parameterlessWorks.Id.IsEqualTo(1);
+            parameterlessWorks.SomeValue.IsEqualTo("what up?");
+            parameterlessWorks.SomeBlargValue.Value.IsEqualTo(Expected);
+
+            // test: via constructor
+            var parameterDoesNot = connection.QuerySingle<Issue461_ParameterisedTypeConstructor>("SELECT * FROM #Issue461");
+            parameterDoesNot.Id.IsEqualTo(1);
+            parameterDoesNot.SomeValue.IsEqualTo("what up?");
+            parameterDoesNot.SomeBlargValue.Value.IsEqualTo(Expected);
+        }
+
+        // I would usually expect this to be a struct; using a class
+        // so that we can't pass unexpectedly due to forcing an unsafe cast - want
+        // to see an InvalidCastException if it is wrong
+        private class Blarg
+        {
+            public Blarg(string value) { Value = value; }
+            public string Value { get; }
+            public override string ToString()
+            {
+                return Value;
+            }
+        }
+
+        private class Issue461_BlargHandler : SqlMapper.TypeHandler<Blarg>
+        {
+            public override void SetValue(IDbDataParameter parameter, Blarg value)
+            {
+                parameter.Value = ((object)value.Value) ?? DBNull.Value;
+            }
+
+            public override Blarg Parse(object value)
+            {
+                string s = (value == null || value is DBNull) ? null : Convert.ToString(value);
+                return new Blarg(s);
+            }
+        }
+
+        private class Issue461_ParameterlessTypeConstructor
+        {
+            public int Id { get; set; }
+
+            public string SomeValue { get; set; }
+            public Blarg SomeBlargValue { get; set; }
+        }
+
+        private class Issue461_ParameterisedTypeConstructor
+        {
+            public Issue461_ParameterisedTypeConstructor(int id, string someValue, Blarg someBlargValue)
+            {
+                Id = id;
+                SomeValue = someValue;
+                SomeBlargValue = someBlargValue;
+            }
+
+            public int Id { get; }
+
+            public string SomeValue { get; }
+            public Blarg SomeBlargValue { get; }
         }
     }
 }
