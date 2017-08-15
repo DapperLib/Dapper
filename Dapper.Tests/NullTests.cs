@@ -2,6 +2,7 @@
 using System.Linq;
 namespace Dapper.Tests
 {
+    [Collection("QueryCacheTests")]
     public class NullTests : TestBase
     {
         [Fact]

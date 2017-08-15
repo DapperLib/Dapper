@@ -5,10 +5,8 @@ using System.Linq;
 
 using Dapper.Contrib.Extensions;
 
-#if !NETCOREAPP1_0
-using System.Transactions;
-#endif
 #if !NETCOREAPP1_0 && !NETCOREAPP2_0
+using System.Transactions;
 using System.Data.SqlServerCe;
 #endif
 using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
@@ -527,7 +525,7 @@ namespace Dapper.Tests.Contrib
             }
         }
 
-#if !NETCOREAPP1_0
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
         [Fact]
         public void TransactionScope()
         {
