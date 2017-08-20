@@ -1065,7 +1065,7 @@ namespace Dapper
         /// </code>
         /// </example>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            ExecuteReaderImplAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered));
+            ExecuteReaderImplAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered), CommandBehavior.Default);
 
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>.
@@ -1078,9 +1078,23 @@ namespace Dapper
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command) =>
-            ExecuteReaderImplAsync(cnn, command);
+            ExecuteReaderImplAsync(cnn, command, CommandBehavior.Default);
 
-        private static async Task<IDataReader> ExecuteReaderImplAsync(IDbConnection cnn, CommandDefinition command)
+        /// <summary>
+        /// Execute parameterized SQL and return an <see cref="IDataReader"/>.
+        /// </summary>
+        /// <param name="cnn">The connection to execute on.</param>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="commandBehavior">The <see cref="CommandBehavior"/> flags for this reader.</param>
+        /// <returns>An <see cref="IDataReader"/> that can be used to iterate over the results of the SQL query.</returns>
+        /// <remarks>
+        /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
+        /// or <see cref="T:DataSet"/>.
+        /// </remarks>
+        public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior) =>
+            ExecuteReaderImplAsync(cnn, command, commandBehavior);
+
+        private static async Task<IDataReader> ExecuteReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
 
@@ -1090,7 +1104,7 @@ namespace Dapper
             {
                 cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.Default, command.CancellationToken).ConfigureAwait(false);
+                var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 return reader;
             }
