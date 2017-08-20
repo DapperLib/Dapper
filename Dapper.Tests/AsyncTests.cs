@@ -30,6 +30,13 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public async Task TestBasicStringUsageQueryFirstAsyncDynamic()
+        {
+            var str = await connection.QueryFirstAsync("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
+            str.IsEqualTo("abc");
+        }
+
+        [Fact]
         public async Task TestBasicStringUsageQueryFirstOrDefaultAsync()
         {
             var str = await connection.QueryFirstOrDefaultAsync<string>(new CommandDefinition("select null as [Value] union all select @txt", new {txt = "def"})).ConfigureAwait(false);
@@ -37,16 +44,37 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        public async Task TestBasicStringUsageQuerySingleAsync()
+        public async Task TestBasicStringUsageQueryFirstOrDefaultAsyncDynamic()
+        {
+            var str = await connection.QueryFirstOrDefaultAsync("select null as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
+            str.IsNull();
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageQuerySingleAsyncDynamic()
         {
             var str = await connection.QuerySingleAsync<string>(new CommandDefinition("select 'abc' as [Value]")).ConfigureAwait(false);
             str.IsEqualTo("abc");
         }
 
         [Fact]
+        public async Task TestBasicStringUsageQuerySingleAsync()
+        {
+            var str = await connection.QuerySingleAsync("select 'abc' as [Value]").ConfigureAwait(false);
+            str.IsEqualTo("abc");
+        }
+
+        [Fact]
         public async Task TestBasicStringUsageQuerySingleOrDefaultAsync()
         {
-            var str = await connection.QuerySingleAsync<string>(new CommandDefinition("select null as [Value]")).ConfigureAwait(false);
+            var str = await connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition("select null as [Value]")).ConfigureAwait(false);
+            str.IsNull();
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageQuerySingleOrDefaultAsyncDynamic()
+        {
+            var str = await connection.QuerySingleOrDefaultAsync("select null as [Value]").ConfigureAwait(false);
             str.IsNull();
         }
 
