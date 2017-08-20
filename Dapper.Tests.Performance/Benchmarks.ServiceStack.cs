@@ -16,7 +16,7 @@ namespace Dapper.Tests.Performance
             _db = dbFactory.Open();
         }
 
-        [Benchmark(Description = "SingleById<T>", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "SingleById")]
         public Post Query()
         {
             Step();

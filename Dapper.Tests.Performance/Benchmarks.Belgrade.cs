@@ -15,7 +15,7 @@ namespace Dapper.Tests.Performance
             _mapper = new QueryMapper(ConnectionString);
         }
 
-        [Benchmark(Description = "ExecuteReader", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "ExecuteReader")]
         public async Task ExecuteReader()
         {
             Step();

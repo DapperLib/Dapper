@@ -46,10 +46,12 @@ namespace Dapper.Tests.Performance
             Add(new ORMColum());
             Add(new ReturnColum());
             Add(Job.Default
+                .WithUnrollFactor(BenchmarkBase.Iterations)
+                //.WithIterationTime(new TimeInterval(500, TimeUnit.Millisecond))
                 .WithLaunchCount(1)
-                .WithIterationTime(new TimeInterval(500, TimeUnit.Millisecond))
-                .WithWarmupCount(3)
-                .WithTargetCount(3)
+                .WithWarmupCount(0)
+                .WithTargetCount(5)
+                .WithRemoveOutliers(true)
             );
         }
     }

@@ -15,7 +15,7 @@ namespace Dapper.Tests.Performance
             _model = new DynamicModel(ConnectionString);
         }
 
-        [Benchmark(Description = "Query (dynamic)", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Query (dynamic)")]
         public dynamic QueryDynamic()
         {
             Step();

@@ -19,6 +19,8 @@ using ServiceStack.OrmLite.Dapper;
 using Susanoo;
 using System.Configuration;
 using System.Threading.Tasks;
+using Dapper.Tests.Performance.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dapper.Tests.Performance
 {
@@ -143,16 +145,23 @@ namespace Dapper.Tests.Performance
 
                     var entityContext2 = new EFContext(connection);
                     tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity Framework: SqlQuery");
-
-                    //var entityContext3 = new EFContext(connection);
-                    //tests.Add(id => entityFrameworkCompiled(entityContext3, id), "Entity Framework CompiledQuery");
-
-                    //var entityContext4 = new EFContext(connection);
-                    //tests.Add(id => entityContext4.Posts.Where("it.Id = @id", new System.Data.Objects.ObjectParameter("id", id)).First(), "Entity Framework ESQL");
-
-                    var entityContext5 = new EFContext(connection);
-                    tests.Add(id => entityContext5.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework: No Tracking");
+                    
+                    var entityContext3 = new EFContext(connection);
+                    tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework: No Tracking");
                 }, "Entity Framework");
+
+                // Entity Framework Core
+                Try(() =>
+                {
+                    var entityContext = new EFCoreContext(ConnectionString);
+                    tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity Framework Core");
+
+                    var entityContext2 = new EFCoreContext(ConnectionString);
+                    tests.Add(id => entityContext2.Posts.FromSql("select * from Posts where Id = {0}", id).First(), "Entity Framework Core: FromSql");
+
+                    var entityContext3 = new EFContext(connection);
+                    tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework Core: No Tracking");
+                }, "Entity Framework Core");
 
                 // Dapper
                 Try(() =>

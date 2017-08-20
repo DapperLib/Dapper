@@ -1,14 +1,15 @@
 using BenchmarkDotNet.Attributes;
 using Dapper.Tests.Performance.Linq2Sql;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data.Linq;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
-    public class Linq2SqlBenchmarks : BenchmarkBase
+    public class EFCoreBenchmarks : BenchmarkBase
     {
-        private DataClassesDataContext Linq2SqlContext;
+        private EntityFrameworkCore.EFCoreContext Context;
         private static readonly Func<DataClassesDataContext, int, Linq2Sql.Post> compiledQuery =
             CompiledQuery.Compile((DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
 
@@ -16,28 +17,28 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            Linq2SqlContext = new DataClassesDataContext(_connection);
+            Context = new EntityFrameworkCore.EFCoreContext(_connection.ConnectionString);
         }
 
         [Benchmark(Description = "Normal")]
-        public Linq2Sql.Post Normal()
+        public Post Normal()
         {
             Step();
-            return Linq2SqlContext.Posts.First(p => p.Id == i);
+            return Context.Posts.First(p => p.Id == i);
         }
 
-        [Benchmark(Description = "Compiled")]
-        public Linq2Sql.Post Compiled()
+        [Benchmark(Description = "SqlQuery")]
+        public Post SqlQuery()
         {
             Step();
-            return compiledQuery(Linq2SqlContext, i);
+            return Context.Posts.FromSql("select * from Posts where Id = {0}", i).First();
         }
 
-        [Benchmark(Description = "ExecuteQuery")]
-        public Post ExecuteQuery()
+        [Benchmark(Description = "No Tracking")]
+        public Post NoTracking()
         {
             Step();
-            return Linq2SqlContext.ExecuteQuery<Post>("select * from Posts where Id = {0}", i).First();
+            return Context.Posts.AsNoTracking().First(p => p.Id == i);
         }
     }
 }

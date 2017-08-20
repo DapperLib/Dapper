@@ -25,7 +25,7 @@ namespace Dapper.Tests.Performance
             _db = new DatabaseManager(_connection);
         }
 
-        [Benchmark(Description = "Mapping Cache<T>", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Mapping Cache")]
         public Post MappingCache()
         {
             Step();
@@ -35,7 +35,7 @@ namespace Dapper.Tests.Performance
                     .Execute(_db, new { Id = i }).First();
         }
 
-        [Benchmark(Description = "Mapping Cache (dynamic)", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Mapping Cache (dynamic)")]
         public dynamic MappingCacheDynamic()
         {
             Step();
@@ -45,14 +45,14 @@ namespace Dapper.Tests.Performance
                     .Execute(_db, new { Id = i }).First();
         }
 
-        [Benchmark(Description = "Mapping Static<T>", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Mapping Static")]
         public Post MappingStatic()
         {
             Step();
             return _cmd.Execute(_db, new { Id = i }).First();
         }
 
-        [Benchmark(Description = "Mapping Static (dynamic)", OperationsPerInvoke = Iterations)]
+        [Benchmark(Description = "Mapping Static (dynamic)")]
         public dynamic MappingStaticDynamic()
         {
             Step();
