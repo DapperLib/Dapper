@@ -280,52 +280,52 @@ namespace Dapper.Tests
             row.N_P_Long.Value.IsEqualTo(LotsOfNumerics.E_Long.B);
             row.N_P_ULong.Value.IsEqualTo(LotsOfNumerics.E_ULong.B);
 
-            TestBigIntForEverythingWorks<bool>(true, dbType);
-            TestBigIntForEverythingWorks<sbyte>((sbyte)1, dbType);
-            TestBigIntForEverythingWorks<byte>((byte)1, dbType);
-            TestBigIntForEverythingWorks<int>((int)1, dbType);
-            TestBigIntForEverythingWorks<uint>((uint)1, dbType);
-            TestBigIntForEverythingWorks<short>((short)1, dbType);
-            TestBigIntForEverythingWorks<ushort>((ushort)1, dbType);
-            TestBigIntForEverythingWorks<long>((long)1, dbType);
-            TestBigIntForEverythingWorks<ulong>((ulong)1, dbType);
-            TestBigIntForEverythingWorks<float>((float)1, dbType);
-            TestBigIntForEverythingWorks<double>((double)1, dbType);
-            TestBigIntForEverythingWorks<decimal>((decimal)1, dbType);
+            TestBigIntForEverythingWorksGeneric<bool>(true, dbType);
+            TestBigIntForEverythingWorksGeneric<sbyte>((sbyte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<byte>((byte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<int>((int)1, dbType);
+            TestBigIntForEverythingWorksGeneric<uint>((uint)1, dbType);
+            TestBigIntForEverythingWorksGeneric<short>((short)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ushort>((ushort)1, dbType);
+            TestBigIntForEverythingWorksGeneric<long>((long)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ulong>((ulong)1, dbType);
+            TestBigIntForEverythingWorksGeneric<float>((float)1, dbType);
+            TestBigIntForEverythingWorksGeneric<double>((double)1, dbType);
+            TestBigIntForEverythingWorksGeneric<decimal>((decimal)1, dbType);
 
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Byte.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_SByte.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Short.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_UShort.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Long.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_ULong.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_ULong.B, dbType);
 
-            TestBigIntForEverythingWorks<bool?>(true, dbType);
-            TestBigIntForEverythingWorks<sbyte?>((sbyte)1, dbType);
-            TestBigIntForEverythingWorks<byte?>((byte)1, dbType);
-            TestBigIntForEverythingWorks<int?>((int)1, dbType);
-            TestBigIntForEverythingWorks<uint?>((uint)1, dbType);
-            TestBigIntForEverythingWorks<short?>((short)1, dbType);
-            TestBigIntForEverythingWorks<ushort?>((ushort)1, dbType);
-            TestBigIntForEverythingWorks<long?>((long)1, dbType);
-            TestBigIntForEverythingWorks<ulong?>((ulong)1, dbType);
-            TestBigIntForEverythingWorks<float?>((float)1, dbType);
-            TestBigIntForEverythingWorks<double?>((double)1, dbType);
-            TestBigIntForEverythingWorks<decimal?>((decimal)1, dbType);
+            TestBigIntForEverythingWorksGeneric<bool?>(true, dbType);
+            TestBigIntForEverythingWorksGeneric<sbyte?>((sbyte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<byte?>((byte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<int?>((int)1, dbType);
+            TestBigIntForEverythingWorksGeneric<uint?>((uint)1, dbType);
+            TestBigIntForEverythingWorksGeneric<short?>((short)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ushort?>((ushort)1, dbType);
+            TestBigIntForEverythingWorksGeneric<long?>((long)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ulong?>((ulong)1, dbType);
+            TestBigIntForEverythingWorksGeneric<float?>((float)1, dbType);
+            TestBigIntForEverythingWorksGeneric<double?>((double)1, dbType);
+            TestBigIntForEverythingWorksGeneric<decimal?>((decimal)1, dbType);
 
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Byte?>(LotsOfNumerics.E_Byte.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_SByte?>(LotsOfNumerics.E_SByte.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Int?>(LotsOfNumerics.E_Int.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_UInt?>(LotsOfNumerics.E_UInt.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Short?>(LotsOfNumerics.E_Short.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_UShort?>(LotsOfNumerics.E_UShort.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Long?>(LotsOfNumerics.E_Long.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_ULong?>(LotsOfNumerics.E_ULong.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Byte?>(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_SByte?>(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Int?>(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_UInt?>(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Short?>(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_UShort?>(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Long?>(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_ULong?>(LotsOfNumerics.E_ULong.B, dbType);
         }
 
-        private void TestBigIntForEverythingWorks<T>(T expected, string dbType)
+        private void TestBigIntForEverythingWorksGeneric<T>(T expected, string dbType)
         {
             var query = connection.Query<T>("select cast(1 as " + dbType + ")").Single();
             query.IsEqualTo(expected);

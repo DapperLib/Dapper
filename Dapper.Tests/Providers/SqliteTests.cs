@@ -24,7 +24,7 @@ namespace Dapper.Tests
             }
         }
 
-        [Collection("TypeHandlerTests")]
+        [Collection(NonParallelDefinition.Name)]
         public class SqliteTypeHandlerTests : TestBase
         {
             [FactSqlite]

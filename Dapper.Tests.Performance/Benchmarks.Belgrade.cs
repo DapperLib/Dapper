@@ -8,7 +8,7 @@ namespace Dapper.Tests.Performance
     {
         private QueryMapper _mapper;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
+using Xunit;
 #if !NETCOREAPP1_0
 using System.Threading;
 #endif
@@ -80,5 +81,11 @@ namespace Dapper.Tests
         {
             _connection?.Dispose();
         }
+    }
+
+    [CollectionDefinition(Name, DisableParallelization = true)]
+    public class NonParallelDefinition : TestBase
+    {
+        public const string Name = "NonParallel";
     }
 }

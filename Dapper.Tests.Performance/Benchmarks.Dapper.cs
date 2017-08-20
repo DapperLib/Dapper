@@ -6,7 +6,7 @@ namespace Dapper.Tests.Performance
 {
     public class DapperBenchmarks : BenchmarkBase
     {
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

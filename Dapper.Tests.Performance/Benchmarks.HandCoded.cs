@@ -13,7 +13,7 @@ namespace Dapper.Tests.Performance
         private DataTable _table;
 #endif
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

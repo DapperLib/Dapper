@@ -353,7 +353,7 @@ namespace Dapper.Tests
             Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
         }
 
-        [Collection("QueryCacheTests")]
+        [Collection(NonParallelDefinition.Name)]
         public class AsyncQueryCacheTests : TestBase
         {
             private SqlConnection _marsConnection;
