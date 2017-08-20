@@ -2,7 +2,7 @@
 using System.Linq;
 namespace Dapper.Tests
 {
-    [Collection("QueryCacheTests")]
+    [Collection(NonParallelDefinition.Name)]
     public class NullTests : TestBase
     {
         [Fact]

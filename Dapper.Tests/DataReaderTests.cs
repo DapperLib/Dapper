@@ -4,42 +4,38 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public partial class DataReaderTests : TestBase
+    public class DataReaderTests : TestBase
     {
-        [Collection("QueryCacheTests")]
-        public class DataReaderQueryCacheTests : TestBase
+        [Fact]
+        public void GetSameReaderForSameShape()
         {
-            [Fact]
-            public void GetSameReaderForSameShape()
-            {
-                var origReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
-                var origParser = origReader.GetRowParser(typeof(HazNameId));
+            var origReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
+            var origParser = origReader.GetRowParser(typeof(HazNameId));
 
-                var typedParser = origReader.GetRowParser<HazNameId>();
+            var typedParser = origReader.GetRowParser<HazNameId>();
 
-                ReferenceEquals(origParser, typedParser).IsEqualTo(true);
+            ReferenceEquals(origParser, typedParser).IsEqualTo(true);
 
-                var list = origReader.Parse<HazNameId>().ToList();
-                list.Count.IsEqualTo(1);
-                list[0].Name.IsEqualTo("abc");
-                list[0].Id.IsEqualTo(123);
-                origReader.Dispose();
+            var list = origReader.Parse<HazNameId>().ToList();
+            list.Count.IsEqualTo(1);
+            list[0].Name.IsEqualTo("abc");
+            list[0].Id.IsEqualTo(123);
+            origReader.Dispose();
 
-                var secondReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
-                var secondParser = secondReader.GetRowParser(typeof(HazNameId));
-                var thirdParser = secondReader.GetRowParser(typeof(HazNameId), 1);
+            var secondReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
+            var secondParser = secondReader.GetRowParser(typeof(HazNameId));
+            var thirdParser = secondReader.GetRowParser(typeof(HazNameId), 1);
 
-                list = secondReader.Parse<HazNameId>().ToList();
-                list.Count.IsEqualTo(1);
-                list[0].Name.IsEqualTo("abc");
-                list[0].Id.IsEqualTo(123);
-                secondReader.Dispose();
+            list = secondReader.Parse<HazNameId>().ToList();
+            list.Count.IsEqualTo(1);
+            list[0].Name.IsEqualTo("abc");
+            list[0].Id.IsEqualTo(123);
+            secondReader.Dispose();
 
-                // now: should be different readers, but same parser
-                ReferenceEquals(origReader, secondReader).IsEqualTo(false);
-                ReferenceEquals(origParser, secondParser).IsEqualTo(true);
-                ReferenceEquals(secondParser, thirdParser).IsEqualTo(false);
-            }
+            // now: should be different readers, but same parser
+            ReferenceEquals(origReader, secondReader).IsEqualTo(false);
+            ReferenceEquals(origParser, secondParser).IsEqualTo(true);
+            ReferenceEquals(secondParser, thirdParser).IsEqualTo(false);
         }
 
         [Fact]
@@ -141,18 +137,13 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
         private class Discriminated_Foo : Discriminated_BaseType
         {
             public string Name { get; set; }
-            public override int Type {
-                get { return 1; }
-            }
+            public override int Type => 1;
         }
 
         private class Discriminated_Bar : Discriminated_BaseType
         {
             public float Value { get; set; }
-            public override int Type
-            {
-                get { return 2; }
-            }
+            public override int Type => 2;
         }
 
         private abstract class DiscriminatedWithMultiMapping_BaseType : Discriminated_BaseType
@@ -164,20 +155,14 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
         {
             public override HazNameId HazNameIdObject { get; set; }
             public string Name { get; set; }
-            public override int Type
-            {
-                get { return 1; }
-            }
+            public override int Type => 1;
         }
 
         private class DiscriminatedWithMultiMapping_Bar : DiscriminatedWithMultiMapping_BaseType
         {
             public override HazNameId HazNameIdObject { get; set; }
             public float Value { get; set; }
-            public override int Type
-            {
-                get { return 2; }
-            }
+            public override int Type => 2;
         }
     }
 }
