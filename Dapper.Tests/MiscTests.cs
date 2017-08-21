@@ -46,11 +46,11 @@ namespace Dapper.Tests
         public void TestNullableGuidSupport()
         {
             var guid = connection.Query<Guid?>("select null").First();
-            guid.IsNull();
+            Assert.Null(guid);
 
             guid = Guid.NewGuid();
             var guid2 = connection.Query<Guid?>("select @guid", new { guid }).First();
-            guid.IsEqualTo(guid2);
+            Assert.Equal(guid, guid2);
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace Dapper.Tests
         {
             var guid = Guid.NewGuid();
             var guid2 = connection.Query<Guid?>("select @guid", new { guid }).First();
-            Assert.IsTrue(guid == guid2);
+            Assert.True(guid == guid2);
         }
 
         private struct Car
@@ -88,9 +88,9 @@ namespace Dapper.Tests
         {
             var car = connection.Query<Car>("select 'Ford' Name, 21 Age, 2 Trap").First();
 
-            car.Age.IsEqualTo(21);
-            car.Name.IsEqualTo("Ford");
-            ((int)car.Trap).IsEqualTo(2);
+            Assert.Equal(21, car.Age);
+            Assert.Equal("Ford", car.Name);
+            Assert.Equal(2, (int)car.Trap);
         }
 
         [Fact]
@@ -100,16 +100,15 @@ namespace Dapper.Tests
             // note Car has Name as a field; parameters only respect properties at the moment
             var car2 = connection.Query<CarWithAllProps>("select @Name Name, @Age Age, @Trap Trap", car1).First();
 
-            car2.Name.IsEqualTo(car1.Name);
-            car2.Age.IsEqualTo(car1.Age);
-            car2.Trap.IsEqualTo(car1.Trap);
+            Assert.Equal(car2.Name, car1.Name);
+            Assert.Equal(car2.Age, car1.Age);
+            Assert.Equal(car2.Trap, car1.Trap);
         }
 
         [Fact]
         public void SelectListInt()
         {
-            connection.Query<int>("select 1 union all select 2 union all select 3")
-              .IsSequenceEqualTo(new[] { 1, 2, 3 });
+            Assert.Equal(new[] { 1, 2, 3 }, connection.Query<int>("select 1 union all select 2 union all select 3"));
         }
 
         [Fact]
@@ -125,12 +124,12 @@ namespace Dapper.Tests
             try
             {
                 var d = connection.Query<Dog>("select * from #dog").Single();
-                d.Name.IsEqualTo("Alf");
-                d.Age.IsEqualTo(1);
+                Assert.Equal("Alf", d.Name);
+                Assert.Equal(1, d.Age);
                 connection.Execute("alter table #dog drop column Name");
                 d = connection.Query<Dog>("select * from #dog").Single();
-                d.Name.IsNull();
-                d.Age.IsEqualTo(1);
+                Assert.Null(d.Name);
+                Assert.Equal(1, d.Age);
             }
             finally
             {
@@ -145,12 +144,12 @@ namespace Dapper.Tests
             try
             {
                 var d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
-                d.Name.IsEqualTo("Alf");
-                d.Age.IsEqualTo(1);
+                Assert.Equal("Alf", d.Name);
+                Assert.Equal(1, d.Age);
                 connection.Execute("alter table #dog drop column Name");
                 d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
-                d.Name.IsNull();
-                d.Age.IsEqualTo(1);
+                Assert.Null(d.Name);
+                Assert.Equal(1, d.Age);
             }
             finally
             {
@@ -162,29 +161,38 @@ namespace Dapper.Tests
         public void Test_Single_First_Default()
         {
             var sql = "select 0 where 1 = 0;"; // no rows
-            try { connection.QueryFirst<int>(sql); Assert.Fail("QueryFirst, 0"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains no elements"); }
-            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 0"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains no elements"); }
-            connection.QueryFirstOrDefault<int>(sql).IsEqualTo(0);
-            connection.QuerySingleOrDefault<int>(sql).IsEqualTo(0);
+
+            var ex = Assert.Throws<InvalidOperationException>(() => connection.QueryFirst<int>(sql));
+            Assert.Equal("Sequence contains no elements", ex.Message);
+
+            ex = Assert.Throws<InvalidOperationException>(() => connection.QuerySingle<int>(sql));
+            Assert.Equal("Sequence contains no elements", ex.Message);
+
+            Assert.Equal(0, connection.QueryFirstOrDefault<int>(sql));
+            Assert.Equal(0, connection.QuerySingleOrDefault<int>(sql));
 
             sql = "select 1;"; // one row
-            connection.QueryFirst<int>(sql).IsEqualTo(1);
-            connection.QuerySingle<int>(sql).IsEqualTo(1);
-            connection.QueryFirstOrDefault<int>(sql).IsEqualTo(1);
-            connection.QuerySingleOrDefault<int>(sql).IsEqualTo(1);
+            Assert.Equal(1, connection.QueryFirst<int>(sql));
+            Assert.Equal(1, connection.QuerySingle<int>(sql));
+            Assert.Equal(1, connection.QueryFirstOrDefault<int>(sql));
+            Assert.Equal(1, connection.QuerySingleOrDefault<int>(sql));
 
             sql = "select 2 union select 3 order by 1;"; // two rows
-            connection.QueryFirst<int>(sql).IsEqualTo(2);
-            try { connection.QuerySingle<int>(sql); Assert.Fail("QuerySingle, 2"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains more than one element"); }
-            connection.QueryFirstOrDefault<int>(sql).IsEqualTo(2);
-            try { connection.QuerySingleOrDefault<int>(sql); Assert.Fail("QuerySingleOrDefault, 2"); } catch (InvalidOperationException ex) { ex.Message.IsEqualTo("Sequence contains more than one element"); }
+            Assert.Equal(2, connection.QueryFirst<int>(sql));
+
+            ex = Assert.Throws<InvalidOperationException>(() => connection.QuerySingle<int>(sql));
+            Assert.Equal("Sequence contains more than one element", ex.Message);
+
+            Assert.Equal(2, connection.QueryFirstOrDefault<int>(sql));
+
+            ex = Assert.Throws<InvalidOperationException>(() => connection.QuerySingleOrDefault<int>(sql));
+            Assert.Equal("Sequence contains more than one element", ex.Message);
         }
 
         [Fact]
         public void TestStrings()
         {
-            connection.Query<string>(@"select 'a' a union select 'b'")
-                .IsSequenceEqualTo(new[] { "a", "b" });
+            Assert.Equal(new[] { "a", "b" }, connection.Query<string>("select 'a' a union select 'b'"));
         }
 
         // see https://stackoverflow.com/questions/16726709/string-format-with-sql-wildcard-causing-dapper-query-to-break
@@ -203,8 +211,8 @@ WHERE (first_name LIKE CONCAT('%', @search_term, '%') OR last_name LIKE CONCAT('
 SELECT * FROM #users16726709
 WHERE (first_name LIKE {0} OR last_name LIKE {0});";
 
-            const string use_end_only = @"CONCAT(@search_term, '%')";
-            const string use_both = @"CONCAT('%', @search_term, '%')";
+            const string use_end_only = "CONCAT(@search_term, '%')";
+            const string use_both = "CONCAT('%', @search_term, '%')";
 
             // if true, slower query due to not being able to use indices, but will allow searching inside strings 
             const bool allow_start_wildcards = false;
@@ -216,9 +224,9 @@ WHERE (first_name LIKE {0} OR last_name LIKE {0});";
 insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('Tony','Farcus') insert #users16726709 values ('Albert','TenoF')");
 
             // Using Dapper
-            connection.Query(end_wildcard, new { search_term = term }).Count().IsEqualTo(2);
-            connection.Query(both_wildcards, new { search_term = term }).Count().IsEqualTo(3);
-            connection.Query(query, new { search_term = term }).Count().IsEqualTo(2);
+            Assert.Equal(2, connection.Query(end_wildcard, new { search_term = term }).Count());
+            Assert.Equal(3, connection.Query(both_wildcards, new { search_term = term }).Count());
+            Assert.Equal(2, connection.Query(query, new { search_term = term }).Count());
         }
 
         [Fact]
@@ -227,9 +235,9 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             var guid = Guid.NewGuid();
             var dog = connection.Query<Dog>("select '' as Extra, 1 as Age, 0.1 as Name1 , Id = @id", new { id = guid });
 
-            dog.Count().IsEqualTo(1);
-            dog.First().Age.IsEqualTo(1);
-            dog.First().Id.IsEqualTo(guid);
+            Assert.Single(dog);
+            Assert.Equal(1, dog.First().Age);
+            Assert.Equal(dog.First().Id, guid);
         }
 
         [Fact]
@@ -238,15 +246,15 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             var guid = Guid.NewGuid();
             var dog = connection.Query<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
 
-            dog.Count().IsEqualTo(1);
-            dog.First().Age.IsNull();
-            dog.First().Id.IsEqualTo(guid);
+            Assert.Single(dog);
+            Assert.Null(dog.First().Age);
+            Assert.Equal(dog.First().Id, guid);
         }
 
         [Fact]
         public void TestSimpleNull()
         {
-            connection.Query<DateTime?>("select null").First().IsNull();
+            Assert.Null(connection.Query<DateTime?>("select null").First());
         }
 
         [Fact]
@@ -254,33 +262,36 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         {
             var rows = connection.Query("select 1 A, 2 B union all select 3, 4").ToList();
 
-            ((int)rows[0].A).IsEqualTo(1);
-            ((int)rows[0].B).IsEqualTo(2);
-            ((int)rows[1].A).IsEqualTo(3);
-            ((int)rows[1].B).IsEqualTo(4);
+            Assert.Equal(1, (int)rows[0].A);
+            Assert.Equal(2, (int)rows[0].B);
+            Assert.Equal(3, (int)rows[1].A);
+            Assert.Equal(4, (int)rows[1].B);
         }
 
         [Fact]
         public void TestStringList()
         {
-            connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new[] { "a", "b", "c" } })
-                .IsSequenceEqualTo(new[] { "a", "b", "c" });
-
-            connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new string[0] })
-                   .IsSequenceEqualTo(new string[0]);
+            Assert.Equal(
+                new[] { "a", "b", "c" },
+                connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new[] { "a", "b", "c" } })
+            );
+            Assert.Equal(
+                new string[0],
+                connection.Query<string>("select * from (select 'a' as x union all select 'b' union all select 'c') as T where x in @strings", new { strings = new string[0] })
+            );
         }
 
         [Fact]
         public void TestExecuteCommand()
         {
-            connection.Execute(@"
+            Assert.Equal(2, connection.Execute(@"
     set nocount on 
     create table #t(i int) 
     set nocount off 
     insert #t 
     select @a a union all select @b 
     set nocount on 
-    drop table #t", new { a = 1, b = 2 }).IsEqualTo(2);
+    drop table #t", new { a = 1, b = 2 }));
         }
 
         [Fact]
@@ -289,10 +300,10 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             connection.Execute("create table #t(i int)");
             try
             {
-                int tally = connection.Execute(@"insert #t (i) values(@a)", new[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
+                int tally = connection.Execute("insert #t (i) values(@a)", new[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
                 int sum = connection.Query<int>("select sum(i) from #t").First();
-                tally.IsEqualTo(4);
-                sum.IsEqualTo(10);
+                Assert.Equal(4, tally);
+                Assert.Equal(10, sum);
             }
             finally
             {
@@ -312,14 +323,14 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             connection.Execute("create table #t(Name nvarchar(max), Age int)");
             try
             {
-                int tally = connection.Execute(@"insert #t (Name,Age) values(@Name, @Age)", new List<Student>
+                int tally = connection.Execute("insert #t (Name,Age) values(@Name, @Age)", new List<Student>
             {
                 new Student{Age = 1, Name = "sam"},
                 new Student{Age = 2, Name = "bob"}
             });
                 int sum = connection.Query<int>("select sum(Age) from #t").First();
-                tally.IsEqualTo(2);
-                sum.IsEqualTo(3);
+                Assert.Equal(2, tally);
+                Assert.Equal(3, sum);
             }
             finally
             {
@@ -331,10 +342,10 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         public void TestExecuteMultipleCommandObjectArray()
         {
             connection.Execute("create table #t(i int)");
-            int tally = connection.Execute(@"insert #t (i) values(@a)", new object[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
+            int tally = connection.Execute("insert #t (i) values(@a)", new object[] { new { a = 1 }, new { a = 2 }, new { a = 3 }, new { a = 4 } });
             int sum = connection.Query<int>("select sum(i) from #t drop table #t").First();
-            tally.IsEqualTo(4);
-            sum.IsEqualTo(10);
+            Assert.Equal(4, tally);
+            Assert.Equal(10, sum);
         }
 
         private class TestObj
@@ -357,21 +368,21 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         [Fact]
         public void TestSetInternal()
         {
-            connection.Query<TestObj>("select 10 as [Internal]").First()._internal.IsEqualTo(10);
+            Assert.Equal(10, connection.Query<TestObj>("select 10 as [Internal]").First()._internal);
         }
 
         [Fact]
         public void TestSetPrivate()
         {
-            connection.Query<TestObj>("select 10 as [Priv]").First()._priv.IsEqualTo(10);
+            Assert.Equal(10, connection.Query<TestObj>("select 10 as [Priv]").First()._priv);
         }
 
         [Fact]
         public void TestExpandWithNullableFields()
         {
             var row = connection.Query("select null A, 2 B").Single();
-            ((int?)row.A).IsNull();
-            ((int?)row.B).IsEqualTo(2);
+            Assert.Null((int?)row.A);
+            Assert.Equal(2, (int?)row.B);
         }
 
         [Fact]
@@ -398,7 +409,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             // should not exception, since enumerated
             en = connection.Query<int>("select 1 as one", buffered: false);
 
-            gotException.IsTrue();
+            Assert.True(gotException);
         }
 
         [Fact]
@@ -425,7 +436,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             // should not exception, since enumertated
             en = connection.Query("select 1 as one", buffered: false);
 
-            gotException.IsTrue();
+            Assert.True(gotException);
         }
 
         [Fact]
@@ -433,7 +444,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         {
             const long foo = 12345;
             var result = connection.Query<long>("select @foo", new { foo }).Single();
-            foo.IsEqualTo(result);
+            Assert.Equal(foo, result);
         }
 
         [Fact]
@@ -444,7 +455,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
 declare @bar table(Value bigint)
 insert @bar values (@foo)
 select * from @bar", new { foo }).Single();
-            result.Value.IsEqualTo(foo);
+            Assert.Equal(result.Value, foo);
         }
 
         private class WithBigInt
@@ -456,12 +467,12 @@ select * from @bar", new { foo }).Single();
         public void TestFieldsAndPrivates()
         {
             var data = connection.Query<TestFieldCaseAndPrivatesEntity>(
-                @"select a=1,b=2,c=3,d=4,f='5'").Single();
-            data.a.IsEqualTo(1);
-            data.GetB().IsEqualTo(2);
-            data.c.IsEqualTo(3);
-            data.GetD().IsEqualTo(4);
-            data.e.IsEqualTo(5);
+                "select a=1,b=2,c=3,d=4,f='5'").Single();
+            Assert.Equal(1, data.a);
+            Assert.Equal(2, data.GetB());
+            Assert.Equal(3, data.c);
+            Assert.Equal(4, data.GetD());
+            Assert.Equal(5, data.e);
         }
 
         private class TestFieldCaseAndPrivatesEntity
@@ -501,10 +512,10 @@ select * from @bar", new { foo }).Single();
         {
             // Test that inheritance works.
             var list = connection.Query<InheritanceTest2>("select 'One' as Derived1, 'Two' as Derived2, 'Three' as Base1, 'Four' as Base2");
-            list.First().Derived1.IsEqualTo("One");
-            list.First().Derived2.IsEqualTo("Two");
-            list.First().Base1.IsEqualTo("Three");
-            list.First().Base2.IsEqualTo("Four");
+            Assert.Equal("One", list.First().Derived1);
+            Assert.Equal("Two", list.First().Derived2);
+            Assert.Equal("Three", list.First().Base1);
+            Assert.Equal("Four", list.First().Base2);
         }
 
 #if !NETCOREAPP1_0
@@ -513,12 +524,12 @@ select * from @bar", new { foo }).Single();
         {
             var dt = new DataTable();
             dt.Load(connection.ExecuteReader("select 3 as [three], 4 as [four]"));
-            dt.Columns.Count.IsEqualTo(2);
-            dt.Columns[0].ColumnName.IsEqualTo("three");
-            dt.Columns[1].ColumnName.IsEqualTo("four");
-            dt.Rows.Count.IsEqualTo(1);
-            ((int)dt.Rows[0][0]).IsEqualTo(3);
-            ((int)dt.Rows[0][1]).IsEqualTo(4);
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal("three", dt.Columns[0].ColumnName);
+            Assert.Equal("four", dt.Columns[1].ColumnName);
+            Assert.Equal(1, dt.Rows.Count);
+            Assert.Equal(3, (int)dt.Rows[0][0]);
+            Assert.Equal(4, (int)dt.Rows[0][1]);
         }
 #endif
 
@@ -535,12 +546,12 @@ select * from @bar", new { foo }).Single();
                     e = new DbString { Value = "abcde", IsAnsi = true },
                     f = new DbString { Value = "abcde", IsAnsi = false },
                 }).First();
-            ((int)obj.a).IsEqualTo(10);
-            ((int)obj.b).IsEqualTo(20);
-            ((int)obj.c).IsEqualTo(5);
-            ((int)obj.d).IsEqualTo(10);
-            ((int)obj.e).IsEqualTo(5);
-            ((int)obj.f).IsEqualTo(10);
+            Assert.Equal(10, (int)obj.a);
+            Assert.Equal(20, (int)obj.b);
+            Assert.Equal(5, (int)obj.c);
+            Assert.Equal(10, (int)obj.d);
+            Assert.Equal(5, (int)obj.e);
+            Assert.Equal(10, (int)obj.f);
         }
 
         [Fact]
@@ -552,8 +563,8 @@ select * from @bar", new { foo }).Single();
                 DbString.IsAnsiDefault = true;
                 var a = new DbString { Value = "abcde" };
                 var b = new DbString { Value = "abcde", IsAnsi = false };
-                a.IsAnsi.IsTrue();
-                b.IsAnsi.IsFalse();
+                Assert.True(a.IsAnsi);
+                Assert.False(b.IsAnsi);
             }
             finally
             {
@@ -565,16 +576,16 @@ select * from @bar", new { foo }).Single();
         public void TestFastExpandoSupportsIDictionary()
         {
             var row = connection.Query("select 1 A, 'two' B").First() as IDictionary<string, object>;
-            row["A"].IsEqualTo(1);
-            row["B"].IsEqualTo("two");
+            Assert.Equal(1, row["A"]);
+            Assert.Equal("two", row["B"]);
         }
 
         [Fact]
         public void TestDapperSetsPrivates()
         {
-            connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow.IsEqualTo(1);
+            Assert.Equal(1, connection.Query<PrivateDan>("select 'one' ShadowInDB").First().Shadow);
 
-            connection.QueryFirstOrDefault<PrivateDan>("select 'one' ShadowInDB").Shadow.IsEqualTo(1);
+            Assert.Equal(1, connection.QueryFirstOrDefault<PrivateDan>("select 'one' ShadowInDB").Shadow);
         }
 
         private class PrivateDan
@@ -598,7 +609,7 @@ select * from @bar", new { foo }).Single();
             {
                 msg = ex.Message;
             }
-            msg.IsEqualTo("The member Foo of type System.GenericUriParser cannot be used as a parameter value");
+            Assert.Equal("The member Foo of type System.GenericUriParser cannot be used as a parameter value", msg);
         }
 
         [Fact]
@@ -606,7 +617,7 @@ select * from @bar", new { foo }).Single();
         {
             int i = connection.Query<int>("select @Bar", new WithBizarreData { Foo = new GenericUriParser(GenericUriParserOptions.Default), Bar = 23 }).Single();
 
-            i.IsEqualTo(23);
+            Assert.Equal(23, i);
         }
 
         private class WithBizarreData
@@ -627,11 +638,11 @@ select * from @bar", new { foo }).Single();
             const char test = '〠';
             char c = connection.Query<char>("select @c", new { c = test }).Single();
 
-            c.IsEqualTo(test);
+            Assert.Equal(c, test);
 
             var obj = connection.Query<WithCharValue>("select @Value as Value", new WithCharValue { Value = c }).Single();
 
-            obj.Value.IsEqualTo(test);
+            Assert.Equal(obj.Value, test);
         }
 
         [Fact]
@@ -640,11 +651,11 @@ select * from @bar", new { foo }).Single();
             char? test = '〠';
             char? c = connection.Query<char?>("select @c", new { c = test }).Single();
 
-            c.IsEqualTo(test);
+            Assert.Equal(c, test);
 
             var obj = connection.Query<WithCharValue>("select @ValueNullable as ValueNullable", new WithCharValue { ValueNullable = c }).Single();
 
-            obj.ValueNullable.IsEqualTo(test);
+            Assert.Equal(obj.ValueNullable, test);
         }
 
         [Fact]
@@ -653,11 +664,11 @@ select * from @bar", new { foo }).Single();
             char? test = null;
             char? c = connection.Query<char?>("select @c", new { c = test }).Single();
 
-            c.IsEqualTo(test);
+            Assert.Equal(c, test);
 
             var obj = connection.Query<WithCharValue>("select @ValueNullable as ValueNullable", new WithCharValue { ValueNullable = c }).Single();
 
-            obj.ValueNullable.IsEqualTo(test);
+            Assert.Equal(obj.ValueNullable, test);
         }
 
         [Fact]
@@ -675,61 +686,61 @@ select * from @bar", new { foo }).Single();
         [Fact]
         public void TestInt16Usage()
         {
-            connection.Query<short>("select cast(42 as smallint)").Single().IsEqualTo((short)42);
-            connection.Query<short?>("select cast(42 as smallint)").Single().IsEqualTo((short?)42);
-            connection.Query<short?>("select cast(null as smallint)").Single().IsEqualTo((short?)null);
+            Assert.Equal(connection.Query<short>("select cast(42 as smallint)").Single(), (short)42);
+            Assert.Equal(connection.Query<short?>("select cast(42 as smallint)").Single(), (short?)42);
+            Assert.Equal(connection.Query<short?>("select cast(null as smallint)").Single(), (short?)null);
 
-            connection.Query<ShortEnum>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum)42);
-            connection.Query<ShortEnum?>("select cast(42 as smallint)").Single().IsEqualTo((ShortEnum?)42);
-            connection.Query<ShortEnum?>("select cast(null as smallint)").Single().IsEqualTo((ShortEnum?)null);
+            Assert.Equal(connection.Query<ShortEnum>("select cast(42 as smallint)").Single(), (ShortEnum)42);
+            Assert.Equal(connection.Query<ShortEnum?>("select cast(42 as smallint)").Single(), (ShortEnum?)42);
+            Assert.Equal(connection.Query<ShortEnum?>("select cast(null as smallint)").Single(), (ShortEnum?)null);
 
             var row =
                 connection.Query<WithInt16Values>(
                     "select cast(1 as smallint) as NonNullableInt16, cast(2 as smallint) as NullableInt16, cast(3 as smallint) as NonNullableInt16Enum, cast(4 as smallint) as NullableInt16Enum")
                     .Single();
-            row.NonNullableInt16.IsEqualTo((short)1);
-            row.NullableInt16.IsEqualTo((short)2);
-            row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Three);
-            row.NullableInt16Enum.IsEqualTo(ShortEnum.Four);
+            Assert.Equal(row.NonNullableInt16, (short)1);
+            Assert.Equal(row.NullableInt16, (short)2);
+            Assert.Equal(ShortEnum.Three, row.NonNullableInt16Enum);
+            Assert.Equal(ShortEnum.Four, row.NullableInt16Enum);
 
             row =
     connection.Query<WithInt16Values>(
         "select cast(5 as smallint) as NonNullableInt16, cast(null as smallint) as NullableInt16, cast(6 as smallint) as NonNullableInt16Enum, cast(null as smallint) as NullableInt16Enum")
         .Single();
-            row.NonNullableInt16.IsEqualTo((short)5);
-            row.NullableInt16.IsEqualTo((short?)null);
-            row.NonNullableInt16Enum.IsEqualTo(ShortEnum.Six);
-            row.NullableInt16Enum.IsEqualTo((ShortEnum?)null);
+            Assert.Equal(row.NonNullableInt16, (short)5);
+            Assert.Equal(row.NullableInt16, (short?)null);
+            Assert.Equal(ShortEnum.Six, row.NonNullableInt16Enum);
+            Assert.Equal(row.NullableInt16Enum, (ShortEnum?)null);
         }
 
         [Fact]
         public void TestInt32Usage()
         {
-            connection.Query<int>("select cast(42 as int)").Single().IsEqualTo((int)42);
-            connection.Query<int?>("select cast(42 as int)").Single().IsEqualTo((int?)42);
-            connection.Query<int?>("select cast(null as int)").Single().IsEqualTo((int?)null);
+            Assert.Equal(connection.Query<int>("select cast(42 as int)").Single(), (int)42);
+            Assert.Equal(connection.Query<int?>("select cast(42 as int)").Single(), (int?)42);
+            Assert.Equal(connection.Query<int?>("select cast(null as int)").Single(), (int?)null);
 
-            connection.Query<IntEnum>("select cast(42 as int)").Single().IsEqualTo((IntEnum)42);
-            connection.Query<IntEnum?>("select cast(42 as int)").Single().IsEqualTo((IntEnum?)42);
-            connection.Query<IntEnum?>("select cast(null as int)").Single().IsEqualTo((IntEnum?)null);
+            Assert.Equal(connection.Query<IntEnum>("select cast(42 as int)").Single(), (IntEnum)42);
+            Assert.Equal(connection.Query<IntEnum?>("select cast(42 as int)").Single(), (IntEnum?)42);
+            Assert.Equal(connection.Query<IntEnum?>("select cast(null as int)").Single(), (IntEnum?)null);
 
             var row =
                 connection.Query<WithInt32Values>(
                     "select cast(1 as int) as NonNullableInt32, cast(2 as int) as NullableInt32, cast(3 as int) as NonNullableInt32Enum, cast(4 as int) as NullableInt32Enum")
                     .Single();
-            row.NonNullableInt32.IsEqualTo((int)1);
-            row.NullableInt32.IsEqualTo((int)2);
-            row.NonNullableInt32Enum.IsEqualTo(IntEnum.Three);
-            row.NullableInt32Enum.IsEqualTo(IntEnum.Four);
+            Assert.Equal(row.NonNullableInt32, (int)1);
+            Assert.Equal(row.NullableInt32, (int)2);
+            Assert.Equal(IntEnum.Three, row.NonNullableInt32Enum);
+            Assert.Equal(IntEnum.Four, row.NullableInt32Enum);
 
             row =
     connection.Query<WithInt32Values>(
         "select cast(5 as int) as NonNullableInt32, cast(null as int) as NullableInt32, cast(6 as int) as NonNullableInt32Enum, cast(null as int) as NullableInt32Enum")
         .Single();
-            row.NonNullableInt32.IsEqualTo((int)5);
-            row.NullableInt32.IsEqualTo((int?)null);
-            row.NonNullableInt32Enum.IsEqualTo(IntEnum.Six);
-            row.NullableInt32Enum.IsEqualTo((IntEnum?)null);
+            Assert.Equal(row.NonNullableInt32, (int)5);
+            Assert.Equal(row.NullableInt32, (int?)null);
+            Assert.Equal(IntEnum.Six, row.NonNullableInt32Enum);
+            Assert.Equal(row.NullableInt32Enum, (IntEnum?)null);
         }
 
         public class WithInt16Values
@@ -757,10 +768,10 @@ select * from @bar", new { foo }).Single();
         public void Issue_40_AutomaticBoolConversion()
         {
             var user = connection.Query<Issue40_User>("select UserId=1,Email='abc',Password='changeme',Active=cast(1 as tinyint)").Single();
-            user.Active.IsTrue();
-            user.UserID.IsEqualTo(1);
-            user.Email.IsEqualTo("abc");
-            user.Password.IsEqualTo("changeme");
+            Assert.True(user.Active);
+            Assert.Equal(1, user.UserID);
+            Assert.Equal("abc", user.Email);
+            Assert.Equal("changeme", user.Password);
         }
 
         public class Issue40_User
@@ -782,7 +793,7 @@ select * from @bar", new { foo }).Single();
             using (var conn = GetClosedConnection())
             {
                 conn.Execute("-- nop");
-                conn.State.IsEqualTo(ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -791,15 +802,8 @@ select * from @bar", new { foo }).Single();
         {
             using (var conn = GetClosedConnection())
             {
-                try
-                {
-                    conn.Execute("nop");
-                    false.IsEqualTo(true); // shouldn't have got here
-                }
-                catch
-                {
-                    conn.State.IsEqualTo(ConnectionState.Closed);
-                }
+                var ex = Assert.ThrowsAny<Exception>(() => conn.Execute("nop"));
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -809,8 +813,8 @@ select * from @bar", new { foo }).Single();
             using (var conn = GetClosedConnection())
             {
                 var i = conn.Query<int>("select 1").Single();
-                conn.State.IsEqualTo(ConnectionState.Closed);
-                i.IsEqualTo(1);
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(1, i);
             }
         }
 
@@ -819,15 +823,8 @@ select * from @bar", new { foo }).Single();
         {
             using (var conn = GetClosedConnection())
             {
-                try
-                {
-                    conn.Query<int>("select gibberish").Single();
-                    false.IsEqualTo(true); // shouldn't have got here
-                }
-                catch
-                {
-                    conn.State.IsEqualTo(ConnectionState.Closed);
-                }
+                Assert.ThrowsAny<Exception>(() => conn.Query<int>("select gibberish").Single());
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -835,23 +832,23 @@ select * from @bar", new { foo }).Single();
         public void TestDynamicMutation()
         {
             var obj = connection.Query("select 1 as [a], 2 as [b], 3 as [c]").Single();
-            ((int)obj.a).IsEqualTo(1);
+            Assert.Equal(1, (int)obj.a);
             IDictionary<string, object> dict = obj;
-            Assert.Equals(3, dict.Count);
-            Assert.IsTrue(dict.Remove("a"));
-            Assert.IsFalse(dict.Remove("d"));
-            Assert.Equals(2, dict.Count);
+            Assert.Equal(3, dict.Count);
+            Assert.True(dict.Remove("a"));
+            Assert.False(dict.Remove("d"));
+            Assert.Equal(2, dict.Count);
             dict.Add("d", 4);
-            Assert.Equals(3, dict.Count);
-            Assert.Equals("b,c,d", string.Join(",", dict.Keys.OrderBy(x => x)));
-            Assert.Equals("2,3,4", string.Join(",", dict.OrderBy(x => x.Key).Select(x => x.Value)));
+            Assert.Equal(3, dict.Count);
+            Assert.Equal("b,c,d", string.Join(",", dict.Keys.OrderBy(x => x)));
+            Assert.Equal("2,3,4", string.Join(",", dict.OrderBy(x => x.Key).Select(x => x.Value)));
 
-            Assert.Equals(2, (int)obj.b);
-            Assert.Equals(3, (int)obj.c);
-            Assert.Equals(4, (int)obj.d);
+            Assert.Equal(2, (int)obj.b);
+            Assert.Equal(3, (int)obj.c);
+            Assert.Equal(4, (int)obj.d);
             try
             {
-                ((int)obj.a).IsEqualTo(1);
+                Assert.Equal(1, (int)obj.a);
                 throw new InvalidOperationException("should have thrown");
             }
             catch (RuntimeBinderException)
@@ -871,10 +868,10 @@ select * from @bar", new { foo }).Single();
 
             var asDict = (IDictionary<string, object>)results;
 
-            asDict.ContainsKey("Id").IsEqualTo(true);
-            asDict.ContainsKey("Title").IsEqualTo(true);
-            asDict.ContainsKey("Surname").IsEqualTo(true);
-            asDict.ContainsKey("AddressCount").IsEqualTo(false);
+            Assert.True(asDict.ContainsKey("Id"));
+            Assert.True(asDict.ContainsKey("Title"));
+            Assert.True(asDict.ContainsKey("Surname"));
+            Assert.False(asDict.ContainsKey("AddressCount"));
         }
 
         // see https://stackoverflow.com/questions/13127886/dapper-returns-null-for-singleordefaultdatediff
@@ -884,12 +881,12 @@ select * from @bar", new { foo }).Single();
             var result = connection.Query<int>( // case with rows
              "select DATEDIFF(day, GETUTCDATE(), @date)", new { date = DateTime.UtcNow.AddDays(20) })
              .SingleOrDefault();
-            result.IsEqualTo(20);
+            Assert.Equal(20, result);
 
             result = connection.Query<int>( // case without rows
                 "select DATEDIFF(day, GETUTCDATE(), @date) where 1 = 0", new { date = DateTime.UtcNow.AddDays(20) })
                 .SingleOrDefault();
-            result.IsEqualTo(0); // zero rows; default of int over zero rows is zero
+            Assert.Equal(0, result); // zero rows; default of int over zero rows is zero
         }
 
         [Fact]
@@ -902,13 +899,13 @@ select * from @bar", new { foo }).Single();
             // - Add data to the source of that query
             // - Perform a the same query again
             connection.Execute("CREATE TABLE #sut (value varchar(10) NOT NULL PRIMARY KEY)");
-            connection.Query("SELECT value FROM #sut").IsSequenceEqualTo(Enumerable.Empty<dynamic>());
+            Assert.Equal(Enumerable.Empty<dynamic>(), connection.Query("SELECT value FROM #sut"));
 
-            connection.Execute("INSERT INTO #sut (value) VALUES ('test')").IsEqualTo(1);
+            Assert.Equal(1, connection.Execute("INSERT INTO #sut (value) VALUES ('test')"));
             var result = connection.Query("SELECT value FROM #sut");
 
             var first = result.First();
-            ((string)first.value).IsEqualTo("test");
+            Assert.Equal("test", (string)first.value);
         }
 
         [Fact]
@@ -918,8 +915,8 @@ select * from @bar", new { foo }).Single();
                 new { x = new DbString { Value = "abc", IsAnsi = true } }).Single();
             var b = connection.Query<int>("select datalength(@x)",
                 new { x = new DbString { Value = "abc", IsAnsi = false } }).Single();
-            a.IsEqualTo(3);
-            b.IsEqualTo(6);
+            Assert.Equal(3, a);
+            Assert.Equal(6, b);
         }
 
         private class HasInt32
@@ -933,10 +930,10 @@ select * from @bar", new { foo }).Single();
         {
             const string sql = "select cast(42 as bigint) as Value";
             int i = connection.Query<HasInt32>(sql).Single().Value;
-            Assert.IsEqualTo(42, i);
+            Assert.Equal(42, i);
 
             i = connection.Query<int>(sql).Single();
-            Assert.IsEqualTo(42, i);
+            Assert.Equal(42, i);
         }
 
         [Fact]
@@ -946,11 +943,11 @@ select * from @bar", new { foo }).Single();
 
             dynamic template = Activator.CreateInstance(type);
             dynamic actual = CheetViaDynamic(template, "select @A as [A], @B as [B]", new { A = 123, B = "abc" });
-            ((object)actual).GetType().IsEqualTo(type);
+            Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
-            a.IsEqualTo(123);
-            b.IsEqualTo("abc");
+            Assert.Equal(123, a);
+            Assert.Equal("abc", b);
         }
 
         [Fact]
@@ -959,11 +956,11 @@ select * from @bar", new { foo }).Single();
             Type type = Common.GetSomeType();
 
             dynamic actual = connection.Query(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).FirstOrDefault();
-            ((object)actual).GetType().IsEqualTo(type);
+            Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
-            a.IsEqualTo(123);
-            b.IsEqualTo("abc");
+            Assert.Equal(123, a);
+            Assert.Equal("abc", b);
         }
 
         private T CheetViaDynamic<T>(T template, string query, object args)
@@ -975,29 +972,29 @@ select * from @bar", new { foo }).Single();
         public void Issue22_ExecuteScalar()
         {
             int i = connection.ExecuteScalar<int>("select 123");
-            i.IsEqualTo(123);
+            Assert.Equal(123, i);
 
             i = connection.ExecuteScalar<int>("select cast(123 as bigint)");
-            i.IsEqualTo(123);
+            Assert.Equal(123, i);
 
             long j = connection.ExecuteScalar<long>("select 123");
-            j.IsEqualTo(123L);
+            Assert.Equal(123L, j);
 
             j = connection.ExecuteScalar<long>("select cast(123 as bigint)");
-            j.IsEqualTo(123L);
+            Assert.Equal(123L, j);
 
             int? k = connection.ExecuteScalar<int?>("select @i", new { i = default(int?) });
-            k.IsNull();
+            Assert.Null(k);
         }
 
         [Fact]
         public void Issue142_FailsNamedStatus()
         {
             var row1 = connection.Query<Issue142_Status>("select @Status as [Status]", new { Status = StatusType.Started }).Single();
-            row1.Status.IsEqualTo(StatusType.Started);
+            Assert.Equal(StatusType.Started, row1.Status);
 
             var row2 = connection.Query<Issue142_StatusType>("select @Status as [Status]", new { Status = Status.Started }).Single();
-            row2.Status.IsEqualTo(Status.Started);
+            Assert.Equal(Status.Started, row2.Status);
         }
 
         public class Issue142_Status
@@ -1023,7 +1020,7 @@ select * from @bar", new { foo }).Single();
         [Fact]
         public void Issue178_SqlServer()
         {
-            const string sql = @"select count(*) from Issue178";
+            const string sql = "select count(*) from Issue178";
             try { connection.Execute("drop table Issue178"); }
             catch { /* don't care */ }
             try { connection.Execute("create table Issue178(id int not null)"); }
@@ -1032,19 +1029,19 @@ select * from @bar", new { foo }).Single();
             var sqlCmd = new SqlCommand(sql, connection);
             using (IDataReader reader1 = sqlCmd.ExecuteReader())
             {
-                Assert.IsTrue(reader1.Read());
-                reader1.GetInt32(0).IsEqualTo(0);
-                Assert.IsFalse(reader1.Read());
-                Assert.IsFalse(reader1.NextResult());
+                Assert.True(reader1.Read());
+                Assert.Equal(0, reader1.GetInt32(0));
+                Assert.False(reader1.Read());
+                Assert.False(reader1.NextResult());
             }
 
             // dapper
             using (var reader2 = connection.ExecuteReader(sql))
             {
-                Assert.IsTrue(reader2.Read());
-                reader2.GetInt32(0).IsEqualTo(0);
-                Assert.IsFalse(reader2.Read());
-                Assert.IsFalse(reader2.NextResult());
+                Assert.True(reader2.Read());
+                Assert.Equal(0, reader2.GetInt32(0));
+                Assert.False(reader2.Read());
+                Assert.False(reader2.NextResult());
             }
         }
 
@@ -1052,14 +1049,14 @@ select * from @bar", new { foo }).Single();
         public void QueryBasicWithoutQuery()
         {
             int? i = connection.Query<int?>("print 'not a query'").FirstOrDefault();
-            i.IsNull();
+            Assert.Null(i);
         }
 
         [Fact]
         public void QueryComplexWithoutQuery()
         {
             var obj = connection.Query<Foo1>("print 'not a query'").FirstOrDefault();
-            obj.IsNull();
+            Assert.Null(obj);
         }
 
         [FactLongRunning]
@@ -1068,15 +1065,15 @@ select * from @bar", new { foo }).Single();
             var watch = Stopwatch.StartNew();
             var i = connection.Query<int>("waitfor delay '00:01:00'; select 42;", commandTimeout: 300, buffered: false).Single();
             watch.Stop();
-            i.IsEqualTo(42);
+            Assert.Equal(42, i);
             var minutes = watch.ElapsedMilliseconds / 1000 / 60;
-            Assert.IsTrue(minutes >= 0.95 && minutes <= 1.05);
+            Assert.True(minutes >= 0.95 && minutes <= 1.05);
         }
 
         [Fact]
         public void SO30435185_InvalidTypeOwner()
         {
-            try
+            var ex = Assert.Throws<InvalidOperationException>(() =>
             {
                 const string sql = @" INSERT INTO #XXX
                         (XXXId, AnotherId, ThirdId, Value, Comment)
@@ -1103,14 +1100,9 @@ select * from @bar", new { foo }).Single();
                     .ToArray();
 
                 var rowcount = (int)connection.Query(sql, parameters).Single().Foo;
-                rowcount.IsEqualTo(1);
-
-                Assert.Fail();
-            }
-            catch (InvalidOperationException ex)
-            {
-                ex.Message.IsEqualTo("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
-            }
+                Assert.Equal(1, rowcount);
+            });
+            Assert.Equal("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context", ex.Message);
         }
 
         [Fact]
@@ -1127,17 +1119,17 @@ insert TPTable (Value) values (2), (568)");
                 .ToDictionary(x => x.Pid);
 
             // check the number of rows
-            rows.Count.IsEqualTo(2);
+            Assert.Equal(2, rows.Count);
 
             // check row 1
             var row = rows[1];
-            row.Pid.IsEqualTo(1);
-            row.Value.IsEqualTo(2);
+            Assert.Equal(1, row.Pid);
+            Assert.Equal(2, row.Value);
 
             // check row 2
             row = rows[2];
-            row.Pid.IsEqualTo(2);
-            row.Value.IsEqualTo(568);
+            Assert.Equal(2, row.Pid);
+            Assert.Equal(568, row.Value);
         }
 
         public class TPTable
@@ -1150,8 +1142,8 @@ insert TPTable (Value) values (2), (568)");
         public void GetOnlyProperties()
         {
             var obj = connection.QuerySingle<HazGetOnly>("select 42 as [Id], 'def' as [Name];");
-            obj.Id.IsEqualTo(42);
-            obj.Name.IsEqualTo("def");
+            Assert.Equal(42, obj.Id);
+            Assert.Equal("def", obj.Name);
         }
 
         private class HazGetOnly

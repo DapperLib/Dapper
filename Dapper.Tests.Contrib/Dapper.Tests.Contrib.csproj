@@ -9,7 +9,7 @@
     <TargetFrameworks>netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Dapper.Tests\Helpers\Assert.cs;..\Dapper.Tests\Helpers\XunitSkippable.cs;..\Dapper\TypeExtensions.cs" />
+    <Compile Include="..\Dapper.Tests\Helpers\XunitSkippable.cs;..\Dapper\TypeExtensions.cs" />
     <None Remove="Test.DB.sdf" />
   </ItemGroup>
   <ItemGroup>

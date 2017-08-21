@@ -18,13 +18,13 @@ namespace Dapper.Tests
             var param = new { testParam = "TestString" };
 
             var result01 = connection.Query<string>(sql, param).FirstOrDefault();
-            result01.IsEqualTo("nvarchar");
+            Assert.Equal("nvarchar", result01);
 
             SqlMapper.PurgeQueryCache();
 
             SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
             var result02 = connection.Query<string>(sql, param).FirstOrDefault();
-            result02.IsEqualTo("varchar");
+            Assert.Equal("varchar", result02);
 
             SqlMapper.PurgeQueryCache();
             SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
@@ -37,13 +37,13 @@ namespace Dapper.Tests
             var param = new { testParam = "TestString" };
 
             var result01 = connection.QueryFirstOrDefault<string>(sql, param);
-            result01.IsEqualTo("nvarchar");
+            Assert.Equal("nvarchar", result01);
 
             SqlMapper.PurgeQueryCache();
 
             SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
             var result02 = connection.QueryFirstOrDefault<string>(sql, param);
-            result02.IsEqualTo("varchar");
+            Assert.Equal("varchar", result02);
 
             SqlMapper.PurgeQueryCache();
             SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
@@ -54,8 +54,8 @@ namespace Dapper.Tests
         {
             // default mapping
             var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("AVal");
-            item.B.IsEqualTo("BVal");
+            Assert.Equal("AVal", item.A);
+            Assert.Equal("BVal", item.B);
 
             // custom mapping
             var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
@@ -63,14 +63,14 @@ namespace Dapper.Tests
             SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
 
             item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("BVal");
-            item.B.IsEqualTo("AVal");
+            Assert.Equal("BVal", item.A);
+            Assert.Equal("AVal", item.B);
 
             // reset to default
             SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
             item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("AVal");
-            item.B.IsEqualTo("BVal");
+            Assert.Equal("AVal", item.A);
+            Assert.Equal("BVal", item.B);
         }
 
         private static string GetDescriptionFromAttribute(MemberInfo member)
@@ -222,59 +222,59 @@ namespace Dapper.Tests
         {
             using (var reader = connection.ExecuteReader("select cast(1 as " + dbType + ")"))
             {
-                reader.Read().IsTrue();
+                Assert.True(reader.Read());
                 reader.GetFieldType(0).Equals(typeof(T));
-                reader.Read().IsFalse();
-                reader.NextResult().IsFalse();
+                Assert.False(reader.Read());
+                Assert.False(reader.NextResult());
             }
 
             string sql = "select " + string.Join(",", typeof(LotsOfNumerics).GetProperties().Select(
                 x => "cast (1 as " + dbType + ") as [" + x.Name + "]"));
             var row = connection.Query<LotsOfNumerics>(sql).Single();
 
-            row.N_Bool.IsTrue();
-            row.N_SByte.IsEqualTo((sbyte)1);
-            row.N_Byte.IsEqualTo((byte)1);
-            row.N_Int.IsEqualTo((int)1);
-            row.N_UInt.IsEqualTo((uint)1);
-            row.N_Short.IsEqualTo((short)1);
-            row.N_UShort.IsEqualTo((ushort)1);
-            row.N_Long.IsEqualTo((long)1);
-            row.N_ULong.IsEqualTo((ulong)1);
-            row.N_Float.IsEqualTo((float)1);
-            row.N_Double.IsEqualTo((double)1);
-            row.N_Decimal.IsEqualTo((decimal)1);
+            Assert.True(row.N_Bool);
+            Assert.Equal(row.N_SByte, (sbyte)1);
+            Assert.Equal(row.N_Byte, (byte)1);
+            Assert.Equal(row.N_Int, (int)1);
+            Assert.Equal(row.N_UInt, (uint)1);
+            Assert.Equal(row.N_Short, (short)1);
+            Assert.Equal(row.N_UShort, (ushort)1);
+            Assert.Equal(row.N_Long, (long)1);
+            Assert.Equal(row.N_ULong, (ulong)1);
+            Assert.Equal(row.N_Float, (float)1);
+            Assert.Equal(row.N_Double, (double)1);
+            Assert.Equal(row.N_Decimal, (decimal)1);
 
-            row.P_Byte.IsEqualTo(LotsOfNumerics.E_Byte.B);
-            row.P_SByte.IsEqualTo(LotsOfNumerics.E_SByte.B);
-            row.P_Short.IsEqualTo(LotsOfNumerics.E_Short.B);
-            row.P_UShort.IsEqualTo(LotsOfNumerics.E_UShort.B);
-            row.P_Int.IsEqualTo(LotsOfNumerics.E_Int.B);
-            row.P_UInt.IsEqualTo(LotsOfNumerics.E_UInt.B);
-            row.P_Long.IsEqualTo(LotsOfNumerics.E_Long.B);
-            row.P_ULong.IsEqualTo(LotsOfNumerics.E_ULong.B);
+            Assert.Equal(LotsOfNumerics.E_Byte.B, row.P_Byte);
+            Assert.Equal(LotsOfNumerics.E_SByte.B, row.P_SByte);
+            Assert.Equal(LotsOfNumerics.E_Short.B, row.P_Short);
+            Assert.Equal(LotsOfNumerics.E_UShort.B, row.P_UShort);
+            Assert.Equal(LotsOfNumerics.E_Int.B, row.P_Int);
+            Assert.Equal(LotsOfNumerics.E_UInt.B, row.P_UInt);
+            Assert.Equal(LotsOfNumerics.E_Long.B, row.P_Long);
+            Assert.Equal(LotsOfNumerics.E_ULong.B, row.P_ULong);
 
-            row.N_N_Bool.Value.IsTrue();
-            row.N_N_SByte.Value.IsEqualTo((sbyte)1);
-            row.N_N_Byte.Value.IsEqualTo((byte)1);
-            row.N_N_Int.Value.IsEqualTo((int)1);
-            row.N_N_UInt.Value.IsEqualTo((uint)1);
-            row.N_N_Short.Value.IsEqualTo((short)1);
-            row.N_N_UShort.Value.IsEqualTo((ushort)1);
-            row.N_N_Long.Value.IsEqualTo((long)1);
-            row.N_N_ULong.Value.IsEqualTo((ulong)1);
-            row.N_N_Float.Value.IsEqualTo((float)1);
-            row.N_N_Double.Value.IsEqualTo((double)1);
-            row.N_N_Decimal.IsEqualTo((decimal)1);
+            Assert.True(row.N_N_Bool.Value);
+            Assert.Equal(row.N_N_SByte.Value, (sbyte)1);
+            Assert.Equal(row.N_N_Byte.Value, (byte)1);
+            Assert.Equal(row.N_N_Int.Value, (int)1);
+            Assert.Equal(row.N_N_UInt.Value, (uint)1);
+            Assert.Equal(row.N_N_Short.Value, (short)1);
+            Assert.Equal(row.N_N_UShort.Value, (ushort)1);
+            Assert.Equal(row.N_N_Long.Value, (long)1);
+            Assert.Equal(row.N_N_ULong.Value, (ulong)1);
+            Assert.Equal(row.N_N_Float.Value, (float)1);
+            Assert.Equal(row.N_N_Double.Value, (double)1);
+            Assert.Equal(row.N_N_Decimal, (decimal)1);
 
-            row.N_P_Byte.Value.IsEqualTo(LotsOfNumerics.E_Byte.B);
-            row.N_P_SByte.Value.IsEqualTo(LotsOfNumerics.E_SByte.B);
-            row.N_P_Short.Value.IsEqualTo(LotsOfNumerics.E_Short.B);
-            row.N_P_UShort.Value.IsEqualTo(LotsOfNumerics.E_UShort.B);
-            row.N_P_Int.Value.IsEqualTo(LotsOfNumerics.E_Int.B);
-            row.N_P_UInt.Value.IsEqualTo(LotsOfNumerics.E_UInt.B);
-            row.N_P_Long.Value.IsEqualTo(LotsOfNumerics.E_Long.B);
-            row.N_P_ULong.Value.IsEqualTo(LotsOfNumerics.E_ULong.B);
+            Assert.Equal(LotsOfNumerics.E_Byte.B, row.N_P_Byte.Value);
+            Assert.Equal(LotsOfNumerics.E_SByte.B, row.N_P_SByte.Value);
+            Assert.Equal(LotsOfNumerics.E_Short.B, row.N_P_Short.Value);
+            Assert.Equal(LotsOfNumerics.E_UShort.B, row.N_P_UShort.Value);
+            Assert.Equal(LotsOfNumerics.E_Int.B, row.N_P_Int.Value);
+            Assert.Equal(LotsOfNumerics.E_UInt.B, row.N_P_UInt.Value);
+            Assert.Equal(LotsOfNumerics.E_Long.B, row.N_P_Long.Value);
+            Assert.Equal(LotsOfNumerics.E_ULong.B, row.N_P_ULong.Value);
 
             TestBigIntForEverythingWorksGeneric<bool>(true, dbType);
             TestBigIntForEverythingWorksGeneric<sbyte>((sbyte)1, dbType);
@@ -324,32 +324,32 @@ namespace Dapper.Tests
         private void TestBigIntForEverythingWorksGeneric<T>(T expected, string dbType)
         {
             var query = connection.Query<T>("select cast(1 as " + dbType + ")").Single();
-            query.IsEqualTo(expected);
+            Assert.Equal(query, expected);
 
             var scalar = connection.ExecuteScalar<T>("select cast(1 as " + dbType + ")");
-            scalar.IsEqualTo(expected);
+            Assert.Equal(scalar, expected);
         }
 
         [Fact]
         public void TestSubsequentQueriesSuccess()
         {
             var data0 = connection.Query<Fooz0>("select 1 as [Id] where 1 = 0").ToList();
-            data0.Count.IsEqualTo(0);
+            Assert.Empty(data0);
 
             var data1 = connection.Query<Fooz1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).ToList();
-            data1.Count.IsEqualTo(0);
+            Assert.Empty(data1);
 
             var data2 = connection.Query<Fooz2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).ToList();
-            data2.Count.IsEqualTo(0);
+            Assert.Empty(data2);
 
             data0 = connection.Query<Fooz0>("select 1 as [Id] where 1 = 0").ToList();
-            data0.Count.IsEqualTo(0);
+            Assert.Empty(data0);
 
             data1 = connection.Query<Fooz1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).ToList();
-            data1.Count.IsEqualTo(0);
+            Assert.Empty(data1);
 
             data2 = connection.Query<Fooz2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).ToList();
-            data2.Count.IsEqualTo(0);
+            Assert.Empty(data2);
         }
 
         private class Fooz0
@@ -411,8 +411,8 @@ namespace Dapper.Tests
             SqlMapper.AddTypeHandler(RatingValueHandler.Default);
             var foo = connection.Query<MyResult>("SELECT 'Foo' AS CategoryName, 200 AS CategoryRating").Single();
 
-            foo.CategoryName.IsEqualTo("Foo");
-            foo.CategoryRating.Value.IsEqualTo(200);
+            Assert.Equal("Foo", foo.CategoryName);
+            Assert.Equal(200, foo.CategoryRating.Value);
         }
 
         [Fact]
@@ -421,7 +421,7 @@ namespace Dapper.Tests
             SqlMapper.AddTypeHandler(RatingValueHandler.Default);
             var foo = connection.Query<RatingValue>("SELECT 200 AS CategoryRating").Single();
 
-            foo.Value.IsEqualTo(200);
+            Assert.Equal(200, foo.Value);
         }
 
         public class StringListTypeHandler : SqlMapper.TypeHandler<List<String>>
@@ -454,7 +454,7 @@ namespace Dapper.Tests
             SqlMapper.ResetTypeHandlers();
             SqlMapper.AddTypeHandler(StringListTypeHandler.Default);
             var foo = connection.Query<MyObjectWithStringList>("SELECT 'Sam,Kyro' AS Names").Single();
-            foo.Names.IsSequenceEqualTo(new[] { "Sam", "Kyro" });
+            Assert.Equal(new[] { "Sam", "Kyro" }, foo.Names);
         }
 
         [Fact]
@@ -469,7 +469,7 @@ namespace Dapper.Tests
                 const string names = "Sam,Kyro";
                 List<string> names_list = names.Split(',').ToList();
                 var foo = connection.Query<string>("INSERT INTO #Issue253 (Names) VALUES (@Names); SELECT Names FROM #Issue253;", new { Names = names_list }).Single();
-                foo.IsEqualTo(names);
+                Assert.Equal(foo, names);
             }
             finally
             {
@@ -511,8 +511,8 @@ namespace Dapper.Tests
                 connection.Execute("INSERT INTO #Test_RemoveTypeMap VALUES (@Now)", new { DateTime.Now });
                 connection.Query<DateTime>("SELECT * FROM #Test_RemoveTypeMap");
 
-                dateTimeHandler.ParseWasCalled.IsTrue();
-                dateTimeHandler.SetValueWasCalled.IsTrue();
+                Assert.True(dateTimeHandler.ParseWasCalled);
+                Assert.True(dateTimeHandler.SetValueWasCalled);
             }
             finally
             {
@@ -529,27 +529,27 @@ namespace Dapper.Tests
                 connection.Execute("create table #ResultsChange (X int);create table #ResultsChange2 (Y int);insert #ResultsChange (X) values(1);insert #ResultsChange2 (Y) values(1);");
 
                 var obj1 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
-                obj1.X.IsEqualTo(1);
-                obj1.Y.IsEqualTo(0);
-                obj1.Z.IsEqualTo(0);
+                Assert.Equal(1, obj1.X);
+                Assert.Equal(0, obj1.Y);
+                Assert.Equal(0, obj1.Z);
 
                 var obj2 = connection.Query<ResultsChangeType>("select * from #ResultsChange rc inner join #ResultsChange2 rc2 on rc2.Y=rc.X").Single();
-                obj2.X.IsEqualTo(1);
-                obj2.Y.IsEqualTo(1);
-                obj2.Z.IsEqualTo(0);
+                Assert.Equal(1, obj2.X);
+                Assert.Equal(1, obj2.Y);
+                Assert.Equal(0, obj2.Z);
 
                 connection.Execute("alter table #ResultsChange add Z int null");
                 connection.Execute("update #ResultsChange set Z = 2");
 
                 var obj3 = connection.Query<ResultsChangeType>("select * from #ResultsChange").Single();
-                obj3.X.IsEqualTo(1);
-                obj3.Y.IsEqualTo(0);
-                obj3.Z.IsEqualTo(2);
+                Assert.Equal(1, obj3.X);
+                Assert.Equal(0, obj3.Y);
+                Assert.Equal(2, obj3.Z);
 
                 var obj4 = connection.Query<ResultsChangeType>("select * from #ResultsChange rc inner join #ResultsChange2 rc2 on rc2.Y=rc.X").Single();
-                obj4.X.IsEqualTo(1);
-                obj4.Y.IsEqualTo(1);
-                obj4.Z.IsEqualTo(2);
+                Assert.Equal(1, obj4.X);
+                Assert.Equal(1, obj4.Y);
+                Assert.Equal(2, obj4.Z);
             }
             finally
             {
@@ -599,10 +599,10 @@ namespace Dapper.Tests
                 @"declare @vals table (A bit null, B bit null, C bit null);
                 insert @vals (A,B,C) values (1,0,null);
                 select * from @vals").Single();
-            obj.IsNotNull();
-            obj.A.Value.IsEqualTo(true);
-            obj.B.Value.IsEqualTo(false);
-            obj.C.IsNull();
+            Assert.NotNull(obj);
+            Assert.True(obj.A.Value);
+            Assert.False(obj.B.Value);
+            Assert.Null(obj.C);
         }
 
         private class HazBools
@@ -618,31 +618,22 @@ namespace Dapper.Tests
             dynamic row = connection.Query("select 1 as [a], '2' as [b]").Single();
             int a = row.a;
             string b = row.b;
-            a.IsEqualTo(1);
-            b.IsEqualTo("2");
+            Assert.Equal(1, a);
+            Assert.Equal("2", b);
 
             row = connection.Query<dynamic>("select 3 as [a], '4' as [b]").Single();
             a = row.a;
             b = row.b;
-            a.IsEqualTo(3);
-            b.IsEqualTo("4");
+            Assert.Equal(3, a);
+            Assert.Equal("4", b);
         }
 
         [Fact]
         public void Issue149_TypeMismatch_SequentialAccess()
         {
-            string error;
             Guid guid = Guid.Parse("cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e");
-            try
-            {
-                var result = connection.Query<Issue149_Person>("select @guid as Id", new { guid }).First();
-                error = null;
-            }
-            catch (Exception ex)
-            {
-                error = ex.Message;
-            }
-            error.IsEqualTo("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)");
+            var ex = Assert.ThrowsAny<Exception>(() => connection.Query<Issue149_Person>("select @guid as Id", new { guid }).First());
+            Assert.Equal("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)", ex.Message);
         }
 
         public class Issue149_Person { public string Id { get; set; } }
@@ -657,7 +648,7 @@ namespace Dapper.Tests
             var date = DateTime.UtcNow;
             var returned = connection.Query<DateTime>(sql, new { date }).Single();
             var delta = returned - date;
-            Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
+            Assert.True(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
         }
 
         [Fact]
@@ -678,15 +669,15 @@ namespace Dapper.Tests
 
             // test: without constructor
             var parameterlessWorks = connection.QuerySingle<Issue461_ParameterlessTypeConstructor>("SELECT * FROM #Issue461");
-            parameterlessWorks.Id.IsEqualTo(1);
-            parameterlessWorks.SomeValue.IsEqualTo("what up?");
-            parameterlessWorks.SomeBlargValue.Value.IsEqualTo(Expected);
+            Assert.Equal(1, parameterlessWorks.Id);
+            Assert.Equal("what up?", parameterlessWorks.SomeValue);
+            Assert.Equal(parameterlessWorks.SomeBlargValue.Value, Expected);
 
             // test: via constructor
             var parameterDoesNot = connection.QuerySingle<Issue461_ParameterisedTypeConstructor>("SELECT * FROM #Issue461");
-            parameterDoesNot.Id.IsEqualTo(1);
-            parameterDoesNot.SomeValue.IsEqualTo("what up?");
-            parameterDoesNot.SomeBlargValue.Value.IsEqualTo(Expected);
+            Assert.Equal(1, parameterDoesNot.Id);
+            Assert.Equal("what up?", parameterDoesNot.SomeValue);
+            Assert.Equal(parameterDoesNot.SomeBlargValue.Value, Expected);
         }
 
         // I would usually expect this to be a struct; using a class

@@ -54,14 +54,14 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
 
                 var rows = conn.Query<MySqlHasBool>("select * from bar;").ToDictionary(x => x.Id);
 
-                rows[1].Bool_Val.IsNull();
-                rows[2].Bool_Val.IsEqualTo(false);
-                rows[3].Bool_Val.IsEqualTo(true);
-                rows[4].Bool_Val.IsNull();
-                rows[5].Bool_Val.IsEqualTo(true);
-                rows[6].Bool_Val.IsEqualTo(false);
-                rows[7].Bool_Val.IsNull();
-                rows[8].Bool_Val.IsEqualTo(true);
+                Assert.Null(rows[1].Bool_Val);
+                Assert.False(rows[2].Bool_Val);
+                Assert.True(rows[3].Bool_Val);
+                Assert.Null(rows[4].Bool_Val);
+                Assert.True(rows[5].Bool_Val);
+                Assert.False(rows[6].Bool_Val);
+                Assert.Null(rows[7].Bool_Val);
+                Assert.True(rows[8].Bool_Val);
             }
         }
 
@@ -125,8 +125,8 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 conn.Execute("replace into Issue426_Test values (@Id,@Time)", localObj);
 
                 var dbObj = conn.Query<Issue426_Test>("select * from Issue426_Test where Id = @id", new { id = Id }).Single();
-                dbObj.Id.IsEqualTo(Id);
-                dbObj.Time.Value.Ticks.IsEqualTo(ticks);
+                Assert.Equal(Id, dbObj.Id);
+                Assert.Equal(ticks, dbObj.Time.Value.Ticks);
             }
         }
 
@@ -142,10 +142,10 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 conn.Execute("insert SO36303462_Test (Id, IsBold) values (3,1);");
 
                 var rows = conn.Query<SO36303462>("select * from SO36303462_Test").ToDictionary(x => x.Id);
-                rows.Count.IsEqualTo(3);
-                rows[1].IsBold.IsTrue();
-                rows[2].IsBold.IsFalse();
-                rows[3].IsBold.IsTrue();
+                Assert.Equal(3, rows.Count);
+                Assert.True(rows[1].IsBold);
+                Assert.False(rows[2].IsBold);
+                Assert.True(rows[3].IsBold);
             }
         }
 
@@ -161,6 +161,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             public TimeSpan? Time { get; set; }
         }
 
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactMySqlAttribute : FactAttribute
         {
             public override string Skip

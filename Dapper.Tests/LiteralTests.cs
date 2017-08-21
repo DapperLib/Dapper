@@ -38,10 +38,10 @@ namespace Dapper.Tests
         public void LiteralReplacementBoolean()
         {
             var row = connection.Query<int?>("select 42 where 1 = {=val}", new { val = true }).SingleOrDefault();
-            row.IsNotNull();
-            row.IsEqualTo(42);
+            Assert.NotNull(row);
+            Assert.Equal(42, row);
             row = connection.Query<int?>("select 42 where 1 = {=val}", new { val = false }).SingleOrDefault();
-            row.IsNull();
+            Assert.Null(row);
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace Dapper.Tests
             });
             var count = connection.Query<int>("select count(1) from #literalin where id in {=ids}",
                 new { ids = new[] { 1, 3, 4 } }).Single();
-            count.IsEqualTo(2);
+            Assert.Equal(2, count);
         }
 
         [Fact]
@@ -78,9 +78,9 @@ namespace Dapper.Tests
             var rows = new[] { new { id = 1, foo = 2 }, new { id = 3, foo = 4 } };
             connection.Execute("insert #literal1 (id,foo) values ({=id}, @foo)", rows);
             var count = connection.Query<int>("select count(1) from #literal1 where id={=foo}", new { foo = 123 }).Single();
-            count.IsEqualTo(1);
+            Assert.Equal(1, count);
             int sum = connection.Query<int>("select sum(id) + sum(foo) from #literal1").Single();
-            sum.IsEqualTo(123 + 456 + 1 + 2 + 3 + 4);
+            Assert.Equal(sum, 123 + 456 + 1 + 2 + 3 + 4);
         }
 
         [Fact]
@@ -94,7 +94,7 @@ namespace Dapper.Tests
             args = new DynamicParameters();
             args.Add("foo", 123);
             var count = connection.Query<int>("select count(1) from #literal2 where id={=foo}", args).Single();
-            count.IsEqualTo(1);
+            Assert.Equal(1, count);
         }
     }
 }

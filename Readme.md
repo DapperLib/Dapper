@@ -363,8 +363,4 @@ Dapper has a comprehensive test suite in the [test project](https://github.com/S
 
 Who is using this?
 ---------------------
-Dapper is in production use at:
-
-[Stack Overflow](https://stackoverflow.com/), [helpdesk](https://www.jitbit.com/web-helpdesk/)
-
-(if you would like to be listed here let me know)
+Dapper is in production use at [Stack Overflow](https://stackoverflow.com/).

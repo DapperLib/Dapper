@@ -23,7 +23,7 @@ namespace Dapper.Tests
                     transaction.Commit();
                 }
 
-                connection.Query<int>("select count(*) from #TransactionTest;").Single().IsEqualTo(1);
+                Assert.Equal(1, connection.Query<int>("select count(*) from #TransactionTest;").Single());
             }
             finally
             {
@@ -45,7 +45,7 @@ namespace Dapper.Tests
                     transaction.Rollback();
                 }
 
-                connection.Query<int>("select count(*) from #TransactionTest;").Single().IsEqualTo(0);
+                Assert.Equal(0, connection.Query<int>("select count(*) from #TransactionTest;").Single());
             }
             finally
             {
@@ -69,7 +69,7 @@ namespace Dapper.Tests
                     transaction.Rollback();
                 }
 
-                connection.Query<int>("select count(*) from #TransactionTest;").Single().IsEqualTo(0);
+                Assert.Equal(0, connection.Query<int>("select count(*) from #TransactionTest;").Single());
             }
             finally
             {

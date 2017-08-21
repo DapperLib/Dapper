@@ -343,7 +343,7 @@ namespace Dapper
         {
             var failMessage = "Expression must be a property/field chain off of a(n) {0} instance";
             failMessage = string.Format(failMessage, typeof(T).Name);
-            Action @throw = () => { throw new InvalidOperationException(failMessage); };
+            Action @throw = () => throw new InvalidOperationException(failMessage);
 
             // Is it even a MemberExpression?
             var lastMemberAccess = expression.Body as MemberExpression;

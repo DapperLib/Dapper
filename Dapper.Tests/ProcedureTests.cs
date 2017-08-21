@@ -26,7 +26,7 @@ namespace Dapper.Tests
             var args = new DynamicParameters(obj);
             args.Add("ID", 0, direction: ParameterDirection.Output);
             connection.Execute("#TestProcWithOutParameter", args, commandType: CommandType.StoredProcedure);
-            args.Get<int>("ID").IsEqualTo(7);
+            Assert.Equal(7, args.Get<int>("ID"));
         }
 
         [Fact]
@@ -50,8 +50,8 @@ namespace Dapper.Tests
             args.Add("ID", 0, direction: ParameterDirection.Output);
             args.Add("result", 0, direction: ParameterDirection.ReturnValue);
             connection.Execute("#TestProcWithOutAndReturnParameter", args, commandType: CommandType.StoredProcedure);
-            args.Get<int>("ID").IsEqualTo(7);
-            args.Get<int>("result").IsEqualTo(42);
+            Assert.Equal(7, args.Get<int>("ID"));
+            Assert.Equal(42, args.Get<int>("result"));
         }
 
         [Fact]
@@ -78,12 +78,12 @@ namespace Dapper.Tests
         END");
             var result = connection.Query(sql: "#up_MessageProcessed_get", param: p, commandType: CommandType.StoredProcedure);
             var row = result.Single();
-            ((int)row.MessageProcessID).IsEqualTo(2);
-            ((int)row.StartNum).IsEqualTo(38349348);
-            ((int)row.EndNum).IsEqualTo(3874900);
+            Assert.Equal(2, (int)row.MessageProcessID);
+            Assert.Equal(38349348, (int)row.StartNum);
+            Assert.Equal(3874900, (int)row.EndNum);
             DateTime startDate = row.StartDate, endDate = row.EndDate;
-            p.Get<int>("SuccessCode").IsEqualTo(0);
-            p.Get<string>("ErrorDescription").IsEqualTo("Completed successfully");
+            Assert.Equal(0, p.Get<int>("SuccessCode"));
+            Assert.Equal("Completed successfully", p.Get<string>("ErrorDescription"));
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace Dapper.Tests
                 TaxInvoiceNumber = InvoiceNumber
             }, commandType: CommandType.StoredProcedure).FirstOrDefault();
 
-            result.TaxInvoiceNumber.IsEqualTo("INV0000000028PPN");
+            Assert.Equal("INV0000000028PPN", result.TaxInvoiceNumber);
         }
 
         private class PracticeRebateOrders
@@ -125,8 +125,8 @@ namespace Dapper.Tests
             var query = connection.QueryMultiple("#TestEmptyResults", commandType: CommandType.StoredProcedure);
             var result1 = query.Read<Issue327_Person>();
             var result2 = query.Read<Issue327_Magic>();
-            result1.Any().IsFalse();
-            result2.Any().IsFalse();
+            Assert.False(result1.Any());
+            Assert.False(result2.Any());
         }
 
         private class Issue327_Person
@@ -159,10 +159,10 @@ begin
 	select 1111
 	return @a
 end");
-            connection.Query<int>("#TestProc", p, commandType: CommandType.StoredProcedure).First().IsEqualTo(1111);
+            Assert.Equal(1111, connection.Query<int>("#TestProc", p, commandType: CommandType.StoredProcedure).First());
 
-            p.Get<int>("c").IsEqualTo(11);
-            p.Get<int>("b").IsEqualTo(999);
+            Assert.Equal(11, p.Get<int>("c"));
+            Assert.Equal(999, p.Get<int>("b"));
         }
 
         // https://stackoverflow.com/q/8593871
@@ -178,10 +178,10 @@ end");
                 }
                 }).ToList();
 
-            results.Count.IsEqualTo(2);
+            Assert.Equal(2, results.Count);
             results.Sort();
-            results[0].IsEqualTo("a");
-            results[1].IsEqualTo("b");
+            Assert.Equal("a", results[0]);
+            Assert.Equal("b", results[1]);
         }
     }
 }

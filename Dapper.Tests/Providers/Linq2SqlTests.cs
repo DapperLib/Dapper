@@ -19,7 +19,7 @@ namespace Dapper.Tests
 
             var output = connection.Query<WithBinary>("select @input as [Value]", new { input }).First().Value;
 
-            output.ToArray().IsSequenceEqualTo(orig);
+            Assert.Equal(orig, output.ToArray());
         }
 
         [Fact]
@@ -31,14 +31,13 @@ namespace Dapper.Tests
 
             var output = connection.Query<System.Data.Linq.Binary>("select @input as [Value]", new { input }).First();
 
-            output.ToArray().IsSequenceEqualTo(orig);
+            Assert.Equal(orig, output.ToArray());
         }
 
         private class WithBinary
         {
             public System.Data.Linq.Binary Value { get; set; }
         }
-
 
         private class NoDefaultConstructorWithBinary
         {
@@ -57,7 +56,7 @@ namespace Dapper.Tests
             new Random(123456).NextBytes(orig);
             var input = new System.Data.Linq.Binary(orig);
             var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as val", new { input }).First().Value;
-            output.ToArray().IsSequenceEqualTo(orig);
+            Assert.Equal(orig, output.ToArray());
         }
     }
 }
