@@ -24,8 +24,8 @@ namespace Dapper.Tests.Providers
             var fromDb = connection.QuerySingle<DbGeography>("declare @geos table(geo geography); insert @geos(geo) values(@val); select * from @geos",
                 new { val = orig });
 
-            fromDb.Area.IsNotNull();
-            fromDb.Area.IsEqualTo(orig.Area);
+            Assert.NotNull(fromDb.Area);
+            Assert.Equal(orig.Area, fromDb.Area);
         }
 #endif
 
@@ -34,7 +34,7 @@ namespace Dapper.Tests.Providers
         {
             var geo = DbGeography.LineFromText("LINESTRING(-122.360 47.656, -122.343 47.656 )", 4326);
             var geo2 = connection.ExecuteScalar<DbGeography>("select @geo", new { geo });
-            geo2.IsNotNull();
+            Assert.NotNull(geo2);
         }
     }
 }

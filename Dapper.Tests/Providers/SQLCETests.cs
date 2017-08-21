@@ -29,11 +29,11 @@ namespace Dapper.Tests
                 cnn.Execute("insert Posts values(2,'title2','body2',null)");
                 cnn.Execute("insert Authors values(1,'sam')");
 
-                var data = cnn.Query<PostCE, AuthorCE, PostCE>(@"select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; return post; }).ToList();
+                var data = cnn.Query<PostCE, AuthorCE, PostCE>("select * from Posts p left join Authors a on a.ID = p.AuthorID", (post, author) => { post.Author = author; return post; }).ToList();
                 var firstPost = data[0];
-                firstPost.Title.IsEqualTo("title");
-                firstPost.Author.Name.IsEqualTo("sam");
-                data[1].Author.IsNull();
+                Assert.Equal("title", firstPost.Title);
+                Assert.Equal("sam", firstPost.Author.Name);
+                Assert.Null(data[1].Author);
             }
         }
 

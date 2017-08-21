@@ -19,63 +19,63 @@ namespace Dapper.Tests
         {
             var query = await connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
             var arr = query.ToArray();
-            arr.IsSequenceEqualTo(new[] { "abc", "def" });
+            Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQueryFirstAsync()
         {
             var str = await connection.QueryFirstAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new {txt = "def"})).ConfigureAwait(false);
-            str.IsEqualTo("abc");
+            Assert.Equal("abc", str);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQueryFirstAsyncDynamic()
         {
             var str = await connection.QueryFirstAsync("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
-            str.IsEqualTo("abc");
+            Assert.Equal("abc", str.Value);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQueryFirstOrDefaultAsync()
         {
             var str = await connection.QueryFirstOrDefaultAsync<string>(new CommandDefinition("select null as [Value] union all select @txt", new {txt = "def"})).ConfigureAwait(false);
-            str.IsNull();
+            Assert.Null(str);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQueryFirstOrDefaultAsyncDynamic()
         {
             var str = await connection.QueryFirstOrDefaultAsync("select null as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
-            str.IsNull();
+            Assert.Null(str.Value);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQuerySingleAsyncDynamic()
         {
             var str = await connection.QuerySingleAsync<string>(new CommandDefinition("select 'abc' as [Value]")).ConfigureAwait(false);
-            str.IsEqualTo("abc");
+            Assert.Equal("abc", str);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQuerySingleAsync()
         {
             var str = await connection.QuerySingleAsync("select 'abc' as [Value]").ConfigureAwait(false);
-            str.IsEqualTo("abc");
+            Assert.Equal("abc", str.Value);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQuerySingleOrDefaultAsync()
         {
             var str = await connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition("select null as [Value]")).ConfigureAwait(false);
-            str.IsNull();
+            Assert.Null(str);
         }
 
         [Fact]
         public async Task TestBasicStringUsageQuerySingleOrDefaultAsyncDynamic()
         {
             var str = await connection.QuerySingleOrDefaultAsync("select null as [Value]").ConfigureAwait(false);
-            str.IsNull();
+            Assert.Null(str.Value);
         }
 
         [Fact]
@@ -83,7 +83,7 @@ namespace Dapper.Tests
         {
             var query = await connection.QueryAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" }, flags: CommandFlags.None)).ConfigureAwait(false);
             var arr = query.ToArray();
-            arr.IsSequenceEqualTo(new[] { "abc", "def" });
+            Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
         [Fact]
@@ -100,7 +100,7 @@ namespace Dapper.Tests
             }
             catch (AggregateException agg)
             {
-                (agg.InnerException is SqlException).IsTrue();
+                Assert.True(agg.InnerException is SqlException);
             }
         }
 
@@ -109,7 +109,7 @@ namespace Dapper.Tests
         {
             var query = await connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
             var arr = query.ToArray();
-            arr.IsSequenceEqualTo(new[] { "abc", "def" });
+            Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
         [Fact]
@@ -117,7 +117,7 @@ namespace Dapper.Tests
         {
             var row = (await connection.QueryAsync("select 'abc' as [Value]").ConfigureAwait(false)).Single();
             string value = row.Value;
-            value.IsEqualTo("abc");
+            Assert.Equal("abc", value);
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace Dapper.Tests
         {
             var query = await connection.QueryAsync<BasicType>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
             var arr = query.ToArray();
-            arr.Select(x => x.Value).IsSequenceEqualTo(new[] { "abc", "def" });
+            Assert.Equal(new[] { "abc", "def" }, arr.Select(x => x.Value));
         }
 
         [Fact]
@@ -146,7 +146,7 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestMultiMapWithSplitAsync()
         {
-            const string sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+            const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
             var productQuery = await connection.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
             {
                 prod.Category = cat;
@@ -155,16 +155,16 @@ namespace Dapper.Tests
 
             var product = productQuery.First();
             // assertions
-            product.Id.IsEqualTo(1);
-            product.Name.IsEqualTo("abc");
-            product.Category.Id.IsEqualTo(2);
-            product.Category.Name.IsEqualTo("def");
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
         }
 
         [Fact]
         public async Task TestMultiMapArbitraryWithSplitAsync()
         {
-            const string sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+            const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
             var productQuery = await connection.QueryAsync<Product>(sql, new[] { typeof(Product), typeof(Category) }, (objects) => {
                 var prod = (Product)objects[0];
                 prod.Category = (Category)objects[1];
@@ -173,16 +173,16 @@ namespace Dapper.Tests
 
             var product = productQuery.First();
             // assertions
-            product.Id.IsEqualTo(1);
-            product.Name.IsEqualTo("abc");
-            product.Category.Id.IsEqualTo(2);
-            product.Category.Name.IsEqualTo("def");
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
         }
 
         [Fact]
         public async Task TestMultiMapWithSplitClosedConnAsync()
         {
-            const string sql = @"select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+            const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
             using (var conn = GetClosedConnection())
             {
                 var productQuery = await conn.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
@@ -193,10 +193,10 @@ namespace Dapper.Tests
 
                 var product = productQuery.First();
                 // assertions
-                product.Id.IsEqualTo(1);
-                product.Name.IsEqualTo("abc");
-                product.Category.Id.IsEqualTo(2);
-                product.Category.Name.IsEqualTo("def");
+                Assert.Equal(1, product.Id);
+                Assert.Equal("abc", product.Name);
+                Assert.Equal(2, product.Category.Id);
+                Assert.Equal("def", product.Category.Name);
             }
         }
 
@@ -205,8 +205,8 @@ namespace Dapper.Tests
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
             {
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
+                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
             }
         }
 
@@ -215,11 +215,11 @@ namespace Dapper.Tests
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
             {
-                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(1);
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
-                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(3);
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(4);
-                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(5);
+                Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+                Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+                Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
             }
         }
 
@@ -228,8 +228,8 @@ namespace Dapper.Tests
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
             {
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(1);
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
+                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
             }
         }
 
@@ -238,11 +238,11 @@ namespace Dapper.Tests
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5;").ConfigureAwait(false))
             {
-                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(1);
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(2);
-                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(3);
-                multi.ReadAsync<int>().Result.Single().IsEqualTo(4);
-                multi.ReadFirstOrDefaultAsync<int>().Result.IsEqualTo(5);
+                Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+                Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+                Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
             }
         }
 
@@ -252,12 +252,12 @@ namespace Dapper.Tests
         {
             var dt = new DataTable();
             dt.Load(await connection.ExecuteReaderAsync("select 3 as [three], 4 as [four]").ConfigureAwait(false));
-            dt.Columns.Count.IsEqualTo(2);
-            dt.Columns[0].ColumnName.IsEqualTo("three");
-            dt.Columns[1].ColumnName.IsEqualTo("four");
-            dt.Rows.Count.IsEqualTo(1);
-            ((int)dt.Rows[0][0]).IsEqualTo(3);
-            ((int)dt.Rows[0][1]).IsEqualTo(4);
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal("three", dt.Columns[0].ColumnName);
+            Assert.Equal("four", dt.Columns[1].ColumnName);
+            Assert.Equal(1, dt.Rows.Count);
+            Assert.Equal(3, (int)dt.Rows[0][0]);
+            Assert.Equal(4, (int)dt.Rows[0][1]);
         }
 
         [Fact]
@@ -267,12 +267,12 @@ namespace Dapper.Tests
             {
                 var dt = new DataTable();
                 dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").ConfigureAwait(false));
-                dt.Columns.Count.IsEqualTo(2);
-                dt.Columns[0].ColumnName.IsEqualTo("three");
-                dt.Columns[1].ColumnName.IsEqualTo("four");
-                dt.Rows.Count.IsEqualTo(1);
-                ((int)dt.Rows[0][0]).IsEqualTo(3);
-                ((int)dt.Rows[0][1]).IsEqualTo(4);
+                Assert.Equal(2, dt.Columns.Count);
+                Assert.Equal("three", dt.Columns[0].ColumnName);
+                Assert.Equal("four", dt.Columns[1].ColumnName);
+                Assert.Equal(1, dt.Rows.Count);
+                Assert.Equal(3, (int)dt.Rows[0][0]);
+                Assert.Equal(4, (int)dt.Rows[0][1]);
             }
         }
 #endif
@@ -301,9 +301,9 @@ namespace Dapper.Tests
             var rows = new[] { new { id = 1, foo = 2 }, new { id = 3, foo = 4 } };
             await conn.ExecuteAsync("insert literal1 (id,foo) values ({=id}, @foo)", rows).ConfigureAwait(false);
             var count = (await conn.QueryAsync<int>("select count(1) from literal1 where id={=foo}", new { foo = 123 }).ConfigureAwait(false)).Single();
-            count.IsEqualTo(1);
+            Assert.Equal(1, count);
             int sum = (await conn.QueryAsync<int>("select sum(id) + sum(foo) from literal1").ConfigureAwait(false)).Single();
-            sum.IsEqualTo(123 + 456 + 1 + 2 + 3 + 4);
+            Assert.Equal(sum, 123 + 456 + 1 + 2 + 3 + 4);
         }
 
         [Fact]
@@ -330,7 +330,7 @@ namespace Dapper.Tests
             args = new DynamicParameters();
             args.Add("foo", 123);
             var count = (await conn.QueryAsync<int>("select count(1) from literal2 where id={=foo}", args).ConfigureAwait(false)).Single();
-            count.IsEqualTo(1);
+            Assert.Equal(1, count);
         }
 
         [Fact]
@@ -344,9 +344,9 @@ namespace Dapper.Tests
             }).ConfigureAwait(false);
             var count = (await connection.QueryAsync<int>("select count(1) from #literalin where id in {=ids}",
                 new { ids = new[] { 1, 3, 4 } }).ConfigureAwait(false)).Single();
-            count.IsEqualTo(2);
+            Assert.Equal(2, count);
         }
-        
+
         [FactLongRunning]
         public async Task RunSequentialVersusParallelAsync()
         {
@@ -391,7 +391,7 @@ namespace Dapper.Tests
             public void AssertNoCacheWorksForQueryMultiple()
             {
                 const int a = 123, b = 456;
-                var cmdDef = new CommandDefinition(@"select @a; select @b;", new
+                var cmdDef = new CommandDefinition("select @a; select @b;", new
                 {
                     a, b
                 }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
@@ -405,10 +405,10 @@ namespace Dapper.Tests
                     d = multi.Read<int>().Single();
                 }
                 int after = SqlMapper.GetCachedSQLCount();
-                before.IsEqualTo(0);
-                after.IsEqualTo(0);
-                c.IsEqualTo(123);
-                d.IsEqualTo(456);
+                Assert.Equal(0, before);
+                Assert.Equal(0, after);
+                Assert.Equal(123, c);
+                Assert.Equal(456, d);
             }
         }
 
@@ -423,11 +423,11 @@ namespace Dapper.Tests
             Type type = Common.GetSomeType();
 
             dynamic actual = (await MarsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false)).FirstOrDefault();
-            ((object)actual).GetType().IsEqualTo(type);
+            Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
-            a.IsEqualTo(123);
-            b.IsEqualTo("abc");
+            Assert.Equal(123, a);
+            Assert.Equal("abc", b);
         }
 
         [Fact]
@@ -436,37 +436,37 @@ namespace Dapper.Tests
             Type type = Common.GetSomeType();
 
             dynamic actual = await MarsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false);
-            ((object)actual).GetType().IsEqualTo(type);
+            Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
-            a.IsEqualTo(123);
-            b.IsEqualTo("abc");
+            Assert.Equal(123, a);
+            Assert.Equal("abc", b);
         }
 
         [Fact]
         public async Task Issue22_ExecuteScalarAsync()
         {
             int i = await connection.ExecuteScalarAsync<int>("select 123").ConfigureAwait(false);
-            i.IsEqualTo(123);
+            Assert.Equal(123, i);
 
             i = await connection.ExecuteScalarAsync<int>("select cast(123 as bigint)").ConfigureAwait(false);
-            i.IsEqualTo(123);
+            Assert.Equal(123, i);
 
             long j = await connection.ExecuteScalarAsync<long>("select 123").ConfigureAwait(false);
-            j.IsEqualTo(123L);
+            Assert.Equal(123L, j);
 
             j = await connection.ExecuteScalarAsync<long>("select cast(123 as bigint)").ConfigureAwait(false);
-            j.IsEqualTo(123L);
+            Assert.Equal(123L, j);
 
             int? k = await connection.ExecuteScalarAsync<int?>("select @i", new { i = default(int?) }).ConfigureAwait(false);
-            k.IsNull();
+            Assert.Null(k);
         }
 
         [Fact]
         public async Task Issue346_QueryAsyncConvert()
         {
             int i = (await connection.QueryAsync<int>("Select Cast(123 as bigint)").ConfigureAwait(false)).First();
-            i.IsEqualTo(123);
+            Assert.Equal(123, i);
         }
 
         [Fact]
@@ -489,11 +489,11 @@ SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId", p).ConfigureAwait(false);
 
-                bob.Occupation.IsEqualTo("grillmaster");
-                bob.PersonId.IsEqualTo(2);
-                bob.NumberOfLegs.IsEqualTo(1);
-                bob.Address.Name.IsEqualTo("bobs burgers");
-                bob.Address.PersonId.IsEqualTo(2);
+                Assert.Equal("grillmaster", bob.Occupation);
+                Assert.Equal(2, bob.PersonId);
+                Assert.Equal(1, bob.NumberOfLegs);
+                Assert.Equal("bobs burgers", bob.Address.Name);
+                Assert.Equal(2, bob.Address.PersonId);
             }
         }
 
@@ -517,12 +517,12 @@ SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
 select 42", p).ConfigureAwait(false));
 
-            bob.Occupation.IsEqualTo("grillmaster");
-            bob.PersonId.IsEqualTo(2);
-            bob.NumberOfLegs.IsEqualTo(1);
-            bob.Address.Name.IsEqualTo("bobs burgers");
-            bob.Address.PersonId.IsEqualTo(2);
-            result.IsEqualTo(42);
+            Assert.Equal("grillmaster", bob.Occupation);
+            Assert.Equal(2, bob.PersonId);
+            Assert.Equal(1, bob.NumberOfLegs);
+            Assert.Equal("bobs burgers", bob.Address.Name);
+            Assert.Equal(2, bob.Address.PersonId);
+            Assert.Equal(42, result);
         }
 
         [Fact]
@@ -545,12 +545,12 @@ SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
 select 42", p).ConfigureAwait(false)).Single();
 
-            bob.Occupation.IsEqualTo("grillmaster");
-            bob.PersonId.IsEqualTo(2);
-            bob.NumberOfLegs.IsEqualTo(1);
-            bob.Address.Name.IsEqualTo("bobs burgers");
-            bob.Address.PersonId.IsEqualTo(2);
-            result.IsEqualTo(42);
+            Assert.Equal("grillmaster", bob.Occupation);
+            Assert.Equal(2, bob.PersonId);
+            Assert.Equal(1, bob.NumberOfLegs);
+            Assert.Equal("bobs burgers", bob.Address.Name);
+            Assert.Equal(2, bob.Address.PersonId);
+            Assert.Equal(42, result);
         }
 
         [Fact]
@@ -573,12 +573,12 @@ SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
 select 42", p, flags: CommandFlags.Buffered)).ConfigureAwait(false)).Single();
 
-            bob.Occupation.IsEqualTo("grillmaster");
-            bob.PersonId.IsEqualTo(2);
-            bob.NumberOfLegs.IsEqualTo(1);
-            bob.Address.Name.IsEqualTo("bobs burgers");
-            bob.Address.PersonId.IsEqualTo(2);
-            result.IsEqualTo(42);
+            Assert.Equal("grillmaster", bob.Occupation);
+            Assert.Equal(2, bob.PersonId);
+            Assert.Equal(1, bob.NumberOfLegs);
+            Assert.Equal("bobs burgers", bob.Address.Name);
+            Assert.Equal(2, bob.Address.PersonId);
+            Assert.Equal(42, result);
         }
 
         [Fact]
@@ -601,12 +601,12 @@ SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
 select 42", p, flags: CommandFlags.None)).ConfigureAwait(false)).Single();
 
-            bob.Occupation.IsEqualTo("grillmaster");
-            bob.PersonId.IsEqualTo(2);
-            bob.NumberOfLegs.IsEqualTo(1);
-            bob.Address.Name.IsEqualTo("bobs burgers");
-            bob.Address.PersonId.IsEqualTo(2);
-            result.IsEqualTo(42);
+            Assert.Equal("grillmaster", bob.Occupation);
+            Assert.Equal(2, bob.PersonId);
+            Assert.Equal(1, bob.NumberOfLegs);
+            Assert.Equal("bobs burgers", bob.Address.Name);
+            Assert.Equal(2, bob.Address.PersonId);
+            Assert.Equal(42, result);
         }
 
         [Fact]
@@ -635,35 +635,35 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 y = multi.ReadAsync<int>().Result.Single();
             }
 
-            bob.Occupation.IsEqualTo("grillmaster");
-            bob.PersonId.IsEqualTo(2);
-            bob.NumberOfLegs.IsEqualTo(1);
-            bob.Address.Name.IsEqualTo("bobs burgers");
-            bob.Address.PersonId.IsEqualTo(2);
-            x.IsEqualTo(42);
-            y.IsEqualTo(17);
+            Assert.Equal("grillmaster", bob.Occupation);
+            Assert.Equal(2, bob.PersonId);
+            Assert.Equal(1, bob.NumberOfLegs);
+            Assert.Equal("bobs burgers", bob.Address.Name);
+            Assert.Equal(2, bob.Address.PersonId);
+            Assert.Equal(42, x);
+            Assert.Equal(17, y);
         }
 
         [Fact]
         public async Task TestSubsequentQueriesSuccessAsync()
         {
             var data0 = (await connection.QueryAsync<AsyncFoo0>("select 1 as [Id] where 1 = 0").ConfigureAwait(false)).ToList();
-            data0.Count.IsEqualTo(0);
+            Assert.Empty(data0);
 
             var data1 = (await connection.QueryAsync<AsyncFoo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).ConfigureAwait(false)).ToList();
-            data1.Count.IsEqualTo(0);
+            Assert.Empty(data1);
 
             var data2 = (await connection.QueryAsync<AsyncFoo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).ConfigureAwait(false)).ToList();
-            data2.Count.IsEqualTo(0);
+            Assert.Empty(data2);
 
             data0 = (await connection.QueryAsync<AsyncFoo0>("select 1 as [Id] where 1 = 0").ConfigureAwait(false)).ToList();
-            data0.Count.IsEqualTo(0);
+            Assert.Empty(data0);
 
             data1 = (await connection.QueryAsync<AsyncFoo1>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.Buffered)).ConfigureAwait(false)).ToList();
-            data1.Count.IsEqualTo(0);
+            Assert.Empty(data1);
 
             data2 = (await connection.QueryAsync<AsyncFoo2>(new CommandDefinition("select 1 as [Id] where 1 = 0", flags: CommandFlags.None)).ConfigureAwait(false)).ToList();
-            data2.Count.IsEqualTo(0);
+            Assert.Empty(data2);
         }
 
         private class AsyncFoo0 { public int Id { get; set; } }
@@ -679,12 +679,12 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             try
             {
                 var d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false);
-                d.Name.IsEqualTo("Alf");
-                d.Age.IsEqualTo(1);
+                Assert.Equal("Alf", d.Name);
+                Assert.Equal(1, d.Age);
                 connection.Execute("alter table #dog drop column Name");
                 d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false);
-                d.Name.IsNull();
-                d.Age.IsEqualTo(1);
+                Assert.Null(d.Name);
+                Assert.Equal(1, d.Age);
             }
             finally
             {
@@ -751,26 +751,26 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 var data = (await connection.QueryAsync<ReviewBoard>(sql, types, mapper).ConfigureAwait(false)).ToList();
 
                 var p = data[0];
-                p.Id.IsEqualTo(1);
-                p.Name.IsEqualTo("Review Board 1");
-                p.User1.Id.IsEqualTo(1);
-                p.User2.Id.IsEqualTo(2);
-                p.User3.Id.IsEqualTo(3);
-                p.User4.Id.IsEqualTo(4);
-                p.User5.Id.IsEqualTo(5);
-                p.User6.Id.IsEqualTo(6);
-                p.User7.Id.IsEqualTo(7);
-                p.User8.Id.IsEqualTo(8);
-                p.User9.Id.IsEqualTo(9);
-                p.User1.Name.IsEqualTo("User 1");
-                p.User2.Name.IsEqualTo("User 2");
-                p.User3.Name.IsEqualTo("User 3");
-                p.User4.Name.IsEqualTo("User 4");
-                p.User5.Name.IsEqualTo("User 5");
-                p.User6.Name.IsEqualTo("User 6");
-                p.User7.Name.IsEqualTo("User 7");
-                p.User8.Name.IsEqualTo("User 8");
-                p.User9.Name.IsEqualTo("User 9");
+                Assert.Equal(1, p.Id);
+                Assert.Equal("Review Board 1", p.Name);
+                Assert.Equal(1, p.User1.Id);
+                Assert.Equal(2, p.User2.Id);
+                Assert.Equal(3, p.User3.Id);
+                Assert.Equal(4, p.User4.Id);
+                Assert.Equal(5, p.User5.Id);
+                Assert.Equal(6, p.User6.Id);
+                Assert.Equal(7, p.User7.Id);
+                Assert.Equal(8, p.User8.Id);
+                Assert.Equal(9, p.User9.Id);
+                Assert.Equal("User 1", p.User1.Name);
+                Assert.Equal("User 2", p.User2.Name);
+                Assert.Equal("User 3", p.User3.Name);
+                Assert.Equal("User 4", p.User4.Name);
+                Assert.Equal("User 5", p.User5.Name);
+                Assert.Equal("User 6", p.User6.Name);
+                Assert.Equal("User 7", p.User7.Name);
+                Assert.Equal("User 8", p.User8.Name);
+                Assert.Equal("User 9", p.User9.Name);
             }
             finally
             {
@@ -782,16 +782,15 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
         public async Task Issue157_ClosedReaderAsync()
         {
             var args = new { x = 42 };
-            const string sql = @"select 123 as [A], 'abc' as [B] where @x=42";
+            const string sql = "select 123 as [A], 'abc' as [B] where @x=42";
             var row = (await connection.QueryAsync<SomeType>(new CommandDefinition(
                 sql, args, flags:CommandFlags.None)).ConfigureAwait(false)).Single();
-            row.IsNotNull();
-            row.A.IsEqualTo(123);
-            row.B.IsEqualTo("abc");
+            Assert.NotNull(row);
+            Assert.Equal(123, row.A);
+            Assert.Equal("abc", row.B);
 
             args = new { x = 5 };
-            (await connection.QueryAsync<SomeType>(new CommandDefinition(
-                sql, args, flags: CommandFlags.None)).ConfigureAwait(false)).Any().IsFalse();
+            Assert.False((await connection.QueryAsync<SomeType>(new CommandDefinition(sql, args, flags: CommandFlags.None)).ConfigureAwait(false)).Any());
         }
 
         [Fact]
@@ -802,7 +801,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 select @@Name = @Id+1
                 select @@Name
                 ", new Product { Id = 1 }).ConfigureAwait(false)).Single();
-            id.IsEqualTo(2);
+            Assert.Equal(2, id);
         }
 
         [Fact]
@@ -810,11 +809,11 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
         {
             using (var reader = await connection.ExecuteReaderAsync("Select 0, 1, 2").ConfigureAwait(false))
             {
-                reader.Read().IsTrue();
-                reader.GetInt32(2).IsEqualTo(2);
-                reader.GetInt32(0).IsEqualTo(0);
-                reader.GetInt32(1).IsEqualTo(1);
-                reader.Read().IsFalse();
+                Assert.True(reader.Read());
+                Assert.Equal(2, reader.GetInt32(2));
+                Assert.Equal(0, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt32(1));
+                Assert.False(reader.Read());
             }
         }
 
@@ -824,7 +823,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             try
             {
                 var data = (await connection.QueryAsync<int>("select 1 union all select 2; RAISERROR('after select', 16, 1);").ConfigureAwait(false)).ToList();
-                Assert.Fail();
+                Assert.True(false, "Expected Exception");
             }
             catch (SqlException ex) when (ex.Message == "after select") { /* swallow only this */ }
         }

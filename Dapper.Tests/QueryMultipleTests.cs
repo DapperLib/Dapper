@@ -63,7 +63,7 @@ namespace Dapper.Tests
         [Fact]
         public void TestMultiReaderBasic()
         {
-            const string sql = @"select 1 as Id union all select 2 as Id     select 'abc' as name   select 1 as Id union all select 2 as Id";
+            const string sql = "select 1 as Id union all select 2 as Id     select 'abc' as name   select 1 as Id union all select 2 as Id";
             int i, j;
             string s;
             using (var multi = connection.QueryMultiple(sql))
@@ -72,9 +72,9 @@ namespace Dapper.Tests
                 s = multi.Read<string>().Single();
                 j = multi.Read<int>().Sum();
             }
-            Assert.IsEqualTo(i, 1);
-            Assert.IsEqualTo(s, "abc");
-            Assert.IsEqualTo(j, 3);
+            Assert.Equal(1, i);
+            Assert.Equal("abc", s);
+            Assert.Equal(3, j);
         }
 
         [Fact]
@@ -102,11 +102,11 @@ namespace Dapper.Tests
                 var users = grid.Read().ToList();
                 var posts = grid.Read().ToList();
 
-                users.Count.IsEqualTo(2);
-                posts.Count.IsEqualTo(3);
+                Assert.Equal(2, users.Count);
+                Assert.Equal(3, posts.Count);
 
-                ((int)users[0].Id).IsEqualTo(2);
-                ((int)posts[0].Id).IsEqualTo(3);
+                Assert.Equal(2, (int)users[0].Id);
+                Assert.Equal(3, (int)posts[0].Id);
             }
             finally
             {
@@ -133,7 +133,7 @@ end");
                 reader.Read();
             }
             var retVal = p.Get<int>("RetVal");
-            retVal.IsEqualTo(3);
+            Assert.Equal(3, retVal);
         }
 
         [Fact]
@@ -141,14 +141,14 @@ end");
         {
             // aka: Read<int> should work even if the data is a <long>
             // using regular API
-            connection.Query<int>("select cast(42 as bigint)").Single().IsEqualTo(42);
-            connection.QuerySingle<int>("select cast(42 as bigint)").IsEqualTo(42);
+            Assert.Equal(42, connection.Query<int>("select cast(42 as bigint)").Single());
+            Assert.Equal(42, connection.QuerySingle<int>("select cast(42 as bigint)"));
 
             // using multi-reader API
             using(var reader = connection.QueryMultiple("select cast(42 as bigint); select cast(42 as bigint)"))
             {
-                reader.Read<int>().Single().IsEqualTo(42);
-                reader.ReadSingle<int>().IsEqualTo(42);
+                Assert.Equal(42, reader.Read<int>().Single());
+                Assert.Equal(42, reader.ReadSingle<int>());
             }
         }
 
@@ -159,10 +159,10 @@ end");
             {
                 using (var multi = conn.QueryMultiple("select 1; select 'abc';"))
                 {
-                    multi.Read<int>().Single().IsEqualTo(1);
-                    multi.Read<string>().Single().IsEqualTo("abc");
+                    Assert.Equal(1, multi.Read<int>().Single());
+                    Assert.Equal("abc", multi.Read<string>().Single());
                 }
-                conn.State.IsEqualTo(ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -171,14 +171,14 @@ end");
         {
             using (var conn = GetClosedConnection())
             {
-                conn.State.IsEqualTo(ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 using (var multi = conn.QueryMultiple("select 1 select 2 select 3"))
                 {
-                    multi.Read<int>().Single().IsEqualTo(1);
-                    multi.Read<int>().Single().IsEqualTo(2);
+                    Assert.Equal(1, multi.Read<int>().Single());
+                    Assert.Equal(2, multi.Read<int>().Single());
                     // not reading 3 is intentional here
                 }
-                conn.State.IsEqualTo(ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -192,10 +192,10 @@ end");
                 {
                     items.AddRange(reader.Read<HazNameId>());
                 }
-                items.Count.IsEqualTo(3);
-                items[0].Id.IsEqualTo(1);
-                items[1].Id.IsEqualTo(2);
-                items[2].Id.IsEqualTo(3);
+                Assert.Equal(3, items.Count);
+                Assert.Equal(1, items[0].Id);
+                Assert.Equal(2, items[1].Id);
+                Assert.Equal(3, items[2].Id);
             }
         }
 
@@ -204,15 +204,8 @@ end");
         {
             using (var conn = GetClosedConnection())
             {
-                try
-                {
-                    conn.QueryMultiple("select gibberish");
-                    false.IsEqualTo(true); // shouldn't have got here
-                }
-                catch
-                {
-                    conn.State.IsEqualTo(ConnectionState.Closed);
-                }
+                Assert.ThrowsAny<Exception>(() => conn.QueryMultiple("select gibberish"));
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -237,15 +230,15 @@ end");
                 }
                 catch (ObjectDisposedException ex)
                 { // expected; success
-                    ex.Message.IsEqualTo("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.");
+                    Assert.Equal("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.", ex.Message);
                 }
 
-                one.Length.IsEqualTo(1);
-                one[0].IsEqualTo(1);
-                two.Length.IsEqualTo(0);
-                three.Length.IsEqualTo(0);
-                four.Length.IsEqualTo(1);
-                four[0].IsEqualTo(4);
+                Assert.Single(one);
+                Assert.Equal(1, one[0]);
+                Assert.Empty(two);
+                Assert.Empty(three);
+                Assert.Single(four);
+                Assert.Equal(4, four[0]);
             }
         }
 
@@ -261,17 +254,17 @@ end");
                 first = multi.Read(type).Single();
                 second = multi.Read(type).Single();
             }
-            ((object)first).GetType().IsEqualTo(type);
+            Assert.Equal(((object)first).GetType(), type);
             int a = first.A;
             string b = first.B;
-            a.IsEqualTo(123);
-            b.IsEqualTo("abc");
+            Assert.Equal(123, a);
+            Assert.Equal("abc", b);
 
-            ((object)second).GetType().IsEqualTo(type);
+            Assert.Equal(((object)second).GetType(), type);
             a = second.A;
             b = second.B;
-            a.IsEqualTo(456);
-            b.IsEqualTo("def");
+            Assert.Equal(456, a);
+            Assert.Equal("def", b);
         }
     }
 }

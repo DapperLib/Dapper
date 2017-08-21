@@ -14,12 +14,12 @@ namespace Dapper.Tests
 
             var typedParser = origReader.GetRowParser<HazNameId>();
 
-            ReferenceEquals(origParser, typedParser).IsEqualTo(true);
+            Assert.True(ReferenceEquals(origParser, typedParser));
 
             var list = origReader.Parse<HazNameId>().ToList();
-            list.Count.IsEqualTo(1);
-            list[0].Name.IsEqualTo("abc");
-            list[0].Id.IsEqualTo(123);
+            Assert.Single(list);
+            Assert.Equal("abc", list[0].Name);
+            Assert.Equal(123, list[0].Id);
             origReader.Dispose();
 
             var secondReader = connection.ExecuteReader("select 'abc' as Name, 123 as Id");
@@ -27,15 +27,15 @@ namespace Dapper.Tests
             var thirdParser = secondReader.GetRowParser(typeof(HazNameId), 1);
 
             list = secondReader.Parse<HazNameId>().ToList();
-            list.Count.IsEqualTo(1);
-            list[0].Name.IsEqualTo("abc");
-            list[0].Id.IsEqualTo(123);
+            Assert.Single(list);
+            Assert.Equal("abc", list[0].Name);
+            Assert.Equal(123, list[0].Id);
             secondReader.Dispose();
 
             // now: should be different readers, but same parser
-            ReferenceEquals(origReader, secondReader).IsEqualTo(false);
-            ReferenceEquals(origParser, secondParser).IsEqualTo(true);
-            ReferenceEquals(secondParser, thirdParser).IsEqualTo(false);
+            Assert.False(ReferenceEquals(origReader, secondReader));
+            Assert.True(ReferenceEquals(origParser, secondParser));
+            Assert.False(ReferenceEquals(secondParser, thirdParser));
         }
 
         [Fact]
@@ -68,13 +68,13 @@ select 'def' as Name, 2 as Type, 4.0 as Value"))
                 }
             }
 
-            result.Count.IsEqualTo(2);
-            result[0].Type.IsEqualTo(1);
-            result[1].Type.IsEqualTo(2);
+            Assert.Equal(2, result.Count);
+            Assert.Equal(1, result[0].Type);
+            Assert.Equal(2, result[1].Type);
             var foo = (Discriminated_Foo)result[0];
-            foo.Name.IsEqualTo("abc");
+            Assert.Equal("abc", foo.Name);
             var bar = (Discriminated_Bar)result[1];
-            bar.Value.IsEqualTo((float)4.0);
+            Assert.Equal(bar.Value, (float)4.0);
         }
 
         [Fact]
@@ -108,7 +108,7 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
                             break;
                         }
 
-                        obj.IsNotNull();
+                        Assert.NotNull(obj);
                         obj.HazNameIdObject = toHaz(reader);
                         result.Add(obj);
 
@@ -116,17 +116,17 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
                 }
             }
 
-            result.Count.IsEqualTo(2);
-            result[0].Type.IsEqualTo(1);
-            result[1].Type.IsEqualTo(2);
+            Assert.Equal(2, result.Count);
+            Assert.Equal(1, result[0].Type);
+            Assert.Equal(2, result[1].Type);
             var foo = (DiscriminatedWithMultiMapping_Foo)result[0];
-            foo.Name.IsEqualTo("abc");
-            foo.HazNameIdObject.Id.IsEqualTo(1);
-            foo.HazNameIdObject.Name.IsEqualTo("zxc");
+            Assert.Equal("abc", foo.Name);
+            Assert.Equal(1, foo.HazNameIdObject.Id);
+            Assert.Equal("zxc", foo.HazNameIdObject.Name);
             var bar = (DiscriminatedWithMultiMapping_Bar)result[1];
-            bar.Value.IsEqualTo((float)4.0);
-            bar.HazNameIdObject.Id.IsEqualTo(2);
-            bar.HazNameIdObject.Name.IsEqualTo("qwe");
+            Assert.Equal(bar.Value, (float)4.0);
+            Assert.Equal(2, bar.HazNameIdObject.Id);
+            Assert.Equal("qwe", bar.HazNameIdObject.Name);
         }
 
         private abstract class Discriminated_BaseType

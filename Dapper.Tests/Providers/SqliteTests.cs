@@ -34,15 +34,15 @@ namespace Dapper.Tests
                 {
                     SqlMapper.ResetTypeHandlers();
                     var row = connection.Query<HazNameId>("select 42 as Id").First();
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
                     row = connection.Query<HazNameId>("select 42 as Id").First();
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
 
                     SqlMapper.ResetTypeHandlers();
                     row = connection.QueryFirst<HazNameId>("select 42 as Id");
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
                     row = connection.QueryFirst<HazNameId>("select 42 as Id");
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
                 }
             }
 
@@ -53,15 +53,15 @@ namespace Dapper.Tests
                 {
                     SqlMapper.ResetTypeHandlers();
                     var row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
                     row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
 
                     SqlMapper.ResetTypeHandlers();
                     row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
                     row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
-                    row.Id.IsEqualTo(42);
+                    Assert.Equal(42, row.Id);
                 }
             }
         }
@@ -87,10 +87,11 @@ namespace Dapper.Tests
                 const SqliteType type = SqliteType.Integer;
                 cmd.Parameters.Add(prefix ? "@foo" : "foo", type).Value = 42;
                 var i = Convert.ToInt32(cmd.ExecuteScalar());
-                i.IsEqualTo(42);
+                Assert.Equal(42, i);
             }
         }
 
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactSqliteAttribute : FactAttribute
         {
             public override string Skip

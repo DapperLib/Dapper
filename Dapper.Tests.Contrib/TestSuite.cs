@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 
 using Dapper.Contrib.Extensions;
+using Xunit;
 
 #if !NETCOREAPP1_0 && !NETCOREAPP2_0
 using System.Transactions;
@@ -110,7 +111,7 @@ namespace Dapper.Tests.Contrib
                     Name = "Someone"
                 };
                 var updates = connection.Update(updateObject);
-                updates.IsFalse();
+                Assert.False(updates);
 
                 connection.DeleteAll<ObjectX>();
 
@@ -122,7 +123,7 @@ namespace Dapper.Tests.Contrib
                 };
                 connection.Insert(insertObject);
                 var list = connection.GetAll<ObjectX>();
-                list.Count().IsEqualTo(1);
+                Assert.Single(list);
             }
         }
 
@@ -139,32 +140,32 @@ namespace Dapper.Tests.Contrib
                 var originalxCount = connection.Query<int>("Select Count(*) From ObjectX").First();
                 connection.Insert(o1);
                 var list1 = connection.Query<ObjectX>("select * from ObjectX").ToList();
-                list1.Count.IsEqualTo(originalxCount + 1);
+                Assert.Equal(list1.Count, originalxCount + 1);
                 o1 = connection.Get<ObjectX>(guid);
-                o1.ObjectXId.IsEqualTo(guid);
+                Assert.Equal(o1.ObjectXId, guid);
                 o1.Name = "Bar";
                 connection.Update(o1);
                 o1 = connection.Get<ObjectX>(guid);
-                o1.Name.IsEqualTo("Bar");
+                Assert.Equal("Bar", o1.Name);
                 connection.Delete(o1);
                 o1 = connection.Get<ObjectX>(guid);
-                o1.IsNull();
+                Assert.Null(o1);
 
                 const int id = 42;
                 var o2 = new ObjectY { ObjectYId = id, Name = "Foo" };
                 var originalyCount = connection.Query<int>("Select Count(*) From ObjectY").First();
                 connection.Insert(o2);
                 var list2 = connection.Query<ObjectY>("select * from ObjectY").ToList();
-                list2.Count.IsEqualTo(originalyCount + 1);
+                Assert.Equal(list2.Count, originalyCount + 1);
                 o2 = connection.Get<ObjectY>(id);
-                o2.ObjectYId.IsEqualTo(id);
+                Assert.Equal(o2.ObjectYId, id);
                 o2.Name = "Bar";
                 connection.Update(o2);
                 o2 = connection.Get<ObjectY>(id);
-                o2.Name.IsEqualTo("Bar");
+                Assert.Equal("Bar", o2.Name);
                 connection.Delete(o2);
                 o2 = connection.Get<ObjectY>(id);
-                o2.IsNull();
+                Assert.Null(o2);
             }
         }
 
@@ -178,8 +179,8 @@ namespace Dapper.Tests.Contrib
                 connection.Insert(o1);
 
                 var objectXs = connection.GetAll<ObjectX>().ToList();
-                objectXs.Count.IsMoreThan(0);
-                objectXs.Count(x => x.ObjectXId== guid).IsEqualTo(1);
+                Assert.True(objectXs.Count > 0);
+                Assert.Equal(1, objectXs.Count(x => x.ObjectXId== guid));
             }
         }
 
@@ -192,16 +193,9 @@ namespace Dapper.Tests.Contrib
                 var o2 = new ObjectZ { Id = id, Name = "Foo" };
                 connection.Insert(o2);
                 var list2 = connection.Query<ObjectZ>("select * from ObjectZ").ToList();
-                list2.Count.IsEqualTo(1);
+                Assert.Single(list2);
                 o2 = connection.Get<ObjectZ>(id);
-                o2.Id.IsEqualTo(id);
-                //o2.Name = "Bar";
-                //connection.Update(o2);
-                //o2 = connection.Get<ObjectY>(id);
-                //o2.Name.IsEqualTo("Bar");
-                //connection.Delete(o2);
-                //o2 = connection.Get<ObjectY>(id);
-                //o2.IsNull();
+                Assert.Equal(o2.Id, id);
             }
         }
 
@@ -212,10 +206,10 @@ namespace Dapper.Tests.Contrib
             {
                 const string name = "First item";
                 var id = connection.Insert(new Stuff { Name = name });
-                id.IsMoreThan(0); // 1-n are valid here, due to parallel tests
+                Assert.True(id > 0); // 1-n are valid here, due to parallel tests
                 var item = connection.Get<Stuff>(id);
-                item.TheId.IsEqualTo((short)id);
-                item.Name.IsEqualTo(name);
+                Assert.Equal(item.TheId, (short)id);
+                Assert.Equal(item.Name, name);
             }
         }
 
@@ -227,8 +221,8 @@ namespace Dapper.Tests.Contrib
                 connection.Insert(new Stuff { Name = "First item" });
                 connection.Insert(new Stuff { Name = "Second item", Created = DateTime.Now });
                 var stuff = connection.Query<Stuff>("select * from Stuff").ToList();
-                stuff[0].Created.IsNull();
-                stuff.Last().Created.IsNotNull();
+                Assert.Null(stuff[0].Created);
+                Assert.NotNull(stuff.Last().Created);
             }
         }
 
@@ -240,13 +234,13 @@ namespace Dapper.Tests.Contrib
                 // tests against "Automobiles" table (Table attribute)
                 var id = connection.Insert(new Car { Name = "Volvo" });
                 var car = connection.Get<Car>(id);
-                car.IsNotNull();
-                car.Name.IsEqualTo("Volvo");
-                connection.Get<Car>(id).Name.IsEqualTo("Volvo");
-                connection.Update(new Car { Id = (int)id, Name = "Saab" }).IsEqualTo(true);
-                connection.Get<Car>(id).Name.IsEqualTo("Saab");
-                connection.Delete(new Car { Id = (int)id }).IsEqualTo(true);
-                connection.Get<Car>(id).IsNull();
+                Assert.NotNull(car);
+                Assert.Equal("Volvo", car.Name);
+                Assert.Equal("Volvo", connection.Get<Car>(id).Name);
+                Assert.True(connection.Update(new Car { Id = (int)id, Name = "Saab" }));
+                Assert.Equal("Saab", connection.Get<Car>(id).Name);
+                Assert.True(connection.Delete(new Car { Id = (int)id }));
+                Assert.Null(connection.Get<Car>(id));
             }
         }
 
@@ -257,8 +251,8 @@ namespace Dapper.Tests.Contrib
             {
                 var id = connection.Insert(new User { Name = "Adama", Age = 10 });
                 var user = connection.Get<User>(id);
-                user.Id.IsEqualTo((int)id);
-                user.Name.IsEqualTo("Adama");
+                Assert.Equal(user.Id, (int)id);
+                Assert.Equal("Adama", user.Name);
                 connection.Delete(user);
             }
         }
@@ -268,9 +262,9 @@ namespace Dapper.Tests.Contrib
         {
             using (var connection = GetConnection())
             {
-                connection.Insert(new User { Name = "Adama", Age = 10 }).IsMoreThan(0);
+                Assert.True(connection.Insert(new User { Name = "Adama", Age = 10 }) > 0);
                 var users = connection.GetAll<User>();
-                users.Count().IsMoreThan(0);
+                Assert.NotEmpty(users);
             }
         }
 
@@ -300,9 +294,9 @@ namespace Dapper.Tests.Contrib
                 connection.DeleteAll<User>();
 
                 var total = connection.Insert(helper(users));
-                total.IsEqualTo(numberOfEntities);
+                Assert.Equal(total, numberOfEntities);
                 users = connection.Query<User>("select * from Users").ToList();
-                users.Count.IsEqualTo(numberOfEntities);
+                Assert.Equal(users.Count, numberOfEntities);
             }
         }
 
@@ -332,16 +326,16 @@ namespace Dapper.Tests.Contrib
                 connection.DeleteAll<User>();
 
                 var total = connection.Insert(helper(users));
-                total.IsEqualTo(numberOfEntities);
+                Assert.Equal(total, numberOfEntities);
                 users = connection.Query<User>("select * from Users").ToList();
-                users.Count.IsEqualTo(numberOfEntities);
+                Assert.Equal(users.Count, numberOfEntities);
                 foreach (var user in users)
                 {
                     user.Name += " updated";
                 }
                 connection.Update(helper(users));
                 var name = connection.Query<User>("select * from Users").First().Name;
-                name.Contains("updated").IsTrue();
+                Assert.Contains("updated", name);
             }
         }
 
@@ -371,14 +365,14 @@ namespace Dapper.Tests.Contrib
                 connection.DeleteAll<User>();
 
                 var total = connection.Insert(helper(users));
-                total.IsEqualTo(numberOfEntities);
+                Assert.Equal(total, numberOfEntities);
                 users = connection.Query<User>("select * from Users").ToList();
-                users.Count.IsEqualTo(numberOfEntities);
+                Assert.Equal(users.Count, numberOfEntities);
 
                 var usersToDelete = users.Take(10).ToList();
                 connection.Delete(helper(usersToDelete));
                 users = connection.Query<User>("select * from Users").ToList();
-                users.Count.IsEqualTo(numberOfEntities - 10);
+                Assert.Equal(users.Count, numberOfEntities - 10);
             }
         }
 
@@ -388,7 +382,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = GetOpenConnection())
             {
                 connection.DeleteAll<User>();
-                connection.Get<User>(3).IsNull();
+                Assert.Null(connection.Get<User>(3));
 
                 //insert with computed attribute that should be ignored
                 connection.Insert(new Car { Name = "Volvo", Computed = "this property should be ignored" });
@@ -397,26 +391,26 @@ namespace Dapper.Tests.Contrib
 
                 //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
-                user.Name.IsEqualTo("Adam");
-                connection.Update(user).IsEqualTo(false);    //returns false if not updated, based on tracking
+                Assert.Equal("Adam", user.Name);
+                Assert.False(connection.Update(user));    //returns false if not updated, based on tracking
                 user.Name = "Bob";
-                connection.Update(user).IsEqualTo(true);    //returns true if updated, based on tracking
+                Assert.True(connection.Update(user));    //returns true if updated, based on tracking
                 user = connection.Get<IUser>(id);
-                user.Name.IsEqualTo("Bob");
+                Assert.Equal("Bob", user.Name);
 
                 //get a user with no tracking
                 var notrackedUser = connection.Get<User>(id);
-                notrackedUser.Name.IsEqualTo("Bob");
-                connection.Update(notrackedUser).IsEqualTo(true);   //returns true, even though user was not changed
+                Assert.Equal("Bob", notrackedUser.Name);
+                Assert.True(connection.Update(notrackedUser));   //returns true, even though user was not changed
                 notrackedUser.Name = "Cecil";
-                connection.Update(notrackedUser).IsEqualTo(true);
-                connection.Get<User>(id).Name.IsEqualTo("Cecil");
+                Assert.True(connection.Update(notrackedUser));
+                Assert.Equal("Cecil", connection.Get<User>(id).Name);
 
-                connection.Query<User>("select * from Users").Count().IsEqualTo(1);
-                connection.Delete(user).IsEqualTo(true);
-                connection.Query<User>("select * from Users").Count().IsEqualTo(0);
+                Assert.Single(connection.Query<User>("select * from Users"));
+                Assert.True(connection.Delete(user));
+                Assert.Empty(connection.Query<User>("select * from Users"));
 
-                connection.Update(notrackedUser).IsEqualTo(false);   //returns false, user not found
+                Assert.False(connection.Update(notrackedUser));   //returns false, user not found
             }
         }
 
@@ -430,7 +424,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = GetOpenConnection())
             {
                 connection.DeleteAll<User>();
-                connection.Get<User>(3).IsNull();
+                Assert.IsNull(connection.Get<User>(3));
                 try
                 {
                     connection.Insert(new User { Name = "Adam", Age = 10 });
@@ -477,7 +471,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = GetOpenConnection())
             {
                 var id = connection.Insert(new Person { Name = "Mr Mapper" });
-                id.IsEqualTo(1);
+                Assert.Equal(1, id);
                 connection.GetAll<Person>();
             }
         }
@@ -496,13 +490,13 @@ namespace Dapper.Tests.Contrib
                 connection.DeleteAll<User>();
 
                 var total = connection.Insert(users);
-                total.IsEqualTo(numberOfEntities);
+                Assert.Equal(total, numberOfEntities);
                 users = connection.GetAll<User>().ToList();
-                users.Count.IsEqualTo(numberOfEntities);
+                Assert.Equal(users.Count, numberOfEntities);
                 var iusers = connection.GetAll<IUser>().ToList();
-                iusers.Count.IsEqualTo(numberOfEntities);
+                Assert.Equal(iusers.Count, numberOfEntities);
                 for (var i = 0; i < numberOfEntities; i++)
-                    iusers[i].Age.IsEqualTo(i);
+                    Assert.Equal(iusers[i].Age, i);
             }
         }
 
@@ -521,7 +515,7 @@ namespace Dapper.Tests.Contrib
                 tran.Rollback();
 
                 car = connection.Get<Car>(id);  //updates should have been rolled back
-                car.Name.IsEqualTo(orgName);
+                Assert.Equal(car.Name, orgName);
             }
         }
 
@@ -537,7 +531,7 @@ namespace Dapper.Tests.Contrib
 
                     txscope.Dispose();  //rollback
 
-                    connection.Get<Car>(id).IsNull();   //returns null - car with that id should not exist
+                    Assert.IsNull(connection.Get<Car>(id));   //returns null - car with that id should not exist
                 }
             }
         }
@@ -548,10 +542,10 @@ namespace Dapper.Tests.Contrib
         {
             using (var connection = GetOpenConnection())
             {
-                connection.Get<IUser>(3).IsNull();
+                Assert.Null(connection.Get<IUser>(3));
                 User user = new User { Name = "Adamb", Age = 10 };
                 int id = (int)connection.Insert(user);
-                user.Id.IsEqualTo(id);
+                Assert.Equal(user.Id, id);
             }
         }
 
@@ -614,7 +608,7 @@ namespace Dapper.Tests.Contrib
                 var id = connection.Insert(new Result() { Name = "Adam", Order = 1 });
 
                 var result = connection.Get<Result>(id);
-                result.Order.IsEqualTo(1);
+                Assert.Equal(1, result.Order);
             }
         }
 
@@ -625,9 +619,9 @@ namespace Dapper.Tests.Contrib
             {
                 var id1 = connection.Insert(new User { Name = "Alice", Age = 32 });
                 var id2 = connection.Insert(new User { Name = "Bob", Age = 33 });
-                connection.DeleteAll<User>().IsTrue();
-                connection.Get<User>(id1).IsNull();
-                connection.Get<User>(id2).IsNull();
+                Assert.True(connection.DeleteAll<User>());
+                Assert.Null(connection.Get<User>(id1));
+                Assert.Null(connection.Get<User>(id2));
             }
         }
     }

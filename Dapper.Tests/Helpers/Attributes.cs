@@ -17,6 +17,7 @@ namespace Dapper.Tests
         public string Url { get; private set; }
     }
 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class FactRequiredCompatibilityLevelAttribute : FactAttribute
     {
         public FactRequiredCompatibilityLevelAttribute(int level) : base()
@@ -42,6 +43,7 @@ namespace Dapper.Tests
         }
     }
 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class FactUnlessCaseSensitiveDatabaseAttribute : FactAttribute
     {
         public FactUnlessCaseSensitiveDatabaseAttribute() : base()
