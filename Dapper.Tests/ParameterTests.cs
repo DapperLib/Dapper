@@ -1090,7 +1090,7 @@ SELECT value FROM @table WHERE value IN @myIds";
             args.AddDynamicParams(new { Foo = foo });
             args.AddDynamicParams(new { Foo = foo });
             int i = connection.Query<int>("select @Foo", args).Single();
-            i.IsEqualTo(123);
+            Assert.Equal(123, i);
         }
 
         [Fact]
