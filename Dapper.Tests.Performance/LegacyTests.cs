@@ -341,7 +341,7 @@ namespace Dapper.Tests.Performance
                         }
                     }, "Hand Coded");
 
-#if !COREFX
+#if !NETSTANDARD1_3
                     var table = new DataTable
                     {
                         Columns =

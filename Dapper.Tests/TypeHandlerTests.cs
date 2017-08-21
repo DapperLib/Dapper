@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection(NonParallelDefinition.Name)]
     public class TypeHandlerTests : TestBase
     {
         [Fact]
@@ -46,6 +47,51 @@ namespace Dapper.Tests
 
             SqlMapper.PurgeQueryCache();
             SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+        }
+
+        [Fact]
+        public void TestCustomTypeMap()
+        {
+            // default mapping
+            var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item.A.IsEqualTo("AVal");
+            item.B.IsEqualTo("BVal");
+
+            // custom mapping
+            var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
+                (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName));
+            SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
+
+            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item.A.IsEqualTo("BVal");
+            item.B.IsEqualTo("AVal");
+
+            // reset to default
+            SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
+            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item.A.IsEqualTo("AVal");
+            item.B.IsEqualTo("BVal");
+        }
+
+        private static string GetDescriptionFromAttribute(MemberInfo member)
+        {
+            if (member == null) return null;
+#if NETCOREAPP1_0
+        var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
+        return (string)data?.ConstructorArguments.Single().Value;
+#else
+            var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
+            return attrib?.Description;
+#endif
+        }
+
+        public class TypeWithMapping
+        {
+            [Description("B")]
+            public string A { get; set; }
+
+            [Description("A")]
+            public string B { get; set; }
         }
 
         [Fact]
@@ -230,52 +276,52 @@ namespace Dapper.Tests
             row.N_P_Long.Value.IsEqualTo(LotsOfNumerics.E_Long.B);
             row.N_P_ULong.Value.IsEqualTo(LotsOfNumerics.E_ULong.B);
 
-            TestBigIntForEverythingWorks<bool>(true, dbType);
-            TestBigIntForEverythingWorks<sbyte>((sbyte)1, dbType);
-            TestBigIntForEverythingWorks<byte>((byte)1, dbType);
-            TestBigIntForEverythingWorks<int>((int)1, dbType);
-            TestBigIntForEverythingWorks<uint>((uint)1, dbType);
-            TestBigIntForEverythingWorks<short>((short)1, dbType);
-            TestBigIntForEverythingWorks<ushort>((ushort)1, dbType);
-            TestBigIntForEverythingWorks<long>((long)1, dbType);
-            TestBigIntForEverythingWorks<ulong>((ulong)1, dbType);
-            TestBigIntForEverythingWorks<float>((float)1, dbType);
-            TestBigIntForEverythingWorks<double>((double)1, dbType);
-            TestBigIntForEverythingWorks<decimal>((decimal)1, dbType);
+            TestBigIntForEverythingWorksGeneric<bool>(true, dbType);
+            TestBigIntForEverythingWorksGeneric<sbyte>((sbyte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<byte>((byte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<int>((int)1, dbType);
+            TestBigIntForEverythingWorksGeneric<uint>((uint)1, dbType);
+            TestBigIntForEverythingWorksGeneric<short>((short)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ushort>((ushort)1, dbType);
+            TestBigIntForEverythingWorksGeneric<long>((long)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ulong>((ulong)1, dbType);
+            TestBigIntForEverythingWorksGeneric<float>((float)1, dbType);
+            TestBigIntForEverythingWorksGeneric<double>((double)1, dbType);
+            TestBigIntForEverythingWorksGeneric<decimal>((decimal)1, dbType);
 
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Byte.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_SByte.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Int.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_UInt.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Short.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_UShort.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_Long.B, dbType);
-            TestBigIntForEverythingWorks(LotsOfNumerics.E_ULong.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorksGeneric(LotsOfNumerics.E_ULong.B, dbType);
 
-            TestBigIntForEverythingWorks<bool?>(true, dbType);
-            TestBigIntForEverythingWorks<sbyte?>((sbyte)1, dbType);
-            TestBigIntForEverythingWorks<byte?>((byte)1, dbType);
-            TestBigIntForEverythingWorks<int?>((int)1, dbType);
-            TestBigIntForEverythingWorks<uint?>((uint)1, dbType);
-            TestBigIntForEverythingWorks<short?>((short)1, dbType);
-            TestBigIntForEverythingWorks<ushort?>((ushort)1, dbType);
-            TestBigIntForEverythingWorks<long?>((long)1, dbType);
-            TestBigIntForEverythingWorks<ulong?>((ulong)1, dbType);
-            TestBigIntForEverythingWorks<float?>((float)1, dbType);
-            TestBigIntForEverythingWorks<double?>((double)1, dbType);
-            TestBigIntForEverythingWorks<decimal?>((decimal)1, dbType);
+            TestBigIntForEverythingWorksGeneric<bool?>(true, dbType);
+            TestBigIntForEverythingWorksGeneric<sbyte?>((sbyte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<byte?>((byte)1, dbType);
+            TestBigIntForEverythingWorksGeneric<int?>((int)1, dbType);
+            TestBigIntForEverythingWorksGeneric<uint?>((uint)1, dbType);
+            TestBigIntForEverythingWorksGeneric<short?>((short)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ushort?>((ushort)1, dbType);
+            TestBigIntForEverythingWorksGeneric<long?>((long)1, dbType);
+            TestBigIntForEverythingWorksGeneric<ulong?>((ulong)1, dbType);
+            TestBigIntForEverythingWorksGeneric<float?>((float)1, dbType);
+            TestBigIntForEverythingWorksGeneric<double?>((double)1, dbType);
+            TestBigIntForEverythingWorksGeneric<decimal?>((decimal)1, dbType);
 
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Byte?>(LotsOfNumerics.E_Byte.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_SByte?>(LotsOfNumerics.E_SByte.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Int?>(LotsOfNumerics.E_Int.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_UInt?>(LotsOfNumerics.E_UInt.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Short?>(LotsOfNumerics.E_Short.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_UShort?>(LotsOfNumerics.E_UShort.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_Long?>(LotsOfNumerics.E_Long.B, dbType);
-            TestBigIntForEverythingWorks<LotsOfNumerics.E_ULong?>(LotsOfNumerics.E_ULong.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Byte?>(LotsOfNumerics.E_Byte.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_SByte?>(LotsOfNumerics.E_SByte.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Int?>(LotsOfNumerics.E_Int.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_UInt?>(LotsOfNumerics.E_UInt.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Short?>(LotsOfNumerics.E_Short.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_UShort?>(LotsOfNumerics.E_UShort.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_Long?>(LotsOfNumerics.E_Long.B, dbType);
+            TestBigIntForEverythingWorksGeneric<LotsOfNumerics.E_ULong?>(LotsOfNumerics.E_ULong.B, dbType);
         }
 
-        private void TestBigIntForEverythingWorks<T>(T expected, string dbType)
+        private void TestBigIntForEverythingWorksGeneric<T>(T expected, string dbType)
         {
             var query = connection.Query<T>("select cast(1 as " + dbType + ")").Single();
             query.IsEqualTo(expected);
@@ -462,7 +508,7 @@ namespace Dapper.Tests
 
             try
             {
-                connection.Execute(@"INSERT INTO #Test_RemoveTypeMap VALUES (@Now)", new { DateTime.Now });
+                connection.Execute("INSERT INTO #Test_RemoveTypeMap VALUES (@Now)", new { DateTime.Now });
                 connection.Query<DateTime>("SELECT * FROM #Test_RemoveTypeMap");
 
                 dateTimeHandler.ParseWasCalled.IsTrue();
@@ -516,51 +562,6 @@ namespace Dapper.Tests
             public int X { get; set; }
             public int Y { get; set; }
             public int Z { get; set; }
-        }
-
-        [Fact]
-        public void TestCustomTypeMap()
-        {
-            // default mapping
-            var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("AVal");
-            item.B.IsEqualTo("BVal");
-
-            // custom mapping
-            var map = new CustomPropertyTypeMap(typeof(TypeWithMapping),
-                (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName));
-            SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
-
-            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("BVal");
-            item.B.IsEqualTo("AVal");
-
-            // reset to default
-            SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
-            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
-            item.A.IsEqualTo("AVal");
-            item.B.IsEqualTo("BVal");
-        }
-
-        private static string GetDescriptionFromAttribute(MemberInfo member)
-        {
-            if (member == null) return null;
-#if COREFX
-            var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
-            return (string)data?.ConstructorArguments.Single().Value;
-#else
-            var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
-            return attrib?.Description;
-#endif
-        }
-
-        public class TypeWithMapping
-        {
-            [Description("B")]
-            public string A { get; set; }
-
-            [Description("A")]
-            public string B { get; set; }
         }
 
         public class WrongTypes
@@ -634,7 +635,7 @@ namespace Dapper.Tests
             Guid guid = Guid.Parse("cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e");
             try
             {
-                var result = connection.Query<Issue149_Person>(@"select @guid as Id", new { guid }).First();
+                var result = connection.Query<Issue149_Person>("select @guid as Id", new { guid }).First();
                 error = null;
             }
             catch (Exception ex)
@@ -657,6 +658,85 @@ namespace Dapper.Tests
             var returned = connection.Query<DateTime>(sql, new { date }).Single();
             var delta = returned - date;
             Assert.IsTrue(delta.TotalMilliseconds >= -10 && delta.TotalMilliseconds <= 10);
+        }
+
+        [Fact]
+        public void Issue461_TypeHandlerWorksInConstructor()
+        {
+            SqlMapper.AddTypeHandler(new Issue461_BlargHandler());
+
+            connection.Execute(@"CREATE TABLE #Issue461 (
+                                      Id                int not null IDENTITY(1,1),
+                                      SomeValue         nvarchar(50),
+                                      SomeBlargValue    nvarchar(200),
+                                    )");
+            const string Expected = "abc123def";
+            var blarg = new Blarg(Expected);
+            connection.Execute(
+                "INSERT INTO #Issue461 (SomeValue, SomeBlargValue) VALUES (@value, @blarg)",
+                new { value = "what up?", blarg });
+
+            // test: without constructor
+            var parameterlessWorks = connection.QuerySingle<Issue461_ParameterlessTypeConstructor>("SELECT * FROM #Issue461");
+            parameterlessWorks.Id.IsEqualTo(1);
+            parameterlessWorks.SomeValue.IsEqualTo("what up?");
+            parameterlessWorks.SomeBlargValue.Value.IsEqualTo(Expected);
+
+            // test: via constructor
+            var parameterDoesNot = connection.QuerySingle<Issue461_ParameterisedTypeConstructor>("SELECT * FROM #Issue461");
+            parameterDoesNot.Id.IsEqualTo(1);
+            parameterDoesNot.SomeValue.IsEqualTo("what up?");
+            parameterDoesNot.SomeBlargValue.Value.IsEqualTo(Expected);
+        }
+
+        // I would usually expect this to be a struct; using a class
+        // so that we can't pass unexpectedly due to forcing an unsafe cast - want
+        // to see an InvalidCastException if it is wrong
+        private class Blarg
+        {
+            public Blarg(string value) { Value = value; }
+            public string Value { get; }
+            public override string ToString()
+            {
+                return Value;
+            }
+        }
+
+        private class Issue461_BlargHandler : SqlMapper.TypeHandler<Blarg>
+        {
+            public override void SetValue(IDbDataParameter parameter, Blarg value)
+            {
+                parameter.Value = ((object)value.Value) ?? DBNull.Value;
+            }
+
+            public override Blarg Parse(object value)
+            {
+                string s = (value == null || value is DBNull) ? null : Convert.ToString(value);
+                return new Blarg(s);
+            }
+        }
+
+        private class Issue461_ParameterlessTypeConstructor
+        {
+            public int Id { get; set; }
+
+            public string SomeValue { get; set; }
+            public Blarg SomeBlargValue { get; set; }
+        }
+
+        private class Issue461_ParameterisedTypeConstructor
+        {
+            public Issue461_ParameterisedTypeConstructor(int id, string someValue, Blarg someBlargValue)
+            {
+                Id = id;
+                SomeValue = someValue;
+                SomeBlargValue = someBlargValue;
+            }
+
+            public int Id { get; }
+
+            public string SomeValue { get; }
+            public Blarg SomeBlargValue { get; }
         }
     }
 }

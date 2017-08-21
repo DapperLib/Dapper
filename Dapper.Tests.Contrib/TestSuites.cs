@@ -1,16 +1,14 @@
-﻿using System;
+﻿using Microsoft.Data.Sqlite;
+using MySql.Data.MySqlClient;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using Xunit;
 using Xunit.Sdk;
-#if COREFX
-using Microsoft.Data.Sqlite;
-#else
-using System.Data.SQLite;
+
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
 using System.Data.SqlServerCe;
-using MySql.Data.MySqlClient;
-using SqliteConnection = System.Data.SQLite.SQLiteConnection;
 #endif
 
 namespace Dapper.Tests.Contrib
@@ -60,7 +58,6 @@ namespace Dapper.Tests.Contrib
         }
     }
 
-#if !COREFX
     public class MySqlServerTestSuite : TestSuite
     {
         const string DbName = "DapperContribTests";
@@ -115,14 +112,11 @@ namespace Dapper.Tests.Contrib
             }
         }
     }
-
-    // This doesn't work on COREFX right now due to:
-    // In Visual Studio: Interop loads (works from console, though)
-    // In general: parameter names, see https://github.com/StackExchange/dapper-dot-net/issues/375
+    
     public class SQLiteTestSuite : TestSuite
     {
         const string FileName = "Test.DB.sqlite";
-        public static string ConnectionString => $"Filename={FileName};";
+        public static string ConnectionString => $"Filename=./{FileName};Mode=ReadWriteCreate;";
         public override IDbConnection GetConnection() => new SqliteConnection(ConnectionString);
 
         static SQLiteTestSuite()
@@ -131,7 +125,6 @@ namespace Dapper.Tests.Contrib
             {
                 File.Delete(FileName);
             }
-            SqliteConnection.CreateFile(FileName);
             using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
@@ -147,6 +140,7 @@ namespace Dapper.Tests.Contrib
         }
     }
 
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
     public class SqlCETestSuite : TestSuite
     {
         const string FileName = "Test.DB.sdf";

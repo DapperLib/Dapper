@@ -6,14 +6,13 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <TargetFrameworks>net452;netcoreapp1.0</TargetFrameworks>
+    <TargetFrameworks>net452;netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp1.0</TargetFrameworks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NET45;MYSQL;ENTITY_FRAMEWORK;LINQ2SQL;FIREBIRD;SQL_CE;POSTGRESQL;OLEDB;SQLITE</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">
-    <DefineConstants>$(DefineConstants);COREFX</DefineConstants>
+    <DefineConstants>$(DefineConstants);ENTITY_FRAMEWORK;LINQ2SQL;SQL_CE;OLEDB</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Test.DB.sdf" />
@@ -21,23 +20,22 @@
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.3.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
-    <PackageReference Include="xunit" Version="2.3.0-beta1-build3642" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-beta1-build1309" />
-    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.0-beta1-build3642" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="5.9.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="MySql.Data" Version="8.0.8-dmr" />
+    <PackageReference Include="Npgsql" Version="3.2.5" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="xunit" Version="$(xUnitVersion)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="$(xUnitVersion)" />
   </ItemGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
-    <PackageReference Include="EntityFramework" Version="6.1.3" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="5.8.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
     <PackageReference Include="Microsoft.SqlServer.Compact" Version="4.0.8876.1" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
-    <PackageReference Include="MySql.Data" Version="7.0.7-m61" />
-    <PackageReference Include="Npgsql" Version="3.2.2" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.104" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
@@ -47,9 +45,12 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">
-    <PackageReference Include="System.Ben" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.0" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp1.0'">
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

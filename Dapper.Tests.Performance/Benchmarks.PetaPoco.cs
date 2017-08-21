@@ -8,7 +8,7 @@ namespace Dapper.Tests.Performance
     {
         private Database _db, _dbFast;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

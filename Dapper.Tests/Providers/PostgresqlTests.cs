@@ -1,5 +1,4 @@
-﻿#if POSTGRESQL
-using System;
+﻿using System;
 using System.Data;
 using System.Linq;
 using Xunit;
@@ -81,4 +80,3 @@ namespace Dapper.Tests
         }
     }
 }
-#endif

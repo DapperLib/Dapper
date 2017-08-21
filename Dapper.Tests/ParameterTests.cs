@@ -10,6 +10,7 @@ using System.Linq;
 using Xunit;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 #if ENTITY_FRAMEWORK
 using System.Data.Entity.Spatial;
@@ -37,6 +38,24 @@ namespace Dapper.Tests
             }
         }
 
+        private static List<Microsoft.SqlServer.Server.SqlDataRecord> CreateSqlDataRecordList(IEnumerable<int> numbers)
+        {
+            var number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
+
+            // Create an SqlMetaData object that describes our table type.
+            Microsoft.SqlServer.Server.SqlMetaData[] tvp_definition = { new Microsoft.SqlServer.Server.SqlMetaData("n", SqlDbType.Int) };
+
+            foreach (int n in numbers)
+            {
+                // Create a new record, using the metadata array above.
+                var rec = new Microsoft.SqlServer.Server.SqlDataRecord(tvp_definition);
+                rec.SetInt32(0, n);    // Set the value.
+                number_list.Add(rec);      // Add it to the list.
+            }
+
+            return number_list;
+        }
+        
         private class IntDynamicParam : SqlMapper.IDynamicParameters
         {
             private readonly IEnumerable<int> numbers;
@@ -50,19 +69,8 @@ namespace Dapper.Tests
                 var sqlCommand = (SqlCommand)command;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
 
-                var number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
-
-                // Create an SqlMetaData object that describes our table type.
-                Microsoft.SqlServer.Server.SqlMetaData[] tvp_definition = { new Microsoft.SqlServer.Server.SqlMetaData("n", SqlDbType.Int) };
-
-                foreach (int n in numbers)
-                {
-                    // Create a new record, using the metadata array above.
-                    var rec = new Microsoft.SqlServer.Server.SqlDataRecord(tvp_definition);
-                    rec.SetInt32(0, n);    // Set the value.
-                    number_list.Add(rec);      // Add it to the list.
-                }
-
+                var number_list = CreateSqlDataRecordList(numbers);
+                
                 // Add the table parameter.
                 var p = sqlCommand.Parameters.Add("ints", SqlDbType.Structured);
                 p.Direction = ParameterDirection.Input;
@@ -84,19 +92,8 @@ namespace Dapper.Tests
                 var sqlCommand = (SqlCommand)command;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
 
-                var number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
-
-                // Create an SqlMetaData object that describes our table type.
-                Microsoft.SqlServer.Server.SqlMetaData[] tvp_definition = { new Microsoft.SqlServer.Server.SqlMetaData("n", SqlDbType.Int) };
-
-                foreach (int n in numbers)
-                {
-                    // Create a new record, using the metadata array above.
-                    var rec = new Microsoft.SqlServer.Server.SqlDataRecord(tvp_definition);
-                    rec.SetInt32(0, n);    // Set the value.
-                    number_list.Add(rec);      // Add it to the list.
-                }
-
+                var number_list = CreateSqlDataRecordList(numbers);
+                
                 // Add the table parameter.
                 var p = sqlCommand.Parameters.Add(name, SqlDbType.Structured);
                 p.Direction = ParameterDirection.Input;
@@ -217,7 +214,6 @@ namespace Dapper.Tests
                 .IsEqualTo(str);
         }
 
-#if !COREFX
         [Fact]
         public void TestTVPWithAnonymousObject()
         {
@@ -288,19 +284,8 @@ namespace Dapper.Tests
                 var sqlCommand = (SqlCommand)command;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
 
-                var number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
-
-                // Create an SqlMetaData object that describes our table type.
-                Microsoft.SqlServer.Server.SqlMetaData[] tvp_definition = { new Microsoft.SqlServer.Server.SqlMetaData("n", SqlDbType.Int) };
-
-                foreach (int n in numbers)
-                {
-                    // Create a new record, using the metadata array above.
-                    var rec = new Microsoft.SqlServer.Server.SqlDataRecord(tvp_definition);
-                    rec.SetInt32(0, n);    // Set the value.
-                    number_list.Add(rec);      // Add it to the list.
-                }
-
+                var number_list = CreateSqlDataRecordList(numbers);
+                
                 // Add the table parameter.
                 var p = sqlCommand.Parameters.Add("ints", SqlDbType.Structured);
                 p.Direction = ParameterDirection.Input;
@@ -343,6 +328,83 @@ namespace Dapper.Tests
             }
         }
 
+        [Fact]
+        public void TestSqlDataRecordListParametersWithAsTableValuedParameter()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+                var records = CreateSqlDataRecordList(new int[] { 1, 2, 3 });
+
+                var nums = connection.Query<int>("get_ints", new { integers = records.AsTableValuedParameter() }, commandType: CommandType.StoredProcedure).ToList();
+                nums.IsSequenceEqualTo(new int[] { 1, 2, 3 });
+
+                nums = connection.Query<int>("select * from @integers", new { integers = records.AsTableValuedParameter("int_list_type") }).ToList();
+                nums.IsSequenceEqualTo(new int[] { 1, 2, 3 });
+
+                try
+                {
+                    connection.Query<int>("select * from @integers", new { integers = records.AsTableValuedParameter() }).First();
+                    throw new InvalidOperationException();
+                }
+                catch (Exception ex)
+                {
+                    ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
+                }
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
+        [Fact]
+        public void TestSqlDataRecordListParametersWithTypeHandlers()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+                // Variable type has to be IEnumerable<SqlDataRecord> for TypeHandler to kick in.
+                IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> records = CreateSqlDataRecordList(new int[] { 1, 2, 3 });
+
+                var nums = connection.Query<int>("get_ints", new { integers = records }, commandType: CommandType.StoredProcedure).ToList();
+                nums.IsSequenceEqualTo(new int[] { 1, 2, 3 });
+
+                try
+                {
+                    connection.Query<int>("select * from @integers", new { integers = records }).First();
+                    throw new InvalidOperationException();
+                }
+                catch (Exception ex)
+                {
+                    ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
+                }
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
+#if !NETCOREAPP1_0
         [Fact]
         public void DataTableParameters()
         {
@@ -491,7 +553,7 @@ namespace Dapper.Tests
 
             public void AddParameters(IDbCommand command, SqlMapper.Identity identity)
             {
-                Console.WriteLine("> AddParameters");
+                Debug.WriteLine("> AddParameters");
                 var lazy = (SqlCommand)command;
                 lazy.Parameters.AddWithValue("Id", 7);
                 var table = new DataTable
@@ -500,7 +562,7 @@ namespace Dapper.Tests
                     Rows = { { 4 }, { 9 } }
                 };
                 lazy.Parameters.AddWithValue("Rules", table);
-                Console.WriteLine("< AddParameters");
+                Debug.WriteLine("< AddParameters");
             }
         }
 

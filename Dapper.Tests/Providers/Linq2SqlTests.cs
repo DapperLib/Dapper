@@ -38,6 +38,27 @@ namespace Dapper.Tests
         {
             public System.Data.Linq.Binary Value { get; set; }
         }
+
+
+        private class NoDefaultConstructorWithBinary
+        {
+            public System.Data.Linq.Binary Value { get; set; }
+            public int Ynt { get; set; }
+            public NoDefaultConstructorWithBinary(System.Data.Linq.Binary val)
+            {
+                Value = val;
+            }
+        }
+
+        [Fact]
+        public void TestNoDefaultConstructorBinary()
+        {
+            byte[] orig = new byte[20];
+            new Random(123456).NextBytes(orig);
+            var input = new System.Data.Linq.Binary(orig);
+            var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as val", new { input }).First().Value;
+            output.ToArray().IsSequenceEqualTo(orig);
+        }
     }
 }
 #endif

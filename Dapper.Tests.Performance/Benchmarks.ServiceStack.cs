@@ -8,7 +8,7 @@ namespace Dapper.Tests.Performance
     {
         private IDbConnection _db;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

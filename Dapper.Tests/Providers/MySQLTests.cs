@@ -1,5 +1,4 @@
-﻿#if MYSQL
-using System;
+﻿using System;
 using System.Linq;
 using Xunit;
 
@@ -186,4 +185,3 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         }
     }
 }
-#endif

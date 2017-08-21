@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using Xunit;
 
-#if COREFX
+#if NETCOREAPP1_0
 using System.Collections;
 using System.Dynamic;
 using System.Data.SqlTypes;
@@ -18,7 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 #endif
 
-#if COREFX
+#if NETCOREAPP1_0
 namespace System
 {
     public enum GenericUriParserOptions
@@ -507,7 +507,7 @@ select * from @bar", new { foo }).Single();
             list.First().Base2.IsEqualTo("Four");
         }
 
-#if !COREFX
+#if !NETCOREAPP1_0
         [Fact]
         public void ExecuteReader()
         {

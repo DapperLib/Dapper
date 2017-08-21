@@ -26,7 +26,7 @@ namespace Dapper
             Properties = GetSettableProps(type);
             _type = type;
         }
-#if COREFX
+#if NETSTANDARD1_3
         private static bool IsParameterMatch(ParameterInfo[] x, ParameterInfo[] y)
         {
             if (ReferenceEquals(x, y)) return true;
@@ -40,7 +40,7 @@ namespace Dapper
         internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
             if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
-#if COREFX
+#if NETSTANDARD1_3
             return propertyInfo.DeclaringType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Single(x => x.Name == propertyInfo.Name
                         && x.PropertyType == propertyInfo.PropertyType
@@ -118,7 +118,7 @@ namespace Dapper
         public ConstructorInfo FindExplicitConstructor()
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-#if COREFX
+#if NETSTANDARD1_3
             var withAttr = constructors.Where(c => c.CustomAttributes.Any(x => x.AttributeType == typeof(ExplicitConstructorAttribute))).ToList();
 #else
             var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();

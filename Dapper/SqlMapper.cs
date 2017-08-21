@@ -19,7 +19,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
-#if COREFX
+#if NETSTANDARD1_3
 using DataException = System.InvalidOperationException;
 #endif
 
@@ -217,26 +217,24 @@ namespace Dapper
         private static void ResetTypeHandlers(bool clone)
         {
             typeHandlers = new Dictionary<Type, ITypeHandler>();
-#if !COREFX
+#if !NETSTANDARD1_3
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
+#endif
             try
             {
                 AddSqlDataRecordsTypeHandler(clone);
             }
             catch { /* https://github.com/StackExchange/dapper-dot-net/issues/424 */ }
-#endif
             AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
         }
 
-#if !COREFX
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void AddSqlDataRecordsTypeHandler(bool clone)
         {
             AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), clone);
         }
-#endif
 
         /// <summary>
         /// Configure the specified type to be mapped to a given db-type.
@@ -348,7 +346,7 @@ namespace Dapper
         /// </summary>
         /// <param name="value">The object to get a corresponding database type for.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -367,7 +365,7 @@ namespace Dapper
         /// <param name="demand">Whether to demand a value (throw if missing).</param>
         /// <param name="handler">The handler for <paramref name="type"/>.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -397,7 +395,7 @@ namespace Dapper
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
-#if !COREFX
+#if !NETSTANDARD1_3 && !NETSTANDARD2_0
             switch (type.FullName)
             {
                 case "Microsoft.SqlServer.Types.SqlGeography":
@@ -1864,7 +1862,7 @@ namespace Dapper
         /// Internal use only.
         /// </summary>
         /// <param name="value">The object to convert to a character.</param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1881,7 +1879,7 @@ namespace Dapper
         /// Internal use only.
         /// </summary>
         /// <param name="value">The object to convert to a character.</param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1900,7 +1898,7 @@ namespace Dapper
         /// <param name="parameters">The parameter collection to search in.</param>
         /// <param name="command">The command for this fetch.</param>
         /// <param name="name">The name of the parameter to get.</param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -1958,7 +1956,7 @@ namespace Dapper
         /// <param name="command">The command to pack parameters for.</param>
         /// <param name="namePrefix">The name prefix for these parameters.</param>
         /// <param name="value">The parameter value can be an <see cref="IEnumerable{T}"/></param>
-#if !COREFX
+#if !NETSTANDARD1_3
         [Browsable(false)]
 #endif
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -2257,7 +2255,7 @@ namespace Dapper
             {
                 switch (TypeExtensions.GetTypeCode(value.GetType()))
                 {
-#if !COREFX
+#if !NETSTANDARD1_3
                     case TypeCode.DBNull:
                         return "null";
 #endif
@@ -3080,7 +3078,7 @@ namespace Dapper
             int index = startBound;
             ConstructorInfo specializedConstructor = null;
 
-#if !COREFX
+#if !NETSTANDARD1_3
             bool supportInitialize = false;
 #endif
             Dictionary<Type, LocalBuilder> structLocals = null;
@@ -3115,7 +3113,7 @@ namespace Dapper
 
                     il.Emit(OpCodes.Newobj, explicitConstr);
                     il.Emit(OpCodes.Stloc_1);
-#if !COREFX
+#if !NETSTANDARD1_3
                     supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                     if (supportInitialize)
                     {
@@ -3137,7 +3135,7 @@ namespace Dapper
                     {
                         il.Emit(OpCodes.Newobj, ctor);
                         il.Emit(OpCodes.Stloc_1);
-#if !COREFX
+#if !NETSTANDARD1_3
                         supportInitialize = typeof(ISupportInitialize).IsAssignableFrom(type);
                         if (supportInitialize)
                         {
@@ -3354,7 +3352,7 @@ namespace Dapper
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc_1); // stack is empty
-#if !COREFX
+#if !NETSTANDARD1_3
                 if (supportInitialize)
                 {
                     il.Emit(OpCodes.Ldloc_1);
@@ -3626,7 +3624,7 @@ namespace Dapper
 
         private static IEqualityComparer<string> connectionStringComparer = StringComparer.Ordinal;
 
-#if !COREFX
+#if !NETSTANDARD1_3
         /// <summary>
         /// Key used to indicate the type name associated with a DataTable.
         /// </summary>
@@ -3662,15 +3660,15 @@ namespace Dapper
         /// <param name="table">The <see cref="DataTable"/> that has a type name associated with it.</param>
         public static string GetTypeName(this DataTable table) =>
             table?.ExtendedProperties[DataTableTypeNameKey] as string;
+#endif
 
         /// <summary>
-        /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a <see cref="TableValuedParameter"/>.
+        /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a TableValuedParameter.
         /// </summary>
-        /// <param name="list">Thhe list of records to convert to TVPs.</param>
+        /// <param name="list">The list of records to convert to TVPs.</param>
         /// <param name="typeName">The sql parameter type name.</param>
         public static ICustomQueryParameter AsTableValuedParameter(this IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName = null) =>
             new SqlDataRecordListTVPParameter(list, typeName);
-#endif
 
         // one per thread
         [ThreadStatic]

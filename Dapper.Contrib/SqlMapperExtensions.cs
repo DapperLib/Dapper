@@ -9,7 +9,7 @@ using System.Reflection.Emit;
 
 using Dapper;
 
-#if COREFX
+#if NETSTANDARD1_3
 using DataException = System.InvalidOperationException;
 #else
 using System.Threading;
@@ -274,7 +274,7 @@ namespace Dapper.Contrib.Extensions
             {
                 //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
                 var tableAttr = type
-#if COREFX
+#if NETSTANDARD1_3
                     .GetTypeInfo()
 #endif
                     .GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
@@ -516,7 +516,7 @@ namespace Dapper.Contrib.Extensions
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
-#if COREFX
+#if NETSTANDARD1_3
                 return AssemblyBuilder.DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
 #else
                 return Thread.GetDomain().DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
@@ -551,7 +551,7 @@ namespace Dapper.Contrib.Extensions
                     CreateProperty<T>(typeBuilder, property.Name, property.PropertyType, setIsDirtyMethod, isId);
                 }
 
-#if COREFX
+#if NETSTANDARD1_3
                 var generatedType = typeBuilder.CreateTypeInfo().AsType();
 #else
                 var generatedType = typeBuilder.CreateType();
