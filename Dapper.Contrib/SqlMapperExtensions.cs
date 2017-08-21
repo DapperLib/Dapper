@@ -76,6 +76,22 @@ namespace Dapper.Contrib.Extensions
                 ["fbconnection"] = new FbAdapter()
             };
 
+        /// <summary>
+        /// Add or set a Custom ISqlAdapter to the AdapterDictionary to use by <see cref="GetFormatter(IDbConnection)"/>
+        /// </summary>
+        /// <param name="connectionname">Name of the connectionname</param>
+        /// <param name="adapter">ISqlAdapter instance</param>
+        public static void SetSqlAdapter(string connectionname, ISqlAdapter adapter)
+        {
+            if (AdapterDictionary.ContainsKey(connectionname))
+            {
+                AdapterDictionary[connectionname] = adapter;
+            }
+            else
+            {
+                AdapterDictionary.Add(connectionname, adapter);
+            }
+        }
         private static List<PropertyInfo> ComputedPropertiesCache(Type type)
         {
             if (ComputedProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
