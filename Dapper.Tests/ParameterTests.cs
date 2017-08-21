@@ -445,7 +445,7 @@ namespace Dapper.Tests
             connection.Execute("create type MyTVPType as table (id int)");
             connection.Execute("create proc #DataTableParameters @ids MyTVPType readonly as select count(1) from @ids");
 
-            var table = new DataTable { TableName="MyTVPType", Columns = { { "id", typeof(int) } }, Rows = { { 1 }, { 2 }, { 3 } } };
+            var table = new DataTable { TableName = "MyTVPType", Columns = { { "id", typeof(int) } }, Rows = { { 1 }, { 2 }, { 3 } } };
             table.SetTypeName(table.TableName); // per SO29533765
             IDictionary<string, object> args = new Dictionary<string, object>
             {
@@ -1060,8 +1060,9 @@ insert @table values(5);
 insert @table values(6);
 insert @table values(7);
 SELECT value FROM @table WHERE value IN @myIds";
-            var queryParams = new Dictionary<string, object> {
-                ["myIds"] = new [] { 5, 6 }
+            var queryParams = new Dictionary<string, object>
+            {
+                ["myIds"] = new[] { 5, 6 }
             };
 
             var dynamicParams = new DynamicParameters(queryParams);

@@ -394,7 +394,7 @@ namespace Dapper
             }
             while (diving != null);
 
-            var dynamicParamName = string.Join(string.Empty, names.ToArray());
+            var dynamicParamName = string.Concat(names.ToArray());
 
             // Before we get all emitty...
             var lookup = string.Join("|", names.ToArray());

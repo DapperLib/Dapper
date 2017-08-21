@@ -377,9 +377,9 @@ namespace Dapper.Tests
 
             public override RatingValue Parse(object value)
             {
-                if (value is Int32)
+                if (value is int)
                 {
-                    return new RatingValue() { Value = (Int32)value };
+                    return new RatingValue() { Value = (int)value };
                 }
 
                 throw new FormatException("Invalid conversion to RatingValue");
@@ -395,13 +395,13 @@ namespace Dapper.Tests
 
         public class RatingValue
         {
-            public Int32 Value { get; set; }
+            public int Value { get; set; }
             // ... some other properties etc ...
         }
 
         public class MyResult
         {
-            public String CategoryName { get; set; }
+            public string CategoryName { get; set; }
             public RatingValue CategoryRating { get; set; }
         }
 
@@ -424,7 +424,7 @@ namespace Dapper.Tests
             Assert.Equal(200, foo.Value);
         }
 
-        public class StringListTypeHandler : SqlMapper.TypeHandler<List<String>>
+        public class StringListTypeHandler : SqlMapper.TypeHandler<List<string>>
         {
             private StringListTypeHandler()
             {
@@ -434,18 +434,18 @@ namespace Dapper.Tests
             //Just a simple List<string> type handler implementation
             public override void SetValue(IDbDataParameter parameter, List<string> value)
             {
-                parameter.Value = String.Join(",", value);
+                parameter.Value = string.Join(",", value);
             }
 
             public override List<string> Parse(object value)
             {
-                return ((value as String) ?? "").Split(',').ToList();
+                return ((value as string) ?? "").Split(',').ToList();
             }
         }
 
         public class MyObjectWithStringList
         {
-            public List<String> Names { get; set; }
+            public List<string> Names { get; set; }
         }
 
         [Fact]

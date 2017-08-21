@@ -25,7 +25,7 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestBasicStringUsageQueryFirstAsync()
         {
-            var str = await connection.QueryFirstAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new {txt = "def"})).ConfigureAwait(false);
+            var str = await connection.QueryFirstAsync<string>(new CommandDefinition("select 'abc' as [Value] union all select @txt", new { txt = "def" })).ConfigureAwait(false);
             Assert.Equal("abc", str);
         }
 
@@ -39,7 +39,7 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestBasicStringUsageQueryFirstOrDefaultAsync()
         {
-            var str = await connection.QueryFirstOrDefaultAsync<string>(new CommandDefinition("select null as [Value] union all select @txt", new {txt = "def"})).ConfigureAwait(false);
+            var str = await connection.QueryFirstOrDefaultAsync<string>(new CommandDefinition("select null as [Value] union all select @txt", new { txt = "def" })).ConfigureAwait(false);
             Assert.Null(str);
         }
 
@@ -165,7 +165,8 @@ namespace Dapper.Tests
         public async Task TestMultiMapArbitraryWithSplitAsync()
         {
             const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
-            var productQuery = await connection.QueryAsync<Product>(sql, new[] { typeof(Product), typeof(Category) }, (objects) => {
+            var productQuery = await connection.QueryAsync<Product>(sql, new[] { typeof(Product), typeof(Category) }, (objects) =>
+            {
                 var prod = (Product)objects[0];
                 prod.Category = (Category)objects[1];
                 return prod;
@@ -393,7 +394,8 @@ namespace Dapper.Tests
                 const int a = 123, b = 456;
                 var cmdDef = new CommandDefinition("select @a; select @b;", new
                 {
-                    a, b
+                    a,
+                    b
                 }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
 
                 int c, d;
@@ -784,7 +786,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             var args = new { x = 42 };
             const string sql = "select 123 as [A], 'abc' as [B] where @x=42";
             var row = (await connection.QueryAsync<SomeType>(new CommandDefinition(
-                sql, args, flags:CommandFlags.None)).ConfigureAwait(false)).Single();
+                sql, args, flags: CommandFlags.None)).ConfigureAwait(false)).Single();
             Assert.NotNull(row);
             Assert.Equal(123, row.A);
             Assert.Equal("abc", row.B);

@@ -63,7 +63,7 @@ namespace Dapper.Tests.Contrib
     {
         private const string DbName = "DapperContribTests";
 
-        public static string ConnectionString { get; private set; } =
+        public static string ConnectionString { get; } =
             IsAppVeyor
                 ? "Server=localhost;Uid=root;Pwd=Password12!;"
                 : "Server=localhost;Uid=test;Pwd=pass;";

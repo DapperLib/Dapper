@@ -407,7 +407,7 @@ namespace Dapper
                             object val = func(reader);
                             if (val == null || val is T)
                             {
-                                buffer.Add((T) val);
+                                buffer.Add((T)val);
                             }
                             else
                             {
@@ -564,7 +564,8 @@ namespace Dapper
                                 masterSql = cmd.CommandText;
                                 var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
                                 info = GetCacheInfo(identity, obj, command.AddToCache);
-                            } else if(pending.Count >= MAX_PENDING)
+                            }
+                            else if (pending.Count >= MAX_PENDING)
                             {
                                 var recycled = pending.Dequeue();
                                 total += await recycled.Task.ConfigureAwait(false);
@@ -955,15 +956,18 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
-            try {
+            try
+            {
                 if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
                 using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false)) {
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                {
                     var results = MultiMapImpl(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;
                 }
             }
-            finally {
+            finally
+            {
                 if (wasClosed) cnn.Close();
             }
         }
@@ -1027,8 +1031,9 @@ namespace Dapper
                     if (!reader.IsClosed)
                     {
                         try { cmd.Cancel(); }
-                        catch { /* don't spoil the existing exception */
-                            }
+                        catch
+                        { /* don't spoil the existing exception */
+                        }
                     }
                     reader.Dispose();
                 }

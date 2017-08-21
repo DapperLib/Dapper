@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Dapper.Contrib.Extensions;
 using System.Linq;
 
@@ -50,7 +50,7 @@ namespace Dapper.Tests.Performance
             Step();
             return _connection.QueryFirstOrDefault("select * from Posts where Id = @Id", new { Id = i }).First();
         }
-        
+
         [Benchmark(Description = "Contrib Get<T>")]
         public Post ContribGet()
         {

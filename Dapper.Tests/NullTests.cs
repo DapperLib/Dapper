@@ -6,7 +6,7 @@ namespace Dapper.Tests
     public class NullTests : TestBase
     {
         [Fact]
-		public void TestNullableDefault()
+        public void TestNullableDefault()
         {
             TestNullable(false);
         }
@@ -17,10 +17,10 @@ namespace Dapper.Tests
             TestNullable(true);
         }
 
-		private void TestNullable(bool applyNulls)
+        private void TestNullable(bool applyNulls)
         {
             bool oldSetting = SqlMapper.Settings.ApplyNullValues;
-			try
+            try
             {
                 SqlMapper.Settings.ApplyNullValues = applyNulls;
                 SqlMapper.PurgeQueryCache();
@@ -51,7 +51,7 @@ select * from @data").ToDictionary(_ => _.Id);
                     Assert.Equal(AnEnum.B, obj.D);
                     Assert.Null(obj.E);
                 }
-				else
+                else
                 {
                     Assert.Equal(2, obj.A);
                     Assert.Equal(2, obj.B);
@@ -59,7 +59,8 @@ select * from @data").ToDictionary(_ => _.Id);
                     Assert.Equal(AnEnum.B, obj.D);
                     Assert.Equal(AnEnum.B, obj.E);
                 }
-            } finally
+            }
+            finally
             {
                 SqlMapper.Settings.ApplyNullValues = oldSetting;
             }
@@ -67,14 +68,14 @@ select * from @data").ToDictionary(_ => _.Id);
 
         private class NullTestClass
         {
-			public int Id { get; set; }
-			public int A { get; set; }
+            public int Id { get; set; }
+            public int A { get; set; }
             public int? B { get; set; }
             public string C { get; set; }
             public AnEnum D { get; set; }
             public AnEnum? E { get; set; }
 
-			public NullTestClass()
+            public NullTestClass()
             {
                 A = 2;
                 B = 2;

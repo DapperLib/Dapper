@@ -91,9 +91,9 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
                     var col = reader.GetOrdinal("Type");
                     var splitOn = reader.GetOrdinal("Id");
 
-                    var toFoo = reader.GetRowParser<DiscriminatedWithMultiMapping_BaseType>(typeof(DiscriminatedWithMultiMapping_Foo),0, splitOn);
-                    var toBar = reader.GetRowParser<DiscriminatedWithMultiMapping_BaseType>(typeof(DiscriminatedWithMultiMapping_Bar),0, splitOn);
-                    var toHaz = reader.GetRowParser<HazNameId>(typeof(HazNameId),splitOn, reader.FieldCount - splitOn);
+                    var toFoo = reader.GetRowParser<DiscriminatedWithMultiMapping_BaseType>(typeof(DiscriminatedWithMultiMapping_Foo), 0, splitOn);
+                    var toBar = reader.GetRowParser<DiscriminatedWithMultiMapping_BaseType>(typeof(DiscriminatedWithMultiMapping_Bar), 0, splitOn);
+                    var toHaz = reader.GetRowParser<HazNameId>(typeof(HazNameId), splitOn, reader.FieldCount - splitOn);
 
                     do
                     {
@@ -102,10 +102,10 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
                         {
                             case 1:
                                 obj = toFoo(reader);
-                            break;
+                                break;
                             case 2:
                                 obj = toBar(reader);
-                            break;
+                                break;
                         }
 
                         Assert.NotNull(obj);

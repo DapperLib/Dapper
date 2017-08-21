@@ -11,7 +11,7 @@ namespace Dapper.Tests.Providers
         {
             EntityFramework.Handlers.Register();
         }
-        
+
         [Fact]
         public void Issue570_DbGeo_HasValues()
         {

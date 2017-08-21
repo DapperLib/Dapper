@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -86,7 +86,7 @@ namespace Dapper.Tests.Performance
                 reader.Read();
                 reader.GetValues(values);
                 _table.Rows.Add(values);
-                return _table.Rows[_table.Rows.Count-1];
+                return _table.Rows[_table.Rows.Count - 1];
             }
         }
     }

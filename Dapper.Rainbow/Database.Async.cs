@@ -88,7 +88,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <returns>The number of rows affected.</returns>
         public Task<int> ExecuteAsync(string sql, dynamic param = null) =>
-            _connection.ExecuteAsync(sql, param as object, _transaction, this._commandTimeout);
+            _connection.ExecuteAsync(sql, param as object, _transaction, _commandTimeout);
 
         /// <summary>
         /// Asynchronously queries the current database.

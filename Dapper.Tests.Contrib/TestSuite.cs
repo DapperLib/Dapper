@@ -180,7 +180,7 @@ namespace Dapper.Tests.Contrib
 
                 var objectXs = connection.GetAll<ObjectX>().ToList();
                 Assert.True(objectXs.Count > 0);
-                Assert.Equal(1, objectXs.Count(x => x.ObjectXId== guid));
+                Assert.Equal(1, objectXs.Count(x => x.ObjectXId == guid));
             }
         }
 

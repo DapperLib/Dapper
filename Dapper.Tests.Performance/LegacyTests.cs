@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Linq;
@@ -145,7 +145,7 @@ namespace Dapper.Tests.Performance
 
                     var entityContext2 = new EFContext(connection);
                     tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity Framework: SqlQuery");
-                    
+
                     var entityContext3 = new EFContext(connection);
                     tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework: No Tracking");
                 }, "Entity Framework");
@@ -266,7 +266,8 @@ namespace Dapper.Tests.Performance
                 }, "Belgrade Sql Client");
 
                 //Susanoo
-                Try(() => {
+                Try(() =>
+                {
                     var susanooDb = new DatabaseManager(connection);
 
                     var susanooPreDefinedCommand =
@@ -307,7 +308,8 @@ namespace Dapper.Tests.Performance
                 }, "ServiceStack.OrmLite");
 
                 // Hand Coded
-                Try(() => {
+                Try(() =>
+                {
                     var postCommand = new SqlCommand()
                     {
                         Connection = connection,

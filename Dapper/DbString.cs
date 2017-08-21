@@ -61,7 +61,6 @@ namespace Dapper
             {
                 param = command.CreateParameter();
                 param.ParameterName = name;
-
             }
             else
             {

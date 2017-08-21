@@ -166,10 +166,10 @@ namespace Dapper
             /// <param name="database">The database this table belongs in.</param>
             /// <param name="likelyTableName">The name for this table.</param>
 			public Table(Database<TDatabase> database, string likelyTableName)
-				: base(database, likelyTableName)
-			{
-			}
-		}
+                : base(database, likelyTableName)
+            {
+            }
+        }
 
         private DbConnection _connection;
         private int _commandTimeout;
@@ -238,7 +238,7 @@ namespace Dapper
         /// <returns>The function to create the <paramref name="tableType"/> table.</returns>
         protected Action<TDatabase> CreateTableConstructor(Type tableType)
         {
-            return CreateTableConstructor(new[] {tableType});
+            return CreateTableConstructor(new[] { tableType });
         }
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace Dapper
             name = name.Replace("[", "");
             name = name.Replace("]", "");
 
-            if(name.Contains("."))
+            if (name.Contains("."))
             {
                 var parts = name.Split('.');
                 if (parts.Length == 2)

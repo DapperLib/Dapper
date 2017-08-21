@@ -9,6 +9,6 @@ namespace Dapper.Tests.Performance.EntityFramework
         {
         }
 
-        public DbSet<Post> Posts { get;set; }
+        public DbSet<Post> Posts { get; set; }
     }
 }

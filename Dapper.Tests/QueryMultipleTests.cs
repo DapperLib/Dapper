@@ -145,7 +145,7 @@ end");
             Assert.Equal(42, connection.QuerySingle<int>("select cast(42 as bigint)"));
 
             // using multi-reader API
-            using(var reader = connection.QueryMultiple("select cast(42 as bigint); select cast(42 as bigint)"))
+            using (var reader = connection.QueryMultiple("select cast(42 as bigint); select cast(42 as bigint)"))
             {
                 Assert.Equal(42, reader.Read<int>().Single());
                 Assert.Equal(42, reader.ReadSingle<int>());
