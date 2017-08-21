@@ -26,10 +26,6 @@
     <Reference Include="System.Core" Pack="false" />
   </ItemGroup>
   
-  <PropertyGroup Condition=" '$(TargetFramework)' != 'net40'">
-    <DefineConstants>$(DefineConstants);ASYNC</DefineConstants>
-  </PropertyGroup>
-  
   <ItemGroup>
     <PackageReference Include="SourceLink.Create.GitHub" Version="2.1.2" PrivateAssets="All" /> 
     <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.1.2" />

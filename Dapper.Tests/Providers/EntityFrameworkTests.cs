@@ -11,8 +11,7 @@ namespace Dapper.Tests.Providers
         {
             EntityFramework.Handlers.Register();
         }
-
-#if ASYNC // TODO: Temp workaround in tests
+        
         [Fact]
         public void Issue570_DbGeo_HasValues()
         {
@@ -27,7 +26,6 @@ namespace Dapper.Tests.Providers
             Assert.NotNull(fromDb.Area);
             Assert.Equal(orig.Area, fromDb.Area);
         }
-#endif
 
         [Fact]
         public void Issue22_ExecuteScalar_EntityFramework()

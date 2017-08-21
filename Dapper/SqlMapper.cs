@@ -1,4 +1,4 @@
-/*
+﻿/*
  License: http://www.apache.org/licenses/LICENSE-2.0
  Home page: https://github.com/StackExchange/dapper-dot-net
  */
@@ -516,13 +516,11 @@ namespace Dapper
             CacheInfo info = null;
             if (multiExec != null)
             {
-#if ASYNC
                 if((command.Flags & CommandFlags.Pipelined) != 0)
                 {
                     // this includes all the code for concurrent/overlapped query
                     return ExecuteMultiImplAsync(cnn, command, multiExec).Result;
                 }
-#endif
                 bool isFirst = true;
                 int total = 0;
                 bool wasClosed = cnn.State == ConnectionState.Closed;

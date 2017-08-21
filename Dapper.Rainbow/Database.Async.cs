@@ -1,5 +1,4 @@
-﻿#if ASYNC
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -210,4 +209,3 @@ namespace Dapper
             SqlMapper.QueryMultipleAsync(_connection, sql, param, transaction, commandTimeout, commandType);
     }
 }
-#endif
