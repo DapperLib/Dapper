@@ -12,7 +12,7 @@ namespace Dapper.Tests.Performance
         private static readonly Func<DataClassesDataContext, int, Linq2Sql.Post> compiledQuery =
             CompiledQuery.Compile((DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

@@ -2,6 +2,7 @@
 using System.Linq;
 namespace Dapper.Tests
 {
+    [Collection(NonParallelDefinition.Name)]
     public class NullTests : TestBase
     {
         [Fact]
@@ -33,30 +34,30 @@ select * from @data").ToDictionary(_ => _.Id);
 
                 var obj = data[2];
 
-                obj.Id.IsEqualTo(2);
-                obj.A.IsEqualTo(42);
-                obj.B.IsEqualTo(42);
-                obj.C.IsEqualTo("abc");
-                obj.D.IsEqualTo(AnEnum.A);
-                obj.E.IsEqualTo(AnEnum.A);
+                Assert.Equal(2, obj.Id);
+                Assert.Equal(42, obj.A);
+                Assert.Equal(42, obj.B);
+                Assert.Equal("abc", obj.C);
+                Assert.Equal(AnEnum.A, obj.D);
+                Assert.Equal(AnEnum.A, obj.E);
 
                 obj = data[1];
-                obj.Id.IsEqualTo(1);
+                Assert.Equal(1, obj.Id);
                 if (applyNulls)
                 {
-                    obj.A.IsEqualTo(2); // cannot be null
-                    obj.B.IsEqualTo(null);
-                    obj.C.IsEqualTo(null);
-                    obj.D.IsEqualTo(AnEnum.B);
-                    obj.E.IsEqualTo(null);
+                    Assert.Equal(2, obj.A); // cannot be null
+                    Assert.Null(obj.B);
+                    Assert.Null(obj.C);
+                    Assert.Equal(AnEnum.B, obj.D);
+                    Assert.Null(obj.E);
                 }
 				else
                 {
-                    obj.A.IsEqualTo(2);
-                    obj.B.IsEqualTo(2);
-                    obj.C.IsEqualTo("def");
-                    obj.D.IsEqualTo(AnEnum.B);
-                    obj.E.IsEqualTo(AnEnum.B);
+                    Assert.Equal(2, obj.A);
+                    Assert.Equal(2, obj.B);
+                    Assert.Equal("def", obj.C);
+                    Assert.Equal(AnEnum.B, obj.D);
+                    Assert.Equal(AnEnum.B, obj.E);
                 }
             } finally
             {

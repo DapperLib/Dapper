@@ -8,7 +8,7 @@ namespace Dapper.Tests.Performance
     {
         private DynamicModel _model;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

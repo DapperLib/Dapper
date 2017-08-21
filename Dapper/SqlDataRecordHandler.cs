@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 
-#if !COREFX
 namespace Dapper
 {
     internal sealed class SqlDataRecordHandler : SqlMapper.ITypeHandler
@@ -18,4 +17,3 @@ namespace Dapper
         }
     }
 }
-#endif

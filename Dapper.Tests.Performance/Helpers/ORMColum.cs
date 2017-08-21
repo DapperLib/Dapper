@@ -8,7 +8,7 @@ namespace Dapper.Tests.Performance.Helpers
     {
         public string Id => nameof(ORMColum);
         public string ColumnName { get; } = "ORM";
-        public string Legend => "The object relational mapper being tested";
+        public string Legend => "The object/relational mapper being tested";
 
         public bool IsDefault(Summary summary, Benchmark benchmark) => false;
         public string GetValue(Summary summary, Benchmark benchmark) => benchmark.Target.Method.DeclaringType.Name.Replace("Benchmarks", string.Empty);

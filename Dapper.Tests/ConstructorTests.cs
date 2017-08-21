@@ -12,26 +12,26 @@ namespace Dapper.Tests
         {
             var order = connection.Query<AbstractInheritance.ConcreteOrder>("select 1 Internal,2 Protected,3 [Public],4 Concrete").First();
 
-            order.Internal.IsEqualTo(1);
-            order.ProtectedVal.IsEqualTo(2);
-            order.Public.IsEqualTo(3);
-            order.Concrete.IsEqualTo(4);
+            Assert.Equal(1, order.Internal);
+            Assert.Equal(2, order.ProtectedVal);
+            Assert.Equal(3, order.Public);
+            Assert.Equal(4, order.Concrete);
         }
 
         [Fact]
         public void TestMultipleConstructors()
         {
             MultipleConstructors mult = connection.Query<MultipleConstructors>("select 0 A, 'Dapper' b").First();
-            mult.A.IsEqualTo(0);
-            mult.B.IsEqualTo("Dapper");
+            Assert.Equal(0, mult.A);
+            Assert.Equal("Dapper", mult.B);
         }
 
         [Fact]
         public void TestConstructorsWithAccessModifiers()
         {
             ConstructorsWithAccessModifiers value = connection.Query<ConstructorsWithAccessModifiers>("select 0 A, 'Dapper' b").First();
-            value.A.IsEqualTo(1);
-            value.B.IsEqualTo("Dapper!");
+            Assert.Equal(1, value.A);
+            Assert.Equal("Dapper!", value.B);
         }
 
         [Fact]
@@ -39,11 +39,11 @@ namespace Dapper.Tests
         {
             var guid = Guid.NewGuid();
             NoDefaultConstructor nodef = connection.Query<NoDefaultConstructor>("select CAST(NULL AS integer) A1,  CAST(NULL AS integer) b1, CAST(NULL AS real) f1, 'Dapper' s1, G1 = @id", new { id = guid }).First();
-            nodef.A.IsEqualTo(0);
-            nodef.B.IsEqualTo(null);
-            nodef.F.IsEqualTo(0);
-            nodef.S.IsEqualTo("Dapper");
-            nodef.G.IsEqualTo(guid);
+            Assert.Equal(0, nodef.A);
+            Assert.Null(nodef.B);
+            Assert.Equal(0, nodef.F);
+            Assert.Equal("Dapper", nodef.S);
+            Assert.Equal(nodef.G, guid);
         }
 
         [Fact]
@@ -52,18 +52,18 @@ namespace Dapper.Tests
             const char c1 = 'ą';
             const char c3 = 'ó';
             NoDefaultConstructorWithChar nodef = connection.Query<NoDefaultConstructorWithChar>("select @c1 c1, @c2 c2, @c3 c3", new { c1 = c1, c2 = (char?)null, c3 = c3 }).First();
-            nodef.Char1.IsEqualTo(c1);
-            nodef.Char2.IsEqualTo(null);
-            nodef.Char3.IsEqualTo(c3);
+            Assert.Equal(nodef.Char1, c1);
+            Assert.Null(nodef.Char2);
+            Assert.Equal(nodef.Char3, c3);
         }
 
         [Fact]
         public void TestNoDefaultConstructorWithEnum()
         {
             NoDefaultConstructorWithEnum nodef = connection.Query<NoDefaultConstructorWithEnum>("select cast(2 as smallint) E1, cast(5 as smallint) n1, cast(null as smallint) n2").First();
-            nodef.E.IsEqualTo(ShortEnum.Two);
-            nodef.NE1.IsEqualTo(ShortEnum.Five);
-            nodef.NE2.IsEqualTo(null);
+            Assert.Equal(ShortEnum.Two, nodef.E);
+            Assert.Equal(ShortEnum.Five, nodef.NE1);
+            Assert.Null(nodef.NE2);
         }
 
         [Fact]
@@ -77,10 +77,10 @@ insert @ExplicitConstructors(Field_1) values (1);
 SELECT * FROM @ExplicitConstructors"
 ).ToList();
 
-            rows.Count.IsEqualTo(1);
-            rows[0].Field.IsEqualTo(1);
-            rows[0].Field_1.IsEqualTo(1);
-            rows[0].GetWentThroughProperConstructor().IsTrue();
+            Assert.Single(rows);
+            Assert.Equal(1, rows[0].Field);
+            Assert.Equal(1, rows[0].Field_1);
+            Assert.True(rows[0].GetWentThroughProperConstructor());
         }
 
         private class _ExplicitConstructors
@@ -102,107 +102,6 @@ SELECT * FROM @ExplicitConstructors"
             {
                 return WentThroughProperConstructor;
             }
-        }
-
-#if LINQ2SQL
-        private class NoDefaultConstructorWithBinary
-        {
-            public System.Data.Linq.Binary Value { get; set; }
-            public int Ynt { get; set; }
-            public NoDefaultConstructorWithBinary(System.Data.Linq.Binary val)
-            {
-                Value = val;
-            }
-        }
-
-        [Fact]
-        public void TestNoDefaultConstructorBinary()
-        {
-            byte[] orig = new byte[20];
-            new Random(123456).NextBytes(orig);
-            var input = new System.Data.Linq.Binary(orig);
-            var output = connection.Query<NoDefaultConstructorWithBinary>("select @input as val", new { input }).First().Value;
-            output.ToArray().IsSequenceEqualTo(orig);
-        }
-#endif
-
-        [Fact]
-        public void Issue461_TypeHandlerWorksInConstructor()
-        {
-            SqlMapper.AddTypeHandler(new Issue461_BlargHandler());
-
-            connection.Execute(@"CREATE TABLE #Issue461 (
-                                      Id                int not null IDENTITY(1,1),
-                                      SomeValue         nvarchar(50),
-                                      SomeBlargValue    nvarchar(200),
-                                    )");
-            const string Expected = "abc123def";
-            var blarg = new Blarg(Expected);
-            connection.Execute(
-                "INSERT INTO #Issue461 (SomeValue, SomeBlargValue) VALUES (@value, @blarg)",
-                new { value = "what up?", blarg });
-
-            // test: without constructor
-            var parameterlessWorks = connection.QuerySingle<Issue461_ParameterlessTypeConstructor>("SELECT * FROM #Issue461");
-            parameterlessWorks.Id.IsEqualTo(1);
-            parameterlessWorks.SomeValue.IsEqualTo("what up?");
-            parameterlessWorks.SomeBlargValue.Value.IsEqualTo(Expected);
-
-            // test: via constructor
-            var parameterDoesNot = connection.QuerySingle<Issue461_ParameterisedTypeConstructor>("SELECT * FROM #Issue461");
-            parameterDoesNot.Id.IsEqualTo(1);
-            parameterDoesNot.SomeValue.IsEqualTo("what up?");
-            parameterDoesNot.SomeBlargValue.Value.IsEqualTo(Expected);
-        }
-
-        // I would usually expect this to be a struct; using a class
-        // so that we can't pass unexpectedly due to forcing an unsafe cast - want
-        // to see an InvalidCastException if it is wrong
-        private class Blarg
-        {
-            public Blarg(string value) { Value = value; }
-            public string Value { get; }
-            public override string ToString()
-            {
-                return Value;
-            }
-        }
-
-        private class Issue461_BlargHandler : SqlMapper.TypeHandler<Blarg>
-        {
-            public override void SetValue(IDbDataParameter parameter, Blarg value)
-            {
-                parameter.Value = ((object)value.Value) ?? DBNull.Value;
-            }
-
-            public override Blarg Parse(object value)
-            {
-                string s = (value == null || value is DBNull) ? null : Convert.ToString(value);
-                return new Blarg(s);
-            }
-        }
-
-        private class Issue461_ParameterlessTypeConstructor
-        {
-            public int Id { get; set; }
-
-            public string SomeValue { get; set; }
-            public Blarg SomeBlargValue { get; set; }
-        }
-
-        private class Issue461_ParameterisedTypeConstructor
-        {
-            public Issue461_ParameterisedTypeConstructor(int id, string someValue, Blarg someBlargValue)
-            {
-                Id = id;
-                SomeValue = someValue;
-                SomeBlargValue = someBlargValue;
-            }
-
-            public int Id { get; }
-
-            public string SomeValue { get; }
-            public Blarg SomeBlargValue { get; }
         }
 
         public static class AbstractInheritance
@@ -312,7 +211,7 @@ SELECT * FROM @ExplicitConstructors"
         public void TestWithNonPublicConstructor()
         {
             var output = connection.Query<WithPrivateConstructor>("select 1 as Foo").First();
-            output.Foo.IsEqualTo(1);
+            Assert.Equal(1, output.Foo);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿#if POSTGRESQL
-using System;
+﻿using System;
 using System.Data;
 using System.Linq;
 using Xunit;
@@ -49,14 +48,15 @@ namespace Dapper.Tests
                 conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", Cats);
 
                 var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new[] { 1, 3, 5 } });
-                r.Count().IsEqualTo(3);
-                r.Count(c => c.Id == 1).IsEqualTo(1);
-                r.Count(c => c.Id == 3).IsEqualTo(1);
-                r.Count(c => c.Id == 5).IsEqualTo(1);
+                Assert.Equal(3, r.Count());
+                Assert.Equal(1, r.Count(c => c.Id == 1));
+                Assert.Equal(1, r.Count(c => c.Id == 3));
+                Assert.Equal(1, r.Count(c => c.Id == 5));
                 transaction.Rollback();
             }
         }
 
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactPostgresqlAttribute : FactAttribute
         {
             public override string Skip
@@ -81,4 +81,3 @@ namespace Dapper.Tests
         }
     }
 }
-#endif

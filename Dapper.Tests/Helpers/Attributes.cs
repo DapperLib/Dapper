@@ -5,20 +5,6 @@ using Xunit;
 namespace Dapper.Tests
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class FactUnlessCoreCLRAttribute : FactAttribute
-    {
-        public FactUnlessCoreCLRAttribute(string url)
-        {
-#if COREFX
-            Skip = $"CoreFX: {url}";
-#endif
-            this.Url = url;
-        }
-
-        public string Url { get; }
-    }
-
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class FactLongRunningAttribute : FactAttribute
     {
         public FactLongRunningAttribute()
@@ -31,6 +17,7 @@ namespace Dapper.Tests
         public string Url { get; private set; }
     }
 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class FactRequiredCompatibilityLevelAttribute : FactAttribute
     {
         public FactRequiredCompatibilityLevelAttribute(int level) : base()
@@ -56,6 +43,7 @@ namespace Dapper.Tests
         }
     }
 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class FactUnlessCaseSensitiveDatabaseAttribute : FactAttribute
     {
         public FactUnlessCaseSensitiveDatabaseAttribute() : base()

@@ -6,27 +6,23 @@
     <DebugType>portable</DebugType>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFramework>netcoreapp1.0</TargetFramework>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">
-    <DefineConstants>$(DefineConstants);COREFX;</DefineConstants>
+    <TargetFrameworks>netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Dapper.Tests\Helpers\Assert.cs;..\Dapper.Tests\Helpers\XunitSkippable.cs;..\Dapper\TypeExtensions.cs" />
+    <Compile Include="..\Dapper.Tests\Helpers\XunitSkippable.cs;..\Dapper\TypeExtensions.cs" />
     <None Remove="Test.DB.sdf" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.3.0" />
-    <PackageReference Include="xunit" Version="2.3.0-beta1-build3642" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-beta1-build1309" />
-    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.0-beta1-build3642" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="MySql.Data" Version="7.0.7-m61" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
+    <PackageReference Include="xunit" Version="$(xUnitVersion)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="$(xUnitVersion)" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />

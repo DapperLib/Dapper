@@ -4,7 +4,7 @@
     <Title>Dapper: Entity Framework type handlers (with a strong name)</Title>
     <Description>Extension handlers for entity framework</Description>
     <Authors>Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net40;net45</TargetFrameworks>
+    <TargetFrameworks>net451</TargetFrameworks>
     <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>

@@ -18,7 +18,7 @@ namespace Dapper.Tests.Performance
                     .DefineResults<dynamic>()
                     .Realize();
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

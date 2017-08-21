@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Dapper.Tests
@@ -18,7 +15,7 @@ namespace Dapper.Tests
             connection.Execute("create proc #Issue261 @c decimal(10,5) OUTPUT as begin set @c=11.884 end");
             connection.Execute("#Issue261", parameters, commandType: CommandType.StoredProcedure);
             var c = parameters.Get<Decimal>("c");
-            c.IsEqualTo(11.884M);
+            Assert.Equal(11.884M, c);
         }
 
         [Fact]
@@ -64,7 +61,7 @@ namespace Dapper.Tests
                 cmd.Parameters.Add(c);
                 cmd.ExecuteNonQuery();
                 decimal value = (decimal)c.Value;
-                value.IsEqualTo(11.884M);
+                Assert.Equal(11.884M, value);
             }
         }
 
@@ -72,7 +69,7 @@ namespace Dapper.Tests
         public void BasicDecimals()
         {
             var c = connection.Query<decimal>("select @c", new { c = 11.884M }).Single();
-            c.IsEqualTo(11.884M);
+            Assert.Equal(11.884M, c);
         }
 
         [Fact]
@@ -103,9 +100,9 @@ namespace Dapper.Tests
             var row = connection.Query<HasDoubleDecimal>(
                 "select cast(null as decimal) as A, cast(null as decimal) as B, cast(null as float) as C, cast(null as float) as D").Single();
             row.A.Equals(0.0);
-            row.B.IsNull();
+            Assert.Null(row.B);
             row.C.Equals(0.0M);
-            row.D.IsNull();
+            Assert.Null(row.D);
         }
 
         private class HasDoubleDecimal

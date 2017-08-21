@@ -9,11 +9,11 @@ namespace Dapper.Tests.Performance
     {
         private SqlCommand _postCommand;
         private SqlParameter _idParam;
-#if !COREFX
+#if !NETCOREAPP1_0
         private DataTable _table;
 #endif
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();
@@ -24,7 +24,7 @@ namespace Dapper.Tests.Performance
                 Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id = @Id"
             };
             _idParam = _postCommand.Parameters.Add("@Id", SqlDbType.Int);
-#if !COREFX
+#if !NETCOREAPP1_0
             _table = new DataTable
             {
                 Columns =

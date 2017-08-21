@@ -5,7 +5,7 @@
     <AssemblyTitle>Dapper entity framework type handlers</AssemblyTitle>
     <VersionPrefix>1.50.2</VersionPrefix>
     <Authors>Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net40;net45</TargetFrameworks>
+    <TargetFrameworks>net451</TargetFrameworks>
     <PackageTags>orm;sql;micro-orm</PackageTags>
   </PropertyGroup>
   <ItemGroup>

@@ -1,16 +1,14 @@
-﻿using System;
+﻿using Microsoft.Data.Sqlite;
+using MySql.Data.MySqlClient;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using Xunit;
 using Xunit.Sdk;
-#if COREFX
-using Microsoft.Data.Sqlite;
-#else
-using System.Data.SQLite;
+
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
 using System.Data.SqlServerCe;
-using MySql.Data.MySqlClient;
-using SqliteConnection = System.Data.SQLite.SQLiteConnection;
 #endif
 
 namespace Dapper.Tests.Contrib
@@ -20,6 +18,7 @@ namespace Dapper.Tests.Contrib
     // If we want to support a new provider, they need only be added here - not in multiple places
 
     [XunitTestCaseDiscoverer("Dapper.Tests.SkippableFactDiscoverer", "Dapper.Tests.Contrib")]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class SkippableFactAttribute : FactAttribute
     {
     }
@@ -38,32 +37,31 @@ namespace Dapper.Tests.Contrib
             using (var connection = new SqlConnection(ConnectionString))
             {
                 // ReSharper disable once AccessToDisposedClosure
-                Action<string> dropTable = name => connection.Execute($@"IF OBJECT_ID('{name}', 'U') IS NOT NULL DROP TABLE [{name}]; ");
+                Action<string> dropTable = name => connection.Execute($"IF OBJECT_ID('{name}', 'U') IS NOT NULL DROP TABLE [{name}]; ");
                 connection.Open();
                 dropTable("Stuff");
-                connection.Execute(@"CREATE TABLE Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null);");
+                connection.Execute("CREATE TABLE Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null);");
                 dropTable("People");
-                connection.Execute(@"CREATE TABLE People (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
+                connection.Execute("CREATE TABLE People (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
                 dropTable("Users");
-                connection.Execute(@"CREATE TABLE Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null);");
+                connection.Execute("CREATE TABLE Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null);");
                 dropTable("Automobiles");
-                connection.Execute(@"CREATE TABLE Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
+                connection.Execute("CREATE TABLE Automobiles (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
                 dropTable("Results");
-                connection.Execute(@"CREATE TABLE Results (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, [Order] int not null);");
+                connection.Execute("CREATE TABLE Results (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, [Order] int not null);");
                 dropTable("ObjectX");
-                connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
                 dropTable("ObjectY");
-                connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
                 dropTable("ObjectZ");
-                connection.Execute(@"CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
             }
         }
     }
 
-#if !COREFX
     public class MySqlServerTestSuite : TestSuite
     {
-        const string DbName = "DapperContribTests";
+        private const string DbName = "DapperContribTests";
 
         public static string ConnectionString { get; private set; } =
             IsAppVeyor
@@ -85,25 +83,25 @@ namespace Dapper.Tests.Contrib
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     // ReSharper disable once AccessToDisposedClosure
-                    Action<string> dropTable = name => connection.Execute($@"DROP TABLE IF EXISTS `{name}`;");
+                    Action<string> dropTable = name => connection.Execute($"DROP TABLE IF EXISTS `{name}`;");
                     connection.Open();
-                    connection.Execute($@"DROP DATABASE IF EXISTS {DbName}; CREATE DATABASE {DbName}; USE {DbName};");
+                    connection.Execute($"DROP DATABASE IF EXISTS {DbName}; CREATE DATABASE {DbName}; USE {DbName};");
                     dropTable("Stuff");
-                    connection.Execute(@"CREATE TABLE Stuff (TheId int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Created DateTime null);");
+                    connection.Execute("CREATE TABLE Stuff (TheId int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Created DateTime null);");
                     dropTable("People");
-                    connection.Execute(@"CREATE TABLE People (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
+                    connection.Execute("CREATE TABLE People (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
                     dropTable("Users");
-                    connection.Execute(@"CREATE TABLE Users (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Age int not null);");
+                    connection.Execute("CREATE TABLE Users (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Age int not null);");
                     dropTable("Automobiles");
-                    connection.Execute(@"CREATE TABLE Automobiles (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
+                    connection.Execute("CREATE TABLE Automobiles (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null);");
                     dropTable("Results");
-                    connection.Execute(@"CREATE TABLE Results (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, `Order` int not null);");
+                    connection.Execute("CREATE TABLE Results (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, `Order` int not null);");
                     dropTable("ObjectX");
-                    connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
+                    connection.Execute("CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
                     dropTable("ObjectY");
-                    connection.Execute(@"CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
+                    connection.Execute("CREATE TABLE ObjectY (ObjectYId int not null, Name nvarchar(100) not null);");
                     dropTable("ObjectZ");
-                    connection.Execute(@"CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
+                    connection.Execute("CREATE TABLE ObjectZ (Id int not null, Name nvarchar(100) not null);");
                 }
             }
             catch (MySqlException e)
@@ -116,13 +114,10 @@ namespace Dapper.Tests.Contrib
         }
     }
 
-    // This doesn't work on COREFX right now due to:
-    // In Visual Studio: Interop loads (works from console, though)
-    // In general: parameter names, see https://github.com/StackExchange/dapper-dot-net/issues/375
     public class SQLiteTestSuite : TestSuite
     {
-        const string FileName = "Test.DB.sqlite";
-        public static string ConnectionString => $"Filename={FileName};";
+        private const string FileName = "Test.DB.sqlite";
+        public static string ConnectionString => $"Filename=./{FileName};Mode=ReadWriteCreate;";
         public override IDbConnection GetConnection() => new SqliteConnection(ConnectionString);
 
         static SQLiteTestSuite()
@@ -131,22 +126,22 @@ namespace Dapper.Tests.Contrib
             {
                 File.Delete(FileName);
             }
-            SqliteConnection.CreateFile(FileName);
             using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
-                connection.Execute(@"CREATE TABLE Stuff (TheId integer primary key autoincrement not null, Name nvarchar(100) not null, Created DateTime null) ");
-                connection.Execute(@"CREATE TABLE People (Id integer primary key autoincrement not null, Name nvarchar(100) not null) ");
-                connection.Execute(@"CREATE TABLE Users (Id integer primary key autoincrement not null, Name nvarchar(100) not null, Age int not null) ");
-                connection.Execute(@"CREATE TABLE Automobiles (Id integer primary key autoincrement not null, Name nvarchar(100) not null) ");
-                connection.Execute(@"CREATE TABLE Results (Id integer primary key autoincrement not null, Name nvarchar(100) not null, [Order] int not null) ");
-                connection.Execute(@"CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null) ");
-                connection.Execute(@"CREATE TABLE ObjectY (ObjectYId integer not null, Name nvarchar(100) not null) ");
-                connection.Execute(@"CREATE TABLE ObjectZ (Id integer not null, Name nvarchar(100) not null) ");
+                connection.Execute("CREATE TABLE Stuff (TheId integer primary key autoincrement not null, Name nvarchar(100) not null, Created DateTime null) ");
+                connection.Execute("CREATE TABLE People (Id integer primary key autoincrement not null, Name nvarchar(100) not null) ");
+                connection.Execute("CREATE TABLE Users (Id integer primary key autoincrement not null, Name nvarchar(100) not null, Age int not null) ");
+                connection.Execute("CREATE TABLE Automobiles (Id integer primary key autoincrement not null, Name nvarchar(100) not null) ");
+                connection.Execute("CREATE TABLE Results (Id integer primary key autoincrement not null, Name nvarchar(100) not null, [Order] int not null) ");
+                connection.Execute("CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null) ");
+                connection.Execute("CREATE TABLE ObjectY (ObjectYId integer not null, Name nvarchar(100) not null) ");
+                connection.Execute("CREATE TABLE ObjectZ (Id integer not null, Name nvarchar(100) not null) ");
             }
         }
     }
 
+#if !NETCOREAPP1_0 && !NETCOREAPP2_0
     public class SqlCETestSuite : TestSuite
     {
         const string FileName = "Test.DB.sdf";

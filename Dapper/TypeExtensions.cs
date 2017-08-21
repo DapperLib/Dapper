@@ -7,41 +7,41 @@ namespace Dapper
     internal static class TypeExtensions
     {
         public static string Name(this Type type) =>
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
             type.GetTypeInfo().Name;
 #else
             type.Name;
 #endif
 
         public static bool IsValueType(this Type type) =>
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
             type.GetTypeInfo().IsValueType;
 #else
             type.IsValueType;
 #endif
 
         public static bool IsEnum(this Type type) =>
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
             type.GetTypeInfo().IsEnum;
 #else
             type.IsEnum;
 #endif
 
         public static bool IsGenericType(this Type type) =>
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
             type.GetTypeInfo().IsGenericType;
 #else
             type.IsGenericType;
 #endif
 
         public static bool IsInterface(this Type type) =>
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
             type.GetTypeInfo().IsInterface;
 #else
             type.IsInterface;
 #endif
 
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
         public static IEnumerable<Attribute> GetCustomAttributes(this Type type, bool inherit)
         {
             return type.GetTypeInfo().GetCustomAttributes(inherit);
@@ -85,7 +85,7 @@ namespace Dapper
 
         public static MethodInfo GetPublicInstanceMethod(this Type type, string name, Type[] types)
         {
-#if COREFX
+#if NETSTANDARD1_3 || NETCOREAPP1_0
             var method = type.GetMethod(name, types);
             return (method?.IsPublic == true && !method.IsStatic) ? method : null;
 #else

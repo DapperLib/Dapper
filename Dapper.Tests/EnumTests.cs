@@ -9,42 +9,42 @@ namespace Dapper.Tests
         [Fact]
         public void TestEnumWeirdness()
         {
-            connection.Query<TestEnumClass>("select null as [EnumEnum]").First().EnumEnum.IsEqualTo(null);
-            connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            Assert.Null(connection.Query<TestEnumClass>("select null as [EnumEnum]").First().EnumEnum);
+            Assert.Equal(TestEnum.Bla, connection.Query<TestEnumClass>("select cast(1 as tinyint) as [EnumEnum]").First().EnumEnum);
         }
 
         [Fact]
         public void TestEnumStrings()
         {
-            connection.Query<TestEnumClassNoNull>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
-            connection.Query<TestEnumClassNoNull>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            Assert.Equal(TestEnum.Bla, connection.Query<TestEnumClassNoNull>("select 'BLA' as [EnumEnum]").First().EnumEnum);
+            Assert.Equal(TestEnum.Bla, connection.Query<TestEnumClassNoNull>("select 'bla' as [EnumEnum]").First().EnumEnum);
 
-            connection.Query<TestEnumClass>("select 'BLA' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
-            connection.Query<TestEnumClass>("select 'bla' as [EnumEnum]").First().EnumEnum.IsEqualTo(TestEnum.Bla);
+            Assert.Equal(TestEnum.Bla, connection.Query<TestEnumClass>("select 'BLA' as [EnumEnum]").First().EnumEnum);
+            Assert.Equal(TestEnum.Bla, connection.Query<TestEnumClass>("select 'bla' as [EnumEnum]").First().EnumEnum);
         }
 
         [Fact]
         public void TestEnumParamsWithNullable()
         {
-            EnumParam a = EnumParam.A;
+            const EnumParam a = EnumParam.A;
             EnumParam? b = EnumParam.B, c = null;
             var obj = connection.Query<EnumParamObject>("select @a as A, @b as B, @c as C",
                 new { a, b, c }).Single();
-            obj.A.IsEqualTo(EnumParam.A);
-            obj.B.IsEqualTo(EnumParam.B);
-            obj.C.IsEqualTo(null);
+            Assert.Equal(EnumParam.A, obj.A);
+            Assert.Equal(EnumParam.B, obj.B);
+            Assert.Null(obj.C);
         }
 
         [Fact]
         public void TestEnumParamsWithoutNullable()
         {
-            EnumParam a = EnumParam.A;
-            EnumParam b = EnumParam.B, c = 0;
+            const EnumParam a = EnumParam.A;
+            const EnumParam b = EnumParam.B, c = 0;
             var obj = connection.Query<EnumParamObjectNonNullable>("select @a as A, @b as B, @c as C",
                 new { a, b, c }).Single();
-            obj.A.IsEqualTo(EnumParam.A);
-            obj.B.IsEqualTo(EnumParam.B);
-            obj.C.IsEqualTo((EnumParam)0);
+            Assert.Equal(EnumParam.A, obj.A);
+            Assert.Equal(EnumParam.B, obj.B);
+            Assert.Equal(obj.C, (EnumParam)0);
         }
 
         private enum EnumParam : short
@@ -96,7 +96,7 @@ namespace Dapper.Tests
                 cmd.Parameters.Add(p);
                 object value = cmd.ExecuteScalar();
                 AnEnum val = (AnEnum)value;
-                val.IsEqualTo(AnEnum.B);
+                Assert.Equal(AnEnum.B, val);
             }
         }
 
@@ -123,7 +123,7 @@ namespace Dapper.Tests
         public void SO27024806_TestVarcharEnumMemberWithExplicitConstructor()
         {
             var foo = connection.Query<SO27024806Class>("SELECT 'Foo' AS myField").Single();
-            foo.MyField.IsEqualTo(SO27024806Enum.Foo);
+            Assert.Equal(SO27024806Enum.Foo, foo.MyField);
         }
     }
 }

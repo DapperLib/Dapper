@@ -35,15 +35,10 @@ public class Dog
             
 var guid = Guid.NewGuid();
 var dog = connection.Query<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
-            
-dog.Count()
-    .IsEqualTo(1);
 
-dog.First().Age
-    .IsNull();
-
-dog.First().Id
-    .IsEqualTo(guid);
+Assert.Equal(1,dog.Count());
+Assert.Null(dog.First().Age);
+Assert.Equal(guid, dog.First().Id);
 ```
 
 Execute a query and map it to a list of dynamic objects
@@ -59,17 +54,10 @@ Example usage:
 ```csharp
 var rows = connection.Query("select 1 A, 2 B union all select 3, 4");
 
-((int)rows[0].A)
-   .IsEqualTo(1);
-
-((int)rows[0].B)
-   .IsEqualTo(2);
-
-((int)rows[1].A)
-   .IsEqualTo(3);
-
-((int)rows[1].B)
-    .IsEqualTo(4);
+Assert.Equal(1, (int)rows[0].A);
+Assert.Equal(2, (int)rows[0].B);
+Assert.Equal(3, (int)rows[1].A);
+Assert.Equal(4, (int)rows[1].B);
 ```
 
 Execute a Command that returns no results
@@ -82,15 +70,15 @@ public static int Execute(this IDbConnection cnn, string sql, object param = nul
 Example usage:
 
 ```csharp
-connection.Execute(@"
+var count = connection.Execute(@"
   set nocount on 
   create table #t(i int) 
   set nocount off 
   insert #t 
   select @a a union all select @b 
   set nocount on 
-  drop table #t", new {a=1, b=2 })
-   .IsEqualTo(2);
+  drop table #t", new {a=1, b=2 });
+Assert.Equal(2, count);
 ```
 
 Execute a Command multiple times
@@ -101,9 +89,10 @@ The same signature also allows you to conveniently and efficiently execute a com
 Example usage:
 
 ```csharp
-connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
+var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
     new[] { new { a=1, b=1 }, new { a=2, b=2 }, new { a=3, b=3 } }
-  ).IsEqualTo(3); // 3 rows inserted: "1,1", "2,2" and "3,3"
+  );
+Assert.Equal(3, count); // 3 rows inserted: "1,1", "2,2" and "3,3"
 ```
 This works for any parameter that implements IEnumerable<T> for some T.
 
@@ -239,11 +228,11 @@ Order by p.Id";
  
 var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post;});
 var post = data.First();
- 
-post.Content.IsEqualTo("Sams Post1");
-post.Id.IsEqualTo(1);
-post.Owner.Name.IsEqualTo("Sam");
-post.Owner.Id.IsEqualTo(99);
+
+Assert.Equal("Sams Post1", post.Content);
+Assert.Equal(1, post.Id);
+Assert.Equal("Sam", post.Owner.Name);
+Assert.Equal(99, post.Owner.Id);
 ```
 
 Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`. If your primary key is different or you would like to split the row at a point other than `Id`, use the optional `splitOn` parameter.
@@ -363,8 +352,4 @@ Dapper has a comprehensive test suite in the [test project](https://github.com/S
 
 Who is using this?
 ---------------------
-Dapper is in production use at:
-
-[Stack Overflow](https://stackoverflow.com/), [helpdesk](https://www.jitbit.com/web-helpdesk/)
-
-(if you would like to be listed here let me know)
+Dapper is in production use at [Stack Overflow](https://stackoverflow.com/).

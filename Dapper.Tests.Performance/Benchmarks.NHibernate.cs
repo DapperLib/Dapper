@@ -13,7 +13,7 @@ namespace Dapper.Tests.Performance
     {
         private IStatelessSession _sql, _hql, _criteria, _linq, _get;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

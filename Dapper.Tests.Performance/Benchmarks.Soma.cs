@@ -6,7 +6,7 @@ namespace Dapper.Tests.Performance
     {
         private dynamic _sdb;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();

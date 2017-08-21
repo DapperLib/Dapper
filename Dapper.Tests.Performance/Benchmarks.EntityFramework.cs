@@ -7,7 +7,7 @@ namespace Dapper.Tests.Performance
     {
         private EntityFramework.EFContext Context;
 
-        [Setup]
+        [GlobalSetup]
         public void Setup()
         {
             BaseSetup();
