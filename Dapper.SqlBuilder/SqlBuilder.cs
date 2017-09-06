@@ -149,5 +149,14 @@ namespace Dapper
 
         public SqlBuilder Having(string sql, dynamic parameters = null) =>
             AddClause("having", sql, parameters, "\nAND ", "HAVING ", "\n", false);
+
+        public SqlBuilder From(string sql) =>
+            AddClause("from", sql, null, "*", "FROM ", "", false);
+
+        public SqlBuilder DerivedFrom(Template sqlTemplate, string alias) =>
+            DerivedFrom(sqlTemplate.RawSql, alias);
+
+        public SqlBuilder DerivedFrom(string sql, string alias) =>
+            AddClause("derived", sql, null, "*", "FROM (", $") as {alias}", false);
     }
 }
