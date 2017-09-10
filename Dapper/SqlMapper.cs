@@ -3696,6 +3696,12 @@ namespace Dapper
         public static ICustomQueryParameter AsTableValuedParameter(this IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName = null) =>
             new SqlDataRecordListTVPParameter(list, typeName);
 
+        /// <summary>
+        /// Used to map IEnumerable&lt;T&gt; as a <see cref="MappedTableValueParameter{T}"/>.
+        /// </summary>
+        public static ICustomQueryParameter MapTableValuedParameter<T>(IEnumerable<T> list) =>
+            new MappedTableValueParameter<T>(list);
+
         // one per thread
         [ThreadStatic]
         private static StringBuilder perThreadStringBuilderCache;

@@ -404,6 +404,52 @@ namespace Dapper.Tests
             }
         }
 
+        public class MappedTvpType
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+        }
+
+        [Fact]
+        public void TestMappedTvp()
+        {
+            try
+            {
+                var items = new List<MappedTvpType>()
+                {
+                    new MappedTvpType() { Id = 1, Name = "One" },
+                    new MappedTvpType() { Id = 2, Name = "One" },
+                    new MappedTvpType() { Id = 3, Name = "One" }
+                };
+                connection.Execute("CREATE TYPE table_list_type AS TABLE (Id int NOT NULL PRIMARY KEY, Name varchar(max))");
+                connection.Execute("CREATE PROC get_values @items table_list_type READONLY AS select * from @items");
+
+                var parameters = new DynamicParameters();
+                parameters.Add("items", SqlMapper.MapTableValuedParameter(items));
+
+                var results = connection.Query<MappedTvpType>("get_values", parameters, commandType: CommandType.StoredProcedure).ToList();
+                Assert.Equal(3, results.Count);
+                for (int i = 0; i < results.Count; i++)
+                {
+                    var actual = results[i];
+                    var expected = items[i];
+                    Assert.Equal(expected.Id, actual.Id);
+                    Assert.Equal(expected.Name, actual.Name);
+                }
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_values");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE table_list_type");
+                }
+            }
+        }
+
 #if !NETCOREAPP1_0
         [Fact]
         public void DataTableParameters()
