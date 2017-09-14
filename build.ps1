@@ -33,6 +33,10 @@ function CalculateVersion() {
     return "$semVersion-$BuildNumber"
 }
 
+if ($BuildNumber -and $BuildNumber.Length -lt 5) {
+    $BuildNumber = $BuildNumber.PadLeft(5, "0")
+}
+
 Write-Host "Run Parameters:" -ForegroundColor Cyan
 Write-Host "Version: $Version"
 Write-Host "BuildNumber: $BuildNumber"
@@ -70,7 +74,7 @@ if ($RunTests) {
     dotnet restore /ConsoleLoggerParameters:Verbosity=Quiet
     foreach ($project in $testsToRun) {
         Write-Host "Running tests: $project (all frameworks)" -ForegroundColor "Magenta"
-        Push-Location "$project"
+        Push-Location ".\$project"
 
         dotnet xunit
         if ($LastExitCode -ne 0) { 
@@ -99,17 +103,19 @@ foreach ($project in $projectsToBuild) {
 	Push-Location ".\$project"
 
     $semVer = CalculateVersion
-
-    Write-Host "  Restoring and packing $project... (Version:" -NoNewline -ForegroundColor "Magenta"
+    $targets = "Restore"
+    
+    Write-Host "  Restoring " -NoNewline -ForegroundColor "Magenta"
+    if ($CreatePackages) {
+        $targets += ";Pack"
+		Write-Host "and packing " -NoNewline -ForegroundColor "Magenta"
+    }
+	Write-Host "$project... (Version:" -NoNewline -ForegroundColor "Magenta"
     Write-Host $semVer -NoNewline -ForegroundColor "Cyan"
     Write-Host ")" -ForegroundColor "Magenta"
     
-    $targets = "Restore"
-    if ($CreatePackages) {
-        $targets += ";Pack"
-    }
 
-	dotnet msbuild "/t:$targets" "/p:Configuration=Release" "/p:Version=$semVer" "/p:PackageOutputPath=$packageOutputFolder" "/p:CI=true" "/p:NuGetBuildTasksPackTargets='000'"
+	dotnet msbuild "/t:$targets" "/p:Configuration=Release" "/p:Version=$semVer" "/p:PackageOutputPath=$packageOutputFolder" "/p:CI=true"
 
 	Pop-Location
 
