@@ -53,3 +53,10 @@ deploy:
   api_key:
     secure: P/UHxq2DEs0GI1SoDXDesHjRVsSVgdywz5vmsnhFQQY5aJgO3kP+QfhwfhXz19Rw
   symbol_server: https://www.myget.org/F/stackoverflow/symbols/api/v2/package
+- provider: NuGet
+  server: https://www.myget.org/F/dapper/api/v2
+  on:
+    branch: master  
+  api_key:
+    secure: PV7ERAltWWLhy7AT2h+Vb5c1BM9/WFgvggb+rKyQ8hDg3fYqpZauYdidOOgt2lp4
+  symbol_server: https://www.myget.org/F/dapper/api/v2/package
