@@ -516,7 +516,7 @@ namespace Dapper.Contrib.Extensions
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
-#if NETSTANDARD1_3
+#if NETSTANDARD1_3 || NETSTANDARD2_0
                 return AssemblyBuilder.DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
 #else
                 return Thread.GetDomain().DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
@@ -551,7 +551,7 @@ namespace Dapper.Contrib.Extensions
                     CreateProperty<T>(typeBuilder, property.Name, property.PropertyType, setIsDirtyMethod, isId);
                 }
 
-#if NETSTANDARD1_3
+#if NETSTANDARD1_3 || NETSTANDARD2_0
                 var generatedType = typeBuilder.CreateTypeInfo().AsType();
 #else
                 var generatedType = typeBuilder.CreateType();
