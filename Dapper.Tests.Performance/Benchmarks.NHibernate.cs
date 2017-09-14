@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Dapper.Tests.Performance.NHibernate;
 using NHibernate;
 using NHibernate.Criterion;
@@ -28,7 +28,7 @@ namespace Dapper.Tests.Performance
         public Post SQL()
         {
             Step();
-            return _sql.CreateSQLQuery(@"select * from Posts where Id = :id")
+            return _sql.CreateSQLQuery("select * from Posts where Id = :id")
                 .SetInt32("id", i)
                 .SetResultTransformer(Transformers.AliasToBean<Post>())
                 .List<Post>()[0];
@@ -38,7 +38,7 @@ namespace Dapper.Tests.Performance
         public Post HQL()
         {
             Step();
-            return _hql.CreateQuery(@"from Post as p where p.Id = :id")
+            return _hql.CreateQuery("from Post as p where p.Id = :id")
                 .SetInt32("id", i)
                 .List<Post>()[0];
         }

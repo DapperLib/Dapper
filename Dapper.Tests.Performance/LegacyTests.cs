@@ -210,12 +210,12 @@ namespace Dapper.Tests.Performance
                 Try(() =>
                 {
                     var nhSession1 = NHibernateHelper.OpenSession();
-                    tests.Add(id => nhSession1.CreateSQLQuery(@"select * from Posts where Id = :id")
+                    tests.Add(id => nhSession1.CreateSQLQuery("select * from Posts where Id = :id")
                         .SetInt32("id", id)
                         .List(), "NHibernate: SQL");
 
                     var nhSession2 = NHibernateHelper.OpenSession();
-                    tests.Add(id => nhSession2.CreateQuery(@"from Post as p where p.Id = :id")
+                    tests.Add(id => nhSession2.CreateQuery("from Post as p where p.Id = :id")
                         .SetInt32("id", id)
                         .List(), "NHibernate: HQL");
 

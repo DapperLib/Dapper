@@ -111,6 +111,7 @@ End
             WriteLine(message);
             ForegroundColor = orig;
         }
+
         public static void WriteColor(string message, ConsoleColor color)
         {
             var orig = ForegroundColor;

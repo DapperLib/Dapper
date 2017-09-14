@@ -409,7 +409,7 @@ namespace Massive
             string sql = limit > 0 ? "SELECT TOP " + limit + " {0} FROM {1} " : "SELECT {0} FROM {1} ";
             if (!string.IsNullOrEmpty(where))
                 sql += where.Trim().StartsWith("where", StringComparison.CurrentCultureIgnoreCase) ? where : "WHERE " + where;
-            if (!String.IsNullOrEmpty(orderBy))
+            if (!string.IsNullOrEmpty(orderBy))
                 sql += orderBy.Trim().StartsWith("order by", StringComparison.CurrentCultureIgnoreCase) ? orderBy : " ORDER BY " + orderBy;
             return Query(string.Format(sql, columns, TableName), args);
         }
@@ -421,7 +421,7 @@ namespace Massive
         {
             dynamic result = new ExpandoObject();
             var countSQL = string.Format("SELECT COUNT({0}) FROM {1}", PrimaryKeyField, TableName);
-            if (String.IsNullOrEmpty(orderBy))
+            if (string.IsNullOrEmpty(orderBy))
                 orderBy = PrimaryKeyField;
 
             if (!string.IsNullOrEmpty(where))

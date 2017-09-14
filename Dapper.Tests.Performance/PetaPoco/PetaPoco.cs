@@ -1399,17 +1399,17 @@ namespace PetaPoco
 
         public Sql OrderBy(params object[] args)
         {
-            return Append(new Sql("ORDER BY " + String.Join(", ", (from x in args select x.ToString()).ToArray())));
+            return Append(new Sql("ORDER BY " + string.Join(", ", (from x in args select x.ToString()).ToArray())));
         }
 
         public Sql Select(params object[] args)
         {
-            return Append(new Sql("SELECT " + String.Join(", ", (from x in args select x.ToString()).ToArray())));
+            return Append(new Sql("SELECT " + string.Join(", ", (from x in args select x.ToString()).ToArray())));
         }
 
         public Sql From(params object[] args)
         {
-            return Append(new Sql("FROM " + String.Join(", ", (from x in args select x.ToString()).ToArray())));
+            return Append(new Sql("FROM " + string.Join(", ", (from x in args select x.ToString()).ToArray())));
         }
 
         private static bool Is(Sql sql, string sqltype)
@@ -1419,7 +1419,7 @@ namespace PetaPoco
 
         public void Build(StringBuilder sb, List<object> args, Sql lhs)
         {
-            if (!String.IsNullOrEmpty(_sql))
+            if (!string.IsNullOrEmpty(_sql))
             {
                 // Add SQL to the string
                 if (sb.Length > 0)
