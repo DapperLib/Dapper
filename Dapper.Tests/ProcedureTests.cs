@@ -183,5 +183,62 @@ end");
             Assert.Equal("a", results[0]);
             Assert.Equal("b", results[1]);
         }
+
+        [Fact]
+        public void TestDateTime2PrecisionPreservedInDynamicParameters()
+        {
+            DateTime datetimeDefault = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime datetime2 = datetimeDefault.AddTicks(1); // Add 100 ns
+
+            Assert.True(datetimeDefault < datetime2);
+
+            var p = new DynamicParameters();
+            // Note: parameters declared as DateTime2
+            p.Add("a", datetime2, dbType: DbType.DateTime2, direction: ParameterDirection.Input);
+            p.Add("b", dbType: DbType.DateTime2, direction: ParameterDirection.Output);
+
+            connection.Execute(@"create proc #TestProc 
+	            @a datetime2,
+	            @b datetime2 output
+            as 
+            begin
+	            set @b = @a
+	            select DATEADD(ns, -100, @b)
+            end");
+            DateTime fromSelect = connection.Query<DateTime>("#TestProc", p, commandType: CommandType.StoredProcedure).First();
+            Assert.Equal(datetimeDefault, fromSelect);
+
+            Assert.Equal(datetime2, p.Get<DateTime>("b"));
+        }
+
+        [Fact]
+        public void TestDateTime2LosePrecisionInDynamicParameters()
+        {
+            DateTime datetimeDefault = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime datetime2 = datetimeDefault.AddTicks(1); // Add 100 ns
+
+            Assert.True(datetimeDefault < datetime2);
+
+            var p = new DynamicParameters();
+            // Note: parameters declared as DateTime but SP has them as DateTime2
+            p.Add("a", datetime2, dbType: DbType.DateTime, direction: ParameterDirection.Input);
+            p.Add("b", dbType: DbType.DateTime, direction: ParameterDirection.Output);
+
+            connection.Execute(@"create proc #TestProc 
+	            @a datetime2,
+	            @b datetime2 output
+            as 
+            begin
+	            set @b = DATEADD(ns, 100, @a)
+	            select @b
+            end");
+
+            DateTime fromSelect = connection.Query<DateTime>("#TestProc", p, commandType: CommandType.StoredProcedure).First();
+            // @a truncates to datetimeDefault when passed into SP by DynamicParameters, add 100ns and it comes out as DateTime2
+            Assert.Equal(datetime2, fromSelect);
+
+            // @b gets set to datetime2 value but is truncated back to DbType.DateTime by DynamicParameters declaration
+            Assert.Equal(datetimeDefault, p.Get<DateTime>("b"));
+        }
     }
 }
