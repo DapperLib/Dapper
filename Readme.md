@@ -174,6 +174,16 @@ Will be translated to:
 select * from (select 1 as Id union all select 2 union all select 3) as X where Id in (@Ids1, @Ids2, @Ids3)" // @Ids1 = 1 , @Ids2 = 2 , @Ids2 = 3
 ```
 
+Literal replacements
+------------
+Dapper supports literal replacements for bool and numeric types.
+
+```csharp
+connection.Query("select * from User where UserId = {=Id}", new {Id = 1}));
+```
+
+The literal replacement is not sent as a parameter, this allows better plans and filtered index usage.
+
 Buffered vs Unbuffered readers
 ---------------------
 Dapper's default behavior is to execute your sql and buffer the entire reader on return. This is ideal in most cases as it minimizes shared locks in the db and cuts down on db network time.
