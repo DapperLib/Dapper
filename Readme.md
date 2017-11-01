@@ -182,7 +182,8 @@ Dapper supports literal replacements for bool and numeric types.
 connection.Query("select * from User where UserId = {=Id}", new {Id = 1}));
 ```
 
-The literal replacement is not sent as a parameter, this allows better plans and filtered index usage.
+The literal replacement is not sent as a parameter, this allows better plans and filtered index usage but should usually be used sparingly and after testing. This feature is particularly useful when the value being injected
+is actually a fixed value (for example, a fixed "category id", "status code" or "region" that is specific to the query). For *live* data where you are considering literals, you might *also* want to consider and test provider-specific query hints like [`OPTIMIZE FOR UNKNOWN`](https://blogs.msdn.microsoft.com/sqlprogrammability/2008/11/26/optimize-for-unknown-a-little-known-sql-server-2008-feature/).
 
 Buffered vs Unbuffered readers
 ---------------------
