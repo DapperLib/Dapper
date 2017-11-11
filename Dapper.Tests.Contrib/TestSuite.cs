@@ -85,6 +85,14 @@ namespace Dapper.Tests.Contrib
         public int Order { get; set; }
     }
 
+    [Table("GenericType")]
+    public class GenericType<T>
+    {
+        [ExplicitKey]
+        public string Id { get; set; }
+        public string Name { get; set; }
+    }
+
     public abstract partial class TestSuite
     {
         protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
@@ -96,6 +104,41 @@ namespace Dapper.Tests.Contrib
             var connection = GetConnection();
             connection.Open();
             return connection;
+        }
+
+        [Fact]
+        public void TypeWithGenericParameterCanBeInserted()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<GenericType<string>>();
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                connection.Insert(objectToInsert);
+
+                Assert.Single(connection.GetAll<GenericType<string>>());
+
+                var objectsToInsert = new List<GenericType<string>>
+                {
+                    new GenericType<string>
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = "1",
+                    },
+                    new GenericType<string>
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = "2",
+                    }
+                };
+
+                connection.Insert(objectsToInsert);
+                var list = connection.GetAll<GenericType<string>>();
+                Assert.Equal(3, list.Count());
+            }
         }
 
         [Fact]

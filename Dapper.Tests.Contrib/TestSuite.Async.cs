@@ -11,6 +11,41 @@ namespace Dapper.Tests.Contrib
 {
     public abstract partial class TestSuite
     {
+        [Fact]
+        public async Task TypeWithGenericParameterCanBeInsertedAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                await connection.DeleteAllAsync<GenericType<string>>();
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                await connection.InsertAsync(objectToInsert);
+
+                Assert.Single(connection.GetAll<GenericType<string>>());
+
+                var objectsToInsert = new List<GenericType<string>>
+                {
+                    new GenericType<string>
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = "1",
+                    },
+                    new GenericType<string>
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = "2",
+                    }
+                };
+
+                await connection.InsertAsync(objectsToInsert);
+                var list = connection.GetAll<GenericType<string>>();
+                Assert.Equal(3, list.Count());
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>

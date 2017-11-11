@@ -130,7 +130,7 @@ namespace Dapper.Contrib.Extensions
                 isList = true;
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType())
+            else if (type.IsGenericType() && type.GetTypeInfo().ImplementedInterfaces.Any(x => x.Name == "IEnumerable`1"))
             {
                 isList = true;
                 type = type.GetGenericArguments()[0];
