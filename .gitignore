@@ -1,5 +1,6 @@
 /*.suo
 .vs/
+.vscode/
 bin/
 obj/
 /*.user
