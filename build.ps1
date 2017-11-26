@@ -30,7 +30,12 @@ function CalculateVersion() {
         Exit 1
     }
 
-    return "$semVersion-$BuildNumber"
+    if ($semVersion -contains "-") {
+        return "$semVersion-$BuildNumber" #prerelease
+    } else {
+        return "$semVersion" #release
+    }
+
 }
 
 if ($BuildNumber -and $BuildNumber.Length -lt 5) {
