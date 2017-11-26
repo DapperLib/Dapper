@@ -787,8 +787,8 @@ public partial class SqlServerAdapter : ISqlAdapter
         if (first == null || first.id == null) return 0;
 
         var id = (int)first.id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Length == 0) return id;
+        var propertyInfos = keyProperties as IList<PropertyInfo> ?? keyProperties.ToList();
+        if (propertyInfos.Count == 0) return id;
 
         var idProperty = propertyInfos[0];
         idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
@@ -843,8 +843,8 @@ public partial class SqlCeServerAdapter : ISqlAdapter
         if (r[0].id == null) return 0;
         var id = (int)r[0].id;
 
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Length == 0) return id;
+        var propertyInfos = keyProperties as IList<PropertyInfo> ?? keyProperties.ToList();
+        if (propertyInfos.Count == 0) return id;
 
         var idProperty = propertyInfos[0];
         idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
@@ -898,8 +898,8 @@ public partial class MySqlAdapter : ISqlAdapter
 
         var id = r.First().id;
         if (id == null) return 0;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Length == 0) return Convert.ToInt32(id);
+        var propertyInfos = keyProperties as IList<PropertyInfo> ?? keyProperties.ToList();
+        if (propertyInfos.Count == 0) return Convert.ToInt32(id);
 
         var idp = propertyInfos[0];
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
@@ -951,8 +951,8 @@ public partial class PostgresAdapter : ISqlAdapter
         sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
 
         // If no primary key then safe to assume a join table with not too much data to return
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Length == 0)
+        var propertyInfos = keyProperties as IList<PropertyInfo> ?? keyProperties.ToList();
+        if (propertyInfos.Count == 0)
         {
             sb.Append(" RETURNING *");
         }
@@ -1027,8 +1027,8 @@ public partial class SQLiteAdapter : ISqlAdapter
         var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
 
         var id = (int)multi.Read().First().id;
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
-        if (propertyInfos.Length == 0) return id;
+        var propertyInfos = keyProperties as IList<PropertyInfo> ?? keyProperties.ToList();
+        if (propertyInfos.Count == 0) return id;
 
         var idProperty = propertyInfos[0];
         idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
@@ -1079,13 +1079,13 @@ public partial class FbAdapter : ISqlAdapter
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
 
-        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        var propertyInfos = keyProperties as IList<PropertyInfo> ?? keyProperties.ToList();
         var keyName = propertyInfos[0].Name;
         var r = connection.Query($"SELECT FIRST 1 {keyName} ID FROM {tableName} ORDER BY {keyName} DESC", transaction: transaction, commandTimeout: commandTimeout);
 
         var id = r.First().ID;
         if (id == null) return 0;
-        if (propertyInfos.Length == 0) return Convert.ToInt32(id);
+        if (propertyInfos.Count == 0) return Convert.ToInt32(id);
 
         var idp = propertyInfos[0];
         idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
