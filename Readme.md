@@ -321,9 +321,9 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
     var squareParser = reader.GetRowParser<IShape>(typeof(Square));
     var triangleParser = reader.GetRowParser<IShape>(typeof(Triangle));
   	
-  	var typeColumnIndex = reader.GetOrdinal("Type");
+    var typeColumnIndex = reader.GetOrdinal("Type");
   	
-  	while (reader.Read())
+    while (reader.Read())
     {
         IShape shape;
         var type = (ShapeType)reader.GetInt32(typeColumnIndex);
@@ -335,7 +335,7 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
             case ShapeType.Square:
             	shape = squareParser(reader);
             	break;
-          	case ShapeType.Triangle:
+            case ShapeType.Triangle:
             	shape = triangleParser(reader);
             	break;
           	default:
