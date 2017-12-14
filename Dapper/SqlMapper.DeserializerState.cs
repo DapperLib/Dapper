@@ -3,9 +3,9 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
-        struct DeserializerState
+        private struct DeserializerState
         {
             public readonly int Hash;
             public readonly Func<IDataReader, object> Func;

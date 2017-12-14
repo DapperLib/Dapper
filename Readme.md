@@ -1,5 +1,6 @@
 Dapper - a simple object mapper for .Net
 ========================================
+[![Build status](https://ci.appveyor.com/api/projects/status/8rbgoxqio76ynj4h?svg=true)](https://ci.appveyor.com/project/StackExchange/dapper)
 
 Release Notes
 -------------
@@ -15,8 +16,6 @@ It provides 3 helpers:
 
 Execute a query and map the results to a strongly typed List
 ------------------------------------------------------------
-
-Note: all extension methods assume the connection is already open, they will fail if the connection is closed.
 
 ```csharp
 public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
@@ -36,15 +35,10 @@ public class Dog
             
 var guid = Guid.NewGuid();
 var dog = connection.Query<Dog>("select Age = @Age, Id = @Id", new { Age = (int?)null, Id = guid });
-            
-dog.Count()
-    .IsEqualTo(1);
 
-dog.First().Age
-    .IsNull();
-
-dog.First().Id
-    .IsEqualTo(guid);
+Assert.Equal(1,dog.Count());
+Assert.Null(dog.First().Age);
+Assert.Equal(guid, dog.First().Id);
 ```
 
 Execute a query and map it to a list of dynamic objects
@@ -60,17 +54,10 @@ Example usage:
 ```csharp
 var rows = connection.Query("select 1 A, 2 B union all select 3, 4");
 
-((int)rows[0].A)
-   .IsEqualTo(1);
-
-((int)rows[0].B)
-   .IsEqualTo(2);
-
-((int)rows[1].A)
-   .IsEqualTo(3);
-
-((int)rows[1].B)
-    .IsEqualTo(4);
+Assert.Equal(1, (int)rows[0].A);
+Assert.Equal(2, (int)rows[0].B);
+Assert.Equal(3, (int)rows[1].A);
+Assert.Equal(4, (int)rows[1].B);
 ```
 
 Execute a Command that returns no results
@@ -83,15 +70,15 @@ public static int Execute(this IDbConnection cnn, string sql, object param = nul
 Example usage:
 
 ```csharp
-connection.Execute(@"
+var count = connection.Execute(@"
   set nocount on 
   create table #t(i int) 
   set nocount off 
   insert #t 
   select @a a union all select @b 
   set nocount on 
-  drop table #t", new {a=1, b=2 })
-   .IsEqualTo(2);
+  drop table #t", new {a=1, b=2 });
+Assert.Equal(2, count);
 ```
 
 Execute a Command multiple times
@@ -102,9 +89,10 @@ The same signature also allows you to conveniently and efficiently execute a com
 Example usage:
 
 ```csharp
-connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
+var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
     new[] { new { a=1, b=1 }, new { a=2, b=2 }, new { a=3, b=3 } }
-  ).IsEqualTo(3); // 3 rows inserted: "1,1", "2,2" and "3,3"
+  );
+Assert.Equal(3, count); // 3 rows inserted: "1,1", "2,2" and "3,3"
 ```
 This works for any parameter that implements IEnumerable<T> for some T.
 
@@ -121,111 +109,41 @@ The performance tests are broken in to 3 lists:
 
 ### Performance of SELECT mapping over 500 iterations - POCO serialization
 
-<table>
-  <tr>
-  	<th>Method</th>
-		<th>Duration</th>		
-		<th>Remarks</th>
-	</tr>
-	<tr>
-		<td>Hand coded (using a <code>SqlDataReader</code>)</td>
-		<td>47ms</td>
-		<td rowspan="9"><a href="http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed">Can be faster</a></td>
-	</tr>
-	<tr>
-		<td>Dapper <code>ExecuteMapperQuery<Post></code></td>
-		<td>49ms</td>
-	</tr>
-	<tr>
-		<td><a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (QueryById)</td>
-		<td>50ms</td>
-	</tr>
-	<tr>
-		<td><a href="http://www.toptensoftware.com/petapoco/">PetaPoco</a></td>
-		<td>52ms</td>
-	</tr>
-	<tr>
-		<td>BLToolkit</td>
-		<td>80ms</td>
-	</tr>
-	<tr>
-		<td>SubSonic CodingHorror</td>
-		<td>107ms</td>
-	</tr>
-	<tr>
-		<td>NHibernate SQL</td>
-		<td>104ms</td>
-	</tr>
-	<tr>
-		<td>Linq 2 SQL <code>ExecuteQuery</code></td>
-		<td>181ms</td>
-	</tr>
-	<tr>
-		<td>Entity framework <code>ExecuteStoreQuery</code></td>
-		<td>631ms</td>
-	</tr>
-</table>
+
+
+| Method                                              | Duration | Remarks |
+| --------------------------------------------------- | -------- | ------- |
+| Hand coded (using a `SqlDataReader`)                | 47ms     | 
+| Dapper `ExecuteMapperQuery`                         | 49ms     |
+| [ServiceStack.OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) (QueryById) | 50ms |
+| [PetaPoco](http://www.toptensoftware.com/petapoco/) | 52ms     | [Can be faster](http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed) |
+| BLToolkit                                           | 80ms     |
+| SubSonic CodingHorror                               | 107ms    |
+| NHibernate SQL                                      | 104ms    |
+| Linq 2 SQL `ExecuteQuery`                           | 181ms    |
+| Entity framework `ExecuteStoreQuery`                | 631ms    |
 
 ### Performance of SELECT mapping over 500 iterations - dynamic serialization
 
-<table>
-	<tr>
-		<th>Method</th>
-		<th>Duration</th>		
-		<th>Remarks</th>
-	</tr>
-	<tr>
-		<td>Dapper <code>ExecuteMapperQuery</code> (dynamic)</td>
-		<td>48ms</td>
-		<td rowspan="3">&nbsp;</td>
-	</tr>
-	<tr>
-		<td><a href="https://github.com/FransBouma/Massive">Massive</a></td>
-		<td>52ms</td>
-	</tr>
-	<tr>
-		<td><a href="https://github.com/markrendle/Simple.Data">Simple.Data</a></td>
-		<td>95ms</td>
-	</tr>
-</table>
+| Method                                                   | Duration | Remarks |
+| -------------------------------------------------------- | -------- | ------- |
+| Dapper `ExecuteMapperQuery` (dynamic)                    | 48ms     |
+| [Massive](https://github.com/FransBouma/Massive)         | 52ms     |
+| [Simple.Data](https://github.com/markrendle/Simple.Data) | 95ms     |
 
 
 ### Performance of SELECT mapping over 500 iterations - typical usage
 
-<table>
-	<tr>
-		<th>Method</th>
-		<th>Duration</th>		
-		<th>Remarks</th>
-	</tr>
-	<tr>
-		<td>Linq 2 SQL CompiledQuery</td>
-		<td>81ms</td>
-		<td>Not super typical involves complex code</td>
-	</tr>
-	<tr>
-		<td>NHibernate HQL</td>
-		<td>118ms</td>
-		<td>&nbsp;</td>
-	</tr>
-	<tr>
-		<td>Linq 2 SQL</td>
-		<td>559ms</td>
-		<td>&nbsp;</td>
-	</tr>
-	<tr>
-		<td>Entity framework</td>
-		<td>859ms</td>
-		<td>&nbsp;</td>
-	</tr>
-	<tr>
-		<td>SubSonic ActiveRecord.SingleOrDefault</td>
-		<td>3619ms</td>
-		<td>&nbsp;</td>
-	</tr>
-</table>
+| Method                                | Duration | Remarks |
+| ------------------------------------- | -------- | ------- |
+| Linq 2 SQL CompiledQuery              | 81ms     | Not super typical involves complex code |
+| NHibernate HQL                        | 118ms    |
+| Linq 2 SQL                            | 559ms    |
+| Entity framework                      | 859ms    |
+| SubSonic ActiveRecord.SingleOrDefault | 3619ms   |
 
-Performance benchmarks are available [here](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests/PerformanceTests.cs).
+
+Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (ctrl F5).
 
@@ -242,7 +160,7 @@ new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 
 List Support
 ------------
-Dapper allow you to pass in IEnumerable<int> and will automatically parameterize your query.
+Dapper allows you to pass in IEnumerable<int> and will automatically parameterize your query.
 
 For example:
 
@@ -255,6 +173,17 @@ Will be translated to:
 ```csharp
 select * from (select 1 as Id union all select 2 union all select 3) as X where Id in (@Ids1, @Ids2, @Ids3)" // @Ids1 = 1 , @Ids2 = 2 , @Ids2 = 3
 ```
+
+Literal replacements
+------------
+Dapper supports literal replacements for bool and numeric types.
+
+```csharp
+connection.Query("select * from User where UserId = {=Id}", new {Id = 1}));
+```
+
+The literal replacement is not sent as a parameter; this allows better plans and filtered index usage but should usually be used sparingly and after testing. This feature is particularly useful when the value being injected
+is actually a fixed value (for example, a fixed "category id", "status code" or "region" that is specific to the query). For *live* data where you are considering literals, you might *also* want to consider and test provider-specific query hints like [`OPTIMIZE FOR UNKNOWN`](https://blogs.msdn.microsoft.com/sqlprogrammability/2008/11/26/optimize-for-unknown-a-little-known-sql-server-2008-feature/) with regular parameters.
 
 Buffered vs Unbuffered readers
 ---------------------
@@ -310,14 +239,14 @@ Order by p.Id";
  
 var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post;});
 var post = data.First();
- 
-post.Content.IsEqualTo("Sams Post1");
-post.Id.IsEqualTo(1);
-post.Owner.Name.IsEqualTo("Sam");
-post.Owner.Id.IsEqualTo(99);
+
+Assert.Equal("Sams Post1", post.Content);
+Assert.Equal(1, post.Id);
+Assert.Equal("Sam", post.Owner.Name);
+Assert.Equal(99, post.Owner.Id);
 ```
 
-Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`, if your primary key is different or you would like to split the wide row at point other than `Id`, use the optional `splitOn` parameter.
+Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`. If your primary key is different or you would like to split the row at a point other than `Id`, use the optional `splitOn` parameter.
 
 Multiple Results
 ---------------------
@@ -426,16 +355,12 @@ Dapper's simplicity means that many feature that ORMs ship with are stripped out
 
 Will Dapper work with my DB provider?
 ---------------------
-Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](http://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
+Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](https://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests/Tests.cs)
+Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests)
 
 Who is using this?
 ---------------------
-Dapper is in production use at:
-
-[Stack Overflow](http://stackoverflow.com/), [helpdesk](https://www.jitbit.com/web-helpdesk/)
-
-(if you would like to be listed here let me know)
+Dapper is in production use at [Stack Overflow](https://stackoverflow.com/).

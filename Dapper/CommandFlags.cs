@@ -2,7 +2,6 @@
 
 namespace Dapper
 {
-
     /// <summary>
     /// Additional state flags that control command behaviour
     /// </summary>
@@ -26,5 +25,4 @@ namespace Dapper
         /// </summary>
         NoCache = 4,
     }
-
 }

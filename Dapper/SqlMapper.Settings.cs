@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Permits specifying certain SqlMapper values globally.
@@ -11,7 +11,7 @@ namespace Dapper
         public static class Settings
         {
             // disable single result by default; prevents errors AFTER the select being detected properly
-            const CommandBehavior DefaultAllowedCommandBehaviors = ~CommandBehavior.SingleResult;
+            private const CommandBehavior DefaultAllowedCommandBehaviors = ~CommandBehavior.SingleResult;
             internal static CommandBehavior AllowedCommandBehaviors { get; private set; } = DefaultAllowedCommandBehaviors;
             private static void SetAllowedCommandBehaviors(CommandBehavior behavior, bool enabled)
             {
@@ -36,6 +36,7 @@ namespace Dapper
                 get { return (AllowedCommandBehaviors & CommandBehavior.SingleRow) != 0; }
                 set { SetAllowedCommandBehaviors(CommandBehavior.SingleRow, value); }
             }
+
             internal static bool DisableCommandBehaviorOptimizations(CommandBehavior behavior, Exception ex)
             {
                 if (AllowedCommandBehaviors == DefaultAllowedCommandBehaviors
@@ -74,7 +75,6 @@ namespace Dapper
             /// Indicates whether nulls in data are silently ignored (default) vs actively applied and assigned to members
             /// </summary>
             public static bool ApplyNullValues { get; set; }
-
 
             /// <summary>
             /// Should list expansions be padded with null-valued parameters, to prevent query-plan saturation? For example,
