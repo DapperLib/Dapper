@@ -187,7 +187,7 @@ namespace Dapper.Contrib.Extensions
                 return false;
             }
 
-            var type = typeof(T);
+            var type = entityToUpdate.GetType();
 
             if (type.IsArray)
             {
