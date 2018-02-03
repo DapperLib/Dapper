@@ -249,9 +249,9 @@ namespace Dapper.Contrib.Extensions
                 foreach (var property in TypePropertiesCache(type))
                 {
                     var val = res[property.Name];
+                    if (val == null) continue;
                     if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
-                        if (val == null) continue;
                         var genericType = property.PropertyType.GetGenericArguments()[0];
                         property.SetValue(obj, Convert.ChangeType(val, genericType), null);
                     }
