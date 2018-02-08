@@ -19,7 +19,7 @@ namespace Dapper.Tests.Performance
             return _connection.Query<Post>("select * from Posts where Id = @Id", new { Id = i }, buffered: true).First();
         }
 
-        [Benchmark(Description = "Query<dyanmic> (buffered)")]
+        [Benchmark(Description = "Query<dynamic> (buffered)")]
         public dynamic QueryBufferedDynamic()
         {
             Step();
@@ -33,7 +33,7 @@ namespace Dapper.Tests.Performance
             return _connection.Query<Post>("select * from Posts where Id = @Id", new { Id = i }, buffered: false).First();
         }
 
-        [Benchmark(Description = "Query<dyanmic> (unbuffered)")]
+        [Benchmark(Description = "Query<dynamic> (unbuffered)")]
         public dynamic QueryUnbufferedDynamic()
         {
             Step();
@@ -47,7 +47,7 @@ namespace Dapper.Tests.Performance
             return _connection.QueryFirstOrDefault<Post>("select * from Posts where Id = @Id", new { Id = i });
         }
 
-        [Benchmark(Description = "QueryFirstOrDefault<dyanmic>")]
+        [Benchmark(Description = "QueryFirstOrDefault<dynamic>")]
         public dynamic QueryFirstOrDefaultDynamic()
         {
             Step();
