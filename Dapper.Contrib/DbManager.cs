@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
@@ -130,6 +131,11 @@ namespace Dapper.Contrib.Extensions
                 var action = DbActions.Dequeue();
                 InvokeAction(action);
             }
+        }
+
+        public T GetMapper<T>() where T : ISqlOperationMapper
+        {
+            return SqlOperationMapperBuilder.GetMapperInstance<T>(GetConnection());
         }
 
         private dynamic InvokeAction(object action)
@@ -281,4 +287,29 @@ namespace Dapper.Contrib.Extensions
             return con;
         }
     }
+
+    public interface ISqlOperationMapper
+    {
+
+    }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class QuerySqlAttribute : Attribute
+    {
+
+        public string SqlFormat { get; }
+
+        public QuerySqlAttribute(string sql) => SqlFormat = sql;
+    }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class ExcuteSqlAttribute : Attribute
+    {
+
+        public string SqlFormat { get; }
+
+        public ExcuteSqlAttribute(string sql) => SqlFormat = sql;
+    }
+
+
 }
