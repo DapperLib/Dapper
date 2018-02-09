@@ -9,10 +9,10 @@ namespace Dapper.Tests.Contrib
 {
     public interface ISpUserMapper : ISqlOperationMapper
     {
-        [QuerySql("select name from `User` where age>@age")]
+        [QuerySql("select name from Users where age>@age")]
         string[] GetUserNames(int age);
 
-        [ExcuteSql("update `User` set name=@name where age>@age")]
+        [ExcuteSql("update Users set name=@name where age>@age")]
         int UpdateUsers(string name, int age);
     }
 
