@@ -42,6 +42,12 @@ namespace Dapper.Tests.Contrib
         public void TestGetMapper()
         {
             var mgr = new DbManager(() => { return GetConnection(); });
+            const int numberOfEntities = 10;
+            var users = new List<User>();
+            for (var i = 0; i < numberOfEntities; i++)
+                users.Add(new User { Name = "User " + i, Age = i });
+            mgr.Insert(users);
+            mgr.SaveChanges();
             var mapper = mgr.GetMapper<ISpUserMapper>();
             var originMames = mapper.GetUserNames(2);
             int count = mapper.UpdateUsers("MapperUpdatedName", 2);
