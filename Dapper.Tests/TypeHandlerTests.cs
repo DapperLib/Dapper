@@ -576,20 +576,20 @@ namespace Dapper.Tests
         public void TestWrongTypes_WithRightTypes()
         {
             var item = connection.Query<WrongTypes>("select 1 as A, cast(2.0 as float) as B, cast(3 as bigint) as C, cast(1 as bit) as D").Single();
-            item.A.Equals(1);
-            item.B.Equals(2.0);
-            item.C.Equals(3L);
-            item.D.Equals(true);
+            Assert.Equal(1, item.A);
+            Assert.Equal(2.0, item.B);
+            Assert.Equal(3L, item.C);
+            Assert.True(item.D);
         }
 
         [Fact]
         public void TestWrongTypes_WithWrongTypes()
         {
             var item = connection.Query<WrongTypes>("select cast(1.0 as float) as A, 2 as B, 3 as C, cast(1 as bigint) as D").Single();
-            item.A.Equals(1);
-            item.B.Equals(2.0);
-            item.C.Equals(3L);
-            item.D.Equals(true);
+            Assert.Equal(1, item.A);
+            Assert.Equal(2.0, item.B);
+            Assert.Equal(3L, item.C);
+            Assert.True(item.D);
         }
 
         [Fact]

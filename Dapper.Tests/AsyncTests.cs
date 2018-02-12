@@ -132,7 +132,7 @@ namespace Dapper.Tests
         public async Task TestExecuteAsync()
         {
             var val = await connection.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 }).ConfigureAwait(false);
-            val.Equals(1);
+            Assert.Equal(1, val);
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace Dapper.Tests
         {
             var query = connection.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
             var val = query.Result;
-            val.Equals(1);
+            Assert.Equal(1, val);
         }
 
         [Fact]

@@ -174,20 +174,20 @@ namespace Dapper.Tests
 
             // check that rows 2&3 yield guids b&c
             var guids = connection.Query<Guid>("select g from #foo where i in (2,3)").ToArray();
-            guids.Length.Equals(2);
-            guids.Contains(a).Equals(false);
-            guids.Contains(b).Equals(true);
-            guids.Contains(c).Equals(true);
-            guids.Contains(d).Equals(false);
+            Assert.Equal(2, guids.Length);
+            Assert.DoesNotContain(a, guids);
+            Assert.Contains(b, guids);
+            Assert.Contains(c, guids);
+            Assert.DoesNotContain(d, guids);
 
             // in query on the guids
             var rows = connection.Query("select * from #foo where g in @guids order by i", new { guids })
                 .Select(row => new { i = (int)row.i, g = (Guid)row.g }).ToArray();
-            rows.Length.Equals(2);
-            rows[0].i.Equals(2);
-            rows[0].g.Equals(b);
-            rows[1].i.Equals(3);
-            rows[1].g.Equals(c);
+            Assert.Equal(2, rows.Length);
+            Assert.Equal(2, rows[0].i);
+            Assert.Equal(b, rows[0].g);
+            Assert.Equal(3, rows[1].i);
+            Assert.Equal(c, rows[1].g);
         }
 
         [FactUnlessCaseSensitiveDatabase]
@@ -514,8 +514,8 @@ namespace Dapper.Tests
         public void SupportInit()
         {
             var obj = connection.Query<WithInit>("select 'abc' as Value").Single();
-            obj.Value.Equals("abc");
-            obj.Flags.Equals(31);
+            Assert.Equal("abc", obj.Value);
+            Assert.Equal(31, obj.Flags);
         }
 
         public class WithInit : ISupportInitialize
@@ -656,7 +656,7 @@ namespace Dapper.Tests
         {
             SqlMapper.ResetTypeHandlers();
             var row = connection.Query<HazSqlHierarchy>("select 3 as [Id], hierarchyid::Parse('/1/2/3/') as [Path]").Single();
-            row.Id.Equals(3);
+            Assert.Equal(3, row.Id);
             Assert.NotEqual(default(SqlHierarchyId), row.Path);
 
             var val = connection.Query<SqlHierarchyId>("select @Path", row).Single();
@@ -1189,8 +1189,8 @@ end");
             args.Name = "abc";
 
             var row = connection.Query("select @Id as [Id], @Name as [Name]", (object)args).Single();
-            ((int)row.Id).Equals(123);
-            ((string)row.Name).Equals("abc");
+            Assert.Equal(123, (int)row.Id);
+            Assert.Equal("abc", (string)row.Name);
         }
 
         [Fact]
@@ -1202,8 +1202,8 @@ end");
             connection.Execute("create table #issue151 (Id int not null, Name nvarchar(20) not null)");
             Assert.Equal(1, connection.Execute("insert #issue151 values(@Id, @Name)", (object)args));
             var row = connection.Query("select Id, Name from #issue151").Single();
-            ((int)row.Id).Equals(123);
-            ((string)row.Name).Equals("abc");
+            Assert.Equal(123, (int)row.Id);
+            Assert.Equal("abc", (string)row.Name);
         }
 
         [Fact]
