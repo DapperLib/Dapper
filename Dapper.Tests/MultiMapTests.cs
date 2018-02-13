@@ -605,7 +605,7 @@ Order by p.Id
             Assert.Null(result.Name);
             Assert.Null(result.Content);
 
-            Assert.Equal("abc", result.Author.Phone);
+            Assert.Equal("def", result.Author.Phone);
             Assert.Equal("ghi", result.Author.Name);
             Assert.Equal(0, result.Author.ID);
             Assert.Null(result.Author.Address);
