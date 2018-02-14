@@ -675,7 +675,7 @@ select * from @bar", new { foo }).Single();
         public void WorkDespiteHavingWrongStructColumnTypes()
         {
             var hazInt = connection.Query<CanHazInt>("select cast(1 as bigint) Value").Single();
-            hazInt.Value.Equals(1);
+            Assert.Equal(1, hazInt.Value);
         }
 
         private struct CanHazInt
