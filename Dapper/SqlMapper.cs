@@ -1040,6 +1040,8 @@ namespace Dapper
                     }
                     reader.Dispose();
                 }
+
+                cmd?.Parameters.Clear();
                 cmd?.Dispose();
                 if (wasClosed) cnn.Close();
                 throw;
@@ -1127,6 +1129,8 @@ namespace Dapper
                     reader.Dispose();
                 }
                 if (wasClosed) cnn.Close();
+                
+                cmd?.Parameters.Clear();
                 cmd?.Dispose();
             }
         }
@@ -1234,6 +1238,7 @@ namespace Dapper
                     reader.Dispose();
                 }
                 if (wasClosed) cnn.Close();
+                cmd?.Parameters.Clear();
                 cmd?.Dispose();
             }
         }
@@ -1458,6 +1463,7 @@ namespace Dapper
                 }
                 finally
                 {
+                    ownedCommand?.Parameters.Clear();
                     ownedCommand?.Dispose();
                     if (wasClosed) cnn.Close();
                 }
@@ -1528,6 +1534,7 @@ namespace Dapper
                 }
                 finally
                 {
+                    ownedCommand?.Parameters.Clear();
                     ownedCommand?.Dispose();
                     if (wasClosed) cnn.Close();
                 }
@@ -2831,6 +2838,7 @@ namespace Dapper
             finally
             {
                 if (wasClosed) cnn.Close();
+                cmd?.Parameters.Clear();
                 cmd?.Dispose();
             }
         }
@@ -2858,6 +2866,7 @@ namespace Dapper
             finally
             {
                 if (wasClosed) cnn.Close();
+                cmd?.Parameters.Clear();
                 cmd?.Dispose();
             }
             return Parse<T>(result);
@@ -2881,7 +2890,11 @@ namespace Dapper
             finally
             {
                 if (wasClosed) cnn.Close();
-                if (cmd != null && disposeCommand) cmd.Dispose();
+                if (cmd != null && disposeCommand)
+                {
+                    cmd.Parameters.Clear();
+                    cmd.Dispose();
+                }
             }
         }
 
