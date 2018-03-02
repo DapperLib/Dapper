@@ -100,12 +100,13 @@ namespace Dapper
         /// <param name="dbType">The type of the parameter.</param>
         /// <param name="direction">The in or out direction of the parameter.</param>
         /// <param name="size">The size of the parameter.</param>
-        public void Add(string name, object value, DbType? dbType, ParameterDirection? direction, int? size)
+        public void Add<T>(string name, T value, DbType? dbType, ParameterDirection? direction, int? size)
         {
             parameters[Clean(name)] = new ParamInfo
             {
                 Name = name,
                 Value = value,
+                Type = value?.GetType() ?? typeof(T),
                 ParameterDirection = direction ?? ParameterDirection.Input,
                 DbType = dbType,
                 Size = size
@@ -122,12 +123,37 @@ namespace Dapper
         /// <param name="size">The size of the parameter.</param>
         /// <param name="precision">The precision of the parameter.</param>
         /// <param name="scale">The scale of the parameter.</param>
-        public void Add(string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
+        public void Add<T>(string name, T value = default(T), DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
         {
             parameters[Clean(name)] = new ParamInfo
             {
                 Name = name,
                 Value = value,
+                Type = value?.GetType() ?? typeof(T),
+                ParameterDirection = direction ?? ParameterDirection.Input,
+                DbType = dbType,
+                Size = size,
+                Precision = precision,
+                Scale = scale
+            };
+        }
+
+        /// <summary>
+        /// Add a parameter to this dynamic parameter list.
+        /// </summary>
+        /// <param name="name">The name of the parameter.</param>
+        /// <param name="dbType">The type of the parameter.</param>
+        /// <param name="direction">The in or out direction of the parameter.</param>
+        /// <param name="size">The size of the parameter.</param>
+        /// <param name="precision">The precision of the parameter.</param>
+        /// <param name="scale">The scale of the parameter.</param>
+        public void Add(string name, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
+        {
+            parameters[Clean(name)] = new ParamInfo
+            {
+                Name = name,
+                Value = null,
+                Type = null,
                 ParameterDirection = direction ?? ParameterDirection.Input,
                 DbType = dbType,
                 Size = size,
@@ -228,14 +254,15 @@ namespace Dapper
 
                 var dbType = param.DbType;
                 var val = param.Value;
+                var type = param.Type;
                 string name = Clean(param.Name);
                 var isCustomQueryParameter = val is SqlMapper.ICustomQueryParameter;
 
                 SqlMapper.ITypeHandler handler = null;
-                if (dbType == null && val != null && !isCustomQueryParameter)
+                if (dbType == null && type != null && !isCustomQueryParameter)
                 {
 #pragma warning disable 618
-                    dbType = SqlMapper.LookupDbType(val.GetType(), name, true, out handler);
+                    dbType = SqlMapper.LookupDbType(type, name, true, out handler);
 #pragma warning disable 618
                 }
                 if (isCustomQueryParameter)
