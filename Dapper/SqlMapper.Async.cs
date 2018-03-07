@@ -392,6 +392,8 @@ namespace Dapper
                     int hash = GetColumnHash(reader);
                     if (tuple.Func == null || tuple.Hash != hash)
                     {
+                        if (reader.FieldCount == 0)
+                            return Enumerable.Empty<T>();
                         tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                         if (command.AddToCache) SetQueryCache(identity, info);
                     }
