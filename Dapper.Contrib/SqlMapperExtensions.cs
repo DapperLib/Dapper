@@ -205,8 +205,8 @@ namespace Dapper.Contrib.Extensions
                     if (val == null) continue;
                     if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
-                        var genericType = property.PropertyType.GetGenericArguments()[0];
-                        property.SetValue(obj, Convert.ChangeType(val, genericType), null);
+                        var genericType = Nullable.GetUnderlyingType(property.PropertyType);
+                        if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
                     }
                     else
                     {
@@ -261,8 +261,8 @@ namespace Dapper.Contrib.Extensions
                     if (val == null) continue;
                     if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
-                        var genericType = property.PropertyType.GetGenericArguments()[0];
-                        property.SetValue(obj, Convert.ChangeType(val, genericType), null);
+                        var genericType = Nullable.GetUnderlyingType(property.PropertyType);
+                        if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
                     }
                     else
                     {
