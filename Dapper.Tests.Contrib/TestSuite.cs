@@ -53,6 +53,21 @@ namespace Dapper.Tests.Contrib
         public int Age { get; set; }
     }
 
+    public interface IUserWithNullableDob
+    {
+        [Key]
+        int Id { get; set; }
+        string Name { get; set; }
+        DateTime? Dob { get; set; }
+    }
+
+    public class UserWithNullableDob : IUserWithNullableDob
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public DateTime? Dob { get; set; }
+    }
+
     public class Person
     {
         public int Id { get; set; }
@@ -540,6 +555,30 @@ namespace Dapper.Tests.Contrib
                 Assert.Equal(iusers.Count, numberOfEntities);
                 for (var i = 0; i < numberOfEntities; i++)
                     Assert.Equal(iusers[i].Age, i);
+            }
+        }
+
+        [Fact]
+        public void GetAndGetAllWithNullableValues()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = connection.Insert(new UserWithNullableDob { Name = "Jackson", Dob = new DateTime(2011, 07, 14) });
+                var id2 = connection.Insert(new UserWithNullableDob { Name = "Geoffrey", Dob = null });
+
+                var user1 = connection.Get<IUserWithNullableDob>(id1);
+                Assert.Equal("Jackson", user1.Name);
+                Assert.Equal(new DateTime(2011, 07, 14), user1.Dob.Value);
+
+                var user2 = connection.Get<IUserWithNullableDob>(id2);
+                Assert.Equal("Geoffrey", user2.Name);
+                Assert.True(user2.Dob == null);
+
+                var users = connection.GetAll<IUserWithNullableDob>().ToList();
+                Assert.Equal("Jackson", users[0].Name);
+                Assert.Equal(new DateTime(2011, 07, 14), users[0].Dob.Value);
+                Assert.Equal("Geoffrey", users[1].Name);
+                Assert.True(users[1].Dob == null);
             }
         }
 

@@ -356,6 +356,31 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public async void GetAsyncAndGetAllAsyncWithNullableValues()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = connection.Insert(new UserWithNullableDob { Name = "Jackson", Dob = new DateTime(2011, 07, 14) });
+                var id2 = connection.Insert(new UserWithNullableDob { Name = "Geoffrey", Dob = null });
+
+                var user1 = await connection.GetAsync<IUserWithNullableDob>(id1);
+                Assert.Equal("Jackson", user1.Name);
+                Assert.Equal(new DateTime(2011, 07, 14), user1.Dob.Value);
+
+                var user2 = await connection.GetAsync<IUserWithNullableDob>(id2);
+                Assert.Equal("Geoffrey", user2.Name);
+                Assert.True(user2.Dob == null);
+
+                var users = await connection.GetAllAsync<IUserWithNullableDob>();
+                var usersList = users.ToList();
+                Assert.Equal("Jackson", usersList[0].Name);
+                Assert.Equal(new DateTime(2011, 07, 14), usersList[0].Dob.Value);
+                Assert.Equal("Geoffrey", usersList[1].Name);
+                Assert.True(usersList[1].Dob == null);
+            }
+        }
+
+        [Fact]
         public async Task InsertFieldWithReservedNameAsync()
         {
             using (var connection = GetOpenConnection())
