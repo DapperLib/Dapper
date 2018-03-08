@@ -53,14 +53,14 @@ namespace Dapper.Tests.Contrib
         public int Age { get; set; }
     }
 
-    public interface IUserWithNullableDob
+    public interface INullableDate
     {
         [Key]
         int Id { get; set; }
         DateTime? DateValue { get; set; }
     }
 
-    public class NullableDate : IUserWithNullableDob
+    public class NullableDate : INullableDate
     {
         public int Id { get; set; }
         public DateTime? DateValue { get; set; }
@@ -567,13 +567,13 @@ namespace Dapper.Tests.Contrib
                 var id1 = connection.Insert(new NullableDate { DateValue = new DateTime(2011, 07, 14) });
                 var id2 = connection.Insert(new NullableDate { DateValue = null });
 
-                var value1 = connection.Get<IUserWithNullableDob>(id1);
+                var value1 = connection.Get<INullableDate>(id1);
                 Assert.Equal(new DateTime(2011, 07, 14), value1.DateValue.Value);
 
-                var value2 = connection.Get<IUserWithNullableDob>(id2);
+                var value2 = connection.Get<INullableDate>(id2);
                 Assert.True(value2.DateValue == null);
 
-                var value3 = connection.GetAll<IUserWithNullableDob>().ToList();
+                var value3 = connection.GetAll<INullableDate>().ToList();
                 Assert.Equal(new DateTime(2011, 07, 14), value3[0].DateValue.Value);
                 Assert.True(value3[1].DateValue == null);
             }
