@@ -355,6 +355,9 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        /// <summary>
+        /// Test for issue #933
+        /// </summary>
         [Fact]
         public async void GetAsyncAndGetAllAsyncWithNullableValues()
         {
@@ -363,15 +366,15 @@ namespace Dapper.Tests.Contrib
                 var id1 = connection.Insert(new UserWithNullableDob { Name = "Jackson", Dob = new DateTime(2011, 07, 14) });
                 var id2 = connection.Insert(new UserWithNullableDob { Name = "Geoffrey", Dob = null });
 
-                var user1 = await connection.GetAsync<IUserWithNullableDob>(id1);
+                var user1 = await connection.GetAsync<IUserWithNullableDob>(id1).ConfigureAwait(false);
                 Assert.Equal("Jackson", user1.Name);
                 Assert.Equal(new DateTime(2011, 07, 14), user1.Dob.Value);
 
-                var user2 = await connection.GetAsync<IUserWithNullableDob>(id2);
+                var user2 = await connection.GetAsync<IUserWithNullableDob>(id2).ConfigureAwait(false);
                 Assert.Equal("Geoffrey", user2.Name);
                 Assert.True(user2.Dob == null);
 
-                var users = await connection.GetAllAsync<IUserWithNullableDob>();
+                var users = await connection.GetAllAsync<IUserWithNullableDob>().ConfigureAwait(false);
                 var usersList = users.ToList();
                 Assert.Equal("Jackson", usersList[0].Name);
                 Assert.Equal(new DateTime(2011, 07, 14), usersList[0].Dob.Value);

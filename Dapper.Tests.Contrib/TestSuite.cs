@@ -558,6 +558,9 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        /// <summary>
+        /// Test for issue #933
+        /// </summary>
         [Fact]
         public void GetAndGetAllWithNullableValues()
         {
