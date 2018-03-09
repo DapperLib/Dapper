@@ -355,6 +355,30 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        /// <summary>
+        /// Test for issue #933
+        /// </summary>
+        [Fact]
+        public async void GetAsyncAndGetAllAsyncWithNullableValues()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = connection.Insert(new NullableDate { DateValue = new DateTime(2011, 07, 14) });
+                var id2 = connection.Insert(new NullableDate { DateValue = null });
+
+                var value1 = await connection.GetAsync<INullableDate>(id1).ConfigureAwait(false);
+                Assert.Equal(new DateTime(2011, 07, 14), value1.DateValue.Value);
+
+                var value2 = await connection.GetAsync<INullableDate>(id2).ConfigureAwait(false);
+                Assert.True(value2.DateValue == null);
+
+                var value3 = await connection.GetAllAsync<INullableDate>().ConfigureAwait(false);
+                var valuesList = value3.ToList();
+                Assert.Equal(new DateTime(2011, 07, 14), valuesList[0].DateValue.Value);
+                Assert.True(valuesList[1].DateValue == null);
+            }
+        }
+
         [Fact]
         public async Task InsertFieldWithReservedNameAsync()
         {

@@ -53,6 +53,19 @@ namespace Dapper.Tests.Contrib
         public int Age { get; set; }
     }
 
+    public interface INullableDate
+    {
+        [Key]
+        int Id { get; set; }
+        DateTime? DateValue { get; set; }
+    }
+
+    public class NullableDate : INullableDate
+    {
+        public int Id { get; set; }
+        public DateTime? DateValue { get; set; }
+    }
+
     public class Person
     {
         public int Id { get; set; }
@@ -540,6 +553,29 @@ namespace Dapper.Tests.Contrib
                 Assert.Equal(iusers.Count, numberOfEntities);
                 for (var i = 0; i < numberOfEntities; i++)
                     Assert.Equal(iusers[i].Age, i);
+            }
+        }
+
+        /// <summary>
+        /// Test for issue #933
+        /// </summary>
+        [Fact]
+        public void GetAndGetAllWithNullableValues()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = connection.Insert(new NullableDate { DateValue = new DateTime(2011, 07, 14) });
+                var id2 = connection.Insert(new NullableDate { DateValue = null });
+
+                var value1 = connection.Get<INullableDate>(id1);
+                Assert.Equal(new DateTime(2011, 07, 14), value1.DateValue.Value);
+
+                var value2 = connection.Get<INullableDate>(id2);
+                Assert.True(value2.DateValue == null);
+
+                var value3 = connection.GetAll<INullableDate>().ToList();
+                Assert.Equal(new DateTime(2011, 07, 14), value3[0].DateValue.Value);
+                Assert.True(value3[1].DateValue == null);
             }
         }
 

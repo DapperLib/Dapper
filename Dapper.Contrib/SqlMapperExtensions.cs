@@ -202,7 +202,16 @@ namespace Dapper.Contrib.Extensions
                 foreach (var property in TypePropertiesCache(type))
                 {
                     var val = res[property.Name];
-                    property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    if (val == null) continue;
+                    if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var genericType = Nullable.GetUnderlyingType(property.PropertyType);
+                        if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
+                    }
+                    else
+                    {
+                        property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    }
                 }
 
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
@@ -249,7 +258,16 @@ namespace Dapper.Contrib.Extensions
                 foreach (var property in TypePropertiesCache(type))
                 {
                     var val = res[property.Name];
-                    property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    if (val == null) continue;
+                    if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var genericType = Nullable.GetUnderlyingType(property.PropertyType);
+                        if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
+                    }
+                    else
+                    {
+                        property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    }
                 }
                 ((IProxy)obj).IsDirty = false;   //reset change tracking and return
                 list.Add(obj);
