@@ -160,6 +160,20 @@ namespace Dapper.Contrib.Extensions
             return keys.Count > 0 ? keys[0] : explicitKeys[0];
         }
 
+        internal static PropertyInfo GetSingleKeyOfEntity<T>(string className, string method)
+        {
+            var type = typeof(T);
+            var keys = KeyPropertiesCache(type);
+            var explicitKeys = ExplicitKeyPropertiesCache(type);
+            var keyCount = keys.Count + explicitKeys.Count;
+            if (keyCount > 1)
+                throw new DataException($"{className}.{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property");
+            if (keyCount == 0)
+                throw new DataException($"{className}.{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
+
+            return keys.Count > 0 ? keys[0] : explicitKeys[0];
+        }
+
         /// <summary>
         /// Returns a single entity by a single id from table "Ts".  
         /// Id must be marked with [Key] attribute.
