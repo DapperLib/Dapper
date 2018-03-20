@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -340,6 +341,8 @@ namespace Dapper
         public static void AddTypeHandler<T>(TypeHandler<T> handler) => AddTypeHandlerImpl(typeof(T), handler, true);
 
         private static Dictionary<Type, ITypeHandler> typeHandlers;
+
+        private static readonly IDictionary<Type, DeserializerProvider> customDeserializers = new ConcurrentDictionary<Type, DeserializerProvider>();
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
 
@@ -1019,7 +1022,7 @@ namespace Dapper
             {
                 if (wasClosed) cnn.Open();
                 cmd = command.SetupCommand(cnn, info.ParamReader);
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess);
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.Default);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache);
                 cmd = null; // now owned by result
@@ -1078,7 +1081,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -1177,8 +1180,8 @@ namespace Dapper
 
                 if (wasClosed) cnn.Open();
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, (row & Row.Single) != 0
-                    ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
-                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow);
+                    ? CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
+                    : CommandBehavior.SingleResult | CommandBehavior.SingleRow);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
 
                 T result = default(T);
@@ -1420,7 +1423,7 @@ namespace Dapper
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SingleResult);
                     reader = ownedReader;
                 }
                 var deserializer = default(DeserializerState);
@@ -1490,7 +1493,7 @@ namespace Dapper
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SingleResult);
                     reader = ownedReader;
                 }
                 DeserializerState deserializer;
@@ -1781,6 +1784,10 @@ namespace Dapper
                 if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
                 {
                     return GetHandlerDeserializer(handler, type, startBound);
+                }
+                if (customDeserializers.TryGetValue(type, out DeserializerProvider customDeserializer))
+                {
+                    return customDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
                 }
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
