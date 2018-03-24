@@ -284,6 +284,11 @@ namespace Dapper.Contrib.Extensions
         /// For English plurals ending in "-es".
         /// </summary>
         private static readonly string[] _esPluralsEnding = { "s", "ch", "sh", "x", "o" };
+        
+        /// <summary>
+        /// Additional options for tables name mapping.
+        /// </summary>
+        public static TableNameMappingOptions TableNameMappingOptions;
 
         private static string GetTableName(Type type)
         {
@@ -307,7 +312,10 @@ namespace Dapper.Contrib.Extensions
                 }
                 else
                 {
-                    name = type.Name + (_esPluralsEnding.Any(ends=> type.Name.EndsWith(ends, StringComparison.OrdinalIgnoreCase)) ? "es" : "s");
+                    if (TableNameMappingOptions.HandleEsPluralEnding)
+                        name = type.Name + (_esPluralsEnding.Any(ends => type.Name.EndsWith(ends, StringComparison.OrdinalIgnoreCase)) ? "es" : "s");
+                    else
+                        name = type.Name + "s";
                     
                     if (type.IsInterface() && name.StartsWith("I"))
                         name = name.Substring(1);
@@ -748,6 +756,18 @@ namespace Dapper.Contrib.Extensions
     [AttributeUsage(AttributeTargets.Property)]
     public class ComputedAttribute : Attribute
     {
+    }
+    
+    /// <summary>
+    /// Options for tables name mapping.
+    /// </summary>
+    public struct TableNameMappingOptions
+    {
+        /// <summary>
+        /// Whether the `GetTableName` method should automatically handle the category of English words formed by adding "es" when they are plurals (for example: `Index` => `Indexes`).
+        /// By default "s" is added for all plurals.
+        /// </summary>
+        public bool HandleEsPluralEnding;
     }
 }
 
