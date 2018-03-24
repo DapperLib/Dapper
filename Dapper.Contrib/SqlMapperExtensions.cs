@@ -312,8 +312,8 @@ namespace Dapper.Contrib.Extensions
                 }
                 else
                 {
-                    if (TableNameMappingOptions.HandleEsPluralEnding)
-                        name = type.Name + (_esPluralsEnding.Any(ends => type.Name.EndsWith(ends, StringComparison.OrdinalIgnoreCase)) ? "es" : "s");
+                    if (TableNameMappingOptions.HandleEsPluralEnding && _esPluralsEnding.Any(ends => type.Name.EndsWith(ends, StringComparison.OrdinalIgnoreCase)))
+                        name = type.Name + "es";
                     else
                         name = type.Name + "s";
                     
