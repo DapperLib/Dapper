@@ -279,6 +279,11 @@ namespace Dapper.Contrib.Extensions
         /// Specify a custom table name mapper based on the POCO type name
         /// </summary>
         public static TableNameMapperDelegate TableNameMapper;
+        
+        /// <summary>
+        /// For English plurals ending in "-es".
+        /// </summary>
+        private static readonly string[] _esPluralsEnding = { "s", "ch", "sh", "x", "o" };
 
         private static string GetTableName(Type type)
         {
@@ -302,7 +307,8 @@ namespace Dapper.Contrib.Extensions
                 }
                 else
                 {
-                    name = type.Name + "s";
+                    name = type.Name + (_esPluralsEnding.Any(ends=> type.Name.EndsWith(ends, StringComparison.OrdinalIgnoreCase)) ? "es" : "s");
+                    
                     if (type.IsInterface() && name.StartsWith("I"))
                         name = name.Substring(1);
                 }
