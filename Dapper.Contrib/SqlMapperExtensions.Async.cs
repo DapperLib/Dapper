@@ -56,6 +56,10 @@ namespace Dapper.Contrib.Extensions
                     var genericType = Nullable.GetUnderlyingType(property.PropertyType);
                     if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
                 }
+                else if (property.PropertyType.IsEnum())
+                {
+                    property.SetValue(obj, Enum.ToObject(property.PropertyType, val), null);
+                }
                 else
                 {
                     property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
@@ -114,6 +118,10 @@ namespace Dapper.Contrib.Extensions
                     {
                         var genericType = Nullable.GetUnderlyingType(property.PropertyType);
                         if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
+                    }
+                    else if (property.PropertyType.IsEnum())
+                    {
+                        property.SetValue(obj, Enum.ToObject(property.PropertyType, val), null);
                     }
                     else
                     {
