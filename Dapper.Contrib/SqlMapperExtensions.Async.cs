@@ -238,7 +238,7 @@ namespace Dapper.Contrib.Extensions
                 var property = nonIdProps[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < nonIdProps.Count - 1)
-                    sb.AppendFormat(", ");
+                    sb.Append(", ");
             }
             sb.Append(" where ");
             for (var i = 0; i < keyProperties.Count; i++)
@@ -246,7 +246,7 @@ namespace Dapper.Contrib.Extensions
                 var property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" and ");
+                    sb.Append(" and ");
             }
             var updated = await connection.ExecuteAsync(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction).ConfigureAwait(false);
             return updated > 0;
@@ -293,7 +293,7 @@ namespace Dapper.Contrib.Extensions
                 var property = keyProperties[i];
                 sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" AND ");
+                    sb.Append(" AND ");
             }
             var deleted = await connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;

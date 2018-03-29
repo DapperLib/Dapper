@@ -432,7 +432,7 @@ namespace Dapper.Contrib.Extensions
                 var property = nonIdProps[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < nonIdProps.Count - 1)
-                    sb.AppendFormat(", ");
+                    sb.Append(", ");
             }
             sb.Append(" where ");
             for (var i = 0; i < keyProperties.Count; i++)
@@ -440,7 +440,7 @@ namespace Dapper.Contrib.Extensions
                 var property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" and ");
+                    sb.Append(" and ");
             }
             var updated = connection.Execute(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
             return updated > 0;
@@ -489,7 +489,7 @@ namespace Dapper.Contrib.Extensions
                 var property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
-                    sb.AppendFormat(" and ");
+                    sb.Append(" and ");
             }
             var deleted = connection.Execute(sb.ToString(), entityToDelete, transaction, commandTimeout);
             return deleted > 0;
