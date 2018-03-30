@@ -226,6 +226,12 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public async Task InsertEnumerableAsync()
+        {
+            await InsertHelperAsync(src => src.AsEnumerable()).ConfigureAwait(false);
+        }
+
+        [Fact]
         public async Task InsertArrayAsync()
         {
             await InsertHelperAsync(src => src.ToArray()).ConfigureAwait(false);

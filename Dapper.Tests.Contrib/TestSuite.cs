@@ -325,6 +325,12 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void InsertEnumerable()
+        {
+            InsertHelper(src => src.AsEnumerable());
+        }
+
+        [Fact]
         public void InsertArray()
         {
             InsertHelper(src => src.ToArray());
