@@ -393,8 +393,7 @@ namespace Dapper
         /// </summary>
         private static DbCommand TrySetupAsyncCommand(this CommandDefinition command, IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
-            var result = command.SetupCommand(cnn, paramReader);
-            if (result is DbCommand dbCommand)
+            if (command.SetupCommand(cnn, paramReader) is DbCommand dbCommand)
             {
                 return dbCommand;
             }
