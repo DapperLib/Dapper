@@ -384,7 +384,7 @@ namespace Dapper
             }
             else
             {
-                throw new InvalidOperationException("Async operations require use of a DbConnection or an open IDbConnection");
+                throw new InvalidOperationException("Async operations require use of a DbConnection or an already-open IDbConnection");
             }
         }
 
@@ -399,7 +399,7 @@ namespace Dapper
             }
             else
             {
-                throw new InvalidOperationException("Async operations require use of a DbCommand. Provided IDbConnection must produce a DbCommand.");
+                throw new InvalidOperationException("Async operations require use of a DbConnection or an IDbConnection where .CreateCommand() returns a DbCommand");
             }
         }
 
