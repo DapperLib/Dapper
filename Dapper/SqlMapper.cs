@@ -1441,7 +1441,12 @@ namespace Dapper
                 {
                     while (reader.Read())
                     {
-                        yield return mapIt(reader);
+                        var mapedResult = mapIt(reader);
+
+                        if (mapedResult == null)
+                            continue;
+
+                        yield return mapedResult;
                     }
                     if (finalize)
                     {
