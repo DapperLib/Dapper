@@ -6,37 +6,66 @@ using System.Reflection.Emit;
 
 namespace Dapper
 {
+    /// <summary>
+    /// Snapshots an object for comparison later.
+    /// </summary>
     public static class Snapshotter
     {
+        /// <summary>
+        /// Starts the snapshot of an objec by making a copy of the current state.
+        /// </summary>
+        /// <typeparam name="T">The type of object to snapshot.</typeparam>
+        /// <param name="obj">The object to snapshot.</param>
+        /// <returns>The snapshot of the object.</returns>
         public static Snapshot<T> Start<T>(T obj)
         {
             return new Snapshot<T>(obj);
         }
 
+        /// <summary>
+        /// A snapshot of an object's state.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         public class Snapshot<T>
         {
-            static Func<T, T> cloner;
-            static Func<T, T, List<Change>> differ;
-            T memberWiseClone;
-            T trackedObject;
+            private static Func<T, T> cloner;
+            private static Func<T, T, List<Change>> differ;
+            private readonly T memberWiseClone;
+            private readonly T trackedObject;
 
+            /// <summary>
+            /// Creates a snapshot from an object.
+            /// </summary>
+            /// <param name="original">The original object to snapshot.</param>
             public Snapshot(T original)
             {
                 memberWiseClone = Clone(original);
                 trackedObject = original;
             }
 
+            /// <summary>
+            /// A holder for listing new values of changes fields and properties.
+            /// </summary>
             public class Change
             {
+                /// <summary>
+                /// The name of the field or property that changed.
+                /// </summary>
                 public string Name { get; set; }
+                /// <summary>
+                /// The new value of the field or property.
+                /// </summary>
                 public object NewValue { get; set; }
             }
 
+            /// <summary>
+            /// Does a diff between the original object and the current state.
+            /// </summary>
+            /// <returns>The list of the fields changes in the object.</returns>
             public DynamicParameters Diff()
             {
                 return Diff(memberWiseClone, trackedObject);
             }
-
 
             private static T Clone(T myObject)
             {
@@ -55,32 +84,27 @@ namespace Dapper
                 return dm;
             }
 
-
-            static List<PropertyInfo> RelevantProperties()
+            private static List<PropertyInfo> RelevantProperties()
             {
                 return typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(p =>
-                        p.GetSetMethod(true) != null &&
-                        p.GetGetMethod(true) != null &&
-                        (p.PropertyType == typeof(string) ||
-                         p.PropertyType.IsValueType() ||
-                         (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                        p.GetSetMethod(true) != null
+                        && p.GetGetMethod(true) != null
+                        && (p.PropertyType == typeof(string)
+                             || p.PropertyType.IsValueType()
+                             || (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
                         ).ToList();
             }
 
-            // This is used by IL, ReSharper is wrong.
-            // ReSharper disable UnusedMember.Local
             private static bool AreEqual<U>(U first, U second)
             {
-                if (first == null && second == null) return true;
-                if (first == null) return false;
+                if (EqualityComparer<U>.Default.Equals(first, default(U)) && EqualityComparer<U>.Default.Equals(second, default(U))) return true;
+                if (EqualityComparer<U>.Default.Equals(first, default(U))) return false;
                 return first.Equals(second);
             }
-            // ReSharper restore UnusedMember.Local
 
             private static Func<T, T, List<Change>> GenerateDiffer()
             {
-
                 var dm = new DynamicMethod("DoDiff", typeof(List<Change>), new[] { typeof(T), typeof(T) }, true);
 
                 var il = dm.GetILGenerator();
@@ -117,7 +141,7 @@ namespace Dapper
                     il.Emit(OpCodes.Stloc_2);
                     // [original prop val, current prop val]
 
-                    il.EmitCall(OpCodes.Call, typeof(Snapshot<T>).GetMethod("AreEqual", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(new Type[] { prop.PropertyType }), null);
+                    il.EmitCall(OpCodes.Call, typeof(Snapshot<T>).GetMethod(nameof(AreEqual), BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(new Type[] { prop.PropertyType }), null);
                     // [result] 
 
                     Label skip = il.DefineLabel();
@@ -163,8 +187,7 @@ namespace Dapper
                 return (Func<T, T, List<Change>>)dm.CreateDelegate(typeof(Func<T, T, List<Change>>));
             }
 
-
-            // adapted from http://stackoverflow.com/a/966466/17174
+            // adapted from https://stackoverflow.com/a/966466/17174
             private static Func<T, T> GenerateCloner()
             {
                 var dm = new DynamicMethod("DoClone", typeof(T), new Type[] { typeof(T) }, true);

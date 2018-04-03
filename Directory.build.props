@@ -1,0 +1,34 @@
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>1.50.2</VersionPrefix>
+
+    <Copyright>2017 Stack Exchange, Inc.</Copyright>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
+
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageReleaseNotes>https://stackexchange.github.io/Dapper/</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/StackExchange/Dapper</PackageProjectUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/StackExchange/Dapper</RepositoryUrl>
+    
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <IncludeSymbols>false</IncludeSymbols>
+    <xUnitVersion>2.3.0-beta5-build3769</xUnitVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR  '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451'">
+    <Reference Include="System.Core" Pack="false" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="SourceLink.Create.GitHub" Version="2.1.2" PrivateAssets="All" /> 
+    <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.1.2" />
+    <DotNetCliToolReference Include="dotnet-sourcelink-git" Version="2.1.2" />
+  </ItemGroup>
+</Project>

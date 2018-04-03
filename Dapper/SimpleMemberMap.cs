@@ -6,7 +6,7 @@ namespace Dapper
     /// <summary>
     /// Represents simple member map for one of target parameter or property or field to source DataReader column
     /// </summary>
-    sealed class SimpleMemberMap : SqlMapper.IMemberMap
+    internal sealed class SimpleMemberMap : SqlMapper.IMemberMap
     {
         /// <summary>
         /// Creates instance for simple property mapping
@@ -15,14 +15,8 @@ namespace Dapper
         /// <param name="property">Target property</param>
         public SimpleMemberMap(string columnName, PropertyInfo property)
         {
-            if (columnName == null)
-                throw new ArgumentNullException(nameof(columnName));
-
-            if (property == null)
-                throw new ArgumentNullException(nameof(property));
-
-            ColumnName = columnName;
-            Property = property;
+            ColumnName = columnName ?? throw new ArgumentNullException(nameof(columnName));
+            Property = property ?? throw new ArgumentNullException(nameof(property));
         }
 
         /// <summary>
@@ -32,14 +26,8 @@ namespace Dapper
         /// <param name="field">Target property</param>
         public SimpleMemberMap(string columnName, FieldInfo field)
         {
-            if (columnName == null)
-                throw new ArgumentNullException(nameof(columnName));
-
-            if (field == null)
-                throw new ArgumentNullException(nameof(field));
-
-            ColumnName = columnName;
-            Field = field;
+            ColumnName = columnName ?? throw new ArgumentNullException(nameof(columnName));
+            Field = field ?? throw new ArgumentNullException(nameof(field));
         }
 
         /// <summary>
@@ -49,14 +37,8 @@ namespace Dapper
         /// <param name="parameter">Target constructor parameter</param>
         public SimpleMemberMap(string columnName, ParameterInfo parameter)
         {
-            if (columnName == null)
-                throw new ArgumentNullException(nameof(columnName));
-
-            if (parameter == null)
-                throw new ArgumentNullException(nameof(parameter));
-
-            ColumnName = columnName;
-            Parameter = parameter;
+            ColumnName = columnName ?? throw new ArgumentNullException(nameof(columnName));
+            Parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
         }
 
         /// <summary>

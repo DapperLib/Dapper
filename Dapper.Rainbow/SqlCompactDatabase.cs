@@ -5,10 +5,23 @@ using System.Linq;
 
 namespace Dapper
 {
+    /// <summary>
+    /// A SQL Compact specific <see cref="Database{TDatabase}"/> implementation.
+    /// </summary>
+    /// <typeparam name="TDatabase">The type of database.</typeparam>
     public abstract class SqlCompactDatabase<TDatabase> : Database<TDatabase> where TDatabase : Database<TDatabase>, new()
     {
+        /// <summary>
+        /// A SQL Compact specific table, which handles the syntax correctly across operations.
+        /// </summary>
+        /// <typeparam name="T">The type in the table.</typeparam>
         public class SqlCompactTable<T> : Table<T>
         {
+            /// <summary>
+            /// Creates a table for a SQL Compact database.
+            /// </summary>
+            /// <param name="database"></param>
+            /// <param name="likelyTableName"></param>
             public SqlCompactTable(Database<TDatabase> database, string likelyTableName)
                 : base(database, likelyTableName)
             {
@@ -38,12 +51,17 @@ namespace Dapper
             }
         }
 
+        /// <summary>
+        /// Initializes the databases.
+        /// </summary>
+        /// <param name="connection">The connection to use.</param>
+        /// <returns>The newly created database.</returns>
         public static TDatabase Init(DbConnection connection)
         {
-            TDatabase db = new TDatabase();
+            var db = new TDatabase();
             db.InitDatabase(connection, 0);
             return db;
-        }        
+        }
 
         internal override Action<TDatabase> CreateTableConstructorForTable()
         {
