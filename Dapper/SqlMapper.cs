@@ -3097,7 +3097,7 @@ namespace Dapper
                 throw MultiMapException(reader);
             }
 
-            var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
+            var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).Distinct().ToArray();
 
             ITypeMap typeMap = GetTypeMap(type);
 
