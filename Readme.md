@@ -116,7 +116,7 @@ The performance tests are broken in to 3 lists:
 | Hand coded (using a `SqlDataReader`)                | 47ms     | 
 | Dapper `ExecuteMapperQuery`                         | 49ms     |
 | [ServiceStack.OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) (QueryById) | 50ms |
-| [PetaPoco](http://www.toptensoftware.com/petapoco/) | 52ms     | [Can be faster](http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed) |
+| [PetaPoco](http://www.toptensoftware.com/petapoco/) | 52ms     | [Can be faster](http://web.archive.org/web/20170921124755/http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed) |
 | BLToolkit                                           | 80ms     |
 | SubSonic CodingHorror                               | 107ms    |
 | NHibernate SQL                                      | 104ms    |
