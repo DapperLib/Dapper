@@ -215,6 +215,7 @@ namespace Dapper.Contrib.Extensions
         /// <returns>Entity of T</returns>
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
+            string defaultKeyName = "id";
             var type = typeof(T);
 
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
@@ -228,22 +229,102 @@ namespace Dapper.Contrib.Extensions
                 keyProperties.AddRange(explicitKeyProperties);
 
                 var sb = new StringBuilder();
-                sb.AppendFormat("select * from {name} where ", name);
+                sb.AppendFormat("select * from {0} where ", name);
+                var adapter = GetFormatter(connection);
+
+                for (var i = 0; i < keyProperties.Count; i++)
+                {
+                    var property = keyProperties[i];
+                    if (i == 0) //using the first key attribute
+                    {
+                        defaultKeyName = property.Name;
+                    }
+                    adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
+                    if (i < keyProperties.Count - 1)
+                        sb.Append(" and ");
+                }
+                sql = sb.ToString();
+                GetQueries[type.TypeHandle] = sql;
+            }
+
+            var dynParms = new DynamicParameters();
+            dynParms.Add("@" + defaultKeyName, id);
+
+            T obj;
+
+            if (type.IsInterface())
+            {
+                var res = connection.Query(sql, dynParms).FirstOrDefault() as IDictionary<string, object>;
+
+                if (res == null)
+                    return null;
+
+                obj = ProxyGenerator.GetInterfaceProxy<T>();
+
+                foreach (var property in TypePropertiesCache(type))
+                {
+                    var val = res[property.Name];
+                    if (val == null) continue;
+                    if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var genericType = Nullable.GetUnderlyingType(property.PropertyType);
+                        if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
+                    }
+                    else
+                    {
+                        property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
+                    }
+                }
+
+                ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+            }
+            else
+            {
+                obj = connection.Query<T>(sql, dynParms, transaction, commandTimeout: commandTimeout).FirstOrDefault();
+            }
+            return obj;
+        }
+
+        public static T Get<T>(this IDbConnection connection, T objectToRead, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+
+            var type = typeof(T);
+            var dynParms = new DynamicParameters();
+
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
+            keyProperties.AddRange(explicitKeyProperties);
+
+            if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
+            {
+                var name = GetTableName(type);
+ 
+                var sb = new StringBuilder();
+                sb.AppendFormat("select * from {0} where ", name);
                 var adapter = GetFormatter(connection);
 
                 for (var i = 0; i < keyProperties.Count; i++)
                 {
                     var property = keyProperties[i];
                     adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
+                    dynParms.Add("@" + property.Name, property.GetValue(objectToRead));
                     if (i < keyProperties.Count - 1)
                         sb.Append(" and ");
                 }
-
-                GetQueries[type.TypeHandle] = sb.ToString();
+                sql = sb.ToString();
+                GetQueries[type.TypeHandle] = sql;
             }
-
-            var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            else
+            {
+                for (var i = 0; i < keyProperties.Count; i++)
+                {
+                    var property = keyProperties[i];
+                    dynParms.Add("@" + property.Name, property.GetValue(objectToRead));
+                }
+            }
 
             T obj;
 
