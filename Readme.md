@@ -5,7 +5,7 @@ Dapper - a simple object mapper for .Net
 Release Notes
 -------------
 
-[Located at stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
+Located at [stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
 
 
 Features
@@ -99,7 +99,7 @@ This works for any parameter that implements IEnumerable<T> for some T.
 Performance
 -----------
 
-A key feature of Dapper is performance. The following metrics show how long it takes to execute 500 SELECT statements against a DB and map the data returned to objects.
+A key feature of Dapper is performance. The following metrics show how long it takes to execute 500 `SELECT` statements against a DB and map the data returned to objects.
 
 The performance tests are broken in to 3 lists:
 
@@ -108,8 +108,6 @@ The performance tests are broken in to 3 lists:
 - Typical framework usage. Often typical framework usage differs from the optimal usage performance wise. Often it will not involve writing SQL.
 
 ### Performance of SELECT mapping over 500 iterations - POCO serialization
-
-
 
 | Method                                              | Duration | Remarks |
 | --------------------------------------------------- | -------- | ------- |
@@ -145,14 +143,14 @@ The performance tests are broken in to 3 lists:
 
 Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
 
-Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (ctrl F5).
+Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (<kbd>Ctrl</kbd>+<kbd>F5</kbd>).
 
 Alternatively, you might prefer Frans Bouma's [RawDataAccessBencher](https://github.com/FransBouma/RawDataAccessBencher) test suite or [OrmBenchmark](https://github.com/InfoTechBridge/OrmBenchmark).
 
 Parameterized queries
 ---------------------
 
-Parameters are passed in as anonymous classes. This allow you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in Query analyzer.
+Parameters are passed in as anonymous classes. This allow you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
 
 ```csharp
 new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B 
@@ -160,7 +158,7 @@ new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 
 List Support
 ------------
-Dapper allows you to pass in IEnumerable<int> and will automatically parameterize your query.
+Dapper allows you to pass in `IEnumerable<int>` and will automatically parameterize your query.
 
 For example:
 
@@ -187,9 +185,9 @@ is actually a fixed value (for example, a fixed "category id", "status code" or 
 
 Buffered vs Unbuffered readers
 ---------------------
-Dapper's default behavior is to execute your sql and buffer the entire reader on return. This is ideal in most cases as it minimizes shared locks in the db and cuts down on db network time.
+Dapper's default behavior is to execute your SQL and buffer the entire reader on return. This is ideal in most cases as it minimizes shared locks in the db and cuts down on db network time.
 
-However when executing huge queries you may need to minimize memory footprint and only load objects as needed. To do so pass, buffered: false into the Query method.
+However when executing huge queries you may need to minimize memory footprint and only load objects as needed. To do so pass, `buffered: false` into the `Query` method.
 
 Multi Mapping
 ---------------------
@@ -301,7 +299,7 @@ Dapper supports varchar params, if you are executing a where clause on a varchar
 Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true });
 ```
 
-On SQL Server it is crucial to use the unicode when querying unicode and ansi when querying non unicode.
+On SQL Server it is crucial to use the unicode when querying unicode and ANSI when querying non unicode.
 
 Type Switching Per Row
 ---------------------
@@ -349,9 +347,9 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
 
 Limitations and caveats
 ---------------------
-Dapper caches information about every query it runs, this allow it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a ConcurrentDictionary object. The objects it stores are never flushed. If you are generating SQL strings on the fly without using parameters it is possible you will hit memory issues. We may convert the dictionaries to an LRU Cache.
+Dapper caches information about every query it runs, this allow it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a `ConcurrentDictionary` object. The objects it stores are never flushed. If you are generating SQL strings on the fly without using parameters it is possible you will hit memory issues. We may convert the dictionaries to an LRU Cache.
 
-Dapper's simplicity means that many feature that ORMs ship with are stripped out. It worries  about the 95% scenario, and gives you the tools you need most of the time. It doesn't attempt to solve every problem.
+Dapper's simplicity means that many feature that ORMs ship with are stripped out. It worries about the 95% scenario, and gives you the tools you need most of the time. It doesn't attempt to solve every problem.
 
 Will Dapper work with my DB provider?
 ---------------------
@@ -359,7 +357,7 @@ Dapper has no DB specific implementation details, it works across all .NET ADO p
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests)
+Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests).
 
 Who is using this?
 ---------------------
