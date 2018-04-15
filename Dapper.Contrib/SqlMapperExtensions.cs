@@ -285,7 +285,19 @@ namespace Dapper.Contrib.Extensions
             return obj;
         }
 
-        public static T Get<T>(this IDbConnection connection, T objectToRead, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        /// <summary>
+        /// Returns a single entity by a single id from table "Ts".
+        /// Id must be marked with [Key] attribute.
+        /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
+        /// for optimal performance.
+        /// </summary>
+        /// <typeparam name="T">Interface or type to create and populate</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToRead">the entity to read, the id column must be marked with [Key] attribute</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>Entity of T</returns>
+       public static T Get<T>(this IDbConnection connection, T entityToRead, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
 
             var type = typeof(T);
@@ -310,7 +322,7 @@ namespace Dapper.Contrib.Extensions
                 {
                     var property = keyProperties[i];
                     adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
-                    dynParms.Add("@" + property.Name, property.GetValue(objectToRead));
+                    dynParms.Add("@" + property.Name, property.GetValue(entityToRead));
                     if (i < keyProperties.Count - 1)
                         sb.Append(" and ");
                 }
@@ -322,7 +334,7 @@ namespace Dapper.Contrib.Extensions
                 for (var i = 0; i < keyProperties.Count; i++)
                 {
                     var property = keyProperties[i];
-                    dynParms.Add("@" + property.Name, property.GetValue(objectToRead));
+                    dynParms.Add("@" + property.Name, property.GetValue(entityToRead));
                 }
             }
 
@@ -922,7 +934,7 @@ public partial interface ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName);
+    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null);
 }
 
 /// <summary>
@@ -975,9 +987,9 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName);
+        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName ?? columnName);
     }
 }
 
@@ -1031,9 +1043,9 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName==null)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName);
+        sb.AppendFormat("[{0}] = @{1}", columnName, propertyName ?? columnName);
     }
 }
 
@@ -1086,9 +1098,9 @@ public partial class MySqlAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
     {
-        sb.AppendFormat("`{0}` = @{1}", columnName, propertyName);
+        sb.AppendFormat("`{0}` = @{1}", columnName, propertyName ?? columnName);
     }
 }
 
@@ -1162,9 +1174,9 @@ public partial class PostgresAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName);
+        sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName ?? columnName);
     }
 }
 
@@ -1215,9 +1227,9 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName);
+        sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName ?? columnName);
     }
 }
 
@@ -1272,8 +1284,8 @@ public partial class FbAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
     {
-        sb.AppendFormat("{0} = @{1}", columnName, propertyName);
+        sb.AppendFormat("{0} = @{1}", columnName, propertyName ?? columnName);
     }
 }
