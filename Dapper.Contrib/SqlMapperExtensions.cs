@@ -934,7 +934,14 @@ public partial interface ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null);
+    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The object's property name.</param>
+    void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null);
 }
 
 /// <summary>
@@ -987,7 +994,18 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("[{0}] = @{0}", columnName);
+    }
+
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The objects's property name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null)
     {
         sb.AppendFormat("[{0}] = @{1}", columnName, propertyName ?? columnName);
     }
@@ -1043,7 +1061,17 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName==null)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("[{0}] = @{0}", columnName);
+    }
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The object's property name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null)
     {
         sb.AppendFormat("[{0}] = @{1}", columnName, propertyName ?? columnName);
     }
@@ -1098,7 +1126,17 @@ public partial class MySqlAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("`{0}` = @{0}", columnName);
+    }
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The object's property name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null)
     {
         sb.AppendFormat("`{0}` = @{1}", columnName, propertyName ?? columnName);
     }
@@ -1174,7 +1212,18 @@ public partial class PostgresAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("\"{0}\" = @{0}", columnName);
+    }
+
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The object's property name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null)
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName ?? columnName);
     }
@@ -1227,7 +1276,18 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("\"{0}\" = @{0}", columnName);
+    }
+
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The object's property name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null)
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, propertyName ?? columnName);
     }
@@ -1284,7 +1344,18 @@ public partial class FbAdapter : ISqlAdapter
     /// </summary>
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
-    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName=null)
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("{0} = @{0}", columnName);
+    }
+
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="propertyName">The object's property name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName, string propertyName = null)
     {
         sb.AppendFormat("{0} = @{1}", columnName, propertyName ?? columnName);
     }
