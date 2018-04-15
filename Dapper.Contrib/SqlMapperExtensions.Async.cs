@@ -24,18 +24,26 @@ namespace Dapper.Contrib.Extensions
         /// <returns>Entity of T</returns>
         public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
+            String keyName = "";
             var type = typeof(T);
+
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
-                var key = GetSingleKey<T>(nameof(GetAsync));
+                var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
+                keyName = key.Name;
+                String keyColumnName = GetDBColumnName(key.Name, key);
 
-                sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
+                sql = $"select * from {name} where {keyColumnName} = @" + keyName;
                 GetQueries[type.TypeHandle] = sql;
+            }
+            else
+            {
+                keyName = sql.Split('@')[1];
             }
 
             var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            dynParms.Add("@"+keyName, id);
 
             if (!type.IsInterface())
                 return (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();

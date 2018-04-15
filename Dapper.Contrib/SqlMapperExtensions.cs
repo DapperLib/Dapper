@@ -215,40 +215,26 @@ namespace Dapper.Contrib.Extensions
         /// <returns>Entity of T</returns>
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string defaultKeyName = "id";
+            String keyName = "";
             var type = typeof(T);
 
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
-                var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
-                var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
-                if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
-                    throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
-
+                var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
-                keyProperties.AddRange(explicitKeyProperties);
+                keyName = key.Name;
+                String keyColumnName = GetDBColumnName(key.Name, key);
 
-                var sb = new StringBuilder();
-                sb.AppendFormat("select * from {0} where ", name);
-                var adapter = GetFormatter(connection);
-
-                for (var i = 0; i < keyProperties.Count; i++)
-                {
-                    var property = keyProperties[i];
-                    if (i == 0) //using the first key attribute
-                    {
-                        defaultKeyName = property.Name;
-                    }
-                    adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
-                    if (i < keyProperties.Count - 1)
-                        sb.Append(" and ");
-                }
-                sql = sb.ToString();
+                sql = $"select * from {name} where {keyColumnName} = @"+keyName;
                 GetQueries[type.TypeHandle] = sql;
+            }
+            else
+            {
+                keyName = sql.Split('@')[1];
             }
 
             var dynParms = new DynamicParameters();
-            dynParms.Add("@" + defaultKeyName, id);
+            dynParms.Add("@" + keyName, id);
 
             T obj;
 
