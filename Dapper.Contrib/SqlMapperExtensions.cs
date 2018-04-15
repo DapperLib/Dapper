@@ -142,28 +142,9 @@ namespace Dapper.Contrib.Extensions
         }
 
 
-        private static String GetDBColumnName(string keyName, List<PropertyInfo> columnProperties)
+        private static String GetDBColumnName(PropertyInfo columnProperty)
         {
-            String mappingName = keyName;
-            PropertyInfo propertiesForKey = columnProperties.FirstOrDefault(a => a.Name == keyName);
-            if (propertiesForKey != null)
-            {
-                var columnPropertiesForKey = propertiesForKey.GetCustomAttributes(true);
-                var selectedProperty = columnPropertiesForKey.FirstOrDefault(a => a.GetType().ToString() == "System.ComponentModel.DataAnnotations.Schema.ColumnAttribute");
-
-#if !NETSTANDARD1_3 && !NETSTANDARD2_0
-                if (selectedProperty != null)
-                {
-                    mappingName = ((System.ComponentModel.DataAnnotations.Schema.ColumnAttribute)selectedProperty).Name;
-                }
-#endif
-            }
-            return mappingName;
-        }
-
-        private static String GetDBColumnName(string keyName, PropertyInfo columnProperty)
-        {
-            String mappingName = keyName;
+            String mappingName = columnProperty.Name;
             var columnPropertiesForKey = columnProperty.GetCustomAttributes(true);
             var selectedProperty = columnPropertiesForKey.FirstOrDefault(a => a.GetType().ToString() == "System.ComponentModel.DataAnnotations.Schema.ColumnAttribute");
 
@@ -223,14 +204,22 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
                 keyName = key.Name;
-                String keyColumnName = GetDBColumnName(key.Name, key);
+                String keyColumnName = GetDBColumnName(key);
 
                 sql = $"select * from {name} where {keyColumnName} = @"+keyName;
                 GetQueries[type.TypeHandle] = sql;
             }
             else
             {
-                keyName = sql.Split('@')[1];
+                var sqlSplit = sql.Split('@');
+                if (sqlSplit.Count() < 2)
+                {
+                    throw new DataException($"Get<T> only supports an entity with a [Key] or an [ExplicitKey] property");
+                }
+                else
+                {
+                    keyName = sqlSplit[1];
+                }
             }
 
             var dynParms = new DynamicParameters();
@@ -307,7 +296,7 @@ namespace Dapper.Contrib.Extensions
                 for (var i = 0; i < keyProperties.Count; i++)
                 {
                     var property = keyProperties[i];
-                    adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
+                    adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property), property.Name);  //fix for issue #336
                     dynParms.Add("@" + property.Name, property.GetValue(entityToRead));
                     if (i < keyProperties.Count - 1)
                         sb.Append(" and ");
@@ -494,7 +483,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                adapter.AppendColumnName(sbColumnList, GetDBColumnName(property.Name, property));  //fix for issue #336
+                adapter.AppendColumnName(sbColumnList, GetDBColumnName(property));  //fix for issue #336
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbColumnList.Append(", ");
             }
@@ -574,7 +563,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps[i];
-                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property),property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property),property.Name);  //fix for issue #336
                 if (i < nonIdProps.Count - 1)
                     sb.Append(", ");
             }
@@ -582,7 +571,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property), property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
@@ -631,7 +620,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property), property.Name);  //fix for issue #336
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }

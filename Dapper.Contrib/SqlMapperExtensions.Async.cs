@@ -32,14 +32,22 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
                 keyName = key.Name;
-                String keyColumnName = GetDBColumnName(key.Name, key);
+                String keyColumnName = GetDBColumnName(key);
 
                 sql = $"select * from {name} where {keyColumnName} = @" + keyName;
                 GetQueries[type.TypeHandle] = sql;
             }
             else
             {
-                keyName = sql.Split('@')[1];
+                var sqlSplit = sql.Split('@');
+                if (sqlSplit.Count() < 2)
+                {
+                    throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+                }
+                else
+                {
+                    keyName = sqlSplit[1];
+                }
             }
 
             var dynParms = new DynamicParameters();
@@ -252,7 +260,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps[i];
-                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property), property.Name);
                 if (i < nonIdProps.Count - 1)
                     sb.Append(", ");
             }
@@ -260,7 +268,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property.Name, property), property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, GetDBColumnName(property), property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
