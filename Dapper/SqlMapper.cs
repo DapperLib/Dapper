@@ -503,13 +503,23 @@ namespace Dapper
         public static T ExecuteScalar<T>(this IDbConnection cnn, CommandDefinition command) =>
             ExecuteScalarImpl<T>(cnn, ref command);
 
+        /// <summary>
+        /// Check if an object is a multivalue object.
+        /// </summary>
+        /// <param name="value">The object is being checked.</param>
+        /// <returns>[true] if the object is a multivalue object.</returns>
+        public static bool IsMultiValue(object value)
+        {
+            return (value is IEnumerable
+                    && !(value is string
+                      || value is IEnumerable<KeyValuePair<string, object>>
+                      || value is IDynamicParameters)
+                );
+        }
+
         private static IEnumerable GetMultiExec(object param)
         {
-            return (param is IEnumerable
-                    && !(param is string
-                      || param is IEnumerable<KeyValuePair<string, object>>
-                      || param is IDynamicParameters)
-                ) ? (IEnumerable)param : null;
+            return IsMultiValue(param) ? (IEnumerable)param : null;
         }
 
         private static int ExecuteImpl(this IDbConnection cnn, ref CommandDefinition command)

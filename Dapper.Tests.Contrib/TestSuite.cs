@@ -52,6 +52,16 @@ namespace Dapper.Tests.Contrib
         public string Name { get; set; }
         public int Age { get; set; }
     }
+ 
+    [Table("Users")]
+    public class GenericUser<TKey>
+         where TKey : IEquatable<TKey>
+    {
+        [Key]
+        public TKey Id { get; set; }
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
 
     public interface INullableDate
     {
@@ -436,6 +446,54 @@ namespace Dapper.Tests.Contrib
                 users = connection.Query<User>("select * from Users").ToList();
                 Assert.Equal(users.Count, numberOfEntities - 10);
             }
+        }
+
+        [Fact]
+        public void TestGenericUser()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<GenericUser<int>>();
+
+                var genUser = new GenericUser<int> { Name = "Generic user", Age = 33 };
+                var total = connection.Insert(genUser);
+                Assert.True(total > 0);
+                genUser.Id = (int)total;
+
+                var users = connection.Query<GenericUser<int>>("select * from Users").AsList();
+                Assert.Single(users);
+                Assert.Equal(genUser.Id, users[0].Id);
+                Assert.Equal(genUser.Name, users[0].Name);
+                Assert.Equal(genUser.Age, users[0].Age);
+
+                genUser.Name = "New Generic user";
+                genUser.Age = 35;
+                Assert.True(connection.Update(genUser));
+                users = connection.Query<GenericUser<int>>("select * from Users").AsList();
+                Assert.Single(users);
+                Assert.Equal(genUser.Id, users[0].Id);
+                Assert.Equal(genUser.Name, users[0].Name);
+                Assert.Equal(genUser.Age, users[0].Age);
+
+                connection.Delete(genUser);
+                users = connection.Query<GenericUser<int>>("select * from Users").AsList();
+                Assert.Empty(users);
+
+                const int numberOfEntities = 10;
+                users = new List<GenericUser<int>>(numberOfEntities);
+                for (var i = 0; i < numberOfEntities; i++)
+                    users.Add(new GenericUser<int> { Name = "User " + i, Age = i });
+
+                total = connection.Insert(users.ToList());
+                Assert.Equal(total, numberOfEntities);
+                users = connection.Query<GenericUser<int>>("select * from Users").AsList();
+                Assert.Equal(users.Count, numberOfEntities);
+
+                connection.Delete(users.ToList());
+                users = connection.Query<GenericUser<int>>("select * from Users").AsList();
+                Assert.Equal(users.Count, numberOfEntities - 10);
+            }
+            
         }
 
         [Fact]

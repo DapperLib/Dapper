@@ -413,7 +413,7 @@ namespace Dapper.Contrib.Extensions
             {
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType())
+            else if (type.IsGenericType() && SqlMapper.IsMultiValue(entityToUpdate))
             {
                 type = type.GetGenericArguments()[0];
             }
@@ -474,7 +474,7 @@ namespace Dapper.Contrib.Extensions
             {
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType())
+            else if (type.IsGenericType() && SqlMapper.IsMultiValue(entityToDelete))
             {
                 type = type.GetGenericArguments()[0];
             }
