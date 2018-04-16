@@ -1,48 +1,71 @@
-﻿/*
- License: http://www.apache.org/licenses/LICENSE-2.0 
- Home page: http://code.google.com/p/dapper-dot-net/
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace Dapper
 {
+    /// <summary>
+    /// Snapshots an object for comparison later.
+    /// </summary>
     public static class Snapshotter
     {
+        /// <summary>
+        /// Starts the snapshot of an objec by making a copy of the current state.
+        /// </summary>
+        /// <typeparam name="T">The type of object to snapshot.</typeparam>
+        /// <param name="obj">The object to snapshot.</param>
+        /// <returns>The snapshot of the object.</returns>
         public static Snapshot<T> Start<T>(T obj)
         {
             return new Snapshot<T>(obj);
         }
 
+        /// <summary>
+        /// A snapshot of an object's state.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         public class Snapshot<T>
         {
-            static Func<T, T> cloner;
-            static Func<T, T, List<Change>> differ;
-            T memberWiseClone;
-            T trackedObject;
+            private static Func<T, T> cloner;
+            private static Func<T, T, List<Change>> differ;
+            private readonly T memberWiseClone;
+            private readonly T trackedObject;
 
+            /// <summary>
+            /// Creates a snapshot from an object.
+            /// </summary>
+            /// <param name="original">The original object to snapshot.</param>
             public Snapshot(T original)
             {
                 memberWiseClone = Clone(original);
                 trackedObject = original;
             }
 
+            /// <summary>
+            /// A holder for listing new values of changes fields and properties.
+            /// </summary>
             public class Change
             {
+                /// <summary>
+                /// The name of the field or property that changed.
+                /// </summary>
                 public string Name { get; set; }
+                /// <summary>
+                /// The new value of the field or property.
+                /// </summary>
                 public object NewValue { get; set; }
             }
 
+            /// <summary>
+            /// Does a diff between the original object and the current state.
+            /// </summary>
+            /// <returns>The list of the fields changes in the object.</returns>
             public DynamicParameters Diff()
             {
                 return Diff(memberWiseClone, trackedObject);
             }
-
 
             private static T Clone(T myObject)
             {
@@ -61,31 +84,28 @@ namespace Dapper
                 return dm;
             }
 
-
-            static List<PropertyInfo> RelevantProperties()
+            private static List<PropertyInfo> RelevantProperties()
             {
-                return typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                return typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(p =>
-                        p.GetSetMethod() != null &&
-                        p.GetGetMethod() != null &&
-                        (p.PropertyType.IsValueType ||
-                            p.PropertyType == typeof(string) ||
-                            (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                        p.GetSetMethod(true) != null
+                        && p.GetGetMethod(true) != null
+                        && (p.PropertyType == typeof(string)
+                             || p.PropertyType.IsValueType()
+                             || (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
                         ).ToList();
             }
 
-
             private static bool AreEqual<U>(U first, U second)
             {
-                if (first == null && second == null) return true;
-                if (first == null && second != null) return false;
+                if (EqualityComparer<U>.Default.Equals(first, default(U)) && EqualityComparer<U>.Default.Equals(second, default(U))) return true;
+                if (EqualityComparer<U>.Default.Equals(first, default(U))) return false;
                 return first.Equals(second);
             }
 
             private static Func<T, T, List<Change>> GenerateDiffer()
             {
-
-                var dm = new DynamicMethod("DoDiff", typeof(List<Change>), new Type[] { typeof(T), typeof(T) }, true);
+                var dm = new DynamicMethod("DoDiff", typeof(List<Change>), new[] { typeof(T), typeof(T) }, true);
 
                 var il = dm.GetILGenerator();
                 // change list
@@ -102,11 +122,11 @@ namespace Dapper
                     // []
                     il.Emit(OpCodes.Ldarg_0);
                     // [original]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod(true));
                     // [original prop val]
                     il.Emit(OpCodes.Ldarg_1);
                     // [original prop val, current]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod(true));
                     // [original prop val, current prop val]
 
                     il.Emit(OpCodes.Dup);
@@ -121,7 +141,7 @@ namespace Dapper
                     il.Emit(OpCodes.Stloc_2);
                     // [original prop val, current prop val]
 
-                    il.EmitCall(OpCodes.Call, typeof(Snapshot<T>).GetMethod("AreEqual", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(new Type[] { prop.PropertyType }), null);
+                    il.EmitCall(OpCodes.Call, typeof(Snapshot<T>).GetMethod(nameof(AreEqual), BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(new Type[] { prop.PropertyType }), null);
                     // [result] 
 
                     Label skip = il.DefineLabel();
@@ -167,11 +187,9 @@ namespace Dapper
                 return (Func<T, T, List<Change>>)dm.CreateDelegate(typeof(Func<T, T, List<Change>>));
             }
 
-
-            // adapted from http://stackoverflow.com/a/966466/17174
+            // adapted from https://stackoverflow.com/a/966466/17174
             private static Func<T, T> GenerateCloner()
             {
-                Delegate myExec = null;
                 var dm = new DynamicMethod("DoClone", typeof(T), new Type[] { typeof(T) }, true);
                 var ctor = typeof(T).GetConstructor(new Type[] { });
 
@@ -188,9 +206,9 @@ namespace Dapper
                     // [clone]
                     il.Emit(OpCodes.Ldarg_0);
                     // [clone, source]
-                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetGetMethod(true));
                     // [clone, source val]
-                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod());
+                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod(true));
                     // []
                 }
 
@@ -199,11 +217,10 @@ namespace Dapper
                 // Return constructed object.   --> 0 items on stack
                 il.Emit(OpCodes.Ret);
 
-                myExec = dm.CreateDelegate(typeof(Func<T, T>));
+                var myExec = dm.CreateDelegate(typeof(Func<T, T>));
 
                 return (Func<T, T>)myExec;
             }
         }
     }
 }
-

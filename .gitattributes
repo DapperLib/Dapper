@@ -1,4 +1,6 @@
-﻿*.doc  diff=astextplain
+﻿* text=auto
+
+*.doc  diff=astextplain
 *.DOC	diff=astextplain
 *.docx	diff=astextplain
 *.DOCX	diff=astextplain
