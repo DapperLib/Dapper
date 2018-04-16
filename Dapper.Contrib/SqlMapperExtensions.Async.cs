@@ -29,7 +29,7 @@ namespace Dapper.Contrib.Extensions
 
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
-                var key = GetSingleKey<T>(nameof(Get));
+                var key = GetSingleKey<T>(nameof(GetAsync));
                 var name = GetTableName(type);
                 keyName = key.Name;
                 String keyColumnName = GetDBColumnName(key);
