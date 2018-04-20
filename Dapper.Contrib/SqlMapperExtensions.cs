@@ -857,7 +857,7 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// </summary>
     /// <param name="value">The table or return or ... name.</param>
     /// <returns>Normalized name.</returns>
-    public string NormalizeName(string value) => throw new NotImplementedException();
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -920,7 +920,7 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// </summary>
     /// <param name="value">The table or return or ... name.</param>
     /// <returns>Normalized name.</returns>
-    public string NormalizeName(string value) => throw new NotImplementedException();
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -982,7 +982,7 @@ public partial class MySqlAdapter : ISqlAdapter
     /// </summary>
     /// <param name="value">The table or return or ... name.</param>
     /// <returns>Normalized name.</returns>
-    public string NormalizeName(string value) => throw new NotImplementedException();
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -1125,7 +1125,7 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// </summary>
     /// <param name="value">The table or return or ... name.</param>
     /// <returns>Normalized name.</returns>
-    public string NormalizeName(string value) => throw new NotImplementedException();
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -1189,5 +1189,5 @@ public partial class FbAdapter : ISqlAdapter
     /// </summary>
     /// <param name="value">The table or return or ... name.</param>
     /// <returns>Normalized name.</returns>
-    public string NormalizeName(string value) => throw new NotImplementedException();
+    public string NormalizeName(string value) => value;
 }
