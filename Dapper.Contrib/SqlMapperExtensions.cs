@@ -415,7 +415,15 @@ namespace Dapper.Contrib.Extensions
             }
             else if (type.IsGenericType())
             {
-                type = type.GetGenericArguments()[0];
+                var typeInfo = type.GetTypeInfo();
+                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+
+                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
+                {
+                    type = type.GetGenericArguments()[0];
+                }
             }
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
@@ -476,7 +484,15 @@ namespace Dapper.Contrib.Extensions
             }
             else if (type.IsGenericType())
             {
-                type = type.GetGenericArguments()[0];
+                var typeInfo = type.GetTypeInfo();
+                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+
+                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
+                {
+                    type = type.GetGenericArguments()[0];
+                }
             }
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
