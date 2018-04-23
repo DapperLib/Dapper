@@ -155,6 +155,43 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void TypeWithGenericParameterCanBeUpdated()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                connection.Insert(objectToInsert);
+
+                objectToInsert.Name = "somethingelse";
+                connection.Update(objectToInsert);
+
+                var updatedObject = connection.Get<GenericType<string>>(objectToInsert.Id);
+                Assert.Equal(objectToInsert.Name, updatedObject.Name);
+            }
+        }
+
+        [Fact]
+        public void TypeWithGenericParameterCanBeDeleted()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                connection.Insert(objectToInsert);
+
+                bool deleted = connection.Delete(objectToInsert);
+                Assert.True(deleted);
+            }
+        }
+
+        [Fact]
         public void Issue418()
         {
             using (var connection = GetOpenConnection())
@@ -363,6 +400,12 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void UpdateEnumerable()
+        {
+            UpdateHelper(src => src.AsEnumerable());
+        }
+
+        [Fact]
         public void UpdateArray()
         {
             UpdateHelper(src => src.ToArray());
@@ -399,6 +442,12 @@ namespace Dapper.Tests.Contrib
                 var name = connection.Query<User>("select * from Users").First().Name;
                 Assert.Contains("updated", name);
             }
+        }
+
+        [Fact]
+        public void DeleteEnumerable()
+        {
+            DeleteHelper(src => src.AsEnumerable());
         }
 
         [Fact]
