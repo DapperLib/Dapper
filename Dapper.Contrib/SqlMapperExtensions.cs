@@ -370,7 +370,8 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                sbParameterList.AppendFormat("@{0}", property.Name);
+                var isJson = property.GetCustomAttribute(typeof(JsonAttribute), false) != null;
+                sbParameterList.Append($"@{property.Name}{(isJson ? "::json" : string.Empty)}");
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }

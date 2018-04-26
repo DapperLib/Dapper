@@ -182,7 +182,8 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                sbParameterList.AppendFormat("@{0}", property.Name);
+                var isJson = property.GetCustomAttribute(typeof(JsonAttribute), false) != null;
+                sbParameterList.Append($"@{property.Name}{(isJson ? "::json" : string.Empty)}");
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -476,7 +477,7 @@ public partial class PostgresAdapter
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                sb.Append(NormalizeName(property.Name));
             }
         }
 
@@ -486,7 +487,7 @@ public partial class PostgresAdapter
         var id = 0;
         foreach (var p in propertyInfos)
         {
-            var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
+            var value = ((IDictionary<string, object>)results.First())[p.Name];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
