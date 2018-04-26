@@ -179,9 +179,11 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(Get));
-                var name = GetTableName(type);
+                var name = GetTableName(type, connection);
 
-                sql = $"select * from {name} where {key.Name} = @id";
+                Func<string, string> normalizer = GetFormatter(connection).NormalizeName;
+
+                sql = $"select * from {name} where {normalizer(key.Name)} = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -242,7 +244,7 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
                 GetSingleKey<T>(nameof(GetAll));
-                var name = GetTableName(type);
+                var name = GetTableName(type, connection);
 
                 sql = "select * from " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
@@ -280,7 +282,7 @@ namespace Dapper.Contrib.Extensions
         /// </summary>
         public static TableNameMapperDelegate TableNameMapper;
 
-        private static string GetTableName(Type type)
+        private static string GetTableName(Type type, IDbConnection connection)
         {
             if (TypeTableName.TryGetValue(type.TypeHandle, out string name)) return name;
 
@@ -307,7 +309,8 @@ namespace Dapper.Contrib.Extensions
                         name = name.Substring(1);
                 }
             }
-
+            Func<string, string> normalizer = GetFormatter(connection).NormalizeName;
+            name = normalizer == null ? name : normalizer(name);
             TypeTableName[type.TypeHandle] = name;
             return name;
         }
@@ -346,7 +349,7 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var name = GetTableName(type);
+            var name = GetTableName(type, connection);
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
@@ -367,7 +370,8 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                sbParameterList.AppendFormat("@{0}", property.Name);
+                var isJson = property.GetCustomAttribute(typeof(JsonAttribute), false) != null;
+                sbParameterList.Append($"@{property.Name}{(isJson ? "::json" : string.Empty)}");
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -423,7 +427,7 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var name = GetTableName(type, connection);
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
@@ -484,7 +488,7 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var name = GetTableName(type, connection);
             keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
@@ -495,7 +499,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
@@ -514,7 +518,7 @@ namespace Dapper.Contrib.Extensions
         public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            var name = GetTableName(type);
+            var name = GetTableName(type, connection);
             var statement = $"delete from {name}";
             var deleted = connection.Execute(statement, null, transaction, commandTimeout);
             return deleted > 0;
@@ -785,6 +789,13 @@ public partial interface ISqlAdapter
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    string NormalizeName(string value);
 }
 
 /// <summary>
@@ -841,6 +852,13 @@ public partial class SqlServerAdapter : ISqlAdapter
     {
         sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
     }
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -897,6 +915,13 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     {
         sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
     }
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -952,6 +977,13 @@ public partial class MySqlAdapter : ISqlAdapter
     {
         sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
     }
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -991,7 +1023,7 @@ public partial class PostgresAdapter : ISqlAdapter
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                sb.Append(NormalizeName(property.Name));
             }
         }
 
@@ -1001,7 +1033,7 @@ public partial class PostgresAdapter : ISqlAdapter
         var id = 0;
         foreach (var p in propertyInfos)
         {
-            var value = ((IDictionary<string, object>)results[0])[p.Name.ToLower()];
+            var value = ((IDictionary<string, object>)results[0])[p.Name];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
@@ -1028,6 +1060,13 @@ public partial class PostgresAdapter : ISqlAdapter
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
     }
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    public string NormalizeName(string value) => $"\"{value}\"";
 }
 
 /// <summary>
@@ -1081,6 +1120,13 @@ public partial class SQLiteAdapter : ISqlAdapter
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
     }
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    public string NormalizeName(string value) => value;
 }
 
 /// <summary>
@@ -1138,4 +1184,11 @@ public partial class FbAdapter : ISqlAdapter
     {
         sb.AppendFormat("{0} = @{1}", columnName, columnName);
     }
+
+    /// <summary>
+    /// Normalize name.
+    /// </summary>
+    /// <param name="value">The table or return or ... name.</param>
+    /// <returns>Normalized name.</returns>
+    public string NormalizeName(string value) => value;
 }
