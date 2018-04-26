@@ -499,7 +499,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
