@@ -370,7 +370,7 @@ Dapper has no DB specific implementation details, it works across all .NET ADO p
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/dapper-dot-net/blob/master/Dapper.Tests).
+Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests).
 
 Who is using this?
 ---------------------
