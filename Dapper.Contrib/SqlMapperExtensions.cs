@@ -320,8 +320,9 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="sqlAdapter">The specific ISqlAdapter to use, auto-detected based on connection if null</param>
         /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
-        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static long Insert<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             var isList = false;
 
@@ -353,7 +354,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection);
+            var adapter = sqlAdapter ?? GetFormatter(connection);
 
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
@@ -399,8 +400,9 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToUpdate">Entity to be updated</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="sqlAdapter">The specific ISqlAdapter to use, auto-detected based on connection if null</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             if (entityToUpdate is IProxy proxy && !proxy.IsDirty)
             {
@@ -441,7 +443,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection);
+            var adapter = sqlAdapter ?? GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count; i++)
             {
@@ -470,8 +472,9 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToDelete">Entity to delete</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="sqlAdapter">The specific ISqlAdapter to use, auto-detected based on connection if null</param>
         /// <returns>true if deleted, false if not found</returns>
-        public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             if (entityToDelete == null)
                 throw new ArgumentException("Cannot Delete null Object", nameof(entityToDelete));
@@ -506,7 +509,7 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
 
-            var adapter = GetFormatter(connection);
+            var adapter = sqlAdapter ?? GetFormatter(connection);
 
             for (var i = 0; i < keyProperties.Count; i++)
             {

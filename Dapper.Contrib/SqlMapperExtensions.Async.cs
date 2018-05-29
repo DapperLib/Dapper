@@ -205,8 +205,9 @@ namespace Dapper.Contrib.Extensions
         /// <param name="entityToUpdate">Entity to be updated</param>
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <param name="sqlAdapter">The specific ISqlAdapter to use, auto-detected based on connection if null</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             if ((entityToUpdate is IProxy proxy) && !proxy.IsDirty)
             {
@@ -247,7 +248,7 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection);
+            var adapter = sqlAdapter ?? GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count; i++)
             {
