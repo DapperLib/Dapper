@@ -181,7 +181,7 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                sql = $"select * from [{name}] where {key.Name} = @id";
+                sql = $"select * from {name} where {key.Name} = @id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -284,21 +284,22 @@ namespace Dapper.Contrib.Extensions
         {
             if (TypeTableName.TryGetValue(type.TypeHandle, out string name)) return name;
 
-            if (TableNameMapper != null)
-            {
-                name = TableNameMapper(type);
-            }
-            else
-            {
-                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
-                var tableAttr = type
+            //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
+            var tableAttr = type
 #if NETSTANDARD1_3
                     .GetTypeInfo()
 #endif
                     .GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
-                if (tableAttr != null)
+
+            if (tableAttr != null)
+            {
+                name = tableAttr.Name;
+            }
+            else
+            {
+                if (TableNameMapper != null)
                 {
-                    name = tableAttr.Name;
+                    name = TableNameMapper(type);
                 }
                 else
                 {
@@ -308,8 +309,14 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
+            if (!name.StartsWith("["))
+                name = $"[{name}";
+
+            if (!name.EndsWith("]"))
+                name = $"{name}]";
+
             TypeTableName[type.TypeHandle] = name;
-            return name;
+            return $"{name}";
         }
 
         /// <summary>
