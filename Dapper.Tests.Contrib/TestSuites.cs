@@ -26,10 +26,12 @@ namespace Dapper.Tests.Contrib
     public class SqlServerTestSuite : TestSuite
     {
         private const string DbName = "tempdb";
+        private const string Server = @".\SQLEXPRESS";
+
         public static string ConnectionString =>
             IsAppVeyor
                 ? @"Server=(local)\SQL2016;Database=tempdb;User ID=sa;Password=Password12!"
-                : $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
+                : $@"Data Source={Server};Initial Catalog={DbName};Integrated Security=True";
         public override IDbConnection GetConnection() => new SqlConnection(ConnectionString);
 
         static SqlServerTestSuite()
