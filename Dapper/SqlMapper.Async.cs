@@ -686,274 +686,274 @@ namespace Dapper
             }
         }
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 2 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
+        //        new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TReturn> map, string splitOn = "Id") =>
-            MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 2 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="command">The command to execute.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TReturn> map, string splitOn = "Id") =>
+        //    MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 3 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
+        //        new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TReturn> map, string splitOn = "Id") =>
-            MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 3 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="command">The command to execute.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TReturn> map, string splitOn = "Id") =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 4 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn,
+        //        new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, string splitOn = "Id") =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 4 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="command">The command to execute.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, string splitOn = "Id") =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 5 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn,
+        //        new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, string splitOn = "Id") =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 5 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="command">The command to execute.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, string splitOn = "Id") =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 6 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 6 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn,
+        //        new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 6 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, string splitOn = "Id") =>
-             MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, command, map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 6 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="command">The command to execute.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, string splitOn = "Id") =>
+        //     MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, command, map, splitOn);
 
-        /// <summary>
-        /// Perform a asynchronous multi-mapping query with 7 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
-        /// <typeparam name="TSeventh">The seventh type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+        ///// <summary>
+        ///// Perform a asynchronous multi-mapping query with 7 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
+        ///// <typeparam name="TSeventh">The seventh type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn,
+        //        new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
-        /// <summary>
-        /// Perform an asynchronous multi-mapping query with 7 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
-        /// <typeparam name="TSeventh">The seventh type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, string splitOn = "Id") =>
-            MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn);
+        ///// <summary>
+        ///// Perform an asynchronous multi-mapping query with 7 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
+        ///// <typeparam name="TSeventh">The seventh type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="command">The command to execute.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, string splitOn = "Id") =>
+        //    MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn);
 
-        private static async Task<IEnumerable<TReturn>> MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn)
-        {
-            object param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            var info = GetCacheInfo(identity, param, command.AddToCache);
-            bool wasClosed = cnn.State == ConnectionState.Closed;
-            try
-            {
-                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
-                {
-                    if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
-                    return command.Buffered ? results.ToList() : results;
-                }
-            }
-            finally
-            {
-                if (wasClosed) cnn.Close();
-            }
-        }
+        //private static async Task<IEnumerable<TReturn>> MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn)
+        //{
+        //    object param = command.Parameters;
+        //    var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
+        //    var info = GetCacheInfo(identity, param, command.AddToCache);
+        //    bool wasClosed = cnn.State == ConnectionState.Closed;
+        //    try
+        //    {
+        //        if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+        //        using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+        //        using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+        //        {
+        //            if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
+        //            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
+        //            return command.Buffered ? results.ToList() : results;
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        if (wasClosed) cnn.Close();
+        //    }
+        //}
 
         /// <summary>
         /// Perform a asynchronous multi-mapping query with an arbitrary number of input types. 

@@ -27,4 +27,16 @@
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
     <PackageReference Include="System.Xml.XmlDocument" Version="4.3.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    <None Update="SqlMapper.Query.Generated.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SqlMapper.Query.Generated.cs</LastGenOutput>
+    </None>
+    <Compile Update="SqlMapper.Query.Generated.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SqlMapper.Query.Generated.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>    
+  </ItemGroup>  
 </Project>
