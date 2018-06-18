@@ -312,10 +312,12 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
+            var adapter = GetFormatter(connection);
+            
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.Append(" AND ");
             }
