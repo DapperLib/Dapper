@@ -442,48 +442,45 @@ namespace Dapper
         {
             
             case 1:
-                return r => ((Func<T0, TReturn>)map)((T0)deserializer(r));
-            
-            case 2:
                 return r => ((Func<T0, T1, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r));
             
-            case 3:
+            case 2:
                 return r => ((Func<T0, T1, T2, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r));
             
-            case 4:
+            case 3:
                 return r => ((Func<T0, T1, T2, T3, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r));
             
-            case 5:
+            case 4:
                 return r => ((Func<T0, T1, T2, T3, T4, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r));
             
-            case 6:
+            case 5:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r));
             
-            case 7:
+            case 6:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r));
             
-            case 8:
+            case 7:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r));
             
-            case 9:
+            case 8:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r));
             
-            case 10:
+            case 9:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r),(T9)otherDeserializers[8](r));
             
-            case 11:
+            case 10:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r),(T9)otherDeserializers[8](r),(T10)otherDeserializers[9](r));
             
-            case 12:
+            case 11:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r),(T9)otherDeserializers[8](r),(T10)otherDeserializers[9](r),(T11)otherDeserializers[10](r));
             
-            case 13:
+            case 12:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r),(T9)otherDeserializers[8](r),(T10)otherDeserializers[9](r),(T11)otherDeserializers[10](r),(T12)otherDeserializers[11](r));
             
-            case 14:
+            case 13:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r),(T9)otherDeserializers[8](r),(T10)otherDeserializers[9](r),(T11)otherDeserializers[10](r),(T12)otherDeserializers[11](r),(T13)otherDeserializers[12](r));
             
-            case 15:
+            case 14:
                 return r => ((Func<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TReturn>)map)((T0)deserializer(r), (T1)otherDeserializers[0](r),(T2)otherDeserializers[1](r),(T3)otherDeserializers[2](r),(T4)otherDeserializers[3](r),(T5)otherDeserializers[4](r),(T6)otherDeserializers[5](r),(T7)otherDeserializers[6](r),(T8)otherDeserializers[7](r),(T9)otherDeserializers[8](r),(T10)otherDeserializers[9](r),(T11)otherDeserializers[10](r),(T12)otherDeserializers[11](r),(T13)otherDeserializers[12](r),(T14)otherDeserializers[13](r));
                       
             default:

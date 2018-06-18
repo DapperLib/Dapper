@@ -54,10 +54,13 @@ namespace Dapper
     {
         switch (otherDeserializers.Length)
         {
-            <# foreach(var size in SIZES) { #>
+            <# foreach(var size in SIZES) { 
+                if(size == MAX_SIZE)
+                    continue;            
+            #>
 
             case <#=size#>:
-                return r => ((Func<#= FormatTypeArgs(size) #>)map)((T0)deserializer(r)<#=FormatMapDeserializers(size)#>
+                return r => ((Func<#= FormatTypeArgs(size + 1) #>)map)((T0)deserializer(r)<#=FormatMapDeserializers(size)#>
             <# } #>
           
             default:
@@ -316,22 +319,28 @@ namespace Dapper
         return res;
     }
 
-    public string FormatMapDeserializers(int count){
+    public string FormatMapDeserializers(int caseIndex){
         string res = "";
           
-        if(count == 1){
+        if(caseIndex == 0){
             return ");";
         } else{
             res += ", ";
         }
+        
+        var serializerIndex = 0;        
 
-        for (var i = 1; i < count; i++)
+        for (var typeInd = 1; typeInd < (caseIndex + 1); typeInd++)
         {
-            res += String.Format("(T{0})otherDeserializers[{1}](r)", i, i - 1);
-            if(i + 1 != count)
+            res += String.Format("(T{0})otherDeserializers[{1}](r)", typeInd, serializerIndex);
+            
+            if(typeInd != caseIndex)
                 res += ",";
             else 
                 res += ");";
+
+            serializerIndex++;
+
         }
         return res;
     }
