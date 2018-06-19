@@ -1238,140 +1238,140 @@ namespace Dapper
             }
         }
 
-        /// <summary>
-        /// Perform a multi-mapping query with 2 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        ///// <summary>
+        ///// Perform a multi-mapping query with 2 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
-        /// <summary>
-        /// Perform a multi-mapping query with 3 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        ///// <summary>
+        ///// Perform a multi-mapping query with 3 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
-        /// <summary>
-        /// Perform a multi-mapping query with 4 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        ///// <summary>
+        ///// Perform a multi-mapping query with 4 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
-        /// <summary>
-        /// Perform a multi-mapping query with 5 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        ///// <summary>
+        ///// Perform a multi-mapping query with 5 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
-        /// <summary>
-        /// Perform a multi-mapping query with 6 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        ///// <summary>
+        ///// Perform a multi-mapping query with 6 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
-        /// <summary>
-        /// Perform a multi-mapping query with 7 input types. 
-        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
-        /// </summary>
-        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
-        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
-        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
-        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
-        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
-        /// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
-        /// <typeparam name="TSeventh">The seventh type in the recordset.</typeparam>
-        /// <typeparam name="TReturn">The combined type to return.</typeparam>
-        /// <param name="cnn">The connection to query on.</param>
-        /// <param name="sql">The SQL to execute for this query.</param>
-        /// <param name="map">The function to map row types to the return type.</param>
-        /// <param name="param">The parameters to use for this query.</param>
-        /// <param name="transaction">The transaction to use for this query.</param>
-        /// <param name="buffered">Whether to buffer the results in memory.</param>
-        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
-        /// <param name="commandType">Is it a stored proc or a batch?</param>
-        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
-            MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+        ///// <summary>
+        ///// Perform a multi-mapping query with 7 input types. 
+        ///// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        ///// </summary>
+        ///// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        ///// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        ///// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        ///// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        ///// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        ///// <typeparam name="TSixth">The sixth type in the recordset.</typeparam>
+        ///// <typeparam name="TSeventh">The seventh type in the recordset.</typeparam>
+        ///// <typeparam name="TReturn">The combined type to return.</typeparam>
+        ///// <param name="cnn">The connection to query on.</param>
+        ///// <param name="sql">The SQL to execute for this query.</param>
+        ///// <param name="map">The function to map row types to the return type.</param>
+        ///// <param name="param">The parameters to use for this query.</param>
+        ///// <param name="transaction">The transaction to use for this query.</param>
+        ///// <param name="buffered">Whether to buffer the results in memory.</param>
+        ///// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        ///// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        ///// <param name="commandType">Is it a stored proc or a batch?</param>
+        ///// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        //public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        //    MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
         /// Perform a multi-mapping query with an arbitrary number of input types. 
@@ -1396,73 +1396,73 @@ namespace Dapper
             return buffered ? results.ToList() : results;
         }
 
-        private static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
-            this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
-        {
-            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
-            var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null, true);
-            return buffered ? results.ToList() : results;
-        }
+        //private static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
+        //    this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
+        //{
+        //    var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+        //    var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null, true);
+        //    return buffered ? results.ToList() : results;
+        //}
 
-        private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
-        {
-            object param = command.Parameters;
-            identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
-            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
+        //private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        //{
+        //    object param = command.Parameters;
+        //    identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType(), new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) });
+        //    CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
-            IDbCommand ownedCommand = null;
-            IDataReader ownedReader = null;
+        //    IDbCommand ownedCommand = null;
+        //    IDataReader ownedReader = null;
 
-            bool wasClosed = cnn?.State == ConnectionState.Closed;
-            try
-            {
-                if (reader == null)
-                {
-                    ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
-                    if (wasClosed) cnn.Open();
-                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
-                    reader = ownedReader;
-                }
-                var deserializer = default(DeserializerState);
-                Func<IDataReader, object>[] otherDeserializers;
+        //    bool wasClosed = cnn?.State == ConnectionState.Closed;
+        //    try
+        //    {
+        //        if (reader == null)
+        //        {
+        //            ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
+        //            if (wasClosed) cnn.Open();
+        //            ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+        //            reader = ownedReader;
+        //        }
+        //        var deserializer = default(DeserializerState);
+        //        Func<IDataReader, object>[] otherDeserializers;
 
-                int hash = GetColumnHash(reader);
-                if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
-                {
-                    var deserializers = GenerateDeserializers(new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) }, splitOn, reader);
-                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
-                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
-                    if (command.AddToCache) SetQueryCache(identity, cinfo);
-                }
+        //        int hash = GetColumnHash(reader);
+        //        if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
+        //        {
+        //            var deserializers = GenerateDeserializers(new[] { typeof(TFirst), typeof(TSecond), typeof(TThird), typeof(TFourth), typeof(TFifth), typeof(TSixth), typeof(TSeventh) }, splitOn, reader);
+        //            deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
+        //            otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+        //            if (command.AddToCache) SetQueryCache(identity, cinfo);
+        //        }
 
-                Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
+        //        Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
 
-                if (mapIt != null)
-                {
-                    while (reader.Read())
-                    {
-                        yield return mapIt(reader);
-                    }
-                    if (finalize)
-                    {
-                        while (reader.NextResult()) { /* ignore remaining result sets */ }
-                        command.OnCompleted();
-                    }
-                }
-            }
-            finally
-            {
-                try
-                {
-                    ownedReader?.Dispose();
-                }
-                finally
-                {
-                    ownedCommand?.Dispose();
-                    if (wasClosed) cnn.Close();
-                }
-            }
-        }
+        //        if (mapIt != null)
+        //        {
+        //            while (reader.Read())
+        //            {
+        //                yield return mapIt(reader);
+        //            }
+        //            if (finalize)
+        //            {
+        //                while (reader.NextResult()) { /* ignore remaining result sets */ }
+        //                command.OnCompleted();
+        //            }
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        try
+        //        {
+        //            ownedReader?.Dispose();
+        //        }
+        //        finally
+        //        {
+        //            ownedCommand?.Dispose();
+        //            if (wasClosed) cnn.Close();
+        //        }
+        //    }
+        //}
 
         private static CommandBehavior GetBehavior(bool close, CommandBehavior @default)
         {
@@ -1534,26 +1534,26 @@ namespace Dapper
             }
         }
 
-        private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
-        {
-            switch (otherDeserializers.Length)
-            {
-                case 1:
-                    return r => ((Func<TFirst, TSecond, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r));
-                case 2:
-                    return r => ((Func<TFirst, TSecond, TThird, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r));
-                case 3:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r));
-                case 4:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r));
-                case 5:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r));
-                case 6:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r), (TSeventh)otherDeserializers[5](r));
-                default:
-                    throw new NotSupportedException();
-            }
-        }
+        //private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
+        //{
+        //    switch (otherDeserializers.Length)
+        //    {
+        //        case 1:
+        //            return r => ((Func<TFirst, TSecond, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r));
+        //        case 2:
+        //            return r => ((Func<TFirst, TSecond, TThird, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r));
+        //        case 3:
+        //            return r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r));
+        //        case 4:
+        //            return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r));
+        //        case 5:
+        //            return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r));
+        //        case 6:
+        //            return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r), (TSeventh)otherDeserializers[5](r));
+        //        default:
+        //            throw new NotSupportedException();
+        //    }
+        //}
 
         private static Func<IDataReader, TReturn> GenerateMapper<TReturn>(int length, Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, Func<object[], TReturn> map)
         {

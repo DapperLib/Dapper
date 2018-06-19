@@ -1,0 +1,359 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+#if NETSTANDARD1_3
+using DataException = System.InvalidOperationException;
+#endif
+
+namespace Dapper
+{
+    public static partial class SqlMapper
+    {
+    <# foreach(var size in SIZES) { #>
+
+<# 
+    // GENERATE QUERY FUNCTIONS FOR MANY TYPES
+#>
+        /// <summary>
+        /// Perform a multi-mapping query with 7 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        <#= FormatXmlComment(size) #>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>        
+        /// <param name="cnn">The connection to query on.</param>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="buffered">Whether to buffer the results in memory.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public static IEnumerable<TReturn> Query<#= FormatTypeArgs(size) #>(this IDbConnection cnn, string sql,Func<#= FormatTypeArgs(size) #> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+            MultiMap<#= FormatTypeArgsForMultiMap(size) #>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+
+    <# } #>
+
+<# 
+    // GENERATE GenerateMapper FUNCTION FOR MANY TYPES
+#>
+
+    private static Func<IDataReader, TReturn> GenerateMapper<#= FormatTypeArgs(MAX_SIZE) #>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
+    {
+        switch (otherDeserializers.Length)
+        {
+            <# foreach(var size in SIZES) { 
+                if(size == MAX_SIZE)
+                    continue;            
+            #>
+
+            case <#=size#>:
+                return r => ((Func<#= FormatTypeArgs(size + 1) #>)map)((T0)deserializer(r)<#=FormatMapDeserializers(size)#>
+            <# } #>
+          
+            default:
+                throw new NotSupportedException();
+        }
+    }
+    
+<# 
+    // GENERATE MultiMap FUNCTION FOR MANY TYPES
+#>
+
+    private static IEnumerable<TReturn> MultiMap<#= FormatTypeArgs(MAX_SIZE) #>(
+            this IDbConnection cnn, string sql, Delegate map, object param, IDbTransaction transaction, bool buffered, string splitOn, int? commandTimeout, CommandType? commandType)
+        {
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var results = MultiMapImpl<#= FormatTypeArgs(MAX_SIZE) #>(cnn, command, map, splitOn, null, null, true);
+            return buffered ? results.ToList() : results;
+        }
+
+
+<# 
+    // GENERATE MultiMapImpl FUNCTION FOR MANY TYPES
+#>
+    
+    private static IEnumerable<TReturn> MultiMapImpl<#= FormatTypeArgs(MAX_SIZE) #>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        {
+            object param = command.Parameters;
+            identity = identity ?? new Identity(command.CommandText, command.CommandType, cnn, typeof(T0), param?.GetType(), new[] {                 
+                <#=FormatTypeofParams()#>
+            });
+            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
+
+            IDbCommand ownedCommand = null;
+            IDataReader ownedReader = null;
+
+            bool wasClosed = cnn?.State == ConnectionState.Closed;
+            try
+            {
+                if (reader == null)
+                {
+                    ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
+                    if (wasClosed) cnn.Open();
+                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                    reader = ownedReader;
+                }
+                var deserializer = default(DeserializerState);
+                Func<IDataReader, object>[] otherDeserializers;
+
+                int hash = GetColumnHash(reader);
+                if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
+                {
+                    var deserializers = GenerateDeserializers(new[] { 
+                            <#=FormatTypeofParams()#>
+                        }, splitOn, reader);
+                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
+                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+                    if (command.AddToCache) SetQueryCache(identity, cinfo);
+                }
+
+                Func<IDataReader, TReturn> mapIt = GenerateMapper<#= FormatTypeArgs(MAX_SIZE) #>(deserializer.Func, otherDeserializers, map);
+
+                if (mapIt != null)
+                {
+                    while (reader.Read())
+                    {
+                        yield return mapIt(reader);
+                    }
+                    if (finalize)
+                    {
+                        while (reader.NextResult()) { /* ignore remaining result sets */ }
+                        command.OnCompleted();
+                    }
+                }
+            }
+            finally
+            {
+                try
+                {
+                    ownedReader?.Dispose();
+                }
+                finally
+                {
+                    ownedCommand?.Dispose();
+                    if (wasClosed) cnn.Close();
+                }
+            }
+        }
+
+<#  // =============================================================================> SqlMapper.Async 
+    // GENERATE MultiMapAsync FUNCTION FOR MANY TYPES
+#>
+
+    private static async Task<IEnumerable<TReturn>> MultiMapAsync<#= FormatTypeArgs(MAX_SIZE) #>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn)
+        {
+            object param = command.Parameters;
+            var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(T0), param?.GetType(), new[] { 
+                <#=FormatTypeofParams()#>
+            });
+            var info = GetCacheInfo(identity, param, command.AddToCache);
+            bool wasClosed = cnn.State == ConnectionState.Closed;
+            try
+            {
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                {
+                    if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
+                    var results = MultiMapImpl<#= FormatTypeArgs(MAX_SIZE) #>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
+                    return command.Buffered ? results.ToList() : results;
+                }
+            }
+            finally
+            {
+                if (wasClosed) cnn.Close();
+            }
+        }
+
+        <# foreach(var size in SIZES) { #>
+
+        /// <summary>
+        /// Perform a asynchronous multi-mapping query with 2 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        <#= FormatXmlComment(size) #>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="cnn">The connection to query on.</param>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="buffered">Whether to buffer the results in memory.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public static Task<IEnumerable<TReturn>> QueryAsync<#= FormatTypeArgs(size) #>(this IDbConnection cnn, string sql, Func<#= FormatTypeArgs(size) #> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+            MultiMapAsync<#= FormatTypeArgsForMultiMap(size) #>(cnn,
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
+
+        /// <summary>
+        /// Perform a asynchronous multi-mapping query with 2 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        <#= FormatXmlComment(size) #>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="cnn">The connection to query on.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public static Task<IEnumerable<TReturn>> QueryAsync<#= FormatTypeArgs(size) #>(this IDbConnection cnn, CommandDefinition command, Func<#= FormatTypeArgs(size) #> map, string splitOn = "Id") =>
+            MultiMapAsync<#= FormatTypeArgsForMultiMap(size) #>(cnn, command, map, splitOn);
+
+        <# } #>
+
+
+
+<#  // =============================================================================> SqlMapper.GridReader.cs 
+    // GENERATE MultiReadInternal
+#>
+        /// <summary>
+        /// The grid reader provides interfaces for reading multiple result sets from a Dapper query
+        /// </summary>
+        public partial class GridReader : IDisposable
+        {
+            private IEnumerable<TReturn> MultiReadInternal<#= FormatTypeArgs(MAX_SIZE) #>(Delegate func, string splitOn)
+            {
+                var identity = this.identity.ForGrid(typeof(TReturn), new Type[] {
+                   <#= FormatTypeofParams() #>
+                }, gridIndex);
+
+                IsConsumed = true;
+
+                try
+                {
+                    foreach (var r in MultiMapImpl<#= FormatTypeArgs(MAX_SIZE) #>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
+                    {
+                        yield return r;
+                    }
+                }
+                finally
+                {
+                    NextResult();
+                }
+            }
+
+            <# foreach(var size in SIZES) { #>
+
+            /// <summary>
+            /// Read multiple objects from a single record set on the grid
+            /// </summary>
+           <#= FormatXmlComment(size) #>
+            /// <typeparam name="TReturn">The type to return from the record set.</typeparam>
+            /// <param name="func">The mapping function from the read types to the return type.</param>
+            /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
+            /// <param name="buffered">Whether to buffer results in memory.</param>
+            public IEnumerable<TReturn> Read<#= FormatTypeArgs(size) #>(Func<#= FormatTypeArgs(size) #> func, string splitOn = "id", bool buffered = true)
+            {
+                var result = MultiReadInternal<#= FormatTypeArgsForMultiMap(size) #>(func, splitOn);
+                return buffered ? result.ToList() : result;
+            }
+
+            <# } #> 
+
+        }         
+    
+    }// END class SqlMapper
+}
+
+
+<# 
+    // HELPER FUNCTIONS FOR GENERATION
+#>
+<#+
+    static readonly int[] SIZES = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }; //, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
+    static readonly int MAX_SIZE = 15;
+
+    public string FormatTypeArgs(int count) {
+        if(count < 1)
+            return "";
+        return "<" + FormatList(count, "T{0}") + ", TReturn>";
+    }
+
+    public string FormatTypeArgsForMultiMap(int count){
+        if(count < 1)
+            return "";
+        string res = "<";
+        for (var i = 0; i < MAX_SIZE; i++)
+        {
+            if(i >= count){
+                res += "DontMap,";
+            } 
+            else{
+                res += String.Format("T{0},", i);
+            }            
+        }
+        res += "TReturn>";
+        return res;
+    }
+
+    public string FormatCtorArgs(int count) {
+        return FormatList(count, "T{0} i{0}");
+    }
+
+    string FormatList(int count, string format) {
+        return String.Join(", ", Enumerable.Range(0, count).Select(i => String.Format(format, i)));
+    }
+
+    public string FormatXmlComment(int count)
+    {
+        string res = "";
+        for (var i = 0; i < count; i++)
+        {
+            res += String.Format("\r\n\t\t/// <typeparam name=\"T{0}\">{0} type in the recordset</typeparam>", i);
+        }
+        return res;
+    }
+
+    public string FormatMapDeserializers(int caseIndex){
+        string res = "";
+          
+        if(caseIndex == 0){
+            return ");";
+        } else{
+            res += ", ";
+        }
+        
+        var serializerIndex = 0;        
+
+        for (var typeInd = 1; typeInd < (caseIndex + 1); typeInd++)
+        {
+            res += String.Format("(T{0})otherDeserializers[{1}](r)", typeInd, serializerIndex);
+            
+            if(typeInd != caseIndex)
+                res += ",";
+            else 
+                res += ");";
+
+            serializerIndex++;
+
+        }
+        return res;
+    }
+
+    public string FormatTypeofParams(){
+        string res = "";
+        for (var i = 0; i < MAX_SIZE; i++)
+        {
+            res += String.Format("typeof(T{0})", i);
+            if(i + 1 != MAX_SIZE)
+                res += ",";
+        }
+        return res;
+    }
+
+#>
