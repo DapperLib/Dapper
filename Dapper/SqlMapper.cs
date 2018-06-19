@@ -1349,7 +1349,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with 7 input types. 
+        /// Perform a multi-mapping query with 7 input types. If you need more types -> use Query with Type[] parameter.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
