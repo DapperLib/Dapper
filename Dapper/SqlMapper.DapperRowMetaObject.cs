@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Reflection;
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
-        sealed class DapperRowMetaObject : System.Dynamic.DynamicMetaObject
+        private sealed class DapperRowMetaObject : System.Dynamic.DynamicMetaObject
         {
-            static readonly MethodInfo getValueMethod = typeof(IDictionary<string, object>).GetProperty("Item").GetGetMethod();
-            static readonly MethodInfo setValueMethod = typeof(DapperRow).GetMethod("SetValue", new Type[] { typeof(string), typeof(object) });
+            private static readonly MethodInfo getValueMethod = typeof(IDictionary<string, object>).GetProperty("Item").GetGetMethod();
+            private static readonly MethodInfo setValueMethod = typeof(DapperRow).GetMethod("SetValue", new Type[] { typeof(string), typeof(object) });
 
             public DapperRowMetaObject(
                 System.Linq.Expressions.Expression expression,
@@ -27,7 +27,7 @@ namespace Dapper
             {
             }
 
-            System.Dynamic.DynamicMetaObject CallMethod(
+            private System.Dynamic.DynamicMetaObject CallMethod(
                 MethodInfo method,
                 System.Linq.Expressions.Expression[] parameters
                 )

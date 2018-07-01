@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Data;
-#if !COREFX
+#if !NETSTANDARD1_3
 namespace Dapper
 {
-    sealed class DataTableHandler : SqlMapper.ITypeHandler
+    internal sealed class DataTableHandler : SqlMapper.ITypeHandler
     {
         public object Parse(Type destinationType, object value)
         {

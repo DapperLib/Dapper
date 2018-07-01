@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Dapper
 {
-    partial class SqlMapper
+    public static partial class SqlMapper
     {
         /// <summary>
         /// Implement this interface to change default mapping of reader columns to type members
