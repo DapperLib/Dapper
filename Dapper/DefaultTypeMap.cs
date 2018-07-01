@@ -153,7 +153,10 @@ namespace Dapper
         public SqlMapper.IMemberMap GetMember(string columnName)
         {
             var property = Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+               ?? Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
+               ?? Properties.Find(p =>
+                    string.Equals(((ColumnAttribute)p.GetCustomAttribute(typeof(ColumnAttribute)))?.Name,
+                        columnName, StringComparison.OrdinalIgnoreCase));
 
             if (property == null && MatchNamesWithUnderscores)
             {
