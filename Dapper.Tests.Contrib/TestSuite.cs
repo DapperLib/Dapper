@@ -53,6 +53,19 @@ namespace Dapper.Tests.Contrib
         public int Age { get; set; }
     }
 
+    public interface INullableDate
+    {
+        [Key]
+        int Id { get; set; }
+        DateTime? DateValue { get; set; }
+    }
+
+    public class NullableDate : INullableDate
+    {
+        public int Id { get; set; }
+        public DateTime? DateValue { get; set; }
+    }
+
     public class Person
     {
         public int Id { get; set; }
@@ -138,6 +151,43 @@ namespace Dapper.Tests.Contrib
                 connection.Insert(objectsToInsert);
                 var list = connection.GetAll<GenericType<string>>();
                 Assert.Equal(3, list.Count());
+            }
+        }
+
+        [Fact]
+        public void TypeWithGenericParameterCanBeUpdated()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                connection.Insert(objectToInsert);
+
+                objectToInsert.Name = "somethingelse";
+                connection.Update(objectToInsert);
+
+                var updatedObject = connection.Get<GenericType<string>>(objectToInsert.Id);
+                Assert.Equal(objectToInsert.Name, updatedObject.Name);
+            }
+        }
+
+        [Fact]
+        public void TypeWithGenericParameterCanBeDeleted()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                connection.Insert(objectToInsert);
+
+                bool deleted = connection.Delete(objectToInsert);
+                Assert.True(deleted);
             }
         }
 
@@ -312,6 +362,12 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void InsertEnumerable()
+        {
+            InsertHelper(src => src.AsEnumerable());
+        }
+
+        [Fact]
         public void InsertArray()
         {
             InsertHelper(src => src.ToArray());
@@ -341,6 +397,12 @@ namespace Dapper.Tests.Contrib
                 users = connection.Query<User>("select * from Users").ToList();
                 Assert.Equal(users.Count, numberOfEntities);
             }
+        }
+
+        [Fact]
+        public void UpdateEnumerable()
+        {
+            UpdateHelper(src => src.AsEnumerable());
         }
 
         [Fact]
@@ -380,6 +442,12 @@ namespace Dapper.Tests.Contrib
                 var name = connection.Query<User>("select * from Users").First().Name;
                 Assert.Contains("updated", name);
             }
+        }
+
+        [Fact]
+        public void DeleteEnumerable()
+        {
+            DeleteHelper(src => src.AsEnumerable());
         }
 
         [Fact]
@@ -540,6 +608,29 @@ namespace Dapper.Tests.Contrib
                 Assert.Equal(iusers.Count, numberOfEntities);
                 for (var i = 0; i < numberOfEntities; i++)
                     Assert.Equal(iusers[i].Age, i);
+            }
+        }
+
+        /// <summary>
+        /// Test for issue #933
+        /// </summary>
+        [Fact]
+        public void GetAndGetAllWithNullableValues()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = connection.Insert(new NullableDate { DateValue = new DateTime(2011, 07, 14) });
+                var id2 = connection.Insert(new NullableDate { DateValue = null });
+
+                var value1 = connection.Get<INullableDate>(id1);
+                Assert.Equal(new DateTime(2011, 07, 14), value1.DateValue.Value);
+
+                var value2 = connection.Get<INullableDate>(id2);
+                Assert.True(value2.DateValue == null);
+
+                var value3 = connection.GetAll<INullableDate>().ToList();
+                Assert.Equal(new DateTime(2011, 07, 14), value3[0].DateValue.Value);
+                Assert.True(value3[1].DateValue == null);
             }
         }
 

@@ -13,9 +13,9 @@ namespace Dapper.Tests
             AnEnum x = (AnEnum)(int)row.x;
             decimal y = row.y;
             AnotherEnum z = (AnotherEnum)(byte)row.z;
-            x.Equals(AnEnum.B);
-            y.Equals(123.45M);
-            z.Equals(AnotherEnum.A);
+            Assert.Equal(AnEnum.B, x);
+            Assert.Equal(123.45M, y);
+            Assert.Equal(AnotherEnum.A, z);
         }
 
         [Fact]
@@ -29,9 +29,9 @@ namespace Dapper.Tests
             AnEnum x = (AnEnum)(int)row.x;
             decimal y = row.y;
             AnotherEnum z = (AnotherEnum)(byte)row.z;
-            x.Equals(AnEnum.B);
-            y.Equals(123.45M);
-            z.Equals(AnotherEnum.A);
+            Assert.Equal(AnEnum.B, x);
+            Assert.Equal(123.45M, y);
+            Assert.Equal(AnotherEnum.A, z);
         }
 
         [Fact]

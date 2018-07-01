@@ -4,9 +4,7 @@
 
 A brief guide is available [on github](https://github.com/StackExchange/dapper-dot-net/blob/master/Readme.md)
 
-More examples coming soon on Stack Overflow docs.
-
-Questions on Stack Overflow should be tagged [`dapper`](http://stackoverflow.com/questions/tagged/dapper)
+Questions on Stack Overflow should be tagged [`dapper`](https://stackoverflow.com/questions/tagged/dapper)
 
 ## Installation
 
@@ -21,6 +19,13 @@ or
 Note: to get the latest pre-release build, add ` -Pre` to the end of the command.
 
 ## Release  Notes
+
+### 1.50.5
+
+- Fixes empty result set hanging with `QueryAsync`
+- `DapperRow` now implements `IReadOnlyDictionary<string, object>`
+- Improved error messages for `Async` when the provided `IDbConnection` is not a `DbConnection`
+- Contrib: `GetAll` now handles nullable types
 
 ### 1.50.4
 
@@ -88,7 +93,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 - Add `QueryFirstOrDefault` / `ReadFirstOrDefault` methods that optimize the single-row scenario
 - remove some legacy `dynamic` usage from the async API
 - make `DynamicTypeMap` public again (error during core-clr migration)
-- use `Hashtable` again on core-clr 
+- use `Hashtable` again on core-clr
 
 ### 1.50-beta3
 
