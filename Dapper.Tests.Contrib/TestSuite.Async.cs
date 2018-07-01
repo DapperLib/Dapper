@@ -37,6 +37,7 @@ namespace Dapper.Tests.Contrib
                 await connection.InsertAsync(objectW);
                 var list = await connection.GetAllAsync<ObjectW>();
                 list.Count().IsEqualTo(1);
+        }
 
         [Fact]
         public async Task TypeWithGenericParameterCanBeInsertedAsync()
