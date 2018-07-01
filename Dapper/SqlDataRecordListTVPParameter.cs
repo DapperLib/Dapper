@@ -32,11 +32,7 @@ namespace Dapper
 
         internal static void Set(IDbDataParameter parameter, IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
         {
-            if(data.Any())
-            {
-                parameter.Value = data;
-            }
-
+            parameter.Value = data != null && data.Any() ? data : null;
             if (parameter is System.Data.SqlClient.SqlParameter sqlParam)
             {
                 sqlParam.SqlDbType = SqlDbType.Structured;
