@@ -50,7 +50,7 @@ namespace Dapper.Tests.Contrib
                 dropTable("Results");
                 connection.Execute("CREATE TABLE Results (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, [Order] int not null);");
                 dropTable("ObjectW");
-                connection.Execute(@"CREATE TABLE ObjectW (ObjectWId uniqueidentifier not null, Name nvarchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectW (ObjectWId uniqueidentifier not null, Name nvarchar(100) not null);");
                 dropTable("ObjectX");
                 connection.Execute("CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
                 dropTable("ObjectY");
@@ -103,7 +103,7 @@ namespace Dapper.Tests.Contrib
                     dropTable("Results");
                     connection.Execute("CREATE TABLE Results (Id int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, `Order` int not null);");
                     dropTable("ObjectW");
-                    connection.Execute(@"CREATE TABLE ObjectW (ObjectWId CHAR(38) not null, Name nvarchar(100) not null);");
+                    connection.Execute("CREATE TABLE ObjectW (ObjectWId CHAR(38) not null, Name nvarchar(100) not null);");
                     dropTable("ObjectX");
                     connection.Execute("CREATE TABLE ObjectX (ObjectXId nvarchar(100) not null, Name nvarchar(100) not null);");
                     dropTable("ObjectY");

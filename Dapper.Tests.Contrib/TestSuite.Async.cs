@@ -32,11 +32,11 @@ namespace Dapper.Tests.Contrib
                     Name = "Someone"
                 };
                 var updates = await connection.UpdateAsync(objectW);
-                updates.IsFalse();
- 
+                Assert.False(updates);
+
                 await connection.InsertAsync(objectW);
                 var list = await connection.GetAllAsync<ObjectW>();
-                list.Count().IsEqualTo(1);
+                Assert.Single(list);
             }
         }
 
