@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace Dapper
 {
@@ -32,7 +32,7 @@ namespace Dapper
 
         internal static void Set(IDbDataParameter parameter, IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
         {
-            parameter.Value = (object)data ?? DBNull.Value;
+            parameter.Value = data != null && data.Any() ? data : null;
             if (parameter is System.Data.SqlClient.SqlParameter sqlParam)
             {
                 sqlParam.SqlDbType = SqlDbType.Structured;

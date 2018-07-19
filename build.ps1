@@ -30,7 +30,7 @@ function CalculateVersion() {
         Exit 1
     }
 
-    if ($semVersion -contains "-") {
+    if ($semVersion -match "-") {
         return "$semVersion-$BuildNumber" #prerelease
     } else {
         return "$semVersion" #release

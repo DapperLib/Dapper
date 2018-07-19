@@ -241,6 +241,37 @@ namespace Dapper.Tests
             }
         }
 
+        [Fact]
+        public void TestTVPWithAnonymousEmptyObject()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+                var nums = connection.Query<int>("get_ints", new { integers = new IntCustomParam(new int[] { }) }, commandType: CommandType.StoredProcedure).ToList();
+                Assert.Equal(1, nums[0]);
+                Assert.Equal(2, nums[1]);
+                Assert.Equal(3, nums[2]);
+                Assert.Equal(3, nums.Count);
+            }
+            catch (ArgumentException ex)
+            {
+                Assert.True(string.Compare(ex.Message, "There are no records in the SqlDataRecord enumeration. To send a table-valued parameter with no rows, use a null reference for the value instead.") == 0);
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
         // SQL Server specific test to demonstrate TVP 
         [Fact]
         public void TestTVP()
@@ -353,6 +384,33 @@ namespace Dapper.Tests
                 {
                     ex.Message.Equals("The table type parameter 'ids' must have a valid type name.");
                 }
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
+        [Fact]
+        public void TestEmptySqlDataRecordListParametersWithAsTableValuedParameter()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+
+                var emptyRecord = CreateSqlDataRecordList(Enumerable.Empty<int>());
+
+                var nums = connection.Query<int>("get_ints", new { integers = emptyRecord.AsTableValuedParameter() }, commandType: CommandType.StoredProcedure).ToList();
+                Assert.True(nums.Count == 0);
             }
             finally
             {
