@@ -597,7 +597,7 @@ Order by p.Id
                      cast('01 Feb 2013' as datetime) as CreateDate,
                      'ghi' as Name, 'def' as Phone",
             (T, P) => { T.Author = P; return T; },
-            null, null, true, "ID,Name").Single();
+            null, null, true, "ID,ID").Single();
 
             Assert.Equal(123, result.ID);
             Assert.Equal("abc", result.Title);
@@ -611,6 +611,29 @@ Order by p.Id
             Assert.Null(result.Author.Address);
         }
 
+        [Fact]
+        public void TestSplitWithTypeAliasColumns()
+        {
+            var result = connection.Query<Topic, Profile, Topic>(
+            @"select 123 as ID, 'abc' as Title,
+                     cast('01 Feb 2013' as datetime) as CreateDate,
+                     'def' as Name, 'geh' as Content, 789 as ProfileId, 
+                    'gaa' as ProfilePhone, 'ghi' as ProfileName",
+            (T, P) => { T.Author = P; return T; },
+            null, null, true, "ID").Single();
+
+            Assert.Equal(123, result.ID);
+            Assert.Equal("abc", result.Title);
+            Assert.Equal(new DateTime(2013, 2, 1), result.CreateDate);
+            Assert.Equal("def", result.Name);
+            Assert.Equal("geh", result.Content);
+
+            Assert.Equal(789, result.Author.ID);
+            Assert.Equal("gaa", result.Author.Phone);
+            Assert.Equal("ghi", result.Author.Name);
+            Assert.Null(result.Author.Address);
+        }
+  
         public class Profile
         {
             public int ID { get; set; }
