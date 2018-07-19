@@ -597,7 +597,7 @@ Order by p.Id
                      cast('01 Feb 2013' as datetime) as CreateDate,
                      'ghi' as Name, 'def' as Phone",
             (T, P) => { T.Author = P; return T; },
-            null, null, true, "ID,ID").Single();
+            null, null, true, "ID,Name").Single();
 
             Assert.Equal(123, result.ID);
             Assert.Equal("abc", result.Title);
