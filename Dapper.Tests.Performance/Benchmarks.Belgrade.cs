@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Belgrade.SqlClient.SqlDb;
 using System.Threading.Tasks;
 
@@ -16,14 +16,13 @@ namespace Dapper.Tests.Performance
         }
 
         [Benchmark(Description = "ExecuteReader")]
-        public async Task ExecuteReader()
+        public Post ExecuteReader()
         {
             Step();
-            // TODO: How do you get a Post out of this thing?
-            await _mapper.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + i,
+            var post = new Post();
+            _mapper.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + i,
                         reader =>
                         {
-                            var post = new Post();
                             post.Id = reader.GetInt32(0);
                             post.Text = reader.GetString(1);
                             post.CreationDate = reader.GetDateTime(2);
@@ -39,6 +38,7 @@ namespace Dapper.Tests.Performance
                             post.Counter8 = reader.IsDBNull(11) ? null : (int?)reader.GetInt32(11);
                             post.Counter9 = reader.IsDBNull(12) ? null : (int?)reader.GetInt32(12);
                         });
+            return post;
         }
     }
 }
