@@ -340,7 +340,7 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
         var type = (ShapeType)reader.GetInt32(typeColumnIndex);
         switch (type)
         {
-          	case ShapeType.Circle:
+            case ShapeType.Circle:
             	shape = circleParser(reader);
             	break;
             case ShapeType.Square:
@@ -349,7 +349,7 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
             case ShapeType.Triangle:
             	shape = triangleParser(reader);
             	break;
-          	default:
+            default:
             	throw new NotImplementedException();
         }
 
