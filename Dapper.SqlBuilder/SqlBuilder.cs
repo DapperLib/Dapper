@@ -138,6 +138,9 @@ namespace Dapper
         public SqlBuilder Select(string sql, dynamic parameters = null) =>
             AddClause("select", sql, parameters, " , ", "", "\n", false);
 
+        public SqlBuilder Delete(string sql, dynamic parameters = null) =>
+            AddClause("delete", sql, parameters, " , ", "", "\n", false);
+
         public SqlBuilder AddParameters(dynamic parameters) =>
             AddClause("--parameters", "", parameters, "", "", "", false);
 
