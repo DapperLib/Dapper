@@ -2323,7 +2323,7 @@ namespace Dapper
                                 return sb.Append(')').__ToStringRecycle();
                             }
                         }
-                        throw new NotSupportedException(value.GetType().Name);
+                        throw new NotSupportedException($"The type '{value.GetType().Name}' is not supported for SQL literals.");
                 }
             }
         }
