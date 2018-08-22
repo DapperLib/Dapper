@@ -23,6 +23,12 @@ namespace Dapper
                 throw new ArgumentNullException(nameof(type));
 
             _fields = GetSettableFields(type);
+			
+			// when using reflection, there's no guarantee that static constructors are called
+			// before object instantiation, so do it manually for all types (whose constructors haven't been called)
+			foreach(var field in _fields)
+                System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(field.FieldType.TypeHandle);
+			
             Properties = GetSettableProps(type);
             _type = type;
         }
