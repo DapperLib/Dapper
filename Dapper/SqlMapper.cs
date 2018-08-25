@@ -1619,7 +1619,7 @@ namespace Dapper
                     int splitPoint = 0;
                     if (typeIdx > 0)
                     {
-                        splitPoint = GetNextSplit(currentPos, currentSplit, reader);
+                        splitPoint = GetNextSplit(currentPos, currentSplit, type.Name, reader);
                         if (isMultiSplit && splitIdx > 0)
                         {
                             currentSplit = splits[--splitIdx];
@@ -1659,7 +1659,7 @@ namespace Dapper
             return reader.FieldCount;
         }
 
-        private static int GetNextSplit(int startIdx, string splitOn, IDataReader reader)
+        private static int GetNextSplit(int startIdx, string splitOn, string typeName, IDataReader reader)
         {
             if (splitOn == "*")
             {
@@ -1668,7 +1668,8 @@ namespace Dapper
 
             for (var i = startIdx - 1; i > 0; --i)
             {
-                if (string.Equals(splitOn, reader.GetName(i), StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(splitOn, reader.GetName(i), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(typeName + splitOn,  reader.GetName(i), StringComparison.OrdinalIgnoreCase))
                 {
                     return i;
                 }
@@ -3189,7 +3190,7 @@ namespace Dapper
 
             var members = IsValueTuple(type) ? GetValueTupleMembers(type, names) : ((specializedConstructor != null
                 ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList());
+                : names.Select(n => typeMap.GetMember(n) ?? typeMap.GetMember(n.Replace(type.Name,""))).ToList()));
 
             // stack is now [target]
 
