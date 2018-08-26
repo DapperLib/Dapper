@@ -549,6 +549,7 @@ namespace Dapper
                                 cmd.Parameters.Clear(); // current code is Add-tastic
                             }
                             info.ParamReader(cmd, obj);
+                            command.BeforeExecute?.Invoke(cmd);
                             total += cmd.ExecuteNonQuery();
                         }
                     }
@@ -1019,6 +1020,7 @@ namespace Dapper
             {
                 if (wasClosed) cnn.Open();
                 cmd = command.SetupCommand(cnn, info.ParamReader);
+                command.BeforeExecute?.Invoke(cmd);
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache);
@@ -1078,6 +1080,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
+                command.BeforeExecute?.Invoke(cmd);
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
@@ -1176,6 +1179,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
+                command.BeforeExecute?.Invoke(cmd);
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, (row & Row.Single) != 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
                     : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow);
@@ -2824,6 +2828,7 @@ namespace Dapper
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
+                command.BeforeExecute?.Invoke(cmd);
                 int result = cmd.ExecuteNonQuery();
                 command.OnCompleted();
                 return result;
@@ -2852,6 +2857,7 @@ namespace Dapper
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
+                command.BeforeExecute?.Invoke(cmd);
                 result = cmd.ExecuteScalar();
                 command.OnCompleted();
             }
@@ -2872,6 +2878,7 @@ namespace Dapper
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
+                command.BeforeExecute?.Invoke(cmd);
                 var reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, commandBehavior);
                 wasClosed = false; // don't dispose before giving it to them!
                 disposeCommand = false;

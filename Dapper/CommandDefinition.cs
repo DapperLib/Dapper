@@ -74,6 +74,11 @@ namespace Dapper
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
 
         /// <summary>
+        /// Action method called prior to the command executing.
+        /// </summary>
+        public Action<IDbCommand> BeforeExecute { get; }
+
+        /// <summary>
         /// Initialize the command definition
         /// </summary>
         /// <param name="commandText">The text for this command.</param>
@@ -83,9 +88,10 @@ namespace Dapper
         /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
         /// <param name="flags">The behavior flags for this command.</param>
         /// <param name="cancellationToken">The cancellation token for this command.</param>
+        /// <param name="beforeExecute">Callback action before the command is executed.</param>
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
-                                 , CancellationToken cancellationToken = default(CancellationToken)
+                                 , CancellationToken cancellationToken = default(CancellationToken), Action<IDbCommand> beforeExecute = null
             )
         {
             CommandText = commandText;
@@ -95,6 +101,7 @@ namespace Dapper
             CommandType = commandType;
             Flags = flags;
             CancellationToken = cancellationToken;
+            BeforeExecute = beforeExecute;
         }
 
         private CommandDefinition(object parameters) : this()

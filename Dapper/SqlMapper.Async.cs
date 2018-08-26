@@ -416,6 +416,7 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
+                    command.BeforeExecute?.Invoke(cmd);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
                     var tuple = info.Deserializer;
@@ -480,6 +481,7 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
+                    command.BeforeExecute?.Invoke(cmd);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, (row & Row.Single) != 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
                     : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancel).ConfigureAwait(false);
@@ -610,7 +612,7 @@ namespace Dapper
                                 cmd = command.TrySetupAsyncCommand(cnn, null);
                             }
                             info.ParamReader(cmd, obj);
-
+                            command.BeforeExecute?.Invoke(cmd);
                             var task = cmd.ExecuteNonQueryAsync(command.CancellationToken);
                             pending.Enqueue(new AsyncExecState(cmd, task));
                             cmd = null; // note the using in the finally: this avoids a double-dispose
@@ -651,6 +653,7 @@ namespace Dapper
                                 cmd.Parameters.Clear(); // current code is Add-tastic
                             }
                             info.ParamReader(cmd, obj);
+                            command.BeforeExecute?.Invoke(cmd);
                             total += await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
                         }
                     }
@@ -675,6 +678,7 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                    command.BeforeExecute?.Invoke(cmd);
                     var result = await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
                     command.OnCompleted();
                     return result;
@@ -1047,6 +1051,7 @@ namespace Dapper
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+                command.BeforeExecute?.Invoke(cmd);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
@@ -1140,6 +1145,7 @@ namespace Dapper
             {
                 cmd = command.TrySetupAsyncCommand(cnn, paramReader);
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                command.BeforeExecute?.Invoke(cmd);
                 var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 return reader;
@@ -1214,6 +1220,7 @@ namespace Dapper
             {
                 cmd = command.TrySetupAsyncCommand(cnn, paramReader);
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                command.BeforeExecute?.Invoke(cmd);
                 result = await cmd.ExecuteScalarAsync(command.CancellationToken).ConfigureAwait(false);
                 command.OnCompleted();
             }
