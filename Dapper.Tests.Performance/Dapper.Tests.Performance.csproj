@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
   <PropertyGroup>
     <AssemblyName>Dapper.Tests.Performance</AssemblyName>
     <Title>Dapper.Tests.Performance</Title>
@@ -14,6 +15,8 @@
     <PackageReference Include="Belgrade.Sql.Client" Version="0.7.0" />
     <PackageReference Include="BenchmarkDotNet" Version="0.10.9" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.10.9" />
+    <PackageReference Include="Dashing" Version="2.0.7" />
+    <PackageReference Include="Dashing.Weaver" Version="2.0.7" />
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
     <PackageReference Include="EntityFramework" Version="6.1.3" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="5.9.1" />
@@ -48,4 +51,8 @@
   <ItemGroup>
     <PackageReference Update="SourceLink.Create.GitHub" Version="2.1.2" />
   </ItemGroup>
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
+  <PropertyGroup>
+    <WeaveArguments>-p "$(MSBuildThisFileDirectory)$(OutputPath)$(AssemblyName).exe" -t "Dapper.Tests.Performance.Dashing.DashingConfiguration"</WeaveArguments>
+  </PropertyGroup>
 </Project>

@@ -19,7 +19,9 @@ using ServiceStack.OrmLite.Dapper;
 using Susanoo;
 using System.Configuration;
 using System.Threading.Tasks;
+using Dapper.Tests.Performance.Dashing;
 using Dapper.Tests.Performance.EntityFrameworkCore;
+using Dashing;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dapper.Tests.Performance
@@ -180,6 +182,15 @@ namespace Dapper.Tests.Performance
                     var mapperConnection3 = GetOpenConnection();
                     tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Contrib");
                 }, "Dapper");
+
+                // Dashing
+                Try(() =>
+                {
+                    var config = new DashingConfiguration();
+                    var database = new SqlDatabase(config, ConnectionString);
+                    var session = database.BeginTransactionLessSession(GetOpenConnection());
+                    tests.Add(id => session.Get<Dashing.Post>(id), "Dashing Get");
+                }, "Dashing");
 
                 // Massive
                 Try(() =>
