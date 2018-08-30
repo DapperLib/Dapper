@@ -6,24 +6,22 @@ namespace Dapper.Tests.Performance
 {
     public class DashingBenchmarks : BenchmarkBase
     {
-        private SqlDatabase database;
+        private ISession session;
 
         [GlobalSetup]
         public void Setup()
         {
             BaseSetup();
             var configuration = new DashingConfiguration();
-            database = new SqlDatabase(configuration, ConnectionString);
+            var database = new SqlDatabase(configuration, ConnectionString);
+            this.session = database.BeginTransactionLessSession(_connection);
         }
 
         [Benchmark(Description = "Get By Id")]
         public Dashing.Post QueryBuffered()
         {
             Step();
-            using (var session = database.BeginTransactionLessSession(_connection))
-            {
-                return session.Get<Dashing.Post>(i);
-            }
+            return session.Get<Dashing.Post>(i);
         }
     }
 }
