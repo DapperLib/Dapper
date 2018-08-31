@@ -11,7 +11,6 @@ namespace Dapper.Tests
     public class CallbackTests : TestBase
     {
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestExecuteCallbackCommand()
         {
             IDbDataParameter r = null;
@@ -32,7 +31,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public async Task TestExecuteCallbackCommandAsync()
         {
             IDbDataParameter r = null;
@@ -53,7 +51,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestExecuteScalerCallbackCommand()
         {
             IDbDataParameter r = null;
@@ -74,7 +71,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public async Task TestExecuteScalerCallbackCommandAsync()
         {
             IDbDataParameter r = null;
@@ -95,7 +91,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestExecuteMultipleCallbackCommand()
         {
             connection.Execute("create table #tt(i int)");
@@ -122,7 +117,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public async Task TestExecuteMultipleCallbackCommandAsync()
         {
             connection.Execute("create table #tt(i int)");
@@ -149,7 +143,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestExecuteReaderCallback()
         {
             IDbDataParameter r = null;
@@ -169,8 +162,7 @@ namespace Dapper.Tests
 
         }
         [Fact]
-        [Trait("Category", "aaa")]
-        public async Task TestExecuteReaderCallbackAsync()
+         public async Task TestExecuteReaderCallbackAsync()
         {
             IDbDataParameter r = null;
 
@@ -190,7 +182,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestQueryCallback()
         {
             IDbDataParameter r = null;
@@ -211,7 +202,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public async Task TestQueryCallbackAsync()
         {
             IDbDataParameter r = null;
@@ -231,7 +221,6 @@ namespace Dapper.Tests
 
         }
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestQueryMultipleCallback()
         {
             IDbDataParameter r = null;
@@ -252,7 +241,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public async Task TestQueryMultipleCallbackAsync()
         {
             IDbDataParameter r = null;
@@ -273,7 +261,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public void TestQueryFirstCallback()
         {
             IDbDataParameter r = null;
@@ -295,7 +282,6 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        [Trait("Category", "aaa")]
         public async Task TestQueryFirstCallbackAsync()
         {
             IDbDataParameter r = null;
