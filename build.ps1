@@ -29,17 +29,15 @@ if ($PullRequestNumber) {
     $CreatePackages = $false
 }
 
-Write-Host "Building projects..." -ForegroundColor "Magenta"
-foreach ($project in $projectsToBuild + $testsToRun) {
-    Write-Host "Building $project (dotnet restore/build)..." -ForegroundColor "Magenta"
-    dotnet restore ".\$project\$project.csproj" /p:CI=true
-    dotnet build ".\$project\$project.csproj" -c Release /p:CI=true
-    Write-Host ""
-}
+Write-Host "Restoring all projects..." -ForegroundColor "Magenta"
+dotnet restore
+Write-Host "Done restoring." -ForegroundColor "Green"
+
+Write-Host "Building all projects..." -ForegroundColor "Magenta"
+dotnet build -c Release --no-restore /p:CI=true
 Write-Host "Done building." -ForegroundColor "Green"
 
 if ($RunTests) {
-    dotnet restore /ConsoleLoggerParameters:Verbosity=Quiet
     foreach ($project in $testsToRun) {
         Write-Host "Running tests: $project (all frameworks)" -ForegroundColor "Magenta"
         Push-Location ".\$project"
