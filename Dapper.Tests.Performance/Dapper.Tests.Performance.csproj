@@ -19,9 +19,8 @@
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="5.9.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="1.1.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="1.1.2" />
-    <PackageReference Include="Microsoft.SqlServer.Compact" Version="4.0.8876.1" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
-    <PackageReference Include="MySql.Data" Version="7.0.7-m61" />
+    <PackageReference Include="MySqlConnector" Version="0.44.1" />
     <PackageReference Include="NHibernate" Version="4.1.1.4000" />
     <PackageReference Include="Iesi.Collections" Version="4.0.2" />
     <PackageReference Include="Npgsql" Version="3.2.5" />
@@ -46,6 +45,6 @@
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="SourceLink.Create.GitHub" Version="2.1.2" />
+    <PackageReference Update="SourceLink.Create.GitHub" Version="2.8.3" />
   </ItemGroup>
 </Project>
