@@ -8,11 +8,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		appveyor.yml = appveyor.yml
 		build.ps1 = build.ps1
-		build.sh = build.sh
+		Directory.build.props = Directory.build.props
 		License.txt = License.txt
 		nuget.config = nuget.config
 		Readme.md = Readme.md
 		semver.txt = semver.txt
+		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper", "Dapper\Dapper.csproj", "{FAC24C3F-68F9-4247-A4B9-21D487E99275}"
