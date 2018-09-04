@@ -245,7 +245,8 @@ namespace Dapper.Contrib.Extensions
             var allProperties = TypePropertiesCache(type);
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
-            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+            var ignoreUpdateProperties = IgnoreUpdatePropertiesCache(type);
+            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(ignoreUpdateProperties)).ToList();
 
             var adapter = GetFormatter(connection);
 

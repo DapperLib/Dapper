@@ -61,6 +61,7 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> IgnoreUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
@@ -87,6 +88,19 @@ namespace Dapper.Contrib.Extensions
 
             ComputedProperties[type.TypeHandle] = computedProperties;
             return computedProperties;
+        }
+
+        private static List<PropertyInfo> IgnoreUpdatePropertiesCache(Type type)
+        {
+            if (IgnoreUpdateProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
+            {
+                return pi.ToList();
+            }
+
+            var ignoreUpdateProperties = TypePropertiesCache(type).Where(p => p.GetCustomAttributes(true).Any(a => a is IgnoreUpdateAttribute)).ToList();
+
+            IgnoreUpdateProperties[type.TypeHandle] = ignoreUpdateProperties;
+            return ignoreUpdateProperties;
         }
 
         private static List<PropertyInfo> ExplicitKeyPropertiesCache(Type type)
@@ -439,7 +453,8 @@ namespace Dapper.Contrib.Extensions
             var allProperties = TypePropertiesCache(type);
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
-            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+            var ignoreUpdateProperties = IgnoreUpdatePropertiesCache(type);
+            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(ignoreUpdateProperties)).ToList();
 
             var adapter = GetFormatter(connection);
 
@@ -765,6 +780,14 @@ namespace Dapper.Contrib.Extensions
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ComputedAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    /// Specifies that this is a column that will be ignored in an Update method.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class IgnoreUpdateAttribute : Attribute
     {
     }
 }
