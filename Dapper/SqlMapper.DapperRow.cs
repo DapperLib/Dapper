@@ -174,12 +174,16 @@ namespace Dapper
             private object SetValue(string key, object value, bool isAdd)
             {
                 if (key == null) throw new ArgumentNullException(nameof(key));
-                int index = table.IndexOfName(key);
-                if (index < 0)
+                int index;
+                lock(table)
                 {
-                    index = table.AddField(key);
+                    index = table.IndexOfName(key);
+                    if (index < 0)
+                    {
+                        index = table.AddField(key);
+                    }
                 }
-                else if (isAdd && index < values.Length && !(values[index] is DeadValue))
+                if (index >= 0 && isAdd && index < values.Length && !(values[index] is DeadValue))
                 {
                     // then semantically, this value already exists
                     throw new ArgumentException("An item with the same key has already been added", nameof(key));
