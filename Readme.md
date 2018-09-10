@@ -112,49 +112,54 @@ This works for any parameter that implements IEnumerable<T> for some T.
 Performance
 -----------
 
-A key feature of Dapper is performance. The following metrics show how long it takes to execute 500 `SELECT` statements against a DB and map the data returned to objects.
+A key feature of Dapper is performance. The following metrics show how long it takes to execute a `SELECT` statement against a DB (in various config, each labeled) and map the data returned to objects.
 
-The performance tests are broken in to 3 lists:
+The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance) (contributions welcome!) and can be run once compiled via:
+```
+Dapper.Tests.Performance.exe -f * --join
+```
+Output from the latest run is:
+``` ini
+BenchmarkDotNet=v0.11.1, OS=Windows 10.0.17134.228 (1803/April2018Update/Redstone4)
+Intel Core i7-6900K CPU 3.20GHz (Skylake), 1 CPU, 16 logical and 8 physical cores
+  [Host] : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3132.0
+  Dry    : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3132.0
 
-- POCO serialization for frameworks that support pulling static typed objects from the DB. Using raw SQL.
-- Dynamic serialization for frameworks that support returning dynamic lists of objects.
-- Typical framework usage. Often typical framework usage differs from the optimal usage performance wise. Often it will not involve writing SQL.
-
-### Performance of SELECT mapping over 500 iterations - POCO serialization
-
-| Method                                              | Duration | Remarks |
-| --------------------------------------------------- | -------- | ------- |
-| Hand coded (using a `SqlDataReader`)                | 47ms     |
-| Dapper `ExecuteMapperQuery`                         | 49ms     |
-| [ServiceStack.OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) (QueryById) | 50ms |
-| [PetaPoco](https://github.com/CollaboratingPlatypus/PetaPoco) | 52ms     | [Can be faster](https://web.archive.org/web/20170921124755/http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed) |
-| BLToolkit                                           | 80ms     |
-| SubSonic CodingHorror                               | 107ms    |
-| NHibernate SQL                                      | 104ms    |
-| Linq 2 SQL `ExecuteQuery`                           | 181ms    |
-| Entity framework `ExecuteStoreQuery`                | 631ms    |
-
-### Performance of SELECT mapping over 500 iterations - dynamic serialization
-
-| Method                                                   | Duration | Remarks |
-| -------------------------------------------------------- | -------- | ------- |
-| Dapper `ExecuteMapperQuery` (dynamic)                    | 48ms     |
-| [Massive](https://github.com/FransBouma/Massive)         | 52ms     |
-| [Simple.Data](https://github.com/markrendle/Simple.Data) | 95ms     |
-
-
-### Performance of SELECT mapping over 500 iterations - typical usage
-
-| Method                                | Duration | Remarks |
-| ------------------------------------- | -------- | ------- |
-| Linq 2 SQL CompiledQuery              | 81ms     | Not super typical involves complex code |
-| NHibernate HQL                        | 118ms    |
-| Linq 2 SQL                            | 559ms    |
-| Entity framework                      | 859ms    |
-| SubSonic ActiveRecord.SingleOrDefault | 3619ms   |
-
-
-Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
+```
+|          ORM |                        Method | Return |      Mean |      StdDev |       Error |   Gen 0 |  Gen 1 | Allocated |
+|------------- |------------------------------ |------- |----------:|------------:|------------:|--------:|-------:|----------:|
+|     Belgrade |                 ExecuteReader |   Post |  82.10 us |  13.0829 us |  19.7795 us |  1.8000 | 0.6000 |  11.17 KB |
+|    HandCoded |                    SqlCommand |   Post |  89.92 us |   0.8381 us |   1.2670 us |  1.8000 |      - |  12.24 KB |
+|     PetaPoco |          &#39;Fetch&lt;Post&gt; (Fast)&#39; |   Post |  98.07 us |   1.5757 us |   2.3822 us |  2.2000 |      - |  13.65 KB |
+|      Massive |             &#39;Query (dynamic)&#39; | Object | 100.04 us |   0.5432 us |   0.8212 us |  2.2000 |      - |  14.19 KB |
+|       Dapper |        QueryFirstOrDefault&lt;T&gt; |   Post | 100.09 us |   4.8470 us |   7.3280 us |  2.0000 |      - |  13.46 KB |
+|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | Object | 100.92 us |   3.7207 us |   5.6252 us |  2.0000 |      - |   13.5 KB |
+|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | Object | 101.08 us |   3.7129 us |   5.6134 us |  2.2000 |      - |  13.87 KB |
+|    HandCoded |                     DataTable | Object | 102.27 us |   4.1966 us |   6.3446 us |  1.8000 | 0.8000 |  12.45 KB |
+|       Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |   Post | 106.14 us |   6.3850 us |   9.6532 us |  2.2000 |      - |  13.79 KB |
+|     PetaPoco |                   Fetch&lt;Post&gt; |   Post | 108.01 us |   2.1586 us |   3.2635 us |  2.2000 |      - |  14.59 KB |
+|       Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |   Post | 112.34 us |   7.5631 us |  11.4343 us |  2.2000 |      - |  14.45 KB |
+| ServiceStack |                    SingleById |   Post | 113.69 us |   4.6274 us |   6.9959 us |  2.8000 |      - |  17.52 KB |
+|      Susanoo |    &#39;Mapping Static (dynamic)&#39; | Object | 115.25 us |   5.7222 us |   8.6511 us |  2.4000 |      - |  14.97 KB |
+|      Susanoo |              &#39;Mapping Static&#39; |   Post | 118.35 us |   5.6989 us |   8.6159 us |  2.4000 |      - |  14.98 KB |
+|      Susanoo |     &#39;Mapping Cache (dynamic)&#39; | Object | 134.08 us |   3.8200 us |   5.7753 us |  3.2000 |      - |   20.4 KB |
+|      Susanoo |               &#39;Mapping Cache&#39; |   Post | 134.28 us |   6.9117 us |  10.4495 us |  3.2000 |      - |  20.88 KB |
+|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | Object | 137.91 us |   3.7417 us |   5.6569 us |  2.2000 | 0.2000 |  13.87 KB |
+|     Linq2Sql |                      Compiled |   Post | 138.62 us |  13.1397 us |  19.8654 us |  1.4000 |      - |   9.81 KB |
+|       Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |   Post | 141.76 us |   5.8730 us |   8.8791 us |  2.2000 | 0.2000 |  13.83 KB |
+|   NHibernate |                        Get&lt;T&gt; |   Post | 204.62 us |   5.8727 us |   8.8786 us |  5.0000 | 0.4000 |   32.5 KB |
+|          EF6 |                      SqlQuery |   Post | 209.85 us | 119.1005 us | 180.0629 us |  4.2000 | 0.2000 |  27.85 KB |
+|   NHibernate |                           HQL |   Post | 223.35 us |  25.1484 us |  38.0208 us |  5.6000 | 0.6000 |  34.99 KB |
+|       EFCore |                        Normal |   Post | 238.64 us |  62.3371 us |  94.2447 us |  3.0000 |      - |  20.25 KB |
+|       EFCore |                 &#39;No Tracking&#39; |   Post | 250.54 us |  54.3318 us |  82.1420 us |  3.2000 |      - |  21.54 KB |
+|     Linq2Sql |                  ExecuteQuery |   Post | 251.42 us |   3.1365 us |   4.7419 us |  6.8000 | 0.2000 |  42.33 KB |
+|   NHibernate |                      Criteria |   Post | 265.75 us |   7.1248 us |  10.7717 us | 10.6000 | 1.0000 |  65.57 KB |
+|       EFCore |                      SqlQuery |   Post | 270.49 us |  63.9498 us |  96.6829 us |  3.2000 |      - |  20.75 KB |
+|          EF6 |                        Normal |   Post | 319.10 us | 144.1011 us | 217.8603 us |  7.6000 | 0.2000 |  48.27 KB |
+|          EF6 |                 &#39;No Tracking&#39; |   Post | 337.29 us | 128.3960 us | 194.1164 us |  8.8000 | 0.4000 |  55.08 KB |
+|   NHibernate |                           SQL |   Post | 360.57 us |   9.8691 us |  14.9207 us | 16.4000 | 1.2000 | 101.21 KB |
+|     Linq2Sql |                        Normal |   Post | 373.28 us | 212.8746 us | 321.8360 us |  2.2000 | 1.0000 |  14.66 KB |
+|   NHibernate |                          LINQ |   Post | 961.72 us |  36.8094 us |  55.6506 us | 10.0000 | 3.2000 |  61.93 KB |
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (<kbd>Ctrl</kbd>+<kbd>F5</kbd>).
 
