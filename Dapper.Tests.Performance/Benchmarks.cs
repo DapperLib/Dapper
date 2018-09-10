@@ -1,10 +1,9 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Attributes.Columns;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Horology;
 using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Mathematics;
 using BenchmarkDotNet.Order;
 using Dapper.Tests.Performance.Helpers;
 using System;
@@ -13,9 +12,9 @@ using System.Data.SqlClient;
 
 namespace Dapper.Tests.Performance
 {
-    [OrderProvider(SummaryOrderPolicy.FastestToSlowest)]
-    [RankColumn]
+    [Orderer(SummaryOrderPolicy.FastestToSlowest)]
     [Config(typeof(Config))]
+    [BenchmarkCategory("ORM")]
     public abstract class BenchmarkBase
     {
         public const int Iterations = 50;
@@ -44,14 +43,19 @@ namespace Dapper.Tests.Performance
         {
             Add(new MemoryDiagnoser());
             Add(new ORMColum());
+            Add(TargetMethodColumn.Method);
             Add(new ReturnColum());
-            Add(Job.Default
-                .WithUnrollFactor(BenchmarkBase.Iterations)
-                //.WithIterationTime(new TimeInterval(500, TimeUnit.Millisecond))
+            Add(StatisticColumn.Mean);
+            Add(StatisticColumn.StdDev);
+            Add(StatisticColumn.Error);
+            Add(BaselineScaledColumn.Scaled);
+            Add(Job.Dry
                 .WithLaunchCount(1)
                 .WithWarmupCount(0)
-                .WithTargetCount(5)
-                .WithRemoveOutliers(true)
+                .WithInvocationCount(50)
+                .WithIterationCount(BenchmarkBase.Iterations)
+                .WithMaxIterationCount(BenchmarkBase.Iterations)
+                .WithOutlierMode(OutlierMode.All)
             );
         }
     }

@@ -10,9 +10,9 @@ namespace Dapper.Tests.Performance.Helpers
         public string ColumnName { get; } = "Return";
         public string Legend => "The return type of the method";
 
-        public bool IsDefault(Summary summary, Benchmark benchmark) => false;
-        public string GetValue(Summary summary, Benchmark benchmark) => benchmark.Target.Method.ReturnType.Name;
-        public string GetValue(Summary summary, Benchmark benchmark, ISummaryStyle style) => benchmark.Target.Method.ReturnType.Name;
+        public bool IsDefault(Summary summary, BenchmarkCase benchmarkCase) => false;
+        public string GetValue(Summary summary, BenchmarkCase benchmarkCase) => benchmarkCase.Descriptor.WorkloadMethod.ReturnType.Name;
+        public string GetValue(Summary summary, BenchmarkCase benchmarkCase, ISummaryStyle style) => GetValue(summary, benchmarkCase);
 
         public bool IsAvailable(Summary summary) => true;
         public bool AlwaysShow => true;
