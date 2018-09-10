@@ -131,20 +131,20 @@ Intel Core i7-6900K CPU 3.20GHz (Skylake), 1 CPU, 16 logical and 8 physical core
 |     Belgrade |                 ExecuteReader |   Post |  82.10 us |  13.0829 us |  19.7795 us |  1.8000 | 0.6000 |  11.17 KB |
 |    HandCoded |                    SqlCommand |   Post |  89.92 us |   0.8381 us |   1.2670 us |  1.8000 |      - |  12.24 KB |
 |     PetaPoco |          &#39;Fetch&lt;Post&gt; (Fast)&#39; |   Post |  98.07 us |   1.5757 us |   2.3822 us |  2.2000 |      - |  13.65 KB |
-|      Massive |             &#39;Query (dynamic)&#39; | Object | 100.04 us |   0.5432 us |   0.8212 us |  2.2000 |      - |  14.19 KB |
+|      Massive |             &#39;Query (dynamic)&#39; | dynamic | 100.04 us |   0.5432 us |   0.8212 us |  2.2000 |      - |  14.19 KB |
 |       Dapper |        QueryFirstOrDefault&lt;T&gt; |   Post | 100.09 us |   4.8470 us |   7.3280 us |  2.0000 |      - |  13.46 KB |
-|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | Object | 100.92 us |   3.7207 us |   5.6252 us |  2.0000 |      - |   13.5 KB |
-|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | Object | 101.08 us |   3.7129 us |   5.6134 us |  2.2000 |      - |  13.87 KB |
-|    HandCoded |                     DataTable | Object | 102.27 us |   4.1966 us |   6.3446 us |  1.8000 | 0.8000 |  12.45 KB |
+|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | dynamic | 100.92 us |   3.7207 us |   5.6252 us |  2.0000 |      - |   13.5 KB |
+|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | dynamic | 101.08 us |   3.7129 us |   5.6134 us |  2.2000 |      - |  13.87 KB |
+|    HandCoded |                     DataTable | dynamic | 102.27 us |   4.1966 us |   6.3446 us |  1.8000 | 0.8000 |  12.45 KB |
 |       Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |   Post | 106.14 us |   6.3850 us |   9.6532 us |  2.2000 |      - |  13.79 KB |
 |     PetaPoco |                   Fetch&lt;Post&gt; |   Post | 108.01 us |   2.1586 us |   3.2635 us |  2.2000 |      - |  14.59 KB |
 |       Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |   Post | 112.34 us |   7.5631 us |  11.4343 us |  2.2000 |      - |  14.45 KB |
 | ServiceStack |                    SingleById |   Post | 113.69 us |   4.6274 us |   6.9959 us |  2.8000 |      - |  17.52 KB |
-|      Susanoo |    &#39;Mapping Static (dynamic)&#39; | Object | 115.25 us |   5.7222 us |   8.6511 us |  2.4000 |      - |  14.97 KB |
+|      Susanoo |    &#39;Mapping Static (dynamic)&#39; | dynamic | 115.25 us |   5.7222 us |   8.6511 us |  2.4000 |      - |  14.97 KB |
 |      Susanoo |              &#39;Mapping Static&#39; |   Post | 118.35 us |   5.6989 us |   8.6159 us |  2.4000 |      - |  14.98 KB |
-|      Susanoo |     &#39;Mapping Cache (dynamic)&#39; | Object | 134.08 us |   3.8200 us |   5.7753 us |  3.2000 |      - |   20.4 KB |
+|      Susanoo |     &#39;Mapping Cache (dynamic)&#39; | dynamic | 134.08 us |   3.8200 us |   5.7753 us |  3.2000 |      - |   20.4 KB |
 |      Susanoo |               &#39;Mapping Cache&#39; |   Post | 134.28 us |   6.9117 us |  10.4495 us |  3.2000 |      - |  20.88 KB |
-|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | Object | 137.91 us |   3.7417 us |   5.6569 us |  2.2000 | 0.2000 |  13.87 KB |
+|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | dynamic | 137.91 us |   3.7417 us |   5.6569 us |  2.2000 | 0.2000 |  13.87 KB |
 |     Linq2Sql |                      Compiled |   Post | 138.62 us |  13.1397 us |  19.8654 us |  1.4000 |      - |   9.81 KB |
 |       Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |   Post | 141.76 us |   5.8730 us |   8.8791 us |  2.2000 | 0.2000 |  13.83 KB |
 |   NHibernate |                        Get&lt;T&gt; |   Post | 204.62 us |   5.8727 us |   8.8786 us |  5.0000 | 0.4000 |   32.5 KB |
