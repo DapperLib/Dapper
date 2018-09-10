@@ -1,4 +1,6 @@
-﻿using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Order;
+using BenchmarkDotNet.Running;
 using System;
 using System.Data.SqlClient;
 using System.Linq;
@@ -44,9 +46,8 @@ namespace Dapper.Tests.Performance
             }
             else
             {
-                WriteLine("Iterations: " + BenchmarkBase.Iterations);
-                new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args);
-                //summary.Reports.OrderBy(r => r.ResultStatistics.Mean);
+                WriteLine("Iterations: " + Config.Iterations);
+                new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new Config());
             }
         }
 

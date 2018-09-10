@@ -47,7 +47,7 @@ namespace Dapper.Tests.Performance
 #endif
         }
 
-        [Benchmark(Description = "SqlCommand", Baseline = true)]
+        [Benchmark(Description = "SqlCommand")]
         public Post SqlCommand()
         {
             Step();
