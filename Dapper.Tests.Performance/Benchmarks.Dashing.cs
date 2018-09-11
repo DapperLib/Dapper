@@ -1,12 +1,14 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System.ComponentModel;
+using BenchmarkDotNet.Attributes;
 using Dapper.Tests.Performance.Dashing;
 using Dashing;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("Dashing")]
     public class DashingBenchmarks : BenchmarkBase
     {
-        private ISession session;
+        private ISession Session;
 
         [GlobalSetup]
         public void Setup()
@@ -14,14 +16,14 @@ namespace Dapper.Tests.Performance
             BaseSetup();
             var configuration = new DashingConfiguration();
             var database = new SqlDatabase(configuration, ConnectionString);
-            this.session = database.BeginTransactionLessSession(_connection);
+            Session = database.BeginTransactionLessSession(_connection);
         }
 
-        [Benchmark(Description = "Get By Id")]
-        public Dashing.Post QueryBuffered()
+        [Benchmark(Description = "Get")]
+        public Dashing.Post Get()
         {
             Step();
-            return session.Get<Dashing.Post>(i);
+            return Session.Get<Dashing.Post>(i);
         }
     }
 }

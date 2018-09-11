@@ -1,9 +1,11 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Dapper.Contrib.Extensions;
+using System.ComponentModel;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("Dapper")]
     public class DapperBenchmarks : BenchmarkBase
     {
         [GlobalSetup]

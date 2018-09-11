@@ -2,13 +2,16 @@
 using Dapper.Tests.Performance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.ComponentModel;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("EF Core")]
     public class EFCoreBenchmarks : BenchmarkBase
     {
         private EFCoreContext Context;
+
         private static readonly Func<EFCoreContext, int, Post> compiledQuery =
             EF.CompileQuery((EFCoreContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
 
@@ -19,14 +22,14 @@ namespace Dapper.Tests.Performance
             Context = new EFCoreContext(_connection.ConnectionString);
         }
 
-        [Benchmark(Description = "Normal")]
-        public Post Normal()
+        [Benchmark(Description = "First")]
+        public Post First()
         {
             Step();
             return Context.Posts.First(p => p.Id == i);
         }
 
-        [Benchmark(Description = "Compiled")]
+        [Benchmark(Description = "First (Compiled)")]
         public Post Compiled()
         {
             Step();
@@ -40,7 +43,7 @@ namespace Dapper.Tests.Performance
             return Context.Posts.FromSql("select * from Posts where Id = {0}", i).First();
         }
 
-        [Benchmark(Description = "No Tracking")]
+        [Benchmark(Description = "First (No Tracking)")]
         public Post NoTracking()
         {
             Step();

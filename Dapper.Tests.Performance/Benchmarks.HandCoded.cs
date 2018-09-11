@@ -1,10 +1,12 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("Hand Coded")]
     public class HandCodedBenchmarks : BenchmarkBase
     {
         private SqlCommand _postCommand;
@@ -56,7 +58,7 @@ namespace Dapper.Tests.Performance
             using (var reader = _postCommand.ExecuteReader())
             {
                 reader.Read();
-                var post = new Post
+                return new Post
                 {
                     Id = reader.GetInt32(0),
                     Text = reader.GetNullableString(1),
@@ -73,7 +75,6 @@ namespace Dapper.Tests.Performance
                     Counter8 = reader.IsDBNull(11) ? null : (int?)reader.GetInt32(11),
                     Counter9 = reader.IsDBNull(12) ? null : (int?)reader.GetInt32(12)
                 };
-                return post;
             }
         }
 
