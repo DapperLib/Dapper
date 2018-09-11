@@ -5,9 +5,11 @@ namespace Dapper.Tests.Performance
 {
     [ServiceStack.DataAnnotations.Alias("Posts")]
     [Table(Name = "Posts")]
+    [LinqToDB.Mapping.Table(Name = "Posts")]
     public class Post
     {
         [Id(IdKind.Identity)]
+        [LinqToDB.Mapping.PrimaryKey, LinqToDB.Mapping.Identity]
         public int Id { get; set; }
         public string Text { get; set; }
         public DateTime CreationDate { get; set; }
