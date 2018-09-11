@@ -16,6 +16,7 @@
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
     <PackageReference Include="EntityFramework" Version="6.2.0" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="6.3.0" />
+    <PackageReference Include="linq2db.SqlServer" Version="2.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.2" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
     <PackageReference Include="MySqlConnector" Version="0.44.1" />
@@ -40,7 +41,7 @@
   <ItemGroup>
     <None Update="NHibernate\*.xml" CopyToOutputDirectory="Always" />
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
-  </ItemGroup>
+  </ItemGroup>  
   <ItemGroup>
     <PackageReference Update="SourceLink.Create.GitHub" Version="2.8.3" />
   </ItemGroup>
