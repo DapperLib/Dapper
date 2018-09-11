@@ -1,10 +1,11 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Belgrade.SqlClient.SqlDb;
-using System.Threading.Tasks;
 using Belgrade.SqlClient;
+using System.ComponentModel;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("Belgrade")]
     public class BelgradeBenchmarks : BenchmarkBase
     {
         private QueryMapper _mapper;
