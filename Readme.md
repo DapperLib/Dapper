@@ -120,46 +120,47 @@ Dapper.Tests.Performance.exe -f * --join
 ```
 Output from the latest run is:
 ``` ini
-BenchmarkDotNet=v0.11.1, OS=Windows 10.0.17134.228 (1803/April2018Update/Redstone4)
-Intel Core i7-6900K CPU 3.20GHz (Skylake), 1 CPU, 16 logical and 8 physical cores
-  [Host] : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3132.0
-  Dry    : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3132.0
+BenchmarkDotNet=v0.11.1, OS=Windows 10.0.17134.254 (1803/April2018Update/Redstone4)
+Intel Core i7-7700HQ CPU 2.80GHz (Kaby Lake), 1 CPU, 8 logical and 4 physical cores
+Frequency=2742188 Hz, Resolution=364.6723 ns, Timer=TSC
+  [Host] : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3163.0
+  Dry    : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3163.0
 
 ```
-|          ORM |                        Method | Return |      Mean |      StdDev |       Error |   Gen 0 |  Gen 1 | Allocated |
-|------------- |------------------------------ |------- |----------:|------------:|------------:|--------:|-------:|----------:|
-|     Belgrade |                 ExecuteReader |   Post |  82.10 us |  13.0829 us |  19.7795 us |  1.8000 | 0.6000 |  11.17 KB |
-|    HandCoded |                    SqlCommand |   Post |  89.92 us |   0.8381 us |   1.2670 us |  1.8000 |      - |  12.24 KB |
-|     PetaPoco |          &#39;Fetch&lt;Post&gt; (Fast)&#39; |   Post |  98.07 us |   1.5757 us |   2.3822 us |  2.2000 |      - |  13.65 KB |
-|      Massive |             &#39;Query (dynamic)&#39; | dynamic | 100.04 us |   0.5432 us |   0.8212 us |  2.2000 |      - |  14.19 KB |
-|       Dapper |        QueryFirstOrDefault&lt;T&gt; |   Post | 100.09 us |   4.8470 us |   7.3280 us |  2.0000 |      - |  13.46 KB |
-|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | dynamic | 100.92 us |   3.7207 us |   5.6252 us |  2.0000 |      - |   13.5 KB |
-|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | dynamic | 101.08 us |   3.7129 us |   5.6134 us |  2.2000 |      - |  13.87 KB |
-|    HandCoded |                     DataTable | dynamic | 102.27 us |   4.1966 us |   6.3446 us |  1.8000 | 0.8000 |  12.45 KB |
-|       Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |   Post | 106.14 us |   6.3850 us |   9.6532 us |  2.2000 |      - |  13.79 KB |
-|     PetaPoco |                   Fetch&lt;Post&gt; |   Post | 108.01 us |   2.1586 us |   3.2635 us |  2.2000 |      - |  14.59 KB |
-|       Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |   Post | 112.34 us |   7.5631 us |  11.4343 us |  2.2000 |      - |  14.45 KB |
-| ServiceStack |                    SingleById |   Post | 113.69 us |   4.6274 us |   6.9959 us |  2.8000 |      - |  17.52 KB |
-|      Susanoo |    &#39;Mapping Static (dynamic)&#39; | dynamic | 115.25 us |   5.7222 us |   8.6511 us |  2.4000 |      - |  14.97 KB |
-|      Susanoo |              &#39;Mapping Static&#39; |   Post | 118.35 us |   5.6989 us |   8.6159 us |  2.4000 |      - |  14.98 KB |
-|      Susanoo |     &#39;Mapping Cache (dynamic)&#39; | dynamic | 134.08 us |   3.8200 us |   5.7753 us |  3.2000 |      - |   20.4 KB |
-|      Susanoo |               &#39;Mapping Cache&#39; |   Post | 134.28 us |   6.9117 us |  10.4495 us |  3.2000 |      - |  20.88 KB |
-|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | dynamic | 137.91 us |   3.7417 us |   5.6569 us |  2.2000 | 0.2000 |  13.87 KB |
-|     Linq2Sql |                      Compiled |   Post | 138.62 us |  13.1397 us |  19.8654 us |  1.4000 |      - |   9.81 KB |
-|       Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |   Post | 141.76 us |   5.8730 us |   8.8791 us |  2.2000 | 0.2000 |  13.83 KB |
-|   NHibernate |                        Get&lt;T&gt; |   Post | 204.62 us |   5.8727 us |   8.8786 us |  5.0000 | 0.4000 |   32.5 KB |
-|          EF6 |                      SqlQuery |   Post | 209.85 us | 119.1005 us | 180.0629 us |  4.2000 | 0.2000 |  27.85 KB |
-|   NHibernate |                           HQL |   Post | 223.35 us |  25.1484 us |  38.0208 us |  5.6000 | 0.6000 |  34.99 KB |
-|       EFCore |                        Normal |   Post | 238.64 us |  62.3371 us |  94.2447 us |  3.0000 |      - |  20.25 KB |
-|       EFCore |                 &#39;No Tracking&#39; |   Post | 250.54 us |  54.3318 us |  82.1420 us |  3.2000 |      - |  21.54 KB |
-|     Linq2Sql |                  ExecuteQuery |   Post | 251.42 us |   3.1365 us |   4.7419 us |  6.8000 | 0.2000 |  42.33 KB |
-|   NHibernate |                      Criteria |   Post | 265.75 us |   7.1248 us |  10.7717 us | 10.6000 | 1.0000 |  65.57 KB |
-|       EFCore |                      SqlQuery |   Post | 270.49 us |  63.9498 us |  96.6829 us |  3.2000 |      - |  20.75 KB |
-|          EF6 |                        Normal |   Post | 319.10 us | 144.1011 us | 217.8603 us |  7.6000 | 0.2000 |  48.27 KB |
-|          EF6 |                 &#39;No Tracking&#39; |   Post | 337.29 us | 128.3960 us | 194.1164 us |  8.8000 | 0.4000 |  55.08 KB |
-|   NHibernate |                           SQL |   Post | 360.57 us |   9.8691 us |  14.9207 us | 16.4000 | 1.2000 | 101.21 KB |
-|     Linq2Sql |                        Normal |   Post | 373.28 us | 212.8746 us | 321.8360 us |  2.2000 | 1.0000 |  14.66 KB |
-|   NHibernate |                          LINQ |   Post | 961.72 us |  36.8094 us |  55.6506 us | 10.0000 | 3.2000 |  61.93 KB |
+|          ORM |                        Method |  Return |        Mean |     StdDev |      Error |   Gen 0 |  Gen 1 | Allocated |
+|------------- |------------------------------ |-------- |------------:|-----------:|-----------:|--------:|-------:|----------:|
+|     Belgrade |                 ExecuteReader |    Post |    93.20 us |  17.628 us |  26.652 us |  3.6000 | 1.0000 |  11.28 KB |
+|     PetaPoco |          &#39;Fetch&lt;Post&gt; (Fast)&#39; |    Post |    95.47 us |   2.608 us |   3.943 us |  4.4000 |      - |  13.65 KB |
+|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | dynamic |    99.27 us |   6.661 us |  10.070 us |  4.2000 |      - |  13.51 KB |
+|       Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |    Post |    99.37 us |   6.892 us |  10.420 us |  4.4000 |      - |  13.79 KB |
+|      Massive |             &#39;Query (dynamic)&#39; | dynamic |   100.11 us |   2.543 us |   3.845 us |  4.6000 |      - |  14.21 KB |
+|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | dynamic |   100.30 us |   4.362 us |   6.595 us |  4.4000 |      - |  13.88 KB |
+|    HandCoded |                    SqlCommand |    Post |   102.95 us |   1.909 us |   2.886 us |  3.8000 |      - |  12.24 KB |
+|    HandCoded |                     DataTable | dynamic |   105.04 us |   4.730 us |   7.151 us |  2.2000 | 0.6000 |  12.45 KB |
+|      Susanoo |    &#39;Mapping Static (dynamic)&#39; | dynamic |   105.10 us |   8.457 us |  12.786 us |  4.8000 |      - |  14.97 KB |
+|       Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |    Post |   107.35 us |   9.207 us |  13.920 us |  4.6000 |      - |  14.45 KB |
+|      Susanoo |              &#39;Mapping Static&#39; |    Post |   111.39 us |   7.716 us |  11.666 us |  4.8000 |      - |  14.99 KB |
+|       Dapper |        QueryFirstOrDefault&lt;T&gt; |    Post |   112.32 us |   5.053 us |   7.639 us |  4.2000 |      - |  13.47 KB |
+|     PetaPoco |                   Fetch&lt;Post&gt; |    Post |   114.62 us |   3.273 us |   4.948 us |  4.6000 |      - |  14.59 KB |
+|      Susanoo |     &#39;Mapping Cache (dynamic)&#39; | dynamic |   124.43 us |   3.182 us |   4.811 us |  6.6000 |      - |  20.41 KB |
+|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | dynamic |   124.43 us |   4.195 us |   6.342 us |  4.4000 |      - |  13.87 KB |
+|     Linq2Sql |                      Compiled |    Post |   125.92 us |   6.187 us |   9.354 us |  3.0000 |      - |   9.82 KB |
+|      Susanoo |               &#39;Mapping Cache&#39; |    Post |   128.99 us |  10.511 us |  15.891 us |  6.8000 |      - |   20.9 KB |
+| ServiceStack |                    SingleById |    Post |   130.70 us |   5.525 us |   8.354 us |  5.6000 |      - |  17.53 KB |
+|       Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |    Post |   146.41 us |  12.281 us |  18.568 us |  4.4000 |      - |  13.84 KB |
+|          EF6 |                      SqlQuery |    Post |   197.36 us | 139.733 us | 211.257 us |  9.0000 |      - |  27.86 KB |
+|   NHibernate |                        Get&lt;T&gt; |    Post |   201.49 us |   7.650 us |  11.565 us | 10.4000 |      - |   32.5 KB |
+|   NHibernate |                           HQL |    Post |   231.44 us |  31.127 us |  47.060 us | 11.2000 |      - |     35 KB |
+|       EFCore |                        Normal |    Post |   244.87 us |  69.894 us | 105.670 us |  6.4000 |      - |  20.25 KB |
+|       EFCore |                 &#39;No Tracking&#39; |    Post |   253.52 us |  61.048 us |  92.296 us |  6.8000 |      - |  21.36 KB |
+|     Linq2Sql |                  ExecuteQuery |    Post |   264.58 us |   4.516 us |   6.828 us | 13.6000 |      - |  42.34 KB |
+|       EFCore |                      SqlQuery |    Post |   273.44 us |  71.265 us | 107.742 us |  6.6000 |      - |  20.75 KB |
+|   NHibernate |                      Criteria |    Post |   274.41 us |  11.087 us |  16.762 us | 21.2000 |      - |  65.37 KB |
+|          EF6 |                        Normal |    Post |   317.09 us | 155.828 us | 235.589 us | 15.6000 |      - |  48.29 KB |
+|          EF6 |                 &#39;No Tracking&#39; |    Post |   343.42 us | 150.279 us | 227.201 us | 17.8000 |      - |   55.1 KB |
+|   NHibernate |                           SQL |    Post |   355.03 us |  17.416 us |  26.330 us | 32.8000 |      - | 101.06 KB |
+|     Linq2Sql |                        Normal |    Post |   388.27 us | 260.226 us | 393.424 us |  4.6000 | 1.4000 |  14.68 KB |
+|   NHibernate |                          LINQ |    Post | 1,156.97 us |  35.166 us |  53.167 us | 20.2000 |      - |  62.13 KB |
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (<kbd>Ctrl</kbd>+<kbd>F5</kbd>).
 
