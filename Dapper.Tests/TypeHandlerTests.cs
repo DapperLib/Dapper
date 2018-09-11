@@ -593,6 +593,13 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void TestTreatIntAsABool()
+        {
+            Assert.True(connection.Query<bool>("select CAST(1 AS BIT)").Single());
+            Assert.True(connection.Query<bool>("select 1").Single());
+        }
+
+        [Fact]
         public void SO24607639_NullableBools()
         {
             var obj = connection.Query<HazBools>(

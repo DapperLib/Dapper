@@ -112,49 +112,56 @@ This works for any parameter that implements IEnumerable<T> for some T.
 Performance
 -----------
 
-A key feature of Dapper is performance. The following metrics show how long it takes to execute 500 `SELECT` statements against a DB and map the data returned to objects.
+A key feature of Dapper is performance. The following metrics show how long it takes to execute a `SELECT` statement against a DB (in various config, each labeled) and map the data returned to objects.
 
-The performance tests are broken in to 3 lists:
+The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance) (contributions welcome!) and can be run once compiled via:
+```
+Dapper.Tests.Performance.exe -f * --join
+```
+Output from the latest run is:
+``` ini
+BenchmarkDotNet=v0.11.1, OS=Windows 10.0.17134.254 (1803/April2018Update/Redstone4)
+Intel Core i7-7700HQ CPU 2.80GHz (Kaby Lake), 1 CPU, 8 logical and 4 physical cores
+Frequency=2742188 Hz, Resolution=364.6723 ns, Timer=TSC
+  [Host] : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3163.0
+  Dry    : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3163.0
+```
+|          ORM |                        Method |  Return |        Mean |     StdDev |      Error |   Gen 0 |  Gen 1 | Allocated |
+|------------- |------------------------------ |-------- |------------:|-----------:|-----------:|--------:|-------:|----------:|
+|    HandCoded |                    SqlCommand |    Post |    86.76 us |   1.573 us |   2.379 us |  3.8000 |      - |  12.24 KB |
+|     PetaPoco |          &#39;Fetch&lt;Post&gt; (Fast)&#39; |    Post |    95.43 us |   2.434 us |   3.681 us |  4.4000 |      - |  13.65 KB |
+|    HandCoded |                     DataTable | dynamic |    98.18 us |   5.242 us |   7.925 us |  2.2000 | 0.6000 |  12.45 KB |
+|     PetaPoco |                   Fetch&lt;Post&gt; |    Post |    98.18 us |   2.252 us |   3.404 us |  4.6000 |      - |  14.59 KB |
+|      Massive |             &#39;Query (dynamic)&#39; | dynamic |    98.47 us |   3.102 us |   4.690 us |  4.6000 |      - |  14.21 KB |
+|     Belgrade |                 ExecuteReader |    Post |    99.14 us |  15.731 us |  23.783 us |  3.6000 | 1.0000 |  11.37 KB |
+|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | dynamic |   100.42 us |   5.311 us |   8.030 us |  4.4000 |      - |  13.88 KB |
+|       Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |    Post |   102.55 us |   9.289 us |  14.044 us |  4.6000 |      - |  14.45 KB |
+|       Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |    Post |   104.85 us |  10.278 us |  15.539 us |  4.4000 |      - |  13.79 KB |
+| ServiceStack |                    SingleById |    Post |   107.83 us |   5.144 us |   7.778 us |  5.6000 |      - |  17.53 KB |
+|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | dynamic |   109.78 us |   7.689 us |  11.624 us |  4.2000 |      - |  13.51 KB |
+|       Dapper |        QueryFirstOrDefault&lt;T&gt; |    Post |   112.97 us |   4.081 us |   6.170 us |  4.2000 |      - |  13.47 KB |
+|      Susanoo |              &#39;Mapping Static&#39; |    Post |   118.91 us |   8.786 us |  13.282 us |  4.8000 |      - |  14.99 KB |
+|      Susanoo |    &#39;Mapping Static (dynamic)&#39; | dynamic |   119.57 us |   6.985 us |  10.560 us |  4.8000 |      - |  14.97 KB |
+|      Susanoo |               &#39;Mapping Cache&#39; |    Post |   123.68 us |   6.693 us |  10.118 us |  6.8000 |      - |   20.9 KB |
+|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | dynamic |   127.06 us |   8.748 us |  13.225 us |  4.4000 |      - |  13.87 KB |
+|       Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |    Post |   132.28 us |   9.350 us |  14.136 us |  4.4000 |      - |  13.84 KB |
+|      Susanoo |     &#39;Mapping Cache (dynamic)&#39; | dynamic |   133.45 us |   4.179 us |   6.318 us |  6.6000 |      - |  20.41 KB |
+|     Linq2Sql |                      Compiled |    Post |   133.46 us |   6.137 us |   9.278 us |  3.0000 |      - |   9.82 KB |
+|       EFCore |                      Compiled |    Post |   180.70 us |  65.498 us |  99.024 us |  5.2000 |      - |  16.08 KB |
+|          EF6 |                      SqlQuery |    Post |   187.09 us | 136.314 us | 206.088 us |  9.0000 |      - |  27.86 KB |
+|   NHibernate |                        Get&lt;T&gt; |    Post |   202.34 us |  10.271 us |  15.528 us | 10.4000 |      - |   32.5 KB |
+|   NHibernate |                           HQL |    Post |   216.95 us |  26.889 us |  40.653 us | 11.2000 |      - |     35 KB |
+|       EFCore |                 &#39;No Tracking&#39; |    Post |   243.18 us |  59.359 us |  89.742 us |  6.8000 |      - |  21.36 KB |
+|       EFCore |                        Normal |    Post |   245.60 us |  72.618 us | 109.788 us |  6.4000 |      - |  20.25 KB |
+|     Linq2Sql |                  ExecuteQuery |    Post |   246.66 us |   6.215 us |   9.396 us | 13.6000 |      - |  42.34 KB |
+|   NHibernate |                      Criteria |    Post |   252.51 us |  18.303 us |  27.672 us | 21.2000 |      - |  65.37 KB |
+|       EFCore |                      SqlQuery |    Post |   263.34 us |  73.919 us | 111.755 us |  6.6000 |      - |  20.75 KB |
+|          EF6 |                        Normal |    Post |   308.46 us | 154.203 us | 233.133 us | 15.6000 |      - |  48.29 KB |
+|   NHibernate |                           SQL |    Post |   322.13 us |   9.530 us |  14.408 us | 32.8000 |      - | 101.06 KB |
+|          EF6 |                 &#39;No Tracking&#39; |    Post |   324.12 us | 134.870 us | 203.905 us | 17.8000 |      - |   55.1 KB |
+|     Linq2Sql |                        Normal |    Post |   370.55 us | 238.033 us | 359.871 us |  4.6000 | 1.4000 |  14.68 KB |
+|   NHibernate |                          LINQ |    Post | 1,110.87 us |  36.863 us |  55.731 us | 20.2000 |      - |  62.13 KB |
 
-- POCO serialization for frameworks that support pulling static typed objects from the DB. Using raw SQL.
-- Dynamic serialization for frameworks that support returning dynamic lists of objects.
-- Typical framework usage. Often typical framework usage differs from the optimal usage performance wise. Often it will not involve writing SQL.
-
-### Performance of SELECT mapping over 500 iterations - POCO serialization
-
-| Method                                              | Duration | Remarks |
-| --------------------------------------------------- | -------- | ------- |
-| Hand coded (using a `SqlDataReader`)                | 47ms     |
-| Dapper `ExecuteMapperQuery`                         | 49ms     |
-| [ServiceStack.OrmLite](https://github.com/ServiceStack/ServiceStack.OrmLite) (QueryById) | 50ms |
-| [PetaPoco](https://github.com/CollaboratingPlatypus/PetaPoco) | 52ms     | [Can be faster](https://web.archive.org/web/20170921124755/http://www.toptensoftware.com/blog/posts/94-PetaPoco-More-Speed) |
-| BLToolkit                                           | 80ms     |
-| SubSonic CodingHorror                               | 107ms    |
-| NHibernate SQL                                      | 104ms    |
-| Linq 2 SQL `ExecuteQuery`                           | 181ms    |
-| Entity framework `ExecuteStoreQuery`                | 631ms    |
-
-### Performance of SELECT mapping over 500 iterations - dynamic serialization
-
-| Method                                                   | Duration | Remarks |
-| -------------------------------------------------------- | -------- | ------- |
-| Dapper `ExecuteMapperQuery` (dynamic)                    | 48ms     |
-| [Massive](https://github.com/FransBouma/Massive)         | 52ms     |
-| [Simple.Data](https://github.com/markrendle/Simple.Data) | 95ms     |
-
-
-### Performance of SELECT mapping over 500 iterations - typical usage
-
-| Method                                | Duration | Remarks |
-| ------------------------------------- | -------- | ------- |
-| Linq 2 SQL CompiledQuery              | 81ms     | Not super typical involves complex code |
-| NHibernate HQL                        | 118ms    |
-| Linq 2 SQL                            | 559ms    |
-| Entity framework                      | 859ms    |
-| SubSonic ActiveRecord.SingleOrDefault | 3619ms   |
-
-
-Performance benchmarks are available [here](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance).
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (<kbd>Ctrl</kbd>+<kbd>F5</kbd>).
 

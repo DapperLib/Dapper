@@ -15,10 +15,20 @@ namespace Dapper
         {
             if (reader.Read())
             {
-                var deser = GetDeserializer(typeof(T), reader, 0, -1, false);
+                var effectiveType = typeof(T);
+                var deser = GetDeserializer(effectiveType, reader, 0, -1, false);
+                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 do
                 {
-                    yield return (T)deser(reader);
+                    object val = deser(reader);
+                    if (val == null || val is T)
+                    {
+                        yield return (T)val;
+                    }
+                    else
+                    {
+                        yield return (T)Convert.ChangeType(val, convertToType, System.Globalization.CultureInfo.InvariantCulture);
+                    }
                 } while (reader.Read());
             }
         }
