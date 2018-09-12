@@ -12,7 +12,7 @@ namespace Dapper.Tests.Performance
 {
     public class Config : ManualConfig
     {
-        public const int Iterations = 5000;
+        public const int Iterations = 500;
 
         public Config()
         {
@@ -28,16 +28,16 @@ namespace Dapper.Tests.Performance
             Add(TargetMethodColumn.Method);
             Add(new ReturnColum());
             Add(StatisticColumn.Mean);
-            Add(StatisticColumn.StdDev);
-            Add(StatisticColumn.Error);
+            //Add(StatisticColumn.StdDev);
+            //Add(StatisticColumn.Error);
             Add(BaselineScaledColumn.Scaled);
             Add(md.GetColumnProvider());
 
-            Add(Job.Dry
-                .WithLaunchCount(1)
-                .WithWarmupCount(1)
-                .WithInvocationCount(Iterations)
-                .WithIterationCount(10)
+            Add(Job.ShortRun
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(Iterations)
+                   .WithIterationCount(1)
             );
             Set(new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest));
             SummaryPerType = false;
