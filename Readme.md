@@ -370,6 +370,22 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
 }
 ```
 
+Literal Parameters
+---------------------
+
+Besides supporting [Parameterized Queries](https://github.com/StackExchange/Dapper/blob/master/Readme.md#parameterized-queries), Dapper also supports Literal Parameters in the form of `{=Identifier}`. Literal Parameters are not sent as sql arguments, but are concatenated  directly into the string:
+
+```csharp
+connection.Query<int>("select * from MyTable where Id = {=Id}", new { Id = 1});
+```
+Which translates to:
+
+```
+select * from MyTable where Id = 1
+```
+
+The Literal Parameters only work with Booleans and Numeric types.
+
 Limitations and caveats
 ---------------------
 Dapper caches information about every query it runs, this allows it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a `ConcurrentDictionary` object. Statements that are only used once are routinely flushed from this cache. Still, if you are generating SQL strings on the fly without using parameters it is possible you may hit memory issues.
