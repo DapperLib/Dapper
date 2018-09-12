@@ -290,15 +290,19 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
-                var tableAttr = type
 #if NETSTANDARD1_3
-                    .GetTypeInfo()
+                var info = type.GetTypeInfo();
+#else
+                var info = type;
 #endif
-                    .GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
-                if (tableAttr != null)
+                //NOTE: This as dynamic trick falls back to handle both our own Table-attribute as well as the one in EntityFramework 
+                var tableAttrName =
+                    info.GetCustomAttribute<TableAttribute>(false)?.Name
+                    ?? (info.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic)?.Name;
+
+                if (tableAttrName != null)
                 {
-                    name = tableAttr.Name;
+                    name = tableAttrName;
                 }
                 else
                 {
