@@ -24,6 +24,9 @@ using Dapper.Tests.Performance.EntityFrameworkCore;
 using Dashing;
 using Microsoft.EntityFrameworkCore;
 using Belgrade.SqlClient;
+using DevExpress.Xpo;
+using Dapper.Tests.Performance.Xpo;
+using DevExpress.Data.Filtering;
 
 namespace Dapper.Tests.Performance
 {
@@ -385,6 +388,30 @@ namespace Dapper.Tests.Performance
                     }, "DataTable via IDataReader.GetValues");
 #endif
                 }, "Hand Coded");
+
+                // DevExpress.XPO
+                Try(() =>
+                {
+                    IDataLayer dataLayer = XpoDefault.GetDataLayer(connection, DevExpress.Xpo.DB.AutoCreateOption.SchemaAlreadyExists);
+                    dataLayer.Dictionary.GetDataStoreSchema(typeof(Xpo.Post));
+                    UnitOfWork session = new UnitOfWork(dataLayer, dataLayer);
+                    session.IdentityMapBehavior = IdentityMapBehavior.Strong;
+                    session.TypesManager.EnsureIsTypedObjectValid();
+
+                    tests.Add(id => session.Query<Xpo.Post>().First(p => p.Id == id), "DevExpress.XPO: Query<T>");
+                    tests.Add(id => session.GetObjectByKey<Xpo.Post>(id, true), "DevExpress.XPO: GetObjectByKey<T>");
+                    tests.Add(id =>
+                    {
+                        CriteriaOperator findCriteria = new BinaryOperator()
+                        {
+                            OperatorType = BinaryOperatorType.Equal,
+                            LeftOperand = new OperandProperty("Id"),
+                            RightOperand = new ConstantValue(id)
+                        };
+                        session.FindObject<Xpo.Post>(findCriteria);
+                    }, "DevExpress.XPO: FindObject<T>");
+
+                }, "DevExpress.XPO");
 
                 // Subsonic isn't maintained anymore - doesn't import correctly
                 //Try(() =>
