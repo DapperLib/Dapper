@@ -6,11 +6,12 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <TargetFrameworks>net452;netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>net471;netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net471' ">
     <DefineConstants>$(DefineConstants);ENTITY_FRAMEWORK;LINQ2SQL;OLEDB</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
@@ -29,7 +30,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />

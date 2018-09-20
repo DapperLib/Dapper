@@ -440,7 +440,7 @@ namespace Dapper
         public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            return ExecuteImpl(cnn, ref command);
+            return ExecuteImpl(cnn, command);
         }
 
         /// <summary>
@@ -449,7 +449,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute on this connection.</param>
         /// <returns>The number of rows affected.</returns>
-        public static int Execute(this IDbConnection cnn, CommandDefinition command) => ExecuteImpl(cnn, ref command);
+        public static int Execute(this IDbConnection cnn, in CommandDefinition command) => ExecuteImpl(cnn, command);
 
         /// <summary>
         /// Execute parameterized SQL that selects a single value.
@@ -464,7 +464,7 @@ namespace Dapper
         public static object ExecuteScalar(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            return ExecuteScalarImpl<object>(cnn, ref command);
+            return ExecuteScalarImpl<object>(cnn, command);
         }
 
         /// <summary>
@@ -481,7 +481,7 @@ namespace Dapper
         public static T ExecuteScalar<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            return ExecuteScalarImpl<T>(cnn, ref command);
+            return ExecuteScalarImpl<T>(cnn, command);
         }
 
         /// <summary>
@@ -490,8 +490,8 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute.</param>
         /// <returns>The first cell selected as <see cref="object"/>.</returns>
-        public static object ExecuteScalar(this IDbConnection cnn, CommandDefinition command) =>
-            ExecuteScalarImpl<object>(cnn, ref command);
+        public static object ExecuteScalar(this IDbConnection cnn, in CommandDefinition command) =>
+            ExecuteScalarImpl<object>(cnn, command);
 
         /// <summary>
         /// Execute parameterized SQL that selects a single value.
@@ -500,8 +500,8 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute.</param>
         /// <returns>The first cell selected as <typeparamref name="T"/>.</returns>
-        public static T ExecuteScalar<T>(this IDbConnection cnn, CommandDefinition command) =>
-            ExecuteScalarImpl<T>(cnn, ref command);
+        public static T ExecuteScalar<T>(this IDbConnection cnn, in CommandDefinition command) =>
+            ExecuteScalarImpl<T>(cnn, command);
 
         private static IEnumerable GetMultiExec(object param)
         {
@@ -512,7 +512,7 @@ namespace Dapper
                 ) ? (IEnumerable)param : null;
         }
 
-        private static int ExecuteImpl(this IDbConnection cnn, ref CommandDefinition command)
+        private static int ExecuteImpl(this IDbConnection cnn, in CommandDefinition command)
         {
             object param = command.Parameters;
             IEnumerable multiExec = GetMultiExec(param);
@@ -567,7 +567,7 @@ namespace Dapper
                 identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType(), null);
                 info = GetCacheInfo(identity, param, command.AddToCache);
             }
-            return ExecuteCommand(cnn, ref command, param == null ? null : info.ParamReader);
+            return ExecuteCommand(cnn, command, param == null ? null : info.ParamReader);
         }
 
         /// <summary>
@@ -598,7 +598,7 @@ namespace Dapper
         public static IDataReader ExecuteReader(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
+            var reader = ExecuteReaderImpl(cnn, command, CommandBehavior.Default, out IDbCommand dbcmd);
             return new WrappedReader(dbcmd, reader);
         }
 
@@ -612,9 +612,9 @@ namespace Dapper
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
-        public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
+        public static IDataReader ExecuteReader(this IDbConnection cnn, in CommandDefinition command)
         {
-            var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
+            var reader = ExecuteReaderImpl(cnn, command, CommandBehavior.Default, out IDbCommand dbcmd);
             return new WrappedReader(dbcmd, reader);
         }
 
@@ -629,9 +629,9 @@ namespace Dapper
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
-        public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
+        public static IDataReader ExecuteReader(this IDbConnection cnn, in CommandDefinition command, CommandBehavior commandBehavior)
         {
-            var reader = ExecuteReaderImpl(cnn, ref command, commandBehavior, out IDbCommand dbcmd);
+            var reader = ExecuteReaderImpl(cnn, command, commandBehavior, out IDbCommand dbcmd);
             return new WrappedReader(dbcmd, reader);
         }
 
@@ -740,7 +740,7 @@ namespace Dapper
         public static T QueryFirst<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<T>(cnn, Row.First, ref command, typeof(T));
+            return QueryRowImpl<T>(cnn, Row.First, command, typeof(T));
         }
 
         /// <summary>
@@ -760,7 +760,7 @@ namespace Dapper
         public static T QueryFirstOrDefault<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<T>(cnn, Row.FirstOrDefault, ref command, typeof(T));
+            return QueryRowImpl<T>(cnn, Row.FirstOrDefault, command, typeof(T));
         }
 
         /// <summary>
@@ -780,7 +780,7 @@ namespace Dapper
         public static T QuerySingle<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<T>(cnn, Row.Single, ref command, typeof(T));
+            return QueryRowImpl<T>(cnn, Row.Single, command, typeof(T));
         }
 
         /// <summary>
@@ -800,7 +800,7 @@ namespace Dapper
         public static T QuerySingleOrDefault<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<T>(cnn, Row.SingleOrDefault, ref command, typeof(T));
+            return QueryRowImpl<T>(cnn, Row.SingleOrDefault, command, typeof(T));
         }
 
         /// <summary>
@@ -846,7 +846,7 @@ namespace Dapper
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<object>(cnn, Row.First, ref command, type);
+            return QueryRowImpl<object>(cnn, Row.First, command, type);
         }
 
         /// <summary>
@@ -868,7 +868,7 @@ namespace Dapper
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<object>(cnn, Row.FirstOrDefault, ref command, type);
+            return QueryRowImpl<object>(cnn, Row.FirstOrDefault, command, type);
         }
 
         /// <summary>
@@ -890,7 +890,7 @@ namespace Dapper
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<object>(cnn, Row.Single, ref command, type);
+            return QueryRowImpl<object>(cnn, Row.Single, command, type);
         }
 
         /// <summary>
@@ -912,7 +912,7 @@ namespace Dapper
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None);
-            return QueryRowImpl<object>(cnn, Row.SingleOrDefault, ref command, type);
+            return QueryRowImpl<object>(cnn, Row.SingleOrDefault, command, type);
         }
 
         /// <summary>
@@ -925,7 +925,7 @@ namespace Dapper
         /// A sequence of data of <typeparamref name="T"/>; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IEnumerable<T> Query<T>(this IDbConnection cnn, CommandDefinition command)
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, in CommandDefinition command)
         {
             var data = QueryImpl<T>(cnn, command, typeof(T));
             return command.Buffered ? data.ToList() : data;
@@ -941,8 +941,8 @@ namespace Dapper
         /// A single instance or null of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QueryFirst<T>(this IDbConnection cnn, CommandDefinition command) =>
-            QueryRowImpl<T>(cnn, Row.First, ref command, typeof(T));
+        public static T QueryFirst<T>(this IDbConnection cnn, in CommandDefinition command) =>
+            QueryRowImpl<T>(cnn, Row.First, command, typeof(T));
 
         /// <summary>
         /// Executes a query, returning the data typed as <typeparamref name="T"/>.
@@ -954,8 +954,8 @@ namespace Dapper
         /// A single or null instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QueryFirstOrDefault<T>(this IDbConnection cnn, CommandDefinition command) =>
-            QueryRowImpl<T>(cnn, Row.FirstOrDefault, ref command, typeof(T));
+        public static T QueryFirstOrDefault<T>(this IDbConnection cnn, in CommandDefinition command) =>
+            QueryRowImpl<T>(cnn, Row.FirstOrDefault, command, typeof(T));
 
         /// <summary>
         /// Executes a query, returning the data typed as <typeparamref name="T"/>.
@@ -967,8 +967,8 @@ namespace Dapper
         /// A single instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QuerySingle<T>(this IDbConnection cnn, CommandDefinition command) =>
-            QueryRowImpl<T>(cnn, Row.Single, ref command, typeof(T));
+        public static T QuerySingle<T>(this IDbConnection cnn, in CommandDefinition command) =>
+            QueryRowImpl<T>(cnn, Row.Single, command, typeof(T));
 
         /// <summary>
         /// Executes a query, returning the data typed as <typeparamref name="T"/>.
@@ -980,8 +980,8 @@ namespace Dapper
         /// A single instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QuerySingleOrDefault<T>(this IDbConnection cnn, CommandDefinition command) =>
-            QueryRowImpl<T>(cnn, Row.SingleOrDefault, ref command, typeof(T));
+        public static T QuerySingleOrDefault<T>(this IDbConnection cnn, in CommandDefinition command) =>
+            QueryRowImpl<T>(cnn, Row.SingleOrDefault, command, typeof(T));
 
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn.
@@ -995,7 +995,7 @@ namespace Dapper
         public static GridReader QueryMultiple(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            return QueryMultipleImpl(cnn, ref command);
+            return QueryMultipleImpl(cnn, command);
         }
 
         /// <summary>
@@ -1003,10 +1003,10 @@ namespace Dapper
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command to execute for this query.</param>
-        public static GridReader QueryMultiple(this IDbConnection cnn, CommandDefinition command) =>
-            QueryMultipleImpl(cnn, ref command);
+        public static GridReader QueryMultiple(this IDbConnection cnn, in CommandDefinition command) =>
+            QueryMultipleImpl(cnn, command);
 
-        private static GridReader QueryMultipleImpl(this IDbConnection cnn, ref CommandDefinition command)
+        private static GridReader QueryMultipleImpl(this IDbConnection cnn, in CommandDefinition command)
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param?.GetType(), null);
@@ -1161,7 +1161,7 @@ namespace Dapper
             }
         }
 
-        private static T QueryRowImpl<T>(IDbConnection cnn, Row row, ref CommandDefinition command, Type effectiveType)
+        private static T QueryRowImpl<T>(IDbConnection cnn, Row row, in CommandDefinition command, Type effectiveType)
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType(), null);
@@ -2816,7 +2816,7 @@ namespace Dapper
         private static readonly MethodInfo StringReplace = typeof(string).GetPublicInstanceMethod(nameof(string.Replace), new Type[] { typeof(string), typeof(string) }),
             InvariantCulture = typeof(CultureInfo).GetProperty(nameof(CultureInfo.InvariantCulture), BindingFlags.Public | BindingFlags.Static).GetGetMethod();
 
-        private static int ExecuteCommand(IDbConnection cnn, ref CommandDefinition command, Action<IDbCommand, object> paramReader)
+        private static int ExecuteCommand(IDbConnection cnn, in CommandDefinition command, Action<IDbCommand, object> paramReader)
         {
             IDbCommand cmd = null;
             bool wasClosed = cnn.State == ConnectionState.Closed;
@@ -2835,7 +2835,7 @@ namespace Dapper
             }
         }
 
-        private static T ExecuteScalarImpl<T>(IDbConnection cnn, ref CommandDefinition command)
+        private static T ExecuteScalarImpl<T>(IDbConnection cnn, in CommandDefinition command)
         {
             Action<IDbCommand, object> paramReader = null;
             object param = command.Parameters;
@@ -2863,9 +2863,9 @@ namespace Dapper
             return Parse<T>(result);
         }
 
-        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command, CommandBehavior commandBehavior, out IDbCommand cmd)
+        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, in CommandDefinition command, CommandBehavior commandBehavior, out IDbCommand cmd)
         {
-            Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
+            Action<IDbCommand, object> paramReader = GetParameterReader(cnn, command);
             cmd = null;
             bool wasClosed = cnn.State == ConnectionState.Closed, disposeCommand = true;
             try
@@ -2885,7 +2885,7 @@ namespace Dapper
             }
         }
 
-        private static Action<IDbCommand, object> GetParameterReader(IDbConnection cnn, ref CommandDefinition command)
+        private static Action<IDbCommand, object> GetParameterReader(IDbConnection cnn, in CommandDefinition command)
         {
             object param = command.Parameters;
             IEnumerable multiExec = GetMultiExec(param);

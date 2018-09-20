@@ -6,6 +6,7 @@
     <DebugType>portable</DebugType>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
     <TargetFrameworks>netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>

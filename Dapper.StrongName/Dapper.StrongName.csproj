@@ -5,14 +5,15 @@
     <Title>Dapper (Strong Named)</Title>
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net451;netstandard1.3;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net471;netstandard1.3;netstandard2.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Dapper\**\*.cs" Exclude="..\Dapper\obj\**\*.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net451'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />

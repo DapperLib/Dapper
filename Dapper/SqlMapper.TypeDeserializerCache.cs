@@ -52,7 +52,7 @@ namespace Dapper
 
             private readonly Dictionary<DeserializerKey, Func<IDataReader, object>> readers = new Dictionary<DeserializerKey, Func<IDataReader, object>>();
 
-            private struct DeserializerKey : IEquatable<DeserializerKey>
+            private readonly struct DeserializerKey : IEquatable<DeserializerKey>
             {
                 private readonly int startBound, length;
                 private readonly bool returnNullIfFirstMissing;

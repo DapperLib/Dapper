@@ -4,12 +4,13 @@
     <Title>Dapper: Entity Framework type handlers (with a strong name)</Title>
     <Description>Extension handlers for entity framework</Description>
     <Authors>Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net451</TargetFrameworks>
+    <TargetFrameworks>net471</TargetFrameworks>
     <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <PackageId>Dapper.EntityFramework.StrongName</PackageId>
     <PackageTags>orm;sql;micro-orm</PackageTags>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Dapper.EntityFramework\**\*.cs" Exclude="..\Dapper.EntityFramework\obj\**\*.cs" />
