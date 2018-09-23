@@ -10,6 +10,7 @@ namespace Dapper
         private sealed class DapperRow
             : System.Dynamic.IDynamicMetaObjectProvider
             , IDictionary<string, object>
+            , IReadOnlyDictionary<string, object>
         {
             private readonly DapperTable table;
             private object[] values;
@@ -205,6 +206,41 @@ namespace Dapper
             ICollection<object> IDictionary<string, object>.Values
             {
                 get { return this.Select(kv => kv.Value).ToArray(); }
+            }
+
+            #endregion
+
+
+            #region Implementation of IReadOnlyDictionary<string,object>
+
+
+            int IReadOnlyCollection<KeyValuePair<string, object>>.Count
+            {
+                get
+                {
+                    return values.Count(t => !(t is DeadValue));
+                }
+            }
+
+            bool IReadOnlyDictionary<string, object>.ContainsKey(string key)
+            {
+                int index = table.IndexOfName(key);
+                return index >= 0 && index < values.Length && !(values[index] is DeadValue);
+            }
+
+            object IReadOnlyDictionary<string, object>.this[string key]
+            {
+                get { TryGetValue(key, out object val); return val; }
+            }
+
+            IEnumerable<string> IReadOnlyDictionary<string, object>.Keys
+            {
+                get { return this.Select(kv => kv.Key); }
+            }
+
+            IEnumerable<object> IReadOnlyDictionary<string, object>.Values
+            {
+                get { return this.Select(kv => kv.Value); }
             }
 
             #endregion

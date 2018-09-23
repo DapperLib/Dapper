@@ -373,6 +373,36 @@ namespace Dapper
             return task;
         }
 
+        /// <summary>
+        /// Attempts to open a connection asynchronously, with a better error message for unsupported usages.
+        /// </summary>
+        private static Task TryOpenAsync(this IDbConnection cnn, CancellationToken cancel)
+        {
+            if (cnn is DbConnection dbConn)
+            {
+                return dbConn.OpenAsync(cancel);
+            }
+            else
+            {
+                throw new InvalidOperationException("Async operations require use of a DbConnection or an already-open IDbConnection");
+            }
+        }
+
+        /// <summary>
+        /// Attempts setup a <see cref="DbCommand"/> on a <see cref="DbConnection"/>, with a better error message for unsupported usages.
+        /// </summary>
+        private static DbCommand TrySetupAsyncCommand(this CommandDefinition command, IDbConnection cnn, Action<IDbCommand, object> paramReader)
+        {
+            if (command.SetupCommand(cnn, paramReader) is DbCommand dbCommand)
+            {
+                return dbCommand;
+            }
+            else
+            {
+                throw new InvalidOperationException("Async operations require use of a DbConnection or an IDbConnection where .CreateCommand() returns a DbCommand");
+            }
+        }
+
         private static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
@@ -380,18 +410,20 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-            using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+            using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
             {
                 DbDataReader reader = null;
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync(cancel).ConfigureAwait(false);
+                    if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
                     if (tuple.Func == null || tuple.Hash != hash)
                     {
+                        if (reader.FieldCount == 0)
+                            return Enumerable.Empty<T>();
                         tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                         if (command.AddToCache) SetQueryCache(identity, info);
                     }
@@ -442,12 +474,12 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-            using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+            using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
             {
                 DbDataReader reader = null;
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync(cancel).ConfigureAwait(false);
+                    if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, (row & Row.Single) != 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
                     : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancel).ConfigureAwait(false);
@@ -544,7 +576,7 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
 
                 CacheInfo info = null;
                 string masterSql = null;
@@ -560,7 +592,7 @@ namespace Dapper
                             if (isFirst)
                             {
                                 isFirst = false;
-                                cmd = (DbCommand)command.SetupCommand(cnn, null);
+                                cmd = command.TrySetupAsyncCommand(cnn, null);
                                 masterSql = cmd.CommandText;
                                 var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType(), null);
                                 info = GetCacheInfo(identity, obj, command.AddToCache);
@@ -575,7 +607,7 @@ namespace Dapper
                             }
                             else
                             {
-                                cmd = (DbCommand)command.SetupCommand(cnn, null);
+                                cmd = command.TrySetupAsyncCommand(cnn, null);
                             }
                             info.ParamReader(cmd, obj);
 
@@ -602,7 +634,7 @@ namespace Dapper
                 }
                 else
                 {
-                    using (var cmd = (DbCommand)command.SetupCommand(cnn, null))
+                    using (var cmd = command.TrySetupAsyncCommand(cnn, null))
                     {
                         foreach (var obj in multiExec)
                         {
@@ -638,11 +670,11 @@ namespace Dapper
             var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param?.GetType(), null);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
-            using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+            using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
             {
                 try
                 {
-                    if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
+                    if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                     var result = await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
                     command.OnCompleted();
                     return result;
@@ -908,8 +940,8 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
@@ -958,8 +990,8 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync().ConfigureAwait(false);
-                using (var cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader))
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
                 using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
                 {
                     var results = MultiMapImpl(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
@@ -1013,8 +1045,8 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
-                cmd = (DbCommand)command.SetupCommand(cnn, info.ParamReader);
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
@@ -1106,8 +1138,8 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
+                cmd = command.TrySetupAsyncCommand(cnn, paramReader);
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 return reader;
@@ -1180,8 +1212,8 @@ namespace Dapper
             object result;
             try
             {
-                cmd = (DbCommand)command.SetupCommand(cnn, paramReader);
-                if (wasClosed) await ((DbConnection)cnn).OpenAsync(command.CancellationToken).ConfigureAwait(false);
+                cmd = command.TrySetupAsyncCommand(cnn, paramReader);
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 result = await cmd.ExecuteScalarAsync(command.CancellationToken).ConfigureAwait(false);
                 command.OnCompleted();
             }

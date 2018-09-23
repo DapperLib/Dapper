@@ -19,8 +19,11 @@ using ServiceStack.OrmLite.Dapper;
 using Susanoo;
 using System.Configuration;
 using System.Threading.Tasks;
+using Dapper.Tests.Performance.Dashing;
 using Dapper.Tests.Performance.EntityFrameworkCore;
+using Dashing;
 using Microsoft.EntityFrameworkCore;
+using Belgrade.SqlClient;
 
 namespace Dapper.Tests.Performance
 {
@@ -81,12 +84,16 @@ namespace Dapper.Tests.Performance
                     }
                 }
 
+                Console.WriteLine("|Time|Framework|");
                 foreach (var test in this.OrderBy(t => t.Watch.ElapsedMilliseconds))
                 {
                     var ms = test.Watch.ElapsedMilliseconds.ToString();
+                    Console.Write("|");
                     Console.Write(ms);
                     Program.WriteColor("ms ".PadRight(8 - ms.Length), ConsoleColor.DarkGray);
-                    Console.WriteLine(test.Name);
+                    Console.Write("|");
+                    Console.Write(test.Name);
+                    Console.WriteLine("|");
                 }
             }
         }
@@ -181,6 +188,15 @@ namespace Dapper.Tests.Performance
                     tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Contrib");
                 }, "Dapper");
 
+                // Dashing
+                Try(() =>
+                {
+                    var config = new DashingConfiguration();
+                    var database = new SqlDatabase(config, ConnectionString);
+                    var session = database.BeginTransactionLessSession(GetOpenConnection());
+                    tests.Add(id => session.Get<Dashing.Post>(id), "Dashing Get");
+                }, "Dashing");
+
                 // Massive
                 Try(() =>
                 {
@@ -233,18 +249,11 @@ namespace Dapper.Tests.Performance
                     tests.Add(id => nhSession5.Get<Post>(id), "NHibernate: Session.Get");
                 }, "NHibernate");
 
-                // Simple.Data
-                Try(() =>
-                {
-                    var sdb = Simple.Data.Database.OpenConnection(ConnectionString);
-                    tests.Add(id => sdb.Posts.FindById(id).FirstOrDefault(), "Simple.Data");
-                }, "Simple.Data");
-
                 // Belgrade
                 Try(() =>
                 {
                     var query = new Belgrade.SqlClient.SqlDb.QueryMapper(ConnectionString);
-                    tests.AsyncAdd(id => query.ExecuteReader("SELECT TOP 1 * FROM Posts WHERE Id = " + id,
+                    tests.AsyncAdd(id => query.Sql("SELECT TOP 1 * FROM Posts WHERE Id = @Id").Param("Id", id).Map(
                         reader =>
                         {
                             var post = new Post();
