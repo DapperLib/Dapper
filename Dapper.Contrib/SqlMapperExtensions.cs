@@ -396,6 +396,84 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
+        /// Inserts an entity into table "Ts" and returns identity id or number of inserted rows if inserting a list.
+        /// </summary>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToInsert">Entity to insert, can be list of entities</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>Identity of inserted entity, or number of inserted rows if inserting a list</returns>
+        public static long Insert(this IDbConnection connection, object entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var isList = false;
+
+            var type = entityToInsert.GetType();
+
+            if (type.IsArray)
+            {
+                isList = true;
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
+                var typeInfo = type.GetTypeInfo();
+                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+
+                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
+                {
+                    isList = true;
+                    type = type.GetGenericArguments()[0];
+                }
+            }
+
+            var name = GetTableName(type);
+            var sbColumnList = new StringBuilder(null);
+            var allProperties = TypePropertiesCache(type);
+            var keyProperties = KeyPropertiesCache(type);
+            var computedProperties = ComputedPropertiesCache(type);
+            var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+
+            var adapter = GetFormatter(connection);
+
+            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
+            {
+                var property = allPropertiesExceptKeyAndComputed[i];
+                adapter.AppendColumnName(sbColumnList, property.Name);  //fix for issue #336
+                if (i < allPropertiesExceptKeyAndComputed.Count - 1)
+                    sbColumnList.Append(", ");
+            }
+
+            var sbParameterList = new StringBuilder(null);
+            for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
+            {
+                var property = allPropertiesExceptKeyAndComputed[i];
+                sbParameterList.AppendFormat("@{0}", property.Name);
+                if (i < allPropertiesExceptKeyAndComputed.Count - 1)
+                    sbParameterList.Append(", ");
+            }
+
+            int returnVal;
+            var wasClosed = connection.State == ConnectionState.Closed;
+            if (wasClosed) connection.Open();
+
+            if (!isList)    //single entity
+            {
+                returnVal = adapter.Insert(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                    sbParameterList.ToString(), keyProperties, entityToInsert);
+            }
+            else
+            {
+                //insert list of entities
+                var cmd = $"insert into {name} ({sbColumnList}) values ({sbParameterList})";
+                returnVal = connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+            }
+            if (wasClosed) connection.Close();
+            return returnVal;
+        }
+
+        /// <summary>
         /// Updates entity in table "Ts", checks if the entity is modified if the entity is tracked by the Get() extension.
         /// </summary>
         /// <typeparam name="T">Type to be updated</typeparam>
@@ -467,6 +545,77 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
+        /// Updates entity in table "Ts", checks if the entity is modified if the entity is tracked by the Get() extension.
+        /// </summary>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToUpdate">Entity to be updated</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
+        public static bool Update(this IDbConnection connection, object entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            if (entityToUpdate is IProxy proxy && !proxy.IsDirty)
+            {
+                return false;
+            }
+
+            var type = entityToUpdate.GetType();
+
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
+                var typeInfo = type.GetTypeInfo();
+                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+
+                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
+                {
+                    type = type.GetGenericArguments()[0];
+                }
+            }
+
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
+            var name = GetTableName(type);
+
+            var sb = new StringBuilder();
+            sb.AppendFormat("update {0} set ", name);
+
+            var allProperties = TypePropertiesCache(type);
+            keyProperties.AddRange(explicitKeyProperties);
+            var computedProperties = ComputedPropertiesCache(type);
+            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+
+            var adapter = GetFormatter(connection);
+
+            for (var i = 0; i < nonIdProps.Count; i++)
+            {
+                var property = nonIdProps[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                if (i < nonIdProps.Count - 1)
+                    sb.Append(", ");
+            }
+            sb.Append(" where ");
+            for (var i = 0; i < keyProperties.Count; i++)
+            {
+                var property = keyProperties[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                if (i < keyProperties.Count - 1)
+                    sb.Append(" and ");
+            }
+            var updated = connection.Execute(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
+            return updated > 0;
+        }
+
+
+        /// <summary>
         /// Delete entity in table "Ts".
         /// </summary>
         /// <typeparam name="T">Type of entity</typeparam>
@@ -481,6 +630,62 @@ namespace Dapper.Contrib.Extensions
                 throw new ArgumentException("Cannot Delete null Object", nameof(entityToDelete));
 
             var type = typeof(T);
+
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType())
+            {
+                var typeInfo = type.GetTypeInfo();
+                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+
+                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
+                {
+                    type = type.GetGenericArguments()[0];
+                }
+            }
+
+            var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
+            var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
+            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
+                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+
+            var name = GetTableName(type);
+            keyProperties.AddRange(explicitKeyProperties);
+
+            var sb = new StringBuilder();
+            sb.AppendFormat("delete from {0} where ", name);
+
+            var adapter = GetFormatter(connection);
+
+            for (var i = 0; i < keyProperties.Count; i++)
+            {
+                var property = keyProperties[i];
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+                if (i < keyProperties.Count - 1)
+                    sb.Append(" and ");
+            }
+            var deleted = connection.Execute(sb.ToString(), entityToDelete, transaction, commandTimeout);
+            return deleted > 0;
+        }
+
+        /// <summary>
+        /// Delete entity in table "Ts".
+        /// </summary>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToDelete">Entity to delete</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>true if deleted, false if not found</returns>
+        public static bool Delete(this IDbConnection connection, object entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            if (entityToDelete == null)
+                throw new ArgumentException("Cannot Delete null Object", nameof(entityToDelete));
+
+            var type = entityToDelete.GetType();
 
             if (type.IsArray)
             {
