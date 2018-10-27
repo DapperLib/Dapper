@@ -370,6 +370,14 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
 }
 ```
 
+User Defined Variables
+---------------------
+In order to use Non-parameter SQL variables with MySql Connector, you have to add the following option to your connection string:
+
+`Allow User Variables=True`
+
+Make sure you don't provide Dapper with a property to map.
+
 Limitations and caveats
 ---------------------
 Dapper caches information about every query it runs, this allows it to materialize objects quickly and process parameters quickly. The current implementation caches this information in a `ConcurrentDictionary` object. Statements that are only used once are routinely flushed from this cache. Still, if you are generating SQL strings on the fly without using parameters it is possible you may hit memory issues.
