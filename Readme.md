@@ -370,7 +370,7 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
 }
 ```
 
-User Defined Variables
+User Defined Variables in MySQL
 ---------------------
 In order to use Non-parameter SQL variables with MySql Connector, you have to add the following option to your connection string:
 
