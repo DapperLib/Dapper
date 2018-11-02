@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class PostcresqlTests : TestBase
+    public class PostgresqlTests : TestBase
     {
         private static Npgsql.NpgsqlConnection GetOpenNpgsqlConnection()
         {
