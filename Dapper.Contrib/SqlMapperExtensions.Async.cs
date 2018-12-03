@@ -165,7 +165,7 @@ namespace Dapper.Contrib.Extensions
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
-            var keyProperties = KeyPropertiesCache(type).ToList();
+            var keyProperties = KeyPropertiesCache(type);
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
@@ -232,7 +232,7 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var keyProperties = KeyPropertiesCache(type).ToList();
+            var keyProperties = KeyPropertiesCache(type);
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
