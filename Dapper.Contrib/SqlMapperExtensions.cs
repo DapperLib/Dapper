@@ -936,7 +936,7 @@ public partial class MySqlAdapter : ISqlAdapter
     {
         var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
         connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
-        var r = connection.Query("Select LAST_INSERT_ID() id", transaction: transaction, commandTimeout: commandTimeout);
+        var r = connection.Query("/*FORCE_MASTER*/ Select LAST_INSERT_ID() id", transaction: transaction, commandTimeout: commandTimeout);
 
         var id = r.First().id;
         if (id == null) return 0;
