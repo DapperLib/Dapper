@@ -575,3 +575,25 @@ public partial class FbAdapter
         return Convert.ToInt32(id);
     }
 }
+
+public partial class HanaAdapter
+{
+    public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
+        var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
+        connection.Execute(cmd, entityToInsert, transaction, commandTimeout);
+
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        var keyName = propertyInfos[0].Name;
+        var r = connection.Query($"SELECT FIRST 1 {keyName} ID FROM {tableName} ORDER BY {keyName} DESC", transaction: transaction, commandTimeout: commandTimeout);
+
+        var id = r.First().ID;
+        if (id == null) return 0;
+        if (propertyInfos.Length == 0) return Convert.ToInt32(id);
+
+        var idp = propertyInfos[0];
+        idp.SetValue(entityToInsert, Convert.ChangeType(id, idp.PropertyType), null);
+
+        return Convert.ToInt32(id);
+    }
+}
