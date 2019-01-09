@@ -39,6 +39,16 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void TestTreatIntAsABool()
+        {
+            // Test we are consistent with direct call to database, see TypeHandlerTests.TestTreatIntAsABool
+            using(var reader = connection.ExecuteReader("select CAST(1 AS BIT)"))
+                Assert.True(SqlMapper.Parse<bool>(reader).Single());
+            using (var reader = connection.ExecuteReader("select 1"))
+                Assert.True(SqlMapper.Parse<bool>(reader).Single());
+        }
+
+        [Fact]
         public void DiscriminatedUnion()
         {
             List<Discriminated_BaseType> result = new List<Discriminated_BaseType>();
