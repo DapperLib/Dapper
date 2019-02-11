@@ -20,6 +20,14 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
+### 1.50.7
+
+- Fix #1190 - incorrect unmanaged pointer when processing parameters that are a boxed struct (rare error relating to GC)
+- Fix #1111 - make `SqlMapper.Parse` consistent with `QueryImpl`
+- Fix #111- - improve error message for invalid literal types
+- Fix #1149 - improve error messages in "contrib"
+- Improved detection of empty table-valued-parameters
+
 ### 1.50.5
 
 - Fixes empty result set hanging with `QueryAsync`

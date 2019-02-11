@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		appveyor.yml = appveyor.yml
 		build.ps1 = build.ps1
 		Directory.build.props = Directory.build.props
+		docs\index.md = docs\index.md
 		License.txt = License.txt
 		nuget.config = nuget.config
 		Readme.md = Readme.md
