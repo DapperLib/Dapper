@@ -42,15 +42,15 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### 1.50.2
 
-- fix issue [#569](https://github.com/StackExchange/Dapper/issues/569) (`in` expansions using ODBC pseudo-positional arguments)
+- Fix issue [#569](https://github.com/StackExchange/Dapper/issues/569) (`in` expansions using ODBC pseudo-positional arguments)
 
 ### 1.50.1
 
-- change to how `string_split` is used for `InListStringSplitCount`
+- Change to how `string_split` is used for `InListStringSplitCount`
 
 ### 1.50.0
 
-- no changes; stable release
+- No changes; stable release
 
 ### 1.50.0-rc3
 
@@ -58,37 +58,37 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### 1.50.0-rc2b
 
-- new `InListStringSplitCount` global setting; if set (non-negative), `in @foo` expansions (of at least the specified size) of primitive types (`int`, `tinyint`, `smallint`, `bigint`) are implemented via the SQL Server 2016 (compat level 130) `STRING_SPLIT` function
-- fix for incorrect conversions in `GridReader` ([#254](https://github.com/StackExchange/Dapper/issues/254))
+- New `InListStringSplitCount` global setting; if set (non-negative), `in @foo` expansions (of at least the specified size) of primitive types (`int`, `tinyint`, `smallint`, `bigint`) are implemented via the SQL Server 2016 (compat level 130) `STRING_SPLIT` function
+- Fix for incorrect conversions in `GridReader` ([#254](https://github.com/StackExchange/Dapper/issues/254))
 
 ### 1.50.0-rc2 / 1.50.0-rc2a
 
-- packaging for .NET Core rc2
+- Packaging for .NET Core rc2
 
 ### 1.50-beta9
 
-- fix for `PadListExpansions` to work correctly with `not in` scenarios; now uses last non-null value instead of `null`; if none available, don't pad
-- fix problems with single-result/single-row not being supported by all providers (basically: sqlite, [#466](https://github.com/StackExchange/Dapper/issues/466))
-- fix problems with enums - nulls ([#467](https://github.com/StackExchange/Dapper/issues/467)) and primitive values ([#468](https://github.com/StackExchange/Dapper/issues/468))
-- add support for C# 6 get-only properties ([#473](https://github.com/StackExchange/Dapper/issues/473))
-- add support for various xml types ([#427](https://github.com/StackExchange/Dapper/issues/427))
+- Fix for `PadListExpansions` to work correctly with `not in` scenarios; now uses last non-null value instead of `null`; if none available, don't pad
+- Fix problems with single-result/single-row not being supported by all providers (basically: sqlite, [#466](https://github.com/StackExchange/Dapper/issues/466))
+- Fix problems with enums - nulls ([#467](https://github.com/StackExchange/Dapper/issues/467)) and primitive values ([#468](https://github.com/StackExchange/Dapper/issues/468))
+- Add support for C# 6 get-only properties ([#473](https://github.com/StackExchange/Dapper/issues/473))
+- Add support for various xml types ([#427](https://github.com/StackExchange/Dapper/issues/427))
 
 ### 1.50-beta8
 
-- addition of `GetRowParser<T>` extension method on `IDataReader` API - allows manual construction of discriminated unions, etc
-- addition of `Settings.PadListExpansions` - reduces query-plan saturation by padding list expansions with `null` values (opt-in, because on some DB configurations this could change the meaning) *(note: bad choice of `null` revised in 1.50-beta9)*
-- addition of `Settings.ApplyNullValues` - assigns (rather than ignores) `null` values when possible
-- fix for [#461](https://github.com/StackExchange/Dapper/issues/461) - ensure type-handlers work for constructor-based initialization
-- fix for [#455](https://github.com/StackExchange/Dapper/issues/455) - make the `LookupDbType` method available again
+- Addition of `GetRowParser<T>` extension method on `IDataReader` API - allows manual construction of discriminated unions, etc
+- Addition of `Settings.PadListExpansions` - reduces query-plan saturation by padding list expansions with `null` values (opt-in, because on some DB configurations this could change the meaning) *(note: bad choice of `null` revised in 1.50-beta9)*
+- Addition of `Settings.ApplyNullValues` - assigns (rather than ignores) `null` values when possible
+- Fix for [#461](https://github.com/StackExchange/Dapper/issues/461) - ensure type-handlers work for constructor-based initialization
+- Fix for [#455](https://github.com/StackExchange/Dapper/issues/455) - make the `LookupDbType` method available again
 
 ### 1.50-beta7
 
-- addition of `GetRowParser(Type)` (and refactor the backing store for readers to suit)
-- column hash should consider type, not just name
+- Addition of `GetRowParser(Type)` (and refactor the backing store for readers to suit)
+- Column hash should consider type, not just name
 
 ### 1.50-beta6
 
-- fix for issue [#424](https://github.com/StackExchange/Dapper/issues/424) - defensive `SqlDataRecord` handling
+- Fix for issue [#424](https://github.com/StackExchange/Dapper/issues/424) - defensive `SqlDataRecord` handling
 
 ### 1.50-beta5
 
@@ -99,9 +99,9 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### 1.50-beta4
 
 - Add `QueryFirstOrDefault` / `ReadFirstOrDefault` methods that optimize the single-row scenario
-- remove some legacy `dynamic` usage from the async API
-- make `DynamicTypeMap` public again (error during core-clr migration)
-- use `Hashtable` again on core-clr
+- Remove some legacy `dynamic` usage from the async API
+- Make `DynamicTypeMap` public again (error during core-clr migration)
+- Use `Hashtable` again on core-clr
 
 ### 1.50-beta3
 
@@ -110,61 +110,61 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### 1.50-beta2
 
 - Core CLR now targets rc1 / 23516
-- various Core CLR fixes
-- code cleanup and C# 6 usage (assorted)
+- Various Core CLR fixes
+- Code cleanup and C# 6 usage (assorted)
 
 ### 1.50-beta1
 
-- split `SqlMapper.cs` as it was becoming too unmaintainable; NuGet is now the only supported deployment channel
-- remove down-level C# requirements, as "drop in the file" is no longer the expected usage
+- Split `SqlMapper.cs` as it was becoming too unmaintainable; NuGet is now the only supported deployment channel
+- Remove down-level C# requirements, as "drop in the file" is no longer the expected usage
 - `SqlMapper.Settings` added; provides high-level global configuration; initially `CommandTimeout` (@Irrational86)
 - improve error message if an array is used as a parameter in an invalid context
-- add `Type[]` support for `GridReader.Read` scenarios (@NikolayGlynchak)
-- support for custom type-maps in collection parameters (@gjsduarte)
-- fix incorrect cast in `QueryAsync<T>` (@phnx47, [#346](https://github.com/StackExchange/Dapper/issues/346))
-- fix incorrect null handling re `UdtTypeName` (@perliedman)
-- support for `SqlDataRecord` (@sqmgh)
-- allow `DbString` default for `IsAnsi` to be specified (@kppullin)
+- Add `Type[]` support for `GridReader.Read` scenarios (@NikolayGlynchak)
+- Support for custom type-maps in collection parameters (@gjsduarte)
+- Fix incorrect cast in `QueryAsync<T>` (@phnx47, [#346](https://github.com/StackExchange/Dapper/issues/346))
+- Fix incorrect null handling re `UdtTypeName` (@perliedman)
+- Support for `SqlDataRecord` (@sqmgh)
+- Allow `DbString` default for `IsAnsi` to be specified (@kppullin)
 - provide `TypeMapProvider` with lazy func-based initialization (@garyhuntddn)
-- core-clr updated to beta-8 and various cleanups/fixes
-- built using core-clr build tools
+- Core-clr updated to beta-8 and various cleanups/fixes
+- Built using core-clr build tools
 
 
 ### 1.42
 
-- fix bug with dynamic parameters where `.Get<T>` is called before the command is executed
+- Fix bug with dynamic parameters where `.Get<T>` is called before the command is executed
 
 ### 1.41-beta5
 
-- core-clr packaging build and workarounds
-- fix bug with literal `{=val}` boolean replacements
+- Core-clr packaging build and workarounds
+- Fix bug with literal `{=val}` boolean replacements
 
 ### 1.41-beta4
 
-- core-clr packaging build
-- improve mapping to enum members (@BrianJolly)
+- Core-clr packaging build
+- Improve mapping to enum members (@BrianJolly)
 
 ### 1.41-beta
 
-- core-clr packaging build
+- Core-clr packaging build
 
 ### 1.41-alpha
 
-- introduces dnx (core-clr) experimental changes
-- adds `SqlBuilder` project
-- improve error message when incorrectly accessing parameter values
+- Introduces dnx (core-clr) experimental changes
+- Adds `SqlBuilder` project
+- Improve error message when incorrectly accessing parameter values
 
 ### 1.40
 
-- workaround for broken `GetValues()` on Mono; add `AsList()`
+- Workaround for broken `GetValues()` on Mono; add `AsList()`
 
 ### 1.39
 
-- fix case on SQL CLR types; grid-reader should respect no-cache flags; make parameter inclusion case-insensitive
+- Fix case on SQL CLR types; grid-reader should respect no-cache flags; make parameter inclusion case-insensitive
 
 ### 1.38
 
-- specify constructor explicitly; allow value-type parameters (albeit: boxed)
+- Specify constructor explicitly; allow value-type parameters (albeit: boxed)
 
 ### 1.37
 
@@ -177,8 +177,8 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### 1.35
 
 - Fix Issue [#151](https://github.com/StackExchange/Dapper/issues/151) (Execute should work with `ExpandoObject` etc); Fix Issue #182 (better support for db-type when using `object` values);
-- output expressions / callbacks in dynamic args (via Derek); arbitrary number of types in multi-mapping (via James Holwell);
-- fix `DbString`/Oracle bug (via Mauro Cerutti); new support for **named positional arguments**
+- Output expressions / callbacks in dynamic args (via Derek); arbitrary number of types in multi-mapping (via James Holwell);
+- Fix `DbString`/Oracle bug (via Mauro Cerutti); new support for **named positional arguments**
 
 ### 1.34
 
