@@ -123,6 +123,10 @@ namespace Dapper
             {
                 cmd.CommandTimeout = SqlMapper.Settings.CommandTimeout.Value;
             }
+            else 
+            {
+                cmd.CommandTimeout = cnn.CommandTimeout;
+            }
             if (CommandType.HasValue)
                 cmd.CommandType = CommandType.Value;
             paramReader?.Invoke(cmd, Parameters);
