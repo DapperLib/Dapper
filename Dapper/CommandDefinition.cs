@@ -125,7 +125,7 @@ namespace Dapper
             }
             else 
             {
-                cmd.CommandTimeout = cnn.CommandTimeout;
+                cmd.CommandTimeout = cnn.ConnectionTimeout;
             }
             if (CommandType.HasValue)
                 cmd.CommandType = CommandType.Value;
