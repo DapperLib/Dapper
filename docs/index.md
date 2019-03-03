@@ -20,6 +20,10 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
+### 1.60.1
+
+- Fix [#1196](https://github.com/StackExchange/Dapper/issues/1196) - versioning fix only ([#1198](https://github.com/StackExchange/Dapper/pull/1198)) - assembly version is now locked at 1.60.0 to resolve some mismatch issues with .NET Core assebly loading/binding.
+
 ### 1.50.7
 
 - Fix [#1190](https://github.com/StackExchange/Dapper/issues/1190) - incorrect unmanaged pointer when processing parameters that are a boxed struct (rare error relating to GC)
