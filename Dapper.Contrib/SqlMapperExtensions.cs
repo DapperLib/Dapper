@@ -61,6 +61,7 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, PropertyInfo> VersionProperties = new ConcurrentDictionary<RuntimeTypeHandle, PropertyInfo>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
@@ -123,6 +124,31 @@ namespace Dapper.Contrib.Extensions
 
             KeyProperties[type.TypeHandle] = keyProperties;
             return keyProperties;
+        }
+
+        private static PropertyInfo VersionPropertyCache(Type type)
+        {
+            if (VersionProperties.TryGetValue(type.TypeHandle, out PropertyInfo versionProperty))
+            {
+                return versionProperty;
+            }
+
+            var allProperties = TypePropertiesCache(type);
+            var versionProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is RowVersionAttribute)).ToList();
+
+            if (!versionProperties.Any())
+            {
+                return null;
+            }
+            if (versionProperties.Count > 1)
+            {
+                string attributeName = nameof(RowVersionAttribute);
+                attributeName = attributeName.Substring(0, attributeName.Length - "Attribute".Length);
+                throw new DataException($"Only one property can have the attribute [{attributeName}]");
+            }
+
+            VersionProperties[type.TypeHandle] = versionProperties[0];
+            return versionProperties[0];
         }
 
         private static List<PropertyInfo> TypePropertiesCache(Type type)
@@ -396,21 +422,13 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Updates entity in table "Ts", checks if the entity is modified if the entity is tracked by the Get() extension.
+        /// Builds the update statement based on the given entity.
         /// </summary>
         /// <typeparam name="T">Type to be updated</typeparam>
         /// <param name="connection">Open SqlConnection</param>
-        /// <param name="entityToUpdate">Entity to be updated</param>
-        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
-        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
-        /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        /// <returns>SQL Update statement</returns>
+        private static string BuildUpdateStatement<T>(IDbConnection connection) where T : class
         {
-            if (entityToUpdate is IProxy proxy && !proxy.IsDirty)
-            {
-                return false;
-            }
-
             var type = typeof(T);
 
             if (type.IsArray)
@@ -439,10 +457,20 @@ namespace Dapper.Contrib.Extensions
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
+            
+            PropertyInfo versionProperty = VersionPropertyCache(type);
+            if (versionProperty != null)
+            {
+                sb.Append(" Version = Version + 1, ");
+                
+                keyProperties.Add(versionProperty); // to make sure the version is not set using the given entity value
+                // and that the version is used as a key in the where statement
+            }
 
             var allProperties = TypePropertiesCache(type);
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
+
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
             var adapter = GetFormatter(connection);
@@ -454,6 +482,7 @@ namespace Dapper.Contrib.Extensions
                 if (i < nonIdProps.Count - 1)
                     sb.Append(", ");
             }
+
             sb.Append(" where ");
             for (var i = 0; i < keyProperties.Count; i++)
             {
@@ -462,7 +491,28 @@ namespace Dapper.Contrib.Extensions
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
-            var updated = connection.Execute(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
+
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Updates entity in table "Ts", checks if the entity is modified if the entity is tracked by the Get() extension.
+        /// </summary>
+        /// <typeparam name="T">Type to be updated</typeparam>
+        /// <param name="connection">Open SqlConnection</param>
+        /// <param name="entityToUpdate">Entity to be updated</param>
+        /// <param name="transaction">The transaction to run under, null (the default) if none</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
+        /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
+        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            if (entityToUpdate is IProxy proxy && !proxy.IsDirty)
+            {
+                return false;
+            }
+
+            string sql = BuildUpdateStatement<T>(connection);
+            var updated = connection.Execute(sql, entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
             return updated > 0;
         }
 
@@ -732,6 +782,17 @@ namespace Dapper.Contrib.Extensions
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class KeyAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    /// Specifies that this field is a row version number which is also used for optimistic concurrency. 
+    /// When an update is issued using <see cref="SqlMapperExtensions"/>, the update will only succeed if the given
+    /// entity has a row version that matches the one in the database.
+    /// The row version will be automatically incremented following a successful update.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class RowVersionAttribute : Attribute
     {
     }
 
