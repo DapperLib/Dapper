@@ -1349,7 +1349,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with 7 input types. 
+        /// Perform a multi-mapping query with 7 input types. If you need more types -> use Query with Type[] parameter.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -2323,7 +2323,7 @@ namespace Dapper
                                 return sb.Append(')').__ToStringRecycle();
                             }
                         }
-                        throw new NotSupportedException(value.GetType().Name);
+                        throw new NotSupportedException($"The type '{value.GetType().Name}' is not supported for SQL literals.");
                 }
             }
         }
@@ -2416,7 +2416,7 @@ namespace Dapper
             il.Emit(OpCodes.Ldarg_1); // stack is now [untyped-param]
             if (isStruct)
             {
-                il.DeclareLocal(type.MakePointerType());
+                il.DeclareLocal(type.MakeByRefType()); // note: ref-local
                 il.Emit(OpCodes.Unbox, type); // stack is now [typed-param]
             }
             else

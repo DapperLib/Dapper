@@ -165,7 +165,7 @@ namespace Dapper.Contrib.Extensions
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
-            var keyProperties = KeyPropertiesCache(type);
+            var keyProperties = KeyPropertiesCache(type).ToList();
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
@@ -232,7 +232,7 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var keyProperties = KeyPropertiesCache(type);
+            var keyProperties = KeyPropertiesCache(type).ToList();
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
@@ -312,10 +312,12 @@ namespace Dapper.Contrib.Extensions
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
+            var adapter = GetFormatter(connection);
+            
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                sb.AppendFormat("{0} = @{1}", property.Name, property.Name);
+                adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.Append(" AND ");
             }

@@ -153,7 +153,7 @@ namespace Dapper.Contrib.Extensions
             var explicitKeys = ExplicitKeyPropertiesCache(type);
             var keyCount = keys.Count + explicitKeys.Count;
             if (keyCount > 1)
-                throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property");
+                throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property. [Key] Count: {keys.Count}, [ExplicitKey] Count: {explicitKeys.Count}");
             if (keyCount == 0)
                 throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
 
@@ -290,15 +290,19 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                //NOTE: This as dynamic trick should be able to handle both our own Table-attribute as well as the one in EntityFramework 
-                var tableAttr = type
 #if NETSTANDARD1_3
-                    .GetTypeInfo()
+                var info = type.GetTypeInfo();
+#else
+                var info = type;
 #endif
-                    .GetCustomAttributes(false).SingleOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic;
-                if (tableAttr != null)
+                //NOTE: This as dynamic trick falls back to handle both our own Table-attribute as well as the one in EntityFramework 
+                var tableAttrName =
+                    info.GetCustomAttribute<TableAttribute>(false)?.Name
+                    ?? (info.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic)?.Name;
+
+                if (tableAttrName != null)
                 {
-                    name = tableAttr.Name;
+                    name = tableAttrName;
                 }
                 else
                 {

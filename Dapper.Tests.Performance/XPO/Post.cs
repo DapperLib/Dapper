@@ -1,15 +1,12 @@
 ﻿using System;
-using Soma.Core;
+using DevExpress.Xpo;
 
-namespace Dapper.Tests.Performance
+namespace Dapper.Tests.Performance.Xpo
 {
-    [ServiceStack.DataAnnotations.Alias("Posts")]
-    [Table(Name = "Posts")]
-    [LinqToDB.Mapping.Table(Name = "Posts")]
-    public class Post
+    [Persistent("Posts")]
+    public class Post : XPLiteObject
     {
-        [Id(IdKind.Identity)]
-        [LinqToDB.Mapping.PrimaryKey, LinqToDB.Mapping.Identity]
+        [Key(false)]
         public int Id { get; set; }
         public string Text { get; set; }
         public DateTime CreationDate { get; set; }
@@ -23,5 +20,6 @@ namespace Dapper.Tests.Performance
         public int? Counter7 { get; set; }
         public int? Counter8 { get; set; }
         public int? Counter9 { get; set; }
+        public Post(Session session) : base(session) { }
     }
 }
