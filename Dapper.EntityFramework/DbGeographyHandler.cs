@@ -51,7 +51,7 @@ namespace Dapper.EntityFramework
             if (value == null || value is DBNull) return null;
             if (value is SqlGeography geo)
             {
-                return DbGeography.FromBinary(geo.STAsBinary().Value);
+                return DbGeography.FromBinary(geo.STAsBinary().Value, geo.STSrid.Value);
             }
             return DbGeography.FromText(value.ToString());
         }
