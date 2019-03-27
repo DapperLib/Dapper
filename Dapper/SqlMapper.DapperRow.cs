@@ -7,9 +7,8 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
-        private sealed class DapperRow
-            : System.Dynamic.IDynamicMetaObjectProvider
-            , IDictionary<string, object>
+        private sealed partial class DapperRow
+            : IDictionary<string, object>
             , IReadOnlyDictionary<string, object>
         {
             private readonly DapperTable table;
@@ -76,12 +75,6 @@ namespace Dapper
                 }
 
                 return sb.Append('}').__ToStringRecycle();
-            }
-
-            System.Dynamic.DynamicMetaObject System.Dynamic.IDynamicMetaObjectProvider.GetMetaObject(
-                System.Linq.Expressions.Expression parameter)
-            {
-                return new DapperRowMetaObject(parameter, System.Dynamic.BindingRestrictions.Empty, this);
             }
 
             public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
