@@ -20,6 +20,14 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
+### 1.60.7
+
+- improve performance of descriptor API
+
+### 1.60.5
+
+- add descriptor API to `DapperRow` (enables UI binding with non-generic `Query()` API)
+
 ### 1.60.1
 
 - Fix [#1196](https://github.com/StackExchange/Dapper/issues/1196) - versioning fix only ([#1198](https://github.com/StackExchange/Dapper/pull/1198)) - assembly version is now locked at 1.60.0 to resolve some mismatch issues with .NET Core assembly loading/binding.
