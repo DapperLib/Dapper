@@ -20,7 +20,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
-### 1.60.7
+### 1.60.6
 
 - improve performance of descriptor API
 
