@@ -70,7 +70,7 @@ namespace Dapper
                     {
                         var type = row != null && row.TryGetValue(names[i], out var value) && value != null
                             ? value.GetType() : typeof(object);
-                        arr[i] = new RowBoundPropertyDescriptor(type, names[i]);
+                        arr[i] = new RowBoundPropertyDescriptor(type, names[i], i);
                     }
                     return new PropertyDescriptorCollection(arr, true);
                 }
@@ -84,20 +84,22 @@ namespace Dapper
             private sealed class RowBoundPropertyDescriptor : PropertyDescriptor
             {
                 private readonly Type _type;
-                public RowBoundPropertyDescriptor(Type type, string name) : base(name, null)
-                    => _type = type;
-
-                public override bool CanResetValue(object component) => false;
-                public override void ResetValue(object component) => throw new NotSupportedException();
-
+                private readonly int _index;
+                public RowBoundPropertyDescriptor(Type type, string name, int index) : base(name, null)
+                {
+                    _type = type;
+                    _index = index;
+                }
+                public override bool CanResetValue(object component) => true;
+                public override void ResetValue(object component) => ((DapperRow)component).Remove(_index);
                 public override bool IsReadOnly => false;
-                public override bool ShouldSerializeValue(object component) => true;
+                public override bool ShouldSerializeValue(object component) => ((DapperRow)component).TryGetValue(_index, out _);
                 public override Type ComponentType => typeof(DapperRow);
                 public override Type PropertyType => _type;
                 public override object GetValue(object component)
-                    => ((IDictionary<string, object>)component).TryGetValue(Name, out var val) ? val : null;
+                    => ((DapperRow)component).TryGetValue(_index, out var val) ? (val ?? DBNull.Value): DBNull.Value;
                 public override void SetValue(object component, object value)
-                    => ((IDictionary<string, object>)component)[Name] = value;
+                    => ((DapperRow)component).SetValue(_index, value is DBNull ? null : value);
             }
         }
     }
