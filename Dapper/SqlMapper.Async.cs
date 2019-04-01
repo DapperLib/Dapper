@@ -391,7 +391,7 @@ namespace Dapper
         /// <summary>
         /// Attempts setup a <see cref="DbCommand"/> on a <see cref="DbConnection"/>, with a better error message for unsupported usages.
         /// </summary>
-        private static DbCommand TrySetupAsyncCommand(this CommandDefinition command, IDbConnection cnn, Action<IDbCommand, object> paramReader)
+        private static DbCommand TrySetupAsyncCommand(in this CommandDefinition command, IDbConnection cnn, Action<IDbCommand, object> paramReader)
         {
             if (command.SetupCommand(cnn, paramReader) is DbCommand dbCommand)
             {
@@ -420,11 +420,15 @@ namespace Dapper
 
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
+
+                    var buffer = command.Buffered ? CreateBufferList<T>() : null;
                     if (tuple.Func == null || tuple.Hash != hash)
                     {
                         if (reader.FieldCount == 0)
-                            return Enumerable.Empty<T>();
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        {
+                            return buffer ?? Enumerable.Empty<T>();
+                        }
+                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false, buffer as IDynamicRowList));
                         if (command.AddToCache) SetQueryCache(identity, info);
                     }
 
@@ -432,7 +436,6 @@ namespace Dapper
 
                     if (command.Buffered)
                     {
-                        var buffer = new List<T>();
                         var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                         while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                         {
@@ -491,7 +494,7 @@ namespace Dapper
                         int hash = GetColumnHash(reader);
                         if (tuple.Func == null || tuple.Hash != hash)
                         {
-                            tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                            tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false, null));
                             if (command.AddToCache) SetQueryCache(identity, info);
                         }
 
@@ -558,7 +561,7 @@ namespace Dapper
             }
         }
 
-        private struct AsyncExecState
+        private readonly struct AsyncExecState
         {
             public readonly DbCommand Command;
             public readonly Task<int> Task;

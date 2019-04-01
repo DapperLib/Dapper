@@ -13,7 +13,7 @@ namespace UIBindingTest
             SuspendLayout();
             using (var conn = new SqlConnection("Data Source=.;Initial Catalog=master;Integrated Security=SSPI"))
             {
-                mainGrid.DataSource = conn.Query("select * from sys.objects").AsList();
+                mainGrid.DataSource = conn.Query("select * from sys.objects where 1 = 0").AsList();
             }
             ResumeLayout();
         }

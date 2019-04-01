@@ -16,7 +16,7 @@ namespace Dapper
             if (reader.Read())
             {
                 var effectiveType = typeof(T);
-                var deser = GetDeserializer(effectiveType, reader, 0, -1, false);
+                var deser = GetDeserializer(effectiveType, reader, 0, -1, false, null);
                 var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 do
                 {
@@ -42,7 +42,7 @@ namespace Dapper
         {
             if (reader.Read())
             {
-                var deser = GetDeserializer(type, reader, 0, -1, false);
+                var deser = GetDeserializer(type, reader, 0, -1, false, null);
                 do
                 {
                     yield return deser(reader);
@@ -58,7 +58,7 @@ namespace Dapper
         {
             if (reader.Read())
             {
-                var deser = GetDapperRowDeserializer(reader, 0, -1, false);
+                var deser = GetDapperRowDeserializer(reader, 0, -1, false, null);
                 do
                 {
                     yield return deser(reader);
@@ -79,7 +79,7 @@ namespace Dapper
         public static Func<IDataReader, object> GetRowParser(this IDataReader reader, Type type,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            return GetDeserializer(type, reader, startIndex, length, returnNullIfFirstMissing);
+            return GetDeserializer(type, reader, startIndex, length, returnNullIfFirstMissing, null);
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Dapper
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             concreteType = concreteType ?? typeof(T);
-            var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
+            var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing, null);
             if (concreteType.IsValueType())
             {
                 return _ => (T)func(_);

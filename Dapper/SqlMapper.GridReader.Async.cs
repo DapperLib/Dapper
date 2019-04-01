@@ -165,15 +165,16 @@ namespace Dapper
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
+                var buffer = buffered ? CreateBufferList<T>() : null;
                 if (deserializer.Func == null || deserializer.Hash != hash)
                 {
-                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false, buffer as IDynamicRowList));
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
                 if (buffered && reader is DbDataReader)
                 {
-                    return ReadBufferedAsync<T>(gridIndex, deserializer.Func);
+                    return ReadBufferedAsync<T>(gridIndex, deserializer.Func, buffer);
                 }
                 else
                 {
@@ -207,7 +208,7 @@ namespace Dapper
                     int hash = GetColumnHash(reader);
                     if (deserializer.Func == null || deserializer.Hash != hash)
                     {
-                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false, null));
                         cache.Deserializer = deserializer;
                     }
                     result = (T)deserializer.Func(reader);
@@ -222,12 +223,11 @@ namespace Dapper
                 return result;
             }
 
-            private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer)
+            private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer, List<T> buffer)
             {
                 try
                 {
                     var reader = (DbDataReader)this.reader;
-                    var buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         buffer.Add((T)deserializer(reader));

@@ -152,14 +152,20 @@ namespace Dapper
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
+                var buffer = buffered ? CreateBufferList<T>() : null;
                 if (deserializer.Func == null || deserializer.Hash != hash)
                 {
-                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false, buffer as IDynamicRowList));
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
                 var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                return buffered ? result.ToList() : result;
+                if (buffered)
+                {
+                    buffer.AddRange(result);
+                    return buffer;
+                }
+                return result;
             }
 
             private T ReadRow<T>(Type type, Row row)
@@ -178,7 +184,7 @@ namespace Dapper
                     int hash = GetColumnHash(reader);
                     if (deserializer.Func == null || deserializer.Hash != hash)
                     {
-                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false, null));
                         cache.Deserializer = deserializer;
                     }
                     object val = deserializer.Func(reader);

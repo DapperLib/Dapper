@@ -18,21 +18,20 @@ namespace Dapper
                     => new DapperRowTypeDescriptor(instance);
             }
 
-            //// in theory we could implement this for zero-length results to bind; would require
-            //// additional changes, though, to capture a table even when no rows - so not currently provided
-            //internal sealed class DapperRowList : List<DapperRow>, ITypedList
-            //{
-            //    private readonly DapperTable _table;
-            //    public DapperRowList(DapperTable table) { _table = table; }
-            //    PropertyDescriptorCollection ITypedList.GetItemProperties(PropertyDescriptor[] listAccessors)
-            //    {
-            //        if (listAccessors != null && listAccessors.Length != 0) return PropertyDescriptorCollection.Empty;
+            // in theory we could implement this for zero-length results to bind; would require
+            // additional changes, though, to capture a table even when no rows - so not currently provided
+            internal sealed class DapperRowList : List<object>, ITypedList, IDynamicRowList
+            {
+                private DapperTable _table;
+                PropertyDescriptorCollection ITypedList.GetItemProperties(PropertyDescriptor[] listAccessors)
+                {
+                    if (listAccessors != null && listAccessors.Length != 0) return PropertyDescriptorCollection.Empty;
 
-            //        return DapperRowTypeDescriptor.GetProperties(_table);
-            //    }
-
-            //    string ITypedList.GetListName(PropertyDescriptor[] listAccessors) => null;
-            //}
+                    return DapperRowTypeDescriptor.GetProperties(_table);
+                }
+                string ITypedList.GetListName(PropertyDescriptor[] listAccessors) => null;
+                void IDynamicRowList.SetTable(DapperTable table) => _table = table;
+            }
 
             private sealed class DapperRowTypeDescriptor : ICustomTypeDescriptor
             {
@@ -60,17 +59,16 @@ namespace Dapper
 
                 EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[] attributes) => EventDescriptorCollection.Empty;
 
-                internal static PropertyDescriptorCollection GetProperties(DapperRow row) => GetProperties(row?.table, row);
-                internal static PropertyDescriptorCollection GetProperties(DapperTable table, IDictionary<string,object> row = null)
+                internal static PropertyDescriptorCollection GetProperties(DapperRow row) => GetProperties(row?.table);
+                internal static PropertyDescriptorCollection GetProperties(DapperTable table)
                 {
-                    string[] names = table?.FieldNames;
-                    if (names == null || names.Length == 0) return PropertyDescriptorCollection.Empty;
-                    var arr = new PropertyDescriptor[names.Length];
+                    var columns = table?.Columns;
+                    if (columns == null || columns.Length == 0) return PropertyDescriptorCollection.Empty;
+                    var arr = new PropertyDescriptor[columns.Length];
                     for (int i = 0; i < arr.Length; i++)
                     {
-                        var type = row != null && row.TryGetValue(names[i], out var value) && value != null
-                            ? value.GetType() : typeof(object);
-                        arr[i] = new RowBoundPropertyDescriptor(type, names[i], i);
+                        ref readonly DapperTable.DapperColumn col = ref columns[i];
+                        arr[i] = new RowBoundPropertyDescriptor(col.Type, col.Name, i);
                     }
                     return new PropertyDescriptorCollection(arr, true);
                 }

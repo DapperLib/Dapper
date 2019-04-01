@@ -647,7 +647,7 @@ namespace Dapper
         /// <param name="commandType">The type of command to execute.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static IEnumerable<dynamic> Query(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null) =>
-            Query<DapperRow>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
+            Query<object>(cnn, sql, param as object, transaction, buffered, commandTimeout, commandType);
 
         /// <summary>
         /// Return a dynamic object with properties matching the columns.
@@ -660,7 +660,7 @@ namespace Dapper
         /// <param name="commandType">The type of command to execute.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static dynamic QueryFirst(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            QueryFirst<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+            QueryFirst<object>(cnn, sql, param as object, transaction, commandTimeout, commandType);
 
         /// <summary>
         /// Return a dynamic object with properties matching the columns.
@@ -673,7 +673,7 @@ namespace Dapper
         /// <param name="commandType">The type of command to execute.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static dynamic QueryFirstOrDefault(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            QueryFirstOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+            QueryFirstOrDefault<object>(cnn, sql, param as object, transaction, commandTimeout, commandType);
 
         /// <summary>
         /// Return a dynamic object with properties matching the columns.
@@ -686,7 +686,7 @@ namespace Dapper
         /// <param name="commandType">The type of command to execute.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static dynamic QuerySingle(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            QuerySingle<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+            QuerySingle<object>(cnn, sql, param as object, transaction, commandTimeout, commandType);
 
         /// <summary>
         /// Return a dynamic object with properties matching the columns.
@@ -699,7 +699,7 @@ namespace Dapper
         /// <param name="commandType">The type of command to execute.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public static dynamic QuerySingleOrDefault(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            QuerySingleOrDefault<DapperRow>(cnn, sql, param as object, transaction, commandTimeout, commandType);
+            QuerySingleOrDefault<object>(cnn, sql, param as object, transaction, commandTimeout, commandType);
 
         /// <summary>
         /// Executes a query, returning the data typed as <typeparamref name="T"/>.
@@ -719,8 +719,7 @@ namespace Dapper
         public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
-            var data = QueryImpl<T>(cnn, command, typeof(T));
-            return command.Buffered ? data.ToList() : data;
+            return command.Buffered ? QueryBufferedImpl<T>(cnn, command, typeof(T)) : QueryImpl<T>(cnn, command, typeof(T), null);
         }
 
         /// <summary>
@@ -823,8 +822,7 @@ namespace Dapper
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
-            var data = QueryImpl<object>(cnn, command, type);
-            return command.Buffered ? data.ToList() : data;
+            return command.Buffered ? QueryBufferedImpl<object>(cnn, command, type) : QueryImpl<object>(cnn, command, type, null);
         }
 
         /// <summary>
@@ -926,10 +924,7 @@ namespace Dapper
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
         public static IEnumerable<T> Query<T>(this IDbConnection cnn, CommandDefinition command)
-        {
-            var data = QueryImpl<T>(cnn, command, typeof(T));
-            return command.Buffered ? data.ToList() : data;
-        }
+            => command.Buffered ? QueryBufferedImpl<T>(cnn, command, typeof(T)) : QueryImpl<T>(cnn, command, typeof(T), null);
 
         /// <summary>
         /// Executes a query, returning the data typed as <typeparamref name="T"/>.
@@ -1063,7 +1058,30 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> QueryImpl<T>(this IDbConnection cnn, CommandDefinition command, Type effectiveType)
+        internal interface IDynamicRowList
+        {
+            void SetTable(DapperTable table);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static List<T> CreateBufferList<T>()
+        {
+#if !NETSTANDARD1_3 // needs the component-model API
+            if (typeof(T) == typeof(object))
+            {
+                return (List<T>)(object)new DapperRow.DapperRowList();
+            }
+#endif
+            return new List<T>();
+        }
+        private static IList<T> QueryBufferedImpl<T>(this IDbConnection cnn, CommandDefinition command, Type effectiveType)
+        {
+            List<T> list = CreateBufferList<T>();
+            list.AddRange(QueryImpl<T>(cnn, command, effectiveType, list));
+            return list;
+        }
+
+        private static IEnumerable<T> QueryImpl<T>(this IDbConnection cnn, CommandDefinition command, Type effectiveType, List<T> buffer)
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType(), null);
@@ -1088,8 +1106,10 @@ namespace Dapper
                 if (tuple.Func == null || tuple.Hash != hash)
                 {
                     if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
+                    {
                         yield break;
-                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                    }
+                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false, buffer as IDynamicRowList));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
 
@@ -1098,13 +1118,22 @@ namespace Dapper
                 while (reader.Read())
                 {
                     object val = func(reader);
+                    T typed;
                     if (val == null || val is T)
                     {
-                        yield return (T)val;
+                        typed = (T)val;
                     }
                     else
                     {
-                        yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                        typed = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                    }
+                    if (buffer != null)
+                    {
+                        buffer.Add(typed);
+                    }
+                    else
+                    {
+                        yield return typed;
                     }
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
@@ -1191,7 +1220,7 @@ namespace Dapper
                     int hash = GetColumnHash(reader);
                     if (tuple.Func == null || tuple.Hash != hash)
                     {
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false, null));
                         if (command.AddToCache) SetQueryCache(identity, info);
                     }
 
@@ -1596,7 +1625,7 @@ namespace Dapper
                     {
                         currentSplit = splits[++splitIdx];
                     }
-                    deserializers.Add(GetDeserializer(type, reader, currentPos, splitPoint - currentPos, !first));
+                    deserializers.Add(GetDeserializer(type, reader, currentPos, splitPoint - currentPos, !first, null));
                     currentPos = splitPoint;
                     first = false;
                 }
@@ -1626,7 +1655,7 @@ namespace Dapper
                         }
                     }
 
-                    deserializers.Add(GetDeserializer(type, reader, splitPoint, currentPos - splitPoint, typeIdx > 0));
+                    deserializers.Add(GetDeserializer(type, reader, splitPoint, currentPos - splitPoint, typeIdx > 0, null));
                     currentPos = splitPoint;
                 }
 
@@ -1767,12 +1796,12 @@ namespace Dapper
             });
         }
 
-        private static Func<IDataReader, object> GetDeserializer(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
+        private static Func<IDataReader, object> GetDeserializer(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing, IDynamicRowList rowList)
         {
             // dynamic is passed in as Object ... by c# design
             if (type == typeof(object) || type == typeof(DapperRow))
             {
-                return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
+                return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing, rowList);
             }
             Type underlyingType = null;
             if (!(typeMap.ContainsKey(type) || type.IsEnum() || type.FullName == LinqBinary
@@ -1803,7 +1832,7 @@ namespace Dapper
                 return new InvalidOperationException("No columns were selected");
         }
 
-        internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
+        internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing, IDynamicRowList rowList)
         {
             var fieldCount = reader.FieldCount;
             if (length == -1)
@@ -1818,51 +1847,11 @@ namespace Dapper
 
             var effectiveFieldCount = Math.Min(fieldCount - startBound, length);
 
-            DapperTable table = null;
+            DapperTable table = DapperTable.Create(reader, startBound, effectiveFieldCount);
+            rowList?.SetTable(table);
 
-            return
-                r =>
-                {
-                    if (table == null)
-                    {
-                        string[] names = new string[effectiveFieldCount];
-                        for (int i = 0; i < effectiveFieldCount; i++)
-                        {
-                            names[i] = r.GetName(i + startBound);
-                        }
-                        table = new DapperTable(names);
-                    }
-
-                    var values = new object[effectiveFieldCount];
-
-                    if (returnNullIfFirstMissing)
-                    {
-                        values[0] = r.GetValue(startBound);
-                        if (values[0] is DBNull)
-                        {
-                            return null;
-                        }
-                    }
-
-                    if (startBound == 0)
-                    {
-                        for (int i = 0; i < values.Length; i++)
-                        {
-                            object val = r.GetValue(i);
-                            values[i] = val is DBNull ? null : val;
-                        }
-                    }
-                    else
-                    {
-                        var begin = returnNullIfFirstMissing ? 1 : 0;
-                        for (var iter = begin; iter < effectiveFieldCount; ++iter)
-                        {
-                            object obj = r.GetValue(iter + startBound);
-                            values[iter] = obj is DBNull ? null : obj;
-                        }
-                    }
-                    return new DapperRow(table, values);
-                };
+            if (returnNullIfFirstMissing) return table.AddRowUnlessFirstMissing;
+            return table.AddRow;
         }
         /// <summary>
         /// Internal use only.

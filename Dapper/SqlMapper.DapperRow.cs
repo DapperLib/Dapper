@@ -81,13 +81,13 @@ namespace Dapper
 
             public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
             {
-                var names = table.FieldNames;
-                for (var i = 0; i < names.Length; i++)
+                var columns = table.Columns;
+                for (var i = 0; i < columns.Length; i++)
                 {
                     object value = i < values.Length ? values[i] : null;
                     if (!(value is DeadValue))
                     {
-                        yield return new KeyValuePair<string, object>(names[i], value);
+                        yield return new KeyValuePair<string, object>(columns[i].Name, value);
                     }
                 }
             }
@@ -174,7 +174,7 @@ namespace Dapper
                 int index = table.IndexOfName(key);
                 if (index < 0)
                 {
-                    index = table.AddField(key);
+                    index = table.AddField(key, typeof(object));
                 }
                 else if (isAdd && index < values.Length && !(values[index] is DeadValue))
                 {
