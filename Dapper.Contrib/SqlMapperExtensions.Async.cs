@@ -28,7 +28,8 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(GetAsync));
-                var name = GetTableName(type);
+                var adapter = GetFormatter(connection);
+                var name = adapter.EscapeArtifactName(GetTableName(type));
 
                 sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
                 GetQueries[type.TypeHandle] = sql;
@@ -86,7 +87,8 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
                 GetSingleKey<T>(nameof(GetAll));
-                var name = GetTableName(type);
+                var adapter = GetFormatter(connection);
+                var name = adapter.EscapeArtifactName(GetTableName(type));
 
                 sql = "SELECT * FROM " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
@@ -162,7 +164,7 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var name = GetTableName(type);
+            var name = sqlAdapter.EscapeArtifactName(GetTableName(type));
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type).ToList();
@@ -237,7 +239,8 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var adapter = GetFormatter(connection);
+            var name = adapter.EscapeArtifactName(GetTableName(type));
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
@@ -247,7 +250,6 @@ namespace Dapper.Contrib.Extensions
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count; i++)
             {
@@ -306,13 +308,13 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var adapter = GetFormatter(connection);
+            var name = adapter.EscapeArtifactName(GetTableName(type));
             keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
-            var adapter = GetFormatter(connection);
             
             for (var i = 0; i < keyProperties.Count; i++)
             {
@@ -336,7 +338,8 @@ namespace Dapper.Contrib.Extensions
         public static async Task<bool> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            var statement = "DELETE FROM " + GetTableName(type);
+            var adapter = GetFormatter(connection);
+            var statement = "DELETE FROM " + adapter.EscapeArtifactName(GetTableName(type));
             var deleted = await connection.ExecuteAsync(statement, null, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;
         }

@@ -179,7 +179,8 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(Get));
-                var name = GetTableName(type);
+                var adapter = GetFormatter(connection);
+                var name = adapter.EscapeArtifactName(GetTableName(type));
 
                 sql = $"select * from {name} where {key.Name} = @id";
                 GetQueries[type.TypeHandle] = sql;
@@ -242,7 +243,8 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
                 GetSingleKey<T>(nameof(GetAll));
-                var name = GetTableName(type);
+                var adapter = GetFormatter(connection);
+                var name = adapter.EscapeArtifactName(GetTableName(type));
 
                 sql = "select * from " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
@@ -350,14 +352,15 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            var name = GetTableName(type);
+            var adapter = GetFormatter(connection);
+
+            var name = adapter.EscapeArtifactName(GetTableName(type));
             var sbColumnList = new StringBuilder(null);
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type);
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
 
-            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
@@ -435,7 +438,8 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var adapter = GetFormatter(connection);
+            var name = adapter.EscapeArtifactName(GetTableName(type));
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
@@ -444,8 +448,6 @@ namespace Dapper.Contrib.Extensions
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
-
-            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < nonIdProps.Count; i++)
             {
@@ -504,13 +506,13 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var adapter = GetFormatter(connection);
+            var name = adapter.EscapeArtifactName(GetTableName(type));
             keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
 
-            var adapter = GetFormatter(connection);
 
             for (var i = 0; i < keyProperties.Count; i++)
             {
@@ -534,7 +536,8 @@ namespace Dapper.Contrib.Extensions
         public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
-            var name = GetTableName(type);
+            var adapter = GetFormatter(connection);
+            var name = adapter.EscapeArtifactName(GetTableName(type));
             var statement = $"delete from {name}";
             var deleted = connection.Execute(statement, null, transaction, commandTimeout);
             return deleted > 0;
@@ -805,6 +808,13 @@ public partial interface ISqlAdapter
     /// <param name="sb">The string builder  to append to.</param>
     /// <param name="columnName">The column name.</param>
     void AppendColumnNameEqualsValue(StringBuilder sb, string columnName);
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    string EscapeArtifactName(string artifactName);
 }
 
 /// <summary>
@@ -849,7 +859,7 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}]", columnName);
+        sb.AppendFormat("{0}", EscapeArtifactName(columnName));
     }
 
     /// <summary>
@@ -859,7 +869,17 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        sb.AppendFormat("{0} = @{1}", EscapeArtifactName(columnName), columnName);
+    }
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    public string EscapeArtifactName(string artifactName)
+    {
+        return $"[{artifactName}]";
     }
 }
 
@@ -905,7 +925,7 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}]", columnName);
+        sb.AppendFormat("{0}", EscapeArtifactName(columnName));
     }
 
     /// <summary>
@@ -915,7 +935,17 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        sb.AppendFormat("{0} = @{1}", EscapeArtifactName(columnName), columnName);
+    }
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    public string EscapeArtifactName(string artifactName)
+    {
+        return $"[{artifactName}]";
     }
 }
 
@@ -960,7 +990,7 @@ public partial class MySqlAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("`{0}`", columnName);
+        sb.AppendFormat("{0}", EscapeArtifactName(columnName));
     }
 
     /// <summary>
@@ -970,7 +1000,17 @@ public partial class MySqlAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
+        sb.AppendFormat("{0} = @{1}", EscapeArtifactName(columnName), columnName);
+    }
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    public string EscapeArtifactName(string artifactName)
+    {
+        return $"`{artifactName}`";
     }
 }
 
@@ -1036,7 +1076,7 @@ public partial class PostgresAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\"", columnName);
+        sb.AppendFormat("{0}", EscapeArtifactName(columnName));
     }
 
     /// <summary>
@@ -1046,7 +1086,17 @@ public partial class PostgresAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+        sb.AppendFormat("{0} = @{1}", EscapeArtifactName(columnName), columnName);
+    }
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    public string EscapeArtifactName(string artifactName)
+    {
+        return $"\"{artifactName}\"";
     }
 }
 
@@ -1089,7 +1139,7 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\"", columnName);
+        sb.AppendFormat("{0}", EscapeArtifactName(columnName));
     }
 
     /// <summary>
@@ -1099,7 +1149,17 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+        sb.AppendFormat("{0} = @{1}", EscapeArtifactName(columnName), columnName);
+    }
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    public string EscapeArtifactName(string artifactName)
+    {
+        return $"\"{artifactName}\"";
     }
 }
 
@@ -1157,5 +1217,15 @@ public partial class FbAdapter : ISqlAdapter
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("{0} = @{1}", columnName, columnName);
+    }
+
+    /// <summary>
+    /// Returns escaped artifact name to prevent collision with keywords.
+    /// </summary>
+    /// <param name="artifactName">The database artifact name.</param>
+    /// <returns>The escaped artifact name.</returns>
+    public string EscapeArtifactName(string artifactName)
+    {
+        return artifactName;
     }
 }
