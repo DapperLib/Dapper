@@ -61,6 +61,32 @@ namespace Dapper
         /// <returns>Matching constructor or default one</returns>
         public ConstructorInfo FindConstructor(string[] names, Type[] types)
         {
+            // first search constructor using the same position of names
+            var byPositionConstructor = FindConstructorByColumns(names, types);
+            if (byPositionConstructor != null)
+                return byPositionConstructor;
+
+            // if not found, search by names sorted (F# anonymous records)
+            return FindConstructorBySortedNames(names, types);
+        }
+
+        private ConstructorInfo FindConstructorBySortedNames(string[] names, Type[] types)
+        {
+            if (names.Length != types.Length)
+                return null;
+
+            var byName = names.Zip(types, (name, type) => new { name, type })
+                              .OrderBy(x => x.name)
+                              .ToArray();
+
+            var namesByName = byName.Select(x => x.name).ToArray();
+            var typesByName = byName.Select(x => x.type).ToArray();
+
+            return FindConstructorByColumns(namesByName, typesByName);
+        }
+
+        private ConstructorInfo FindConstructorByColumns(string[] names, Type[] types)
+        {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
             {
