@@ -3258,9 +3258,15 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloc, returnValueLocal); // [target]
             }
 
-            var members = (specializedConstructor != null
-                ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList();
+            List<IMemberMap> members;
+            if (specializedConstructor != null)
+            {
+                members = names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n)).ToList();
+            }
+            else
+            {
+                members = names.Select(n => typeMap.GetMember(n)).ToList();
+            }
 
             // stack is now [target]
             bool first = true;
