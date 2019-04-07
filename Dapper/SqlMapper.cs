@@ -3258,10 +3258,12 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloc, returnValueLocal); // [target]
             }
 
+            bool reorderConstructorParameters = false;
             List<IMemberMap> members;
             if (specializedConstructor != null)
             {
                 members = names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n)).ToList();
+                reorderConstructorParameters = members.Select((m, i) => i != m.Parameter.Position).Any(x => x);
             }
             else
             {
@@ -3361,6 +3363,36 @@ namespace Dapper
             {
                 if (specializedConstructor != null)
                 {
+                    if (reorderConstructorParameters)
+                    {
+                        // stack is already filled with arguments
+                        // save these in local vars and readd to stack in correct order
+
+                        var valuesIndexes =
+                            members
+                                .AsEnumerable()
+                                .Reverse() // as stack LIFO order
+                                .Select(item =>
+                                {
+                                    int localIndex = il.DeclareLocal(item.MemberType).LocalIndex;
+                                    StoreLocal(il, localIndex);
+                                    return localIndex;
+                                })
+                                .Reverse() // as FIFO order
+                                .ToList();
+
+                        var membersByConstructorParamsOrder =
+                            members
+                            .Zip(valuesIndexes, (member, storedInLocalVarIndex) => new { member, storedInLocalVarIndex })
+                            .OrderBy(item => item.member.Parameter.Position)
+                            .ToList();
+
+                        foreach (var item in membersByConstructorParamsOrder)
+                        {
+                            LoadLocal(il, item.storedInLocalVarIndex);
+                        }
+                    }
+
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc, returnValueLocal); // stack is empty
