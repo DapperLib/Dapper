@@ -71,7 +71,7 @@ namespace Dapper
                 return null;
 
             var byName = names.Zip(types, (name, type) => new { name, type })
-                              .OrderBy(x => x.name)
+                              .OrderBy(x => x.name, StringComparer.OrdinalIgnoreCase)
                               .ToArray();
 
             var namesByName = byName.Select(x => x.name).ToArray();
