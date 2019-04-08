@@ -61,13 +61,8 @@ namespace Dapper
         /// <returns>Matching constructor or default one</returns>
         public ConstructorInfo FindConstructor(string[] names, Type[] types)
         {
-            // first search constructor using the same position of names
-            var byPositionConstructor = FindConstructorByColumns(names, types);
-            if (byPositionConstructor != null)
-                return byPositionConstructor;
-
-            // if not found, search by names sorted (F# anonymous records)
-            return FindConstructorBySortedNames(names, types);
+            return FindConstructorByColumns(names, types) // first search constructor using the same position of names
+                ?? FindConstructorBySortedNames(names, types); // if not found, search by names sorted (F# anonymous records)
         }
 
         private ConstructorInfo FindConstructorBySortedNames(string[] names, Type[] types)
