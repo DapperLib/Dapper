@@ -3263,7 +3263,11 @@ namespace Dapper
             if (specializedConstructor != null)
             {
                 members = names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n)).ToList();
-                reorderConstructorParameters = members.Select((m, i) => i != m.Parameter.Position).Any(x => x);
+                var ctorParams = specializedConstructor.GetParameters();
+                reorderConstructorParameters =
+                    ctorParams.Any()
+                    && ctorParams.Length == members.Count
+                    && members.Select((m, i) => i != m.Parameter.Position).Any(x => x);
             }
             else
             {
