@@ -1,5 +1,8 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using Dapper.Tests.TestCases;
+using Dapper.Tests.TestEntities;
 using Xunit;
 
 namespace Dapper.Tests
@@ -124,6 +127,16 @@ namespace Dapper.Tests
         {
             var foo = connection.Query<SO27024806Class>("SELECT 'Foo' AS myField").Single();
             Assert.Equal(SO27024806Enum.Foo, foo.MyField);
+        }
+
+        [Theory]
+        [MemberData(nameof(EnumTestCases.TestEnumParsingWithHandlerCases), MemberType = typeof(EnumTestCases))]
+        public void TestEnumParsingWithHandler(string query, IEnumerable<Item> expectedResult)
+        {
+            SqlMapper.AddTypeHandler(new ItemTypeHandler());
+            var actualResult = connection.Query<Item>(query);
+
+            Assert.Equal(expectedResult, actualResult);
         }
     }
 }
