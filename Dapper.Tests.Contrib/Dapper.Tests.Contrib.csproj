@@ -6,13 +6,14 @@
     <DebugType>portable</DebugType>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Dapper.Tests\Helpers\XunitSkippable.cs;..\Dapper\TypeExtensions.cs" />
     <None Remove="Test.DB.sdf" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Npgsql" Version="3.2.5" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />

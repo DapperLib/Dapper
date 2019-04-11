@@ -175,13 +175,19 @@ namespace Dapper.Contrib.Extensions
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
+            var adapter = GetFormatter(connection);
 
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                sql = $"select * from {name} where {key.Name} = @id";
+                var sb = new StringBuilder("select * from ");
+                sb.Append(name);
+                sb.Append(" where ");
+                adapter.AppendColumnName(sb, key.Name);
+                sb.Append(" = @id;");
+                sql = sb.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -1011,7 +1017,7 @@ public partial class PostgresAdapter : ISqlAdapter
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                AppendColumnName(sb, property.Name);
             }
         }
 
@@ -1021,8 +1027,8 @@ public partial class PostgresAdapter : ISqlAdapter
         var id = 0;
         foreach (var p in propertyInfos)
         {
-            var value = ((IDictionary<string, object>)results[0])[p.Name.ToLower()];
-            p.SetValue(entityToInsert, value, null);
+            var value = ((IDictionary<string, object>)results[0])[p.Name];
+            p.SetValue(entityToInsert, Convert.ChangeType(value, p.PropertyType), null);
             if (id == 0)
                 id = Convert.ToInt32(value);
         }

@@ -226,9 +226,9 @@ namespace Dapper.Tests.Contrib
 
                 var builder = new SqlBuilder();
                 var justId = builder.AddTemplate("SELECT /**select**/ FROM Users");
-                var all = builder.AddTemplate("SELECT Name, /**select**/, Age FROM Users");
+                var all = builder.AddTemplate($"SELECT {FormatIdentifier("Name")}, /**select**/, {FormatIdentifier("Age")} FROM Users");
 
-                builder.Select("Id");
+                builder.Select(FormatIdentifier("Id"));
 
                 var ids = await connection.QueryAsync<int>(justId.RawSql, justId.Parameters).ConfigureAwait(false);
                 var users = await connection.QueryAsync<User>(all.RawSql, all.Parameters).ConfigureAwait(false);
@@ -246,7 +246,7 @@ namespace Dapper.Tests.Contrib
         public async Task BuilderTemplateWithoutCompositionAsync()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new { age = 5 });
+            var template = builder.AddTemplate($"SELECT COUNT(*) FROM Users WHERE {FormatIdentifier("Age")} = @age", new { age = 5 });
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");

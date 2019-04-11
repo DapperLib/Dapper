@@ -111,6 +111,7 @@ namespace Dapper.Tests.Contrib
         protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
 
         public abstract IDbConnection GetConnection();
+        public virtual string FormatIdentifier(string identifier) => identifier;
 
         private IDbConnection GetOpenConnection()
         {
@@ -699,9 +700,9 @@ namespace Dapper.Tests.Contrib
 
                 var builder = new SqlBuilder();
                 var justId = builder.AddTemplate("SELECT /**select**/ FROM Users");
-                var all = builder.AddTemplate("SELECT Name, /**select**/, Age FROM Users");
+                var all = builder.AddTemplate($"SELECT {FormatIdentifier("Name")}, /**select**/, {FormatIdentifier("Age")} FROM Users");
 
-                builder.Select("Id");
+                builder.Select(FormatIdentifier("Id"));
 
                 var ids = connection.Query<int>(justId.RawSql, justId.Parameters);
                 var users = connection.Query<User>(all.RawSql, all.Parameters);
@@ -718,7 +719,7 @@ namespace Dapper.Tests.Contrib
         public void BuilderTemplateWithoutComposition()
         {
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate("SELECT COUNT(*) FROM Users WHERE Age = @age", new { age = 5 });
+            var template = builder.AddTemplate($"SELECT COUNT(*) FROM Users WHERE {FormatIdentifier("Age")} = @age", new { age = 5 });
 
             if (template.RawSql == null) throw new Exception("RawSql null");
             if (template.Parameters == null) throw new Exception("Parameters null");
