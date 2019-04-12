@@ -6,7 +6,7 @@
     <DebugType>portable</DebugType>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Dapper.Tests\Helpers\XunitSkippable.cs;..\Dapper\TypeExtensions.cs" />

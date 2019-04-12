@@ -80,25 +80,25 @@ namespace Dapper.Tests.Contrib
                 void dropTable(string name) => connection.Execute($"DROP TABLE IF EXISTS {name}; ");
                 connection.Open();
                 dropTable("Stuff");
-                connection.Execute("CREATE TABLE Stuff (\"TheId\" serial not null, \"Name\" varchar(100) not null, \"Created\" timestamp null);");
+                connection.Execute("CREATE TABLE Stuff (TheId serial not null, \"Name\" varchar(100) not null, \"Created\" timestamp null);");
                 dropTable("People");
-                connection.Execute("CREATE TABLE People (\"Id\" serial not null, \"Name\" varchar(100) not null);");
+                connection.Execute("CREATE TABLE People (Id serial not null, \"Name\" varchar(100) not null);");
                 dropTable("\"users\"");
-                connection.Execute("CREATE TABLE \"users\" (\"Id\" serial not null, \"Name\" varchar(100) not null, \"Age\" int not null);");
+                connection.Execute("CREATE TABLE \"users\" (Id serial not null, \"Name\" varchar(100) not null, \"Age\" int not null);");
                 dropTable("Automobiles");
-                connection.Execute("CREATE TABLE Automobiles (\"Id\" serial not null, \"Name\" varchar(100) not null);");
+                connection.Execute("CREATE TABLE Automobiles (Id serial not null, \"Name\" varchar(100) not null);");
                 dropTable("Results");
-                connection.Execute("CREATE TABLE Results (\"Id\" serial not null, \"Name\" varchar(100) not null, \"Order\" int not null);");
+                connection.Execute("CREATE TABLE Results (Id serial not null, \"Name\" varchar(100) not null, \"Order\" int not null);");
                 dropTable("ObjectX");
-                connection.Execute("CREATE TABLE ObjectX (\"ObjectXId\" varchar(100) not null, \"Name\" varchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectX (ObjectXId varchar(100) not null, \"Name\" varchar(100) not null);");
                 dropTable("ObjectY");
-                connection.Execute("CREATE TABLE ObjectY (\"ObjectYId\" int not null, \"Name\" varchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectY (ObjectYId int not null, \"Name\" varchar(100) not null);");
                 dropTable("ObjectZ");
-                connection.Execute("CREATE TABLE ObjectZ (\"Id\" int not null, \"Name\" varchar(100) not null);");
+                connection.Execute("CREATE TABLE ObjectZ (Id int not null, \"Name\" varchar(100) not null);");
                 dropTable("GenericType");
-                connection.Execute("CREATE TABLE GenericType (\"Id\" varchar(100) not null, \"Name\" varchar(100) not null);");
+                connection.Execute("CREATE TABLE GenericType (Id varchar(100) not null, \"Name\" varchar(100) not null);");
                 dropTable("NullableDates");
-                connection.Execute("CREATE TABLE NullableDates (\"Id\" serial not null, \"DateValue\" timestamp null);");
+                connection.Execute("CREATE TABLE NullableDates (Id serial not null, \"DateValue\" timestamp null);");
             }
         }
     }

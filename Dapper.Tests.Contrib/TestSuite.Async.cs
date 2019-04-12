@@ -228,7 +228,7 @@ namespace Dapper.Tests.Contrib
                 var justId = builder.AddTemplate("SELECT /**select**/ FROM Users");
                 var all = builder.AddTemplate($"SELECT {FormatIdentifier("Name")}, /**select**/, {FormatIdentifier("Age")} FROM Users");
 
-                builder.Select(FormatIdentifier("Id"));
+                builder.Select("Id");
 
                 var ids = await connection.QueryAsync<int>(justId.RawSql, justId.Parameters).ConfigureAwait(false);
                 var users = await connection.QueryAsync<User>(all.RawSql, all.Parameters).ConfigureAwait(false);
