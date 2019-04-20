@@ -86,13 +86,13 @@ namespace Dapper.Tests
             Assert.Equal(6, val.e6);
             Assert.Equal(7, val.e7);
             Assert.Equal(8, val.e8);
-            Assert.Equal(9, val.e1);
-            Assert.Equal(10, val.e2);
-            Assert.Equal(11, val.e3);
-            Assert.Equal(12, val.e3);
-            Assert.Equal(13, val.e4);
-            Assert.Equal(14, val.e5);
-            Assert.Equal(15, val.e6);
+            Assert.Equal(9, val.e9);
+            Assert.Equal(10, val.e10);
+            Assert.Equal(11, val.e11);
+            Assert.Equal(12, val.e12);
+            Assert.Equal(13, val.e13);
+            Assert.Equal(14, val.e14);
+            Assert.Equal(15, val.e15);
         }
     }
 }

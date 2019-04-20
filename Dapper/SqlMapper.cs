@@ -1239,7 +1239,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Perform a multi-mapping query with 2 input types. 
+        /// Perform a multi-mapping query with 2 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -1259,7 +1259,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with 3 input types. 
+        /// Perform a multi-mapping query with 3 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -1280,7 +1280,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with 4 input types. 
+        /// Perform a multi-mapping query with 4 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -1302,7 +1302,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with 5 input types. 
+        /// Perform a multi-mapping query with 5 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -1325,7 +1325,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with 6 input types. 
+        /// Perform a multi-mapping query with 6 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -1374,7 +1374,7 @@ namespace Dapper
             MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
 
         /// <summary>
-        /// Perform a multi-mapping query with an arbitrary number of input types. 
+        /// Perform a multi-mapping query with an arbitrary number of input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TReturn">The combined type to return.</typeparam>
@@ -2372,27 +2372,6 @@ namespace Dapper
 
         private static bool IsValueTuple(Type type) => type?.IsValueType() == true && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal);
 
-        private static List<IMemberMap> GetValueTupleMembers(Type type, string[] names)
-        {
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
-            var result = new List<IMemberMap>(names.Length);
-            for (int i = 0; i < names.Length; i++)
-            {
-                FieldInfo field = null;
-                string name = "Item" + (i + 1).ToString(CultureInfo.InvariantCulture);
-                foreach (var test in fields)
-                {
-                    if (test.Name == name)
-                    {
-                        field = test;
-                        break;
-                    }
-                }
-                result.Add(field == null ? null : new SimpleMemberMap(string.IsNullOrWhiteSpace(names[i]) ? name : names[i], field));
-            }
-            return result;
-        }
-
         internal static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
             Type type = identity.parametersType;
@@ -3079,14 +3058,6 @@ namespace Dapper
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
-            var returnType = type.IsValueType() ? typeof(object) : type;
-            var dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), returnType, new[] { typeof(IDataReader) }, type, true);
-            var il = dm.GetILGenerator();
-            il.DeclareLocal(typeof(int));
-            il.DeclareLocal(type);
-            il.Emit(OpCodes.Ldc_I4_0);
-            il.Emit(OpCodes.Stloc_0);
-
             if (length == -1)
             {
                 length = reader.FieldCount - startBound;
@@ -3096,6 +3067,94 @@ namespace Dapper
             {
                 throw MultiMapException(reader);
             }
+
+            var returnType = type.IsValueType() ? typeof(object) : type;
+            var dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), returnType, new[] { typeof(IDataReader) }, type, true);
+            var il = dm.GetILGenerator();
+
+            if (IsValueTuple(type))
+            {
+                GenerateValueTupleDeserializer(type, reader, startBound, length, il);
+            }
+            else
+            {
+                GenerateDeserializerFromMap(type, reader, startBound, length, returnNullIfFirstMissing, il);
+            }
+
+            var funcType = System.Linq.Expressions.Expression.GetFuncType(typeof(IDataReader), returnType);
+            return (Func<IDataReader, object>)dm.CreateDelegate(funcType);
+        }
+
+        private static void GenerateValueTupleDeserializer(Type valueTupleType, IDataReader reader, int startBound, int length, ILGenerator il)
+        {
+            var currentValueTupleType = valueTupleType;
+
+            var constructors = new List<ConstructorInfo>();
+            var languageTupleElementTypes = new List<Type>();
+
+            while (true)
+            {
+                var arity = int.Parse(currentValueTupleType.Name.Substring("ValueTuple`".Length), CultureInfo.InvariantCulture);
+                var constructorParameterTypes = new Type[arity];
+                var restField = (FieldInfo)null;
+
+                foreach (var field in currentValueTupleType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                {
+                    if (field.Name == "Rest")
+                    {
+                        restField = field;
+                    }
+                    else if (field.Name.StartsWith("Item", StringComparison.Ordinal))
+                    {
+                        var elementNumber = int.Parse(field.Name.Substring("Item".Length), CultureInfo.InvariantCulture);
+                        constructorParameterTypes[elementNumber - 1] = field.FieldType;
+                    }
+                }
+
+                var itemFieldCount = constructorParameterTypes.Length;
+                if (restField != null) itemFieldCount--;
+
+                for (var i = 0; i < itemFieldCount; i++)
+                {
+                    languageTupleElementTypes.Add(constructorParameterTypes[i]);
+                }
+
+                if (restField != null)
+                {
+                    constructorParameterTypes[constructorParameterTypes.Length - 1] = restField.FieldType;
+                }
+
+                constructors.Add(currentValueTupleType.GetConstructor(constructorParameterTypes));
+
+                if (restField is null) break;
+
+                currentValueTupleType = restField.FieldType;
+                if (!IsValueTuple(currentValueTupleType))
+                {
+                    throw new InvalidOperationException("The Rest field of a ValueTuple must contain a nested ValueTuple of arity 1 or greater.");
+                }
+            }
+
+            for (var i = 0; i < languageTupleElementTypes.Count; i++)
+            {
+                EmitInt32(il, i + 1);
+            }
+
+            for (var i = constructors.Count - 1; i >= 0; i--)
+            {
+                il.Emit(OpCodes.Newobj, constructors[i]);
+            }
+
+            il.Emit(OpCodes.Box, valueTupleType);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void GenerateDeserializerFromMap(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing, ILGenerator il)
+        {
+            il.DeclareLocal(typeof(int));
+            il.DeclareLocal(type);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Stloc_0);
 
             var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
 
@@ -3187,9 +3246,9 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloc_1);// [target]
             }
 
-            var members = IsValueTuple(type) ? GetValueTupleMembers(type, names) : ((specializedConstructor != null
+            var members = (specializedConstructor != null
                 ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList());
+                : names.Select(n => typeMap.GetMember(n))).ToList();
 
             // stack is now [target]
 
@@ -3400,9 +3459,6 @@ namespace Dapper
                 il.Emit(OpCodes.Box, type);
             }
             il.Emit(OpCodes.Ret);
-
-            var funcType = System.Linq.Expressions.Expression.GetFuncType(typeof(IDataReader), returnType);
-            return (Func<IDataReader, object>)dm.CreateDelegate(funcType);
         }
 
         private static void FlexibleConvertBoxedFromHeadOfStack(ILGenerator il, Type from, Type to, Type via)
