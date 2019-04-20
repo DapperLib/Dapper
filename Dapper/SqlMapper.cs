@@ -3135,9 +3135,36 @@ namespace Dapper
                 }
             }
 
+            var enumDeclareLocal = -1;
+
             for (var i = 0; i < languageTupleElementTypes.Count; i++)
             {
-                EmitInt32(il, i + 1);
+                var targetType = languageTupleElementTypes[i];
+
+                if (i < length)
+                {
+                    LoadReaderValueOrBranchToDBNullLabel(
+                        il,
+                        startBound + i,
+                        ref enumDeclareLocal,
+                        valueCopyLocal: null,
+                        reader.GetFieldType(startBound + i),
+                        targetType,
+                        out var isDbNullLabel);
+
+                    var finishLabel = il.DefineLabel();
+                    il.Emit(OpCodes.Br_S, finishLabel);
+                    il.MarkLabel(isDbNullLabel);
+                    il.Emit(OpCodes.Pop);
+
+                    LoadDefaultValue(il, targetType);
+
+                    il.MarkLabel(finishLabel);
+                }
+                else
+                {
+                    LoadDefaultValue(il, targetType);
+                }
             }
 
             for (var i = constructors.Count - 1; i >= 0; i--)
@@ -3262,96 +3289,11 @@ namespace Dapper
                 {
                     if (specializedConstructor == null)
                         il.Emit(OpCodes.Dup); // stack is now [target][target]
-                    Label isDbNullLabel = il.DefineLabel();
                     Label finishLabel = il.DefineLabel();
-
-                    il.Emit(OpCodes.Ldarg_0); // stack is now [target][target][reader]
-                    EmitInt32(il, index); // stack is now [target][target][reader][index]
-                    il.Emit(OpCodes.Dup);// stack is now [target][target][reader][index][index]
-                    il.Emit(OpCodes.Stloc_0);// stack is now [target][target][reader][index]
-                    il.Emit(OpCodes.Callvirt, getItem); // stack is now [target][target][value-as-object]
-                    il.Emit(OpCodes.Dup); // stack is now [target][target][value-as-object][value-as-object]
-                    StoreLocal(il, valueCopyLocal);
-                    Type colType = reader.GetFieldType(index);
                     Type memberType = item.MemberType;
 
-                    if (memberType == typeof(char) || memberType == typeof(char?))
-                    {
-                        il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
-                            memberType == typeof(char) ? nameof(SqlMapper.ReadChar) : nameof(SqlMapper.ReadNullableChar), BindingFlags.Static | BindingFlags.Public), null); // stack is now [target][target][typed-value]
-                    }
-                    else
-                    {
-                        il.Emit(OpCodes.Dup); // stack is now [target][target][value][value]
-                        il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [target][target][value-as-object][DBNull or null]
-                        il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [target][target][value-as-object]
+                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref enumDeclareLocal, valueCopyLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel);
 
-                        // unbox nullable enums as the primitive, i.e. byte etc
-
-                        var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
-                        var unboxType = nullUnderlyingType?.IsEnum() == true ? nullUnderlyingType : memberType;
-
-                        if (unboxType.IsEnum())
-                        {
-                            Type numericType = Enum.GetUnderlyingType(unboxType);
-                            if (colType == typeof(string))
-                            {
-                                if (enumDeclareLocal == -1)
-                                {
-                                    enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
-                                }
-                                il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [target][target][string]
-                                StoreLocal(il, enumDeclareLocal); // stack is now [target][target]
-                                il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [target][target][enum-type-token]
-                                il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)), null);// stack is now [target][target][enum-type]
-                                LoadLocal(il, enumDeclareLocal); // stack is now [target][target][enum-type][string]
-                                il.Emit(OpCodes.Ldc_I4_1); // stack is now [target][target][enum-type][string][true]
-                                il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [target][target][enum-as-object]
-                                il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
-                            }
-                            else
-                            {
-                                FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
-                            }
-
-                            if (nullUnderlyingType != null)
-                            {
-                                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
-                            }
-                        }
-                        else if (memberType.FullName == LinqBinary)
-                        {
-                            il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][target][byte-array]
-                            il.Emit(OpCodes.Newobj, memberType.GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [target][target][binary]
-                        }
-                        else
-                        {
-                            TypeCode dataTypeCode = TypeExtensions.GetTypeCode(colType), unboxTypeCode = TypeExtensions.GetTypeCode(unboxType);
-                            bool hasTypeHandler;
-                            if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == TypeExtensions.GetTypeCode(nullUnderlyingType))
-                            {
-                                if (hasTypeHandler)
-                                {
-#pragma warning disable 618
-                                    il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [target][target][typed-value]
-#pragma warning restore 618
-                                }
-                                else
-                                {
-                                    il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [target][target][typed-value]
-                                }
-                            }
-                            else
-                            {
-                                // not a direct match; need to tweak the unbox
-                                FlexibleConvertBoxedFromHeadOfStack(il, colType, nullUnderlyingType ?? unboxType, null);
-                                if (nullUnderlyingType != null)
-                                {
-                                    il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [target][target][typed-value]
-                                }
-                            }
-                        }
-                    }
                     if (specializedConstructor == null)
                     {
                         // Store the value in the property/field
@@ -3371,17 +3313,7 @@ namespace Dapper
                     if (specializedConstructor != null)
                     {
                         il.Emit(OpCodes.Pop);
-                        if (item.MemberType.IsValueType())
-                        {
-                            int localIndex = il.DeclareLocal(item.MemberType).LocalIndex;
-                            LoadLocalAddress(il, localIndex);
-                            il.Emit(OpCodes.Initobj, item.MemberType);
-                            LoadLocal(il, localIndex);
-                        }
-                        else
-                        {
-                            il.Emit(OpCodes.Ldnull);
-                        }
+                        LoadDefaultValue(il, item.MemberType);
                     }
                     else if (applyNullSetting && (!memberType.IsValueType() || Nullable.GetUnderlyingType(memberType) != null))
                     {
@@ -3459,6 +3391,115 @@ namespace Dapper
                 il.Emit(OpCodes.Box, type);
             }
             il.Emit(OpCodes.Ret);
+        }
+
+        private static void LoadDefaultValue(ILGenerator il, Type type)
+        {
+            if (type.IsValueType())
+            {
+                int localIndex = il.DeclareLocal(type).LocalIndex;
+                LoadLocalAddress(il, localIndex);
+                il.Emit(OpCodes.Initobj, type);
+                LoadLocal(il, localIndex);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldnull);
+            }
+        }
+
+        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref int enumDeclareLocal, int? valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel)
+        {
+            isDbNullLabel = il.DefineLabel();
+            il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
+            EmitInt32(il, index); // stack is now [...][reader][index]
+            il.Emit(OpCodes.Dup);// stack is now [...][reader][index][index]
+            il.Emit(OpCodes.Stloc_0);// stack is now [...][reader][index]
+            il.Emit(OpCodes.Callvirt, getItem); // stack is now [...][value-as-object]
+
+            if (valueCopyLocal != null)
+            {
+                il.Emit(OpCodes.Dup); // stack is now [...][value-as-object][value-as-object]
+                StoreLocal(il, valueCopyLocal.Value); // stack is now [...][value-as-object]
+            }
+
+            if (memberType == typeof(char) || memberType == typeof(char?))
+            {
+                il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(
+                    memberType == typeof(char) ? nameof(SqlMapper.ReadChar) : nameof(SqlMapper.ReadNullableChar), BindingFlags.Static | BindingFlags.Public), null); // stack is now [...][typed-value]
+            }
+            else
+            {
+                il.Emit(OpCodes.Dup); // stack is now [...][value-as-object][value-as-object]
+                il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [...][value-as-object][DBNull or null]
+                il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [...][value-as-object]
+
+                // unbox nullable enums as the primitive, i.e. byte etc
+
+                var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
+                var unboxType = nullUnderlyingType?.IsEnum() == true ? nullUnderlyingType : memberType;
+
+                if (unboxType.IsEnum())
+                {
+                    Type numericType = Enum.GetUnderlyingType(unboxType);
+                    if (colType == typeof(string))
+                    {
+                        if (enumDeclareLocal == -1)
+                        {
+                            enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
+                        }
+                        il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
+                        StoreLocal(il, enumDeclareLocal); // stack is now [...]
+                        il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
+                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)), null);// stack is now [...][enum-type]
+                        LoadLocal(il, enumDeclareLocal); // stack is now [...][enum-type][string]
+                        il.Emit(OpCodes.Ldc_I4_1); // stack is now [...][enum-type][string][true]
+                        il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [...][enum-as-object]
+                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+                    }
+                    else
+                    {
+                        FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
+                    }
+
+                    if (nullUnderlyingType != null)
+                    {
+                        il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [...][typed-value]
+                    }
+                }
+                else if (memberType.FullName == LinqBinary)
+                {
+                    il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [...][byte-array]
+                    il.Emit(OpCodes.Newobj, memberType.GetConstructor(new Type[] { typeof(byte[]) }));// stack is now [...][binary]
+                }
+                else
+                {
+                    TypeCode dataTypeCode = TypeExtensions.GetTypeCode(colType), unboxTypeCode = TypeExtensions.GetTypeCode(unboxType);
+                    bool hasTypeHandler;
+                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == TypeExtensions.GetTypeCode(nullUnderlyingType))
+                    {
+                        if (hasTypeHandler)
+                        {
+#pragma warning disable 618
+                            il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [...][typed-value]
+#pragma warning restore 618
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+                        }
+                    }
+                    else
+                    {
+                        // not a direct match; need to tweak the unbox
+                        FlexibleConvertBoxedFromHeadOfStack(il, colType, nullUnderlyingType ?? unboxType, null);
+                        if (nullUnderlyingType != null)
+                        {
+                            il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [...][typed-value]
+                        }
+                    }
+                }
+            }
         }
 
         private static void FlexibleConvertBoxedFromHeadOfStack(ILGenerator il, Type from, Type to, Type via)
