@@ -52,10 +52,15 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">The connection to get a database type name from.</param>
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
         /// <summary>
-        /// The function to get a a table name from a given <see cref="Type"/>
+        /// The function to get a table name from a given <see cref="Type"/>
         /// </summary>
         /// <param name="type">The <see cref="Type"/> to get a table name for.</param>
         public delegate string TableNameMapperDelegate(Type type);
+        /// <summary>
+        /// The function to get a single key identity property name from a given <see cref="Type"/>
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to get a key for.</param>
+        public delegate string KeyPropertyNameMapperDelegate(Type type);
 
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
@@ -102,6 +107,11 @@ namespace Dapper.Contrib.Extensions
             return explicitKeyProperties;
         }
 
+        /// <summary>
+        /// Specify a custom key property name mapper based on the POCO type name
+        /// </summary>
+        public static KeyPropertyNameMapperDelegate KeyPropertyNameMapper;
+
         private static List<PropertyInfo> KeyPropertiesCache(Type type)
         {
             if (KeyProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
@@ -114,7 +124,9 @@ namespace Dapper.Contrib.Extensions
 
             if (keyProperties.Count == 0)
             {
-                var idProp = allProperties.Find(p => string.Equals(p.Name, "id", StringComparison.CurrentCultureIgnoreCase));
+                var keyPropertyName = KeyPropertyNameMapper?.Invoke(type) ?? "id";
+
+                var idProp = allProperties.Find(p => string.Equals(p.Name, keyPropertyName, StringComparison.CurrentCultureIgnoreCase));
                 if (idProp != null && !idProp.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
                 {
                     keyProperties.Add(idProp);

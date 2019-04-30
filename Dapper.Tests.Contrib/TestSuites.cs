@@ -26,10 +26,12 @@ namespace Dapper.Tests.Contrib
     public class SqlServerTestSuite : TestSuite
     {
         private const string DbName = "tempdb";
+
         public static string ConnectionString =>
             IsAppVeyor
                 ? @"Server=(local)\SQL2016;Database=tempdb;User ID=sa;Password=Password12!"
-                : $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
+                //: $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
+                : @"Data Source=tcp:PLADPDTAJENKS\ALEXTESTDATABASE,49172;Initial Catalog=TylerID;User Id=TEGadmin; Password=TEG$SQLadmin2; MultipleActiveResultSets=True";
         public override IDbConnection GetConnection() => new SqlConnection(ConnectionString);
 
         static SqlServerTestSuite()
@@ -41,6 +43,8 @@ namespace Dapper.Tests.Contrib
                 connection.Open();
                 dropTable("Stuff");
                 connection.Execute("CREATE TABLE Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null);");
+                dropTable("Junk");
+                connection.Execute("CREATE TABLE Junk (JunkId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null);");
                 dropTable("People");
                 connection.Execute("CREATE TABLE People (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null);");
                 dropTable("Users");

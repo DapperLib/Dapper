@@ -81,6 +81,14 @@ namespace Dapper.Tests.Contrib
         public DateTime? Created { get; set; }
     }
 
+    [Table("Junk")]
+    public class Junk
+    {
+        public short JunkId { get; set; }
+        public string Name { get; set; }
+        public DateTime? Created { get; set; }
+    }
+
     [Table("Automobiles")]
     public class Car
     {
@@ -584,6 +592,32 @@ namespace Dapper.Tests.Contrib
                 var id = connection.Insert(new Person { Name = "Mr Mapper" });
                 Assert.Equal(1, id);
                 connection.GetAll<Person>();
+            }
+        }
+
+        [Fact]
+        public void InsertWithCustomKeyPropertyNameMapper()
+        {
+            SqlMapperExtensions.KeyPropertyNameMapper = type =>
+            {
+                switch (type.Name())
+                {
+                    case "Junk":
+                        var typeName = type.Name;
+                        var name = typeName + "Id";
+                        return name;
+
+                    default:
+                        return "id";
+                }
+            };
+
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert(new Junk { Name = "Custom key mapper" });
+                Assert.Equal(1, id);
+                var junk = connection.Get<Junk>(id);
+                Assert.Equal(1, junk.JunkId);
             }
         }
 
