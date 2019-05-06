@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -87,7 +88,7 @@ namespace Dapper
         /// </summary>
         /// <param name="isolation">The isolation level to use.</param>
         /// <param name="cancellationToken">The cancellation token for this operation.</param>
-        public async Task BeginTransactionAsync(IsolationLevel isolation = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolation = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (_transaction != null)
                 throw new InvalidOperationException("The database already has an active transaction");
@@ -96,6 +97,7 @@ namespace Dapper
                 await _connection.OpenAsync(cancellationToken);
 
             _transaction = _connection.BeginTransaction(isolation);
+            return _transaction;
         }
 
         /// <summary>

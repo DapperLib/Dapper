@@ -208,7 +208,7 @@ namespace Dapper
         /// Begins a transaction in this database. Automatically opens the underlying connection if needed.
         /// </summary>
         /// <param name="isolation">The isolation level to use.</param>
-        public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
+        public DbTransaction BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
         {
             if (_transaction != null)
                 throw new InvalidOperationException("The database already has an active transaction");
@@ -217,6 +217,7 @@ namespace Dapper
                 _connection.Open();
 
             _transaction = _connection.BeginTransaction(isolation);
+            return _transaction;
         }
 
         /// <summary>
