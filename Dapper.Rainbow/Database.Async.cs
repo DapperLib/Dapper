@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dapper
@@ -79,6 +80,22 @@ namespace Dapper
             /// <returns>Data from all table rows.</returns>
             public Task<IEnumerable<T>> AllAsync() =>
                 database.QueryAsync<T>("select * from " + TableName);
+        }
+
+        /// <summary>
+        /// Begins a transaction in this database. Automatically opens the underlying connection if needed.
+        /// </summary>
+        /// <param name="isolation">The isolation level to use.</param>
+        /// <param name="cancellationToken">The cancellation token for this operation.</param>
+        public async Task BeginTransactionAsync(IsolationLevel isolation = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (_transaction != null)
+                throw new InvalidOperationException("The database already has an active transaction");
+
+            if (_connection.State != ConnectionState.Open)
+                await _connection.OpenAsync(cancellationToken);
+
+            _transaction = _connection.BeginTransaction(isolation);
         }
 
         /// <summary>
