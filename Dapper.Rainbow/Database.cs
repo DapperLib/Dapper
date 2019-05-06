@@ -466,13 +466,10 @@ namespace Dapper
         /// </summary>
         public void Dispose()
         {
-            if (_connection.State != ConnectionState.Closed)
-            {
-                _transaction?.Rollback();
-
-                _connection.Close();
-                _connection = null;
-            }
+            var connection = _connection;
+            _connection = null;
+            _transaction = null;
+            connection?.Close();
         }
     }
 }
