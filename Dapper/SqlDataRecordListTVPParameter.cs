@@ -81,8 +81,11 @@ namespace Dapper
             il.Emit(OpCodes.Ldarg_1);
             il.EmitCall(OpCodes.Callvirt, name.GetSetMethod(), null);
 
-            if (dbType != null) il.Emit(OpCodes.Ldind_I4, (int)SqlDbType.Structured);
-            il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod(), null);
+            if (dbType != null)
+            {
+                il.Emit(OpCodes.Ldind_I4, (int)SqlDbType.Structured);
+                il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod(), null);
+            }
 
             il.Emit(OpCodes.Ret);
             return (Action<IDbDataParameter, string>)dm.CreateDelegate(typeof(Action<IDbDataParameter, string>));
