@@ -63,6 +63,8 @@ namespace Dapper
         }
         static Action<IDbDataParameter, string> CreateFor(Type type)
         {
+            //return (p, n) => { };
+
             var name = type.GetProperty("TypeName", BindingFlags.Public | BindingFlags.Instance);
             if (!name.CanWrite) name = null;
             if (name == null) return (p, n) => { };
@@ -75,15 +77,14 @@ namespace Dapper
             var il = dm.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Castclass, type);
-
-            if (dbType != null) il.Emit(OpCodes.Dup);
-
             il.Emit(OpCodes.Ldarg_1);
             il.EmitCall(OpCodes.Callvirt, name.GetSetMethod(), null);
 
             if (dbType != null)
             {
-                il.Emit(OpCodes.Ldind_I4, (int)SqlDbType.Structured);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Castclass, type);
+                il.Emit(OpCodes.Ldc_I4, (int)SqlDbType.Structured);
                 il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod(), null);
             }
 
