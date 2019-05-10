@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -38,15 +40,58 @@ namespace Dapper
         internal static void Set(IDbDataParameter parameter, IEnumerable<T> data, string typeName)
         {
             parameter.Value = data != null && data.Any() ? data : null;
-            var type = parameter.GetType();
-            if (type.Name == "SqlParameter")
+            StructuredHelper.ConfigureStructured(parameter, typeName);
+        }
+    }
+    static class StructuredHelper
+    {
+        private static readonly Hashtable s_perTypeHelpers = new Hashtable();
+        private static Action<IDbDataParameter, string> GetHelper(Type type)
+            => (Action<IDbDataParameter, string>)s_perTypeHelpers[type] ?? SlowGetHelper(type);
+        static Action<IDbDataParameter, string> SlowGetHelper(Type type)
+        {
+            lock(s_perTypeHelpers)
             {
-                var prop = type.GetProperty("SqlDbType");
-                prop?.SetValue(parameter, SqlDbType.Structured);
-
-                prop = type.GetProperty("TypeName");
-                prop?.SetValue(parameter, typeName);
+                var helper = (Action<IDbDataParameter, string>)s_perTypeHelpers[type];
+                if (helper == null)
+                {
+                    helper = CreateFor(type);
+                    s_perTypeHelpers.Add(type, helper);
+                }
+                return helper;
             }
         }
+        static Action<IDbDataParameter, string> CreateFor(Type type)
+        {
+            var name = type.GetProperty("TypeName", BindingFlags.Public | BindingFlags.Instance);
+            if (!name.CanWrite) name = null;
+            if (name == null) return (p, n) => { };
+
+            var dbType = type.GetProperty("SqlDbType", BindingFlags.Public | BindingFlags.Instance);
+            if (!dbType.CanWrite) dbType = null;
+
+            var dm = new DynamicMethod(nameof(CreateFor) + "_" + type.Name, null,
+                new[] { typeof(IDbDataParameter), typeof(string) }, true);
+            var il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Castclass, type);
+
+            if (dbType != null) il.Emit(OpCodes.Dup);
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.EmitCall(OpCodes.Callvirt, name.GetSetMethod(), null);
+
+            if (dbType != null) il.Emit(OpCodes.Ldind_I4, (int)SqlDbType.Structured);
+            il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod(), null);
+
+            il.Emit(OpCodes.Ret);
+            return (Action<IDbDataParameter, string>)dm.CreateDelegate(typeof(Action<IDbDataParameter, string>));
+
+        }
+
+        // this needs to be done per-provider; "dynamic" doesn't work well on all runtimes, although that
+        // would be a fair option otherwise
+        internal static void ConfigureStructured(IDbDataParameter parameter, string typeName)
+            => GetHelper(parameter.GetType())(parameter, typeName);
     }
 }

@@ -18,7 +18,9 @@ using Microsoft.SqlServer.Types;
 
 namespace Dapper.Tests
 {
+    [Collection(NonParallelDefinition.Name)] // because it creates SQL types that compete between the two providers
     public sealed class SystemSqlClientParameterTests : ParameterTests<SystemSqlClientProvider> { }
+    [Collection(NonParallelDefinition.Name)] // because it creates SQL types that compete between the two providers
     public sealed class MicrosoftSqlClientParameterTests : ParameterTests<MicrosoftSqlClientProvider> { }
     public abstract class ParameterTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
