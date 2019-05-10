@@ -3,7 +3,9 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class LiteralTests : TestBase
+    public sealed class SystemSqlClientLiteralTests : LiteralTests<SystemSqlClientProvider> { }
+    public sealed class MicrosoftSqlClientLiteralTests : LiteralTests<MicrosoftSqlClientProvider> { }
+    public abstract class LiteralTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void LiteralReplacementEnumAndString()

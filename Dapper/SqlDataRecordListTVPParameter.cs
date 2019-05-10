@@ -1,22 +1,27 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Dapper
 {
     /// <summary>
     /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a SqlDataRecordListTVPParameter
     /// </summary>
-    internal sealed class SqlDataRecordListTVPParameter : SqlMapper.ICustomQueryParameter
+    internal sealed class SqlDataRecordListTVPParameter<T> : SqlMapper.ICustomQueryParameter
+#if !NETSTANDARD1_3
+        where T : IDataRecord
+#endif
     {
-        private readonly IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data;
+        private readonly IEnumerable<T> data;
         private readonly string typeName;
         /// <summary>
-        /// Create a new instance of <see cref="SqlDataRecordListTVPParameter"/>.
+        /// Create a new instance of <see cref="SqlDataRecordListTVPParameter&lt;T&gt;"/>.
         /// </summary>
         /// <param name="data">The data records to convert into TVPs.</param>
         /// <param name="typeName">The parameter type name.</param>
-        public SqlDataRecordListTVPParameter(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
+        public SqlDataRecordListTVPParameter(IEnumerable<T> data, string typeName)
         {
             this.data = data;
             this.typeName = typeName;
@@ -30,13 +35,17 @@ namespace Dapper
             command.Parameters.Add(param);
         }
 
-        internal static void Set(IDbDataParameter parameter, IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> data, string typeName)
+        internal static void Set(IDbDataParameter parameter, IEnumerable<T> data, string typeName)
         {
             parameter.Value = data != null && data.Any() ? data : null;
-            if (parameter is System.Data.SqlClient.SqlParameter sqlParam)
+            var type = parameter.GetType();
+            if (type.Name == "SqlParameter")
             {
-                sqlParam.SqlDbType = SqlDbType.Structured;
-                sqlParam.TypeName = typeName;
+                var prop = type.GetProperty("SqlDbType");
+                prop?.SetValue(parameter, SqlDbType.Structured);
+
+                prop = type.GetProperty("TypeName");
+                prop?.SetValue(parameter, typeName);
             }
         }
     }

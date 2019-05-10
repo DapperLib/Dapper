@@ -6,7 +6,9 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class ProcedureTests : TestBase
+    public sealed class SystemSqlClientProcedureTests : ProcedureTests<SystemSqlClientProvider> { }
+    public sealed class MicrosoftSqlClientProcedureTests : ProcedureTests<MicrosoftSqlClientProvider> { }
+    public abstract class ProcedureTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestProcWithOutParameter()

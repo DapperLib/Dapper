@@ -5,7 +5,10 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class ConstructorTests : TestBase
+    public sealed class SystemSqlClientConstructorTests : ConstructorTests<SystemSqlClientProvider> { }
+    public sealed class MicrosoftSqlClientConstructorTests : ConstructorTests<MicrosoftSqlClientProvider> { }
+
+    public abstract class ConstructorTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestAbstractInheritance()

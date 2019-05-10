@@ -9,7 +9,11 @@ using Xunit;
 namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)]
-    public class TypeHandlerTests : TestBase
+    public sealed class SystemSqlClientTypeHandlerTests : TypeHandlerTests<SystemSqlClientProvider> { }
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class MicrosoftSqlClientTypeHandlerTests : TypeHandlerTests<MicrosoftSqlClientProvider> { }
+
+    public abstract class TypeHandlerTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestChangingDefaultStringTypeMappingToAnsiString()

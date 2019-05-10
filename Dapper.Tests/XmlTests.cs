@@ -4,7 +4,9 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class XmlTests : TestBase
+    public sealed class SystemSqlClientXmlTests : XmlTests<SystemSqlClientProvider> { }
+    public sealed class MicrosoftSqlClientXmlTests : XmlTests<MicrosoftSqlClientProvider> { }
+    public abstract class XmlTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void CommonXmlTypesSupported()

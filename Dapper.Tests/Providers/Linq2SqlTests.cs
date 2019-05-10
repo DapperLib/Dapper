@@ -8,7 +8,9 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class Linq2SqlTests : TestBase
+    public sealed class SystemSqlClientLinq2SqlTests : Linq2SqlTests<SystemSqlClientProvider> { }
+    public sealed class MicrosoftSqlClientLinq2SqlTests : Linq2SqlTests<MicrosoftSqlClientProvider> { }
+    public abstract class Linq2SqlTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestLinqBinaryToClass()
