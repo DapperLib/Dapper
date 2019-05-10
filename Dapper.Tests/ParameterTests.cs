@@ -622,14 +622,19 @@ namespace Dapper.Tests
             public void AddParameters(IDbCommand command, SqlMapper.Identity identity)
             {
                 Debug.WriteLine("> AddParameters");
-                var lazy = (System.Data.SqlClient.SqlCommand)command;
-                lazy.Parameters.AddWithValue("Id", 7);
+                var p = command.CreateParameter();
+                p.ParameterName = "Id";
+                p.Value = 7;
+                command.Parameters.Add(p);
                 var table = new DataTable
                 {
                     Columns = { { "Id", typeof(int) } },
                     Rows = { { 4 }, { 9 } }
                 };
-                lazy.Parameters.AddWithValue("Rules", table);
+                p = command.CreateParameter();
+                p.ParameterName = "Rules";
+                p.Value = table;
+                command.Parameters.Add(p);
                 Debug.WriteLine("< AddParameters");
             }
         }
