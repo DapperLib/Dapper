@@ -6,12 +6,13 @@
     <Description>Dapper Core Performance Suite</Description>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
+    <PackageReference Include="Chloe.SqlServer" Version="3.9.0" />
     <PackageReference Include="Dashing" Version="2.0.7" />
     <PackageReference Include="Dashing.Weaver" Version="2.0.7" />
     <PackageReference Include="Belgrade.Sql.Client" Version="1.1.4" />
@@ -29,7 +30,9 @@
     <PackageReference Include="Npgsql" Version="4.0.3" />
     <PackageReference Include="PetaPoco" Version="5.1.306" />
     <PackageReference Include="ServiceStack.OrmLite.SqlServer.Signed" Version="4.5.14" />
+    <PackageReference Include="SmartSql" Version="4.0.48" />
     <PackageReference Include="Soma" Version="1.9.0.1" />
+    <PackageReference Include="sqlSugar" Version="5.0.0.2" />
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
     <PackageReference Include="Susanoo.SqlServer" Version="1.2.4.2" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.109.1" />
@@ -44,7 +47,13 @@
   <ItemGroup>
     <None Update="NHibernate\*.xml" CopyToOutputDirectory="Always" />
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
-  </ItemGroup>  
+    <Compile Update="Benchmarks.SqlSugar.cs">
+      <DependentUpon>Benchmarks.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Benchmarks.Chloe.cs">
+      <DependentUpon>Benchmarks.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Update="SourceLink.Create.GitHub" Version="2.8.3" />
   </ItemGroup>

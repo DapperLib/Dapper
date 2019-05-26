@@ -1,11 +1,14 @@
 ﻿using System;
 using Soma.Core;
+using SqlSugar;
 
 namespace Dapper.Tests.Performance
 {
     [ServiceStack.DataAnnotations.Alias("Posts")]
     [Table(Name = "Posts")]
     [LinqToDB.Mapping.Table(Name = "Posts")]
+    [SugarTable("Posts")]
+    [Chloe.Annotations.Table("Posts")]
     public class Post
     {
         [Id(IdKind.Identity)]
