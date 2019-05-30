@@ -34,6 +34,12 @@ namespace Dapper.Tests.Performance
                 RealSql = "select * from Posts where Id = @Id", Request = new {Id = i}
             });
         }
+        [Benchmark(Description = "GetById")]
+        public Post GetById()
+        {
+            Step();
+            return _dbSession.GetById<Post,int>(i);
+        }
 
         [Benchmark(Description = "QuerySingleStrongRequest")]
         public Post QuerySingleStrongRequest()

@@ -10,6 +10,7 @@ namespace Dapper.Tests.Performance
     [SugarTable("Posts")]
     [Chloe.Annotations.Table("Posts")]
     [FreeSql.DataAnnotations.Table(Name = "Posts")]
+    [SmartSql.Annotations.Table("Posts")]
     public class Post
     {
         [Id(IdKind.Identity)]
