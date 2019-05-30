@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 using SmartSql;
 using SmartSql.DbSession;
 using System.ComponentModel;
+using SmartSql.Data;
 using SmartSql.DataSource;
 
 namespace Dapper.Tests.Performance
@@ -42,15 +45,30 @@ namespace Dapper.Tests.Performance
             });
         }
 
-        [Benchmark(Description = "QuerySingle<dynamic>")]
-        public dynamic QuerySingleDynamic()
+        [Benchmark(Description = "QuerySingleSqlParameterCollection")]
+        public Post QuerySingleSqlParameterCollection()
         {
             Step();
-            return _dbSession.QuerySingle<dynamic>(new RequestContext
+            SqlParameterCollection sqlParameterCollection = new SqlParameterCollection();
+            sqlParameterCollection.Add("Id", new SqlParameter("Id", i));
+            return _dbSession.QuerySingle<Post>(new RequestContext
             {
-                RealSql = "select * from Posts where Id = @Id", Request = new {Id = i}
+                RealSql = "select * from Posts where Id = @Id", Request = sqlParameterCollection
             });
         }
+
+        [Benchmark(Description = "QuerySingleSqlParameterCollection<dynamic>")]
+        public dynamic QuerySingleSqlParameterCollectionDynamic()
+        {
+            Step();
+            SqlParameterCollection sqlParameterCollection = new SqlParameterCollection();
+            sqlParameterCollection.Add("Id", new SqlParameter("Id", i));
+            return _dbSession.QuerySingle<dynamic>(new RequestContext
+            {
+                RealSql = "select * from Posts where Id = @Id", Request = sqlParameterCollection
+            });
+        }
+
         [Benchmark(Description = "QuerySingleStrongRequest<dynamic>")]
         public dynamic QuerySingleStrongRequestDynamic()
         {

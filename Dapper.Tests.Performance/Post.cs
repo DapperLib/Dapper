@@ -9,6 +9,7 @@ namespace Dapper.Tests.Performance
     [LinqToDB.Mapping.Table(Name = "Posts")]
     [SugarTable("Posts")]
     [Chloe.Annotations.Table("Posts")]
+    [FreeSql.DataAnnotations.Table(Name = "Posts")]
     public class Post
     {
         [Id(IdKind.Identity)]

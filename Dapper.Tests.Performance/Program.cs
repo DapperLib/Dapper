@@ -34,7 +34,7 @@ namespace Dapper.Tests.Performance
             WriteLine("Using ConnectionString: " + BenchmarkBase.ConnectionString);
             EnsureDBSetup();
             WriteLine("Database setup complete.");
-
+            
             if (args.Any(a => a == "--legacy"))
             {
                 var test = new LegacyTests();

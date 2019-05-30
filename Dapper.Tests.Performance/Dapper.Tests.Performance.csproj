@@ -9,6 +9,7 @@
     <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\SmartSql\src\SmartSql\SmartSql.csproj" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
@@ -21,6 +22,7 @@
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
     <PackageReference Include="EntityFramework" Version="6.2.0" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="6.3.0" />
+    <PackageReference Include="FreeSql.Provider.SqlServer" Version="0.6.3" />
     <PackageReference Include="linq2db.SqlServer" Version="2.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.2" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
@@ -30,7 +32,7 @@
     <PackageReference Include="Npgsql" Version="4.0.3" />
     <PackageReference Include="PetaPoco" Version="5.1.306" />
     <PackageReference Include="ServiceStack.OrmLite.SqlServer.Signed" Version="4.5.14" />
-    <PackageReference Include="SmartSql" Version="4.0.48" />
+    <!--    <PackageReference Include="SmartSql" Version="4.0.48" />-->
     <PackageReference Include="Soma" Version="1.9.0.1" />
     <PackageReference Include="sqlSugar" Version="5.0.0.2" />
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
@@ -51,6 +53,9 @@
       <DependentUpon>Benchmarks.cs</DependentUpon>
     </Compile>
     <Compile Update="Benchmarks.Chloe.cs">
+      <DependentUpon>Benchmarks.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Benchmarks.FreeSql.cs">
       <DependentUpon>Benchmarks.cs</DependentUpon>
     </Compile>
   </ItemGroup>
