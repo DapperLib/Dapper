@@ -48,15 +48,6 @@
   <ItemGroup>
     <None Update="NHibernate\*.xml" CopyToOutputDirectory="Always" />
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
-    <Compile Update="Benchmarks.SqlSugar.cs">
-      <DependentUpon>Benchmarks.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Benchmarks.Chloe.cs">
-      <DependentUpon>Benchmarks.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Benchmarks.FreeSql.cs">
-      <DependentUpon>Benchmarks.cs</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="SourceLink.Create.GitHub" Version="2.8.3" />
