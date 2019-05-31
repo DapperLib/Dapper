@@ -48,6 +48,12 @@
   <ItemGroup>
     <None Update="NHibernate\*.xml" CopyToOutputDirectory="Always" />
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
+    <None Update="SmartSql\SmartSqlMapConfig.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SmartSql\Maps\Post.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="SourceLink.Create.GitHub" Version="2.8.3" />

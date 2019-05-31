@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+//*******************************
+// Create By Ahoo Wang
+// Date 2019-05-31 17:45
+// Code Generate By SmartCode
+// Code Generate Github : https://github.com/dotnetcore/SmartCode
+//*******************************-->
+
+<SmartSqlMap Scope="Post" xmlns="http://SmartSql.net/schemas/SmartSqlMap.xsd">
+    <Statements>
+        <Statement Id="GetById">
+            select * from Posts where Id = @Id
+        </Statement>
+    </Statements>
+</SmartSqlMap>

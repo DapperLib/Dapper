@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 using SmartSql;
 using SmartSql.DbSession;
 using System.ComponentModel;
+using SmartSql.ConfigBuilder;
 using SmartSql.Data;
 using SmartSql.DataSource;
 
@@ -19,10 +20,23 @@ namespace Dapper.Tests.Performance
         {
             BaseSetup();
             var smartSqlBuilder = new SmartSqlBuilder()
-                .UseDataSource(DbProvider.SQLSERVER, _connection.ConnectionString)
+                .UseProperties(new[]
+                {
+                    new KeyValuePair<string, string>("ConnectionString", _connection.ConnectionString)
+                })
+                .UseXmlConfig(ResourceType.File, "SmartSql/SmartSqlMapConfig.xml")
                 .UseCache(false).Build();
             _dbSession = smartSqlBuilder.GetDbSessionFactory().Open(_connection.ConnectionString);
-            //_dbSession.Connection = _connection;
+        }
+
+        [Benchmark(Description = "QuerySingleFromXml")]
+        public Post QuerySingleFromXml()
+        {
+            Step();
+            return _dbSession.QuerySingle<Post>(new RequestContext
+            {
+                Scope = nameof(Post), SqlId = "GetById", Request = new {Id = i}
+            });
         }
 
         [Benchmark(Description = "QuerySingle")]
@@ -34,11 +48,12 @@ namespace Dapper.Tests.Performance
                 RealSql = "select * from Posts where Id = @Id", Request = new {Id = i}
             });
         }
+
         [Benchmark(Description = "GetById")]
         public Post GetById()
         {
             Step();
-            return _dbSession.GetById<Post,int>(i);
+            return _dbSession.GetById<Post, int>(i);
         }
 
         [Benchmark(Description = "QuerySingleStrongRequest")]
