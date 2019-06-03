@@ -5,6 +5,7 @@ using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Loggers;
+using BenchmarkDotNet.Mathematics;
 using BenchmarkDotNet.Order;
 using Dapper.Tests.Performance.Helpers;
 
@@ -30,6 +31,7 @@ namespace Dapper.Tests.Performance
             Add(StatisticColumn.Mean);
             //Add(StatisticColumn.StdDev);
             //Add(StatisticColumn.Error);
+            Add(new RankColumn(NumeralSystem.Arabic));
             Add(BaselineScaledColumn.Scaled);
             Add(md.GetColumnProvider());
 
