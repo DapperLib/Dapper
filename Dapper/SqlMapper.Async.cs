@@ -13,7 +13,7 @@ namespace Dapper
     public static partial class SqlMapper
     {
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="sql">The SQL to execute for the query.</param>
@@ -26,7 +26,7 @@ namespace Dapper
             QueryAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
@@ -35,7 +35,7 @@ namespace Dapper
             QueryAsync<dynamic>(cnn, typeof(DapperRow), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
@@ -44,7 +44,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.First, typeof(DapperRow), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
@@ -53,7 +53,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.FirstOrDefault, typeof(DapperRow), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
@@ -62,7 +62,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.Single, typeof(DapperRow), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
@@ -71,7 +71,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.SingleOrDefault, typeof(DapperRow), command);
 
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type of results to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -88,7 +88,7 @@ namespace Dapper
             QueryAsync<T>(cnn, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type of result to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -101,7 +101,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.First, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type of result to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -114,7 +114,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.FirstOrDefault, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type of result to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -127,7 +127,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.Single, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -140,7 +140,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.SingleOrDefault, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="sql">The SQL to execute for the query.</param>
@@ -152,7 +152,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.First, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="sql">The SQL to execute for the query.</param>
@@ -164,7 +164,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.FirstOrDefault, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="sql">The SQL to execute for the query.</param>
@@ -176,7 +176,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.Single, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="sql">The SQL to execute for the query.</param>
@@ -188,7 +188,7 @@ namespace Dapper
             QueryRowAsync<dynamic>(cnn, Row.SingleOrDefault, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -205,7 +205,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -221,7 +221,7 @@ namespace Dapper
             return QueryRowAsync<object>(cnn, Row.First, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
         }
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -237,7 +237,7 @@ namespace Dapper
             return QueryRowAsync<object>(cnn, Row.FirstOrDefault, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
         }
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -253,7 +253,7 @@ namespace Dapper
             return QueryRowAsync<object>(cnn, Row.Single, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default(CancellationToken)));
         }
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -270,7 +270,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -283,7 +283,7 @@ namespace Dapper
             QueryAsync<T>(cnn, typeof(T), command);
 
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -292,7 +292,7 @@ namespace Dapper
             QueryAsync<object>(cnn, type, command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -301,7 +301,7 @@ namespace Dapper
             QueryRowAsync<object>(cnn, Row.First, type, command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -310,7 +310,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.First, typeof(T), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -319,7 +319,7 @@ namespace Dapper
             QueryRowAsync<object>(cnn, Row.FirstOrDefault, type, command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -328,7 +328,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.FirstOrDefault, typeof(T), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -337,7 +337,7 @@ namespace Dapper
             QueryRowAsync<object>(cnn, Row.Single, type, command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -346,7 +346,7 @@ namespace Dapper
             QueryRowAsync<T>(cnn, Row.Single, typeof(T), command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
@@ -355,7 +355,7 @@ namespace Dapper
             QueryRowAsync<object>(cnn, Row.SingleOrDefault, type, command);
 
         /// <summary>
-        /// Execute a single-row query asynchronously using .NET 4.5 Task.
+        /// Execute a single-row query asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
@@ -526,7 +526,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Execute a command asynchronously using .NET 4.5 Task.
+        /// Execute a command asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="sql">The SQL to execute for this query.</param>
@@ -539,7 +539,7 @@ namespace Dapper
             ExecuteAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default(CancellationToken)));
 
         /// <summary>
-        /// Execute a command asynchronously using .NET 4.5 Task.
+        /// Execute a command asynchronously using Task.
         /// </summary>
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute on this connection.</param>
