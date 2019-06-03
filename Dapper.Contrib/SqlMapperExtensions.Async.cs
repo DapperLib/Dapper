@@ -12,7 +12,7 @@ namespace Dapper.Contrib.Extensions
     public static partial class SqlMapperExtensions
     {
         /// <summary>
-        /// Returns a single entity by a single id from table "Ts" asynchronously using .NET 4.5 Task. T must be of interface type. 
+        /// Returns a single entity by a single id from table "Ts" asynchronously using Task. T must be of interface type. 
         /// Id must be marked with [Key] attribute.
         /// Created entity is tracked/intercepted for changes and used by the Update() extension. 
         /// </summary>
@@ -127,7 +127,7 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Inserts an entity into table "Ts" asynchronously using .NET 4.5 Task and returns identity id.
+        /// Inserts an entity into table "Ts" asynchronously using Task and returns identity id.
         /// </summary>
         /// <typeparam name="T">The type being inserted.</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -198,7 +198,7 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Updates entity in table "Ts" asynchronously using .NET 4.5 Task, checks if the entity is modified if the entity is tracked by the Get() extension.
+        /// Updates entity in table "Ts" asynchronously using Task, checks if the entity is modified if the entity is tracked by the Get() extension.
         /// </summary>
         /// <typeparam name="T">Type to be updated</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -269,7 +269,7 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Delete entity in table "Ts" asynchronously using .NET 4.5 Task.
+        /// Delete entity in table "Ts" asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">Type of entity</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -326,7 +326,7 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
-        /// Delete all entities in the table related to the type T asynchronously using .NET 4.5 Task.
+        /// Delete all entities in the table related to the type T asynchronously using Task.
         /// </summary>
         /// <typeparam name="T">Type of entity</typeparam>
         /// <param name="connection">Open SqlConnection</param>
