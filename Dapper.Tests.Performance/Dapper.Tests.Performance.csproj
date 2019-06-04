@@ -37,6 +37,9 @@
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
     <PackageReference Include="Susanoo.SqlServer" Version="1.2.4.2" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.109.1" />
+    <Reference Include="IBatisNet.DataMapper, Version=1.5.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>External-bin\IBatisNet.DataMapper.dll</HintPath>
+    </Reference>
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
@@ -52,6 +55,15 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="SmartSql\Maps\Post.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="IBatis\sqlMap.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="IBatis\providers.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="IBatis\Maps\Post.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

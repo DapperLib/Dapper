@@ -1,0 +1,1586 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IBatisNet.DataAccess</name>
+    </assembly>
+    <members>
+        <member name="T:IBatisNet.DataAccess.MessageManager">
+            <summary>
+            Summary description for MessageManager.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.MessageManager.#ctor">
+            <summary>
+            Constructor.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.MessageManager.GetStream(System.String)">
+            <summary>
+            Gets a resource stream.
+            </summary>
+            <param name="name">The resource key.</param>
+            <returns>A resource stream.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.MessageManager.FormatMessage(System.String,System.Object[])">
+            <summary>
+            Formats a message stored in the assembly resource file.
+            </summary>
+            <param name="key">The resource key.</param>
+            <param name="format">The format arguments.</param>
+            <returns>A formatted string.</returns>
+        </member>
+        <member name="P:IBatisNet.DataAccess.MessageManager.Instance">
+            <summary>
+            Gets a message manager for the assembly resource file.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.MessageManager.Item(System.String)">
+            <summary>
+            Gets the message with the specified key from the assembly resource file.
+            </summary>
+            <param name="key">Key of the item to retrieve from the resource file.</param>
+            <returns>Value from the resource file identified by the key.</returns>
+        </member>
+        <member name="T:IBatisNet.DataAccess.MessageManager.MessageKeys">
+            <summary>
+            Class used to expose constants that represent keys in the resource file.
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSessionHandler">
+            <summary>
+            Summary description for SqlMapDaoSessionHandler.
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Interfaces.IDaoSessionHandler">
+            <summary>
+            Description résumée de IDaoSessionHandler.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Interfaces.IDaoSessionHandler.GetDaoSession(IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            
+            </summary>
+            <param name="daoManager"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Interfaces.IDaoSessionHandler.Configure(System.Collections.Specialized.NameValueCollection,System.Collections.IDictionary)">
+            <summary>
+            
+            </summary>
+            <param name="properties">The properties scope</param>
+            <param name="resources">A collection of object useful to init</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSessionHandler.#ctor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSessionHandler.Configure(System.Collections.Specialized.NameValueCollection,System.Collections.IDictionary)">
+            <summary>
+            
+            </summary>
+            <param name="properties"></param>
+            <param name="resources"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSessionHandler.GetDaoSession(IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            
+            </summary>
+            <param name="daoManager"></param>
+            <returns></returns>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSessionHandler.SqlMap">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Configuration.DaoProxy">
+            <summary>
+            Summary description for DaoProxy.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DaoProxy.#cctor">
+            <summary>
+            Constructor for a DaoProxy
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DaoProxy.#ctor(IBatisNet.DataAccess.Configuration.Dao)">
+            <summary>
+            Create a new proxy for the Dao
+            </summary>
+            <param name="dao">The dao object to proxy</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DaoProxy.NewInstance(IBatisNet.DataAccess.Configuration.Dao)">
+            <summary>
+            
+            </summary>
+            <param name="dao"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DaoProxy.Intercept(Castle.DynamicProxy.IInvocation,System.Object[])">
+            <summary>
+            
+            </summary>
+            <param name="invocation"></param>
+            <param name="arguments"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Configuration.Dao">
+            <summary>
+            Summary description for 
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.Dao.#ctor">
+            <summary>
+            Do not use direclty, only for serialization.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.Dao.Initialize(IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            Initialize dao object.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.Implementation">
+            <summary>
+            The implementation class of the dao. 
+            </summary>
+            <example>IBatisNet.DataAccess.Test.Implementations.MSSQL.SqlAccountDao</example>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.Interface">
+            <summary>
+            The Interface class that the dao must implement.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.DaoInterface">
+            <summary>
+            The dao interface type.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.DaoImplementation">
+            <summary>
+            The dao implementation type.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.DaoInstance">
+            <summary>
+            The concrete dao.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.Proxy">
+            <summary>
+            The proxy dao.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.Dao.DaoManager">
+            <summary>
+            The DaoManager who manage this dao.
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Interfaces.IDao">
+            <summary>
+            Mark a class as a Dao object.
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.SessionHolder">
+            <summary>
+            Summary description for SessionHolder.
+            </summary>
+            <remarks>
+            See also LocalDataStoreSlot
+            </remarks>
+        </member>
+        <member name="F:IBatisNet.DataAccess.SessionHolder.LOCAL_SESSION">
+            <summary>
+            Token for SqlMapConfig xml root.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.SessionHolder.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="daoManagerName">The DaoManager name.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.SessionHolder.Store(IBatisNet.Common.IDalSession)">
+            <summary>
+            Store the local session.
+            Ensure that the session is unique for each thread.
+            </summary>
+            <param name="session">The session to store</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.SessionHolder.Dispose">
+            <summary>
+            Remove the local session.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.SessionHolder.LocalSession">
+            <summary>
+            Get the local session
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Configuration.Serializers.DaoDeSerializer">
+            <summary>
+            Summary description for DaoDeSerializer.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.Serializers.DaoDeSerializer.Deserialize(System.Xml.XmlNode,IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Deserialize a Dao object
+            </summary>
+            <param name="node"></param>
+            <param name="configScope"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IBatisNet.DataAccess.IDaoManager">
+            <summary>
+            Contract for a dao manager
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.BeginTransaction(System.Data.IsolationLevel)">
+            <summary>
+            Begins a database transaction with the specified isolation level.
+            </summary>
+            <param name="isolationLevel">
+            The isolation level under which the transaction should run.
+            </param>
+            <returns>A IDalSession.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.BeginTransaction">
+            <summary>
+            Begins a database transaction.
+            </summary>
+            <returns>A IDalSession</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.CloseConnection">
+            <summary>
+            Close a connection
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.CommitTransaction">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <remarks>
+            Auto close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.GetDao(System.Type)">
+            <summary>
+            Gets a Dao instance for the requested interface type.
+            </summary>
+            <param name="daoInterface">The requested interface type.</param>
+            <returns>A Dao instance</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.GetDaoSession">
+            <summary>
+            Get a new DaoSession
+            </summary>
+            <returns>A new DaoSession</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.IsDaoSessionStarted">
+            <summary>
+            Determines whether [is DAO session started].
+            </summary>
+            <returns>
+            	<c>true</c> if [is DAO session started]; otherwise, <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.OpenConnection(System.String)">
+            <summary>
+            Open a connection, on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.OpenConnection">
+            <summary>
+            Open a connection.
+            </summary>
+            <returns>A IDalSession.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.IDaoManager.RollBackTransaction">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <remarks>
+            Close the connection.
+            </remarks>
+        </member>
+        <member name="P:IBatisNet.DataAccess.IDaoManager.LocalDaoSession">
+            <summary>
+            Gets the local DAO session.
+            </summary>
+            <value>The local DAO session.</value>
+        </member>
+        <member name="P:IBatisNet.DataAccess.IDaoManager.LocalDataSource">
+            <summary>
+            Gets the local data source.
+            </summary>
+            <value>The local data source.</value>
+        </member>
+        <member name="P:IBatisNet.DataAccess.IDaoManager.Item(System.Type)">
+            <summary>
+            Gets a Dao instance for the requested interface type.
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder">
+            <summary>
+            Summary description for DomDaoManagerBuilder.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.DAO_NAMESPACE_PREFIX">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.DEFAULT_FILE_CONFIG_NAME">
+            <summary>
+            Key for default config name
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.DEFAULT_PROVIDER_NAME">
+            <summary>
+            Key for default provider name
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.DEFAULT_DAOSESSIONHANDLER_NAME">
+            <summary>
+            Key for default dao session handler name
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_PROPERTIES">
+            <summary>
+            Token for xml path to properties elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_PROPERTY">
+            <summary>
+            Token for xml path to property elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_SETTINGS_ADD">
+            <summary>
+            Token for xml path to settings add elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.PROVIDERS_FILE_NAME">
+            <summary>
+            Token for providers config file name.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_PROVIDER">
+            <summary>
+            Token for xml path to provider elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_DAO_SESSION_HANDLERS">
+            <summary>
+            Token for xml path to dao session handlers element.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_HANDLER">
+            <summary>
+            Token for xml path to handler element.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_DAO_CONTEXT">
+            <summary>
+            Token for xml path to dao context element.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_DATABASE_PROVIDER">
+            <summary>
+            Token for xml path to database provider elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_DATABASE_DATASOURCE">
+            <summary>
+            Token for xml path to database source elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_DAO_SESSION_HANDLER">
+            <summary>
+            Token for xml path to dao session handler elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_DAO">
+            <summary>
+            Token for xml path to dao elements.
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.XML_CONFIG_PROVIDERS">
+            <summary>
+            Token for xml path to DaoConfig providers element.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.#ctor">
+            <summary>
+            Constructor.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.Configure">
+            <summary>
+            Configure DaoManagers from via the default file config.
+            (accesd as relative ressource path from your Application root)
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.Configure(System.Xml.XmlDocument)">
+            <summary>
+            Configure DaoManagers from an XmlDocument.
+            </summary>
+            <param name="document">An xml configuration document.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.Configure(System.String)">
+            <summary>
+            Configure DaoManagers from a file path.
+            </summary>
+            <param name="resource">
+            A relative ressource path from your Application root 
+            or a absolue file path file:\\c:\dir\a.config
+            </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.Configure(System.IO.Stream)">
+            <summary>
+             Configure DaoManagers from a stream.
+            </summary>
+            <param name="resource">A stream resource</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.Configure(System.IO.FileInfo)">
+            <summary>
+             Configure DaoManagers from a FileInfo.
+            </summary>
+            <param name="resource">A FileInfo resource</param>
+            <returns>An SqlMap</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.Configure(System.Uri)">
+            <summary>
+             Configure DaoManagers from an Uri.
+            </summary>
+            <param name="resource">A Uri resource</param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ConfigureAndWatch(IBatisNet.Common.Utilities.ConfigureHandler)">
+            <summary>
+            Configure and monitor the configuration file for modifications and 
+            automatically reconfigure  
+            </summary>
+            <param name="configureDelegate">
+            Delegate called when a file is changed to rebuild the 
+            </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ConfigureAndWatch(System.String,IBatisNet.Common.Utilities.ConfigureHandler)">
+             <summary>
+             Configure and monitor the configuration file for modifications and 
+             automatically reconfigure  
+             </summary>
+             <param name="resource">
+             A relative ressource path from your Application root 
+             or an absolue file path file://c:\dir\a.config
+             </param>
+            <param name="configureDelegate">
+             Delegate called when the file has changed, to rebuild the dal.
+             </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ConfigureAndWatch(System.IO.FileInfo,IBatisNet.Common.Utilities.ConfigureHandler)">
+             <summary>
+             Configure and monitor the configuration file for modifications 
+             and automatically reconfigure SqlMap. 
+             </summary>
+             <param name="resource">
+             A FileInfo to your config file.
+             </param>
+            <param name="configureDelegate">
+             Delegate called when the file has changed, to rebuild the dal.
+             </param>
+             <returns>An SqlMap</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.OnConfigFileChange(System.Object)">
+            <summary>
+            Called when the configuration has been updated. 
+            </summary>
+            <param name="obj">The state config.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.BuildDaoManagers(System.Xml.XmlDocument,System.Boolean)">
+            <summary>
+            Build DaoManagers from config document.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.GetConfig(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Load and build the dao managers.
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.GetProviders(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Load and initialize providers from specified file.
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.GetDaoSessionHandlers(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Load and initialize custom DaoSession Handlers.
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.GetContexts(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Build dao contexts
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ParseGlobalProperties(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Initialize the list of variables defined in the
+            properties file.
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ParseProvider(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Initialize the provider
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+            <returns>A provider</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ParseDataSource(IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Build the data source object
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+            <returns>A DataSource</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ParseDaoFactory(IBatisNet.DataAccess.Scope.ConfigurationScope,IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            Parse dao factory tag
+            </summary>
+            <param name="configurationScope">The scope of the configuration</param>
+            <param name="daoManager"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ApplyNamespacePrefix(System.String)">
+            <summary>
+            Apply an XML NameSpace
+            </summary>
+            <param name="elementName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DomDaoManagerBuilder.ApplyProviderNamespacePrefix(System.String)">
+            <summary>
+            Apply the provider namespace prefix
+            </summary>
+            <param name="elementName"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Exceptions.DataAccessException">
+            <summary>
+            The DataAccessException is thrown when an error in the Dao occurs.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Exceptions.DataAccessException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:IBatisNet.DataAccess.Exceptions.DataAccessException"/> class.
+            </summary>
+            <remarks>
+            This constructor initializes the <para>Message</para> property of the new instance 
+            to a system-supplied message that describes the error.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Exceptions.DataAccessException.#ctor(System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:IBatisNet.DataAccess.Exceptions.DataAccessException"/> 
+            class with a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <remarks>
+            This constructor initializes the Message property of the new instance 
+            using the message parameter.
+            </remarks>
+            <param name="ex">
+            The exception that is the cause of the current exception. 
+            If the innerException parameter is not a null reference (Nothing in Visual Basic), 
+            the current exception is raised in a catch block that handles the inner exception.
+            </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Exceptions.DataAccessException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:IBatisNet.DataAccess.Exceptions.DataAccessException"/> 
+            class with a specified error message.
+            </summary>
+            <remarks>
+            This constructor initializes the Message property of the new instance to 
+            the Message property of the passed in exception. 
+            </remarks>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Exceptions.DataAccessException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:IBatisNet.DataAccess.Exceptions.DataAccessException"/> 
+            class with a specified error message and a reference to the inner exception 
+            that is the cause of this exception.
+            </summary>
+            <remarks>
+            An exception that is thrown as a direct result of a previous exception should include a reference to the previous 
+            exception in the InnerException property. 
+            The InnerException property returns the same value that is passed into the constructor, or a null reference 
+            (Nothing in Visual Basic) if the InnerException property does not supply the inner exception value to the constructor.
+            </remarks>
+            <param name="message">The message that describes the error.</param>
+            <param name="inner">The exception that caused the error</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Exceptions.DataAccessException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:IBatisNet.DataAccess.Exceptions.DataAccessException"/> 
+            class with serialized data.
+            </summary>
+            <remarks>
+            This constructor is called during deserialization to reconstitute the 
+            exception object transmitted over a stream.
+            </remarks>
+            <param name="info">
+            The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized 
+            object data about the exception being thrown.
+            </param>
+            <param name="context">
+            The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual 
+            information about the source or destination. 
+            </param>
+        </member>
+        <member name="T:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession">
+            <summary>
+            An ADO.NET implementation of the DataAccess Session .
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.DaoSession">
+            <summary>
+            Abstract definition of a DataAccess Session
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.DaoSession.daoManager">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.#ctor(IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            The DaoManager that manages this Dao instance will be passed
+            in as the parameter to this constructor automatically upon
+            instantiation.
+            </summary>
+            <param name="daoManager"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.Complete">
+            <summary>
+            Complete (commit) a transsaction
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.OpenConnection">
+            <summary>
+            Opens a database connection.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.OpenConnection(System.String)">
+            <summary>
+            Open a connection, on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CloseConnection">
+            <summary>
+            Closes the connection
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction">
+            <summary>
+            Begins a transaction.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction(System.String)">
+            <summary>
+            Open a connection and begin a transaction on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction(System.Boolean)">
+            <summary>
+            Begins a database transaction
+            </summary>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction(System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction at the data source with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction(System.String,System.Data.IsolationLevel)">
+            <summary>
+            Open a connection and begin a transaction on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction(System.Boolean,System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction on the current connection
+            with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.BeginTransaction(System.String,System.Boolean,System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction on the current connection
+            with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+            <param name="connectionString">The connection string</param>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CommitTransaction">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <remarks>
+            Will close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CommitTransaction(System.Boolean)">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <param name="closeConnection">Close the connection</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.RollBackTransaction">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <remarks>
+            Will close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.RollBackTransaction(System.Boolean)">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <param name="closeConnection">Close the connection</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CreateCommand(System.Data.CommandType)">
+            <summary>
+            
+            </summary>
+            <param name="commandType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CreateDataParameter">
+            <summary>
+            Create an IDataParameter
+            </summary>
+            <returns>An IDataParameter.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CreateDataAdapter">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.CreateDataAdapter(System.Data.IDbCommand)">
+            <summary>
+            
+            </summary>
+            <param name="command"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSession.Dispose">
+            <summary>
+            Releasing, or resetting resources.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSession.DataSource">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSession.Connection">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSession.Transaction">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession._connection">
+            <summary>
+            Holds value of connection
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession._transaction">
+            <summary>
+            Holds value of transaction
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.#ctor(IBatisNet.DataAccess.DaoManager,IBatisNet.Common.DataSource)">
+            <summary>
+            
+            </summary>
+            <param name="daoManager"></param>
+            <param name="dataSource"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.Complete">
+            <summary>
+            Complete (commit) a transaction
+            </summary>
+            <remarks>
+            Use in 'using' syntax.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.OpenConnection">
+            <summary>
+            Opens a database connection.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.OpenConnection(System.String)">
+            <summary>
+            Open a connection, on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CloseConnection">
+            <summary>
+            Closes the connection
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction">
+            <summary>
+            Begins a transaction.
+            </summary>
+            <remarks>
+            Oepn a connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction(System.String)">
+            <summary>
+            Open a connection and begin a transaction on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction(System.Boolean)">
+            <summary>
+            Begins a database transaction
+            </summary>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction(System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction at the data source with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction(System.String,System.Data.IsolationLevel)">
+            <summary>
+            Open a connection and begin a transaction on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction(System.Boolean,System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction on the current connection
+            with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+            <param name="openConnection">Open the connection ?</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.BeginTransaction(System.String,System.Boolean,System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction on the current connection
+            with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+            <param name="connectionString">The connection string</param>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CommitTransaction">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <remarks>
+            Will close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CommitTransaction(System.Boolean)">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <param name="closeConnection">Close the connection</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.RollBackTransaction">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <remarks>
+            Will close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.RollBackTransaction(System.Boolean)">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <param name="closeConnection">Close the connection</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CreateCommand(System.Data.CommandType)">
+            <summary>
+            
+            </summary>
+            <param name="commandType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CreateDataParameter">
+            <summary>
+            Create an IDataParameter
+            </summary>
+            <returns>An IDataParameter.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CreateDataAdapter">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.CreateDataAdapter(System.Data.IDbCommand)">
+            <summary>
+            
+            </summary>
+            <param name="command"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.Dispose">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.DataSource">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.Connection">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.Transaction">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSession.Consistent">
+            <summary>
+            Changes the vote for transaction to commit (true) or to abort (false).
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.DaoManager">
+             <summary>
+             DaoManager is a facade class that provides convenient access to the rest
+             of the DAO framework.  It's primary responsibilities include:
+                - Reading configuration information and initializing the framework 
+                - Managing different contexts for different configurations
+                - Providing access to Dao implementation
+                - Providing access to the DaoSession pool for connections, transactions
+             </summary>
+             <example>
+             <pre/>
+             <b>Exemple 1:</b>
+             DaoManager daoManager = DaoManager.GetInstance("PetStore"); 
+             ICategoryDao categoryDao = (ICategoryDao) daoManager.GetDao("Category");
+             DaoSession daoSession = daoManager.GetDaoSession();
+             daoSession.OpenConnection();
+             ArrayList categoryList = categoryGetCategoryList(5,daoSession);
+             daoSession.CloseConnection(daoSession);
+             <p/>
+             <b>Exemple 2:</b>
+             DaoManager daoManager = DaoManager.GetInstance("PetStore"); 
+             ICategoryDao categoryDao = (ICategoryDao) daoManager.GetDao("Category");
+             daoManager.OpenConnection();
+             ArrayList categoryList = categoryGetCategoryList(5);
+             daoManager.CloseConnection();
+             
+             <b>Exemple 3:</b>
+             Product p1 = new Product();
+             Product p2 = new Product();
+             Category c 1= new Category()
+             c1.Add(p1);
+             c2.Add(p2);
+             <p/>
+             DaoManager daoManager = DaoManager.GetInstance("PetStore"); 
+             ICategoryDao categoryDao = (ICategoryDao) daoManager.GetDao("Category");
+             IProductDao productDao = (IProductDao) daoManager.GetDao("Product");
+             daoManager.BeginTransaction();
+             try
+             {
+            	productInsert(p1);
+            	productInsert(p2);
+            	categoryInsert(c1);
+            	daoManager.CommitTransaction();
+             }
+            catch
+            {
+            	daoManager.RollBackTransaction();
+            }<pre/>
+            </example>
+        </member>
+        <member name="F:IBatisNet.DataAccess.DaoManager.DEFAULT_CONTEXT_NAME">
+            <summary>
+            Key for default context name
+            </summary>
+        </member>
+        <member name="F:IBatisNet.DataAccess.DaoManager.DaoContextMap">
+             <summary>
+             
+             </summary>
+            <remarks>
+            (contextName, daoManager)
+            </remarks>
+        </member>
+        <member name="F:IBatisNet.DataAccess.DaoManager._sessionHolder">
+            <summary>
+            Container session unique for each thread. 
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.#ctor">
+            <summary>
+            Make the default constructor private to prevent
+            instances from being created.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.Configure">
+            <summary>
+            Configure an DaoManager from via the default file config.
+            (accesd as relative ressource path from your Application root)
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.Configure(System.String)">
+            <summary>
+            Configure an DaoManager from via a file.
+            </summary>
+            <param name="resource">
+            A relative ressource path from your Application root.
+            </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.ConfigureAndWatch(IBatisNet.Common.Utilities.ConfigureHandler)">
+            <summary>
+            Configure and monitor the configuration file for modifications and 
+            automatically reconfigure  
+            </summary>
+            <param name="configureDelegate">
+            Delegate called when a file is changed to rebuild the 
+            </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.ConfigureAndWatch(System.String,IBatisNet.Common.Utilities.ConfigureHandler)">
+             <summary>
+             Configure and monitor the configuration file for modifications and 
+             automatically reconfigure  
+             </summary>
+             <param name="resource">
+             A relative ressource path from your Application root.
+             </param>
+            <param name="configureDelegate">
+             Delegate called when the file has changed, to rebuild the dal.
+             </param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.Reset">
+            <summary>
+            Cleared all reference to 
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.NewInstance">
+            <summary>
+            Create anew instance of a DaoManager
+            </summary>
+            <returns>A DaoManager.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.GetInstance">
+            <summary>
+            Gets the default DaoManager.
+            </summary>
+            <returns>A DaoManager.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.GetInstance(System.String)">
+            <summary>
+            Gets a DaoManager registered with the specified id.
+            </summary>
+            <param name="contextName">The name of the DaoManger.</param>
+            <returns>A DaoManager.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.GetInstance(IBatisNet.DataAccess.Interfaces.IDao)">
+            <summary>
+            Get the DaoManager associated with this a Dao instance
+            </summary>
+            <param name="dao">A Dao instance.</param>
+            <returns>A DaoManager</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.RegisterDaoManager(System.String,IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            Register a DaoManager
+            </summary>
+            <param name="contextName"></param>
+            <param name="daoManager"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.GetDaoSession">
+            <summary>
+            Get a new DaoSession
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.IsDaoSessionStarted">
+            <summary>
+            Determines whether [is DAO session started].
+            </summary>
+            <returns>
+            	<c>true</c> if [is DAO session started]; otherwise, <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.OpenConnection">
+            <summary>
+            Open a connection.
+            </summary>
+            <returns>A IDalSession.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.OpenConnection(System.String)">
+            <summary>
+            Open a connection, on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.CloseConnection">
+            <summary>
+            Close a connection
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.BeginTransaction">
+            <summary>
+            Begins a database transaction.
+            </summary>
+            <returns>A IDalSession</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.BeginTransaction(System.Data.IsolationLevel)">
+            <summary>
+            Begins a database transaction with the specified isolation level.
+            </summary>
+            <param name="isolationLevel">
+            The isolation level under which the transaction should run.
+            </param>
+            <returns>A IDalSession.</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.CommitTransaction">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <remarks>
+            Close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.RollBackTransaction">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <remarks>
+            Close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.Dispose">
+            <summary>
+            Release the local session.
+            </summary>
+            <remarks>Use in SqlMapDaoSession</remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.GetDao(System.Type)">
+            <summary>
+            Gets a Dao instance for the requested interface type.
+            </summary>
+            <param name="daoInterface">The requested interface type.</param>
+            <returns>A Dao instance</returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoManager.RegisterDao(IBatisNet.DataAccess.Configuration.Dao)">
+            <summary>
+            Register a dao
+            </summary>
+            <param name="dao"></param>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.DataSource">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.DbProvider">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.LocalDataSource">
+            <summary>
+            Gets the local data source.
+            </summary>
+            <value>The local data source.</value>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.Name">
+            <summary>
+            DaoManger name
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.DaoSessionHandler">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.IsDefault">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.DaoMap">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.LocalDaoSession">
+            <summary>
+            Gets the local DAO session.
+            </summary>
+            <value>The local DAO session.</value>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoManager.Item(System.Type)">
+            <summary>
+            Gets a Dao instance for the requested interface type.
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Configuration.Serializers.DaoSessionHandlerDeSerializer">
+            <summary>
+            Summary description for DaoSessionHandlerDeSerializer.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.Serializers.DaoSessionHandlerDeSerializer.Deserialize(System.Xml.XmlNode,IBatisNet.DataAccess.Scope.ConfigurationScope)">
+            <summary>
+            Deserialize a Dao object
+            </summary>
+            <param name="node"></param>
+            <param name="configScope"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession">
+            <summary>
+            An SqlMappper implementation of the DataAccess Session.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.#ctor(IBatisNet.DataAccess.DaoManager,IBatisNet.DataMapper.ISqlMapper)">
+            <summary>
+            
+            </summary>
+            <param name="daoManager"></param>
+            <param name="sqlMap"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.Complete">
+            <summary>
+            Complete (commit) a transaction
+            </summary>
+            <remarks>
+            Use in 'using' syntax.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.OpenConnection">
+            <summary>
+            Opens a database connection.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.OpenConnection(System.String)">
+            <summary>
+            Open a connection, on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CloseConnection">
+            <summary>
+            Closes the connection
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction">
+            <summary>
+            Begins a transaction.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction(System.String)">
+            <summary>
+            Open a connection and begin a transaction on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction(System.Boolean)">
+            <summary>
+            Begins a database transaction
+            </summary>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction(System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction at the data source with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction(System.String,System.Data.IsolationLevel)">
+            <summary>
+            Open a connection and begin a transaction on the specified connection string.
+            </summary>
+            <param name="connectionString">The connection string</param>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction(System.Boolean,System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction on the current connection
+            with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.BeginTransaction(System.String,System.Boolean,System.Data.IsolationLevel)">
+            <summary>
+            Begins a transaction on the current connection
+            with the specified IsolationLevel value.
+            </summary>
+            <param name="isolationLevel">The transaction isolation level for this connection.</param>
+            <param name="connectionString">The connection string</param>
+            <param name="openConnection">Open a connection.</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CommitTransaction">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <remarks>
+            Will close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CommitTransaction(System.Boolean)">
+            <summary>
+            Commits the database transaction.
+            </summary>
+            <param name="closeConnection">Close the connection</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.RollBackTransaction">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <remarks>
+            Will close the connection.
+            </remarks>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.RollBackTransaction(System.Boolean)">
+            <summary>
+            Rolls back a transaction from a pending state.
+            </summary>
+            <param name="closeConnection">Close the connection</param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CreateCommand(System.Data.CommandType)">
+            <summary>
+            
+            </summary>
+            <param name="commandType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CreateDataParameter">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CreateDataAdapter">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.CreateDataAdapter(System.Data.IDbCommand)">
+            <summary>
+            
+            </summary>
+            <param name="command"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.Dispose">
+            <summary>
+            Releasing, or resetting resources.
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.SqlMap">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.DataSource">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.Connection">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.DaoSessionHandlers.SqlMapDaoSession.Transaction">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSessionHandler">
+            <summary>
+            Summary description for SimpleDaoSessionHandler.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSessionHandler.#ctor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSessionHandler.Configure(System.Collections.Specialized.NameValueCollection,System.Collections.IDictionary)">
+            <summary>
+            
+            </summary>
+            <param name="properties"></param>
+            <param name="resources"></param>
+        </member>
+        <member name="M:IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSessionHandler.GetDaoSession(IBatisNet.DataAccess.DaoManager)">
+            <summary>
+            
+            </summary>
+            <param name="daoManager"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Scope.ConfigurationScope">
+            <summary>
+            Description résumée de ConfigurationScope.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Scope.ConfigurationScope.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.XmlNamespaceManager">
+            <summary>
+            XmlNamespaceManager
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.NodeContext">
+            <summary>
+            The current context node we are analizing
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.DaoConfigDocument">
+            <summary>
+            The XML dao config file
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.UseConfigFileWatcher">
+            <summary>
+            Tell us if we use Configuration File Watcher
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.ErrorContext">
+            <summary>
+             Get the request's error context
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.Providers">
+            <summary>
+             List of providers
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.Properties">
+            <summary>
+             List of global properties
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ConfigurationScope.DaoSectionHandlers">
+            <summary>
+            List of Dao Section Handlers
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Scope.ErrorContext">
+            <summary>
+            An error context to help us create meaningful error messages.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Scope.ErrorContext.Reset">
+            <summary>
+            Clear the error context
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Scope.ErrorContext.ToString">
+            <summary>
+            ToString method for ErrorContext
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ErrorContext.Resource">
+            <summary>
+            The resource causing the problem
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ErrorContext.Activity">
+            <summary>
+            The activity that was happening when the error happened
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ErrorContext.ObjectId">
+            <summary>
+            The object ID where the problem happened
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ErrorContext.MoreInfo">
+            <summary>
+            More information about the error
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Scope.ErrorContext.Cause">
+            <summary>
+            The cause of the error
+            </summary>
+        </member>
+        <member name="T:IBatisNet.DataAccess.Configuration.DaoSessionHandler">
+            <summary>
+            Description résumée de DaoSessionHandler.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DaoSessionHandler.#ctor">
+            <summary>
+            Do not use direclty, only for serialization.
+            </summary>
+        </member>
+        <member name="M:IBatisNet.DataAccess.Configuration.DaoSessionHandler.#ctor(System.String,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="name"></param>
+            <param name="implementation"></param>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.DaoSessionHandler.IsDefault">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.DaoSessionHandler.Implementation">
+            <summary>
+            
+            </summary>
+            <example>
+            Examples of Type: "IBatisNet.DataAccess.DaoSessionHandlers.SimpleDaoSessionHandler"
+            </example>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.DaoSessionHandler.TypeInstance">
+            <summary>
+            The impelmenattion type
+            </summary>
+        </member>
+        <member name="P:IBatisNet.DataAccess.Configuration.DaoSessionHandler.Name">
+            <summary>
+            
+            </summary>
+        </member>
+    </members>
+</doc>

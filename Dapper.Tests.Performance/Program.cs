@@ -1,6 +1,4 @@
-﻿using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Order;
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 using System;
 using System.Data.SqlClient;
 using System.Linq;
@@ -31,15 +29,16 @@ namespace Dapper.Tests.Performance
                 WriteLine(": run the legacy benchmark suite/format", ConsoleColor.Gray);
                 WriteLine();
             }
+
             WriteLine("Using ConnectionString: " + BenchmarkBase.ConnectionString);
             EnsureDBSetup();
             WriteLine("Database setup complete.");
-            
             if (args.Any(a => a == "--legacy"))
             {
                 var test = new LegacyTests();
                 const int iterations = 500;
-                WriteLineColor($"Running legacy benchmarks: {iterations} iterations that load up a Post entity.", ConsoleColor.Green);
+                WriteLineColor($"Running legacy benchmarks: {iterations} iterations that load up a Post entity.",
+                    ConsoleColor.Green);
                 test.RunAsync(iterations).GetAwaiter().GetResult();
                 WriteLine();
                 WriteLineColor("Run complete.", ConsoleColor.Green);

@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<sqlMap 
+	namespace="Post" 
+	xmlns="http://ibatis.apache.org/mapping" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<alias>
+		<typeAlias alias="Post" type="Dapper.Tests.Performance.Post, Dapper.Tests.Performance" />
+	</alias>
+
+	<resultMaps>
+		<resultMap id="Post-Result" class="Post">
+			<result property="Id" column="Id" />
+			<result property="Text" column="Text" />
+			<result property="CreationDate" column="CreationDate" />
+			<result property="LastChangeDate" column="LastChangeDate" />
+            <result property="Counter1" column="Counter1" />
+            <result property="Counter2" column="Counter2" />
+            <result property="Counter3" column="Counter3" />
+            <result property="Counter4" column="Counter4" />
+            <result property="Counter5" column="Counter5" />
+            <result property="Counter6" column="Counter6" />
+            <result property="Counter7" column="Counter7" />
+            <result property="Counter8" column="Counter8" />
+            <result property="Counter9" column="Counter9" />
+		</resultMap>
+	</resultMaps>
+
+	<statements>
+
+    <select id="GetById" parameterClass="int" resultMap="Post-Result">
+        select * from Posts where Id =  #Id#
+    </select>
+	</statements>
+</sqlMap>
