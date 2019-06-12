@@ -1,6 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Reflection;
+﻿using System.Data;
 
 #if !NETSTANDARD1_3
 namespace Dapper
@@ -47,7 +45,7 @@ namespace Dapper
             {
                 typeName = table.GetTypeName();
             }
-            if (!string.IsNullOrEmpty(typeName)) StructuredHelper.ConfigureStructured(parameter, typeName);
+            if (!string.IsNullOrEmpty(typeName)) StructuredHelper.ConfigureTVP(parameter, typeName);
         }
     }
 }

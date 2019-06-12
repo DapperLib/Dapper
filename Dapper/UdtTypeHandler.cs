@@ -33,7 +33,7 @@ namespace Dapper
 #pragma warning disable 0618
                 parameter.Value = SanitizeParameterValue(value);
 #pragma warning restore 0618
-                if(!(value is DBNull)) StructuredHelper.ConfigureStructured(parameter, udtTypeName);
+                if(!(value is DBNull)) StructuredHelper.ConfigureUDT(parameter, udtTypeName);
             }
         }
 #endif
