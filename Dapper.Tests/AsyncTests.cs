@@ -815,6 +815,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
         }
     }
 
+    [Collection(NonParallelDefinition.Name)]
     public abstract class AsyncQueryCacheTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
     {
         private DbConnection _marsConnection;
