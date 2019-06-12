@@ -1,48 +1,92 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Globalization;
 using Xunit;
+using System.Data.Common;
 #if !NETCOREAPP1_0
 using System.Threading;
 #endif
 
 namespace Dapper.Tests
 {
-    public abstract class TestBase : IDisposable
+    public static class DatabaseProvider<TProvider> where TProvider : DatabaseProvider
     {
-        protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
+        public static TProvider Instance { get; } = Activator.CreateInstance<TProvider>();
+    }
+    public abstract class DatabaseProvider
+    {
+        public abstract DbProviderFactory Factory { get; }
 
-        public static string ConnectionString =>
+        public static bool IsAppVeyor { get; } = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
+        public virtual void Dispose() { }
+        public abstract string GetConnectionString();
+
+        public DbConnection GetOpenConnection()
+        {
+            var conn = Factory.CreateConnection();
+            conn.ConnectionString = GetConnectionString();
+            conn.Open();
+            if (conn.State != ConnectionState.Open) throw new InvalidOperationException("should be open!");
+            return conn;
+        }
+
+        public DbConnection GetClosedConnection()
+        {
+            var conn = Factory.CreateConnection();
+            conn.ConnectionString = GetConnectionString();
+            if (conn.State != ConnectionState.Closed) throw new InvalidOperationException("should be closed!");
+            return conn;
+        }
+
+        public DbParameter CreateRawParameter(string name, object value)
+        {
+            var p = Factory.CreateParameter();
+            p.ParameterName = name;
+            p.Value = value ?? DBNull.Value;
+            return p;
+        }
+    }
+
+    public abstract class SqlServerDatabaseProvider : DatabaseProvider
+    {
+        public override string GetConnectionString() =>
             IsAppVeyor
                 ? @"Server=(local)\SQL2016;Database=tempdb;User ID=sa;Password=Password12!"
                 : "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
 
-        protected SqlConnection _connection;
-        protected SqlConnection connection => _connection ?? (_connection = GetOpenConnection());
-
-        public static SqlConnection GetOpenConnection(bool mars = false)
+        public DbConnection GetOpenConnection(bool mars)
         {
-            var cs = ConnectionString;
-            if (mars)
-            {
-                var scsb = new SqlConnectionStringBuilder(cs)
-                {
-                    MultipleActiveResultSets = true
-                };
-                cs = scsb.ConnectionString;
-            }
-            var connection = new SqlConnection(cs);
-            connection.Open();
-            return connection;
-        }
+            if (!mars) return GetOpenConnection();
 
-        public SqlConnection GetClosedConnection()
-        {
-            var conn = new SqlConnection(ConnectionString);
-            if (conn.State != ConnectionState.Closed) throw new InvalidOperationException("should be closed!");
+            var scsb = Factory.CreateConnectionStringBuilder();
+            scsb.ConnectionString = GetConnectionString();
+            ((dynamic)scsb).MultipleActiveResultSets = true;
+            var conn = Factory.CreateConnection();
+            conn.ConnectionString = scsb.ConnectionString;
+            conn.Open();
+            if (conn.State != ConnectionState.Open) throw new InvalidOperationException("should be open!");
             return conn;
         }
+    }
+    public sealed class SystemSqlClientProvider : SqlServerDatabaseProvider
+    {
+        public override DbProviderFactory Factory => System.Data.SqlClient.SqlClientFactory.Instance;
+    }
+#if MSSQLCLIENT
+    public sealed class MicrosoftSqlClientProvider : SqlServerDatabaseProvider
+    {
+        public override DbProviderFactory Factory => Microsoft.Data.SqlClient.SqlClientFactory.Instance;
+    }
+#endif
+
+    public abstract class TestBase<TProvider> : IDisposable where TProvider : DatabaseProvider
+    {
+        protected DbConnection GetOpenConnection() => Provider.GetOpenConnection();
+        protected DbConnection GetClosedConnection() => Provider.GetClosedConnection();
+        protected DbConnection _connection;
+        protected DbConnection connection => _connection ?? (_connection = Provider.GetOpenConnection());
+
+        public TProvider Provider { get; } = DatabaseProvider<TProvider>.Instance;
 
         protected static CultureInfo ActiveCulture
         {
@@ -58,7 +102,10 @@ namespace Dapper.Tests
         static TestBase()
         {
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
-            Console.WriteLine("Using Connectionstring: {0}", ConnectionString);
+            var provider = DatabaseProvider<TProvider>.Instance;
+            Console.WriteLine("Using Connectionstring: {0}", provider.GetConnectionString());
+            var factory = provider.Factory;
+            Console.WriteLine("Using Provider: {0}", factory.GetType().FullName);
 #if NETCOREAPP1_0
             Console.WriteLine("CoreCLR (netcoreapp1.0)");
 #else
@@ -77,14 +124,15 @@ namespace Dapper.Tests
 #endif
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             _connection?.Dispose();
+            _connection = null;
+            Provider?.Dispose();
         }
     }
 
-    [CollectionDefinition(Name, DisableParallelization = true)]
-    public class NonParallelDefinition : TestBase
+    public static class NonParallelDefinition
     {
         public const string Name = "NonParallel";
     }

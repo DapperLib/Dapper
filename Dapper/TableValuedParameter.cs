@@ -1,6 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Reflection;
+﻿using System.Data;
 
 #if !NETSTANDARD1_3
 namespace Dapper
@@ -30,17 +28,6 @@ namespace Dapper
             this.typeName = typeName;
         }
 
-        private static readonly Action<System.Data.SqlClient.SqlParameter, string> setTypeName;
-        static TableValuedParameter()
-        {
-            var prop = typeof(System.Data.SqlClient.SqlParameter).GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public);
-            if (prop != null && prop.PropertyType == typeof(string) && prop.CanWrite)
-            {
-                setTypeName = (Action<System.Data.SqlClient.SqlParameter, string>)
-                    Delegate.CreateDelegate(typeof(Action<System.Data.SqlClient.SqlParameter, string>), prop.GetSetMethod());
-            }
-        }
-
         void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
         {
             var param = command.CreateParameter();
@@ -58,11 +45,7 @@ namespace Dapper
             {
                 typeName = table.GetTypeName();
             }
-            if (!string.IsNullOrEmpty(typeName) && (parameter is System.Data.SqlClient.SqlParameter sqlParam))
-            {
-                setTypeName?.Invoke(sqlParam, typeName);
-                sqlParam.SqlDbType = SqlDbType.Structured;
-            }
+            if (!string.IsNullOrEmpty(typeName)) StructuredHelper.ConfigureTVP(parameter, typeName);
         }
     }
 }

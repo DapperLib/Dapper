@@ -4,15 +4,31 @@ using System.Diagnostics;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Data.SqlClient;
 using Xunit;
+using System.Data.Common;
 
 namespace Dapper.Tests
 {
-    public class Tests : TestBase
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class SystemSqlClientAsyncTests : AsyncTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class MicrosoftSqlClientAsyncTests : AsyncTests<MicrosoftSqlClientProvider> { }
+#endif
+
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class SystemSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class MicrosoftSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<MicrosoftSqlClientProvider> { }
+#endif
+
+
+    public abstract class AsyncTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
     {
-        private SqlConnection _marsConnection;
-        private SqlConnection MarsConnection => _marsConnection ?? (_marsConnection = GetOpenConnection(true));
+        private DbConnection _marsConnection;
+        
+        private DbConnection MarsConnection => _marsConnection ?? (_marsConnection = Provider.GetOpenConnection(true));
 
         [Fact]
         public async Task TestBasicStringUsageAsync()
@@ -100,7 +116,7 @@ namespace Dapper.Tests
             }
             catch (AggregateException agg)
             {
-                Assert.True(agg.InnerException is SqlException);
+                Assert.True(agg.InnerException.GetType().Name == "SqlException");
             }
         }
 
@@ -380,38 +396,6 @@ namespace Dapper.Tests
             MarsConnection.Execute(new CommandDefinition("select @id", ids, flags: CommandFlags.Pipelined));
             watch.Stop();
             Console.WriteLine("Pipeline: {0}ms", watch.ElapsedMilliseconds);
-        }
-
-        [Collection(NonParallelDefinition.Name)]
-        public class AsyncQueryCacheTests : TestBase
-        {
-            private SqlConnection _marsConnection;
-            private SqlConnection MarsConnection => _marsConnection ?? (_marsConnection = GetOpenConnection(true));
-
-            [Fact]
-            public void AssertNoCacheWorksForQueryMultiple()
-            {
-                const int a = 123, b = 456;
-                var cmdDef = new CommandDefinition("select @a; select @b;", new
-                {
-                    a,
-                    b
-                }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
-
-                int c, d;
-                SqlMapper.PurgeQueryCache();
-                int before = SqlMapper.GetCachedSQLCount();
-                using (var multi = MarsConnection.QueryMultiple(cmdDef))
-                {
-                    c = multi.Read<int>().Single();
-                    d = multi.Read<int>().Single();
-                }
-                int after = SqlMapper.GetCachedSQLCount();
-                Assert.Equal(0, before);
-                Assert.Equal(0, after);
-                Assert.Equal(123, c);
-                Assert.Equal(456, d);
-            }
         }
 
         private class BasicType
@@ -827,7 +811,46 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 var data = (await connection.QueryAsync<int>("select 1 union all select 2; RAISERROR('after select', 16, 1);").ConfigureAwait(false)).ToList();
                 Assert.True(false, "Expected Exception");
             }
-            catch (SqlException ex) when (ex.Message == "after select") { /* swallow only this */ }
+            catch (Exception ex) when (ex.GetType().Name == "SqlException" && ex.Message == "after select") { /* swallow only this */ }
+        }
+    }
+
+    [Collection(NonParallelDefinition.Name)]
+    public abstract class AsyncQueryCacheTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
+    {
+        private DbConnection _marsConnection;
+        private DbConnection MarsConnection => _marsConnection ?? (_marsConnection = Provider.GetOpenConnection(true));
+
+        public override void Dispose()
+        {
+            _marsConnection?.Dispose();
+            _marsConnection = null;
+            base.Dispose();
+        }
+
+        [Fact]
+        public void AssertNoCacheWorksForQueryMultiple()
+        {
+            const int a = 123, b = 456;
+            var cmdDef = new CommandDefinition("select @a; select @b;", new
+            {
+                a,
+                b
+            }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
+
+            int c, d;
+            SqlMapper.PurgeQueryCache();
+            int before = SqlMapper.GetCachedSQLCount();
+            using (var multi = MarsConnection.QueryMultiple(cmdDef))
+            {
+                c = multi.Read<int>().Single();
+                d = multi.Read<int>().Single();
+            }
+            int after = SqlMapper.GetCachedSQLCount();
+            Assert.Equal(0, before);
+            Assert.Equal(0, after);
+            Assert.Equal(123, c);
+            Assert.Equal(456, d);
         }
     }
 }
