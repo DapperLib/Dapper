@@ -42,7 +42,7 @@ namespace Dapper.Tests
                     command.Parameters.Add(parameter);
             }
         }
-        /* problems with conflicting type
+
         private static List<Microsoft.SqlServer.Server.SqlDataRecord> CreateSqlDataRecordList(IEnumerable<int> numbers)
         {
             var number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
@@ -107,7 +107,6 @@ namespace Dapper.Tests
                 p.Value = number_list;
             }
         }
-         */
 
         /* TODO:
          * 
@@ -222,8 +221,6 @@ namespace Dapper.Tests
         }
 
 
-        /* problems with conflicting type
-         * 
         [Fact]
         public void TestTVPWithAnonymousObject()
         {
@@ -471,8 +468,6 @@ namespace Dapper.Tests
                 }
             }
         }
-
-        */
 
 #if !NETCOREAPP1_0
         [Fact]
