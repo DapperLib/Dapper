@@ -98,5 +98,19 @@ namespace Dapper.Tests
             Assert.Equal(14, val.e14);
             Assert.Equal(15, val.e15);
         }
+
+        [Fact]
+        public void TupleReturnValue_Works_WithStringField()
+        {
+            var val = connection.QuerySingle<ValueTuple<string>>("select '42'");
+            Assert.Equal("42", val.Item1);
+        }
+
+        [Fact]
+        public void TupleReturnValue_Works_WithByteField()
+        {
+            var val = connection.QuerySingle<ValueTuple<byte[]>>("select 0xDEADBEEF");
+            Assert.Equal(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF }, val.Item1);
+        }
     }
 }
