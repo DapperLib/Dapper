@@ -84,7 +84,11 @@ namespace Dapper
             {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Castclass, type);
+#if NETSTANDARD1_3
+                il.Emit(OpCodes.Ldc_I4, (int)30); // hard-code the known enum value
+#else
                 il.Emit(OpCodes.Ldc_I4, (int)SqlDbType.Structured);
+#endif
                 il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod(), null);
             }
 
