@@ -7,7 +7,9 @@ using Xunit;
 namespace Dapper.Tests
 {
     public sealed class SystemSqlClientProcedureTests : ProcedureTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientProcedureTests : ProcedureTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class ProcedureTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]

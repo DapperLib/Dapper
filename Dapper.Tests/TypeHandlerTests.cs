@@ -10,8 +10,10 @@ namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)]
     public sealed class SystemSqlClientTypeHandlerTests : TypeHandlerTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)]
     public sealed class MicrosoftSqlClientTypeHandlerTests : TypeHandlerTests<MicrosoftSqlClientProvider> { }
+#endif
 
     public abstract class TypeHandlerTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {

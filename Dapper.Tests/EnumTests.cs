@@ -5,7 +5,9 @@ using Xunit;
 namespace Dapper.Tests
 {
     public sealed class SystemSqlClientEnumTests : EnumTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientEnumTests : EnumTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class EnumTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]

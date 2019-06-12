@@ -40,7 +40,9 @@ namespace System
 namespace Dapper.Tests
 {
     public sealed class SystemSqlClientMiscTests : MiscTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientMiscTests : MiscTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class MiscTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]

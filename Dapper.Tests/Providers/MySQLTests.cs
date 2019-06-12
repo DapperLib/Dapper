@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Dapper.Tests
@@ -152,6 +154,52 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 Assert.True(rows[1].IsBold);
                 Assert.False(rows[2].IsBold);
                 Assert.True(rows[3].IsBold);
+            }
+        }
+
+        [Fact]
+        public void Issue1277_ReaderSync()
+        {
+            using (var conn = Provider.GetMySqlConnection())
+            {
+                try { conn.Execute("drop table Issue1277_Test"); } catch { /* don't care */ }
+                conn.Execute("create table Issue1277_Test (Id int not null, IsBold tinyint not null);");
+                conn.Execute("insert Issue1277_Test (Id, IsBold) values (1,1);");
+                conn.Execute("insert Issue1277_Test (Id, IsBold) values (2,0);");
+                conn.Execute("insert Issue1277_Test (Id, IsBold) values (3,1);");
+
+                using (var reader = conn.ExecuteReader(
+                    "select * from Issue1277_Test where Id < @id",
+                    new { id = 42 }))
+                {
+                    var table = new DataTable();
+                    table.Load(reader);
+                    Assert.Equal(2, table.Columns.Count);
+                    Assert.Equal(3, table.Rows.Count);
+                }
+            }
+        }
+
+        [Fact]
+        public async Task Issue1277_ReaderAsync()
+        {
+            using (var conn = Provider.GetMySqlConnection())
+            {
+                try { await conn.ExecuteAsync("drop table Issue1277_Test"); } catch { /* don't care */ }
+                await conn.ExecuteAsync("create table Issue1277_Test (Id int not null, IsBold tinyint not null);");
+                await conn.ExecuteAsync("insert Issue1277_Test (Id, IsBold) values (1,1);");
+                await conn.ExecuteAsync("insert Issue1277_Test (Id, IsBold) values (2,0);");
+                await conn.ExecuteAsync("insert Issue1277_Test (Id, IsBold) values (3,1);");
+
+                using (var reader = await conn.ExecuteReaderAsync(
+                    "select * from Issue1277_Test where Id < @id",
+                    new { id = 42 }))
+                {
+                    var table = new DataTable();
+                    table.Load(reader);
+                    Assert.Equal(2, table.Columns.Count);
+                    Assert.Equal(3, table.Rows.Count);
+                }
             }
         }
 

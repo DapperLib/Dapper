@@ -8,7 +8,9 @@ using Xunit;
 namespace Dapper.Tests
 {
     public sealed class SystemSqlClientTransactionTests : TransactionTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientTransactionTests : TransactionTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class TransactionTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]

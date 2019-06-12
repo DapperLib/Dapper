@@ -7,7 +7,9 @@ using Xunit;
 namespace Dapper.Tests
 {
     public sealed class SystemSqlClientQueryMultipleTests : QueryMultipleTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientQueryMultipleTests : QueryMultipleTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class QueryMultipleTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]

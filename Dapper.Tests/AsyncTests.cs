@@ -11,13 +11,17 @@ namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)]
     public sealed class SystemSqlClientAsyncTests : AsyncTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)]
     public sealed class MicrosoftSqlClientAsyncTests : AsyncTests<MicrosoftSqlClientProvider> { }
+#endif
 
     [Collection(NonParallelDefinition.Name)]
     public sealed class SystemSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)]
     public sealed class MicrosoftSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<MicrosoftSqlClientProvider> { }
+#endif
 
 
     public abstract class AsyncTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
