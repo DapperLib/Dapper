@@ -157,7 +157,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             }
         }
 
-        [Fact]
+        [FactMySql]
         public void Issue1277_ReaderSync()
         {
             using (var conn = Provider.GetMySqlConnection())
@@ -180,7 +180,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             }
         }
 
-        [Fact]
+        [FactMySql]
         public async Task Issue1277_ReaderAsync()
         {
             using (var conn = Provider.GetMySqlConnection())
