@@ -7,7 +7,9 @@ using Xunit;
 namespace Dapper.Tests.Providers
 {
     public sealed class SystemSqlClientEntityFrameworkTests : EntityFrameworkTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientEntityFrameworkTests : EntityFrameworkTests<MicrosoftSqlClientProvider> { }
+#endif
 
     [Collection("TypeHandlerTests")]
     public abstract class EntityFrameworkTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider

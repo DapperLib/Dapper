@@ -4,7 +4,9 @@ using Xunit;
 namespace Dapper.Tests
 {
     public sealed class SystemSqlClientTupleTests : TupleTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientTupleTests : TupleTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class TupleTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]

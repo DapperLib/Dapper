@@ -16,6 +16,14 @@
   <ItemGroup>
     <None Remove="Test.DB.sdf" />
   </ItemGroup>
+  <!-- these two go together
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19128.1-Preview" />
+  </ItemGroup>
+  -->
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
@@ -26,7 +34,6 @@
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
     <PackageReference Include="xunit" Version="$(xUnitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19128.1-Preview" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
   </ItemGroup>
 

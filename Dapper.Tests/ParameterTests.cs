@@ -20,8 +20,10 @@ namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)] // because it creates SQL types that compete between the two providers
     public sealed class SystemSqlClientParameterTests : ParameterTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)] // because it creates SQL types that compete between the two providers
     public sealed class MicrosoftSqlClientParameterTests : ParameterTests<MicrosoftSqlClientProvider> { }
+#endif
     public abstract class ParameterTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         public class DbParams : SqlMapper.IDynamicParameters, IEnumerable<IDbDataParameter>

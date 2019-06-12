@@ -4,8 +4,10 @@ namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)]
     public sealed class SystemSqlClientNullTests : NullTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)]
     public sealed class MicrosoftSqlClientNullTests : NullTests<MicrosoftSqlClientProvider> { }
+#endif
 
     public abstract class NullTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {

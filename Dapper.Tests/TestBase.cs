@@ -72,10 +72,12 @@ namespace Dapper.Tests
     {
         public override DbProviderFactory Factory => System.Data.SqlClient.SqlClientFactory.Instance;
     }
+#if MSSQLCLIENT
     public sealed class MicrosoftSqlClientProvider : SqlServerDatabaseProvider
     {
         public override DbProviderFactory Factory => Microsoft.Data.SqlClient.SqlClientFactory.Instance;
     }
+#endif
 
     public abstract class TestBase<TProvider> : IDisposable where TProvider : DatabaseProvider
     {
