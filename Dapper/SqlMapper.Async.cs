@@ -1101,7 +1101,7 @@ namespace Dapper
         /// </code>
         /// </example>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            ExecuteReaderImplAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered), CommandBehavior.Default);
+            ExecuteWrappedReaderImplAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered), CommandBehavior.Default);
 
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>.
@@ -1114,7 +1114,7 @@ namespace Dapper
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command) =>
-            ExecuteReaderImplAsync(cnn, command, CommandBehavior.Default);
+            ExecuteWrappedReaderImplAsync(cnn, command, CommandBehavior.Default);
 
         /// <summary>
         /// Execute parameterized SQL and return an <see cref="IDataReader"/>.
@@ -1128,26 +1128,27 @@ namespace Dapper
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior) =>
-            ExecuteReaderImplAsync(cnn, command, commandBehavior);
+            ExecuteWrappedReaderImplAsync(cnn, command, commandBehavior);
 
-        private static async Task<IDataReader> ExecuteReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
+        private static async Task<IDataReader> ExecuteWrappedReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
 
             DbCommand cmd = null;
-            bool wasClosed = cnn.State == ConnectionState.Closed;
+            bool wasClosed = cnn.State == ConnectionState.Closed, disposeCommand = true;
             try
             {
                 cmd = command.TrySetupAsyncCommand(cnn, paramReader);
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
-                return reader;
+                disposeCommand = false;
+                return WrappedReader.Create(cmd, reader);
             }
             finally
             {
                 if (wasClosed) cnn.Close();
-                cmd?.Dispose();
+                if (cmd != null && disposeCommand) cmd.Dispose();
             }
         }
 

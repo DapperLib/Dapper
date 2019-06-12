@@ -237,7 +237,7 @@ namespace Dapper
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void AddSqlDataRecordsTypeHandler(bool clone)
         {
-            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler(), clone);
+            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler<Microsoft.SqlServer.Server.SqlDataRecord>(), clone);
         }
 
         /// <summary>
@@ -599,7 +599,7 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
-            return new WrappedReader(dbcmd, reader);
+            return WrappedReader.Create(dbcmd, reader);
         }
 
         /// <summary>
@@ -615,7 +615,7 @@ namespace Dapper
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
             var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
-            return new WrappedReader(dbcmd, reader);
+            return WrappedReader.Create(dbcmd, reader);
         }
 
         /// <summary>
@@ -632,7 +632,7 @@ namespace Dapper
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
             var reader = ExecuteReaderImpl(cnn, ref command, commandBehavior, out IDbCommand dbcmd);
-            return new WrappedReader(dbcmd, reader);
+            return WrappedReader.Create(dbcmd, reader);
         }
 
         /// <summary>
@@ -3790,8 +3790,19 @@ namespace Dapper
         /// </summary>
         /// <param name="list">The list of records to convert to TVPs.</param>
         /// <param name="typeName">The sql parameter type name.</param>
+        public static ICustomQueryParameter AsTableValuedParameter<T>(this IEnumerable<T> list, string typeName = null) where T : IDataRecord =>
+            new SqlDataRecordListTVPParameter<T>(list, typeName);
+
+        /* 
+        /// <summary>
+        /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a TableValuedParameter.
+        /// </summary>
+        /// <param name="list">The list of records to convert to TVPs.</param>
+        /// <param name="typeName">The sql parameter type name.</param>
         public static ICustomQueryParameter AsTableValuedParameter(this IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName = null) =>
-            new SqlDataRecordListTVPParameter(list, typeName);
+            new SqlDataRecordListTVPParameter<Microsoft.SqlServer.Server.SqlDataRecord>(list, typeName);
+        // ^^^ retained to avoid missing-method-exception; can presumably drop in a "major"
+        */
 
         // one per thread
         [ThreadStatic]

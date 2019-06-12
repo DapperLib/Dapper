@@ -4,7 +4,10 @@ using System.Data;
 
 namespace Dapper
 {
-    internal sealed class SqlDataRecordHandler : SqlMapper.ITypeHandler
+    internal sealed class SqlDataRecordHandler<T> : SqlMapper.ITypeHandler
+#if !NETSTANDARD1_3
+        where T : IDataRecord
+#endif
     {
         public object Parse(Type destinationType, object value)
         {
@@ -13,7 +16,7 @@ namespace Dapper
 
         public void SetValue(IDbDataParameter parameter, object value)
         {
-            SqlDataRecordListTVPParameter.Set(parameter, value as IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>, null);
+            SqlDataRecordListTVPParameter<T>.Set(parameter, value as IEnumerable<T>, null);
         }
     }
 }

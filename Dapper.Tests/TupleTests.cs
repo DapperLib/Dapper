@@ -3,7 +3,11 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class TupleTests : TestBase
+    public sealed class SystemSqlClientTupleTests : TupleTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    public sealed class MicrosoftSqlClientTupleTests : TupleTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class TupleTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TupleStructParameter_Fails_HelpfulMessage()
