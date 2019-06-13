@@ -3178,7 +3178,7 @@ namespace Dapper
 
         private static void GenerateDeserializerFromMap(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing, ILGenerator il)
         {
-            il.DeclareLocal(typeof(int));
+            var currentIndexDiagnosticLocal = il.DeclareLocal(typeof(int));
             il.DeclareLocal(type);
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc_0);
@@ -3292,6 +3292,10 @@ namespace Dapper
                     Label finishLabel = il.DefineLabel();
                     Type memberType = item.MemberType;
 
+                    // Save off the current index for access if an exception is thrown
+                    EmitInt32(il, index);
+                    il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
+
                     LoadReaderValueOrBranchToDBNullLabel(il, index, ref enumDeclareLocal, valueCopyLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel);
 
                     if (specializedConstructor == null)
@@ -3379,7 +3383,7 @@ namespace Dapper
             }
             il.MarkLabel(allDone);
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception
-            il.Emit(OpCodes.Ldloc_0); // stack is Exception, index
+            il.Emit(OpCodes.Ldloc, currentIndexDiagnosticLocal); // stack is Exception, index
             il.Emit(OpCodes.Ldarg_0); // stack is Exception, index, reader
             LoadLocal(il, valueCopyLocal); // stack is Exception, index, reader, value
             il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SqlMapper.ThrowDataException)), null);
@@ -3413,8 +3417,6 @@ namespace Dapper
             isDbNullLabel = il.DefineLabel();
             il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
             EmitInt32(il, index); // stack is now [...][reader][index]
-            il.Emit(OpCodes.Dup);// stack is now [...][reader][index][index]
-            il.Emit(OpCodes.Stloc_0);// stack is now [...][reader][index]
             il.Emit(OpCodes.Callvirt, getItem); // stack is now [...][value-as-object]
 
             if (valueCopyLocal != null)
