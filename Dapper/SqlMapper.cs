@@ -3521,48 +3521,51 @@ namespace Dapper
             {
                 bool handled = false;
                 OpCode opCode = default(OpCode);
-                switch (TypeExtensions.GetTypeCode(from))
+                if (SqlMapper.AssumeColumnsAreStronglyTyped)
                 {
-                    case TypeCode.Boolean:
-                    case TypeCode.Byte:
-                    case TypeCode.SByte:
-                    case TypeCode.Int16:
-                    case TypeCode.UInt16:
-                    case TypeCode.Int32:
-                    case TypeCode.UInt32:
-                    case TypeCode.Int64:
-                    case TypeCode.UInt64:
-                    case TypeCode.Single:
-                    case TypeCode.Double:
-                        handled = true;
-                        switch (TypeExtensions.GetTypeCode(via ?? to))
-                        {
-                            case TypeCode.Byte:
-                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
-                            case TypeCode.SByte:
-                                opCode = OpCodes.Conv_Ovf_I1; break;
-                            case TypeCode.UInt16:
-                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
-                            case TypeCode.Int16:
-                                opCode = OpCodes.Conv_Ovf_I2; break;
-                            case TypeCode.UInt32:
-                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
-                            case TypeCode.Boolean: // boolean is basically an int, at least at this level
-                            case TypeCode.Int32:
-                                opCode = OpCodes.Conv_Ovf_I4; break;
-                            case TypeCode.UInt64:
-                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
-                            case TypeCode.Int64:
-                                opCode = OpCodes.Conv_Ovf_I8; break;
-                            case TypeCode.Single:
-                                opCode = OpCodes.Conv_R4; break;
-                            case TypeCode.Double:
-                                opCode = OpCodes.Conv_R8; break;
-                            default:
-                                handled = false;
-                                break;
-                        }
-                        break;
+                    switch (TypeExtensions.GetTypeCode(from))
+                    {
+                        case TypeCode.Boolean:
+                        case TypeCode.Byte:
+                        case TypeCode.SByte:
+                        case TypeCode.Int16:
+                        case TypeCode.UInt16:
+                        case TypeCode.Int32:
+                        case TypeCode.UInt32:
+                        case TypeCode.Int64:
+                        case TypeCode.UInt64:
+                        case TypeCode.Single:
+                        case TypeCode.Double:
+                            handled = true;
+                            switch (TypeExtensions.GetTypeCode(via ?? to))
+                            {
+                                case TypeCode.Byte:
+                                    opCode = OpCodes.Conv_Ovf_I1_Un; break;
+                                case TypeCode.SByte:
+                                    opCode = OpCodes.Conv_Ovf_I1; break;
+                                case TypeCode.UInt16:
+                                    opCode = OpCodes.Conv_Ovf_I2_Un; break;
+                                case TypeCode.Int16:
+                                    opCode = OpCodes.Conv_Ovf_I2; break;
+                                case TypeCode.UInt32:
+                                    opCode = OpCodes.Conv_Ovf_I4_Un; break;
+                                case TypeCode.Boolean: // boolean is basically an int, at least at this level
+                                case TypeCode.Int32:
+                                    opCode = OpCodes.Conv_Ovf_I4; break;
+                                case TypeCode.UInt64:
+                                    opCode = OpCodes.Conv_Ovf_I8_Un; break;
+                                case TypeCode.Int64:
+                                    opCode = OpCodes.Conv_Ovf_I8; break;
+                                case TypeCode.Single:
+                                    opCode = OpCodes.Conv_R4; break;
+                                case TypeCode.Double:
+                                    opCode = OpCodes.Conv_R8; break;
+                                default:
+                                    handled = false;
+                                    break;
+                            }
+                            break;
+                    }
                 }
                 if (handled)
                 {
@@ -3748,6 +3751,17 @@ namespace Dapper
         }
 
         private static IEqualityComparer<string> connectionStringComparer = StringComparer.Ordinal;
+
+        /// <summary>
+        /// Some data providers change column types dynamically.
+        /// If set to false, all value conversions will be done via Convert.ChangeType to handle this behavior.
+        /// </summary>
+        public static bool AssumeColumnsAreStronglyTyped
+        {
+            get { return assumeColumnsAreStronglyTyped; }
+            set { assumeColumnsAreStronglyTyped = value; }
+        }
+        private static bool assumeColumnsAreStronglyTyped = true;
 
 #if !NETSTANDARD1_3
         /// <summary>
