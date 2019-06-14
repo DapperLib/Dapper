@@ -31,7 +31,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, CommandDefinition command) =>
             QueryAsync<dynamic>(cnn, typeof(DapperRow), command);
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<dynamic> QueryFirstAsync(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<dynamic> QueryFirstAsync(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<dynamic>(cnn, Row.First, typeof(DapperRow), command);
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<dynamic> QueryFirstOrDefaultAsync(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<dynamic> QueryFirstOrDefaultAsync(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<dynamic>(cnn, Row.FirstOrDefault, typeof(DapperRow), command);
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<dynamic> QuerySingleAsync(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<dynamic> QuerySingleAsync(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<dynamic>(cnn, Row.Single, typeof(DapperRow), command);
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
         /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<dynamic> QuerySingleOrDefaultAsync(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<dynamic> QuerySingleOrDefaultAsync(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<dynamic>(cnn, Row.SingleOrDefault, typeof(DapperRow), command);
 
         /// <summary>
@@ -279,7 +279,7 @@ namespace Dapper
         /// A sequence of data of <typeparamref name="T"/>; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryAsync<T>(cnn, typeof(T), command);
 
         /// <summary>
@@ -288,7 +288,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, in CommandDefinition command) =>
+        public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
             QueryAsync<object>(cnn, type, command);
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<object> QueryFirstAsync(this IDbConnection cnn, Type type, in CommandDefinition command) =>
+        public static Task<object> QueryFirstAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
             QueryRowAsync<object>(cnn, Row.First, type, command);
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace Dapper
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<T> QueryFirstAsync<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<T> QueryFirstAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<T>(cnn, Row.First, typeof(T), command);
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<object> QueryFirstOrDefaultAsync(this IDbConnection cnn, Type type, in CommandDefinition command) =>
+        public static Task<object> QueryFirstOrDefaultAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
             QueryRowAsync<object>(cnn, Row.FirstOrDefault, type, command);
 
         /// <summary>
@@ -324,7 +324,7 @@ namespace Dapper
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<T> QueryFirstOrDefaultAsync<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<T> QueryFirstOrDefaultAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<T>(cnn, Row.FirstOrDefault, typeof(T), command);
 
         /// <summary>
@@ -333,7 +333,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<object> QuerySingleAsync(this IDbConnection cnn, Type type, in CommandDefinition command) =>
+        public static Task<object> QuerySingleAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
             QueryRowAsync<object>(cnn, Row.Single, type, command);
 
         /// <summary>
@@ -342,7 +342,7 @@ namespace Dapper
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<T> QuerySingleAsync<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<T> QuerySingleAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<T>(cnn, Row.Single, typeof(T), command);
 
         /// <summary>
@@ -351,7 +351,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<object> QuerySingleOrDefaultAsync(this IDbConnection cnn, Type type, in CommandDefinition command) =>
+        public static Task<object> QuerySingleOrDefaultAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
             QueryRowAsync<object>(cnn, Row.SingleOrDefault, type, command);
 
         /// <summary>
@@ -360,7 +360,7 @@ namespace Dapper
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<T> QuerySingleOrDefaultAsync<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<T> QuerySingleOrDefaultAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<T>(cnn, Row.SingleOrDefault, typeof(T), command);
 
         private static Task<DbDataReader> ExecuteReaderWithFlagsFallbackAsync(DbCommand cmd, bool wasClosed, CommandBehavior behavior, CancellationToken cancellationToken)
@@ -544,7 +544,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute on this connection.</param>
         /// <returns>The number of rows affected.</returns>
-        public static Task<int> ExecuteAsync(this IDbConnection cnn, in CommandDefinition command)
+        public static Task<int> ExecuteAsync(this IDbConnection cnn, CommandDefinition command)
         {
             object param = command.Parameters;
             IEnumerable multiExec = GetMultiExec(param);
@@ -719,7 +719,7 @@ namespace Dapper
         /// <param name="command">The command to execute.</param>
         /// <param name="map">The function to map row types to the return type.</param>
         /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, in CommandDefinition command, Func<TFirst, TSecond, TReturn> map, string splitOn = "Id") =>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TReturn> map, string splitOn = "Id") =>
             MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
@@ -757,7 +757,7 @@ namespace Dapper
         /// <param name="command">The command to execute.</param>
         /// <param name="map">The function to map row types to the return type.</param>
         /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, in CommandDefinition command, Func<TFirst, TSecond, TThird, TReturn> map, string splitOn = "Id") =>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TReturn> map, string splitOn = "Id") =>
             MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
@@ -797,7 +797,7 @@ namespace Dapper
         /// <param name="command">The command to execute.</param>
         /// <param name="map">The function to map row types to the return type.</param>
         /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, in CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, string splitOn = "Id") =>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, string splitOn = "Id") =>
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
@@ -839,7 +839,7 @@ namespace Dapper
         /// <param name="command">The command to execute.</param>
         /// <param name="map">The function to map row types to the return type.</param>
         /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, in CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, string splitOn = "Id") =>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, string splitOn = "Id") =>
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
@@ -883,7 +883,7 @@ namespace Dapper
         /// <param name="command">The command to execute.</param>
         /// <param name="map">The function to map row types to the return type.</param>
         /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, in CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, string splitOn = "Id") =>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, string splitOn = "Id") =>
              MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
@@ -929,7 +929,7 @@ namespace Dapper
         /// <param name="command">The command to execute.</param>
         /// <param name="map">The function to map row types to the return type.</param>
         /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
-        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, in CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, string splitOn = "Id") =>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, string splitOn = "Id") =>
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn);
 
         private static async Task<IEnumerable<TReturn>> MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn)
@@ -1185,7 +1185,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute.</param>
         /// <returns>The first cell selected as <see cref="object"/>.</returns>
-        public static Task<object> ExecuteScalarAsync(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<object> ExecuteScalarAsync(this IDbConnection cnn, CommandDefinition command) =>
             ExecuteScalarImplAsync<object>(cnn, command);
 
         /// <summary>
@@ -1195,7 +1195,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute.</param>
         /// <returns>The first cell selected as <typeparamref name="T"/>.</returns>
-        public static Task<T> ExecuteScalarAsync<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static Task<T> ExecuteScalarAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             ExecuteScalarImplAsync<T>(cnn, command);
 
         private static async Task<T> ExecuteScalarImplAsync<T>(IDbConnection cnn, CommandDefinition command)

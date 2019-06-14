@@ -449,7 +449,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute on this connection.</param>
         /// <returns>The number of rows affected.</returns>
-        public static int Execute(this IDbConnection cnn, in CommandDefinition command) => ExecuteImpl(cnn, command);
+        public static int Execute(this IDbConnection cnn, CommandDefinition command) => ExecuteImpl(cnn, command);
 
         /// <summary>
         /// Execute parameterized SQL that selects a single value.
@@ -490,7 +490,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute.</param>
         /// <returns>The first cell selected as <see cref="object"/>.</returns>
-        public static object ExecuteScalar(this IDbConnection cnn, in CommandDefinition command) =>
+        public static object ExecuteScalar(this IDbConnection cnn, CommandDefinition command) =>
             ExecuteScalarImpl<object>(cnn, command);
 
         /// <summary>
@@ -500,7 +500,7 @@ namespace Dapper
         /// <param name="cnn">The connection to execute on.</param>
         /// <param name="command">The command to execute.</param>
         /// <returns>The first cell selected as <typeparamref name="T"/>.</returns>
-        public static T ExecuteScalar<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static T ExecuteScalar<T>(this IDbConnection cnn, CommandDefinition command) =>
             ExecuteScalarImpl<T>(cnn, command);
 
         private static IEnumerable GetMultiExec(object param)
@@ -598,7 +598,7 @@ namespace Dapper
         public static IDataReader ExecuteReader(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
-            var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
+            var reader = ExecuteReaderImpl(cnn, command, CommandBehavior.Default, out IDbCommand dbcmd);
             return WrappedReader.Create(dbcmd, reader);
         }
 
@@ -612,9 +612,9 @@ namespace Dapper
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
-        public static IDataReader ExecuteReader(this IDbConnection cnn, in CommandDefinition command)
+        public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
-            var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
+            var reader = ExecuteReaderImpl(cnn, command, CommandBehavior.Default, out IDbCommand dbcmd);
             return WrappedReader.Create(dbcmd, reader);
         }
 
@@ -629,9 +629,9 @@ namespace Dapper
         /// This is typically used when the results of a query are not processed by Dapper, for example, used to fill a <see cref="DataTable"/>
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
-        public static IDataReader ExecuteReader(this IDbConnection cnn, in CommandDefinition command, CommandBehavior commandBehavior)
+        public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
-            var reader = ExecuteReaderImpl(cnn, ref command, commandBehavior, out IDbCommand dbcmd);
+            var reader = ExecuteReaderImpl(cnn, command, commandBehavior, out IDbCommand dbcmd);
             return WrappedReader.Create(dbcmd, reader);
         }
 
@@ -925,7 +925,7 @@ namespace Dapper
         /// A sequence of data of <typeparamref name="T"/>; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IEnumerable<T> Query<T>(this IDbConnection cnn, in CommandDefinition command)
+        public static IEnumerable<T> Query<T>(this IDbConnection cnn, CommandDefinition command)
         {
             var data = QueryImpl<T>(cnn, command, typeof(T));
             return command.Buffered ? data.ToList() : data;
@@ -941,7 +941,7 @@ namespace Dapper
         /// A single instance or null of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QueryFirst<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static T QueryFirst<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowImpl<T>(cnn, Row.First, command, typeof(T));
 
         /// <summary>
@@ -954,7 +954,7 @@ namespace Dapper
         /// A single or null instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QueryFirstOrDefault<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static T QueryFirstOrDefault<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowImpl<T>(cnn, Row.FirstOrDefault, command, typeof(T));
 
         /// <summary>
@@ -967,7 +967,7 @@ namespace Dapper
         /// A single instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QuerySingle<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static T QuerySingle<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowImpl<T>(cnn, Row.Single, command, typeof(T));
 
         /// <summary>
@@ -980,7 +980,7 @@ namespace Dapper
         /// A single instance of the supplied type; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static T QuerySingleOrDefault<T>(this IDbConnection cnn, in CommandDefinition command) =>
+        public static T QuerySingleOrDefault<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowImpl<T>(cnn, Row.SingleOrDefault, command, typeof(T));
 
         /// <summary>
@@ -1003,7 +1003,7 @@ namespace Dapper
         /// </summary>
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command to execute for this query.</param>
-        public static GridReader QueryMultiple(this IDbConnection cnn, in CommandDefinition command) =>
+        public static GridReader QueryMultiple(this IDbConnection cnn, CommandDefinition command) =>
             QueryMultipleImpl(cnn, command);
 
         private static GridReader QueryMultipleImpl(this IDbConnection cnn, in CommandDefinition command)
