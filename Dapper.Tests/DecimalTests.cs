@@ -5,7 +5,11 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class DecimalTests : TestBase
+    public sealed class SystemSqlClientDecimalTests : DecimalTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    public sealed class MicrosoftSqlClientDecimalTests : DecimalTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class DecimalTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void Issue261_Decimals()

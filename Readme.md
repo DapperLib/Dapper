@@ -240,7 +240,7 @@ class User
 
 Now let us say that we want to map a query that joins both the posts and the users table. Until now if we needed to combine the result of 2 queries, we'd need a new object to express it but it makes more sense in this case to put the `User` object inside the `Post` object.
 
-This is the user case for multi mapping. You tell dapper that the query returns a `Post` and a `User` object and then give it a function describing what you want to do with each of the rows containing both a `Post` and a `User` object. In our case, we want to take the user object and put it inside the post object. So we write the function:
+This is the use case for multi mapping. You tell dapper that the query returns a `Post` and a `User` object and then give it a function describing what you want to do with each of the rows containing both a `Post` and a `User` object. In our case, we want to take the user object and put it inside the post object. So we write the function:
 
 ```csharp
 (post, user) => { post.Owner = user; return post; }
@@ -369,6 +369,14 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
     }
 }
 ```
+
+User Defined Variables in MySQL
+---------------------
+In order to use Non-parameter SQL variables with MySql Connector, you have to add the following option to your connection string:
+
+`Allow User Variables=True`
+
+Make sure you don't provide Dapper with a property to map.
 
 Limitations and caveats
 ---------------------

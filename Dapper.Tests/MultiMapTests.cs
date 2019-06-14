@@ -6,7 +6,11 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class MultiMapTests : TestBase
+    public sealed class SystemSqlClientMultiMapTests : MultiMapTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    public sealed class MicrosoftSqlClientMultiMapTests : MultiMapTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class MultiMapTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void ParentChildIdentityAssociations()

@@ -189,7 +189,7 @@ namespace Dapper
             _connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Execute a query asynchronously using .NET 4.5 Task.
+        /// Execute a query asynchronously using Task.
         /// </summary>
         /// <param name="sql">The SQL to execute.</param>
         /// <param name="param">The parameters to use.</param>

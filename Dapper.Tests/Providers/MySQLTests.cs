@@ -1,31 +1,39 @@
 ﻿using System;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Dapper.Tests
 {
-    public class MySQLTests : TestBase
+    public sealed class MySqlProvider : DatabaseProvider
     {
-        private static MySql.Data.MySqlClient.MySqlConnection GetMySqlConnection(bool open = true,
-            bool convertZeroDatetime = false, bool allowZeroDatetime = false)
-        {
-            string cs = IsAppVeyor
+        public override DbProviderFactory Factory => MySql.Data.MySqlClient.MySqlClientFactory.Instance;
+        public override string GetConnectionString() => IsAppVeyor
                 ? "Server=localhost;Database=test;Uid=root;Pwd=Password12!;"
                 : "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
-            var csb = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(cs)
-            {
-                AllowZeroDateTime = allowZeroDatetime,
-                ConvertZeroDateTime = convertZeroDatetime
-            };
-            var conn = new MySql.Data.MySqlClient.MySqlConnection(csb.ConnectionString);
+
+        public DbConnection GetMySqlConnection(bool open = true,
+            bool convertZeroDatetime = false, bool allowZeroDatetime = false)
+        {
+            string cs = GetConnectionString();
+            var csb = Factory.CreateConnectionStringBuilder();
+            csb.ConnectionString = cs;
+            ((dynamic)csb).AllowZeroDateTime = allowZeroDatetime;
+            ((dynamic)csb).ConvertZeroDateTime = convertZeroDatetime;
+            var conn = Factory.CreateConnection();
+            conn.ConnectionString = csb.ConnectionString;
             if (open) conn.Open();
             return conn;
         }
-
+    }
+    public class MySQLTests : TestBase<MySqlProvider>
+    {      
         [FactMySql]
         public void DapperEnumValue_Mysql()
         {
-            using (var conn = GetMySqlConnection())
+            using (var conn = Provider.GetMySqlConnection())
             {
                 Common.DapperEnumValue(conn);
             }
@@ -34,7 +42,7 @@ namespace Dapper.Tests
         [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/552, not resolved on the MySQL end.")]
         public void Issue552_SignedUnsignedBooleans()
         {
-            using (var conn = GetMySqlConnection(true, false, false))
+            using (var conn = Provider.GetMySqlConnection(true, false, false))
             {
                 conn.Execute(@"
 CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
@@ -74,7 +82,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [FactMySql]
         public void Issue295_NullableDateTime_MySql_Default()
         {
-            using (var conn = GetMySqlConnection(true, false, false))
+            using (var conn = Provider.GetMySqlConnection(true, false, false))
             {
                 Common.TestDateTime(conn);
             }
@@ -83,7 +91,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [FactMySql]
         public void Issue295_NullableDateTime_MySql_ConvertZeroDatetime()
         {
-            using (var conn = GetMySqlConnection(true, true, false))
+            using (var conn = Provider.GetMySqlConnection(true, true, false))
             {
                 Common.TestDateTime(conn);
             }
@@ -92,7 +100,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/295, AllowZeroDateTime=True is not supported")]
         public void Issue295_NullableDateTime_MySql_AllowZeroDatetime()
         {
-            using (var conn = GetMySqlConnection(true, false, true))
+            using (var conn = Provider.GetMySqlConnection(true, false, true))
             {
                 Common.TestDateTime(conn);
             }
@@ -101,7 +109,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [FactMySql(Skip = "See https://github.com/StackExchange/Dapper/issues/295, AllowZeroDateTime=True is not supported")]
         public void Issue295_NullableDateTime_MySql_ConvertAllowZeroDatetime()
         {
-            using (var conn = GetMySqlConnection(true, true, true))
+            using (var conn = Provider.GetMySqlConnection(true, true, true))
             {
                 Common.TestDateTime(conn);
             }
@@ -110,7 +118,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [FactMySql]
         public void Issue426_SO34439033_DateTimeGainsTicks()
         {
-            using (var conn = GetMySqlConnection(true, true, true))
+            using (var conn = Provider.GetMySqlConnection(true, true, true))
             {
                 try { conn.Execute("drop table Issue426_Test"); } catch { /* don't care */ }
                 try { conn.Execute("create table Issue426_Test (Id int not null, Time time not null)"); } catch { /* don't care */ }
@@ -133,7 +141,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [FactMySql]
         public void SO36303462_Tinyint_Bools()
         {
-            using (var conn = GetMySqlConnection(true, true, true))
+            using (var conn = Provider.GetMySqlConnection(true, true, true))
             {
                 try { conn.Execute("drop table SO36303462_Test"); } catch { /* don't care */ }
                 conn.Execute("create table SO36303462_Test (Id int not null, IsBold tinyint not null);");
@@ -146,6 +154,52 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 Assert.True(rows[1].IsBold);
                 Assert.False(rows[2].IsBold);
                 Assert.True(rows[3].IsBold);
+            }
+        }
+
+        [FactMySql]
+        public void Issue1277_ReaderSync()
+        {
+            using (var conn = Provider.GetMySqlConnection())
+            {
+                try { conn.Execute("drop table Issue1277_Test"); } catch { /* don't care */ }
+                conn.Execute("create table Issue1277_Test (Id int not null, IsBold tinyint not null);");
+                conn.Execute("insert Issue1277_Test (Id, IsBold) values (1,1);");
+                conn.Execute("insert Issue1277_Test (Id, IsBold) values (2,0);");
+                conn.Execute("insert Issue1277_Test (Id, IsBold) values (3,1);");
+
+                using (var reader = conn.ExecuteReader(
+                    "select * from Issue1277_Test where Id < @id",
+                    new { id = 42 }))
+                {
+                    var table = new DataTable();
+                    table.Load(reader);
+                    Assert.Equal(2, table.Columns.Count);
+                    Assert.Equal(3, table.Rows.Count);
+                }
+            }
+        }
+
+        [FactMySql]
+        public async Task Issue1277_ReaderAsync()
+        {
+            using (var conn = Provider.GetMySqlConnection())
+            {
+                try { await conn.ExecuteAsync("drop table Issue1277_Test"); } catch { /* don't care */ }
+                await conn.ExecuteAsync("create table Issue1277_Test (Id int not null, IsBold tinyint not null);");
+                await conn.ExecuteAsync("insert Issue1277_Test (Id, IsBold) values (1,1);");
+                await conn.ExecuteAsync("insert Issue1277_Test (Id, IsBold) values (2,0);");
+                await conn.ExecuteAsync("insert Issue1277_Test (Id, IsBold) values (3,1);");
+
+                using (var reader = await conn.ExecuteReaderAsync(
+                    "select * from Issue1277_Test where Id < @id",
+                    new { id = 42 }))
+                {
+                    var table = new DataTable();
+                    table.Load(reader);
+                    Assert.Equal(2, table.Columns.Count);
+                    Assert.Equal(3, table.Rows.Count);
+                }
             }
         }
 
@@ -176,7 +230,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
             {
                 try
                 {
-                    using (GetMySqlConnection(true)) { /* just trying to see if it works */ }
+                    using (DatabaseProvider<MySqlProvider>.Instance.GetMySqlConnection(true)) { /* just trying to see if it works */ }
                 }
                 catch (Exception ex)
                 {

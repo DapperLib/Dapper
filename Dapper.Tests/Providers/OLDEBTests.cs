@@ -1,24 +1,24 @@
 ﻿#if OLEDB
 using System;
+using System.Data.Common;
 using System.Data.OleDb;
 using System.Linq;
 using Xunit;
 
 namespace Dapper.Tests
 {
-    public class OLDEBTests : TestBase
+    public class OLEDBProvider : DatabaseProvider
     {
-        public static string OleDbConnectionString =>
+        public override DbProviderFactory Factory => OleDbFactory.Instance;
+        public override string GetConnectionString() =>
             IsAppVeyor
                 ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2016;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
                 : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
+    }
 
-        public OleDbConnection GetOleDbConnection()
-        {
-            var conn = new OleDbConnection(OleDbConnectionString);
-            conn.Open();
-            return conn;
-        }
+    public class OLDEBTests : TestBase<OLEDBProvider>
+    {
+        public OleDbConnection GetOleDbConnection() => (OleDbConnection) Provider.GetOpenConnection();
 
         // see https://stackoverflow.com/q/18847510/23354
         [Fact]

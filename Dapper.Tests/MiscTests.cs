@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using Xunit;
@@ -40,7 +39,11 @@ namespace System
 
 namespace Dapper.Tests
 {
-    public class MiscTests : TestBase
+    public sealed class SystemSqlClientMiscTests : MiscTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    public sealed class MicrosoftSqlClientMiscTests : MiscTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class MiscTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestNullableGuidSupport()
@@ -1026,13 +1029,16 @@ select * from @bar", new { foo }).Single();
             try { connection.Execute("create table Issue178(id int not null)"); }
             catch { /* don't care */ }
             // raw ADO.net
-            var sqlCmd = new SqlCommand(sql, connection);
-            using (IDataReader reader1 = sqlCmd.ExecuteReader())
+            using (var sqlCmd = connection.CreateCommand())
             {
-                Assert.True(reader1.Read());
-                Assert.Equal(0, reader1.GetInt32(0));
-                Assert.False(reader1.Read());
-                Assert.False(reader1.NextResult());
+                sqlCmd.CommandText = sql;
+                using (IDataReader reader1 = sqlCmd.ExecuteReader())
+                {
+                    Assert.True(reader1.Read());
+                    Assert.Equal(0, reader1.GetInt32(0));
+                    Assert.False(reader1.Read());
+                    Assert.False(reader1.NextResult());
+                }
             }
 
             // dapper

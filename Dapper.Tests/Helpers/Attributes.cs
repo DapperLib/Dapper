@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data.SqlClient;
 using Xunit;
 
 namespace Dapper.Tests
@@ -32,7 +31,7 @@ namespace Dapper.Tests
         public static readonly int DetectedLevel;
         static FactRequiredCompatibilityLevelAttribute()
         {
-            using (var conn = TestBase.GetOpenConnection())
+            using (var conn = DatabaseProvider<SystemSqlClientProvider>.Instance.GetOpenConnection())
             {
                 try
                 {
@@ -57,15 +56,16 @@ namespace Dapper.Tests
         public static readonly bool IsCaseSensitive;
         static FactUnlessCaseSensitiveDatabaseAttribute()
         {
-            using (var conn = TestBase.GetOpenConnection())
+            using (var conn = DatabaseProvider<SystemSqlClientProvider>.Instance.GetOpenConnection())
             {
                 try
                 {
                     conn.Execute("declare @i int; set @I = 1;");
                 }
-                catch (SqlException s)
+                catch (Exception ex) when (ex.GetType().Name == "SqlException")
                 {
-                    if (s.Number == 137)
+                    int err = ((dynamic)ex).Number;
+                    if (err == 137)
                         IsCaseSensitive = true;
                     else
                         throw;
