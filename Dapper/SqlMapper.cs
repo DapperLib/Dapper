@@ -3046,9 +3046,9 @@ namespace Dapper
             }
             if (initAndLoad)
             {
-                il.Emit(OpCodes.Ldloca, (short)found.LocalIndex);
+                il.Emit(OpCodes.Ldloca, found);
                 il.Emit(OpCodes.Initobj, type);
-                il.Emit(OpCodes.Ldloca, (short)found.LocalIndex);
+                il.Emit(OpCodes.Ldloca, found);
                 il.Emit(OpCodes.Ldobj, type);
             }
             return found;
@@ -3135,7 +3135,7 @@ namespace Dapper
                 }
             }
 
-            var enumDeclareLocal = -1;
+            var stringEnumLocal = (LocalBuilder)null;
 
             for (var i = 0; i < languageTupleElementTypes.Count; i++)
             {
@@ -3146,7 +3146,7 @@ namespace Dapper
                     LoadReaderValueOrBranchToDBNullLabel(
                         il,
                         startBound + i,
-                        ref enumDeclareLocal,
+                        ref stringEnumLocal,
                         valueCopyLocal: null,
                         reader.GetFieldType(startBound + i),
                         targetType,
@@ -3281,7 +3281,8 @@ namespace Dapper
 
             bool first = true;
             var allDone = il.DefineLabel();
-            int enumDeclareLocal = -1, valueCopyLocal = il.DeclareLocal(typeof(object)).LocalIndex;
+            var stringEnumLocal = (LocalBuilder)null;
+            var valueCopyDiagnosticLocal = il.DeclareLocal(typeof(object));
             bool applyNullSetting = Settings.ApplyNullValues;
             foreach (var item in members)
             {
@@ -3296,7 +3297,7 @@ namespace Dapper
                     EmitInt32(il, index);
                     il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
 
-                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref enumDeclareLocal, valueCopyLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel);
+                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel);
 
                     if (specializedConstructor == null)
                     {
@@ -3385,7 +3386,7 @@ namespace Dapper
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception
             il.Emit(OpCodes.Ldloc, currentIndexDiagnosticLocal); // stack is Exception, index
             il.Emit(OpCodes.Ldarg_0); // stack is Exception, index, reader
-            LoadLocal(il, valueCopyLocal); // stack is Exception, index, reader, value
+            il.Emit(OpCodes.Ldloc, valueCopyDiagnosticLocal); // stack is Exception, index, reader, value
             il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SqlMapper.ThrowDataException)), null);
             il.EndExceptionBlock();
 
@@ -3401,10 +3402,10 @@ namespace Dapper
         {
             if (type.IsValueType())
             {
-                int localIndex = il.DeclareLocal(type).LocalIndex;
-                LoadLocalAddress(il, localIndex);
+                var local = il.DeclareLocal(type);
+                il.Emit(OpCodes.Ldloca, local);
                 il.Emit(OpCodes.Initobj, type);
-                LoadLocal(il, localIndex);
+                il.Emit(OpCodes.Ldloc, local);
             }
             else
             {
@@ -3412,7 +3413,7 @@ namespace Dapper
             }
         }
 
-        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref int enumDeclareLocal, int? valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel)
+        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder stringEnumLocal, LocalBuilder valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel)
         {
             isDbNullLabel = il.DefineLabel();
             il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
@@ -3422,7 +3423,7 @@ namespace Dapper
             if (valueCopyLocal != null)
             {
                 il.Emit(OpCodes.Dup); // stack is now [...][value-as-object][value-as-object]
-                StoreLocal(il, valueCopyLocal.Value); // stack is now [...][value-as-object]
+                il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value-as-object]
             }
 
             if (memberType == typeof(char) || memberType == typeof(char?))
@@ -3446,15 +3447,15 @@ namespace Dapper
                     Type numericType = Enum.GetUnderlyingType(unboxType);
                     if (colType == typeof(string))
                     {
-                        if (enumDeclareLocal == -1)
+                        if (stringEnumLocal == null)
                         {
-                            enumDeclareLocal = il.DeclareLocal(typeof(string)).LocalIndex;
+                            stringEnumLocal = il.DeclareLocal(typeof(string));
                         }
                         il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
-                        StoreLocal(il, enumDeclareLocal); // stack is now [...]
+                        il.Emit(OpCodes.Stloc, stringEnumLocal); // stack is now [...]
                         il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
                         il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)), null);// stack is now [...][enum-type]
-                        LoadLocal(il, enumDeclareLocal); // stack is now [...][enum-type][string]
+                        il.Emit(OpCodes.Ldloc, stringEnumLocal); // stack is now [...][enum-type][string]
                         il.Emit(OpCodes.Ldc_I4_1); // stack is now [...][enum-type][string][true]
                         il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [...][enum-as-object]
                         il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
@@ -3608,64 +3609,6 @@ namespace Dapper
             return null;
         }
 
-        private static void LoadLocal(ILGenerator il, int index)
-        {
-            if (index < 0 || index >= short.MaxValue) throw new ArgumentNullException(nameof(index));
-            switch (index)
-            {
-                case 0: il.Emit(OpCodes.Ldloc_0); break;
-                case 1: il.Emit(OpCodes.Ldloc_1); break;
-                case 2: il.Emit(OpCodes.Ldloc_2); break;
-                case 3: il.Emit(OpCodes.Ldloc_3); break;
-                default:
-                    if (index <= 255)
-                    {
-                        il.Emit(OpCodes.Ldloc_S, (byte)index);
-                    }
-                    else
-                    {
-                        il.Emit(OpCodes.Ldloc, (short)index);
-                    }
-                    break;
-            }
-        }
-
-        private static void StoreLocal(ILGenerator il, int index)
-        {
-            if (index < 0 || index >= short.MaxValue) throw new ArgumentNullException(nameof(index));
-            switch (index)
-            {
-                case 0: il.Emit(OpCodes.Stloc_0); break;
-                case 1: il.Emit(OpCodes.Stloc_1); break;
-                case 2: il.Emit(OpCodes.Stloc_2); break;
-                case 3: il.Emit(OpCodes.Stloc_3); break;
-                default:
-                    if (index <= 255)
-                    {
-                        il.Emit(OpCodes.Stloc_S, (byte)index);
-                    }
-                    else
-                    {
-                        il.Emit(OpCodes.Stloc, (short)index);
-                    }
-                    break;
-            }
-        }
-
-        private static void LoadLocalAddress(ILGenerator il, int index)
-        {
-            if (index < 0 || index >= short.MaxValue) throw new ArgumentNullException(nameof(index));
-
-            if (index <= 255)
-            {
-                il.Emit(OpCodes.Ldloca_S, (byte)index);
-            }
-            else
-            {
-                il.Emit(OpCodes.Ldloca, (short)index);
-            }
-        }
-
         /// <summary>
         /// Throws a data exception, only used internally
         /// </summary>
@@ -3795,7 +3738,7 @@ namespace Dapper
         public static ICustomQueryParameter AsTableValuedParameter<T>(this IEnumerable<T> list, string typeName = null) where T : IDataRecord =>
             new SqlDataRecordListTVPParameter<T>(list, typeName);
 
-        /* 
+        /*
         /// <summary>
         /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a TableValuedParameter.
         /// </summary>
