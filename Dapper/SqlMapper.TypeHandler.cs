@@ -19,6 +19,16 @@ namespace Dapper
             public abstract void SetValue(IDbDataParameter parameter, T value);
 
             /// <summary>
+            /// Assign the parameter value when the parameter is null
+            /// </summary>
+            /// <param name="parameter">The parameter to configure</param>
+            /// <remarks>The parameter's <see cref="DbType"/> will default to <see cref="DbType.String"/> if not changed</remarks>
+            public virtual void SetNullValue(IDbDataParameter parameter)
+            {
+                parameter.Value = DBNull.Value;
+            }
+
+            /// <summary>
             /// Parse a database value back to a typed value
             /// </summary>
             /// <param name="value">The value from the database</param>
@@ -29,7 +39,7 @@ namespace Dapper
             {
                 if (value is DBNull)
                 {
-                    parameter.Value = value;
+                    SetNullValue(parameter);
                 }
                 else
                 {

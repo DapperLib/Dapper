@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using Xunit;
@@ -741,6 +742,71 @@ namespace Dapper.Tests
 
             public string SomeValue { get; }
             public Blarg SomeBlargValue { get; }
+        }
+
+        [Fact]
+        public void Issue1234_TypeHandlerWrongDbType()
+        {
+            connection.Execute("CREATE TABLE #Issue1234 (Bytes VARBINARY(16) NULL);");
+            try
+            {
+                // Verify that the fixed handler works (can insert null)
+                SqlMapper.ResetTypeHandlers();
+                SqlMapper.AddTypeHandler(typeof(Issue1234Class), BinaryFixedTypeHandler.Default);
+
+                connection.Execute("INSERT INTO #Issue1234 (Bytes) VALUES (@Value);", new { Value = new Issue1234Class() });
+                connection.Execute("INSERT INTO #Issue1234 (Bytes) VALUES (@Value);", new { Value = (Issue1234Class)null });
+
+                // Sanity check that the original handler breaks as expected
+                SqlMapper.ResetTypeHandlers();
+                SqlMapper.AddTypeHandler(typeof(Issue1234Class), BinaryBrokenTypeHandler.Default);
+
+                connection.Execute("INSERT INTO #Issue1234 (Bytes) VALUES (@Value);", new { Value = new Issue1234Class() });
+                var exception = Assert.Throws<SqlException>(() => connection.Execute("INSERT INTO #Issue1234 (Bytes) VALUES (@Value);", new { Value = (Issue1234Class)null }));
+                Assert.Equal("Implicit conversion from data type nvarchar to varbinary is not allowed. Use the CONVERT function to run this query.", exception.Message);
+            }
+            finally
+            {
+                connection.Execute("DROP TABLE #Issue1234;");
+            }
+        }
+
+        public class Issue1234Class { }
+
+        public class BinaryBrokenTypeHandler : SqlMapper.TypeHandler<Issue1234Class>
+        {
+            protected BinaryBrokenTypeHandler() { }
+
+            // Make the field type ITypeHandler to ensure it cannot be used with SqlMapper.AddTypeHandler<T>(TypeHandler<T>)
+            // by mistake.
+            public static readonly SqlMapper.ITypeHandler Default = new BinaryBrokenTypeHandler();
+
+            public override Issue1234Class Parse(object value)
+            {
+                return new Issue1234Class();
+            }
+
+            public override void SetValue(IDbDataParameter parameter, Issue1234Class value)
+            {
+                parameter.DbType = DbType.Binary;
+                parameter.Value = BitConverter.GetBytes(value.GetHashCode());
+            }
+        }
+
+        public class BinaryFixedTypeHandler : BinaryBrokenTypeHandler
+        {
+            private BinaryFixedTypeHandler() { }
+
+            // Make the field type ITypeHandler to ensure it cannot be used with SqlMapper.AddTypeHandler<T>(TypeHandler<T>)
+            // by mistake.
+            public new static readonly SqlMapper.ITypeHandler Default = new BinaryFixedTypeHandler();
+
+            // Additionally implement SetNullValue to set the correct DbType on the parameter
+            public override void SetNullValue(IDbDataParameter parameter)
+            {
+                parameter.DbType = DbType.Binary;
+                base.SetNullValue(parameter);
+            }
         }
     }
 }
