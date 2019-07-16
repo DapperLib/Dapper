@@ -3436,6 +3436,15 @@ namespace Dapper
                 il.Emit(OpCodes.Isinst, typeof(DBNull)); // stack is now [...][value-as-object][DBNull or null]
                 il.Emit(OpCodes.Brtrue_S, isDbNullLabel); // stack is now [...][value-as-object]
 
+                if (typeHandlers.TryGetValue(memberType, out ITypeHandler handler))
+                {
+
+#pragma warning disable 618
+                    il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(memberType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [...][typed-value]
+#pragma warning restore 618
+                    return;
+                }
+
                 // unbox nullable enums as the primitive, i.e. byte etc
 
                 var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
@@ -3477,19 +3486,9 @@ namespace Dapper
                 else
                 {
                     TypeCode dataTypeCode = TypeExtensions.GetTypeCode(colType), unboxTypeCode = TypeExtensions.GetTypeCode(unboxType);
-                    bool hasTypeHandler;
-                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == TypeExtensions.GetTypeCode(nullUnderlyingType))
+                    if (colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == TypeExtensions.GetTypeCode(nullUnderlyingType))
                     {
-                        if (hasTypeHandler)
-                        {
-#pragma warning disable 618
-                            il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [...][typed-value]
-#pragma warning restore 618
-                        }
-                        else
-                        {
-                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
-                        }
+                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
                     }
                     else
                     {
