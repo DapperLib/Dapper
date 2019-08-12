@@ -1769,6 +1769,17 @@ namespace Dapper
             });
         }
 
+        private static bool IsRegisteredType(Type type, ref Type underlyingType)
+        {
+            if (type == null)
+            {
+                return false;
+            }
+
+            return typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
+                   || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum);
+        }
+
         private static Func<IDataReader, object> GetDeserializer(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
             // dynamic is passed in as Object ... by c# design
@@ -1777,8 +1788,7 @@ namespace Dapper
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
             Type underlyingType = null;
-            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
-                || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
+            if (!(IsRegisteredType(type, ref underlyingType) || (type.IsArray && IsRegisteredType(type.GetElementType(), ref underlyingType))))
             {
                 if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
                 {
