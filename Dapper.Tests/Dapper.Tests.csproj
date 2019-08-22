@@ -6,7 +6,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <TargetFrameworks>netcoreapp2.1;net46;netcoreapp2.0;net472</TargetFrameworks><!--;netcoreapp3.0-->
+    <TargetFrameworks>netcoreapp2.1;net46;netcoreapp2.0;net472;netcoreapp3.0</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -53,10 +53,13 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
   </ItemGroup>
 
   <!--
