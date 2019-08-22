@@ -61,7 +61,7 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
   </ItemGroup>
 
-  <!--
+  
   <PropertyGroup>
     <PostBuildEvent>
       if not exist "$(TargetDir)x86" md "$(TargetDir)x86"
@@ -70,5 +70,5 @@
       xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.1016.290\NativeBinaries\x64\*.*" "$(TargetDir)x64"
     </PostBuildEvent>
   </PropertyGroup>
-  -->
+  
 </Project>
