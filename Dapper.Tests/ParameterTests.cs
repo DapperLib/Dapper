@@ -329,7 +329,7 @@ namespace Dapper.Tests
             try
             {
                 connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
-                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @ints");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
 
                 var nums = connection.Query<int>("get_ints", new IntDynamicParam(new int[] { 1, 2, 3 })).ToList();
                 Assert.Equal(1, nums[0]);
@@ -341,11 +341,11 @@ namespace Dapper.Tests
             {
                 try
                 {
-                    connection.Execute("DROP PROC get_ints");
+                    try { connection.Execute("DROP PROC get_ints"); } catch { }
                 }
                 finally
                 {
-                    connection.Execute("DROP TYPE int_list_type");
+                    try { connection.Execute("DROP TYPE int_list_type"); } catch { }
                 }
             }
         }
@@ -377,7 +377,7 @@ namespace Dapper.Tests
             try
             {
                 connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
-                connection.Execute("CREATE PROC get_values @ints int_list_type READONLY, @stringParam varchar(20), @dateParam datetime AS select i.*, @stringParam as stringParam, @dateParam as dateParam from @ints i");
+                connection.Execute("CREATE PROC get_values @integers int_list_type READONLY, @stringParam varchar(20), @dateParam datetime AS select i.*, @stringParam as stringParam, @dateParam as dateParam from @integers i");
 
                 var dynamicParameters = new DynamicParameterWithIntTVP(new int[] { 1, 2, 3 });
                 dynamicParameters.AddDynamicParams(new { stringParam = "stringParam", dateParam = new DateTime(2012, 1, 1) });
