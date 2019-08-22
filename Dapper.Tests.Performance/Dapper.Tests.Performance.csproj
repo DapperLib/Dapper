@@ -15,13 +15,13 @@
     <PackageReference Include="Dashing" Version="2.0.7" />
     <PackageReference Include="Dashing.Weaver" Version="2.0.7" />
     <PackageReference Include="Belgrade.Sql.Client" Version="1.1.4" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.11.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
     <PackageReference Include="DevExpress.Xpo" Version="18.1.6" />
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
     <PackageReference Include="EntityFramework" Version="6.2.0" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="6.3.0" />
     <PackageReference Include="linq2db.SqlServer" Version="2.3.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <PackageReference Include="MySqlConnector" Version="0.44.1" />
     <PackageReference Include="NHibernate" Version="5.1.3" />
