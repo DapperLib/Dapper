@@ -17,7 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Dapper.StrongName\Dapper.StrongName.csproj" />
     <PackageReference Include="EntityFramework" Version="6.1.3" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="11.0.2" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />

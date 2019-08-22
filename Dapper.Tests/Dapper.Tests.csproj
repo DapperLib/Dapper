@@ -6,7 +6,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <TargetFrameworks>netcoreapp2.1;net46;netcoreapp2.0;net472</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;net46;netcoreapp2.0;net472;netcoreapp3.0</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -16,14 +16,12 @@
   <ItemGroup>
     <None Remove="Test.DB.sdf" />
   </ItemGroup>
-  <!-- these two go together
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19128.1-Preview" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19221.1-Preview" />
   </ItemGroup>
-  -->
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
@@ -40,7 +38,7 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net472'">
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
@@ -61,12 +59,14 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.0.0" />
   </ItemGroup>
 
+  <!--
   <PropertyGroup>
     <PostBuildEvent>
       if not exist "$(TargetDir)x86" md "$(TargetDir)x86"
-      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.314.76\NativeBinaries\x86\*.*" "$(TargetDir)x86"
+      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.1016.290\NativeBinaries\x86\*.*" "$(TargetDir)x86"
       if not exist "$(TargetDir)x64" md "$(TargetDir)x64"
-      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.314.76\NativeBinaries\x64\*.*" "$(TargetDir)x64"
+      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.1016.290\NativeBinaries\x64\*.*" "$(TargetDir)x64"
     </PostBuildEvent>
   </PropertyGroup>
+  -->
 </Project>
