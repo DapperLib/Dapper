@@ -6,7 +6,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <TargetFrameworks>netcoreapp2.1;net46;netcoreapp2.0;net472;netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;net46;netcoreapp2.0;net472</TargetFrameworks><!--;netcoreapp3.0-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -32,7 +32,7 @@
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
     <PackageReference Include="xunit" Version="$(xUnitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net472'">
