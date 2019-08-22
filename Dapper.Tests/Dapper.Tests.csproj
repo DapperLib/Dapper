@@ -25,9 +25,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="5.9.1" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
-    <PackageReference Include="MySqlConnector" Version="0.44.1" />
+    <PackageReference Include="MySqlConnector" Version="0.56.0" />
     <PackageReference Include="Npgsql" Version="4.0.9" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -49,10 +49,6 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp1.0'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">

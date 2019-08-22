@@ -16,7 +16,7 @@
     <PackageReference Include="Dashing.Weaver" Version="2.2.0" />
     <PackageReference Include="Belgrade.Sql.Client" Version="1.1.4" />
     <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
-    <PackageReference Include="DevExpress.Xpo" Version="18.1.6" />
+    <PackageReference Include="DevExpress.Xpo" Version="19.1.5" />
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
     <PackageReference Include="EntityFramework" Version="6.2.0" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
