@@ -329,7 +329,7 @@ namespace Dapper.Tests
             try
             {
                 connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
-                connection.Execute("CREATE PROC get_ints @ints int_list_type READONLY AS select * from @ints");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @ints");
 
                 var nums = connection.Query<int>("get_ints", new IntDynamicParam(new int[] { 1, 2, 3 })).ToList();
                 Assert.Equal(1, nums[0]);
