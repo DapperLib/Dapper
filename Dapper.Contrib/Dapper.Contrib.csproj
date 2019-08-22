@@ -22,7 +22,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' OR '$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />

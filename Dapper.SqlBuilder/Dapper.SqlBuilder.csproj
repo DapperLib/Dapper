@@ -20,6 +20,6 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
-    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 </Project>
