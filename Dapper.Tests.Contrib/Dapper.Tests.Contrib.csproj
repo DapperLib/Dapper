@@ -17,7 +17,7 @@
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="MySqlConnector" Version="0.44.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
