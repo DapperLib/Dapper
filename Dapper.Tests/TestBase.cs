@@ -81,7 +81,11 @@ namespace Dapper.Tests
 
     public abstract class TestBase<TProvider> : IDisposable where TProvider : DatabaseProvider
     {
-        protected bool IsMsDataClient => connection is Microsoft.Data.SqlClient.SqlConnection;
+        protected void SkipIfMsDataClient()
+        {
+            if (connection is Microsoft.Data.SqlClient.SqlConnection)
+                throw new SkipTestException("Not supported on Microsoft.Data.SqlClient");
+        }
 
         protected DbConnection GetOpenConnection() => Provider.GetOpenConnection();
         protected DbConnection GetClosedConnection() => Provider.GetClosedConnection();
