@@ -82,6 +82,22 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void Issue569_SO38527197_PseudoPositionalParameters_In_And_Other_Condition()
+        {
+            const string sql = @"select s1.value as id, s2.value as score 
+                        from string_split('1,2,3,4,5',',') s1, string_split('1,2,3,4,5',',') s2
+                        where s1.value in ?ids? and s2.value = ?score?";
+            using (var connection = GetOleDbConnection())
+            {
+                const int score = 2;
+                int[] ids = { 1, 2, 5, 7 };
+                var list = connection.Query<int>(sql, new { ids, score }).AsList();
+                list.Sort();
+                Assert.Equal("1,2,5", string.Join(",", list));
+            }
+        }
+
+        [Fact]
         public void Issue569_SO38527197_PseudoPositionalParameters_In()
         {
             using (var connection = GetOleDbConnection())
