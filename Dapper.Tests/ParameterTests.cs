@@ -718,6 +718,8 @@ namespace Dapper.Tests
         [Fact]
         public void DBGeography_SO24405645_SO24402424()
         {
+            if (IsMsDataClient) return; // not supported
+
             EntityFramework.Handlers.Register();
 
             connection.Execute("create table #Geo (id int, geo geography, geometry geometry)");
@@ -739,6 +741,8 @@ namespace Dapper.Tests
         [Fact]
         public void SqlGeography_SO25538154()
         {
+            if (IsMsDataClient) return; // not supported
+
             SqlMapper.ResetTypeHandlers();
             connection.Execute("create table #SqlGeo (id int, geo geography, geometry geometry)");
 
@@ -777,6 +781,8 @@ namespace Dapper.Tests
         [Fact]
         public void SqlHierarchyId_SO18888911()
         {
+            if (IsMsDataClient) return; // not supported
+
             SqlMapper.ResetTypeHandlers();
             var row = connection.Query<HazSqlHierarchy>("select 3 as [Id], hierarchyid::Parse('/1/2/3/') as [Path]").Single();
             Assert.Equal(3, row.Id);
