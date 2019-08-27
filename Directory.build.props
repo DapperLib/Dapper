@@ -17,7 +17,7 @@
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>
     <IncludeSymbols>false</IncludeSymbols>
-    <xUnitVersion>2.4.1-pre.build.4059</xUnitVersion>
+    <xUnitVersion>2.4.1</xUnitVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net451'">
