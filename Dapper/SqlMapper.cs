@@ -224,20 +224,9 @@ namespace Dapper
 #if !NETSTANDARD1_3
             AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
 #endif
-            try
-            {
-                AddSqlDataRecordsTypeHandler(clone);
-            }
-            catch { /* https://github.com/StackExchange/dapper-dot-net/issues/424 */ }
             AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
             AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void AddSqlDataRecordsTypeHandler(bool clone)
-        {
-            AddTypeHandlerImpl(typeof(IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>), new SqlDataRecordHandler<Microsoft.SqlServer.Server.SqlDataRecord>(), clone);
         }
 
         /// <summary>
@@ -396,6 +385,29 @@ namespace Dapper
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
+#if !NETSTANDARD1_3
+                // auto-detect things like IEnumerable<SqlDataRecord> as a family
+                if (type.IsInterface && type.IsGenericType
+                    && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+                    && typeof(IEnumerable<IDataRecord>).IsAssignableFrom(type))
+                {
+                    var argTypes = type.GetGenericArguments();
+                    if(typeof(IDataRecord).IsAssignableFrom(argTypes[0]))
+                    {
+                        try
+                        {
+                            handler = (ITypeHandler)Activator.CreateInstance(
+                                typeof(SqlDataRecordHandler<>).MakeGenericType(argTypes));
+                            AddTypeHandlerImpl(type, handler, true);
+                            return DbType.Object;
+                        }
+                        catch
+                        {
+                            handler = null;
+                        }
+                    }
+                }
+#endif
                 return DynamicParameters.EnumerableMultiParameter;
             }
 
