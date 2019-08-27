@@ -26,4 +26,5 @@
     </PackageReference>
     <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
   </ItemGroup>
+  <!-- note: define SQLCE if SQL CE is available -->
 </Project>

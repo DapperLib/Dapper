@@ -1,6 +1,5 @@
 ﻿using System.Data;
 
-#if !NETSTANDARD1_3
 namespace Dapper
 {
     /// <summary>
@@ -49,4 +48,3 @@ namespace Dapper
         }
     }
 }
-#endif

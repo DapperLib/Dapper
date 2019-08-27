@@ -252,7 +252,7 @@ namespace Dapper
             var il = dm.GetILGenerator();
 
             var setters = GetType().GetProperties()
-                .Where(p => p.PropertyType.IsGenericType() && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
+                .Where(p => p.PropertyType.IsGenericType && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
                 .Select(p => Tuple.Create(
                         p.GetSetMethod(true),
                         p.PropertyType.GetConstructor(new[] { typeof(TDatabase), typeof(string) }),
