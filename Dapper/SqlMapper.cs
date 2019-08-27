@@ -3807,15 +3807,6 @@ namespace Dapper
         public static ICustomQueryParameter AsTableValuedParameter<T>(this IEnumerable<T> list, string typeName = null) where T : IDataRecord =>
             new SqlDataRecordListTVPParameter<T>(list, typeName);
 
-        /// <summary>
-        /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a TableValuedParameter.
-        /// </summary>
-        /// <param name="list">The list of records to convert to TVPs.</param>
-        /// <param name="typeName">The sql parameter type name.</param>
-        public static ICustomQueryParameter AsTableValuedParameter(this IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> list, string typeName = null) =>
-            new SqlDataRecordListTVPParameter<Microsoft.SqlServer.Server.SqlDataRecord>(list, typeName);
-        // ^^^ retained to avoid missing-method-exception; can presumably drop in a "major"
-
         // one per thread
         [ThreadStatic]
         private static StringBuilder perThreadStringBuilderCache;
