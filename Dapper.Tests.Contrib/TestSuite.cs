@@ -648,7 +648,7 @@ namespace Dapper.Tests.Contrib
                 Assert.Equal(car.Name, orgName);
             }
         }
-
+#if TRANSCOPE
         [Fact]
         public void TransactionScope()
         {
@@ -664,6 +664,7 @@ namespace Dapper.Tests.Contrib
                 }
             }
         }
+#endif
 
         [Fact]
         public void InsertCheckKey()
