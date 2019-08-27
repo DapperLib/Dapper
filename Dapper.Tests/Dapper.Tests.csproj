@@ -19,9 +19,25 @@
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
   </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19221.1-Preview" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
   </ItemGroup>
+  <ItemGroup Condition="'$(Platform)'=='x64'">
+    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x64\*.dll">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)'=='x86'">
+    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x86\*.dll">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
@@ -35,7 +51,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net472'">
@@ -60,15 +75,4 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
   </ItemGroup>
-
-  
-  <PropertyGroup>
-    <PostBuildEvent>
-      if not exist "$(TargetDir)x86" md "$(TargetDir)x86"
-      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.1016.290\NativeBinaries\x86\*.*" "$(TargetDir)x86"
-      if not exist "$(TargetDir)x64" md "$(TargetDir)x64"
-      xcopy /s /y /q "$(NuGetPackageRoot)\Microsoft.SqlServer.Types\14.0.1016.290\NativeBinaries\x64\*.*" "$(TargetDir)x64"
-    </PostBuildEvent>
-  </PropertyGroup>
-  
 </Project>
