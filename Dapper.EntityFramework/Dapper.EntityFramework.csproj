@@ -5,18 +5,12 @@
     <AssemblyTitle>Dapper entity framework type handlers</AssemblyTitle>
     <VersionPrefix>1.50.2</VersionPrefix>
     <Authors>Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net451</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <PackageTags>orm;sql;micro-orm</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <PackageReference Include="EntityFramework" Version="6.2.0" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 </Project>
