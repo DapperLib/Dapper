@@ -687,7 +687,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types. 
+        /// Perform a asynchronous multi-mapping query with 2 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -708,7 +708,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types. 
+        /// Perform a asynchronous multi-mapping query with 2 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -723,7 +723,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types. 
+        /// Perform a asynchronous multi-mapping query with 3 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -745,7 +745,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types. 
+        /// Perform a asynchronous multi-mapping query with 3 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -761,7 +761,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types. 
+        /// Perform a asynchronous multi-mapping query with 4 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -784,7 +784,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types. 
+        /// Perform a asynchronous multi-mapping query with 4 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -801,7 +801,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types. 
+        /// Perform a asynchronous multi-mapping query with 5 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -825,7 +825,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types. 
+        /// Perform a asynchronous multi-mapping query with 5 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -843,7 +843,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 6 input types. 
+        /// Perform a asynchronous multi-mapping query with 6 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -868,7 +868,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 6 input types. 
+        /// Perform a asynchronous multi-mapping query with 6 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -887,7 +887,7 @@ namespace Dapper
              MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 7 input types. 
+        /// Perform a asynchronous multi-mapping query with 7 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -913,7 +913,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default(CancellationToken)), map, splitOn);
 
         /// <summary>
-        /// Perform an asynchronous multi-mapping query with 7 input types. 
+        /// Perform an asynchronous multi-mapping query with 7 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -956,7 +956,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with an arbitrary number of input types. 
+        /// Perform a asynchronous multi-mapping query with an arbitrary number of input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TReturn">The combined type to return.</typeparam>
@@ -1101,6 +1101,18 @@ namespace Dapper
         /// </code>
         /// </example>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
+            ExecuteWrappedReaderImplAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered), CommandBehavior.Default).CastResult<DbDataReader, IDataReader>();
+
+        /// <summary>
+        /// Execute parameterized SQL and return a <see cref="DbDataReader"/>.
+        /// </summary>
+        /// <param name="cnn">The connection to execute on.</param>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="param">The parameters to use for this command.</param>
+        /// <param name="transaction">The transaction to use for this command.</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        public static Task<DbDataReader> ExecuteReaderAsync(this DbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
             ExecuteWrappedReaderImplAsync(cnn, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered), CommandBehavior.Default);
 
         /// <summary>
@@ -1114,6 +1126,14 @@ namespace Dapper
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command) =>
+            ExecuteWrappedReaderImplAsync(cnn, command, CommandBehavior.Default).CastResult<DbDataReader, IDataReader>();
+
+        /// <summary>
+        /// Execute parameterized SQL and return a <see cref="DbDataReader"/>.
+        /// </summary>
+        /// <param name="cnn">The connection to execute on.</param>
+        /// <param name="command">The command to execute.</param>
+        public static Task<DbDataReader> ExecuteReaderAsync(this DbConnection cnn, CommandDefinition command) =>
             ExecuteWrappedReaderImplAsync(cnn, command, CommandBehavior.Default);
 
         /// <summary>
@@ -1128,9 +1148,18 @@ namespace Dapper
         /// or <see cref="T:DataSet"/>.
         /// </remarks>
         public static Task<IDataReader> ExecuteReaderAsync(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior) =>
+            ExecuteWrappedReaderImplAsync(cnn, command, commandBehavior).CastResult<DbDataReader, IDataReader>();
+
+        /// <summary>
+        /// Execute parameterized SQL and return a <see cref="DbDataReader"/>.
+        /// </summary>
+        /// <param name="cnn">The connection to execute on.</param>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="commandBehavior">The <see cref="CommandBehavior"/> flags for this reader.</param>
+        public static Task<DbDataReader> ExecuteReaderAsync(this DbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior) =>
             ExecuteWrappedReaderImplAsync(cnn, command, commandBehavior);
 
-        private static async Task<IDataReader> ExecuteWrappedReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
+        private static async Task<DbDataReader> ExecuteWrappedReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
 
