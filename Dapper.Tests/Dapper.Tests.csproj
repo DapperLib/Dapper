@@ -23,16 +23,19 @@
   <ItemGroup>
     <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19221.1-Preview" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290"
+                      Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net472'"/>
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)'=='x64'">
-    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x64\*.dll">
+    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x64\*.dll"
+             Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net472'">
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)'=='x86'">
-    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x86\*.dll">
+    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x86\*.dll"
+             Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net472'">
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
