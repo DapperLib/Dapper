@@ -4,8 +4,10 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection("DataReaderTests")]
     public sealed class SystemSqlClientDataReaderTests : DataReaderTests<SystemSqlClientProvider> { }
 #if MSSQLCLIENT
+    [Collection("DataReaderTests")]
     public sealed class MicrosoftSqlClientDataReaderTests : DataReaderTests<MicrosoftSqlClientProvider> { }
 #endif
 

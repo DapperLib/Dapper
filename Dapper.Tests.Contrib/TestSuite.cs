@@ -2,14 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-
+using System.Transactions;
 using Dapper.Contrib.Extensions;
 using Xunit;
 
-#if !NETCOREAPP1_0 && !NETCOREAPP2_0
-using System.Transactions;
-using System.Data.SqlServerCe;
-#endif
 using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
 
 namespace Dapper.Tests.Contrib
@@ -525,7 +521,7 @@ namespace Dapper.Tests.Contrib
             }
         }
 
-#if !NETCOREAPP1_0 && !NETCOREAPP2_0
+#if SQLCE
         [Fact(Skip = "Not parallel friendly - thinking about how to test this")]
         public void InsertWithCustomDbType()
         {
@@ -563,7 +559,7 @@ namespace Dapper.Tests.Contrib
         {
             SqlMapperExtensions.TableNameMapper = type =>
             {
-                switch (type.Name())
+                switch (type.Name)
                 {
                     case "Person":
                         return "People";
@@ -573,7 +569,7 @@ namespace Dapper.Tests.Contrib
                             return tableattr.Name;
 
                         var name = type.Name + "s";
-                        if (type.IsInterface() && name.StartsWith("I"))
+                        if (type.IsInterface && name.StartsWith("I"))
                             return name.Substring(1);
                         return name;
                 }
@@ -652,8 +648,7 @@ namespace Dapper.Tests.Contrib
                 Assert.Equal(car.Name, orgName);
             }
         }
-
-#if !NETCOREAPP1_0 && !NETCOREAPP2_0
+#if TRANSCOPE
         [Fact]
         public void TransactionScope()
         {
@@ -665,7 +660,7 @@ namespace Dapper.Tests.Contrib
 
                     txscope.Dispose();  //rollback
 
-                    Assert.IsNull(connection.Get<Car>(id));   //returns null - car with that id should not exist
+                    Assert.Null(connection.Get<Car>(id));   //returns null - car with that id should not exist
                 }
             }
         }
