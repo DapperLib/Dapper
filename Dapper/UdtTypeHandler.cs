@@ -5,7 +5,6 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
-#if !NETSTANDARD1_3 && !NETSTANDARD2_0
         /// <summary>
         /// A type handler for data-types that are supported by the underlying provider, but which need
         /// a well-known UdtTypeName to be specified
@@ -36,6 +35,5 @@ namespace Dapper
                 if(!(value is DBNull)) StructuredHelper.ConfigureUDT(parameter, udtTypeName);
             }
         }
-#endif
     }
 }

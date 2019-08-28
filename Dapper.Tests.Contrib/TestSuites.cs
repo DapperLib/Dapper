@@ -7,10 +7,6 @@ using System.IO;
 using Xunit;
 using Xunit.Sdk;
 
-#if !NETCOREAPP1_0 && !NETCOREAPP2_0
-using System.Data.SqlServerCe;
-#endif
-
 namespace Dapper.Tests.Contrib
 {
     // The test suites here implement TestSuiteBase so that each provider runs
@@ -72,7 +68,7 @@ namespace Dapper.Tests.Contrib
 
         public override IDbConnection GetConnection()
         {
-            if (_skip) throw new SkipTestException("Skipping MySQL Tests - no server.");
+            if (_skip) Skip.Inconclusive("Skipping MySQL Tests - no server.");
             return new MySqlConnection(ConnectionString);
         }
 
@@ -148,7 +144,8 @@ namespace Dapper.Tests.Contrib
         }
     }
 
-#if !NETCOREAPP1_0 && !NETCOREAPP2_0
+
+#if SQLCE
     public class SqlCETestSuite : TestSuite
     {
         const string FileName = "Test.DB.sdf";

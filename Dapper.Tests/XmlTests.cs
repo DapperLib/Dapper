@@ -4,8 +4,10 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection("XmlTests")]
     public sealed class SystemSqlClientXmlTests : XmlTests<SystemSqlClientProvider> { }
 #if MSSQLCLIENT
+    [Collection("XmlTests")]
     public sealed class MicrosoftSqlClientXmlTests : XmlTests<MicrosoftSqlClientProvider> { }
 #endif
     public abstract class XmlTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider

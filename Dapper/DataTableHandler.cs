@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-#if !NETSTANDARD1_3
 namespace Dapper
 {
     internal sealed class DataTableHandler : SqlMapper.ITypeHandler
@@ -16,4 +15,3 @@ namespace Dapper
         }
     }
 }
-#endif
