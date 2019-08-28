@@ -2379,7 +2379,8 @@ namespace Dapper
             var il = dm.GetILGenerator();
 
             bool isStruct = type.IsValueType;
-            var sizeLocal = (LocalBuilder)null;
+            var _sizeLocal = (LocalBuilder)null;
+            LocalBuilder GetSizeLocal() => _sizeLocal ?? (_sizeLocal = il.DeclareLocal(typeof(int)));
             il.Emit(OpCodes.Ldarg_1); // stack is now [untyped-param]
 
             LocalBuilder typedParameterLocal;
@@ -2590,10 +2591,6 @@ namespace Dapper
                 }
                 if (checkForNull)
                 {
-                    if ((dbType == DbType.String || dbType == DbType.AnsiString) && sizeLocal == null)
-                    {
-                        sizeLocal = il.DeclareLocal(typeof(int));
-                    }
                     // relative stack: [boxed value]
                     il.Emit(OpCodes.Dup);// relative stack: [boxed value] [boxed value]
                     Label notNull = il.DefineLabel();
@@ -2605,7 +2602,7 @@ namespace Dapper
                     if (dbType == DbType.String || dbType == DbType.AnsiString)
                     {
                         EmitInt32(il, 0);
-                        il.Emit(OpCodes.Stloc, sizeLocal);
+                        il.Emit(OpCodes.Stloc, GetSizeLocal());
                     }
                     if (allDone != null) il.Emit(OpCodes.Br_S, allDone.Value);
                     il.MarkLabel(notNull);
@@ -2622,7 +2619,7 @@ namespace Dapper
                         il.MarkLabel(isLong);
                         EmitInt32(il, -1); // [string] [-1]
                         il.MarkLabel(lenDone);
-                        il.Emit(OpCodes.Stloc, sizeLocal); // [string]
+                        il.Emit(OpCodes.Stloc, GetSizeLocal()); // [string]
                     }
                     if (prop.PropertyType.FullName == LinqBinary)
                     {
@@ -2646,6 +2643,7 @@ namespace Dapper
                 if (prop.PropertyType == typeof(string))
                 {
                     var endOfSize = il.DefineLabel();
+                    var sizeLocal = GetSizeLocal();
                     // don't set if 0
                     il.Emit(OpCodes.Ldloc, sizeLocal); // [parameters] [[parameters]] [parameter] [size]
                     il.Emit(OpCodes.Brfalse_S, endOfSize); // [parameters] [[parameters]] [parameter]
