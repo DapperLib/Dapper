@@ -3259,7 +3259,6 @@ namespace Dapper
                 : names.Select(n => typeMap.GetMember(n))).ToList();
 
             // stack is now [target]
-
             bool first = true;
             var allDone = il.DefineLabel();
             var stringEnumLocal = (LocalBuilder)null;
@@ -3369,6 +3368,7 @@ namespace Dapper
             il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SqlMapper.ThrowDataException)), null);
             il.EndExceptionBlock();
 
+            il.Emit(OpCodes.Ldloc, returnValueLocal); // stack is [rval]
             if (type.IsValueType)
             {
                 il.Emit(OpCodes.Box, type);
