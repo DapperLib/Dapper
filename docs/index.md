@@ -20,7 +20,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
-### 2.0.5
+### 2.0.4
 
 Primary changes:
 
