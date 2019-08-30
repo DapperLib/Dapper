@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper.ProviderTools.Internal;
-
+#nullable enable
 namespace Dapper.ProviderTools
 {
     /// <summary>
