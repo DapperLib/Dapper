@@ -3,7 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
-
+#nullable enable
 namespace Dapper.ProviderTools.Internal
 {
     internal sealed class DynamicBulkCopy : BulkCopy
