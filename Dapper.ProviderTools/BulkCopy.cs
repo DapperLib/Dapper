@@ -44,11 +44,13 @@ namespace Dapper.ProviderTools
             return bcp;
         }
 
-        /// <summary>
-        /// Provide an external registration for a given connection type
-        /// </summary>
-        public static void Register(Type type, Func<DbConnection, object>? factory)
-            => s_bcpFactory[type] = factory;
+        ///// <summary>
+        ///// Provide an external registration for a given connection type
+        ///// </summary>
+        //public static void Register(Type type, Func<DbConnection, BulkCopy> factory)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         private static readonly ConcurrentDictionary<Type, Func<DbConnection, object>?> s_bcpFactory
             = new ConcurrentDictionary<Type, Func<DbConnection, object>?>();
