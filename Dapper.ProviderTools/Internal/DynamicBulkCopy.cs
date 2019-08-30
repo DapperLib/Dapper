@@ -32,6 +32,8 @@ namespace Dapper.ProviderTools.Internal
 
         public override void WriteToServer(DataTable source)
             => _wrapped.WriteToServer(source);
+        public override void WriteToServer(DataRow[] source)
+            => _wrapped.WriteToServer(source);
 
         public override void WriteToServer(IDataReader source)
             => _wrapped.WriteToServer(source);
@@ -40,6 +42,8 @@ namespace Dapper.ProviderTools.Internal
             => _wrapped.WriteToServer(source, cancellationToken);
 
         public override Task WriteToServerAsync(DataTable source, CancellationToken cancellationToken)
+            => _wrapped.WriteToServer(source, cancellationToken);
+        public override Task WriteToServerAsync(DataRow[] source, CancellationToken cancellationToken)
             => _wrapped.WriteToServer(source, cancellationToken);
 
         protected override void Dispose(bool disposing)
