@@ -31,6 +31,20 @@ namespace Dapper.ProviderTools
         }
 
         /// <summary>
+        /// Create a BulkCopy instance for the connection provided
+        /// </summary>
+        public static BulkCopy Create(DbConnection connection)
+        {
+            var bcp = TryCreate(connection);
+            if (bcp == null)
+            {
+                if (connection == null) throw new ArgumentNullException(nameof(connection));
+                throw new NotSupportedException("Unable to create BulkCopy for " + connection.GetType().FullName);
+            }
+            return bcp;
+        }
+
+        /// <summary>
         /// Provide an external registration for a given connection type
         /// </summary>
         public static void Register(Type type, Func<DbConnection, object>? factory)
@@ -74,15 +88,23 @@ namespace Dapper.ProviderTools
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        public abstract void WriteToServer(DataRow[] source);
+        /// <summary>
+        /// Write a set of data to the server
+        /// </summary>
         public abstract void WriteToServer(IDataReader source);
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
-        public abstract Task WriteToServerAsync(DbDataReader source, CancellationToken cancellationToken);
+        public abstract Task WriteToServerAsync(DbDataReader source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
-        public abstract Task WriteToServerAsync(DataTable source, CancellationToken cancellationToken);
+        public abstract Task WriteToServerAsync(DataTable source, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Write a set of data to the server
+        /// </summary>
+        public abstract Task WriteToServerAsync(DataRow[] source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Add a mapping between two columns by name
         /// </summary>
