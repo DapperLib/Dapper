@@ -9,7 +9,7 @@
     <PackageId>$(AssemblyName)</PackageId>
     <PackageReleaseNotes>https://stackexchange.github.io/Dapper/</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/StackExchange/Dapper</PackageProjectUrl>
-    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/StackExchange/Dapper</RepositoryUrl>
     
