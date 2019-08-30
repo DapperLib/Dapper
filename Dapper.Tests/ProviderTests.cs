@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Data.Common;
 using Dapper.ProviderTools;
 using Xunit;
 
@@ -21,6 +22,62 @@ namespace Dapper.Tests
             using (var conn = new Microsoft.Data.SqlClient.SqlConnection())
             {
                 Test<Microsoft.Data.SqlClient.SqlBulkCopy>(conn);
+            }
+        }
+
+        [Fact]
+        public void ClientId_SystemDataSqlClient()
+            => TestClientId<SystemSqlClientProvider>();
+
+        [Fact]
+        public void ClientId_MicrosoftDataSqlClient()
+            => TestClientId<MicrosoftSqlClientProvider>();
+
+
+        [Fact]
+        public void ClearPool_SystemDataSqlClient()
+            => ClearPool<SystemSqlClientProvider>();
+
+        [Fact]
+        public void ClearPool_MicrosoftDataSqlClient()
+            => ClearPool<MicrosoftSqlClientProvider>();
+
+        [Fact]
+        public void ClearAllPools_SystemDataSqlClient()
+            => ClearAllPools<SystemSqlClientProvider>();
+
+        [Fact]
+        public void ClearAllPools_MicrosoftDataSqlClient()
+            => ClearAllPools<MicrosoftSqlClientProvider>();
+
+        private static void TestClientId<T>()
+             where T : SqlServerDatabaseProvider, new()
+        {
+            var provider = new T();
+            using (var conn = provider.GetOpenConnection())
+            {
+                Assert.True(conn.TryGetClientConnectionId(out var id));
+                Assert.NotEqual(Guid.Empty, id);
+            }
+        }
+
+        private static void ClearPool<T>()
+     where T : SqlServerDatabaseProvider, new()
+        {
+            var provider = new T();
+            using (var conn = provider.GetOpenConnection())
+            {
+                Assert.True(conn.TryClearPool());
+            }
+        }
+
+        private static void ClearAllPools<T>()
+     where T : SqlServerDatabaseProvider, new()
+        {
+            var provider = new T();
+            using (var conn = provider.GetOpenConnection())
+            {
+                Assert.True(conn.TryClearAllPools());
             }
         }
 
