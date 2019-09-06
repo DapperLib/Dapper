@@ -17,7 +17,7 @@ namespace Dapper.Tests.Performance.Helpers
             return type == typeof(object) ? "dynamic" : type.Name;
         }
 
-        public string GetValue(Summary summary, BenchmarkCase benchmarkCase, ISummaryStyle style) => GetValue(summary, benchmarkCase);
+        public string GetValue(Summary summary, BenchmarkCase benchmarkCase, SummaryStyle style) => GetValue(summary, benchmarkCase);
 
         public bool IsAvailable(Summary summary) => true;
         public bool AlwaysShow => true;

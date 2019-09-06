@@ -5,8 +5,10 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection("ConstructorTests")]
     public sealed class SystemSqlClientConstructorTests : ConstructorTests<SystemSqlClientProvider> { }
 #if MSSQLCLIENT
+    [Collection("ConstructorTests")]
     public sealed class MicrosoftSqlClientConstructorTests : ConstructorTests<MicrosoftSqlClientProvider> { }
 #endif
 

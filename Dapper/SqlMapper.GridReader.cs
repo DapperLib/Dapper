@@ -204,15 +204,7 @@ namespace Dapper
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Delegate func, string splitOn)
             {
-                var identity = this.identity.ForGrid(typeof(TReturn), new Type[] {
-                    typeof(TFirst),
-                    typeof(TSecond),
-                    typeof(TThird),
-                    typeof(TFourth),
-                    typeof(TFifth),
-                    typeof(TSixth),
-                    typeof(TSeventh)
-                }, gridIndex);
+                var identity = this.identity.ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(typeof(TReturn), gridIndex);
 
                 IsConsumed = true;
 

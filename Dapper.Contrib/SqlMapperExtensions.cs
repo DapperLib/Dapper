@@ -190,7 +190,7 @@ namespace Dapper.Contrib.Extensions
 
             T obj;
 
-            if (type.IsInterface())
+            if (type.IsInterface)
             {
                 var res = connection.Query(sql, dynParms).FirstOrDefault() as IDictionary<string, object>;
 
@@ -203,7 +203,7 @@ namespace Dapper.Contrib.Extensions
                 {
                     var val = res[property.Name];
                     if (val == null) continue;
-                    if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
                         var genericType = Nullable.GetUnderlyingType(property.PropertyType);
                         if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
@@ -248,7 +248,7 @@ namespace Dapper.Contrib.Extensions
                 GetQueries[cacheType.TypeHandle] = sql;
             }
 
-            if (!type.IsInterface()) return connection.Query<T>(sql, null, transaction, commandTimeout: commandTimeout);
+            if (!type.IsInterface) return connection.Query<T>(sql, null, transaction, commandTimeout: commandTimeout);
 
             var result = connection.Query(sql);
             var list = new List<T>();
@@ -259,7 +259,7 @@ namespace Dapper.Contrib.Extensions
                 {
                     var val = res[property.Name];
                     if (val == null) continue;
-                    if (property.PropertyType.IsGenericType() && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                     {
                         var genericType = Nullable.GetUnderlyingType(property.PropertyType);
                         if (genericType != null) property.SetValue(obj, Convert.ChangeType(val, genericType), null);
@@ -307,7 +307,7 @@ namespace Dapper.Contrib.Extensions
                 else
                 {
                     name = type.Name + "s";
-                    if (type.IsInterface() && name.StartsWith("I"))
+                    if (type.IsInterface && name.StartsWith("I"))
                         name = name.Substring(1);
                 }
             }
@@ -336,11 +336,11 @@ namespace Dapper.Contrib.Extensions
                 isList = true;
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType())
+            else if (type.IsGenericType)
             {
                 var typeInfo = type.GetTypeInfo();
                 bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
                     typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
 
                 if (implementsGenericIEnumerableOrIsGenericIEnumerable)
@@ -417,11 +417,11 @@ namespace Dapper.Contrib.Extensions
             {
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType())
+            else if (type.IsGenericType)
             {
                 var typeInfo = type.GetTypeInfo();
                 bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
                     typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
 
                 if (implementsGenericIEnumerableOrIsGenericIEnumerable)
@@ -486,11 +486,11 @@ namespace Dapper.Contrib.Extensions
             {
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType())
+            else if (type.IsGenericType)
             {
                 var typeInfo = type.GetTypeInfo();
                 bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType() && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
                     typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
 
                 if (implementsGenericIEnumerableOrIsGenericIEnumerable)
