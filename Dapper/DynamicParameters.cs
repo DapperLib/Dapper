@@ -6,10 +6,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
-#if NETSTANDARD1_3
-using ApplicationException = System.InvalidOperationException;
-#endif
-
 namespace Dapper
 {
     /// <summary>

@@ -12,9 +12,7 @@ namespace Dapper
     /// Used to pass a IEnumerable&lt;SqlDataRecord&gt; as a SqlDataRecordListTVPParameter
     /// </summary>
     internal sealed class SqlDataRecordListTVPParameter<T> : SqlMapper.ICustomQueryParameter
-#if !NETSTANDARD1_3
         where T : IDataRecord
-#endif
     {
         private readonly IEnumerable<T> data;
         private readonly string typeName;

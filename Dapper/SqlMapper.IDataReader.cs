@@ -140,7 +140,7 @@ namespace Dapper
         {
             concreteType = concreteType ?? typeof(T);
             var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
-            if (concreteType.IsValueType())
+            if (concreteType.IsValueType)
             {
                 return _ => (T)func(_);
             }

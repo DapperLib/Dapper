@@ -93,6 +93,14 @@ namespace Dapper
             cmd.Dispose();
             return null; // GIGO
         }
+        public static DbDataReader Create(IDbCommand cmd, DbDataReader reader)
+        {
+            if (cmd == null) return reader; // no need to wrap if no command
+
+            if (reader != null) return new DbWrappedReader(cmd, reader);
+            cmd.Dispose();
+            return null; // GIGO
+        }
     }
     internal sealed class DbWrappedReader : DbDataReader, IWrappedDataReader
     {
@@ -143,7 +151,7 @@ namespace Dapper
                 _cmd = null;
             }
         }
-        
+
         public override int FieldCount => _reader.FieldCount;
 
         public override bool GetBoolean(int i) => _reader.GetBoolean(i);
