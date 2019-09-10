@@ -1876,13 +1876,8 @@ namespace Dapper
         public static char ReadChar(object value)
         {
             if (value == null || value is DBNull) throw new ArgumentNullException(nameof(value));
-            var s = value as string;
-            if (s == null)
-            {
-                var c = value as char?;
-                if (c != null) return c.Value;
-            }
-            else if (s.Length == 1) return s[0];
+            if (value is string s && s.Length == 1) return s[0];
+            if (value is char c) return c;
             throw new ArgumentException("A single-character was expected", nameof(value));
         }
 
@@ -1896,13 +1891,8 @@ namespace Dapper
         public static char? ReadNullableChar(object value)
         {
             if (value == null || value is DBNull) return null;
-            var s = value as string;
-            if (s == null)
-            {
-                var c = value as char?;
-                if (c != null) return c;
-            }
-            else if (s.Length == 1) return s[0];
+            if (value is string s && s.Length == 1) return s[0];
+            if (value is char c) return c;
             throw new ArgumentException("A single-character was expected", nameof(value));
         }
 
