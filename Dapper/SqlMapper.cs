@@ -1877,8 +1877,13 @@ namespace Dapper
         {
             if (value == null || value is DBNull) throw new ArgumentNullException(nameof(value));
             var s = value as string;
-            if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", nameof(value));
-            return s[0];
+            if (s == null)
+            {
+                var c = value as char?;
+                if (c != null) return c.Value;
+            }
+            else if (s.Length == 1) return s[0];
+            throw new ArgumentException("A single-character was expected", nameof(value));
         }
 
         /// <summary>
@@ -1892,8 +1897,13 @@ namespace Dapper
         {
             if (value == null || value is DBNull) return null;
             var s = value as string;
-            if (s == null || s.Length != 1) throw new ArgumentException("A single-character was expected", nameof(value));
-            return s[0];
+            if (s == null)
+            {
+                var c = value as char?;
+                if (c != null) return c;
+            }
+            else if (s.Length == 1) return s[0];
+            throw new ArgumentException("A single-character was expected", nameof(value));
         }
 
         /// <summary>
