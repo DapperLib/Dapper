@@ -45,7 +45,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.EntityFramework.Stro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests.Performance", "Dapper.Tests.Performance\Dapper.Tests.Performance.csproj", "{F017075A-2969-4A8E-8971-26F154EB420F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.ProviderTools", "Dapper.ProviderTools\Dapper.ProviderTools.csproj", "{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.ProviderTools", "Dapper.ProviderTools\Dapper.ProviderTools.csproj", "{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
