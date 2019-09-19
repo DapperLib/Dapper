@@ -252,7 +252,14 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < nonIdProps.Count; i++)
             {
                 var property = nonIdProps[i];
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);
+                var columnAttrName = property.GetCustomAttribute<ColumnAttribute>(false)?.Name
+                    ?? (property.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "ColumnAttribute") as dynamic)?.Name;
+
+                if (columnAttrName != null)
+                    adapter.AppendColumnNameEqualsValue(sb, columnAttrName, property.Name);
+                else
+                    adapter.AppendColumnNameEqualsValue(sb, property.Name);
+
                 if (i < nonIdProps.Count - 1)
                     sb.Append(", ");
             }
@@ -260,7 +267,15 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);
+                var columnAttrName = property.GetCustomAttribute<ColumnAttribute>(false)?.Name
+                    ?? (property.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "ColumnAttribute") as dynamic)?.Name;
+
+                if (columnAttrName != null)
+                    adapter.AppendColumnNameEqualsValue(sb, columnAttrName, property.Name);
+                else
+                    adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
+
+
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
@@ -313,11 +328,17 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
             var adapter = GetFormatter(connection);
-            
+
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property.Name);
+                var columnAttrName = property.GetCustomAttribute<ColumnAttribute>(false)?.Name
+                    ?? (property.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "ColumnAttribute") as dynamic)?.Name;
+
+                if (columnAttrName != null)
+                    adapter.AppendColumnNameEqualsValue(sb, columnAttrName, property.Name);
+                else
+                    adapter.AppendColumnNameEqualsValue(sb, property.Name);
                 if (i < keyProperties.Count - 1)
                     sb.Append(" AND ");
             }

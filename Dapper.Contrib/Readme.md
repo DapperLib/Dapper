@@ -128,6 +128,17 @@ Dapper.Contrib makes use of some optional attributes:
         public string Name { get; set; }
     }
     ```
+* `[Column("Columnname")]` - use another column name instead of the name of the property
+
+    ```csharp    
+    public class Employee
+    {
+        public int Id { get; set; }
+        
+        [Column ("FULLNAME")]
+        public string Name { get; set; }
+    }
+    ```
 * `[Key]` - this property represents a database-generated identity/key
     
     ```csharp
