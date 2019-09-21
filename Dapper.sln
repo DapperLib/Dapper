@@ -14,7 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		License.txt = License.txt
 		nuget.config = nuget.config
 		Readme.md = Readme.md
-		semver.txt = semver.txt
 		version.json = version.json
 	EndProjectSection
 EndProject
