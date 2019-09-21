@@ -1,5 +1,4 @@
-﻿#if !NETSTANDARD1_3
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -1443,4 +1442,3 @@ namespace PetaPoco
     }
 }
 #pragma warning restore RCS1023 // Format empty block.
-#endif

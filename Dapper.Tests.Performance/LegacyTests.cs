@@ -355,7 +355,6 @@ namespace Dapper.Tests.Performance
                         }
                     }, "Hand Coded");
 
-#if !NETSTANDARD1_3
                     var table = new DataTable
                     {
                         Columns =
@@ -386,7 +385,6 @@ namespace Dapper.Tests.Performance
                             table.Rows.Add(values);
                         }
                     }, "DataTable via IDataReader.GetValues");
-#endif
                 }, "Hand Coded");
 
                 // DevExpress.XPO
