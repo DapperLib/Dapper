@@ -13,9 +13,9 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
+    <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19239.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
@@ -33,10 +33,8 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- Conditionals make the tooling go crazy...just include them for this test project -->
     <Content Include="$(NuGetPackageRoot)\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\**\*.dll" CopyToOutputDirectory="PreserveNewest" />

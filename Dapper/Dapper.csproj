@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageId>Dapper</PackageId>
-    <PackageTags>orm;sql;micro-orm</PackageTags>
+    <AssemblyName>Dapper</AssemblyName>
     <Title>Dapper</Title>
+    <PackageTags>orm;sql;micro-orm</PackageTags>
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
