@@ -1,51 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Dapper.Tests</AssemblyName>
-    <Title>Dapper.Tests</Title>
     <Description>Dapper Core Test Suite</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <TargetFrameworks>netcoreapp2.1;net462;net472</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
     <DefineConstants>$(DefineConstants);ENTITY_FRAMEWORK;LINQ2SQL;OLEDB</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Test.DB.sdf" />
-  </ItemGroup>
-  <PropertyGroup>
-    <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19239.1" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(Platform)'=='x64'">
-    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x64\*.dll" Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
-      <Link>%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Platform)'=='x86'">
-    <Content Include="$(USERPROFILE)\.nuget\packages\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\x86\*.dll" Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
-      <Link>%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19239.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="MySqlConnector" Version="0.56.0" />
     <PackageReference Include="Npgsql" Version="4.0.9" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="xunit" Version="$(xUnitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)">
@@ -56,22 +33,13 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="1.1.1" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
-    <!--<PackageReference Include="Oracle.ManagedDataAccess" Version="19.3.1" />-->
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
+  <ItemGroup>
+    <!-- Conditionals make the tooling go crazy...just include them for this test project -->
+    <Content Include="$(NuGetPackageRoot)\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\**\*.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Remove="Test.DB.sdf" />
   </ItemGroup>
 </Project>
