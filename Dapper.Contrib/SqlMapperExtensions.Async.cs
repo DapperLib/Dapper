@@ -307,18 +307,18 @@ namespace Dapper.Contrib.Extensions
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
             var name = GetTableName(type);
-            keyProperties.AddRange(explicitKeyProperties);
+            var allKeyProperties = keyProperties.Concat(explicitKeyProperties).ToList();
 
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0} WHERE ", name);
 
             var adapter = GetFormatter(connection);
             
-            for (var i = 0; i < keyProperties.Count; i++)
+            for (var i = 0; i < allKeyProperties.Count; i++)
             {
-                var property = keyProperties[i];
+                var property = allKeyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);
-                if (i < keyProperties.Count - 1)
+                if (i < allKeyProperties.Count - 1)
                     sb.Append(" AND ");
             }
             var deleted = await connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction, commandTimeout).ConfigureAwait(false);
