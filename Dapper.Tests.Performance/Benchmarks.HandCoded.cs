@@ -17,7 +17,7 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            _postCommand = new SqlCommand("select * from Posts where Id = @Id", _connection);
+            _postCommand = new SqlCommand("select Top 1 * from Posts where Id = @Id", _connection);
             _idParam = _postCommand.Parameters.Add("@Id", SqlDbType.Int);
             _postCommand.Prepare();
             _table = new DataTable
