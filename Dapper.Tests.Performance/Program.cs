@@ -1,6 +1,4 @@
-﻿using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Order;
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 using System;
 using System.Data.SqlClient;
 using System.Linq;
@@ -28,7 +26,7 @@ namespace Dapper.Tests.Performance
                 WriteColor("  (no args)", ConsoleColor.Blue);
                 WriteLine(": run all benchmarks");
                 WriteColor("  --legacy", ConsoleColor.Blue);
-                WriteLine(": run the legacy benchmark suite/format", ConsoleColor.Gray);
+                WriteLineColor(": run the legacy benchmark suite/format", ConsoleColor.Gray);
                 WriteLine();
             }
             WriteLine("Using ConnectionString: " + BenchmarkBase.ConnectionString);
