@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿#if NET4X
+using System.ComponentModel;
 using BenchmarkDotNet.Attributes;
 using Dapper.Tests.Performance.Dashing;
 using Dashing;
@@ -19,7 +20,10 @@ namespace Dapper.Tests.Performance
             Session = database.BeginTransactionLessSession(_connection);
         }
 
-        [Benchmark(Description = "Get")]
+        // This needs love to be compatible with current SDKs (weaving doesn't work and shouldn't be used here anyway (competition).
+        // I'll file an issue with Dashing to see if someone can help me out here since I can't figure out from the docs how to
+        // make it work correctly.
+        //[Benchmark(Description = "Get")]
         public Dashing.Post Get()
         {
             Step();
@@ -27,3 +31,4 @@ namespace Dapper.Tests.Performance
         }
     }
 }
+#endif

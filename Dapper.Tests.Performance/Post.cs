@@ -1,14 +1,20 @@
 ﻿using System;
+#if NET4X
 using Soma.Core;
+#endif
 
 namespace Dapper.Tests.Performance
 {
     [ServiceStack.DataAnnotations.Alias("Posts")]
+#if NET4X
     [Table(Name = "Posts")]
+#endif
     [LinqToDB.Mapping.Table(Name = "Posts")]
     public class Post
     {
+#if NET4X
         [Id(IdKind.Identity)]
+#endif
         [LinqToDB.Mapping.PrimaryKey, LinqToDB.Mapping.Identity]
         public int Id { get; set; }
         [LinqToDB.Mapping.Column, LinqToDB.Mapping.Nullable]

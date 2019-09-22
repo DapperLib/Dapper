@@ -37,7 +37,7 @@ namespace Dapper.Tests.Performance
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
                    .WithUnrollFactor(Iterations)
-                   .WithIterationCount(10)
+                   .WithIterationCount(1)
             );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;
