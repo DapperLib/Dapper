@@ -1,5 +1,4 @@
-﻿<Project>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Dapper.Tests.Performance</AssemblyName>
     <Title>Dapper.Tests.Performance</Title>
@@ -13,7 +12,6 @@
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
     <PackageReference Include="Dashing" Version="2.2.0" />
-    <PackageReference Include="Dashing.Weaver" Version="2.2.0" />
     <PackageReference Include="Belgrade.Sql.Client" Version="1.1.4" />
     <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
     <PackageReference Include="DevExpress.Xpo" Version="19.1.5" />
@@ -42,14 +40,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="NHibernate\*.xml" CopyToOutputDirectory="Always" />
+    <EmbeddedResource Include="NHibernate\*.xml" />
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
-  </ItemGroup>  
-  <ItemGroup>
-    <PackageReference Update="SourceLink.Create.GitHub" Version="2.8.3" />
   </ItemGroup>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
-  <PropertyGroup>
-    <WeaveArguments>-p "$(MSBuildThisFileDirectory)$(OutputPath)$(AssemblyName).exe" -t "Dapper.Tests.Performance.Dashing.DashingConfiguration"</WeaveArguments>
-  </PropertyGroup>
 </Project>
