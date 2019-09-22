@@ -31,7 +31,7 @@ namespace Dapper.Tests.Performance
             //Add(StatisticColumn.StdDev);
             //Add(StatisticColumn.Error);
             Add(BaselineRatioColumn.RatioMean);
-            //Add(md.GetColumnProvider());
+            Add(DefaultColumnProviders.Metrics);
 
             Add(Job.ShortRun
                    .WithLaunchCount(1)
