@@ -18,12 +18,14 @@ namespace Dapper.Tests
 #endif
 
     [Collection(NonParallelDefinition.Name)]
-    public sealed class SystemSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<SystemSqlClientProvider> {
+    public sealed class SystemSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<SystemSqlClientProvider>
+    {
         public SystemSqlClientAsyncQueryCacheTests(ITestOutputHelper log) : base(log) { }
     }
 #if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)]
-    public sealed class MicrosoftSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<MicrosoftSqlClientProvider> {
+    public sealed class MicrosoftSqlClientAsyncQueryCacheTests : AsyncQueryCacheTests<MicrosoftSqlClientProvider>
+    {
         public MicrosoftSqlClientAsyncQueryCacheTests(ITestOutputHelper log) : base(log) { }
     }
 #endif
@@ -32,7 +34,7 @@ namespace Dapper.Tests
     public abstract class AsyncTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
     {
         private DbConnection _marsConnection;
-        
+
         private DbConnection MarsConnection => _marsConnection ?? (_marsConnection = Provider.GetOpenConnection(true));
 
         [Fact]
@@ -128,9 +130,12 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestBasicStringUsageClosedAsync()
         {
-            var query = await connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
-            var arr = query.ToArray();
-            Assert.Equal(new[] { "abc", "def" }, arr);
+            using (var conn = GetClosedConnection())
+            {
+                var query = await conn.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
+                var arr = query.ToArray();
+                Assert.Equal(new[] { "abc", "def" }, arr);
+            }
         }
 
         [Fact]
@@ -159,9 +164,12 @@ namespace Dapper.Tests
         [Fact]
         public void TestExecuteClosedConnAsyncInner()
         {
-            var query = connection.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
-            var val = query.Result;
-            Assert.Equal(1, val);
+            using (var conn = GetClosedConnection())
+            {
+                var query = conn.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
+                var val = query.Result;
+                Assert.Equal(1, val);
+            }
         }
 
         [Fact]
@@ -248,23 +256,29 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestMultiClosedConnAsync()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
+            using (var conn = GetClosedConnection())
             {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
+                {
+                    Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                }
             }
         }
 
         [Fact]
         public async Task TestMultiClosedConnAsyncViaFirstOrDefault()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5;").ConfigureAwait(false))
+            using (var conn = GetClosedConnection())
             {
-                Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
+                using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
+                {
+                    Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                    Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+                    Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+                    Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
+                }
             }
         }
 
