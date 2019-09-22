@@ -6,7 +6,6 @@ using System.Data.SqlClient;
 
 namespace Dapper.Tests.Performance
 {
-    [Orderer(SummaryOrderPolicy.FastestToSlowest)]
     [BenchmarkCategory("ORM")]
     public abstract class BenchmarkBase
     {
