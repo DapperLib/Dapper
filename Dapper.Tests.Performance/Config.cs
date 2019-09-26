@@ -28,8 +28,8 @@ namespace Dapper.Tests.Performance
             Add(TargetMethodColumn.Method);
             Add(new ReturnColum());
             Add(StatisticColumn.Mean);
-            //Add(StatisticColumn.StdDev);
-            //Add(StatisticColumn.Error);
+            Add(StatisticColumn.StdDev);
+            Add(StatisticColumn.Error);
             Add(BaselineRatioColumn.RatioMean);
             Add(DefaultColumnProviders.Metrics);
 
@@ -37,7 +37,7 @@ namespace Dapper.Tests.Performance
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
                    .WithUnrollFactor(Iterations)
-                   .WithIterationCount(1)
+                   .WithIterationCount(10)
             );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;

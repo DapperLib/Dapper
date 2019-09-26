@@ -522,7 +522,6 @@ namespace Dapper.Tests
             }
         }
 
-#if !NETCOREAPP1_0
         [Fact]
         public void DataTableParameters()
         {
@@ -698,7 +697,6 @@ namespace Dapper.Tests
                 Rules = new SO29596645_RuleTableValuedParameters("@Rules");
             }
         }
-#endif
 
 #if ENTITY_FRAMEWORK
         private class HazGeo

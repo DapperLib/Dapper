@@ -4,38 +4,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Linq;
-using Xunit;
-
-#if NETCOREAPP1_0
-using System.Collections;
-using System.Dynamic;
-using System.Data.SqlTypes;
-#else // net452
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-#endif
-
-#if NETCOREAPP1_0
-namespace System
-{
-    public enum GenericUriParserOptions
-    {
-        Default
-    }
-
-    public class GenericUriParser
-    {
-        private readonly GenericUriParserOptions options;
-
-        public GenericUriParser(GenericUriParserOptions options)
-        {
-            this.options = options;
-        }
-    }
-}
-#endif
+using Xunit;
 
 namespace Dapper.Tests
 {
@@ -523,7 +496,6 @@ select * from @bar", new { foo }).Single();
             Assert.Equal("Four", list.First().Base2);
         }
 
-#if !NETCOREAPP1_0
         [Fact]
         public void ExecuteReader()
         {
@@ -536,7 +508,6 @@ select * from @bar", new { foo }).Single();
             Assert.Equal(3, (int)dt.Rows[0][0]);
             Assert.Equal(4, (int)dt.Rows[0][1]);
         }
-#endif
 
         [Fact]
         public void TestDbString()

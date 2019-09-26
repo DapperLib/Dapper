@@ -11,12 +11,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Dapper\TypeExtensions.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>

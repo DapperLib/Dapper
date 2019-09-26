@@ -11,18 +11,15 @@ namespace Dapper.Tests.Performance
     {
         private SqlCommand _postCommand;
         private SqlParameter _idParam;
-#if !NETCOREAPP1_0
         private DataTable _table;
-#endif
 
         [GlobalSetup]
         public void Setup()
         {
             BaseSetup();
-            _postCommand = new SqlCommand("select * from Posts where Id = @Id", _connection);
+            _postCommand = new SqlCommand("select Top 1 * from Posts where Id = @Id", _connection);
             _idParam = _postCommand.Parameters.Add("@Id", SqlDbType.Int);
             _postCommand.Prepare();
-#if !NETCOREAPP1_0
             _table = new DataTable
             {
                 Columns =
@@ -42,7 +39,6 @@ namespace Dapper.Tests.Performance
                         {"Counter9", typeof (int)},
                     }
             };
-#endif
         }
 
         [Benchmark(Description = "SqlCommand")]

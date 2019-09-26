@@ -6,14 +6,9 @@ using System.Reflection;
 using System.Text;
 using System.Collections.Concurrent;
 using System.Reflection.Emit;
+using System.Threading;
 
 using Dapper;
-
-#if NETSTANDARD1_3
-using DataException = System.InvalidOperationException;
-#else
-using System.Threading;
-#endif
 
 namespace Dapper.Contrib.Extensions
 {
@@ -290,15 +285,10 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-#if NETSTANDARD1_3
-                var info = type.GetTypeInfo();
-#else
-                var info = type;
-#endif
                 //NOTE: This as dynamic trick falls back to handle both our own Table-attribute as well as the one in EntityFramework 
                 var tableAttrName =
-                    info.GetCustomAttribute<TableAttribute>(false)?.Name
-                    ?? (info.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic)?.Name;
+                    type.GetCustomAttribute<TableAttribute>(false)?.Name
+                    ?? (type.GetCustomAttributes(false).FirstOrDefault(attr => attr.GetType().Name == "TableAttribute") as dynamic)?.Name;
 
                 if (tableAttrName != null)
                 {
@@ -562,7 +552,7 @@ namespace Dapper.Contrib.Extensions
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
-#if NETSTANDARD1_3 || NETSTANDARD2_0
+#if NETSTANDARD2_0
                 return AssemblyBuilder.DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
 #else
                 return Thread.GetDomain().DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
@@ -597,7 +587,7 @@ namespace Dapper.Contrib.Extensions
                     CreateProperty<T>(typeBuilder, property.Name, property.PropertyType, setIsDirtyMethod, isId);
                 }
 
-#if NETSTANDARD1_3 || NETSTANDARD2_0
+#if NETSTANDARD2_0
                 var generatedType = typeBuilder.CreateTypeInfo().AsType();
 #else
                 var generatedType = typeBuilder.CreateType();

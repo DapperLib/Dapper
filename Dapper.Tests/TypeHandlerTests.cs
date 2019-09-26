@@ -82,13 +82,8 @@ namespace Dapper.Tests
         private static string GetDescriptionFromAttribute(MemberInfo member)
         {
             if (member == null) return null;
-#if NETCOREAPP1_0
-        var data = member.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DescriptionAttribute));
-        return (string)data?.ConstructorArguments.Single().Value;
-#else
             var attrib = (DescriptionAttribute)Attribute.GetCustomAttribute(member, typeof(DescriptionAttribute), false);
             return attrib?.Description;
-#endif
         }
 
         public class TypeWithMapping
