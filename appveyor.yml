@@ -7,7 +7,7 @@ skip_commits:
     - '**/*.md'
 
 install:
-  - choco install dotnetcore-sdk --version 3.0.100-rc1-014190
+  - choco install dotnetcore-sdk --version 3.0.100
 
 environment:
   Appveyor: true
