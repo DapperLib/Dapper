@@ -1,5 +1,4 @@
-﻿#if !NETSTANDARD1_3
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
@@ -454,4 +453,3 @@ namespace Massive
     }
 }
 #pragma warning restore RCS1141 // Add parameter to documentation comment.
-#endif

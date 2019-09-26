@@ -20,12 +20,15 @@ namespace Dapper.Tests
             if (obj is T) Skip.Inconclusive(reason ?? $"not valid for {typeof(T).FullName}");
         }
     }
+
+#pragma warning disable RCS1194 // Implement exception constructors.
     public class SkipTestException : Exception
     {
         public SkipTestException(string reason) : base(reason)
         {
         }
     }
+#pragma warning restore RCS1194 // Implement exception constructors.
 
     public class FactDiscoverer : Xunit.Sdk.FactDiscoverer
     {

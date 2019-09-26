@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿#if NET4X
+using BenchmarkDotNet.Attributes;
 using Dapper.Tests.Performance.Linq2Sql;
 using System;
 using System.ComponentModel;
@@ -44,3 +45,4 @@ namespace Dapper.Tests.Performance
         }
     }
 }
+#endif

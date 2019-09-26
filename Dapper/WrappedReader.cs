@@ -29,15 +29,10 @@ namespace Dapper
             await Task.Yield(); // will never hit this - already thrown and handled
             return result;
         }
-#if !NETSTANDARD1_3
         public override void Close() { }
         public override DataTable GetSchemaTable() => ThrowDisposed<DataTable>();
         public override object InitializeLifetimeService() => ThrowDisposed<object>();
-#endif
         protected override void Dispose(bool disposing) { }
-#if NET451
-        public override System.Runtime.Remoting.ObjRef CreateObjRef(Type requestedType) => ThrowDisposed<System.Runtime.Remoting.ObjRef>();
-#endif
         public override bool GetBoolean(int ordinal) => ThrowDisposed<bool>();
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length) => ThrowDisposed<long>();
         public override float GetFloat(int ordinal) => ThrowDisposed<float>();
@@ -119,14 +114,9 @@ namespace Dapper
 
         public override bool HasRows => _reader.HasRows;
 
-#if !NETSTANDARD1_3
         public override void Close() => _reader.Close();
         public override DataTable GetSchemaTable() => _reader.GetSchemaTable();
         public override object InitializeLifetimeService() => _reader.InitializeLifetimeService();
-#endif
-#if NET451
-        public override System.Runtime.Remoting.ObjRef CreateObjRef(Type requestedType) => _reader.CreateObjRef(requestedType);
-#endif
 
         public override int Depth => _reader.Depth;
 
@@ -142,9 +132,7 @@ namespace Dapper
         {
             if (disposing)
             {
-#if !NETSTANDARD1_3
                 _reader.Close();
-#endif
                 _reader.Dispose();
                 _reader = DisposedReader.Instance; // all future ops are no-ops
                 _cmd?.Dispose();

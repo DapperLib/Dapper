@@ -282,7 +282,6 @@ namespace Dapper.Tests
             }
         }
 
-#if !NETCOREAPP1_0
         [Fact]
         public async Task ExecuteReaderOpenAsync()
         {
@@ -311,7 +310,6 @@ namespace Dapper.Tests
                 Assert.Equal(4, (int)dt.Rows[0][1]);
             }
         }
-#endif
 
         [Fact]
         public async Task LiteralReplacementOpen()
