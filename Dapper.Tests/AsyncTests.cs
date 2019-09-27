@@ -476,7 +476,7 @@ namespace Dapper.Tests
         public async Task TestSupportForDynamicParametersOutputExpressionsAsync()
         {
             {
-                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+                var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2, Index = new Index() } };
 
                 var p = new DynamicParameters(bob);
                 p.Output(bob, b => b.PersonId);
@@ -484,19 +484,22 @@ namespace Dapper.Tests
                 p.Output(bob, b => b.NumberOfLegs);
                 p.Output(bob, b => b.Address.Name);
                 p.Output(bob, b => b.Address.PersonId);
+                p.Output(bob, b => b.Address.Index.Id);
 
                 await connection.ExecuteAsync(@"
 SET @Occupation = 'grillmaster' 
 SET @PersonId = @PersonId + 1 
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
-SET @AddressPersonId = @PersonId", p).ConfigureAwait(false);
+SET @AddressPersonId = @PersonId
+SET @AddressIndexId = '01088'", p).ConfigureAwait(false);
 
                 Assert.Equal("grillmaster", bob.Occupation);
                 Assert.Equal(2, bob.PersonId);
                 Assert.Equal(1, bob.NumberOfLegs);
                 Assert.Equal("bobs burgers", bob.Address.Name);
                 Assert.Equal(2, bob.Address.PersonId);
+                Assert.Equal("01088", bob.Address.Index.Id);
             }
         }
 
