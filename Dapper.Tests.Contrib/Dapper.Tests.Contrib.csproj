@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Contrib</AssemblyName>
     <Description>Dapper Contrib Test Suite</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;net462</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
@@ -23,6 +23,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <!-- note: define SQLCE if SQL CE is available -->
 </Project>
