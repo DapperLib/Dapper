@@ -17,12 +17,12 @@
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19239.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.0.19269.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
     <PackageReference Include="MySqlConnector" Version="0.56.0" />
     <PackageReference Include="Npgsql" Version="4.0.9" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.7.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="xunit" Version="$(xUnitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitVersion)">
