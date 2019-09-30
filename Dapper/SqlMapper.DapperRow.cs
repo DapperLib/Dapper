@@ -279,7 +279,7 @@ namespace Dapper
                 dicEnumerHasCurrent = false;
 
                 while ((dicEnumerIndex < values.Length - 1)
-                            && !(values[dicEnumerIndex++] is DeadValue))
+                            && !(values[++dicEnumerIndex] is DeadValue))
                 {
                 }
 
