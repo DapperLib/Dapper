@@ -10,9 +10,13 @@ namespace Dapper
         private sealed partial class DapperRow
             : IDictionary<string, object>
             , IReadOnlyDictionary<string, object>
+            , IDictionaryEnumerator
         {
             private readonly DapperTable table;
             private object[] values;
+            private int dicEnumerIndex;
+            private bool dicEnumerHasCurrent;
+            private DictionaryEntry dicEnumerCurrent;
 
             public DapperRow(DapperTable table, object[] values)
             {
@@ -242,6 +246,49 @@ namespace Dapper
             IEnumerable<object> IReadOnlyDictionary<string, object>.Values
             {
                 get { return this.Select(kv => kv.Value); }
+            }
+
+            #endregion
+
+            #region Implementation of IDictionaryEnumerator
+
+            public DictionaryEntry Entry { get { return (DictionaryEntry)Current; } }
+
+            public object Key { get { return ((DictionaryEntry)Current).Key; } }
+
+            public object Value { get { return ((DictionaryEntry)Current).Value; } }
+
+            public object Current
+            {
+                get
+                {
+                    if (!dicEnumerHasCurrent)
+                    {
+                        object value = dicEnumerIndex < values.Length ? values[dicEnumerIndex] : null;
+
+                        dicEnumerCurrent = new DictionaryEntry(table.FieldNames[dicEnumerIndex], value);
+                        dicEnumerHasCurrent = true;
+                    }
+
+                    return dicEnumerCurrent;
+                }
+            }
+
+            public bool MoveNext()
+            {
+                dicEnumerHasCurrent = false;
+
+                while ((dicEnumerIndex < values.Length - 1)
+                            && !(values[dicEnumerIndex++] is DeadValue))
+                {
+                }
+
+                return dicEnumerIndex <= values.Length - 1;
+            }
+
+            public void Reset()
+            {
+                dicEnumerIndex = 0;
             }
 
             #endregion
