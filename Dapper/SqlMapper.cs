@@ -531,19 +531,16 @@ namespace Dapper
                     if (wasClosed) cnn.Open();
                     using (var cmd = command.SetupCommand(cnn, null))
                     {
-                        string masterSql = null;
                         foreach (var obj in multiExec)
                         {
                             if (isFirst)
                             {
-                                masterSql = cmd.CommandText;
                                 isFirst = false;
                                 identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType());
                                 info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             else
                             {
-                                cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
                                 cmd.Parameters.Clear(); // current code is Add-tastic
                             }
                             info.ParamReader(cmd, obj);
