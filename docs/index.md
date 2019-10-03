@@ -10,6 +10,8 @@ Questions on Stack Overflow should be tagged [`dapper`](https://stackoverflow.co
 
 From NuGet:
 
+### Using Package Manager
+
     Install-Package Dapper
 
 or
@@ -17,6 +19,14 @@ or
     Install-Package Dapper.StrongName
 
 Note: to get the latest pre-release build, add ` -Pre` to the end of the command.
+
+### Using .NET CLI
+
+    dotnet add package Dapper
+
+or
+
+    dotnet add package Dapper.StrongName
 
 ## Release  Notes
 
