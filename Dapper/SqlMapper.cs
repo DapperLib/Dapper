@@ -3387,13 +3387,13 @@ namespace Dapper
 
                         var membersByConstructorParamsOrder =
                             members
-                            .Zip(valuesIndexes, (member, storedInLocalVarIndex) => new { member, storedInLocalVarIndex })
+                            .Zip(valuesIndexes, (member, storedInLocalVar) => new { member, storedInLocalVar })
                             .OrderBy(item => item.member.Parameter.Position)
                             .ToList();
 
                         foreach (var item in membersByConstructorParamsOrder)
                         {
-                            il.Emit(OpCodes.Ldloc, item.storedInLocalVarIndex);
+                            il.Emit(OpCodes.Ldloc, item.storedInLocalVar);
                         }
                     }
 
