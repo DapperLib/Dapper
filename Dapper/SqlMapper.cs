@@ -3378,9 +3378,9 @@ namespace Dapper
                                 .Reverse() // as stack LIFO order
                                 .Select(item =>
                                 {
-                                    int localIndex = il.DeclareLocal(item.MemberType).LocalIndex;
-                                    StoreLocal(il, localIndex);
-                                    return localIndex;
+                                    var local = il.DeclareLocal(item.MemberType);
+                                    il.Emit(OpCodes.Stloc, local);
+                                    return local;
                                 })
                                 .Reverse() // as FIFO order
                                 .ToList();
@@ -3393,7 +3393,7 @@ namespace Dapper
 
                         foreach (var item in membersByConstructorParamsOrder)
                         {
-                            LoadLocal(il, item.storedInLocalVarIndex);
+                            il.Emit(OpCodes.Ldloc, item.storedInLocalVarIndex);
                         }
                     }
 
