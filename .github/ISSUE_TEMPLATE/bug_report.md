@@ -20,10 +20,11 @@ about: Create a bug report
 
 
 
-## Version (Required)
+## Your environment and Version (Required)
 
-- Dapper ver X.Y.Z
-- Dapper.Contrib ver X.Y.Z
+- Dapper ver. X.Y.Z
+- Dapper.Contrib ver. X.Y.Z
+- SQL Server 20XX
 
 ## Source Code (Optional)
 
