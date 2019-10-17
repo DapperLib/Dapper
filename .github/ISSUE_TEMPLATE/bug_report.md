@@ -22,9 +22,10 @@ about: Create a bug report
 
 ## Your environment and Version (Required)
 
-- Dapper ver. X.Y.Z
-- Dapper.Contrib ver. X.Y.Z
-- SQL Server 20XX
+- Dapper version X.Y.Z
+- .NET runtime; for example: ".NET Framework 4.7.2" or ".NET Core 3"
+- additional libraries, if any; for example: "Dapper.Contrib version X.Y.Z"
+- target RDBMS, when relevant; for example: "Microsoft SQL Server 2017"
 
 ## Source Code (Optional)
 
