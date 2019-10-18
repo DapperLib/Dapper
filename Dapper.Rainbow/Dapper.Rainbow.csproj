@@ -6,8 +6,6 @@
     <Description>Trivial micro-orm implemented on Dapper, provides with CRUD helpers.</Description>
     <Authors>Sam Saffron</Authors>
     <Copyright>2017 Sam Saffron</Copyright>
-    <TargetFrameworks>net451;netstandard1.3</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <!-- TODO: Docs -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
