@@ -6,8 +6,10 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    [Collection("ProcedureTests")]
     public sealed class SystemSqlClientProcedureTests : ProcedureTests<SystemSqlClientProvider> { }
 #if MSSQLCLIENT
+    [Collection("ProcedureTests")]
     public sealed class MicrosoftSqlClientProcedureTests : ProcedureTests<MicrosoftSqlClientProvider> { }
 #endif
     public abstract class ProcedureTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
@@ -110,9 +112,7 @@ namespace Dapper.Tests
         private class PracticeRebateOrders
         {
             public string fTaxInvoiceNumber;
-#if !NETCOREAPP1_0
             [System.Xml.Serialization.XmlElement(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
-#endif
             public string TaxInvoiceNumber
             {
                 get { return fTaxInvoiceNumber; }

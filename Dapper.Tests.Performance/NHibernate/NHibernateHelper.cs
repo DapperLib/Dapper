@@ -1,4 +1,5 @@
-﻿using NHibernate;
+﻿using System.Reflection;
+using NHibernate;
 using NHibernate.Cfg;
 
 namespace Dapper.Tests.Performance.NHibernate
@@ -14,9 +15,8 @@ namespace Dapper.Tests.Performance.NHibernate
                 if (_sessionFactory == null)
                 {
                     var configuration = new Configuration();
-                    configuration.Configure(@".\NHibernate\hibernate.cfg.xml");
+                    configuration.Configure(Assembly.GetExecutingAssembly(), "Dapper.Tests.Performance.NHibernate.hibernate.cfg.xml");
                     configuration.AddAssembly(typeof(Post).Assembly);
-                    configuration.AddXmlFile(@".\NHibernate\Post.hbm.xml");
                     _sessionFactory = configuration.BuildSessionFactory();
                 }
 

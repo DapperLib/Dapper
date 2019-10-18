@@ -1,5 +1,4 @@
-﻿#if !NETSTANDARD1_3 // needs the component-model API
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -104,4 +103,3 @@ namespace Dapper
         }
     }
 }
-#endif

@@ -22,25 +22,25 @@ namespace Dapper.Tests.Performance
             Add(MarkdownExporter.GitHub);
             Add(HtmlExporter.Default);
 
-            var md = new MemoryDiagnoser();
+            var md = MemoryDiagnoser.Default;
             Add(md);
             Add(new ORMColum());
             Add(TargetMethodColumn.Method);
             Add(new ReturnColum());
             Add(StatisticColumn.Mean);
-            //Add(StatisticColumn.StdDev);
-            //Add(StatisticColumn.Error);
-            Add(BaselineScaledColumn.Scaled);
-            Add(md.GetColumnProvider());
+            Add(StatisticColumn.StdDev);
+            Add(StatisticColumn.Error);
+            Add(BaselineRatioColumn.RatioMean);
+            Add(DefaultColumnProviders.Metrics);
 
             Add(Job.ShortRun
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
                    .WithUnrollFactor(Iterations)
-                   .WithIterationCount(1)
+                   .WithIterationCount(10)
             );
-            Set(new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest));
-            SummaryPerType = false;
+            Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
+            Options |= ConfigOptions.JoinSummary;
         }
     }
 }

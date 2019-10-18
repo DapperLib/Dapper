@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿#if NET4X
+using BenchmarkDotNet.Attributes;
 using Susanoo;
 using Susanoo.Processing;
 using System.ComponentModel;
@@ -64,3 +65,4 @@ namespace Dapper.Tests.Performance
         }
     }
 }
+#endif

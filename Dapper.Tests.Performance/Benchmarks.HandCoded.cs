@@ -11,22 +11,15 @@ namespace Dapper.Tests.Performance
     {
         private SqlCommand _postCommand;
         private SqlParameter _idParam;
-#if !NETCOREAPP1_0
         private DataTable _table;
-#endif
 
         [GlobalSetup]
         public void Setup()
         {
             BaseSetup();
-            _postCommand = new SqlCommand()
-            {
-                Connection = _connection,
-                CommandText = @"select Id, [Text], [CreationDate], LastChangeDate, 
-                Counter1,Counter2,Counter3,Counter4,Counter5,Counter6,Counter7,Counter8,Counter9 from Posts where Id = @Id"
-            };
+            _postCommand = new SqlCommand("select Top 1 * from Posts where Id = @Id", _connection);
             _idParam = _postCommand.Parameters.Add("@Id", SqlDbType.Int);
-#if !NETCOREAPP1_0
+            _postCommand.Prepare();
             _table = new DataTable
             {
                 Columns =
@@ -46,7 +39,6 @@ namespace Dapper.Tests.Performance
                         {"Counter9", typeof (int)},
                     }
             };
-#endif
         }
 
         [Benchmark(Description = "SqlCommand")]
@@ -55,7 +47,7 @@ namespace Dapper.Tests.Performance
             Step();
             _idParam.Value = i;
 
-            using (var reader = _postCommand.ExecuteReader())
+            using (var reader = _postCommand.ExecuteReader(CommandBehavior.SingleResult | CommandBehavior.SingleRow))
             {
                 reader.Read();
                 return new Post
@@ -65,15 +57,15 @@ namespace Dapper.Tests.Performance
                     CreationDate = reader.GetDateTime(2),
                     LastChangeDate = reader.GetDateTime(3),
 
-                    Counter1 = reader.IsDBNull(4) ? null : (int?)reader.GetInt32(4),
-                    Counter2 = reader.IsDBNull(5) ? null : (int?)reader.GetInt32(5),
-                    Counter3 = reader.IsDBNull(6) ? null : (int?)reader.GetInt32(6),
-                    Counter4 = reader.IsDBNull(7) ? null : (int?)reader.GetInt32(7),
-                    Counter5 = reader.IsDBNull(8) ? null : (int?)reader.GetInt32(8),
-                    Counter6 = reader.IsDBNull(9) ? null : (int?)reader.GetInt32(9),
-                    Counter7 = reader.IsDBNull(10) ? null : (int?)reader.GetInt32(10),
-                    Counter8 = reader.IsDBNull(11) ? null : (int?)reader.GetInt32(11),
-                    Counter9 = reader.IsDBNull(12) ? null : (int?)reader.GetInt32(12)
+                    Counter1 = reader.GetNullableValue<int>(4),
+                    Counter2 = reader.GetNullableValue<int>(5),
+                    Counter3 = reader.GetNullableValue<int>(6),
+                    Counter4 = reader.GetNullableValue<int>(7),
+                    Counter5 = reader.GetNullableValue<int>(8),
+                    Counter6 = reader.GetNullableValue<int>(9),
+                    Counter7 = reader.GetNullableValue<int>(10),
+                    Counter8 = reader.GetNullableValue<int>(11),
+                    Counter9 = reader.GetNullableValue<int>(12)
                 };
             }
         }
@@ -83,13 +75,13 @@ namespace Dapper.Tests.Performance
         {
             Step();
             _idParam.Value = i;
+            _table.Rows.Clear();
             var values = new object[13];
-            using (var reader = _postCommand.ExecuteReader())
+            using (var reader = _postCommand.ExecuteReader(CommandBehavior.SingleResult | CommandBehavior.SingleRow))
             {
                 reader.Read();
                 reader.GetValues(values);
-                _table.Rows.Add(values);
-                return _table.Rows[_table.Rows.Count - 1];
+                return _table.Rows.Add(values);
             }
         }
     }

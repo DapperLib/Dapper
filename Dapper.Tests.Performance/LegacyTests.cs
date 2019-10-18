@@ -1,32 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Linq;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 
-//using BLToolkit.Data; // Note: this doesn't load in the new .csproj system...likely a bug
-using Dapper.Tests.Performance.EntityFramework;
-using Dapper.Tests.Performance.Linq2Sql;
-using Dapper.Tests.Performance.NHibernate;
+using Belgrade.SqlClient;
 using Dapper.Contrib.Extensions;
-using Massive;
-using NHibernate.Criterion;
-using NHibernate.Linq;
-using ServiceStack.OrmLite;
-using ServiceStack.OrmLite.Dapper;
-using Susanoo;
-using System.Configuration;
-using System.Threading.Tasks;
 using Dapper.Tests.Performance.Dashing;
 using Dapper.Tests.Performance.EntityFrameworkCore;
+using Dapper.Tests.Performance.NHibernate;
 using Dashing;
-using Microsoft.EntityFrameworkCore;
-using Belgrade.SqlClient;
 using DevExpress.Xpo;
-using Dapper.Tests.Performance.Xpo;
 using DevExpress.Data.Filtering;
+using Massive;
+using Microsoft.EntityFrameworkCore;
+using NHibernate.Criterion;
+using ServiceStack.OrmLite;
+using ServiceStack.OrmLite.Dapper;
+using System.Configuration;
+using System.Threading.Tasks;
+#if NET4X
+using System.Data.Linq;
+using Dapper.Tests.Performance.EntityFramework;
+using Dapper.Tests.Performance.Linq2Sql;
+using Dapper.Tests.Performance.Xpo;
+using NHibernate.Linq;
+using Susanoo;
+#endif
 
 namespace Dapper.Tests.Performance
 {
@@ -110,8 +111,10 @@ namespace Dapper.Tests.Performance
             return connection;
         }
 
+#if NET4X
         private static DataClassesDataContext GetL2SContext(SqlConnection connection) =>
             new DataClassesDataContext(connection);
+#endif
 
         private static void Try(Action action, string blame)
         {
@@ -133,33 +136,6 @@ namespace Dapper.Tests.Performance
 #pragma warning disable RCS1121 // Use [] instead of calling 'First'.
                 var tests = new Tests();
 
-                // Linq2SQL
-                Try(() =>
-                {
-                    var l2scontext1 = GetL2SContext(connection);
-                    tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq2Sql: Normal");
-
-                    var l2scontext2 = GetL2SContext(connection);
-                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
-                    tests.Add(id => compiledGetPost(l2scontext2, id), "Linq2Sql: Compiled");
-
-                    var l2scontext3 = GetL2SContext(connection);
-                    tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).First(), "Linq2Sql: ExecuteQuery");
-                }, "LINQ-to-SQL");
-
-                // Entity Framework
-                Try(() =>
-                {
-                    var entityContext = new EFContext(connection);
-                    tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity Framework");
-
-                    var entityContext2 = new EFContext(connection);
-                    tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity Framework: SqlQuery");
-
-                    var entityContext3 = new EFContext(connection);
-                    tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework: No Tracking");
-                }, "Entity Framework");
-
                 // Entity Framework Core
                 Try(() =>
                 {
@@ -169,7 +145,7 @@ namespace Dapper.Tests.Performance
                     var entityContext2 = new EFCoreContext(ConnectionString);
                     tests.Add(id => entityContext2.Posts.FromSql("select * from Posts where Id = {0}", id).First(), "Entity Framework Core: FromSql");
 
-                    var entityContext3 = new EFContext(connection);
+                    var entityContext3 = new EFCoreContext(ConnectionString);
                     tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework Core: No Tracking");
                 }, "Entity Framework Core");
 
@@ -190,15 +166,6 @@ namespace Dapper.Tests.Performance
                     var mapperConnection3 = GetOpenConnection();
                     tests.Add(id => mapperConnection3.Get<Post>(id), "Dapper.Contrib");
                 }, "Dapper");
-
-                // Dashing
-                Try(() =>
-                {
-                    var config = new DashingConfiguration();
-                    var database = new SqlDatabase(config, ConnectionString);
-                    var session = database.BeginTransactionLessSession(GetOpenConnection());
-                    tests.Add(id => session.Get<Dashing.Post>(id), "Dashing Get");
-                }, "Dashing");
 
                 // Massive
                 Try(() =>
@@ -277,40 +244,6 @@ namespace Dapper.Tests.Performance
                         }), "Belgrade Sql Client");
                 }, "Belgrade Sql Client");
 
-                //Susanoo
-                Try(() =>
-                {
-                    var susanooDb = new DatabaseManager(connection);
-
-                    var susanooPreDefinedCommand =
-                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                            .DefineResults<Post>()
-                            .Realize();
-
-                    var susanooDynamicPreDefinedCommand =
-                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                            .DefineResults<dynamic>()
-                            .Realize();
-
-                    tests.Add(Id =>
-                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                            .DefineResults<Post>()
-                            .Realize()
-                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Cache Retrieval");
-
-                    tests.Add(Id =>
-                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
-                            .DefineResults<dynamic>()
-                            .Realize()
-                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Cache Retrieval");
-
-                    tests.Add(Id => susanooDynamicPreDefinedCommand
-                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Static");
-
-                    tests.Add(Id => susanooPreDefinedCommand
-                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Static");
-                }, "Susanoo");
-
                 //ServiceStack's OrmLite:
                 Try(() =>
                 {
@@ -355,7 +288,6 @@ namespace Dapper.Tests.Performance
                         }
                     }, "Hand Coded");
 
-#if !NETSTANDARD1_3
                     var table = new DataTable
                     {
                         Columns =
@@ -386,7 +318,6 @@ namespace Dapper.Tests.Performance
                             table.Rows.Add(values);
                         }
                     }, "DataTable via IDataReader.GetValues");
-#endif
                 }, "Hand Coded");
 
                 // DevExpress.XPO
@@ -410,8 +341,79 @@ namespace Dapper.Tests.Performance
                         };
                         session.FindObject<Xpo.Post>(findCriteria);
                     }, "DevExpress.XPO: FindObject<T>");
-
                 }, "DevExpress.XPO");
+
+#if NET4X
+                // Entity Framework
+                Try(() =>
+                {
+                    var entityContext = new EFContext(connection);
+                    tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity Framework");
+
+                    var entityContext2 = new EFContext(connection);
+                    tests.Add(id => entityContext2.Database.SqlQuery<Post>("select * from Posts where Id = {0}", id).First(), "Entity Framework: SqlQuery");
+
+                    var entityContext3 = new EFContext(connection);
+                    tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework: No Tracking");
+                }, "Entity Framework");
+
+                // Linq2SQL
+                Try(() =>
+                {
+                    var l2scontext1 = GetL2SContext(connection);
+                    tests.Add(id => l2scontext1.Posts.First(p => p.Id == id), "Linq2Sql: Normal");
+
+                    var l2scontext2 = GetL2SContext(connection);
+                    var compiledGetPost = CompiledQuery.Compile((Linq2Sql.DataClassesDataContext ctx, int id) => ctx.Posts.First(p => p.Id == id));
+                    tests.Add(id => compiledGetPost(l2scontext2, id), "Linq2Sql: Compiled");
+
+                    var l2scontext3 = GetL2SContext(connection);
+                    tests.Add(id => l2scontext3.ExecuteQuery<Post>("select * from Posts where Id = {0}", id).First(), "Linq2Sql: ExecuteQuery");
+                }, "LINQ-to-SQL");
+
+                // Dashing
+                Try(() =>
+                {
+                    var config = new DashingConfiguration();
+                    var database = new SqlDatabase(config, ConnectionString);
+                    var session = database.BeginTransactionLessSession(GetOpenConnection());
+                    tests.Add(id => session.Get<Dashing.Post>(id), "Dashing Get");
+                }, "Dashing");
+
+                //Susanoo
+                Try(() =>
+                {
+                    var susanooDb = new DatabaseManager(connection);
+
+                    var susanooPreDefinedCommand =
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<Post>()
+                            .Realize();
+
+                    var susanooDynamicPreDefinedCommand =
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<dynamic>()
+                            .Realize();
+
+                    tests.Add(Id =>
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<Post>()
+                            .Realize()
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Cache Retrieval");
+
+                    tests.Add(Id =>
+                        CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
+                            .DefineResults<dynamic>()
+                            .Realize()
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Cache Retrieval");
+
+                    tests.Add(Id => susanooDynamicPreDefinedCommand
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Dynamic Mapping Static");
+
+                    tests.Add(Id => susanooPreDefinedCommand
+                            .Execute(susanooDb, new { Id }).First(), "Susanoo: Mapping Static");
+                }, "Susanoo");
+#endif
 
                 // Subsonic isn't maintained anymore - doesn't import correctly
                 //Try(() =>

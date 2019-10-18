@@ -83,6 +83,17 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        [Fact] 
+        public async Task GetAsyncSucceedsAfterDeleteAsyncWhenExplicitKeyPresent()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                await connection.DeleteAsync(new ObjectX { ObjectXId = Guid.NewGuid().ToString() }).ConfigureAwait(false);
+                var retrieved = await connection.GetAsync<ObjectX>(Guid.NewGuid().ToString()).ConfigureAwait(false);
+                Assert.Null(retrieved);
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
