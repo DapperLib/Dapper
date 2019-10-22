@@ -1218,7 +1218,7 @@ namespace Dapper
             ExecuteScalarImplAsync<object>(cnn, command);
 
         /// <summary>
-        /// Execute parameterized SQL that selects a single value
+        /// Execute parameterized SQL that selects a single value.
         /// </summary>
         /// <typeparam name="T">The type to return.</typeparam>
         /// <param name="cnn">The connection to execute on.</param>
