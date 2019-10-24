@@ -31,6 +31,10 @@
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
+    <PackageReference Include="EntityFramework" Version="6.3.0" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
     <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
   </PropertyGroup>
