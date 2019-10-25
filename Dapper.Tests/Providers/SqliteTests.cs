@@ -2,6 +2,7 @@
 using System;
 using System.Data.Common;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -123,6 +124,46 @@ namespace Dapper.Tests
                 var i = Convert.ToInt32(cmd.ExecuteScalar());
                 Assert.Equal(42, i);
             }
-        }        
+        }
+
+        [FactSqlite]
+        public void DateTimeIsParsedWithInvariantCulture()
+        {
+            connection.Execute("CREATE TABLE [PersonWithDob] ([Id] integer primary key autoincrement, [DoB] DATETIME not null )");
+
+            var localMorning = DateTime.Parse("2019-07-31 01:00:00");
+
+            var culture = Thread.CurrentThread.CurrentCulture;
+
+            try
+            {
+                connection.Execute("INSERT INTO [PersonWithDob] ([DoB]) VALUES (@DoB)", new PersonWithDob { DoB = localMorning });
+
+                // Before we read the column, use Farsi this is a way to ensure the 
+                // InvariantCulture is used as otherwise it would fail because Farsi
+                // is not able to parse a DateTime that is formatted with Invariant
+
+                var farsi = System.Globalization.CultureInfo.GetCultureInfo("fa-IR");
+                Thread.CurrentThread.CurrentCulture = farsi;
+                Thread.CurrentThread.CurrentUICulture = farsi;
+
+                var person = connection.QueryFirst<PersonWithDob>("SELECT * FROM [PersonWithDob]");
+
+                Assert.Equal(localMorning, person.DoB);
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = culture;
+                Thread.CurrentThread.CurrentUICulture = culture;
+
+                connection.Execute("DROP TABLE [PersonWithDob]");
+            }
+        }
+
+        private class PersonWithDob
+        {
+            public int Id { get; set; }
+            public DateTime DoB { get; set; }
+        }
     }
 }
