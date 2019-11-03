@@ -42,6 +42,41 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
+        /// Available adapters for SQL Syntax
+        /// </summary>
+        public enum SqlAdapters
+        {
+            /// <summary>
+            /// SQL Server Adapter
+            /// </summary>
+            SqlServerAdapter,
+            /// <summary>
+            /// SQL Ce Adapter
+            /// </summary>
+            SqlCeServerAdapter,
+            /// <summary>
+            /// Posters SQL Adapter
+            /// </summary>
+            PostgresAdapter,
+            /// <summary>
+            /// SQLite Adapter
+            /// </summary>
+            SQLiteAdapter,
+            /// <summary>
+            /// MySql Adapter
+            /// </summary>
+            MySqlAdapter,
+            /// <summary>
+            /// Fb Adapter
+            /// </summary>
+            FbAdapter,
+            /// <summary>
+            /// SQL Anywhere Adapter
+            /// </summary>
+            SqlAnywhereAdapter,
+        }
+
+        /// <summary>
         /// The function to get a database type from the given <see cref="IDbConnection"/>.
         /// </summary>
         /// <param name="connection">The connection to get a database type name from.</param>
@@ -59,7 +94,7 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
-        private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
+        private static ISqlAdapter DefaultAdapter = new SqlServerAdapter();
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
             = new Dictionary<string, ISqlAdapter>
             {
@@ -68,7 +103,8 @@ namespace Dapper.Contrib.Extensions
                 ["npgsqlconnection"] = new PostgresAdapter(),
                 ["sqliteconnection"] = new SQLiteAdapter(),
                 ["mysqlconnection"] = new MySqlAdapter(),
-                ["fbconnection"] = new FbAdapter()
+                ["fbconnection"] = new FbAdapter(),
+                ["sqlanywhereconnection"] = new SqlAnywhereAdapter(),
             };
 
         private static List<PropertyInfo> ComputedPropertiesCache(Type type)
@@ -156,6 +192,39 @@ namespace Dapper.Contrib.Extensions
         }
 
         /// <summary>
+        /// Used to set the default Adapter to use in case it is not possible to get the Adapter from the connection
+        /// </summary>
+        /// <param name="adapter"></param>
+        public static void SetDefaultAdapter(SqlAdapters adapter) {
+            switch (adapter)
+            {
+                case SqlAdapters.SqlServerAdapter:
+                    DefaultAdapter = new SqlServerAdapter();
+                    break;
+                case SqlAdapters.SqlCeServerAdapter:
+                    DefaultAdapter = new SqlCeServerAdapter();
+                    break;
+                case SqlAdapters.PostgresAdapter:
+                    DefaultAdapter = new PostgresAdapter();
+                    break;
+                case SqlAdapters.SQLiteAdapter:
+                    DefaultAdapter = new SQLiteAdapter();
+                    break;
+                case SqlAdapters.MySqlAdapter:
+                    DefaultAdapter = new MySqlAdapter();
+                    break;
+                case SqlAdapters.FbAdapter:
+                    DefaultAdapter = new FbAdapter();
+                    break;
+                case SqlAdapters.SqlAnywhereAdapter:
+                    DefaultAdapter = new SqlAnywhereAdapter();
+                    break;
+                default:
+                    throw new NotImplementedException("Adapter of type " + adapter.ToString() + " not implemented!");
+            }
+        }
+
+        /// <summary>
         /// Returns a single entity by a single id from table "Ts".  
         /// Id must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
@@ -170,18 +239,19 @@ namespace Dapper.Contrib.Extensions
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             var type = typeof(T);
+            var adapter = GetFormatter(connection);
 
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                sql = $"select * from {name} where {key.Name} = @id";
+                sql = $"select * from {name} where {key.Name} = {adapter.GetParametersPrefix()}id";
                 GetQueries[type.TypeHandle] = sql;
             }
 
             var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            dynParms.Add($"{adapter.GetParametersPrefix()}id", id);
 
             T obj;
 
@@ -361,7 +431,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                sbParameterList.AppendFormat("@{0}", property.Name);
+                sbParameterList.AppendFormat(adapter.GetParametersPrefix() + (adapter.GetForcePositionalParameters() ? "?{0}?" : "{0}"), property.Name);
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -770,6 +840,18 @@ namespace Dapper.Contrib.Extensions
 public partial interface ISqlAdapter
 {
     /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    string GetParametersPrefix();
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    bool GetForcePositionalParameters();
+
+    /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
     /// <param name="connection">The connection to use.</param>
@@ -802,6 +884,18 @@ public partial interface ISqlAdapter
 /// </summary>
 public partial class SqlServerAdapter : ISqlAdapter
 {
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return "@"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return false; }
+
     /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
@@ -849,7 +943,7 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        sb.AppendFormat("[{0}] = {1}", columnName, GetParametersPrefix() + columnName);
     }
 }
 
@@ -858,6 +952,18 @@ public partial class SqlServerAdapter : ISqlAdapter
 /// </summary>
 public partial class SqlCeServerAdapter : ISqlAdapter
 {
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return "@"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return false; }
+
     /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
@@ -905,7 +1011,7 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}] = @{1}", columnName, columnName);
+        sb.AppendFormat("[{0}] = {1}", columnName, GetParametersPrefix() + columnName);
     }
 }
 
@@ -914,6 +1020,18 @@ public partial class SqlCeServerAdapter : ISqlAdapter
 /// </summary>
 public partial class MySqlAdapter : ISqlAdapter
 {
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return "@"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return false; }
+
     /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
@@ -960,7 +1078,7 @@ public partial class MySqlAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("`{0}` = @{1}", columnName, columnName);
+        sb.AppendFormat("`{0}` = {1}", columnName, GetParametersPrefix() + columnName);
     }
 }
 
@@ -969,6 +1087,18 @@ public partial class MySqlAdapter : ISqlAdapter
 /// </summary>
 public partial class PostgresAdapter : ISqlAdapter
 {
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return "@"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return false; }
+
     /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
@@ -1036,7 +1166,7 @@ public partial class PostgresAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+        sb.AppendFormat("\"{0}\" = {1}", columnName, GetParametersPrefix() + columnName);
     }
 }
 
@@ -1045,6 +1175,18 @@ public partial class PostgresAdapter : ISqlAdapter
 /// </summary>
 public partial class SQLiteAdapter : ISqlAdapter
 {
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return "@"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return false; }
+
     /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
@@ -1089,7 +1231,7 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+        sb.AppendFormat("\"{0}\" = {1}", columnName, GetParametersPrefix() + columnName);
     }
 }
 
@@ -1098,6 +1240,18 @@ public partial class SQLiteAdapter : ISqlAdapter
 /// </summary>
 public partial class FbAdapter : ISqlAdapter
 {
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return "@"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return false; }
+
     /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
@@ -1146,6 +1300,74 @@ public partial class FbAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("{0} = @{1}", columnName, columnName);
+        sb.AppendFormat("{0} = {1}", columnName, GetParametersPrefix() + columnName);
+    }
+}
+
+/// <summary>
+/// The SQL Server database adapter.
+/// </summary>
+public partial class SqlAnywhereAdapter : ISqlAdapter
+{
+    /// <summary>
+    /// Returns the prefix used to identify query's parameters
+    /// </summary>
+    /// <returns></returns>
+    public string GetParametersPrefix() { return ":"; }
+
+    /// <summary>
+    /// Returns a boolean that specifies if this Adapter requires the use of positional paramters
+    /// </summary>
+    /// <returns></returns>
+    public bool GetForcePositionalParameters() { return true; }
+
+    /// <summary>
+    /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
+    /// </summary>
+    /// <param name="connection">The connection to use.</param>
+    /// <param name="transaction">The transaction to use.</param>
+    /// <param name="commandTimeout">The command timeout to use.</param>
+    /// <param name="tableName">The table to insert into.</param>
+    /// <param name="columnList">The columns to set with this insert.</param>
+    /// <param name="parameterList">The parameters to set for this insert.</param>
+    /// <param name="keyProperties">The key columns in this table.</param>
+    /// <param name="entityToInsert">The entity to insert.</param>
+    /// <returns>The Id of the row created.</returns>
+    public int Insert(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
+    {
+        var cmd = $"insert into {tableName} ({columnList}) values ({parameterList});select @@identity id";
+        var multi = connection.QueryMultiple(cmd, entityToInsert, transaction, commandTimeout);
+
+        var first = multi.Read().FirstOrDefault();
+        if (first == null || first.id == null) return 0;
+
+        var id = (int)first.id;
+        var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
+        if (propertyInfos.Length == 0) return id;
+
+        var idProperty = propertyInfos[0];
+        idProperty.SetValue(entityToInsert, Convert.ChangeType(id, idProperty.PropertyType), null);
+
+        return id;
+    }
+
+    /// <summary>
+    /// Adds the name of a column.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    public void AppendColumnName(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("{0}", columnName);
+    }
+
+    /// <summary>
+    /// Adds a column equality to a parameter.
+    /// </summary>
+    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="columnName">The column name.</param>
+    public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
+    {
+        sb.AppendFormat("{0} = {1}", columnName, GetParametersPrefix() + columnName);
     }
 }
