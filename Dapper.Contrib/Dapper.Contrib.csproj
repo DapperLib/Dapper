@@ -7,6 +7,8 @@
     <Authors>Sam Saffron;Johan Danforth</Authors>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>KubePackages.Dapper.Contrib</PackageId>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />

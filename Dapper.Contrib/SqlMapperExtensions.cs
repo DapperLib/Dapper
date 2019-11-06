@@ -246,12 +246,12 @@ namespace Dapper.Contrib.Extensions
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
 
-                sql = $"select * from {name} where {key.Name} = {adapter.GetParametersPrefix()}id";
+                sql = $"select * from {name} where {key.Name} = {adapter.GetFormattedParameter("id")}";
                 GetQueries[type.TypeHandle] = sql;
             }
 
             var dynParms = new DynamicParameters();
-            dynParms.Add($"{adapter.GetParametersPrefix()}id", id);
+            dynParms.Add(adapter.GetFormattedParameter("id"), id);
 
             T obj;
 
@@ -431,7 +431,7 @@ namespace Dapper.Contrib.Extensions
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                sbParameterList.AppendFormat(adapter.GetParametersPrefix() + (adapter.GetForcePositionalParameters() ? "?{0}?" : "{0}"), property.Name);
+                sbParameterList.AppendFormat(adapter.GetFormattedParameter("{0}"), property.Name);
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -852,6 +852,13 @@ public partial interface ISqlAdapter
     bool GetForcePositionalParameters();
 
     /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    string GetFormattedParameter(string columnName);
+
+    /// <summary>
     /// Inserts <paramref name="entityToInsert"/> into the database, returning the Id of the row created.
     /// </summary>
     /// <param name="connection">The connection to use.</param>
@@ -929,7 +936,7 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// <summary>
     /// Adds the name of a column.
     /// </summary>
-    /// <param name="sb">The string builder  to append to.</param>
+    /// <param name="sb">The string builder to append to.</param>
     /// <param name="columnName">The column name.</param>
     public void AppendColumnName(StringBuilder sb, string columnName)
     {
@@ -943,7 +950,24 @@ public partial class SqlServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}] = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("[{0}] = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
 
@@ -1011,7 +1035,24 @@ public partial class SqlCeServerAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("[{0}] = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("[{0}] = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
 
@@ -1078,7 +1119,24 @@ public partial class MySqlAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("`{0}` = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("`{0}` = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
 
@@ -1166,7 +1224,24 @@ public partial class PostgresAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\" = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("\"{0}\" = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
 
@@ -1231,7 +1306,24 @@ public partial class SQLiteAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("\"{0}\" = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("\"{0}\" = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
 
@@ -1300,7 +1392,24 @@ public partial class FbAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("{0} = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("{0} = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
 
@@ -1368,6 +1477,23 @@ public partial class SqlAnywhereAdapter : ISqlAdapter
     /// <param name="columnName">The column name.</param>
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
-        sb.AppendFormat("{0} = {1}", columnName, GetParametersPrefix() + columnName);
+        sb.AppendFormat("{0} = {1}", columnName, GetFormattedParameter(columnName));
+    }
+
+    /// <summary>
+    /// Returns the parameter formatted to be used inside of a query
+    /// </summary>
+    /// <param name="columnName"></param>
+    /// <returns></returns>
+    public string GetFormattedParameter(string columnName)
+    {
+        if (GetForcePositionalParameters())
+        {
+            return "?" + columnName + "?";
+        }
+        else
+        {
+            return GetParametersPrefix() + columnName;
+        }
     }
 }
