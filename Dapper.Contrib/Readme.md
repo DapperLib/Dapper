@@ -11,8 +11,8 @@ The full list of extension methods in Dapper.Contrib right now are:
 ```csharp
 T Get<T>(id);
 IEnumerable<T> GetAll<T>();
-int Insert<T>(T obj);
-int Insert<T>(Enumerable<T> list);
+long Insert<T>(T obj);
+long Insert<T>(Enumerable<T> list);
 bool Update<T>(T obj);
 bool Update<T>(Enumerable<T> list);
 bool Delete<T>(T obj);
