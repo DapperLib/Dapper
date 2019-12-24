@@ -13,6 +13,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
