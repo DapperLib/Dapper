@@ -573,7 +573,6 @@ namespace Dapper
 
         private static async Task<int> ExecuteMultiImplAsync(IDbConnection cnn, CommandDefinition command, IEnumerable multiExec)
         {
-            bool isFirst = true;
             int total = 0;
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
@@ -591,9 +590,8 @@ namespace Dapper
                     {
                         foreach (var obj in multiExec)
                         {
-                            if (isFirst)
+                            if (info is null)
                             {
-                                isFirst = false;
                                 cmd = command.TrySetupAsyncCommand(cnn, null);
                                 masterSql = cmd.CommandText;
 
@@ -614,7 +612,7 @@ namespace Dapper
                             {
                                 cmd = command.TrySetupAsyncCommand(cnn, null);
                             }
-                            info!.ParamReader(cmd, obj);
+                            info.ParamReader(cmd, obj);
 
                             var task = cmd.ExecuteNonQueryAsync(command.CancellationToken);
                             pending.Enqueue(new AsyncExecState(cmd, task));
@@ -643,10 +641,9 @@ namespace Dapper
                     {
                         foreach (var obj in multiExec)
                         {
-                            if (isFirst)
+                            if (info is null)
                             {
                                 masterSql = cmd.CommandText;
-                                isFirst = false;
                                 if (obj is null) throw new ArgumentException("The first item in multiExec must not be null.", nameof(multiExec));
 
                                 var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType());
@@ -657,7 +654,7 @@ namespace Dapper
                                 cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
                                 cmd.Parameters.Clear(); // current code is Add-tastic
                             }
-                            info!.ParamReader(cmd, obj);
+                            info.ParamReader(cmd, obj);
                             total += await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
                         }
                     }

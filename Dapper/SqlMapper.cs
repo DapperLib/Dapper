@@ -527,7 +527,6 @@ namespace Dapper
                     // this includes all the code for concurrent/overlapped query
                     return ExecuteMultiImplAsync(cnn, command, multiExec).Result;
                 }
-                bool isFirst = true;
                 int total = 0;
                 bool wasClosed = cnn.State == ConnectionState.Closed;
                 try
@@ -538,10 +537,9 @@ namespace Dapper
                         string? masterSql = null;
                         foreach (var obj in multiExec)
                         {
-                            if (isFirst)
+                            if (info is null)
                             {
                                 masterSql = cmd.CommandText;
-                                isFirst = false;
 
                                 if (obj is null) throw new ArgumentException("The first item in multiExec must not be null.", nameof(multiExec));
 
@@ -2298,13 +2296,11 @@ namespace Dapper
                         if (multiExec != null)
                         {
                             StringBuilder? sb = null;
-                            bool first = true;
                             foreach (object? subval in multiExec)
                             {
-                                if (first)
+                                if (sb is null)
                                 {
                                     sb = GetStringBuilder().Append('(');
-                                    first = false;
                                 }
                                 else
                                 {
@@ -2312,7 +2308,7 @@ namespace Dapper
                                 }
                                 sb.Append(Format(subval));
                             }
-                            if (first)
+                            if (sb is null)
                             {
                                 return "(select null where 1=0)";
                             }
