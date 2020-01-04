@@ -1,4 +1,7 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+
+#nullable enable
 
 namespace Dapper
 {
@@ -11,24 +14,24 @@ namespace Dapper
         /// </summary>
         /// <typeparam name="TKey">The type to cache.</typeparam>
         /// <typeparam name="TValue">The value type of the cache.</typeparam>
-        internal class Link<TKey, TValue> where TKey : class
+        internal class Link<TKey, TValue> where TKey : class?
         {
-            public static bool TryGet(Link<TKey, TValue> link, TKey key, out TValue value)
+            public static bool TryGet(Link<TKey, TValue>? link, TKey key, [MaybeNullWhen(false)] out TValue value)
             {
                 while (link != null)
                 {
-                    if ((object)key == (object)link.Key)
+                    if (key == link.Key)
                     {
                         value = link.Value;
                         return true;
                     }
                     link = link.Tail;
                 }
-                value = default(TValue);
+                value = default!;
                 return false;
             }
 
-            public static bool TryAdd(ref Link<TKey, TValue> head, TKey key, ref TValue value)
+            public static bool TryAdd([NotNull] ref Link<TKey, TValue>? head, TKey key, ref TValue value)
             {
                 bool tryAgain;
                 do
@@ -46,7 +49,7 @@ namespace Dapper
                 return true;
             }
 
-            private Link(TKey key, TValue value, Link<TKey, TValue> tail)
+            private Link(TKey key, TValue value, Link<TKey, TValue>? tail)
             {
                 Key = key;
                 Value = value;
@@ -55,7 +58,7 @@ namespace Dapper
 
             public TKey Key { get; }
             public TValue Value { get; }
-            public Link<TKey, TValue> Tail { get; }
+            public Link<TKey, TValue>? Tail { get; }
         }
     }
 }
