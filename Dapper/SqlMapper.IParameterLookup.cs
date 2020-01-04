@@ -1,4 +1,6 @@
-﻿namespace Dapper
+﻿#nullable enable
+
+namespace Dapper
 {
     public static partial class SqlMapper
     {
@@ -11,7 +13,7 @@
             /// Get the value of the specified parameter (return null if not found)
             /// </summary>
             /// <param name="name">The name of the parameter to get.</param>
-            object this[string name] { get; }
+            object? this[string name] { get; }
         }
     }
 }

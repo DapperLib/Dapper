@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -23,17 +25,17 @@ namespace Dapper
             /// <summary>
             /// Target property
             /// </summary>
-            PropertyInfo Property { get; }
+            PropertyInfo? Property { get; }
 
             /// <summary>
             /// Target field
             /// </summary>
-            FieldInfo Field { get; }
+            FieldInfo? Field { get; }
 
             /// <summary>
             /// Target constructor parameter
             /// </summary>
-            ParameterInfo Parameter { get; }
+            ParameterInfo? Parameter { get; }
         }
     }
 }

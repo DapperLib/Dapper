@@ -2327,7 +2327,7 @@ namespace Dapper
             var sql = command.CommandText;
             foreach (var token in tokens)
             {
-                object value = parameters[token.Member];
+                object? value = parameters[token.Member];
 #pragma warning disable 0618
                 string text = Format(value);
 #pragma warning restore 0618
@@ -2941,7 +2941,7 @@ namespace Dapper
             }
             if (typeHandlers.TryGetValue(type, out ITypeHandler? handler))
             {
-                return (T)handler.Parse(type, value);
+                return (T)handler.Parse(type, value)!;
             }
             return (T)Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
         }
@@ -3297,7 +3297,7 @@ namespace Dapper
                         }
                         else
                         {
-                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                            il.Emit(OpCodes.Stfld, item.Field!); // stack is now [target]
                         }
                     }
 
@@ -3330,7 +3330,7 @@ namespace Dapper
                         }
                         else
                         {
-                            il.Emit(OpCodes.Stfld, item.Field); // stack is now [target]
+                            il.Emit(OpCodes.Stfld, item.Field!); // stack is now [target]
                         }
                     }
                     else

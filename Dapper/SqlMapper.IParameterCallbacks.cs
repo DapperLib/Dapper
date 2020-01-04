@@ -1,4 +1,6 @@
-﻿namespace Dapper
+﻿#nullable enable
+
+namespace Dapper
 {
     public static partial class SqlMapper
     {
