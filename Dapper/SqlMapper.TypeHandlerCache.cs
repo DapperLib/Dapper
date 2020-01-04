@@ -2,6 +2,8 @@
 using System.ComponentModel;
 using System.Data;
 
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -20,7 +22,7 @@ namespace Dapper
             /// </summary>
             /// <param name="value">The object to parse.</param>
             [Obsolete(ObsoleteInternalUsageOnly, true)]
-            public static T Parse(object value) => (T)handler.Parse(typeof(T), value);
+            public static T Parse(object? value) => (T)handler!.Parse(typeof(T), value)!;
 
             /// <summary>
             /// Not intended for direct usage.
@@ -28,7 +30,7 @@ namespace Dapper
             /// <param name="parameter">The parameter to set a value for.</param>
             /// <param name="value">The value to set.</param>
             [Obsolete(ObsoleteInternalUsageOnly, true)]
-            public static void SetValue(IDbDataParameter parameter, object value) => handler.SetValue(parameter, value);
+            public static void SetValue(IDbDataParameter parameter, object? value) => handler!.SetValue(parameter, value);
 
             internal static void SetHandler(ITypeHandler handler)
             {
@@ -37,7 +39,7 @@ namespace Dapper
 #pragma warning restore 618
             }
 
-            private static ITypeHandler handler;
+            private static ITypeHandler? handler;
         }
     }
 }
