@@ -2,6 +2,8 @@
 using System.Xml;
 using System.Xml.Linq;
 
+#nullable enable
+
 namespace Dapper
 {
     internal abstract class XmlTypeHandler<T> : SqlMapper.StringTypeHandler<T>

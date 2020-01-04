@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -23,9 +25,9 @@ namespace Dapper
             /// </summary>
             /// <param name="value">The value from the database</param>
             /// <returns>The typed value</returns>
-            public abstract T Parse(object value);
+            public abstract T Parse(object? value);
 
-            void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
+            void ITypeHandler.SetValue(IDbDataParameter parameter, object? value)
             {
                 if (value is DBNull)
                 {
@@ -33,11 +35,11 @@ namespace Dapper
                 }
                 else
                 {
-                    SetValue(parameter, (T)value);
+                    SetValue(parameter, (T)value!);
                 }
             }
 
-            object ITypeHandler.Parse(Type destinationType, object value)
+            object? ITypeHandler.Parse(Type destinationType, object? value)
             {
                 return Parse(value);
             }
@@ -76,9 +78,9 @@ namespace Dapper
             /// </summary>
             /// <param name="value">The value from the database</param>
             /// <returns>The typed value</returns>
-            public override T Parse(object value)
+            public override T Parse(object? value)
             {
-                if (value == null || value is DBNull) return default(T);
+                if (value == null || value is DBNull) return default!;
                 return Parse((string)value);
             }
         }
