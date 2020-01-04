@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -13,7 +15,7 @@ namespace Dapper
         public partial class GridReader
         {
             private readonly CancellationToken cancel;
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters? dynamicParams, bool addToCache, CancellationToken cancel)
                 : this(command, reader, identity, dynamicParams, addToCache)
             {
                 this.cancel = cancel;
@@ -139,6 +141,8 @@ namespace Dapper
 
             private async Task NextResultAsync()
             {
+                if (reader is null) throw new ObjectDisposedException(nameof(GridReader));
+
                 if (await ((DbDataReader)reader).NextResultAsync(cancel).ConfigureAwait(false))
                 {
                     readCount++;
@@ -197,7 +201,7 @@ namespace Dapper
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
 
                 IsConsumed = true;
-                T result = default(T);
+                T result = default!;
                 if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);
@@ -224,6 +228,8 @@ namespace Dapper
 
             private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer)
             {
+                if (reader is null) throw new ObjectDisposedException(nameof(GridReader));
+
                 try
                 {
                     var reader = (DbDataReader)this.reader;
