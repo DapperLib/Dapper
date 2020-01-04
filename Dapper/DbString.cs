@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 
+#nullable enable
+
 namespace Dapper
 {
     /// <summary>
@@ -43,12 +45,12 @@ namespace Dapper
         /// <summary>
         /// The value of the string
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
         /// <summary>
         /// Add the parameter to the command... internal use only
         /// </summary>
         /// <param name="command"></param>
-        /// <param name="name"></param>
+        /// <param name="name"></param>A
         public void AddParameter(IDbCommand command, string name)
         {
             if (IsFixedLength && Length == -1)
