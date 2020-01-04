@@ -1966,7 +1966,7 @@ namespace Dapper
         [Browsable(false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete(ObsoleteInternalUsageOnly, false)]
-        public static void PackListParameters(IDbCommand command, string namePrefix, object value)
+        public static void PackListParameters(IDbCommand command, string namePrefix, object? value)
         {
             // initially we tried TVP, however it performs quite poorly.
             // keep in mind SQL support up to 2000 params easily in sp_executesql, needing more is rare
