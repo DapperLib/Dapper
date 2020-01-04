@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+#nullable enable
+
 namespace Dapper
 {
     /// <summary>
@@ -27,17 +29,17 @@ namespace Dapper
             _type = type;
         }
 
-        internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
+        internal static MethodInfo? GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
             if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
 
-            return propertyInfo.DeclaringType.GetProperty(
+            return propertyInfo.DeclaringType?.GetProperty(
                    propertyInfo.Name,
                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                    Type.DefaultBinder,
                    propertyInfo.PropertyType,
                    propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
-                   null).GetSetMethod(true);
+                   null)?.GetSetMethod(true);
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)
@@ -59,7 +61,7 @@ namespace Dapper
         /// <param name="names">DataReader column names</param>
         /// <param name="types">DataReader column types</param>
         /// <returns>Matching constructor or default one</returns>
-        public ConstructorInfo FindConstructor(string[] names, Type[] types)
+        public ConstructorInfo? FindConstructor(string[] names, Type[] types)
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
@@ -98,7 +100,7 @@ namespace Dapper
         /// <summary>
         /// Returns the constructor, if any, that has the ExplicitConstructorAttribute on it.
         /// </summary>
-        public ConstructorInfo FindExplicitConstructor()
+        public ConstructorInfo? FindExplicitConstructor()
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();
@@ -129,7 +131,7 @@ namespace Dapper
         /// </summary>
         /// <param name="columnName">DataReader column name</param>
         /// <returns>Mapping implementation</returns>
-        public SqlMapper.IMemberMap GetMember(string columnName)
+        public SqlMapper.IMemberMap? GetMember(string columnName)
         {
             var property = Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
                ?? Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
