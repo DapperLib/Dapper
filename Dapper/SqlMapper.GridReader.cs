@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Globalization;
+using System.Linq;
+
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -12,13 +15,14 @@ namespace Dapper
         /// </summary>
         public partial class GridReader : IDisposable
         {
-            private IDataReader reader;
+            private IDbCommand? command;
+            private IDataReader? reader;
             private readonly Identity identity;
             private readonly bool addToCache;
 
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
+            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, IParameterCallbacks? callbacks, bool addToCache)
             {
-                Command = command;
+                this.command = command;
                 this.reader = reader;
                 this.identity = identity;
                 this.callbacks = callbacks;
@@ -168,7 +172,7 @@ namespace Dapper
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 IsConsumed = true;
 
-                T result = default(T);
+                T result = default!;
                 if (reader.Read() && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);
@@ -181,10 +185,10 @@ namespace Dapper
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
                     }
-                    object val = deserializer.Func(reader);
+                    object? val = deserializer.Func(reader);
                     if (val == null || val is T)
                     {
-                        result = (T)val;
+                        result = (T)val!;
                     }
                     else
                     {
@@ -221,7 +225,7 @@ namespace Dapper
                 }
             }
 
-            private IEnumerable<TReturn> MultiReadInternal<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn)
+            private IEnumerable<TReturn> MultiReadInternal<TReturn>(Type[] types, Func<object?[], TReturn> map, string splitOn)
             {
                 var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
                 try
@@ -350,23 +354,25 @@ namespace Dapper
             /// <param name="map">The mapping function from the read types to the return type.</param>
             /// <param name="splitOn">The field(s) we should split and read the second object from (defaults to "id")</param>
             /// <param name="buffered">Whether to buffer results in memory.</param>
-            public IEnumerable<TReturn> Read<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn = "id", bool buffered = true)
+            public IEnumerable<TReturn> Read<TReturn>(Type[] types, Func<object?[], TReturn> map, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal(types, map, splitOn);
                 return buffered ? result.ToList() : result;
             }
 
-            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Type effectiveType)
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object?> deserializer, Type effectiveType)
             {
+                if (reader is null) throw new ObjectDisposedException(nameof(GridReader));
+
                 try
                 {
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (index == gridIndex && reader.Read())
                     {
-                        object val = deserializer(reader);
+                        object? val = deserializer(reader);
                         if (val == null || val is T)
                         {
-                            yield return (T)val;
+                            yield return (T)val!;
                         }
                         else
                         {
@@ -384,7 +390,7 @@ namespace Dapper
             }
 
             private int gridIndex, readCount;
-            private readonly IParameterCallbacks callbacks;
+            private readonly IParameterCallbacks? callbacks;
 
             /// <summary>
             /// Has the underlying reader been consumed?
@@ -394,10 +400,12 @@ namespace Dapper
             /// <summary>
             /// The command associated with the reader
             /// </summary>
-            public IDbCommand Command { get; set; }
+            public IDbCommand Command => command ?? throw new ObjectDisposedException(nameof(GridReader));
 
             private void NextResult()
             {
+                if (reader is null) throw new ObjectDisposedException(nameof(GridReader));
+
                 if (reader.NextResult())
                 {
                     readCount++;
@@ -422,14 +430,14 @@ namespace Dapper
             {
                 if (reader != null)
                 {
-                    if (!reader.IsClosed) Command?.Cancel();
+                    if (!reader.IsClosed) command?.Cancel();
                     reader.Dispose();
                     reader = null;
                 }
-                if (Command != null)
+                if (command != null)
                 {
-                    Command.Dispose();
-                    Command = null;
+                    command.Dispose();
+                    command = null;
                 }
             }
         }
