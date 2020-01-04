@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
