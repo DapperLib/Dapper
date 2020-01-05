@@ -1,5 +1,7 @@
 ﻿using System.Data;
 
+#nullable enable
+
 namespace Dapper
 {
     /// <summary>

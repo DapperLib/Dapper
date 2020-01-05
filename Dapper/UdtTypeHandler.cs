@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 
+#nullable enable
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -22,12 +24,12 @@ namespace Dapper
                 this.udtTypeName = udtTypeName;
             }
 
-            object ITypeHandler.Parse(Type destinationType, object value)
+            object? ITypeHandler.Parse(Type destinationType, object? value)
             {
                 return value is DBNull ? null : value;
             }
 
-            void ITypeHandler.SetValue(IDbDataParameter parameter, object value)
+            void ITypeHandler.SetValue(IDbDataParameter parameter, object? value)
             {
 #pragma warning disable 0618
                 parameter.Value = SanitizeParameterValue(value);
