@@ -74,7 +74,8 @@ namespace Dapper
                 int i = 0;
                 for (; i < ctorParameters.Length; i++)
                 {
-                    if (!string.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                    if ((!MatchNamesWithUnderscores && !string.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase)) ||
+                        (MatchNamesWithUnderscores && !string.Equals(ctorParameters[i].Name, names[i].Replace("_", ""), StringComparison.OrdinalIgnoreCase)))
                         break;
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;
@@ -121,7 +122,17 @@ namespace Dapper
         {
             var parameters = constructor.GetParameters();
 
-            return new SimpleMemberMap(columnName, parameters.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase)));
+            var property = parameters.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+
+            if (property == null && MatchNamesWithUnderscores)
+            {
+                property = parameters.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
+                    ?? parameters.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
+            }
+
+            return new SimpleMemberMap(
+                MatchNamesWithUnderscores ? columnName.Replace("_", "") : columnName,
+                property);
         }
 
         /// <summary>
