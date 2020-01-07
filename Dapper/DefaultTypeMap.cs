@@ -122,17 +122,11 @@ namespace Dapper
         {
             var parameters = constructor.GetParameters();
 
-            var property = parameters.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+            var effectiveColumnName = MatchNamesWithUnderscores ? columnName.Replace("_", "") : columnName;
 
-            if (property == null && MatchNamesWithUnderscores)
-            {
-                property = parameters.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
-                    ?? parameters.FirstOrDefault(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
-            }
+            var property = parameters.FirstOrDefault(p => string.Equals(p.Name, effectiveColumnName, StringComparison.OrdinalIgnoreCase));
 
-            return new SimpleMemberMap(
-                MatchNamesWithUnderscores ? columnName.Replace("_", "") : columnName,
-                property);
+            return new SimpleMemberMap(effectiveColumnName, property);
         }
 
         /// <summary>
