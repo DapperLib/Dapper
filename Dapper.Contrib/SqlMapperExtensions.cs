@@ -175,8 +175,14 @@ namespace Dapper.Contrib.Extensions
             {
                 var key = GetSingleKey<T>(nameof(Get));
                 var name = GetTableName(type);
+                var adapter = GetFormatter(connection);
 
-                sql = $"select * from {name} where {key.Name} = @id";
+                var sb = new StringBuilder();
+                sb.Append($"select * from {name} where ");
+                adapter.AppendColumnName(sb, key.Name);
+                sb.Append(" = @id");
+
+                sql = sb.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
 
@@ -1001,7 +1007,7 @@ public partial class PostgresAdapter : ISqlAdapter
                 if (!first)
                     sb.Append(", ");
                 first = false;
-                sb.Append(property.Name);
+                sb.Append($"\"{property.Name}\"");
             }
         }
 
