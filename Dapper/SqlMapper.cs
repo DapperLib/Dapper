@@ -3372,7 +3372,7 @@ namespace Dapper
                         // stack is already filled with arguments
                         // save these in local vars and readd to stack in correct order
 
-                        var valuesIndexes =
+                        var storedInLocalVars =
                             members
                                 .AsEnumerable()
                                 .Reverse() // as stack LIFO order
@@ -3383,17 +3383,18 @@ namespace Dapper
                                     return local;
                                 })
                                 .Reverse() // as FIFO order
-                                .ToList();
+                                .ToArray();
 
-                        var membersByConstructorParamsOrder =
+                        var membersConstructorParamPosition =
                             members
-                            .Zip(valuesIndexes, (member, storedInLocalVar) => new { member, storedInLocalVar })
-                            .OrderBy(item => item.member.Parameter.Position)
-                            .ToList();
+                                .Select(member => member.Parameter.Position)
+                                .ToArray();
 
-                        foreach (var item in membersByConstructorParamsOrder)
+                        Array.Sort(membersConstructorParamPosition, storedInLocalVars);
+
+                        foreach (var item in storedInLocalVars)
                         {
-                            il.Emit(OpCodes.Ldloc, item.storedInLocalVar);
+                            il.Emit(OpCodes.Ldloc, item);
                         }
                     }
 

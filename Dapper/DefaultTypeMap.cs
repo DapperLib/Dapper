@@ -70,12 +70,10 @@ namespace Dapper
             if (names.Length != types.Length)
                 return null;
 
-            var byName = names.Zip(types, (name, type) => new { name, type })
-                              .OrderBy(x => x.name, StringComparer.OrdinalIgnoreCase)
-                              .ToArray();
+            var namesByName = names.ToArray();
+            var typesByName = types.ToArray();
 
-            var namesByName = byName.Select(x => x.name).ToArray();
-            var typesByName = byName.Select(x => x.type).ToArray();
+            Array.Sort(namesByName, typesByName, StringComparer.OrdinalIgnoreCase);
 
             return FindConstructorByColumns(namesByName, typesByName);
         }
