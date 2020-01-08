@@ -1017,7 +1017,7 @@ public partial class PostgresAdapter : ISqlAdapter
         var id = 0;
         foreach (var p in propertyInfos)
         {
-            var value = ((IDictionary<string, object>)results[0])[p.Name.ToLower()];
+            var value = ((IDictionary<string, object>)results[0])[p.Name];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
                 id = Convert.ToInt32(value);
