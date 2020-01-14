@@ -2362,7 +2362,9 @@ namespace Dapper
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused) =>
             CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
 
-        private static bool IsValueTuple(Type type) => type?.IsValueType == true && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal);
+        private static bool IsValueTuple(Type type) => (type?.IsValueType == true 
+                                                       && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal)) 
+                                                       || (type != null && IsValueTuple(Nullable.GetUnderlyingType(type)));
 
         internal static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
@@ -3078,7 +3080,8 @@ namespace Dapper
 
         private static void GenerateValueTupleDeserializer(Type valueTupleType, IDataReader reader, int startBound, int length, ILGenerator il)
         {
-            var currentValueTupleType = valueTupleType;
+            var nullableUnderlyingType = Nullable.GetUnderlyingType(valueTupleType);
+            var currentValueTupleType = nullableUnderlyingType ?? valueTupleType;
 
             var constructors = new List<ConstructorInfo>();
             var languageTupleElementTypes = new List<Type>();
@@ -3161,6 +3164,13 @@ namespace Dapper
             for (var i = constructors.Count - 1; i >= 0; i--)
             {
                 il.Emit(OpCodes.Newobj, constructors[i]);
+            }
+
+            if (nullableUnderlyingType != null)
+            {
+                var nullableTupleConstructor = valueTupleType.GetConstructor(new[] { nullableUnderlyingType });
+                
+                il.Emit(OpCodes.Newobj, nullableTupleConstructor);
             }
 
             il.Emit(OpCodes.Box, valueTupleType);
