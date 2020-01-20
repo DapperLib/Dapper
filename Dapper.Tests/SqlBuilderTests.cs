@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Xunit;
 
 namespace Dapper.Tests
@@ -36,6 +37,42 @@ namespace Dapper.Tests
                 Assert.Equal(16, (int)result[0].Age);
                 Assert.Equal("Sam", (string)result[0].Name);
                 Assert.Equal("USA", (string)result[0].Country);
+            }
+            finally
+            {
+                connection.Execute("drop table #Users");
+            }
+        }
+
+        [Fact]
+        public void TestSqlBuilderUpdateSet()
+        {
+            var id = 1;
+            var vip = true;
+            var updatetime = DateTime.Parse("2020/01/01");
+
+            var sb = new SqlBuilder()
+                   .Set("vip = @vip", new { vip })
+                   .Set("updatetime = @updatetime", new { updatetime })
+                   .Where("id = @id", new { id })
+            ;
+            var template = sb.AddTemplate("update #Users /**set**/ /**where**/");
+
+            const string createSql = @"
+                create table #Users (Id int,Name varchar(20),Age int,Country nvarchar(5),Vip bit,Updatetime datetime);
+                insert #Users (Id,Name,Age,Country) values(1,'Sam',16,'USA'),(2,'Tom',25,'UK'),(3,'Henry',14,'UK')";
+            try
+            {
+                connection.Execute(createSql);
+
+                var effectCount = connection.Execute(template.RawSql, template.Parameters);
+
+                var result = connection.QueryFirst("select * from #Users where Id = 1");
+
+                Assert.Equal("update #Users Set vip = @vip , updatetime = @updatetime\n WHERE id = @id\n", template.RawSql);
+
+                Assert.True((bool)result.Vip);
+                Assert.Equal(updatetime, (DateTime)result.Updatetime);
             }
             finally
             {
