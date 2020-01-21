@@ -260,8 +260,12 @@ namespace Dapper
         /// <param name="type">The type to handle.</param>
         /// <param name="handler">The handler to process the <paramref name="type"/>.</param>
         public static void AddTypeHandler(Type type, ITypeHandler handler) => AddTypeHandlerImpl(type, handler, true);
-
-        internal static bool HasTypeHandler(Type type) => typeHandlers.ContainsKey(type);
+        /// <summary>
+        /// Determine if the specified type will be processed by a custom handler.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool HasTypeHandler(Type type) => typeHandlers.ContainsKey(type);
 
         /// <summary>
         /// Configure the specified type to be processed by a custom handler.
