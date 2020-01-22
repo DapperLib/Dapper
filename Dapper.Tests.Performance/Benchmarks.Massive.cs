@@ -1,9 +1,11 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Massive;
+using System.ComponentModel;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("Massive")]
     public class MassiveBenchmarks : BenchmarkBase
     {
         private DynamicModel _model;

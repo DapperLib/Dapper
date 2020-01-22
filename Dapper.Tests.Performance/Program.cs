@@ -1,9 +1,7 @@
 ﻿using BenchmarkDotNet.Running;
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Reflection;
 using static System.Console;
 
 namespace Dapper.Tests.Performance
@@ -25,29 +23,17 @@ namespace Dapper.Tests.Performance
             if (args.Length == 0)
             {
                 WriteLine("Optional arguments:");
-                WriteColor("  --all", ConsoleColor.Blue);
+                WriteColor("  (no args)", ConsoleColor.Blue);
                 WriteLine(": run all benchmarks");
                 WriteColor("  --legacy", ConsoleColor.Blue);
-                WriteLine(": run the legacy benchmark suite/format", ConsoleColor.Gray);
+                WriteLineColor(": run the legacy benchmark suite/format", ConsoleColor.Gray);
                 WriteLine();
             }
             WriteLine("Using ConnectionString: " + BenchmarkBase.ConnectionString);
             EnsureDBSetup();
             WriteLine("Database setup complete.");
 
-            if (args.Any(a => a == "--all"))
-            {
-                WriteLine("Iterations: " + BenchmarkBase.Iterations);
-                var benchmarks = new List<Benchmark>();
-                var benchTypes = Assembly.GetEntryAssembly().DefinedTypes.Where(t => t.IsSubclassOf(typeof(BenchmarkBase)));
-                WriteLineColor("Running full benchmarks suite", ConsoleColor.Green);
-                foreach (var b in benchTypes)
-                {
-                    benchmarks.AddRange(BenchmarkConverter.TypeToBenchmarks(b));
-                }
-                BenchmarkRunner.Run(benchmarks.ToArray(), null);
-            }
-            else if (args.Any(a => a == "--legacy"))
+            if (args.Any(a => a == "--legacy"))
             {
                 var test = new LegacyTests();
                 const int iterations = 500;
@@ -58,8 +44,8 @@ namespace Dapper.Tests.Performance
             }
             else
             {
-                WriteLine("Iterations: " + BenchmarkBase.Iterations);
-                BenchmarkSwitcher.FromAssembly(typeof(Program).GetTypeInfo().Assembly).Run(args);
+                WriteLine("Iterations: " + Config.Iterations);
+                new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new Config());
             }
         }
 

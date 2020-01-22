@@ -4,7 +4,13 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class EnumTests : TestBase
+    [Collection("EnumTests")]
+    public sealed class SystemSqlClientEnumTests : EnumTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    [Collection("EnumTests")]
+    public sealed class MicrosoftSqlClientEnumTests : EnumTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class EnumTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestEnumWeirdness()

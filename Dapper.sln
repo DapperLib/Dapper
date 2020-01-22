@@ -1,18 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.8
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28917.182
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A34907DF-958A-4E4C-8491-84CF303FD13E}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		appveyor.yml = appveyor.yml
 		build.ps1 = build.ps1
-		build.sh = build.sh
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
+		docs\index.md = docs\index.md
 		License.txt = License.txt
 		nuget.config = nuget.config
 		Readme.md = Readme.md
-		semver.txt = semver.txt
+		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper", "Dapper\Dapper.csproj", "{FAC24C3F-68F9-4247-A4B9-21D487E99275}"
@@ -33,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Rainbow", "Dapper.Ra
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}"
 	ProjectSection(SolutionItems) = preProject
-		Directory.build.props = Directory.build.props
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{568BD46C-1C65-4D44-870C-12CD72563262}"
@@ -41,6 +43,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.EntityFramework.StrongName", "Dapper.EntityFramework.StrongName\Dapper.EntityFramework.StrongName.csproj", "{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests.Performance", "Dapper.Tests.Performance\Dapper.Tests.Performance.csproj", "{F017075A-2969-4A8E-8971-26F154EB420F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.ProviderTools", "Dapper.ProviderTools\Dapper.ProviderTools.csproj", "{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -88,6 +92,10 @@ Global
 		{F017075A-2969-4A8E-8971-26F154EB420F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F017075A-2969-4A8E-8971-26F154EB420F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F017075A-2969-4A8E-8971-26F154EB420F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -103,6 +111,7 @@ Global
 		{8A74F0B6-188F-45D2-8A4B-51E4F211805A} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
 		{39D3EEB6-9C05-4F4A-8C01-7B209742A7EB} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
 		{F017075A-2969-4A8E-8971-26F154EB420F} = {568BD46C-1C65-4D44-870C-12CD72563262}
+		{B06DB435-0C74-4BD3-BC97-52AF7CF9916B} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {928A4226-96F3-409A-8A83-9E7444488710}

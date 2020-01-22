@@ -4,7 +4,7 @@
     <Title>Dapper: Entity Framework type handlers (with a strong name)</Title>
     <Description>Extension handlers for entity framework</Description>
     <Authors>Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net451</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
     <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
@@ -16,13 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper.StrongName\Dapper.StrongName.csproj" />
+    <!-- note: 6.2.0 has regressions; don't force the update -->
     <PackageReference Include="EntityFramework" Version="6.1.3" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="11.0.2" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
   </ItemGroup>
 </Project>

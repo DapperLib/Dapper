@@ -1,18 +1,23 @@
+﻿#if NET4X
 using BenchmarkDotNet.Attributes;
 using Susanoo;
 using Susanoo.Processing;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("Susanoo")]
     public class SusanooBenchmarks : BenchmarkBase
     {
         private DatabaseManager _db;
+
         private static readonly ISingleResultSetCommandProcessor<dynamic, Post> _cmd =
                 CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
                     .DefineResults<Post>()
                     .Realize();
+
         private static readonly ISingleResultSetCommandProcessor<dynamic, dynamic> _cmdDynamic =
                 CommandManager.Instance.DefineCommand("SELECT * FROM Posts WHERE Id = @Id", CommandType.Text)
                     .DefineResults<dynamic>()
@@ -25,7 +30,7 @@ namespace Dapper.Tests.Performance
             _db = new DatabaseManager(_connection);
         }
 
-        [Benchmark(Description = "Mapping Cache")]
+        [Benchmark(Description = "Execute<T> (Cache)")]
         public Post MappingCache()
         {
             Step();
@@ -35,7 +40,7 @@ namespace Dapper.Tests.Performance
                     .Execute(_db, new { Id = i }).First();
         }
 
-        [Benchmark(Description = "Mapping Cache (dynamic)")]
+        [Benchmark(Description = "Execute<dynamic> (Cache)")]
         public dynamic MappingCacheDynamic()
         {
             Step();
@@ -45,14 +50,14 @@ namespace Dapper.Tests.Performance
                     .Execute(_db, new { Id = i }).First();
         }
 
-        [Benchmark(Description = "Mapping Static")]
+        [Benchmark(Description = "Execute<T> (Static)")]
         public Post MappingStatic()
         {
             Step();
             return _cmd.Execute(_db, new { Id = i }).First();
         }
 
-        [Benchmark(Description = "Mapping Static (dynamic)")]
+        [Benchmark(Description = "Execut<dynamic> (Static)")]
         public dynamic MappingStaticDynamic()
         {
             Step();
@@ -60,3 +65,4 @@ namespace Dapper.Tests.Performance
         }
     }
 }
+#endif

@@ -4,7 +4,14 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class DataReaderTests : TestBase
+    [Collection("DataReaderTests")]
+    public sealed class SystemSqlClientDataReaderTests : DataReaderTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    [Collection("DataReaderTests")]
+    public sealed class MicrosoftSqlClientDataReaderTests : DataReaderTests<MicrosoftSqlClientProvider> { }
+#endif
+
+    public abstract class DataReaderTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void GetSameReaderForSameShape()
@@ -36,6 +43,16 @@ namespace Dapper.Tests
             Assert.False(ReferenceEquals(origReader, secondReader));
             Assert.True(ReferenceEquals(origParser, secondParser));
             Assert.False(ReferenceEquals(secondParser, thirdParser));
+        }
+
+        [Fact]
+        public void TestTreatIntAsABool()
+        {
+            // Test we are consistent with direct call to database, see TypeHandlerTests.TestTreatIntAsABool
+            using(var reader = connection.ExecuteReader("select CAST(1 AS BIT)"))
+                Assert.True(SqlMapper.Parse<bool>(reader).Single());
+            using (var reader = connection.ExecuteReader("select 1"))
+                Assert.True(SqlMapper.Parse<bool>(reader).Single());
         }
 
         [Fact]

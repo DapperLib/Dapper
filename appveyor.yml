@@ -6,6 +6,9 @@ skip_commits:
   files:
     - '**/*.md'
 
+install:
+  - choco install dotnetcore-sdk --version 3.0.100
+
 environment:
   Appveyor: true
   # Postgres
@@ -39,7 +42,7 @@ build_script:
   # MySQL
   - mysql -e "create database test;" --user=root
   # Our stuff
-  - ps: .\build.ps1 -BuildNumber "$env:APPVEYOR_BUILD_NUMBER" -Version "$env:APPVEYOR_REPO_TAG_NAME" -PullRequestNumber "$env:APPVEYOR_PULL_REQUEST_NUMBER" -CreatePackages $true
+  - ps: .\build.ps1 -PullRequestNumber "$env:APPVEYOR_PULL_REQUEST_NUMBER" -CreatePackages $true
 
 test: off
 artifacts:

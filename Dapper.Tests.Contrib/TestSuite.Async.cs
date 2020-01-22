@@ -46,6 +46,54 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+        [Fact]
+        public async Task TypeWithGenericParameterCanBeUpdatedAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                await connection.InsertAsync(objectToInsert);
+
+                objectToInsert.Name = "somethingelse";
+                await connection.UpdateAsync(objectToInsert);
+
+                var updatedObject = connection.Get<GenericType<string>>(objectToInsert.Id);
+                Assert.Equal(objectToInsert.Name, updatedObject.Name);
+            }
+        }
+
+        [Fact]
+        public async Task TypeWithGenericParameterCanBeDeletedAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var objectToInsert = new GenericType<string>
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "something"
+                };
+                await connection.InsertAsync(objectToInsert);
+
+                bool deleted = await connection.DeleteAsync(objectToInsert);
+                Assert.True(deleted);
+            }
+        }
+
+        [Fact] 
+        public async Task GetAsyncSucceedsAfterDeleteAsyncWhenExplicitKeyPresent()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                await connection.DeleteAsync(new ObjectX { ObjectXId = Guid.NewGuid().ToString() }).ConfigureAwait(false);
+                var retrieved = await connection.GetAsync<ObjectX>(Guid.NewGuid().ToString()).ConfigureAwait(false);
+                Assert.Null(retrieved);
+            }
+        }
+
         /// <summary>
         /// Tests for issue #351 
         /// </summary>
@@ -264,6 +312,12 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public async Task UpdateEnumerableAsync()
+        {
+            await UpdateHelperAsync(src => src.AsEnumerable()).ConfigureAwait(false);
+        }
+
+        [Fact]
         public async Task UpdateArrayAsync()
         {
             await UpdateHelperAsync(src => src.ToArray()).ConfigureAwait(false);
@@ -300,6 +354,12 @@ namespace Dapper.Tests.Contrib
                 var name = connection.Query<User>("select * from Users").First().Name;
                 Assert.Contains("updated", name);
             }
+        }
+
+        [Fact]
+        public async Task DeleteEnumerableAsync()
+        {
+            await DeleteHelperAsync(src => src.AsEnumerable()).ConfigureAwait(false);
         }
 
         [Fact]

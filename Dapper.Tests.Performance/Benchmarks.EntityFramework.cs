@@ -1,8 +1,11 @@
+﻿#if NET4X
 using BenchmarkDotNet.Attributes;
+using System.ComponentModel;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
+    [Description("EF 6")]
     public class EF6Benchmarks : BenchmarkBase
     {
         private EntityFramework.EFContext Context;
@@ -14,8 +17,8 @@ namespace Dapper.Tests.Performance
             Context = new EntityFramework.EFContext(_connection);
         }
 
-        [Benchmark(Description = "Normal")]
-        public Post Normal()
+        [Benchmark(Description = "First")]
+        public Post First()
         {
             Step();
             return Context.Posts.First(p => p.Id == i);
@@ -28,7 +31,7 @@ namespace Dapper.Tests.Performance
             return Context.Database.SqlQuery<Post>("select * from Posts where Id = {0}", i).First();
         }
 
-        [Benchmark(Description = "No Tracking")]
+        [Benchmark(Description = "First (No Tracking)")]
         public Post NoTracking()
         {
             Step();
@@ -36,3 +39,4 @@ namespace Dapper.Tests.Performance
         }
     }
 }
+#endif

@@ -5,47 +5,44 @@
     <Description>Dapper Core Performance Suite</Description>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFrameworks>net462;netcoreapp3.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
-    <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
-    <PackageReference Include="Belgrade.Sql.Client" Version="0.7.0" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.10.9" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.10.9" />
+    <PackageReference Include="Dashing" Version="2.2.0" />
+    <PackageReference Include="Belgrade.Sql.Client" Version="1.1.4" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.5" />
+    <PackageReference Include="DevExpress.Xpo" Version="19.1.5" />
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
-    <PackageReference Include="EntityFramework" Version="6.1.3" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="5.9.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="1.1.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="1.1.2" />
-    <PackageReference Include="Microsoft.SqlServer.Compact" Version="4.0.8876.1" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.314.76" />
-    <PackageReference Include="MySql.Data" Version="7.0.7-m61" />
-    <PackageReference Include="NHibernate" Version="4.1.1.4000" />
-    <PackageReference Include="Iesi.Collections" Version="4.0.2" />
-    <PackageReference Include="Npgsql" Version="3.2.5" />
-    <PackageReference Include="PetaPoco" Version="5.1.259" />
-    <PackageReference Include="ServiceStack.OrmLite.SqlServer.Signed" Version="4.5.12" />
-    <PackageReference Include="Simple.Data.SqlServer" Version="2.0.0-alpha1" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
+    <PackageReference Include="linq2db.SqlServer" Version="2.9.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
+    <PackageReference Include="MySqlConnector" Version="0.56.0" />
+    <PackageReference Include="NHibernate" Version="5.2.5" />
+    <PackageReference Include="Iesi.Collections" Version="4.0.4" />
+    <PackageReference Include="Npgsql" Version="4.0.9" />
+    <PackageReference Include="PetaPoco" Version="5.1.306" />
+    <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="5.6.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.111" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NHibernate\*.xml" />
+    <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
+    <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
+    <PackageReference Include="EntityFramework" Version="6.2.0" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <PackageReference Include="Soma" Version="1.9.0.1" />
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
     <PackageReference Include="Susanoo.SqlServer" Version="1.2.4.2" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.105.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="NHibernate\*.xml" CopyToOutputDirectory="Always" />
-    <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="SourceLink.Create.GitHub" Version="2.1.2" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data.Linq" />
   </ItemGroup>
 </Project>

@@ -7,7 +7,13 @@ using Xunit;
 
 namespace Dapper.Tests
 {
-    public class TransactionTests : TestBase
+    [Collection("TransactionTests")]
+    public sealed class SystemSqlClientTransactionTests : TransactionTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    [Collection("TransactionTests")]
+    public sealed class MicrosoftSqlClientTransactionTests : TransactionTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class TransactionTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestTransactionCommit()

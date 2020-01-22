@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using Xunit;
 
 namespace Dapper.Tests
 {
-    public class PostcresqlTests : TestBase
+    public class PostgresProvider : DatabaseProvider
     {
-        private static Npgsql.NpgsqlConnection GetOpenNpgsqlConnection()
-        {
-            string cs = IsAppVeyor
+        public override DbProviderFactory Factory => Npgsql.NpgsqlFactory.Instance;
+        public override string GetConnectionString() => IsAppVeyor
                 ? "Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test"
                 : "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"; // ;Encoding = UNICODE
-            var conn = new Npgsql.NpgsqlConnection(cs);
-            conn.Open();
-            return conn;
-        }
+    }
+    public class PostgresqlTests : TestBase<PostgresProvider>
+    {
+        private Npgsql.NpgsqlConnection GetOpenNpgsqlConnection() => (Npgsql.NpgsqlConnection)Provider.GetOpenConnection();
 
         private class Cat
         {
@@ -56,6 +56,28 @@ namespace Dapper.Tests
             }
         }
 
+        private class CharTable
+        {
+            public int Id { get; set; }
+            public char CharColumn { get; set; }
+        }
+
+        [FactPostgresql]
+        public void TestPostgresqlChar()
+        {
+            using (var conn = GetOpenNpgsqlConnection())
+            {
+                var transaction = conn.BeginTransaction();
+                conn.Execute("create table chartable (id serial not null, charcolumn \"char\" not null);");
+                conn.Execute("insert into chartable(charcolumn) values('a');");
+
+                var r = conn.Query<CharTable>("select * from chartable");
+                Assert.Single(r);
+                Assert.Equal('a', r.Single().CharColumn);
+                transaction.Rollback();
+            }
+        }
+
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactPostgresqlAttribute : FactAttribute
         {
@@ -71,7 +93,7 @@ namespace Dapper.Tests
             {
                 try
                 {
-                    using (GetOpenNpgsqlConnection()) { /* just trying to see if it works */ }
+                    using (DatabaseProvider<PostgresProvider>.Instance.GetOpenConnection()) { /* just trying to see if it works */ }
                 }
                 catch (Exception ex)
                 {

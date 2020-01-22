@@ -1,8 +1,6 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.50.2</VersionPrefix>
-
-    <Copyright>2017 Stack Exchange, Inc.</Copyright>
+    <Copyright>2019 Stack Exchange, Inc.</Copyright>
 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -11,24 +9,22 @@
     <PackageId>$(AssemblyName)</PackageId>
     <PackageReleaseNotes>https://stackexchange.github.io/Dapper/</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/StackExchange/Dapper</PackageProjectUrl>
-    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/StackExchange/Dapper</RepositoryUrl>
+    <Deterministic>false</Deterministic>
     
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>
     <IncludeSymbols>false</IncludeSymbols>
-    <xUnitVersion>2.3.0-beta5-build3769</xUnitVersion>
-  </PropertyGroup>
+    <xUnitVersion>2.4.1</xUnitVersion>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR  '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451'">
-    <Reference Include="System.Core" Pack="false" />
-  </ItemGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="SourceLink.Create.GitHub" Version="2.1.2" PrivateAssets="All" /> 
-    <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.1.2" />
-    <DotNetCliToolReference Include="dotnet-sourcelink-git" Version="2.1.2" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.0.26" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All"/>
   </ItemGroup>
 </Project>

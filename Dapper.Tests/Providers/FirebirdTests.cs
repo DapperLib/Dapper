@@ -1,20 +1,25 @@
 ﻿using FirebirdSql.Data.FirebirdClient;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using Xunit;
 
 namespace Dapper.Tests.Providers
 {
-    public class FirebirdTests : TestBase
+    public class FirebirdProvider : DatabaseProvider
     {
+        public override DbProviderFactory Factory => FirebirdClientFactory.Instance;
+        public override string GetConnectionString() => "initial catalog=localhost:database;user id=SYSDBA;password=masterkey";
+    }
+    public class FirebirdTests : TestBase<FirebirdProvider>
+    {
+        private FbConnection GetOpenFirebirdConnection() => (FbConnection)Provider.GetOpenConnection();
+
         [Fact(Skip = "Bug in Firebird; a PR to fix it has been submitted")]
         public void Issue178_Firebird()
         {
-            const string cs = "initial catalog=localhost:database;user id=SYSDBA;password=masterkey";
-
-            using (var connection = new FbConnection(cs))
+            using (var connection = GetOpenFirebirdConnection())
             {
-                connection.Open();
                 const string sql = "select count(*) from Issue178";
                 try { connection.Execute("drop table Issue178"); }
                 catch { /* don't care */ }

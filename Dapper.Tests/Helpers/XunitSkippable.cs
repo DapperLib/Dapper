@@ -9,39 +9,62 @@ using Xunit.Sdk;
 
 namespace Dapper.Tests
 {
+    public static class Skip
+    {
+        public static void Inconclusive(string reason = "inconclusive")
+            => throw new SkipTestException(reason);
+
+        public static void If<T>(object obj, string reason = null)
+            where T : class
+        {
+            if (obj is T) Skip.Inconclusive(reason ?? $"not valid for {typeof(T).FullName}");
+        }
+    }
+
+#pragma warning disable RCS1194 // Implement exception constructors.
     public class SkipTestException : Exception
     {
         public SkipTestException(string reason) : base(reason)
         {
         }
     }
+#pragma warning restore RCS1194 // Implement exception constructors.
 
-    // Most of the below is a direct copy & port from the wonderful examples by Brad Wilson at
-    // https://github.com/xunit/samples.xunit/tree/master/DynamicSkipExample
-    public class SkippableFactDiscoverer : IXunitTestCaseDiscoverer
+    public class FactDiscoverer : Xunit.Sdk.FactDiscoverer
     {
-        private readonly IMessageSink _diagnosticMessageSink;
+        public FactDiscoverer(IMessageSink diagnosticMessageSink) : base(diagnosticMessageSink) { }
 
-        public SkippableFactDiscoverer(IMessageSink diagnosticMessageSink)
-        {
-            _diagnosticMessageSink = diagnosticMessageSink;
-        }
-
-        public IEnumerable<IXunitTestCase> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute)
-        {
-            yield return new SkippableFactTestCase(_diagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), testMethod);
-        }
+        protected override IXunitTestCase CreateTestCase(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute)
+            => new SkippableTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod);
     }
 
-    public class SkippableFactTestCase : XunitTestCase
+    public class TheoryDiscoverer : Xunit.Sdk.TheoryDiscoverer
     {
-        [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
-        public SkippableFactTestCase()
-        {
-        }
+        public TheoryDiscoverer(IMessageSink diagnosticMessageSink) : base(diagnosticMessageSink) { }
 
-        public SkippableFactTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, ITestMethod testMethod, object[] testMethodArguments = null)
-            : base(diagnosticMessageSink, defaultMethodDisplay, testMethod, testMethodArguments)
+        protected override IEnumerable<IXunitTestCase> CreateTestCasesForDataRow(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo theoryAttribute, object[] dataRow)
+            => new[] { new SkippableTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod, dataRow) };
+
+        protected override IEnumerable<IXunitTestCase> CreateTestCasesForSkip(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo theoryAttribute, string skipReason)
+            => new[] { new SkippableTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod) };
+
+        protected override IEnumerable<IXunitTestCase> CreateTestCasesForTheory(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo theoryAttribute)
+            => new[] { new SkippableTheoryTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod) };
+
+        protected override IEnumerable<IXunitTestCase> CreateTestCasesForSkippedDataRow(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo theoryAttribute, object[] dataRow, string skipReason)
+            => new[] { new NamedSkippedDataRowTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod, skipReason, dataRow) };
+    }
+
+    public class SkippableTestCase : XunitTestCase
+    {
+        protected override string GetDisplayName(IAttributeInfo factAttribute, string displayName) =>
+            base.GetDisplayName(factAttribute, displayName).StripName();
+
+        [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
+        public SkippableTestCase() { }
+
+        public SkippableTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod, object[] testMethodArguments = null)
+            : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, testMethodArguments)
         {
         }
 
@@ -52,36 +75,56 @@ namespace Dapper.Tests
             ExceptionAggregator aggregator,
             CancellationTokenSource cancellationTokenSource)
         {
-            var skipMessageBus = new SkippableFactMessageBus(messageBus);
-            var result = await base.RunAsync(
-                diagnosticMessageSink,
-                skipMessageBus,
-                constructorArguments,
-                aggregator,
-                cancellationTokenSource).ConfigureAwait(false);
-            if (skipMessageBus.DynamicallySkippedTestCount > 0)
-            {
-                result.Failed -= skipMessageBus.DynamicallySkippedTestCount;
-                result.Skipped += skipMessageBus.DynamicallySkippedTestCount;
-            }
-
-            return result;
+            var skipMessageBus = new SkippableMessageBus(messageBus);
+            var result = await base.RunAsync(diagnosticMessageSink, skipMessageBus, constructorArguments, aggregator, cancellationTokenSource).ConfigureAwait(false);
+            return result.Update(skipMessageBus);
         }
     }
 
-    public class SkippableFactMessageBus : IMessageBus
+    public class SkippableTheoryTestCase : XunitTheoryTestCase
     {
-        private readonly IMessageBus _innerBus;
-        public SkippableFactMessageBus(IMessageBus innerBus)
+        protected override string GetDisplayName(IAttributeInfo factAttribute, string displayName) =>
+            base.GetDisplayName(factAttribute, displayName).StripName();
+
+        [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
+        public SkippableTheoryTestCase() { }
+
+        public SkippableTheoryTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod)
+            : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod) { }
+
+        public override async Task<RunSummary> RunAsync(
+            IMessageSink diagnosticMessageSink,
+            IMessageBus messageBus,
+            object[] constructorArguments,
+            ExceptionAggregator aggregator,
+            CancellationTokenSource cancellationTokenSource)
         {
-            _innerBus = innerBus;
+            var skipMessageBus = new SkippableMessageBus(messageBus);
+            var result = await base.RunAsync(diagnosticMessageSink, skipMessageBus, constructorArguments, aggregator, cancellationTokenSource).ConfigureAwait(false);
+            return result.Update(skipMessageBus);
         }
+    }
+
+    public class NamedSkippedDataRowTestCase : XunitSkippedDataRowTestCase
+    {
+        protected override string GetDisplayName(IAttributeInfo factAttribute, string displayName) =>
+            base.GetDisplayName(factAttribute, displayName).StripName();
+
+        [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
+        public NamedSkippedDataRowTestCase() { }
+
+        public NamedSkippedDataRowTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod, string skipReason, object[] testMethodArguments = null)
+        : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, skipReason, testMethodArguments) { }
+    }
+
+    public class SkippableMessageBus : IMessageBus
+    {
+        private readonly IMessageBus InnerBus;
+        public SkippableMessageBus(IMessageBus innerBus) => InnerBus = innerBus;
 
         public int DynamicallySkippedTestCount { get; private set; }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         public bool QueueMessage(IMessageSinkMessage message)
         {
@@ -91,10 +134,26 @@ namespace Dapper.Tests
                 if (exceptionType == typeof(SkipTestException).FullName)
                 {
                     DynamicallySkippedTestCount++;
-                    return _innerBus.QueueMessage(new TestSkipped(testFailed.Test, testFailed.Messages.FirstOrDefault()));
+                    return InnerBus.QueueMessage(new TestSkipped(testFailed.Test, testFailed.Messages.FirstOrDefault()));
                 }
             }
-            return _innerBus.QueueMessage(message);
+            return InnerBus.QueueMessage(message);
+        }
+    }
+
+    internal static class XUnitExtensions
+    {
+        internal static string StripName(this string name) =>
+            name.Replace("Dapper.Tests.", "");
+
+        public static RunSummary Update(this RunSummary summary, SkippableMessageBus bus)
+        {
+            if (bus.DynamicallySkippedTestCount > 0)
+            {
+                summary.Failed -= bus.DynamicallySkippedTestCount;
+                summary.Skipped += bus.DynamicallySkippedTestCount;
+            }
+            return summary;
         }
     }
 }

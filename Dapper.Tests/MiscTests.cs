@@ -3,44 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Diagnostics;
-using System.Linq;
-using Xunit;
-
-#if NETCOREAPP1_0
-using System.Collections;
-using System.Dynamic;
-using System.Data.SqlTypes;
-#else // net452
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-#endif
-
-#if NETCOREAPP1_0
-namespace System
-{
-    public enum GenericUriParserOptions
-    {
-        Default
-    }
-
-    public class GenericUriParser
-    {
-        private readonly GenericUriParserOptions options;
-
-        public GenericUriParser(GenericUriParserOptions options)
-        {
-            this.options = options;
-        }
-    }
-}
-#endif
+using Xunit;
 
 namespace Dapper.Tests
 {
-    public class MiscTests : TestBase
+    [Collection("MiscTests")]
+    public sealed class SystemSqlClientMiscTests : MiscTests<SystemSqlClientProvider> { }
+#if MSSQLCLIENT
+    [Collection("MiscTests")]
+    public sealed class MicrosoftSqlClientMiscTests : MiscTests<MicrosoftSqlClientProvider> { }
+#endif
+    public abstract class MiscTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
         [Fact]
         public void TestNullableGuidSupport()
@@ -518,7 +496,6 @@ select * from @bar", new { foo }).Single();
             Assert.Equal("Four", list.First().Base2);
         }
 
-#if !NETCOREAPP1_0
         [Fact]
         public void ExecuteReader()
         {
@@ -531,7 +508,6 @@ select * from @bar", new { foo }).Single();
             Assert.Equal(3, (int)dt.Rows[0][0]);
             Assert.Equal(4, (int)dt.Rows[0][1]);
         }
-#endif
 
         [Fact]
         public void TestDbString()
@@ -1026,13 +1002,16 @@ select * from @bar", new { foo }).Single();
             try { connection.Execute("create table Issue178(id int not null)"); }
             catch { /* don't care */ }
             // raw ADO.net
-            var sqlCmd = new SqlCommand(sql, connection);
-            using (IDataReader reader1 = sqlCmd.ExecuteReader())
+            using (var sqlCmd = connection.CreateCommand())
             {
-                Assert.True(reader1.Read());
-                Assert.Equal(0, reader1.GetInt32(0));
-                Assert.False(reader1.Read());
-                Assert.False(reader1.NextResult());
+                sqlCmd.CommandText = sql;
+                using (IDataReader reader1 = sqlCmd.ExecuteReader())
+                {
+                    Assert.True(reader1.Read());
+                    Assert.Equal(0, reader1.GetInt32(0));
+                    Assert.False(reader1.Read());
+                    Assert.False(reader1.NextResult());
+                }
             }
 
             // dapper

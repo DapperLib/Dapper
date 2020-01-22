@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿#if NET4X
+using System.Data.Common;
 using System.Data.Entity;
 
 namespace Dapper.Tests.Performance.EntityFramework
@@ -12,3 +13,4 @@ namespace Dapper.Tests.Performance.EntityFramework
         public DbSet<Post> Posts { get; set; }
     }
 }
+#endif

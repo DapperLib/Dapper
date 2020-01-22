@@ -1,24 +1,24 @@
 ﻿#if OLEDB
 using System;
+using System.Data.Common;
 using System.Data.OleDb;
 using System.Linq;
 using Xunit;
 
 namespace Dapper.Tests
 {
-    public class OLDEBTests : TestBase
+    public class OLEDBProvider : DatabaseProvider
     {
-        public static string OleDbConnectionString =>
+        public override DbProviderFactory Factory => OleDbFactory.Instance;
+        public override string GetConnectionString() =>
             IsAppVeyor
                 ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2016;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
                 : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
+    }
 
-        public OleDbConnection GetOleDbConnection()
-        {
-            var conn = new OleDbConnection(OleDbConnectionString);
-            conn.Open();
-            return conn;
-        }
+    public class OLDEBTests : TestBase<OLEDBProvider>
+    {
+        public OleDbConnection GetOleDbConnection() => (OleDbConnection) Provider.GetOpenConnection();
 
         // see https://stackoverflow.com/q/18847510/23354
         [Fact]
@@ -78,6 +78,22 @@ namespace Dapper.Tests
             {
                 var ex = Assert.Throws<InvalidOperationException>(() => connection.Query<int>("select ?x? + ?y_2? + ?x?", new { x = 1, y_2 = 3 }).Single());
                 Assert.Equal("When passing parameters by position, each parameter can only be referenced once", ex.Message);
+            }
+        }
+
+        [Fact]
+        public void Issue569_SO38527197_PseudoPositionalParameters_In_And_Other_Condition()
+        {
+            const string sql = @"select s1.value as id, s2.value as score 
+                        from string_split('1,2,3,4,5',',') s1, string_split('1,2,3,4,5',',') s2
+                        where s1.value in ?ids? and s2.value = ?score?";
+            using (var connection = GetOleDbConnection())
+            {
+                const int score = 2;
+                int[] ids = { 1, 2, 5, 7 };
+                var list = connection.Query<int>(sql, new { ids, score }).AsList();
+                list.Sort();
+                Assert.Equal("1,2,5", string.Join(",", list));
             }
         }
 
