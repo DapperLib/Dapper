@@ -34,7 +34,7 @@ namespace Dapper.Contrib.Extensions
                 keyName = key.Name;
                 String keyColumnName = GetDBColumnName(key);
 
-                sql = $"select * from {name} where {keyColumnName} = @" + keyName;
+                sql = $"select * from {name} where {keyColumnName} = @{key.Name}";
                 GetQueries[type.TypeHandle] = sql;
             }
             else
