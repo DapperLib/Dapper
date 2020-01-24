@@ -15,8 +15,13 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            _model = new MightyOrm<Post>(ConnectionString);
-            _dynamicModel = new MightyOrm(ConnectionString);
+
+            // Mighty needs the connection string to contain the ProviderName in addition to everything else for Reasons.
+            // However, it appears the SQL Server driver chokes on it if it's in the full connection string, so we programatically add it here.
+            var connectionString = $"{ConnectionStringSettings.ConnectionString};ProviderName={ConnectionStringSettings.ProviderName}";
+
+            _model = new MightyOrm<Post>(connectionString);
+            _dynamicModel = new MightyOrm(connectionString);
         }
 
         [Benchmark(Description = "Query<T>")]
