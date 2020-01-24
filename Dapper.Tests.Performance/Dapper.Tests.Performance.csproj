@@ -21,6 +21,7 @@
     <PackageReference Include="MySqlConnector" Version="0.56.0" />
     <PackageReference Include="NHibernate" Version="5.2.5" />
     <PackageReference Include="Iesi.Collections" Version="4.0.4" />
+    <PackageReference Include="Mighty" Version="3.0.6" />
     <PackageReference Include="Npgsql" Version="4.0.9" />
     <PackageReference Include="PetaPoco" Version="5.1.306" />
     <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="5.6.0" />
