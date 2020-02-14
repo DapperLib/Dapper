@@ -12,14 +12,14 @@ namespace Dapper.EntityFrameworkCore
         /// </summary>
         public static void RegisterGeography()
         {
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Point>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Polygon>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<LineString>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<LinearRing>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiLineString>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiPoint>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiPolygon>(true));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Geometry>(true));
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<Point>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<Polygon>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<LineString>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<LinearRing>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<MultiLineString>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<MultiPoint>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<MultiPolygon>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeographyHandler<Geometry>());
         }
 
         /// <summary>
@@ -27,14 +27,14 @@ namespace Dapper.EntityFrameworkCore
         /// </summary>
         public static void RegisterGeometry()
         {
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Point>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Polygon>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<LineString>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<LinearRing>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiLineString>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiPoint>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiPolygon>(false));
-            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Geometry>(false));
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Point>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Polygon>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<LineString>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<LinearRing>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiLineString>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiPoint>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<MultiPolygon>());
+            SqlMapper.AddTypeHandler(new NetTopologySuiteGeometryHandler<Geometry>());
         }
     }
 }

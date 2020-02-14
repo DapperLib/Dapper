@@ -9,7 +9,7 @@ namespace Dapper.EntityFrameworkCore
     /// Type-handler for the Geometry spatial type.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class NetTopologySuiteGeometryHandler<T> : SqlMapper.TypeHandler<T>
+    public class NetTopologySuiteGeographyHandler<T> : SqlMapper.TypeHandler<T>
         where T : Geometry
     {
         readonly SqlServerBytesWriter _writer;
@@ -18,10 +18,10 @@ namespace Dapper.EntityFrameworkCore
         /// <summary>
         /// Create a new handler instance.
         /// </summary>
-        public NetTopologySuiteGeometryHandler()
+        public NetTopologySuiteGeographyHandler()
         {
-            _writer = new SqlServerBytesWriter { IsGeography = false };
-            _reader = new SqlServerBytesReader { IsGeography = false };
+            _writer = new SqlServerBytesWriter { IsGeography = true };
+            _reader = new SqlServerBytesReader { IsGeography = true };
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Dapper.EntityFrameworkCore
             parameter.Value = _writer.Write(value);
 
             ((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
-            ((SqlParameter)parameter).UdtTypeName = "geometry";
+            ((SqlParameter)parameter).UdtTypeName = "geography";
         }
     }
 
