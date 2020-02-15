@@ -47,6 +47,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.ProviderTools", "Dap
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.EntityFrameworkCore", "Dapper.EntityFrameworkCore\Dapper.EntityFrameworkCore.csproj", "{2387F5B6-0F39-41BF-9955-F0766D0F5DED}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests.EntityFrameworkCore", "Dapper.Tests.EntityFrameworkCore\Dapper.Tests.EntityFrameworkCore.csproj", "{B1B55EA8-F0EF-466E-B4FB-FD8F1C8B5537}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,10 @@ Global
 		{2387F5B6-0F39-41BF-9955-F0766D0F5DED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2387F5B6-0F39-41BF-9955-F0766D0F5DED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2387F5B6-0F39-41BF-9955-F0766D0F5DED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1B55EA8-F0EF-466E-B4FB-FD8F1C8B5537}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1B55EA8-F0EF-466E-B4FB-FD8F1C8B5537}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1B55EA8-F0EF-466E-B4FB-FD8F1C8B5537}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1B55EA8-F0EF-466E-B4FB-FD8F1C8B5537}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +124,7 @@ Global
 		{F017075A-2969-4A8E-8971-26F154EB420F} = {568BD46C-1C65-4D44-870C-12CD72563262}
 		{B06DB435-0C74-4BD3-BC97-52AF7CF9916B} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
 		{2387F5B6-0F39-41BF-9955-F0766D0F5DED} = {4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}
+		{B1B55EA8-F0EF-466E-B4FB-FD8F1C8B5537} = {568BD46C-1C65-4D44-870C-12CD72563262}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {928A4226-96F3-409A-8A83-9E7444488710}
