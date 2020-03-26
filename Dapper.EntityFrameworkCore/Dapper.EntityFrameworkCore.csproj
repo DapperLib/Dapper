@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Dapper.EntityFrameworkCore</AssemblyName>
+    <Description>Extension handlers for entity framework core</Description>
+    <AssemblyTitle>Dapper entity framework core type handlers</AssemblyTitle>
+    <VersionPrefix>1.50.2</VersionPrefix>
+    <Authors>Marc Gravell;Nick Craver</Authors>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <PackageTags>orm;sql;micro-orm</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite" Version="2.0.0" />
+    <PackageReference Include="NetTopologySuite.IO.SqlServerBytes" Version="2.0.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dapper\Dapper.csproj" />
+    <!-- note: 6.2.0 has regressions; don't force the update -->
+  </ItemGroup>
+</Project>
