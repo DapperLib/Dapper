@@ -54,6 +54,8 @@ namespace Dapper.Tests.Contrib
                 connection.Execute("CREATE TABLE GenericType (Id nvarchar(100) not null, Name nvarchar(100) not null);");
                 dropTable("NullableDates");
                 connection.Execute("CREATE TABLE NullableDates (Id int IDENTITY(1,1) not null, DateValue DateTime null);");
+                dropTable("DefaultValueTests");
+                connection.Execute("CREATE TABLE DefaultValueTests (Id int IDENTITY(1, 1) PRIMARY KEY, Age int DEFAULT 2, Name nvarchar(100) DEFAULT 'default name')");
             }
         }
     }
@@ -100,6 +102,8 @@ namespace Dapper.Tests.Contrib
                     connection.Execute("CREATE TABLE GenericType (Id nvarchar(100) not null, Name nvarchar(100) not null);");
                     dropTable("NullableDates");
                     connection.Execute("CREATE TABLE NullableDates (Id int not null AUTO_INCREMENT PRIMARY KEY, DateValue DateTime);");
+                    dropTable("DefaultValueTests");
+                    connection.Execute("CREATE TABLE DefaultValueTests (Id int not null AUTO_INCREMENT PRIMARY KEY, Age int not null default '2' , `Name` nvarchar(100) not null default 'default name')");
                 }
             }
             catch (MySqlException e)
@@ -137,6 +141,7 @@ namespace Dapper.Tests.Contrib
                 connection.Execute("CREATE TABLE ObjectZ (Id integer not null, Name nvarchar(100) not null) ");
                 connection.Execute("CREATE TABLE GenericType (Id nvarchar(100) not null, Name nvarchar(100) not null) ");
                 connection.Execute("CREATE TABLE NullableDates (Id integer primary key autoincrement not null, DateValue DateTime) ");
+                connection.Execute("CREATE TABLE DefaultValueTests (Id integer primary key autoincrement not null, Name nvarchar(100) DEFAULT 'default name', Age int DEFAULT 2)");
             }
         }
     }

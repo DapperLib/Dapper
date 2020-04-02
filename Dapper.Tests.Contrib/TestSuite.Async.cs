@@ -4,13 +4,104 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Dapper.Contrib.Extensions;
-using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
+//using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
 using Xunit;
 
 namespace Dapper.Tests.Contrib
 {
     public abstract partial class TestSuite
     {
+        [Fact]
+        public async Task PartialUpdateAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                await connection.DeleteAllAsync<IUser>();
+                var user = ProxyGenerator.GetInterfaceProxy<IUser>();
+                Assert.False(((ProxyGenerator.IProxy)user).IsDirty);
+                user.Age = 5;
+                user.Name = "Bob";
+                var id = await connection.InsertAsync<IUser>(user);
+
+                Assert.True(id > 0);
+                user = await connection.QueryFirstOrDefaultAsync<IUser>("SELECT Id, Age FROM Users WHERE Id = @id", new { id });
+                Assert.Equal(2, ((ProxyGenerator.IProxy)user).DirtyFields.Count()); //only Id and Age have been set by Dapper.query
+                Assert.Null(user.Name); //Name is really null
+                user.Age = 6;
+                Assert.True(await connection.UpdateAsync<IUser>(user)); //we just changed Age. Name is still null. Name should not be changed by this query
+
+                user = await connection.GetAsync<IUser>(id);
+                Assert.Equal("Bob", user.Name);
+            }
+        }
+
+        [Fact]
+        public async Task PartialInsertAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var test = ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>();
+                Assert.Empty(((ProxyGenerator.IProxy)test).DirtyFields);
+                test.Name = "Bob";
+                Assert.Null(test.Age);
+                var id = await connection.InsertAsync<IDefaultValueTest>(test); //The DB field Age has a default value of 2. We hence expect that 2 will be written into the DB
+                Console.WriteLine("PartialInsert: " + id);
+
+                test = await connection.GetAsync<IDefaultValueTest>(id);
+                Assert.Equal(2, test.Age);
+            }
+        }
+
+        [Fact]
+        public async Task PartialInsertEmptyListAsync()
+        {
+            
+            using (var connection = GetOpenConnection())
+            {
+                int numItems = 10;
+                List<IDefaultValueTest> list = new List<IDefaultValueTest>();
+                int emptyItem = numItems / 2;
+                for (int i = 0; i < numItems; i++)
+                {
+                    if (i == emptyItem)
+                    {
+                        list.Add(ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>());
+                    }
+                    else
+                    {
+                        var obj = ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>();
+                        obj.Age = i;
+                        obj.Name = "Name " + i;
+                        list.Add(obj);
+                    }
+                }
+                
+                await connection.DeleteAllAsync<IDefaultValueTest>();
+                long res = await connection.InsertAsync<IEnumerable<IDefaultValueTest>>(list);
+                Assert.Equal(numItems, res);
+                var check = (await connection.GetAllAsync<IDefaultValueTest>()).ToList();
+                Assert.Equal(numItems, check.Count());
+                Assert.Equal("default name", check[emptyItem].Name);
+                Assert.Null(list[emptyItem].Name);
+            }
+        }
+
+        [Fact]
+        public async Task PartialInsertEmptyAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var test = ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>();
+                Assert.Empty(((ProxyGenerator.IProxy)test).DirtyFields);
+                var id = await connection.InsertAsync<IDefaultValueTest>(test);
+                Console.WriteLine("PartialInsertEmpty: " + id);
+
+                test = await connection.GetAsync<IDefaultValueTest>(id);
+                Assert.Equal(2, test.Age);
+                Assert.Equal("default name", test.Name);
+            }
+        }
+
         [Fact]
         public async Task TypeWithGenericParameterCanBeInsertedAsync()
         {

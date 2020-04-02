@@ -5,7 +5,7 @@ using System.Linq;
 using Dapper.Contrib.Extensions;
 using Xunit;
 
-using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
+//using FactAttribute = Dapper.Tests.Contrib.SkippableFactAttribute;
 
 namespace Dapper.Tests.Contrib
 {
@@ -31,6 +31,23 @@ namespace Dapper.Tests.Contrib
         [ExplicitKey]
         public int Id { get; set; }
         public string Name { get; set; }
+    }
+
+    [Table("Users")]
+    public interface IUserWithOtherName
+    {
+        [Key]
+        int Id { get; set; }
+        string Name { get; set; }
+        int Age { get; set; }
+    }
+
+    public interface IDefaultValueTest
+    {
+        [Key]
+        int Id { get; set; }
+        string Name { get; set; }
+        int? Age { get; set; }
     }
 
     public interface IUser
@@ -334,6 +351,21 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void TableNameOnInterface()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert<User>(new User { Name = "test", Age = 4 });
+
+                var user = connection.Get<IUserWithOtherName>(id);
+                user.Age = 7;
+                connection.Update(user);
+                var user2 = connection.Get<IUserWithOtherName>(id);
+                Assert.Equal(user.Age, user2.Age);
+            }
+        }
+
+        [Fact]
         public void TestSimpleGet()
         {
             using (var connection = GetOpenConnection())
@@ -482,6 +514,99 @@ namespace Dapper.Tests.Contrib
                 Assert.Equal(users.Count, numberOfEntities - 10);
             }
         }
+
+        [Fact]
+        public void PartialUpdate()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<IUser>();
+                var user = ProxyGenerator.GetInterfaceProxy<IUser>();
+                Assert.False(((ProxyGenerator.IProxy)user).IsDirty);
+                user.Age = 5;
+                user.Name = "Bob";
+                var id = connection.Insert<IUser>(user);
+
+                Assert.True(id > 0);
+                user = connection.QueryFirstOrDefault<IUser>("SELECT Id, Age FROM Users WHERE Id = @id", new { id });
+                Assert.Equal(2, ((ProxyGenerator.IProxy)user).DirtyFields.Count()); //only Id and Age have been set by Dapper.query
+                Assert.Null(user.Name); //Name is really null
+                user.Age = 6;
+                Assert.True(connection.Update<IUser>(user)); //we just changed Age. Name is still null. Name should not be changed by this query
+
+                user = connection.Get<IUser>(id);
+                Assert.Equal("Bob", user.Name);
+            }
+        }
+
+        [Fact]
+        public void PartialInsert()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var test = ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>();
+                Assert.Empty(((ProxyGenerator.IProxy)test).DirtyFields);
+                test.Name = "Bob";
+                Assert.Null(test.Age);
+                var id = connection.Insert<IDefaultValueTest>(test); //The DB field Age has a default value of 2. We hence expect that 2 will be written into the DB
+                Console.WriteLine("PartialInsert: " + id);
+
+                test = connection.Get<IDefaultValueTest>(id);
+                Assert.Equal(2, test.Age);
+            }
+        }
+
+       
+        [Fact]
+        public void PartialInsertEmpty()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var test = ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>();
+                Assert.Empty(((ProxyGenerator.IProxy)test).DirtyFields);
+                var id = connection.Insert<IDefaultValueTest>(test);
+                Console.WriteLine("PartialInsertEmpty: " + id);
+
+                test = connection.Get<IDefaultValueTest>(id);
+                Assert.Equal(2, test.Age);
+                Assert.Equal("default name", test.Name);
+            }
+        }
+
+        
+        [Fact]
+        public void PartialInsertEmptyList()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                int numItems = 10;
+                List<IDefaultValueTest> list = new List<IDefaultValueTest>();
+                int emptyItem = numItems / 2;
+                for (int i = 0; i < numItems; i++)
+                {
+                    if (i == emptyItem)
+                    {
+                        list.Add(ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>());
+                    }
+                    else
+                    {
+                        var obj = ProxyGenerator.GetInterfaceProxy<IDefaultValueTest>();
+                        obj.Age = i;
+                        obj.Name = "Name " + i;
+                        list.Add(obj);
+                    }
+                }
+                connection.DeleteAll<IDefaultValueTest>();
+                long res = connection.Insert<IEnumerable<IDefaultValueTest>>(list);
+                Assert.Equal(numItems, res);
+                var check = connection.GetAll<IDefaultValueTest>().ToList();
+                Assert.Equal(numItems, check.Count());
+                Assert.Equal("default name", check[emptyItem].Name);
+                Assert.Null(list[emptyItem].Name);
+            }
+        }
+
+        
 
         [Fact]
         public void InsertGetUpdate()

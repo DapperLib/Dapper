@@ -62,7 +62,7 @@ namespace Dapper.Contrib.Extensions
                 }
             }
 
-            ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+            ((ProxyGenerator.IProxy)obj).MarkAsClean();   //reset change tracking and return
 
             return obj;
         }
@@ -120,7 +120,7 @@ namespace Dapper.Contrib.Extensions
                         property.SetValue(obj, Convert.ChangeType(val, property.PropertyType), null);
                     }
                 }
-                ((IProxy)obj).IsDirty = false;   //reset change tracking and return
+                ((ProxyGenerator.IProxy)obj).MarkAsClean();   //reset change tracking and return
                 list.Add(obj);
             }
             return list;
@@ -139,6 +139,7 @@ namespace Dapper.Contrib.Extensions
         public static Task<int> InsertAsync<T>(this IDbConnection connection, T entityToInsert, IDbTransaction transaction = null,
             int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
+            var bla = System.Reflection.MethodBase.GetCurrentMethod();
             var type = typeof(T);
             sqlAdapter = sqlAdapter ?? GetFormatter(connection);
 
@@ -168,6 +169,10 @@ namespace Dapper.Contrib.Extensions
             var keyProperties = KeyPropertiesCache(type).ToList();
             var computedProperties = ComputedPropertiesCache(type);
             var allPropertiesExceptKeyAndComputed = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+            if (entityToInsert is ProxyGenerator.IProxy tmpProxy)
+            {
+                allPropertiesExceptKeyAndComputed = allPropertiesExceptKeyAndComputed.Where(x => tmpProxy.DirtyFields.Contains(x.Name)).ToList();
+            }
 
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
@@ -191,7 +196,40 @@ namespace Dapper.Contrib.Extensions
                 return sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
                     sbParameterList.ToString(), keyProperties, entityToInsert);
             }
+            else if (type.IsInterface)
+            {
+                //this is a list of Interfaces. Each Insert statement could be different (as different fields might be dirty for each object)
+                //recursively calling myself for each list item
 
+                System.Collections.IEnumerable listToInsert = (System.Collections.IEnumerable)entityToInsert;
+                MethodInfo method = typeof(Dapper.Contrib.Extensions.SqlMapperExtensions).GetMethod(nameof(InsertAsync));
+                MethodInfo generic = method.MakeGenericMethod(type);
+
+                return Task.Run(async () =>
+                {
+                    int returnVal = 0;
+                    bool transWasNull = transaction == null;
+                    if (transWasNull) transaction = connection.BeginTransaction();
+
+                    foreach (var item in listToInsert)
+                    {
+                        try
+                        {
+                            var task = (Task<int>)generic.Invoke(null, new object[] { connection, item, transaction, commandTimeout, sqlAdapter });
+                            await task.ConfigureAwait(false);
+                            returnVal++;
+                        }
+                        catch (Exception ex)
+                        {
+                            if (transWasNull) transaction.Rollback();
+                            throw ex;
+                        }
+                    }
+                    if (transWasNull) transaction.Commit();
+                    return returnVal;
+                });
+
+            }
             //insert list of entities
             var cmd = $"INSERT INTO {name} ({sbColumnList}) values ({sbParameterList})";
             return connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
@@ -208,9 +246,14 @@ namespace Dapper.Contrib.Extensions
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            if ((entityToUpdate is IProxy proxy) && !proxy.IsDirty)
+            bool tracking = false;
+            if (entityToUpdate is ProxyGenerator.IProxy proxy)
             {
-                return false;
+                if (!proxy.IsDirty)
+                {
+                    return false;
+                }
+                tracking = true;
             }
 
             var type = typeof(T);
@@ -246,6 +289,11 @@ namespace Dapper.Contrib.Extensions
             keyProperties.AddRange(explicitKeyProperties);
             var computedProperties = ComputedPropertiesCache(type);
             var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
+            if (tracking)
+            {
+                var dirtyFields = ((ProxyGenerator.IProxy)entityToUpdate).DirtyFields;
+                nonIdProps = nonIdProps.Where(x => dirtyFields.Contains(x.Name)).ToList();
+            }
 
             var adapter = GetFormatter(connection);
 
@@ -376,7 +424,15 @@ public partial class SqlServerAdapter
     /// <returns>The Id of the row created.</returns>
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = $"INSERT INTO {tableName} ({columnList}) values ({parameterList}); SELECT SCOPE_IDENTITY() id";
+        string cmd;
+        if (columnList == string.Empty)
+        {
+            cmd = $"insert into {tableName} default values;select SCOPE_IDENTITY() id";
+        }
+        else
+        {
+            cmd = $"insert into {tableName} ({columnList}) values ({parameterList});select SCOPE_IDENTITY() id";
+        }
         var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
         var first = await multi.ReadFirstOrDefaultAsync().ConfigureAwait(false);
@@ -409,7 +465,15 @@ public partial class SqlCeServerAdapter
     /// <returns>The Id of the row created.</returns>
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList})";
+        string cmd;
+        if (columnList == string.Empty)
+        {
+            cmd = $"insert into {tableName} default values"; //TODO: untested
+        }
+        else
+        {
+            cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
+        }
         await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
         var r = (await connection.QueryAsync<dynamic>("SELECT @@IDENTITY id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false)).ToList();
 
@@ -443,7 +507,7 @@ public partial class MySqlAdapter
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName,
         string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList})";
+        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList})"; //mysql supports "insert into table () values ()"
         await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
         var r = await connection.QueryAsync<dynamic>("SELECT LAST_INSERT_ID() id", transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
 
@@ -476,7 +540,14 @@ public partial class PostgresAdapter
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
         var sb = new StringBuilder();
-        sb.AppendFormat("INSERT INTO {0} ({1}) VALUES ({2})", tableName, columnList, parameterList);
+        if (columnList == string.Empty)
+        {
+            sb.AppendFormat("insert into {0} default values", tableName); //TODO: untested
+        }
+        else
+        {
+            sb.AppendFormat("insert into {0} ({1}) values ({2})", tableName, columnList, parameterList);
+        }
 
         // If no primary key then safe to assume a join table with not too much data to return
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
@@ -528,7 +599,15 @@ public partial class SQLiteAdapter
     /// <returns>The Id of the row created.</returns>
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList}); SELECT last_insert_rowid() id";
+        string cmd;
+        if (columnList == string.Empty)
+        {
+            cmd = $"insert into {tableName} default values; SELECT last_insert_rowid() id";
+        }
+        else
+        {
+            cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList}); SELECT last_insert_rowid() id";
+        }
         var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
         var id = (int)(await multi.ReadFirstAsync().ConfigureAwait(false)).id;
@@ -558,7 +637,15 @@ public partial class FbAdapter
     /// <returns>The Id of the row created.</returns>
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
+        string cmd;
+        if (columnList == string.Empty)
+        {
+            cmd = $"insert into {tableName} default values"; //TODO: untested
+        }
+        else
+        {
+            cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
+        }
         await connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();

@@ -1800,6 +1800,13 @@ namespace Dapper
             {
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
+            if (type.IsInterface)
+            {
+                Func<object> getIfaceProxyFunc = ProxyGenerator.GetInterfaceProxyType<object>;
+                var getIfaceProxyMethod = typeof(ProxyGenerator).GetMethod(getIfaceProxyFunc.GetMethodInfo().Name, BindingFlags.Public | BindingFlags.Static);
+                var getIfaceProxyGenMethod = getIfaceProxyMethod.MakeGenericMethod(type);
+                type = (Type)getIfaceProxyGenMethod.Invoke(null, null);
+            }
             Type underlyingType = null;
             if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
                 || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
