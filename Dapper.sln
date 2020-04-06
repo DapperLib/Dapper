@@ -46,6 +46,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Tests.Performance", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.ProviderTools", "Dapper.ProviderTools\Dapper.ProviderTools.csproj", "{B06DB435-0C74-4BD3-BC97-52AF7CF9916B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{9D960D4D-80A2-4DAC-B386-8F4235EC73E6}"
+	ProjectSection(SolutionItems) = preProject
+		docs\index.md = docs\index.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
