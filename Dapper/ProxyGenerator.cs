@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -15,6 +16,83 @@ namespace Dapper
     /// </summary>
     public static class ProxyGenerator
     {
+        /// <summary>
+        /// Returns all Properties of "inherited" Interfaces
+        /// </summary>
+        public static PropertyInfo[] GetPublicProperties(this Type type)
+        {
+            if (type.IsInterface)
+            {
+                var propertyInfos = new List<PropertyInfo>();
+
+                var considered = new List<Type>();
+                var queue = new Queue<Type>();
+                considered.Add(type);
+                queue.Enqueue(type);
+                while (queue.Count > 0)
+                {
+                    var subType = queue.Dequeue();
+                    foreach (var subInterface in subType.GetInterfaces())
+                    {
+                        if (considered.Contains(subInterface)) continue;
+
+                        considered.Add(subInterface);
+                        queue.Enqueue(subInterface);
+                    }
+
+                    var typeProperties = subType.GetProperties(
+                        BindingFlags.FlattenHierarchy
+                        | BindingFlags.Public
+                        | BindingFlags.Instance);
+
+                    var newPropertyInfos = typeProperties
+                        .Where(x => !propertyInfos.Contains(x));
+
+                    propertyInfos.InsertRange(0, newPropertyInfos);
+                }
+
+                return propertyInfos.ToArray();
+            }
+
+            return type.GetProperties(BindingFlags.FlattenHierarchy
+                | BindingFlags.Public | BindingFlags.Instance);
+        }
+
+        /// <summary>
+        /// Returns all Properties of "inherited" Interfaces
+        /// </summary>
+        public static MethodInfo GetPublicMethod(this Type type, string name)
+        {
+            if (type.IsInterface)
+            {
+                var considered = new List<Type>();
+                var queue = new Queue<Type>();
+                considered.Add(type);
+                queue.Enqueue(type);
+                while (queue.Count > 0)
+                {
+                    var subType = queue.Dequeue();
+                    foreach (var subInterface in subType.GetInterfaces())
+                    {
+                        if (considered.Contains(subInterface)) continue;
+
+                        considered.Add(subInterface);
+                        queue.Enqueue(subInterface);
+                    }
+
+                    var method = subType.GetMethod(name, 
+                        BindingFlags.FlattenHierarchy
+                        | BindingFlags.Public
+                        | BindingFlags.Instance);
+
+                    if (method != null) return method;
+                }
+            }
+
+            return type.GetMethod(name, BindingFlags.FlattenHierarchy
+                | BindingFlags.Public | BindingFlags.Instance);
+        }
+
         /// <summary>
         /// Interface that will be implemented additionally and contains the IsDirty stuff.
         /// </summary>
@@ -33,7 +111,7 @@ namespace Dapper
             /// </summary>
             void MarkAsClean();
         }
-        private static readonly Dictionary<Type, Type> TypeCache = new Dictionary<Type, Type>();
+        private static readonly ConcurrentDictionary<Type, Type> TypeCache = new ConcurrentDictionary<Type, Type>();
 
         private static AssemblyBuilder GetAsmBuilder(string name)
         {
@@ -76,7 +154,7 @@ namespace Dapper
             var setIsDirtyMethod = CreateIsDirtyProperty(typeBuilder);
 
             // Generate a field for each property, which implements the T
-            foreach (var property in typeof(T).GetProperties())
+            foreach (var property in typeof(T).GetPublicProperties())
             {
                 object[] tmp = property.GetCustomAttributes(true);
                 List<Attribute> custAttr = new List<Attribute>(tmp.Count());
@@ -93,7 +171,13 @@ namespace Dapper
             var generatedType = typeBuilder.CreateType();
 #endif
 
-            TypeCache.Add(typeOfT, generatedType);
+            if (!TypeCache.TryAdd(typeOfT, generatedType))
+            {
+                if (TypeCache.TryGetValue(typeOfT, out Type k2))
+                {
+                    return k2;
+                }
+            }
             return generatedType;
         }
 
@@ -275,8 +359,8 @@ namespace Dapper
 
             property.SetGetMethod(currGetPropMthdBldr);
             property.SetSetMethod(currSetPropMthdBldr);
-            var getMethod = typeof(T).GetMethod("get_" + propertyName);
-            var setMethod = typeof(T).GetMethod("set_" + propertyName);
+            var getMethod = typeof(T).GetPublicMethod("get_" + propertyName);
+            var setMethod = typeof(T).GetPublicMethod("set_" + propertyName);
             typeBuilder.DefineMethodOverride(currGetPropMthdBldr, getMethod);
             typeBuilder.DefineMethodOverride(currSetPropMthdBldr, setMethod);
         }
