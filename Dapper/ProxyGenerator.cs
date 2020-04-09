@@ -149,6 +149,13 @@ namespace Dapper
                 TypeAttributes.Public | TypeAttributes.Class);
             typeBuilder.AddInterfaceImplementation(typeOfT);
             typeBuilder.AddInterfaceImplementation(interfaceType);
+            foreach (var a in typeOfT.GetCustomAttributes(true))
+            {
+                var attrBuilder = GenerateAttributeBuilder((Attribute)a);
+                if (attrBuilder != null)
+                    typeBuilder.SetCustomAttribute(attrBuilder);
+            }
+            
 
             //create our _isDirty field, which implements IProxy
             var setIsDirtyMethod = CreateIsDirtyProperty(typeBuilder);
@@ -331,30 +338,9 @@ namespace Dapper
             //this however works for all Dapper.Contrib's Attributes
             foreach (var a in custAttributes)
             {
-                var attrType = a.GetType();
-                var constructors = attrType.GetConstructors();
-                Array.Sort(constructors, (x, y) => x.GetParameters().Count().CompareTo(y.GetParameters().Count()));
-                var constructor = constructors[0];
-                var constParams = constructor.GetParameters();
-                object[] constArgs = new object[constParams.Count()];
-                bool success = true;
-                for (int i = 0; i < constParams.Count(); i++)
-                {
-                    var method = attrType.GetMethod("get_" + char.ToUpper(constParams[i].Name[0]) + constParams[i].Name.Substring(1));
-                    if (method != null)
-                    {
-                        constArgs[i] = method.Invoke(a, new object[0]);
-                    }
-                    else
-                    {
-                        success = false;
-                    }
-                }
-                if (success)
-                {
-                    var attributeBuilder = new CustomAttributeBuilder(constructor, constArgs);
-                    property.SetCustomAttribute(attributeBuilder);
-                }
+                var attrBuilder = GenerateAttributeBuilder(a);
+                if (attrBuilder != null)
+                    property.SetCustomAttribute(attrBuilder);
             }
 
             property.SetGetMethod(currGetPropMthdBldr);
@@ -363,6 +349,63 @@ namespace Dapper
             var setMethod = typeof(T).GetPublicMethod("set_" + propertyName);
             typeBuilder.DefineMethodOverride(currGetPropMthdBldr, getMethod);
             typeBuilder.DefineMethodOverride(currSetPropMthdBldr, setMethod);
+        }
+
+        private static CustomAttributeBuilder GenerateAttributeBuilder(Attribute a)
+        {
+            var attrType = a.GetType();
+            if (attrType.Name.StartsWith("IOPathValidation"))
+            {
+                Console.WriteLine("eek");
+            }
+            var constructors = attrType.GetConstructors();
+            var props = attrType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(p => p.CanRead).ToList();
+            var fields = attrType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).ToList();
+            Array.Sort(constructors, (x, y) => y.GetParameters().Count().CompareTo(x.GetParameters().Count()));
+            foreach (var constructor in constructors)
+            {
+                var constrParamInfos = constructor.GetParameters();
+                var constructorArgs = new object[constrParamInfos.Length];
+                bool allMatched = true;
+                for (var i = 0; i < constructorArgs.Length && allMatched; i++)
+                {
+                    var prop = props.FirstOrDefault(x => x.Name.Equals(constrParamInfos[i].Name, StringComparison.OrdinalIgnoreCase) && x.PropertyType == constrParamInfos[i].ParameterType);
+                    if (prop != null)
+                    {
+                        constructorArgs[i] = prop.GetValue(a);
+                        props.Remove(prop);
+                    }
+                    else
+                    {
+                        var field = fields.FirstOrDefault(x => x.Name.Equals(constrParamInfos[i].Name, StringComparison.OrdinalIgnoreCase) && x.FieldType == constrParamInfos[i].ParameterType);
+                        if (field != null)
+                        {
+                            constructorArgs[i] = field.GetValue(a);
+                            fields.Remove(field);
+                        }
+                        else
+                        {
+                            allMatched = false;
+                        }
+                    }
+                }
+                if (allMatched)
+                {
+                    var propsArr = props.Where(p => p.CanRead && p.CanWrite && (p.GetMethod?.GetParameters().Length ?? 1) == 0).ToArray();
+                    object[] propValues = new object[propsArr.Length];
+                    for (var i = 0; i < propsArr.Length; i++)
+                        propValues[i] = propsArr[i].GetMethod.Invoke(a, new object[0] { });
+
+                    var fieldsArr = fields.ToArray();
+                    object[] fieldValues = new object[fieldsArr.Length];
+                    for (var i = 0; i < fieldsArr.Length; i++)
+                        fieldValues[i] = fieldsArr[i].GetValue(a);
+
+                    var attributeBuilder = new CustomAttributeBuilder(constructor, constructorArgs, propsArr, propValues, fieldsArr, fieldValues);
+                    return attributeBuilder;
+                }
+            }
+            return null;
         }
     }
 }
