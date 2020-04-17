@@ -94,7 +94,7 @@ namespace Dapper.Contrib.Extensions
             }
 
             var allProperties = TypePropertiesCache(type);
-            var keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
+            var keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a != null && a.GetType().Name == nameof(KeyAttribute))).ToList();
 
             if (keyProperties.Count == 0)
             {
@@ -115,8 +115,7 @@ namespace Dapper.Contrib.Extensions
             {
                 return pis.ToList();
             }
-
-            var properties = type.GetProperties().Where(IsWriteable).ToArray();
+            var properties = type.GetPublicProperties().Where(IsWriteable).ToArray();
             TypeProperties[type.TypeHandle] = properties;
             return properties.ToList();
         }

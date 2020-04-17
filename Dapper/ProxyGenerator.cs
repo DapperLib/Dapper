@@ -354,10 +354,6 @@ namespace Dapper
         private static CustomAttributeBuilder GenerateAttributeBuilder(Attribute a)
         {
             var attrType = a.GetType();
-            if (attrType.Name.StartsWith("IOPathValidation"))
-            {
-                Console.WriteLine("eek");
-            }
             var constructors = attrType.GetConstructors();
             var props = attrType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(p => p.CanRead).ToList();
             var fields = attrType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).ToList();
