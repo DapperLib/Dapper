@@ -411,9 +411,9 @@ namespace Dapper
             {
                 var member = chain[i].Member;
 
-                if (member is PropertyInfo)
+                if (member is PropertyInfo info)
                 {
-                    var get = ((PropertyInfo)member).GetGetMethod(true);
+                    var get = info.GetGetMethod(true);
                     il.Emit(OpCodes.Callvirt, get); // [Member{i}]
                 }
                 else // Else it must be a field!
