@@ -26,7 +26,7 @@ namespace Dapper.Tests.Contrib
 
                 Assert.Single(connection.GetAll<GenericType<string>>());
 
-                var objectsToInsert = new List<GenericType<string>>
+                var objectsToInsert = new List<GenericType<string>>(2)
                 {
                     new GenericType<string>
                     {
@@ -83,7 +83,7 @@ namespace Dapper.Tests.Contrib
             }
         }
 
-        [Fact] 
+        [Fact]
         public async Task GetAsyncSucceedsAfterDeleteAsyncWhenExplicitKeyPresent()
         {
             using (var connection = GetOpenConnection())
@@ -227,7 +227,7 @@ namespace Dapper.Tests.Contrib
                 await connection.DeleteAllAsync<User>().ConfigureAwait(false);
 
                 var rand = new Random(8675309);
-                var data = new List<User>();
+                var data = new List<User>(100);
                 for (var i = 0; i < 100; i++)
                 {
                     var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
@@ -296,7 +296,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -334,7 +334,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -379,7 +379,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -404,7 +404,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 

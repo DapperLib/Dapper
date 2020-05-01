@@ -165,7 +165,7 @@ namespace Dapper
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, DbType>
+            typeMap = new Dictionary<Type, DbType>(37)
             {
                 [typeof(byte)] = DbType.Byte,
                 [typeof(sbyte)] = DbType.SByte,
@@ -380,7 +380,7 @@ namespace Dapper
                     && typeof(IEnumerable<IDataRecord>).IsAssignableFrom(type))
                 {
                     var argTypes = type.GetGenericArguments();
-                    if(typeof(IDataRecord).IsAssignableFrom(argTypes[0]))
+                    if (typeof(IDataRecord).IsAssignableFrom(argTypes[0]))
                     {
                         try
                         {
@@ -2436,7 +2436,7 @@ namespace Dapper
                 }
                 else
                 { // might still all be accounted for; check the hard way
-                    var positionByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                    var positionByName = new Dictionary<string, int>(ctorParams.Length, StringComparer.OrdinalIgnoreCase);
                     foreach (var param in ctorParams)
                     {
                         positionByName[param.Name] = param.Position;
