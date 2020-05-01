@@ -151,6 +151,7 @@ namespace Dapper
             AddClause("having", sql, parameters, "\nAND ", "HAVING ", "\n", false);
 
         public SqlBuilder Set(string sql, dynamic parameters = null) =>
-             AddClause("set", sql, parameters, " , ", "Set ", "\n", false);
+             AddClause("set", sql, parameters, " , ", "SET", "\n", false);
+
     }
 }
