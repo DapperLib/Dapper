@@ -551,9 +551,9 @@ namespace Dapper.Contrib.Extensions
             var name = GetDatabaseType?.Invoke(connection).ToLower()
                        ?? connection.GetType().Name.ToLower();
 
-            return !AdapterDictionary.ContainsKey(name)
+            return !AdapterDictionary.TryGetValue(name, out var adapter)
                 ? DefaultAdapter
-                : AdapterDictionary[name];
+                : adapter;
         }
 
         private static class ProxyGenerator
