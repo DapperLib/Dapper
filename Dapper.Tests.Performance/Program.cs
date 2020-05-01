@@ -28,7 +28,7 @@ namespace Dapper.Tests.Performance
                 WriteColor("  (no args)", ConsoleColor.Blue);
                 WriteLine(": run all benchmarks");
                 WriteColor("  --legacy", ConsoleColor.Blue);
-                WriteLine(": run the legacy benchmark suite/format", ConsoleColor.Gray);
+                WriteColor(": run the legacy benchmark suite/format", ConsoleColor.Gray);
                 WriteLine();
             }
             WriteLine("Using ConnectionString: " + BenchmarkBase.ConnectionString);
