@@ -8,6 +8,7 @@ using System.Linq;
 using Belgrade.SqlClient;
 using Dapper.Contrib.Extensions;
 using Dapper.Tests.Performance.Dashing;
+using Dapper.Tests.Performance.EntityFramework;
 using Dapper.Tests.Performance.EntityFrameworkCore;
 using Dapper.Tests.Performance.NHibernate;
 using Dashing;
@@ -22,7 +23,6 @@ using System.Configuration;
 using System.Threading.Tasks;
 #if NET4X
 using System.Data.Linq;
-using Dapper.Tests.Performance.EntityFramework;
 using Dapper.Tests.Performance.Linq2Sql;
 using Dapper.Tests.Performance.Xpo;
 using NHibernate.Linq;
@@ -343,7 +343,6 @@ namespace Dapper.Tests.Performance
                     }, "DevExpress.XPO: FindObject<T>");
                 }, "DevExpress.XPO");
 
-#if NET4X
                 // Entity Framework
                 Try(() =>
                 {
@@ -357,6 +356,7 @@ namespace Dapper.Tests.Performance
                     tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework: No Tracking");
                 }, "Entity Framework");
 
+#if NET4X
                 // Linq2SQL
                 Try(() =>
                 {
