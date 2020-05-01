@@ -12,7 +12,7 @@ namespace Dapper
     public static class Snapshotter
     {
         /// <summary>
-        /// Starts the snapshot of an object by making a copy of the its current state.
+        /// Starts the snapshot of an object by making a copy of its current state.
         /// </summary>
         /// <typeparam name="T">The type of object to snapshot.</typeparam>
         /// <param name="obj">The object to snapshot.</param>
