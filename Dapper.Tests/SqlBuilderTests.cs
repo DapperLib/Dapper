@@ -69,7 +69,8 @@ namespace Dapper.Tests
 
                 var result = connection.QueryFirst("select * from #Users where Id = 1");
 
-                Assert.Equal("update #Users Set vip = @vip , updatetime = @updatetime\n WHERE id = @id\n", template.RawSql);
+                Assert.Equal("update #Users SET vip = @vip , updatetime = @updatetime\n WHERE id = @id\n", template.RawSql);
+
 
                 Assert.True((bool)result.Vip);
                 Assert.Equal(updatetime, (DateTime)result.Updatetime);
