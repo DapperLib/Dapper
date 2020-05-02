@@ -1,13 +1,10 @@
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 skip_branch_with_pr: true
 skip_tags: true
 skip_commits:
   files:
     - '**/*.md'
-
-install:
-  - choco install dotnetcore-sdk --version 3.0.100
 
 environment:
   Appveyor: true
