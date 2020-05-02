@@ -28,13 +28,13 @@ environment:
   SqlServerConnectionString: Server=(local)\SQL2019;Database=tempdb;User ID=sa;Password=Password12!
 
 services:
-  - mssql2019
   - mysql
   - postgresql
 
 init:
   - git config --global core.autocrlf input
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
+  - net start MSSQL$SQL2019
 
 nuget:
   disable_publish_on_pr: true
