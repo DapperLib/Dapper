@@ -9,9 +9,8 @@ namespace Dapper.Tests
     public class PostgresProvider : DatabaseProvider
     {
         public override DbProviderFactory Factory => Npgsql.NpgsqlFactory.Instance;
-        public override string GetConnectionString() => IsAppVeyor
-                ? "Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test"
-                : "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest"; // ;Encoding = UNICODE
+        public override string GetConnectionString() =>
+            GetConnectionString("PostgesConnectionString", "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest");
     }
     public class PostgresqlTests : TestBase<PostgresProvider>
     {

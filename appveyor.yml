@@ -21,6 +21,12 @@ environment:
   MYSQL_ENV_MYSQL_USER: root
   MYSQL_ENV_MYSQL_PASSWORD: Password12!
   MYSQL_ENV_MYSQL_DATABASE: test
+  # Connection strings for tests:
+  MySqlConnectionString: Server=localhost;Database=test;Uid=root;Pwd=Password12!;
+  OLEDBConnectionString: Provider=SQLOLEDB;Data Source=(local)\SQL2019;Initial Catalog=tempdb;User Id=sa;Password=Password12!
+  PostgesConnectionString: Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test
+  SqlServerConnectionString: Server=(local)\SQL2019;Database=tempdb;User ID=sa;Password=Password12!"
+
 services:
   - mssql2019
   - mysql

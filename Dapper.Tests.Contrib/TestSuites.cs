@@ -23,9 +23,8 @@ namespace Dapper.Tests.Contrib
     {
         private const string DbName = "tempdb";
         public static string ConnectionString =>
-            IsAppVeyor
-                ? @"Server=(local)\SQL2016;Database=tempdb;User ID=sa;Password=Password12!"
-                : $"Data Source=.;Initial Catalog={DbName};Integrated Security=True";
+            GetConnectionString("SqlServerConnectionString", $"Data Source=.;Initial Catalog={DbName};Integrated Security=True");
+
         public override IDbConnection GetConnection() => new SqlConnection(ConnectionString);
 
         static SqlServerTestSuite()
@@ -62,9 +61,7 @@ namespace Dapper.Tests.Contrib
     public class MySqlServerTestSuite : TestSuite
     {
         public static string ConnectionString { get; } =
-            IsAppVeyor
-                ? "Server=localhost;Database=test;Uid=root;Pwd=Password12!;UseAffectedRows=false;"
-                : "Server=localhost;Database=tests;Uid=test;Pwd=pass;UseAffectedRows=false;";
+            GetConnectionString("MySqlConnectionString", "Server=localhost;Database=tests;Uid=test;Pwd=pass;UseAffectedRows=false;");
 
         public override IDbConnection GetConnection()
         {
