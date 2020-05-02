@@ -22,7 +22,7 @@ environment:
   MYSQL_ENV_MYSQL_PASSWORD: Password12!
   MYSQL_ENV_MYSQL_DATABASE: test
 services:
-  - mssql2016
+  - mssql2019
   - mysql
   - postgresql
 
