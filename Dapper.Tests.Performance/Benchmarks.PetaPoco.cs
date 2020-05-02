@@ -14,6 +14,7 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
+            RegisterSqlFactory();
             _db = new Database(ConnectionString, "System.Data.SqlClient");
             _db.OpenSharedConnection();
             _dbFast = new Database(ConnectionString, "System.Data.SqlClient");
