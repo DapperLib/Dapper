@@ -209,7 +209,7 @@ namespace Massive
         /// </summary>
         public virtual List<DbCommand> BuildCommands(params object[] things)
         {
-            var commands = new List<DbCommand>(things.Length);
+            var commands = new List<DbCommand>();
             foreach (var item in things)
             {
                 if (HasPrimaryKey(item))
@@ -323,6 +323,7 @@ namespace Massive
             var settings = (IDictionary<string, object>)expando;
             var sbKeys = new StringBuilder();
             const string stub = "UPDATE {0} SET {1} WHERE {2} = @{3}";
+            var args = new List<object>();
             var result = CreateCommand(stub, null);
             int counter = 0;
             foreach (var item in settings)
