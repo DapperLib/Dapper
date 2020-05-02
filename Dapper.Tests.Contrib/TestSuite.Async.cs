@@ -83,7 +83,7 @@ namespace Dapper.Tests.Contrib
             }
         }
 
-        [Fact] 
+        [Fact]
         public async Task GetAsyncSucceedsAfterDeleteAsyncWhenExplicitKeyPresent()
         {
             using (var connection = GetOpenConnection())
@@ -470,6 +470,22 @@ namespace Dapper.Tests.Contrib
                 await connection.DeleteAllAsync<User>().ConfigureAwait(false);
                 Assert.Null(await connection.GetAsync<User>(id1).ConfigureAwait(false));
                 Assert.Null(await connection.GetAsync<User>(id2).ConfigureAwait(false));
+            }
+        }
+
+        [Fact]
+        public async Task InsertUserNullableId()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id1 = await connection.InsertAsync(new User { Name = "Alice", Age = 32 }).ConfigureAwait(false);
+                var id2 = await connection.InsertAsync(new UserNullableId { Name = "Bob", Age = 33 }).ConfigureAwait(false);
+
+                var user = await connection.GetAsync<User>(id1).ConfigureAwait(false);
+                var userNullableId = await connection.GetAsync<UserNullableId>(id2).ConfigureAwait(false);
+
+                Assert.Equal(user.Id, id1);
+                Assert.Equal(userNullableId.Id.Value, id2);
             }
         }
     }

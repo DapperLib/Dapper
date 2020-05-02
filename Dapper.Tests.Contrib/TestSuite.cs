@@ -49,6 +49,14 @@ namespace Dapper.Tests.Contrib
         public int Age { get; set; }
     }
 
+    [Table("Users")]
+    public class UserNullableId
+    {
+        public int? Id { get; set; }
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
+
     public interface INullableDate
     {
         [Key]
