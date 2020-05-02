@@ -49,7 +49,7 @@ namespace Dapper.Tests
     {
         public override string GetConnectionString() =>
             IsAppVeyor
-                ? @"Server=(local)\SQL2016;Database=tempdb;User ID=sa;Password=Password12!"
+                ? @"Server=(local)\SQL2019;Database=tempdb;User ID=sa;Password=Password12!"
                 : "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
 
         public DbConnection GetOpenConnection(bool mars)
