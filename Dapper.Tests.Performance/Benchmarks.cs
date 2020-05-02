@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Order;
 using System;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -20,6 +19,13 @@ namespace Dapper.Tests.Performance
             i = 0;
             _connection = new SqlConnection(ConnectionString);
             _connection.Open();
+        }
+
+        protected void RegisterSqlFactory()
+        {
+#if NETCOREAPP
+            System.Data.Common.DbProviderFactories.RegisterFactory("System.Data.SqlClient", SqlClientFactory.Instance);
+#endif
         }
 
         protected void Step()

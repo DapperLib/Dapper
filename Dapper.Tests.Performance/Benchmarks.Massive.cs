@@ -14,6 +14,7 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
+            RegisterSqlFactory();
             _model = new DynamicModel(ConnectionString);
         }
 
