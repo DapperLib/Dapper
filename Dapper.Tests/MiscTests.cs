@@ -301,7 +301,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             connection.Execute("create table #t(Name nvarchar(max), Age int)");
             try
             {
-                int tally = connection.Execute("insert #t (Name,Age) values(@Name, @Age)", new List<Student>
+                int tally = connection.Execute("insert #t (Name,Age) values(@Name, @Age)", new List<Student>(2)
             {
                 new Student{Age = 1, Name = "sam"},
                 new Student{Age = 2, Name = "bob"}
