@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Contrib</AssemblyName>
     <Description>Dapper Contrib Test Suite</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>netcoreapp2.1;net462</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>

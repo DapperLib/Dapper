@@ -23,7 +23,7 @@ Write-Host "Done building." -ForegroundColor "Green"
 
 if ($RunTests) {
     Write-Host "Running tests: Build.csproj traversal (all frameworks)" -ForegroundColor "Magenta"
-    dotnet test ".\Build.csproj" -c Release --no-build --logger trx
+    dotnet test ".\Build.csproj" -c Release --no-build
     if ($LastExitCode -ne 0) {
         Write-Host "Error with tests, aborting build." -Foreground "Red"
         Exit 1
