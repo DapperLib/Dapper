@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests</AssemblyName>
     <Description>Dapper Core Test Suite</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TargetFrameworks>netcoreapp2.1;net462;net472</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net462;net472</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
   </PropertyGroup>
@@ -13,10 +13,10 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
     <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
     <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
+    <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />

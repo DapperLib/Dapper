@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Transactions;
 using Dapper.Contrib.Extensions;
 using Xunit;
 
@@ -104,9 +103,10 @@ namespace Dapper.Tests.Contrib
 
     public abstract partial class TestSuite
     {
-        protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
-
         public abstract IDbConnection GetConnection();
+
+        protected static string GetConnectionString(string name, string defaultConnectionString) =>
+            Environment.GetEnvironmentVariable(name) ?? defaultConnectionString;
 
         private IDbConnection GetOpenConnection()
         {

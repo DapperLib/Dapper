@@ -1442,10 +1442,10 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
             Assert.Equal(42, result);
         }
 
-        [Fact]
+        [FactLongRunning]
         public void TestListExpansionPadding_Enabled() => TestListExpansionPadding(true);
 
-        [Fact]
+        [FactLongRunning]
         public void TestListExpansionPadding_Disabled() => TestListExpansionPadding(false);
 
         private void TestListExpansionPadding(bool enabled)
