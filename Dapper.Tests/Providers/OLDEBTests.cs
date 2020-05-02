@@ -11,9 +11,7 @@ namespace Dapper.Tests
     {
         public override DbProviderFactory Factory => OleDbFactory.Instance;
         public override string GetConnectionString() =>
-            IsAppVeyor
-                ? @"Provider=SQLOLEDB;Data Source=(local)\SQL2016;Initial Catalog=tempdb;User Id=sa;Password=Password12!"
-                : "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI";
+            GetConnectionString("OLEDBConnectionString", "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI");
     }
 
     public class OLDEBTests : TestBase<OLEDBProvider>

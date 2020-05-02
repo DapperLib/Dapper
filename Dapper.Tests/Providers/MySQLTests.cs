@@ -10,9 +10,8 @@ namespace Dapper.Tests
     public sealed class MySqlProvider : DatabaseProvider
     {
         public override DbProviderFactory Factory => MySql.Data.MySqlClient.MySqlClientFactory.Instance;
-        public override string GetConnectionString() => IsAppVeyor
-                ? "Server=localhost;Database=test;Uid=root;Pwd=Password12!;"
-                : "Server=localhost;Database=tests;Uid=test;Pwd=pass;";
+        public override string GetConnectionString() =>
+            GetConnectionString("MySqlConnectionString", "Server=localhost;Database=tests;Uid=test;Pwd=pass;");
 
         public DbConnection GetMySqlConnection(bool open = true,
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
