@@ -236,8 +236,10 @@ namespace Dapper.Tests
                 "Error parsing column 1 (Foo=bar - String)");
 
             // And a ValueTuple! (testing position too)
-            // Needs love, because we handle ValueTuple differently today
+            // Still needs love, because we handle ValueTuple differently today
             // It'll yield a raw: typeof(System.FormatException): Input string was not in a correct format.
+            // Note: not checking the "Select 1 Id, null Foo" case here, because we won't attempt to set the column
+            //   ...and there will no error in that case.
             //await TestExceptionsAsync<(int Id, int Foo)>(
             //    connection,
             //    "Select 1 Id, 'bar' Foo",
