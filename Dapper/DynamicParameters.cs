@@ -206,16 +206,6 @@ namespace Dapper
                         });
                     }
                 }
-
-                // Now that the parameters are added to the command, let's place our output callbacks
-                var tmp = outputCallbacks;
-                if (tmp != null)
-                {
-                    foreach (var generator in tmp)
-                    {
-                        generator();
-                    }
-                }
             }
 
             foreach (var param in parameters.Values)
@@ -294,6 +284,16 @@ namespace Dapper
                 }
             }
 
+            // Now that the parameters are added to the command, let's place our output callbacks
+            var tmp = outputCallbacks;
+            if (tmp != null)
+            {
+                foreach (var generator in tmp)
+                {
+                    generator();
+                }
+            }
+                
             // note: most non-priveleged implementations would use: this.ReplaceLiterals(command);
             if (literals.Count != 0) SqlMapper.ReplaceLiterals(this, command, literals);
         }
