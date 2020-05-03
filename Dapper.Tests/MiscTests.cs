@@ -167,6 +167,89 @@ namespace Dapper.Tests
             Assert.Equal("Sequence contains more than one element", ex.Message);
         }
 
+        /// <summary>
+        /// This test is ensuring our "single row" methods also behave like a type being deserialized
+        /// and give a useful error message when the types don't match.
+        /// </summary>
+        [Fact]
+        public async Task TestConversionExceptionMessages()
+        {
+            const string sql = "Select Null;";
+
+            // Nullable is expected to work if we get a null in all cases
+            // List paths
+            var list = connection.Query<int?>(sql);
+            Assert.Null(Assert.Single(list));
+            list = await connection.QueryAsync<int?>(sql);
+            Assert.Null(Assert.Single(list));
+
+            // Single row paths
+            Assert.Null(connection.QueryFirst<int?>(sql));
+            Assert.Null(connection.QueryFirstOrDefault<int?>(sql));
+            Assert.Null(connection.QuerySingle<int?>(sql));
+            Assert.Null(connection.QuerySingleOrDefault<int?>(sql));
+
+            Assert.Null(await connection.QueryFirstAsync<int?>(sql));
+            Assert.Null(await connection.QueryFirstOrDefaultAsync<int?>(sql));
+            Assert.Null(await connection.QuerySingleAsync<int?>(sql));
+            Assert.Null(await connection.QuerySingleOrDefaultAsync<int?>(sql));
+
+            static async Task TestExceptionsAsync<T>(DbConnection connection, string sql, string exception)
+            {
+                var ex = Assert.Throws<DataException>(() => connection.Query<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QueryFirst<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QueryFirstOrDefault<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QuerySingle<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QuerySingleOrDefault<T>(sql));
+                Assert.Equal(exception, ex.Message);
+
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryFirstAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryFirstOrDefaultAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QuerySingleAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QuerySingleOrDefaultAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+            }
+
+            // Null value throws
+            await TestExceptionsAsync<int>(
+                connection,
+                "Select null as Foo",
+                "Error parsing column 0 (Foo=<null>)");
+            // Incompatible value throws (testing unnamed column bits here too)
+            await TestExceptionsAsync<int>(
+                connection,
+                "Select 'bar'",
+                "Error parsing column 0 ((Unnamed Column)=bar - String)");
+            // Null with a full type (testing position too)
+            await TestExceptionsAsync<NullTestType>(
+                connection,
+                "Select 1 Id, 'bar' Foo",
+                "Error parsing column 1 (Foo=bar - String)");
+
+            // And a ValueTuple! (testing position too)
+            // Needs love, because we handle ValueTuple differently today
+            // It'll yield a raw: typeof(System.FormatException): Input string was not in a correct format.
+            //await TestExceptionsAsync<(int Id, int Foo)>(
+            //    connection,
+            //    "Select 1 Id, 'bar' Foo",
+            //    "Error parsing column 1 (Foo=bar - String)");
+        }
+
+        private class NullTestType
+        {
+            public int Id { get; }
+            public int Foo { get; }
+        }
+
         [Fact]
         public void TestStrings()
         {
