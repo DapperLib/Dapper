@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -1096,14 +1097,7 @@ namespace Dapper
                 while (reader.Read())
                 {
                     object val = func(reader);
-                    if (val == null || val is T)
-                    {
-                        yield return (T)val;
-                    }
-                    else
-                    {
-                        yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                    }
+                    yield return GetValue<T>(reader, effectiveType, val);
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 // happy path; close the reader cleanly - no
@@ -1179,31 +1173,14 @@ namespace Dapper
                     : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
 
-                T result = default(T);
+                T result = default;
                 if (reader.Read() && reader.FieldCount != 0)
                 {
                     // with the CloseConnection flag, so the reader will deal with the connection; we
                     // still need something in the "finally" to ensure that broken SQL still results
                     // in the connection closing itself
-                    var tuple = info.Deserializer;
-                    int hash = GetColumnHash(reader);
-                    if (tuple.Func == null || tuple.Hash != hash)
-                    {
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                        if (command.AddToCache) SetQueryCache(identity, info);
-                    }
+                    result = ReadRow<T>(info, identity, ref command, effectiveType, reader);
 
-                    var func = tuple.Func;
-                    object val = func(reader);
-                    if (val == null || val is T)
-                    {
-                        result = (T)val;
-                    }
-                    else
-                    {
-                        var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                        result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                    }
                     if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);
                     while (reader.Read()) { /* ignore subsequent rows */ }
                 }
@@ -1233,6 +1210,53 @@ namespace Dapper
                 }
                 if (wasClosed) cnn.Close();
                 cmd?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Shared value deserilization path for QueryRowImpl and QueryRowAsync
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static T ReadRow<T>(CacheInfo info, Identity identity, ref CommandDefinition command, Type effectiveType, IDataReader reader)
+        {
+            var tuple = info.Deserializer;
+            int hash = GetColumnHash(reader);
+            if (tuple.Func == null || tuple.Hash != hash)
+            {
+                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                if (command.AddToCache) SetQueryCache(identity, info);
+            }
+
+            var func = tuple.Func;
+            object val = func(reader);
+            return GetValue<T>(reader, effectiveType, val);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static T GetValue<T>(IDataReader reader, Type effectiveType, object val)
+        {
+            if (val is T tVal)
+            {
+                return tVal;
+            }
+            else if (val == null && (!effectiveType.IsValueType || Nullable.GetUnderlyingType(effectiveType) != null))
+            {
+                return default;
+            }
+            else
+            {
+                try
+                {
+                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
+                    return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                }
+                catch (Exception ex)
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    ThrowDataException(ex, 0, reader, val);
+#pragma warning restore CS0618 // Type or member is obsolete
+                    return default; // For the compiler - we've already thrown
+                }
             }
         }
 
@@ -3619,6 +3643,11 @@ namespace Dapper
                 if (reader != null && index >= 0 && index < reader.FieldCount)
                 {
                     name = reader.GetName(index);
+                    if (name == string.Empty)
+                    {
+                        // Otherwise we throw (=value) below, which isn't intuitive
+                        name = "(Unnamed Column)";
+                    }
                     try
                     {
                         if (value == null || value is DBNull)
