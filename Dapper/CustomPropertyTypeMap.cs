@@ -52,7 +52,7 @@ namespace Dapper
         /// Returns property based on selector strategy
         /// </summary>
         /// <param name="columnName">DataReader column name</param>
-        /// <returns>Poperty member map</returns>
+        /// <returns>Property member map</returns>
         public SqlMapper.IMemberMap GetMember(string columnName)
         {
             var prop = _propertySelector(_type, columnName);

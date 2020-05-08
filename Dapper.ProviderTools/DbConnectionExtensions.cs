@@ -7,7 +7,7 @@ using System.Reflection;
 namespace Dapper.ProviderTools
 {
     /// <summary>
-    /// Helper utilties for working with database connections
+    /// Helper utilities for working with database connections
     /// </summary>
     public static class DbConnectionExtensions
     {

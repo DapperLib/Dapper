@@ -147,7 +147,7 @@ namespace Dapper
             var backingFieldName = "<" + columnName + ">k__BackingField";
 
             // preference order is:
-            // exact match over underscre match, exact case over wrong case, backing fields over regular fields, match-inc-underscores over match-exc-underscores
+            // exact match over underscore match, exact case over wrong case, backing fields over regular fields, match-inc-underscores over match-exc-underscores
             var field = _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
                 ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
                 ?? _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))

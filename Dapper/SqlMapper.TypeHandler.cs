@@ -56,7 +56,7 @@ namespace Dapper
             protected abstract T Parse(string xml);
 
             /// <summary>
-            /// Format an instace into a string (the instance will never be null)
+            /// Format an instance into a string (the instance will never be null)
             /// </summary>
             /// <param name="xml">The string to format.</param>
             protected abstract string Format(T xml);
