@@ -379,7 +379,7 @@ public partial class SqlServerAdapter
         var cmd = $"INSERT INTO {tableName} ({columnList}) values ({parameterList}); SELECT SCOPE_IDENTITY() id";
         var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
-        var first = await multi.ReadFirstOrDefaultAsync();
+        var first = await multi.ReadFirstOrDefaultAsync().ConfigureAwait(false);
         if (first == null || first.id == null) return 0;
 
         var id = (int)first.id;
@@ -531,7 +531,7 @@ public partial class SQLiteAdapter
         var cmd = $"INSERT INTO {tableName} ({columnList}) VALUES ({parameterList}); SELECT last_insert_rowid() id";
         var multi = await connection.QueryMultipleAsync(cmd, entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
 
-        var id = (int)(await multi.ReadFirstAsync()).id;
+        var id = (int)(await multi.ReadFirstAsync().ConfigureAwait(false)).id;
         var pi = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
         if (pi.Length == 0) return id;
 
