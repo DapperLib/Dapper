@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Data;
-using System.Globalization;
-using Xunit;
 using System.Data.Common;
-#if !NETCOREAPP1_0
+using System.Globalization;
 using System.Threading;
-#endif
+using Xunit;
 
 namespace Dapper.Tests
 {
@@ -17,9 +15,11 @@ namespace Dapper.Tests
     {
         public abstract DbProviderFactory Factory { get; }
 
-        public static bool IsAppVeyor { get; } = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
         public virtual void Dispose() { }
         public abstract string GetConnectionString();
+
+        protected string GetConnectionString(string name, string defaultConnectionString) =>
+            Environment.GetEnvironmentVariable(name) ?? defaultConnectionString;
 
         public DbConnection GetOpenConnection()
         {
@@ -49,10 +49,8 @@ namespace Dapper.Tests
 
     public abstract class SqlServerDatabaseProvider : DatabaseProvider
     {
-        public override string GetConnectionString() =>
-            IsAppVeyor
-                ? @"Server=(local)\SQL2016;Database=tempdb;User ID=sa;Password=Password12!"
-                : "Data Source=.;Initial Catalog=tempdb;Integrated Security=True";
+        public override string GetConnectionString() => 
+            GetConnectionString("SqlServerConnectionString", "Data Source=.;Initial Catalog=tempdb;Integrated Security=True");
 
         public DbConnection GetOpenConnection(bool mars)
         {
@@ -93,13 +91,8 @@ namespace Dapper.Tests
 
         protected static CultureInfo ActiveCulture
         {
-#if NETCOREAPP1_0
-            get { return CultureInfo.CurrentCulture; }
-            set { CultureInfo.CurrentCulture = value; }
-#else
             get { return Thread.CurrentThread.CurrentCulture; }
             set { Thread.CurrentThread.CurrentCulture = value; }
-#endif
         }
 
         static TestBase()
@@ -109,9 +102,6 @@ namespace Dapper.Tests
             Console.WriteLine("Using Connectionstring: {0}", provider.GetConnectionString());
             var factory = provider.Factory;
             Console.WriteLine("Using Provider: {0}", factory.GetType().FullName);
-#if NETCOREAPP1_0
-            Console.WriteLine("CoreCLR (netcoreapp1.0)");
-#else
             Console.WriteLine(".NET: " + Environment.Version);
             Console.Write("Loading native assemblies for SQL types...");
             try
@@ -124,7 +114,6 @@ namespace Dapper.Tests
                 Console.WriteLine("failed.");
                 Console.Error.WriteLine(ex.Message);
             }
-#endif
         }
 
         public virtual void Dispose()

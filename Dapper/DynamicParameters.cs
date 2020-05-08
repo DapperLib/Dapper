@@ -407,14 +407,13 @@ namespace Dapper
             il.Emit(OpCodes.Castclass, typeof(T));    // [T]
 
             // Count - 1 to skip the last member access
-            var i = 0;
-            for (; i < (chain.Count - 1); i++)
+            for (var i = 0; i < chain.Count - 1; i++)
             {
-                var member = chain[0].Member;
+                var member = chain[i].Member;
 
-                if (member is PropertyInfo)
+                if (member is PropertyInfo info)
                 {
-                    var get = ((PropertyInfo)member).GetGetMethod(true);
+                    var get = info.GetGetMethod(true);
                     il.Emit(OpCodes.Callvirt, get); // [Member{i}]
                 }
                 else // Else it must be a field!

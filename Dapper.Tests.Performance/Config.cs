@@ -16,28 +16,28 @@ namespace Dapper.Tests.Performance
 
         public Config()
         {
-            Add(ConsoleLogger.Default);
+            AddLogger(ConsoleLogger.Default);
 
-            Add(CsvExporter.Default);
-            Add(MarkdownExporter.GitHub);
-            Add(HtmlExporter.Default);
+            AddExporter(CsvExporter.Default);
+            AddExporter(MarkdownExporter.GitHub);
+            AddExporter(HtmlExporter.Default);
 
             var md = MemoryDiagnoser.Default;
-            Add(md);
-            Add(new ORMColum());
-            Add(TargetMethodColumn.Method);
-            Add(new ReturnColum());
-            Add(StatisticColumn.Mean);
-            //Add(StatisticColumn.StdDev);
-            //Add(StatisticColumn.Error);
-            Add(BaselineRatioColumn.RatioMean);
-            //Add(md.GetColumnProvider());
+            AddDiagnoser(md);
+            AddColumn(new ORMColum());
+            AddColumn(TargetMethodColumn.Method);
+            AddColumn(new ReturnColum());
+            AddColumn(StatisticColumn.Mean);
+            AddColumn(StatisticColumn.StdDev);
+            AddColumn(StatisticColumn.Error);
+            AddColumn(BaselineRatioColumn.RatioMean);
+            AddColumnProvider(DefaultColumnProviders.Metrics);
 
-            Add(Job.ShortRun
+            AddJob(Job.ShortRun
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
                    .WithUnrollFactor(Iterations)
-                   .WithIterationCount(1)
+                   .WithIterationCount(10)
             );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;

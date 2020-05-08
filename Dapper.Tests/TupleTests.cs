@@ -41,6 +41,22 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void TupleReturnValue_NullableTuple_Works()
+        {
+            var val = connection.QuerySingleOrDefault<(int id, string name)?>("select 42, 'Fred', 123");
+            Assert.NotNull(val);
+            Assert.Equal(42, val.Value.id);
+            Assert.Equal("Fred", val.Value.name);
+        }
+        
+        [Fact]
+        public void TupleReturnValue_NullableTuple_Works_When_Null()
+        {
+            var val = connection.QuerySingleOrDefault<(int id, string name)?>("select 42, 'Fred', 123 where 1 = 2");
+            Assert.Null(val);
+        }
+        
+        [Fact]
         public void TupleReturnValue_TooFewColumns_Unmapped()
         {
             // I'm very wary of making this throw, but I can also see some sense in pointing out the oddness
@@ -75,7 +91,37 @@ namespace Dapper.Tests
             Assert.Equal(7, val.e7);
             Assert.Equal(8, val.e8);
         }
+        
+        [Fact]
+        public void Nullable_TupleReturnValue_Works_With8Elements()
+        {
+            // C# encodes an 8-tuple as ValueTuple<T1, T2, T3, T4, T5, T6, T7, ValueTuple<T8>>
 
+            var val = connection.QuerySingle<(int e1, int e2, int e3, int e4, int e5, int e6, int e7, int e8)?>(
+                "select 1, 2, 3, 4, 5, 6, 7, 8");
+
+            Assert.NotNull(val);
+            Assert.Equal(1, val.Value.e1);
+            Assert.Equal(2, val.Value.e2);
+            Assert.Equal(3, val.Value.e3);
+            Assert.Equal(4, val.Value.e4);
+            Assert.Equal(5, val.Value.e5);
+            Assert.Equal(6, val.Value.e6);
+            Assert.Equal(7, val.Value.e7);
+            Assert.Equal(8, val.Value.e8);
+        }
+        
+        [Fact]
+        public void Nullable_TupleReturnValue_Works_With8Elements_When_Null()
+        {
+            // C# encodes an 8-tuple as ValueTuple<T1, T2, T3, T4, T5, T6, T7, ValueTuple<T8>>
+
+            var val = connection.QuerySingleOrDefault<(int e1, int e2, int e3, int e4, int e5, int e6, int e7, int e8)?>(
+                "select 1, 2, 3, 4, 5, 6, 7, 8 where 1 = 2");
+
+            Assert.Null(val);
+        }
+        
         [Fact]
         public void TupleReturnValue_Works_With15Elements()
         {
@@ -99,6 +145,44 @@ namespace Dapper.Tests
             Assert.Equal(13, val.e13);
             Assert.Equal(14, val.e14);
             Assert.Equal(15, val.e15);
+        }
+
+        
+        [Fact]
+        public void Nullable_TupleReturnValue_Works_With15Elements()
+        {
+            // C# encodes a 15-tuple as ValueTuple<T1, T2, T3, T4, T5, T6, T7, ValueTuple<T8, T9, T10, T11, T12, T13, T14, ValueTuple<T15>>>
+
+            var val = connection.QuerySingle<(int e1, int e2, int e3, int e4, int e5, int e6, int e7, int e8, int e9, int e10, int e11, int e12, int e13, int e14, int e15)?>(
+                "select 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15");
+            
+            Assert.NotNull(val);
+            Assert.Equal(1, val.Value.e1);
+            Assert.Equal(2, val.Value.e2);
+            Assert.Equal(3, val.Value.e3);
+            Assert.Equal(4, val.Value.e4);
+            Assert.Equal(5, val.Value.e5);
+            Assert.Equal(6, val.Value.e6);
+            Assert.Equal(7, val.Value.e7);
+            Assert.Equal(8, val.Value.e8);
+            Assert.Equal(9, val.Value.e9);
+            Assert.Equal(10, val.Value.e10);
+            Assert.Equal(11, val.Value.e11);
+            Assert.Equal(12, val.Value.e12);
+            Assert.Equal(13, val.Value.e13);
+            Assert.Equal(14, val.Value.e14);
+            Assert.Equal(15, val.Value.e15);
+        }
+        
+        [Fact]
+        public void Nullable_TupleReturnValue_Works_With15Elements_When_Null()
+        {
+            // C# encodes a 15-tuple as ValueTuple<T1, T2, T3, T4, T5, T6, T7, ValueTuple<T8, T9, T10, T11, T12, T13, T14, ValueTuple<T15>>>
+
+            var val = connection.QuerySingleOrDefault<(int e1, int e2, int e3, int e4, int e5, int e6, int e7, int e8, int e9, int e10, int e11, int e12, int e13, int e14, int e15)?>(
+                "select 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 where 1 = 2");
+            
+            Assert.Null(val);
         }
 
         [Fact]

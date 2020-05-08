@@ -1,8 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-
     <AssemblyName>Dapper.ProviderTools</AssemblyName>
     <PackageTags>orm;sql;micro-orm</PackageTags>
     <Title>Dapper Provider Tools</Title>
@@ -11,10 +8,11 @@
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <Nullable>enable</Nullable>
-    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
-
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
 </Project>

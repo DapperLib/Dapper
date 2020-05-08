@@ -20,11 +20,30 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
+### 2.0.35
+
+- build tooling: enable "deterministic builds" and enable SDK roll-foward
+- fix culture related formatting/parsing issue with Sqlite (#1363 via sebastienros)
+- documentation fixes (#1357 via jawn)
+- add tests for `SqlBuilder` (#1369 via shps951023)
+
+### 2.0.30
+
+- upstream library updates; project (build) cleanup
+- reinstated net461 build target
+- add Dapper.ProviderTools library (to help with System vs Microsoft SqlClient migration, etc)
+- fix double dictionary lookup (#1339 via DamirAinullin)
+- fix bug with dynamic parameters accessing the wrong member (#1334 via DamirAinullin)
+- fix explicit-key issue with `DeleteAsync` (#1309 via james-hester-ah)
+- fix for `char` on Postgres (#1326 via jjonescz)
+- documentation fixes (#1340 via jawn)
+- test and benchmark fixes (#1337 via DamirAinullin, #1206 via yesmey, #1331 via andresrsanchez, #1335 via DamirAinullin)
+
 ### 2.0.4
 
 Primary changes:
 
-- remove the System.Data.SqlClient depenency, allowing consumers to use System.Data.SqlClient or Microsoft.Data.SqlClient (or neither, or both) as they choose
+- remove the System.Data.SqlClient dependency, allowing consumers to use System.Data.SqlClient or Microsoft.Data.SqlClient (or neither, or both) as they choose
  - this means that some users may need to *re-add* one of the above as a `<PackageReference>` for their project to build, if they were previously relying on Dapper to provide System.Data.SqlClient
  - the `AsTableValuedParameter(this IEnumerable<SqlDataRecord>)` extension method is now `AsTableValuedParameter<T>(this IEnumerable<T>) where T : IDataRecord`; this is a breaking change but should be code-compatible and just requires a rebuild
 - unify the target platform at NetStandard2.0 (and .NET Framework 4.6.2 for the EF DB geometry/geography types)

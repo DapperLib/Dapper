@@ -1,4 +1,5 @@
-﻿using Soma.Core;
+﻿#if NET4X
+using Soma.Core;
 using System;
 
 namespace Dapper.Tests.Performance.Soma
@@ -12,3 +13,4 @@ namespace Dapper.Tests.Performance.Soma
         private static readonly Action<PreparedStatement> noOp = x => { /* nope */ };
     }
 }
+#endif

@@ -30,25 +30,26 @@ namespace Dapper.Tests
             => TestClientId<SystemSqlClientProvider>();
 
         [Fact]
-        public void ClientId_MicrosoftDataSqlClient()
-            => TestClientId<MicrosoftSqlClientProvider>();
-
-
-        [Fact]
         public void ClearPool_SystemDataSqlClient()
             => ClearPool<SystemSqlClientProvider>();
+
+        [Fact]
+        public void ClearAllPools_SystemDataSqlClient()
+            => ClearAllPools<SystemSqlClientProvider>();
+
+#if MSSQLCLIENT
+        [Fact]
+        public void ClientId_MicrosoftDataSqlClient()
+            => TestClientId<MicrosoftSqlClientProvider>();
 
         [Fact]
         public void ClearPool_MicrosoftDataSqlClient()
             => ClearPool<MicrosoftSqlClientProvider>();
 
         [Fact]
-        public void ClearAllPools_SystemDataSqlClient()
-            => ClearAllPools<SystemSqlClientProvider>();
-
-        [Fact]
         public void ClearAllPools_MicrosoftDataSqlClient()
             => ClearAllPools<MicrosoftSqlClientProvider>();
+#endif
 
         private static void TestClientId<T>()
              where T : SqlServerDatabaseProvider, new()
@@ -97,11 +98,13 @@ namespace Dapper.Tests
         public void DbNumber_SystemData(int create, int test, bool result)
             => Test<SystemSqlClientProvider>(create, test, result);
 
+#if MSSQLCLIENT
         [Theory]
         [InlineData(51000, 51000, true)]
         [InlineData(51000, 43, false)]
         public void DbNumber_MicrosoftData(int create, int test, bool result)
             => Test<MicrosoftSqlClientProvider>(create, test, result);
+#endif
 
         private void Test<T>(int create, int test, bool result)
             where T : SqlServerDatabaseProvider, new()

@@ -4,38 +4,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Linq;
-using Xunit;
-
-#if NETCOREAPP1_0
-using System.Collections;
-using System.Dynamic;
-using System.Data.SqlTypes;
-#else // net452
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-#endif
-
-#if NETCOREAPP1_0
-namespace System
-{
-    public enum GenericUriParserOptions
-    {
-        Default
-    }
-
-    public class GenericUriParser
-    {
-        private readonly GenericUriParserOptions options;
-
-        public GenericUriParser(GenericUriParserOptions options)
-        {
-            this.options = options;
-        }
-    }
-}
-#endif
+using Xunit;
 
 namespace Dapper.Tests
 {
@@ -194,6 +167,91 @@ namespace Dapper.Tests
             Assert.Equal("Sequence contains more than one element", ex.Message);
         }
 
+        /// <summary>
+        /// This test is ensuring our "single row" methods also behave like a type being deserialized
+        /// and give a useful error message when the types don't match.
+        /// </summary>
+        [Fact]
+        public async Task TestConversionExceptionMessages()
+        {
+            const string sql = "Select Null;";
+
+            // Nullable is expected to work if we get a null in all cases
+            // List paths
+            var list = connection.Query<int?>(sql);
+            Assert.Null(Assert.Single(list));
+            list = await connection.QueryAsync<int?>(sql);
+            Assert.Null(Assert.Single(list));
+
+            // Single row paths
+            Assert.Null(connection.QueryFirst<int?>(sql));
+            Assert.Null(connection.QueryFirstOrDefault<int?>(sql));
+            Assert.Null(connection.QuerySingle<int?>(sql));
+            Assert.Null(connection.QuerySingleOrDefault<int?>(sql));
+
+            Assert.Null(await connection.QueryFirstAsync<int?>(sql));
+            Assert.Null(await connection.QueryFirstOrDefaultAsync<int?>(sql));
+            Assert.Null(await connection.QuerySingleAsync<int?>(sql));
+            Assert.Null(await connection.QuerySingleOrDefaultAsync<int?>(sql));
+
+            static async Task TestExceptionsAsync<T>(DbConnection connection, string sql, string exception)
+            {
+                var ex = Assert.Throws<DataException>(() => connection.Query<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QueryFirst<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QueryFirstOrDefault<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QuerySingle<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = Assert.Throws<DataException>(() => connection.QuerySingleOrDefault<T>(sql));
+                Assert.Equal(exception, ex.Message);
+
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryFirstAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryFirstOrDefaultAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QuerySingleAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+                ex = await Assert.ThrowsAsync<DataException>(() => connection.QuerySingleOrDefaultAsync<T>(sql));
+                Assert.Equal(exception, ex.Message);
+            }
+
+            // Null value throws
+            await TestExceptionsAsync<int>(
+                connection,
+                "Select null as Foo",
+                "Error parsing column 0 (Foo=<null>)");
+            // Incompatible value throws (testing unnamed column bits here too)
+            await TestExceptionsAsync<int>(
+                connection,
+                "Select 'bar'",
+                "Error parsing column 0 ((Unnamed Column)=bar - String)");
+            // Null with a full type (testing position too)
+            await TestExceptionsAsync<NullTestType>(
+                connection,
+                "Select 1 Id, 'bar' Foo",
+                "Error parsing column 1 (Foo=bar - String)");
+
+            // And a ValueTuple! (testing position too)
+            // Still needs love, because we handle ValueTuple differently today
+            // It'll yield a raw: typeof(System.FormatException): Input string was not in a correct format.
+            // Note: not checking the "Select 1 Id, null Foo" case here, because we won't attempt to set the column
+            //   ...and there will no error in that case.
+            //await TestExceptionsAsync<(int Id, int Foo)>(
+            //    connection,
+            //    "Select 1 Id, 'bar' Foo",
+            //    "Error parsing column 1 (Foo=bar - String)");
+        }
+
+        private class NullTestType
+        {
+            public int Id { get; }
+            public int Foo { get; }
+        }
+
         [Fact]
         public void TestStrings()
         {
@@ -328,7 +386,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             connection.Execute("create table #t(Name nvarchar(max), Age int)");
             try
             {
-                int tally = connection.Execute("insert #t (Name,Age) values(@Name, @Age)", new List<Student>
+                int tally = connection.Execute("insert #t (Name,Age) values(@Name, @Age)", new List<Student>(2)
             {
                 new Student{Age = 1, Name = "sam"},
                 new Student{Age = 2, Name = "bob"}
@@ -523,7 +581,6 @@ select * from @bar", new { foo }).Single();
             Assert.Equal("Four", list.First().Base2);
         }
 
-#if !NETCOREAPP1_0
         [Fact]
         public void ExecuteReader()
         {
@@ -536,7 +593,6 @@ select * from @bar", new { foo }).Single();
             Assert.Equal(3, (int)dt.Rows[0][0]);
             Assert.Equal(4, (int)dt.Rows[0][1]);
         }
-#endif
 
         [Fact]
         public void TestDbString()

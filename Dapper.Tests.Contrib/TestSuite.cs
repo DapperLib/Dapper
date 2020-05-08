@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Transactions;
 using Dapper.Contrib.Extensions;
 using Xunit;
 
@@ -104,9 +103,10 @@ namespace Dapper.Tests.Contrib
 
     public abstract partial class TestSuite
     {
-        protected static readonly bool IsAppVeyor = Environment.GetEnvironmentVariable("Appveyor")?.ToUpperInvariant() == "TRUE";
-
         public abstract IDbConnection GetConnection();
+
+        protected static string GetConnectionString(string name, string defaultConnectionString) =>
+            Environment.GetEnvironmentVariable(name) ?? defaultConnectionString;
 
         private IDbConnection GetOpenConnection()
         {
@@ -130,7 +130,7 @@ namespace Dapper.Tests.Contrib
 
                 Assert.Single(connection.GetAll<GenericType<string>>());
 
-                var objectsToInsert = new List<GenericType<string>>
+                var objectsToInsert = new List<GenericType<string>>(2)
                 {
                     new GenericType<string>
                     {
@@ -380,7 +380,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -418,7 +418,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -463,7 +463,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -588,7 +588,7 @@ namespace Dapper.Tests.Contrib
         {
             const int numberOfEntities = 10;
 
-            var users = new List<User>();
+            var users = new List<User>(numberOfEntities);
             for (var i = 0; i < numberOfEntities; i++)
                 users.Add(new User { Name = "User " + i, Age = i });
 
@@ -684,7 +684,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = GetOpenConnection())
             {
                 var rand = new Random(8675309);
-                var data = new List<User>();
+                var data = new List<User>(100);
                 for (int i = 0; i < 100; i++)
                 {
                     var nU = new User { Age = rand.Next(70), Id = i, Name = Guid.NewGuid().ToString() };
