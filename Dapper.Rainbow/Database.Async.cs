@@ -34,7 +34,7 @@ namespace Dapper
             /// </summary>
             /// <param name="id">The Id of the record to update.</param>
             /// <param name="data">The new record.</param>
-            /// <returns>The number of affeced rows.</returns>
+            /// <returns>The number of affected rows.</returns>
             public Task<int> UpdateAsync(TId id, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
