@@ -197,8 +197,8 @@ namespace Dapper.Tests
         public void PassInEmptyIntArray()
         {
             Assert.Equal(
-                new int[0],
-                connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = new int[0] })
+                Array.Empty<int>(),
+                connection.Query<int>("select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", new { Ids = Array.Empty<int>() })
             );
         }
 
