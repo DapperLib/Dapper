@@ -294,7 +294,7 @@ namespace Dapper
                 }
             }
 
-            // note: most non-priveleged implementations would use: this.ReplaceLiterals(command);
+            // note: most non-privileged implementations would use: this.ReplaceLiterals(command);
             if (literals.Count != 0) SqlMapper.ReplaceLiterals(this, command, literals);
         }
 
@@ -448,8 +448,8 @@ namespace Dapper
                 cache[lookup] = setter;
             }
 
-            // Queue the preparation to be fired off when adding parameters to the DbCommand
-            MAKECALLBACK:
+        // Queue the preparation to be fired off when adding parameters to the DbCommand
+        MAKECALLBACK:
             (outputCallbacks ?? (outputCallbacks = new List<Action>())).Add(() =>
             {
                 // Finally, prep the parameter and attach the callback to it

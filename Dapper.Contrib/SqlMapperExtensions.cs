@@ -180,14 +180,14 @@ namespace Dapper.Contrib.Extensions
                 GetQueries[type.TypeHandle] = sql;
             }
 
-            var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            var dynParams = new DynamicParameters();
+            dynParams.Add("@id", id);
 
             T obj;
 
             if (type.IsInterface)
             {
-                var res = connection.Query(sql, dynParms).FirstOrDefault() as IDictionary<string, object>;
+                var res = connection.Query(sql, dynParams).FirstOrDefault() as IDictionary<string, object>;
 
                 if (res == null)
                     return null;
@@ -213,16 +213,16 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                obj = connection.Query<T>(sql, dynParms, transaction, commandTimeout: commandTimeout).FirstOrDefault();
+                obj = connection.Query<T>(sql, dynParams, transaction, commandTimeout: commandTimeout).FirstOrDefault();
             }
             return obj;
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entities from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -1007,7 +1007,7 @@ public partial class PostgresAdapter : ISqlAdapter
 
         var results = connection.Query(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).ToList();
 
-        // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
+        // Return the key by assigning the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
         foreach (var p in propertyInfos)
         {
@@ -1094,7 +1094,7 @@ public partial class SQLiteAdapter : ISqlAdapter
 }
 
 /// <summary>
-/// The Firebase SQL adapeter.
+/// The Firebase SQL adapter.
 /// </summary>
 public partial class FbAdapter : ISqlAdapter
 {

@@ -2208,7 +2208,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// OBSOLETE: For internal usage only. Sanitizes the paramter value with proper type casting.
+        /// OBSOLETE: For internal usage only. Sanitizes the parameter value with proper type casting.
         /// </summary>
         /// <param name="value">The value to sanitize.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
@@ -2261,7 +2261,7 @@ namespace Dapper
         /// Replace all literal tokens with their text form.
         /// </summary>
         /// <param name="parameters">The parameter lookup to do replacements with.</param>
-        /// <param name="command">The command to repalce parameters in.</param>
+        /// <param name="command">The command to replace parameters in.</param>
         public static void ReplaceLiterals(this IParameterLookup parameters, IDbCommand command)
         {
             var tokens = GetLiteralTokens(command.CommandText);
@@ -3012,7 +3012,7 @@ namespace Dapper
         /// Set custom mapping for type deserializers
         /// </summary>
         /// <param name="type">Entity type to override</param>
-        /// <param name="map">Mapping rules impementation, null to remove custom map</param>
+        /// <param name="map">Mapping rules implementation, null to remove custom map</param>
         public static void SetTypeMap(Type type, ITypeMap map)
         {
             if (type == null)
