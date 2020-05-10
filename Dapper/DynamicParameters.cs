@@ -55,7 +55,7 @@ namespace Dapper
                     var dictionary = obj as IEnumerable<KeyValuePair<string, object>>;
                     if (dictionary == null)
                     {
-                        templates = templates ?? new List<object>();
+                        templates ??= new List<object>();
                         templates.Add(obj);
                     }
                     else
@@ -78,7 +78,7 @@ namespace Dapper
 
                     if (subDynamic.templates != null)
                     {
-                        templates = templates ?? new List<object>();
+                        templates ??= new List<object>();
                         foreach (var t in subDynamic.templates)
                         {
                             templates.Add(t);
@@ -450,7 +450,7 @@ namespace Dapper
 
         // Queue the preparation to be fired off when adding parameters to the DbCommand
         MAKECALLBACK:
-            (outputCallbacks ?? (outputCallbacks = new List<Action>())).Add(() =>
+            (outputCallbacks ??= new List<Action>()).Add(() =>
             {
                 // Finally, prep the parameter and attach the callback to it
                 var targetMemberType = lastMemberAccess?.Type;

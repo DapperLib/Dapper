@@ -29,7 +29,7 @@ namespace Dapper
         /// <param name="types">DataReader column types</param>
         /// <returns>Default constructor</returns>
         public ConstructorInfo FindConstructor(string[] names, Type[] types) =>
-            _type.GetConstructor(new Type[0]);
+            _type.GetConstructor(Array.Empty<Type>());
 
         /// <summary>
         /// Always returns null

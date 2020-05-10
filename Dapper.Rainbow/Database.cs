@@ -199,7 +199,7 @@ namespace Dapper
         {
             _connection = connection;
             _commandTimeout = commandTimeout;
-            tableConstructor = tableConstructor ?? CreateTableConstructorForTable();
+            tableConstructor ??= CreateTableConstructorForTable();
 
             tableConstructor(this as TDatabase);
         }
@@ -320,7 +320,7 @@ namespace Dapper
             name = name.Replace("[", "");
             name = name.Replace("]", "");
 
-            if (name.Contains("."))
+            if (name.IndexOf('.') > 0)
             {
                 var parts = name.Split('.');
                 if (parts.Length == 2)
