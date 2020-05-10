@@ -1132,7 +1132,7 @@ namespace Dapper
             SingleOrDefault = 3
         }
 
-        private static readonly int[] ErrTwoRows = new int[2], ErrZeroRows = new int[0];
+        private static readonly int[] ErrTwoRows = new int[2], ErrZeroRows = Array.Empty<int>();
         private static void ThrowMultipleRows(Row row)
         {
             switch (row)
@@ -1214,7 +1214,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Shared value deserilization path for QueryRowImpl and QueryRowAsync
+        /// Shared value deserialization path for QueryRowImpl and QueryRowAsync
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static T ReadRow<T>(CacheInfo info, Identity identity, ref CommandDefinition command, Type effectiveType, IDataReader reader)
@@ -1429,7 +1429,7 @@ namespace Dapper
         private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
         {
             object param = command.Parameters;
-            identity = identity ?? new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType());
+            identity ??= new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType());
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
@@ -1499,7 +1499,7 @@ namespace Dapper
             }
 
             object param = command.Parameters;
-            identity = identity ?? new IdentityWithTypes(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
+            identity ??= new IdentityWithTypes(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
@@ -2386,8 +2386,8 @@ namespace Dapper
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused) =>
             CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
 
-        private static bool IsValueTuple(Type type) => (type?.IsValueType == true 
-                                                       && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal)) 
+        private static bool IsValueTuple(Type type) => (type?.IsValueType == true
+                                                       && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal))
                                                        || (type != null && IsValueTuple(Nullable.GetUnderlyingType(type)));
 
         internal static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
@@ -2410,7 +2410,7 @@ namespace Dapper
 
             bool isStruct = type.IsValueType;
             var _sizeLocal = (LocalBuilder)null;
-            LocalBuilder GetSizeLocal() => _sizeLocal ?? (_sizeLocal = il.DeclareLocal(typeof(int)));
+            LocalBuilder GetSizeLocal() => _sizeLocal ??= il.DeclareLocal(typeof(int));
             il.Emit(OpCodes.Ldarg_1); // stack is now [untyped-param]
 
             LocalBuilder typedParameterLocal;
@@ -3055,7 +3055,7 @@ namespace Dapper
         private static LocalBuilder GetTempLocal(ILGenerator il, ref Dictionary<Type, LocalBuilder> locals, Type type, bool initAndLoad)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            locals = locals ?? new Dictionary<Type, LocalBuilder>();
+            locals ??= new Dictionary<Type, LocalBuilder>();
             if (!locals.TryGetValue(type, out LocalBuilder found))
             {
                 found = il.DeclareLocal(type);
@@ -3193,7 +3193,7 @@ namespace Dapper
             if (nullableUnderlyingType != null)
             {
                 var nullableTupleConstructor = valueTupleType.GetConstructor(new[] { nullableUnderlyingType });
-                
+
                 il.Emit(OpCodes.Newobj, nullableTupleConstructor);
             }
 
@@ -3777,7 +3777,7 @@ namespace Dapper
         {
             if (obj == null) return "";
             var s = obj.ToString();
-            perThreadStringBuilderCache = perThreadStringBuilderCache ?? obj;
+            perThreadStringBuilderCache ??= obj;
             return s;
         }
     }
