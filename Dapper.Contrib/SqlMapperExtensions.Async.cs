@@ -163,7 +163,7 @@ namespace Dapper.Contrib.Extensions
             }
 
             var name = GetTableName(type);
-            var sbColumnList = new StringBuilder(null);
+            var sbColumnList = new StringBuilder();
             var allProperties = TypePropertiesCache(type);
             var keyProperties = KeyPropertiesCache(type).ToList();
             var computedProperties = ComputedPropertiesCache(type);
@@ -177,11 +177,13 @@ namespace Dapper.Contrib.Extensions
                     sbColumnList.Append(", ");
             }
 
-            var sbParameterList = new StringBuilder(null);
+            var sbParameterList = new StringBuilder();
             for (var i = 0; i < allPropertiesExceptKeyAndComputed.Count; i++)
             {
                 var property = allPropertiesExceptKeyAndComputed[i];
-                sbParameterList.AppendFormat("@{0}", property.Name);
+                sbParameterList
+                    .Append('@')
+                    .Append(property.Name);
                 if (i < allPropertiesExceptKeyAndComputed.Count - 1)
                     sbParameterList.Append(", ");
             }
@@ -239,8 +241,9 @@ namespace Dapper.Contrib.Extensions
 
             var name = GetTableName(type);
 
-            var sb = new StringBuilder();
-            sb.AppendFormat("update {0} set ", name);
+            var sb = new StringBuilder("update ")
+                .Append(name)
+                .Append(" set ");
 
             var allProperties = TypePropertiesCache(type);
             keyProperties.AddRange(explicitKeyProperties);
@@ -309,8 +312,9 @@ namespace Dapper.Contrib.Extensions
             var name = GetTableName(type);
             var allKeyProperties = keyProperties.Concat(explicitKeyProperties).ToList();
 
-            var sb = new StringBuilder();
-            sb.AppendFormat("DELETE FROM {0} WHERE ", name);
+            var sb = new StringBuilder("DELETE FROM ")
+                .Append(name)
+                .Append(" WHERE ");
 
             var adapter = GetFormatter(connection);
 
@@ -475,8 +479,13 @@ public partial class PostgresAdapter
     /// <returns>The Id of the row created.</returns>
     public async Task<int> InsertAsync(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string tableName, string columnList, string parameterList, IEnumerable<PropertyInfo> keyProperties, object entityToInsert)
     {
-        var sb = new StringBuilder();
-        sb.AppendFormat("INSERT INTO {0} ({1}) VALUES ({2})", tableName, columnList, parameterList);
+        var sb = new StringBuilder("INSERT INTO ")
+            .Append(tableName)
+            .Append(" (")
+            .Append(columnList)
+            .Append(") VALUES (")
+            .Append(parameterList)
+            .Append(')');
 
         // If no primary key then safe to assume a join table with not too much data to return
         var propertyInfos = keyProperties as PropertyInfo[] ?? keyProperties.ToArray();
