@@ -1246,6 +1246,14 @@ namespace Dapper
             {
                 return default;
             }
+            else if (val is Array array && typeof(T).IsArray)
+            {
+                var elementType = typeof(T).GetElementType();
+                var result = Array.CreateInstance(elementType, array.Length);
+                for (int i = 0; i < array.Length; i++)
+                    result.SetValue(Convert.ChangeType(array.GetValue(i), elementType, CultureInfo.InvariantCulture), i);
+                return (T)(object)result;
+            }
             else
             {
                 try
