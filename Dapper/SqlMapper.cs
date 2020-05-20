@@ -1801,7 +1801,7 @@ namespace Dapper
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
             Type underlyingType = null;
-            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
+            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.IsArray || type.FullName == LinqBinary
                 || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
             {
                 if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
