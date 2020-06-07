@@ -156,9 +156,8 @@ namespace Dapper.Contrib.Extensions
 
         private static string GenerateGetQuery(IDbConnection connection, Type type, List<PropertyInfo> keyProperties)
         {
-            string sql;
             // Generate query
-            if (!GetQueries.TryGetValue(type.TypeHandle, out sql))
+            if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var name = GetTableName(type);
 
