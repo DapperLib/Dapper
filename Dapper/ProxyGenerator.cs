@@ -355,7 +355,7 @@ namespace Dapper
         {
             var attrType = a.GetType();
             var constructors = attrType.GetConstructors();
-            var props = attrType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(p => p.CanRead).ToList();
+            var props = attrType.GetProperties().Where(p => p.CanRead).ToList();
             var fields = attrType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).ToList();
             Array.Sort(constructors, (x, y) => y.GetParameters().Count().CompareTo(x.GetParameters().Count()));
             foreach (var constructor in constructors)
