@@ -2,7 +2,7 @@
 
 ## Overview
 
-A brief guide is available [on github](https://github.com/StackExchange/dapper-dot-net/blob/master/Readme.md)
+A brief guide is available [on github](https://github.com/StackExchange/Dapper/blob/main/Readme.md)
 
 Questions on Stack Overflow should be tagged [`dapper`](https://stackoverflow.com/questions/tagged/dapper)
 

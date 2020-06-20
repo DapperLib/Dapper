@@ -2,7 +2,7 @@
   "version": "2.0",
   "assemblyVersion": "2.0.0.0",
   "publicReleaseRefSpec": [
-    "^refs/heads/master$",
+    "^refs/heads/main$",
     "^refs/tags/v\\d+\\.\\d+"
   ],
   "nugetPackageVersion": {
