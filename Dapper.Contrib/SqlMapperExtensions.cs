@@ -196,7 +196,7 @@ namespace Dapper.Contrib.Extensions
             Type keyObjectType = keyObject?.GetType();
 
 
-            if (keyProperties.Count == 1 && (keyObjectType == null || keyObjectType.IsValueType))
+            if (keyProperties.Count == 1 && (keyObjectType == null || keyObjectType.IsValueType || keyObjectType.Equals(typeof(string))))
             {
                 dynParms.Add($"@{keyProperties.First().Name}", keyObject);
             }
