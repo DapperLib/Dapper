@@ -363,14 +363,25 @@ namespace Dapper
         public static Task<T> QuerySingleOrDefaultAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryRowAsync<T>(cnn, Row.SingleOrDefault, typeof(T), command);
 
-        private static Task<DbDataReader> ExecuteReaderWithFlagsFallbackAsync(DbCommand cmd, bool wasClosed, CommandBehavior behavior, CancellationToken cancellationToken)
+        private static async Task<DbDataReader> ExecuteReaderWithFlagsFallbackAsync(DbCommand cmd, bool wasClosed, CommandBehavior behavior, CancellationToken cancellationToken, Action<IDataReader> datareaderSetup)
         {
-            var task = cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
-            if (task.Status == TaskStatus.Faulted && Settings.DisableCommandBehaviorOptimizations(behavior, task.Exception.InnerException))
-            { // we can retry; this time it will have different flags
-                return cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
+            try
+            {
+                var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
+                datareaderSetup?.Invoke(reader);
+                return reader;
             }
-            return task;
+            catch (Exception e)
+            {
+                if (Settings.DisableCommandBehaviorOptimizations(behavior, e))
+                {
+                    // we can retry; this time it will have different flags
+                    var reader = await cmd.ExecuteReaderAsync(GetBehavior(wasClosed, behavior), cancellationToken);
+                    datareaderSetup?.Invoke(reader);
+                    return reader;
+                }
+                throw;
+            }
         }
 
         /// <summary>
@@ -416,8 +427,7 @@ namespace Dapper
                 try
                 {
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
-                    reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
-
+                    reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel, command.DataReaderSetup).ConfigureAwait(false);
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
                     if (tuple.Func == null || tuple.Hash != hash)
@@ -475,7 +485,7 @@ namespace Dapper
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, (row & Row.Single) != 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
-                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancel).ConfigureAwait(false);
+                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancel, command.DataReaderSetup).ConfigureAwait(false);
 
                     T result = default;
                     if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
@@ -917,7 +927,7 @@ namespace Dapper
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken, command.DataReaderSetup).ConfigureAwait(false))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                     var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
@@ -967,7 +977,7 @@ namespace Dapper
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken, command.DataReaderSetup).ConfigureAwait(false))
                 {
                     var results = MultiMapImpl(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;
@@ -1022,8 +1032,7 @@ namespace Dapper
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
                 cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
-
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken, command.DataReaderSetup).ConfigureAwait(false);
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
@@ -1144,7 +1153,7 @@ namespace Dapper
             {
                 cmd = command.TrySetupAsyncCommand(cnn, paramReader);
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken).ConfigureAwait(false);
+                var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken, command.DataReaderSetup).ConfigureAwait(false);
                 wasClosed = false;
                 disposeCommand = false;
                 return WrappedReader.Create(cmd, reader);

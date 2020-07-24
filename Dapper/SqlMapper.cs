@@ -1018,7 +1018,7 @@ namespace Dapper
             {
                 if (wasClosed) cnn.Open();
                 cmd = command.SetupCommand(cnn, info.ParamReader);
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess);
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess, command.DataReaderSetup);
 
                 var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache);
                 cmd = null; // now owned by result
@@ -1045,11 +1045,13 @@ namespace Dapper
             }
         }
 
-        private static IDataReader ExecuteReaderWithFlagsFallback(IDbCommand cmd, bool wasClosed, CommandBehavior behavior)
+        private static IDataReader ExecuteReaderWithFlagsFallback(IDbCommand cmd, bool wasClosed, CommandBehavior behavior, Action<IDataReader> setup)
         {
             try
             {
-                return cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
+                var reader = cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
+                setup?.Invoke(reader);
+                return reader;
             }
             catch (ArgumentException ex)
             { // thanks, Sqlite!
@@ -1077,7 +1079,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
 
                 if (wasClosed) cnn.Open();
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.DataReaderSetup);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -1170,7 +1172,8 @@ namespace Dapper
                 if (wasClosed) cnn.Open();
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, (row & Row.Single) != 0
                     ? CommandBehavior.SequentialAccess | CommandBehavior.SingleResult // need to allow multiple rows, to check fail condition
-                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow);
+                    : CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow,
+                    command.DataReaderSetup);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
 
                 T result = default;
@@ -1442,7 +1445,7 @@ namespace Dapper
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.DataReaderSetup);
                     reader = ownedReader;
                 }
                 var deserializer = default(DeserializerState);
@@ -1512,7 +1515,7 @@ namespace Dapper
                 {
                     ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
                     if (wasClosed) cnn.Open();
-                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.DataReaderSetup);
                     reader = ownedReader;
                 }
                 DeserializerState deserializer;
@@ -2868,7 +2871,7 @@ namespace Dapper
             {
                 cmd = command.SetupCommand(cnn, paramReader);
                 if (wasClosed) cnn.Open();
-                var reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, commandBehavior);
+                var reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, commandBehavior, command.DataReaderSetup);
                 wasClosed = false; // don't dispose before giving it to them!
                 disposeCommand = false;
                 // note: command.FireOutputCallbacks(); would be useless here; parameters come at the **end** of the TDS stream

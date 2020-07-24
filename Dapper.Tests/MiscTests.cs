@@ -167,6 +167,74 @@ namespace Dapper.Tests
             Assert.Equal("Sequence contains more than one element", ex.Message);
         }
 
+        private class DataReaderConfiguratorTest
+        {
+            // Returns true if the DataReaderSetup extension point is invoked after the datareader was created, false if otherwise
+            public bool Test<TReturnType>(IDbConnection conn, Func<CommandDefinition, TReturnType> func)
+            {
+                bool callbackInvoked = false;
+                conn.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+                try
+                {
+                    var result = func(new CommandDefinition("select * from #dog", dataReaderSetup: r => { callbackInvoked = true; }));
+                    (result as IDisposable)?.Dispose();
+                }
+                finally
+                {
+                    conn.Execute("drop table #dog");
+                }
+
+                return callbackInvoked;
+            }
+
+            public async Task<bool> TestAsync<TReturnType>(IDbConnection conn, Func<CommandDefinition, Task<TReturnType>> func)
+            {
+                bool callbackInvoked = false;
+                await conn.ExecuteAsync("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
+                try
+                {
+                    var result = await func(new CommandDefinition("select * from #dog", dataReaderSetup: r => { callbackInvoked = true; }));
+                    (result as IDisposable)?.Dispose();
+                }
+                finally
+                {
+                    await conn.ExecuteAsync("drop table #dog");
+                }
+
+                return callbackInvoked;
+            }
+        }
+
+        /// <summary>
+        /// Test that the configuration extension point for DataReader is invoked for synchronous calls
+        /// </summary>
+        [Fact]
+        public void Test_DataReader_Configurator()
+        {
+            var sut = new DataReaderConfiguratorTest();
+            Assert.True(sut.Test(connection, connection.Query<Dog>), "Query<Dog> failed");
+            Assert.True(sut.Test(connection, connection.QueryFirst<Dog>), "QueryFirst<Dog> failed");
+            Assert.True(sut.Test(connection, connection.QueryFirstOrDefault<Dog>), "QueryFirstOrDefault<Dog> failed");
+            Assert.True(sut.Test(connection, connection.QuerySingle<Dog>), "QuerySingle<Dog> failed");
+            Assert.True(sut.Test(connection, connection.QuerySingleOrDefault<Dog>), "QuerySingleOrDefault<Dog> failed");
+            Assert.True(sut.Test(connection, connection.QueryMultiple), "QueryMultiple failed");
+        }
+
+        /// <summary>
+        /// Test that the configuration extension point for DataReader is invoked for async calls
+        /// </summary>
+        [Fact]
+        public async Task Test_DataReader_Configurator_Async()
+        {
+            var sut = new DataReaderConfiguratorTest();
+            Assert.True(await sut.TestAsync(connection, connection.QueryAsync<Dog>), "QueryAsync<Dog> failed");
+            Assert.True(await sut.TestAsync(connection, connection.QueryFirstAsync<Dog>), "QueryFirstAsync<Dog> failed");
+            Assert.True(await sut.TestAsync(connection, connection.QueryFirstOrDefaultAsync<Dog>), "QueryFirstOrDefaultAsync<Dog> failed");
+            Assert.True(await sut.TestAsync(connection, connection.QuerySingleAsync<Dog>), "QuerySingleAsync<Dog> failed");
+            Assert.True(await sut.TestAsync(connection, connection.QuerySingleOrDefaultAsync<Dog>), "QuerySingleOrDefaultAsync<Dog> failed");
+            Assert.True(await sut.TestAsync(connection, connection.QueryMultipleAsync), "QueryMultipleAsync failed");
+        }
+
         /// <summary>
         /// This test is ensuring our "single row" methods also behave like a type being deserialized
         /// and give a useful error message when the types don't match.

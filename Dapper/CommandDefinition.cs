@@ -69,6 +69,12 @@ namespace Dapper
         public CommandFlags Flags { get; }
 
         /// <summary>
+        /// Extension point for configuring IDataReader.  Should only be used for setting simple configuration properties.
+        /// If set, this extension point is invoked immediately after the reader is created, e.g. before the first Read.
+        /// </summary>
+        public Action<IDataReader> DataReaderSetup { get; }
+
+        /// <summary>
         /// Can async queries be pipelined?
         /// </summary>
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
@@ -83,10 +89,10 @@ namespace Dapper
         /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
         /// <param name="flags">The behavior flags for this command.</param>
         /// <param name="cancellationToken">The cancellation token for this command.</param>
+        /// <param name="dataReaderSetup">IDataReader configuration extension point.</param>
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
-                                 , CancellationToken cancellationToken = default(CancellationToken)
-            )
+                                 , CancellationToken cancellationToken = default(CancellationToken), Action<IDataReader> dataReaderSetup = null)
         {
             CommandText = commandText;
             Parameters = parameters;
@@ -95,6 +101,7 @@ namespace Dapper
             CommandType = commandType;
             Flags = flags;
             CancellationToken = cancellationToken;
+            DataReaderSetup = dataReaderSetup;
         }
 
         private CommandDefinition(object parameters) : this()
