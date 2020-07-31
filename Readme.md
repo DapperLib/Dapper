@@ -65,7 +65,7 @@ This method will execute SQL and return a dynamic list.
 Example usage:
 
 ```csharp
-var rows = connection.Query("select 1 A, 2 B union all select 3, 4");
+var rows = connection.Query("select 1 A, 2 B union all select 3, 4").AsList();
 
 Assert.Equal(1, (int)rows[0].A);
 Assert.Equal(2, (int)rows[0].B);
