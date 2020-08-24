@@ -2,7 +2,6 @@
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.VisualBasic;
 using Xunit;
 
 namespace Dapper.Tests
@@ -79,7 +78,7 @@ namespace Dapper.Tests
         }
 
         [FactPostgresql]
-        public void TestPostgresqlArray()
+        public void TestPostgresqlSelectArray()
         {
             using (var conn = GetOpenNpgsqlConnection())
             {
