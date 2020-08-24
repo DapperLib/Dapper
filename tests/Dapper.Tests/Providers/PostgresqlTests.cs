@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using Microsoft.VisualBasic;
 using Xunit;
 
 namespace Dapper.Tests
@@ -74,6 +75,17 @@ namespace Dapper.Tests
                 Assert.Single(r);
                 Assert.Equal('a', r.Single().CharColumn);
                 transaction.Rollback();
+            }
+        }
+
+        [FactPostgresql]
+        public void TestPostgresqlArray()
+        {
+            using (var conn = GetOpenNpgsqlConnection())
+            {
+                var r = conn.Query<int[]>("select array[1,2,3]").ToList();
+                Assert.Single(r);
+                Assert.Equal(new[] { 1, 2, 3 }, r.Single());
             }
         }
 
