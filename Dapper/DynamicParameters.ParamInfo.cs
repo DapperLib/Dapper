@@ -9,6 +9,7 @@ namespace Dapper
         {
             public string Name { get; set; }
             public object Value { get; set; }
+            public Type Type { get; set; }
             public ParameterDirection ParameterDirection { get; set; }
             public DbType? DbType { get; set; }
             public int? Size { get; set; }

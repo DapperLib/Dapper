@@ -1532,5 +1532,45 @@ select @hits as [Hits], (@count - @misses) as [Misses], @query as [Query];
             if (delta != 0) blocks++;
             return blocks * padFactor;
         }
+
+        [Fact]
+        public void DyanamicParametersNullValueDbType1()
+        {
+            const string sql = @"
+SELECT @test AS Test INTO #DynamicParametersTest
+
+SELECT DATA_TYPE
+FROM tempdb.INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME LIKE '#DynamicParametersTest%'
+AND COLUMN_NAME = 'Test'
+
+DROP TABLE #DynamicParametersTest";
+            var param = new DynamicParameters();
+            param.Add<int?>("test", null);
+
+            var paramType = connection.QuerySingle<string>(sql, param);
+
+            Assert.Equal("int", paramType);
+        }
+
+        [Fact]
+        public void DyanamicParametersNullValueDbType2()
+        {
+            const string sql = @"
+SELECT @test AS Test INTO #DynamicParametersTest
+
+SELECT DATA_TYPE
+FROM tempdb.INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME LIKE '#DynamicParametersTest%'
+AND COLUMN_NAME = 'Test'
+
+DROP TABLE #DynamicParametersTest";
+            var param = new DynamicParameters();
+            param.Add<int?>("test", null, null, null, null);
+
+            var paramType = connection.QuerySingle<string>(sql, param);
+
+            Assert.Equal("int", paramType);
+        }
     }
 }
