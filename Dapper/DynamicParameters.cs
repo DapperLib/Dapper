@@ -490,7 +490,7 @@ namespace Dapper
 
         void SqlMapper.IParameterCallbacks.OnCompleted()
         {
-            foreach (var param in from p in parameters select p.Value)
+            foreach (var param in parameters.Values)
             {
                 param.OutputCallback?.Invoke(param.OutputTarget, this);
             }
