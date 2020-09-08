@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Reflection.Emit;
 using System.Threading;
 
@@ -1014,7 +1015,9 @@ public partial class PostgresAdapter : ISqlAdapter
             var value = ((IDictionary<string, object>)results[0])[p.Name.ToLower()];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
-                id = Convert.ToInt32(value);
+            {
+                TryToInt32(value, out id);
+            }
         }
         return id;
     }
@@ -1037,6 +1040,26 @@ public partial class PostgresAdapter : ISqlAdapter
     public void AppendColumnNameEqualsValue(StringBuilder sb, string columnName)
     {
         sb.AppendFormat("\"{0}\" = @{1}", columnName, columnName);
+    }
+
+    private static bool TryToInt32(object value, out int result)
+    {
+        if (value == null)
+        {
+            result = 0;
+            return false;
+        }
+        var typeConverter = TypeDescriptor.GetConverter(value);
+        if (typeConverter != null && typeConverter.CanConvertTo(typeof(int)))
+        {
+            var convertTo = typeConverter.ConvertTo(value, typeof(int));
+            if (convertTo != null)
+            {
+                result = (int)convertTo;
+                return true;
+            }
+        }
+        return int.TryParse(value.ToString(), out result);
     }
 }
 

@@ -506,7 +506,9 @@ public partial class PostgresAdapter
             var value = ((IDictionary<string, object>)results.First())[p.Name.ToLower()];
             p.SetValue(entityToInsert, value, null);
             if (id == 0)
-                id = Convert.ToInt32(value);
+            {
+                TryToInt32(value, out id);
+            }
         }
         return id;
     }
