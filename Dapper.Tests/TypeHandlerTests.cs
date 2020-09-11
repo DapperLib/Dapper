@@ -737,5 +737,29 @@ namespace Dapper.Tests
             public string SomeValue { get; }
             public Blarg SomeBlargValue { get; }
         }
+
+        [Fact]
+        public void Issue798_TestChangingDefaulTypeMappingUsingDbTypeLookup()
+        {
+            const string sql = "SELECT SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @testParam),'BaseType') AS BaseType";
+            var param = new { testParam = "TestString" };
+
+            var result01 = connection.Query<string>(sql, param).FirstOrDefault();
+            Assert.Equal("nvarchar", result01);
+
+            SqlMapper.PurgeQueryCache();
+
+            DbType origType = SqlMapper.GetDbTypeForTypeMap(typeof(string));
+
+            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+            var result02 = connection.Query<string>(sql, param).FirstOrDefault();
+            Assert.Equal("varchar", result02);
+
+            SqlMapper.PurgeQueryCache();
+            SqlMapper.AddTypeMap(typeof(string), origType);  // Restore Default to original type (Unicode String)
+
+            var result03 = connection.Query<string>(sql, param).FirstOrDefault();
+            Assert.Equal("nvarchar", result03);
+        }
     }
 }

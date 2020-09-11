@@ -322,11 +322,25 @@ namespace Dapper
         /// <param name="handler">The handler for the type <typeparamref name="T"/>.</param>
         public static void AddTypeHandler<T>(TypeHandler<T> handler) => AddTypeHandlerImpl(typeof(T), handler, true);
 
+        /// <summary>
+        ///  Lookup the current DbType for a given TypeMap assigned to the Type.
+        /// </summary>
+        /// <param name="type">The type to lookup.</param>
+        /// <returns></returns>
+        public static DbType GetDbTypeForTypeMap(Type type)
+        {
+#pragma warning disable 618
+            return LookupDbType(type, "n/a", false, out ITypeHandler _);
+#pragma warning restore 618
+        }
+
         private static Dictionary<Type, ITypeHandler> typeHandlers;
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
 
         private const string ObsoleteInternalUsageOnly = "This method is for internal use only";
+
+
 
         /// <summary>
         /// Get the DbType that maps to a given value.
