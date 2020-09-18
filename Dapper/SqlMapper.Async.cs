@@ -915,9 +915,9 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(Settings.RunQueryAsyncMapOnCapturedContext);
                 using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(Settings.RunQueryAsyncMapOnCapturedContext))
                 {
                     if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                     var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
@@ -965,9 +965,9 @@ namespace Dapper
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
-                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(Settings.RunQueryAsyncMapOnCapturedContext);
                 using (var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader))
-                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false))
+                using (var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(Settings.RunQueryAsyncMapOnCapturedContext))
                 {
                     var results = MultiMapImpl(null, default(CommandDefinition), types, map, splitOn, reader, identity, true);
                     return command.Buffered ? results.ToList() : results;

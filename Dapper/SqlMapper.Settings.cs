@@ -93,6 +93,12 @@ namespace Dapper
             /// operation if there are this many elements or more. Note that this feature requires SQL Server 2016 / compatibility level 130 (or above).
             /// </summary>
             public static int InListStringSplitCount { get; set; } = -1;
+
+            /// <summary>
+            /// Specifies whether <code>Func&lt;&gt; map</code> in <code>QueryAsync()</code> runs on captured context.
+            /// Enabling the setting allows the <code>map</code> to use context where it is needed, e.g. HttpContext in ASP.NET.
+            /// </summary>
+            public static bool RunQueryAsyncMapOnCapturedContext { get; set; } = false;
         }
     }
 }
