@@ -153,5 +153,8 @@ namespace Dapper
         public SqlBuilder Set(string sql, dynamic parameters = null) =>
              AddClause("set", sql, parameters, " , ", "SET ", "\n", false);
 
+        public SqlBuilder CrossApply(string sql, dynamic parameters = null) =>
+             AddClause("crossapply", sql, parameters, "\nCROSS APPLY( ", "\nCROSS APPLY( ", ")\n", false);
+
     }
 }
