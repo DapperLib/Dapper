@@ -116,7 +116,7 @@ A key feature of Dapper is performance. The following metrics show how long it t
 
 The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/main/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
 ```bash
-dotnet run -p .\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
+dotnet run -p .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
 ```
 Output from the latest run is:
 ``` ini
