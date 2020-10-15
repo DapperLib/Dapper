@@ -2,9 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Dapper.Tests</AssemblyName>
     <Description>Dapper Core Test Suite</Description>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <TargetFrameworks>netcoreapp3.1;net462;net472</TargetFrameworks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
   </PropertyGroup>
 
@@ -13,10 +11,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Dapper\Dapper.csproj" />
-    <ProjectReference Include="..\Dapper.Contrib\Dapper.Contrib.csproj" />
-    <ProjectReference Include="..\Dapper.ProviderTools\Dapper.ProviderTools.csproj" />
-    <ProjectReference Include="..\Dapper.SqlBuilder\Dapper.SqlBuilder.csproj" />
+    <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
+    <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
@@ -25,12 +21,10 @@
     <PackageReference Include="Npgsql" Version="4.0.9" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
-    <ProjectReference Include="..\Dapper.EntityFramework\Dapper.EntityFramework.csproj" />
+    <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
   <ItemGroup>
