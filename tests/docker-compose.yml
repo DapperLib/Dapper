@@ -18,7 +18,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: test
   sqlserver:
-    image: microsoft/mssql-server-linux:2019-latest
+    image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: sql-server-db
     ports:
       - 1433:1433
