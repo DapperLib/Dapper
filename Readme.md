@@ -201,7 +201,7 @@ Literal replacements
 Dapper supports literal replacements for bool and numeric types.
 
 ```csharp
-connection.Query("select * from User where UserTypeId = {=Admin}", new { UserTypeId.Admin }));
+connection.Query("select * from User where UserTypeId = {=Admin}", new { UserTypeId.Admin });
 ```
 
 The literal replacement is not sent as a parameter; this allows better plans and filtered index usage but should usually be used sparingly and after testing. This feature is particularly useful when the value being injected
