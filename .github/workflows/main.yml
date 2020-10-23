@@ -42,10 +42,17 @@ jobs:
       uses: actions/checkout@v1
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
-    - name: .NET Test
-      run: dotnet test Build.csproj -c Release --logger GitHubActions /p:CI=true
+    - name: Dapper Tests
+      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions /p:CI=true
       env:
-        MySQLConnectionString: server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
+        MySQLConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
+        OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
+        PostgreSqlConnectionString: Server=.;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
+        SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
+    - name: Dapper.Contrib Tests
+      run: dotnet test tests/Dapper.Tests.Contrib/Dapper.Tests.Contrib.csproj -c Release --logger GitHubActions /p:CI=true
+      env:
+        MySQLConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         PostgreSqlConnectionString: Server=.;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
