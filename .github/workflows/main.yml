@@ -43,12 +43,11 @@ jobs:
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
     - name: .NET Test
-      run: dotnet test Build.csproj -c Release --no-build /p:CI=true
+      run: dotnet test Build.csproj -c Release --logger GitHubActions /p:CI=true
       env:
-        EnableTestLogging: true
         MySQLConnectionString: server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
-        OLEDBConnectionString: Provider=SQLOLEDB;Server=localhost;${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
-        PostgreSqlConnectionString: Server=localhost;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
-        SQLServerConnectionString: Server=localhost;${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
+        OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
+        PostgreSqlConnectionString: Server=.;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
+        SQLServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
     - name: .NET Lib Pack
       run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
