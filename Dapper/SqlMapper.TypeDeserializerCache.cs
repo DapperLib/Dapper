@@ -112,7 +112,7 @@ namespace Dapper
 
                 public override bool Equals(object obj)
                 {
-                    return obj is DeserializerKey && Equals((DeserializerKey)obj);
+                    return obj is DeserializerKey key && Equals(key);
                 }
 
                 public bool Equals(DeserializerKey other)

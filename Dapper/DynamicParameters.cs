@@ -339,7 +339,7 @@ namespace Dapper
         {
             var failMessage = "Expression must be a property/field chain off of a(n) {0} instance";
             failMessage = string.Format(failMessage, typeof(T).Name);
-            Action @throw = () => throw new InvalidOperationException(failMessage);
+            void Throw() => throw new InvalidOperationException(failMessage);
 
             // Is it even a MemberExpression?
             var lastMemberAccess = expression.Body as MemberExpression;
@@ -357,7 +357,7 @@ namespace Dapper
                 }
                 else
                 {
-                    @throw();
+                    Throw();
                 }
             }
 
@@ -385,7 +385,7 @@ namespace Dapper
                     || (!(diving.Member is PropertyInfo)
                         && !(diving.Member is FieldInfo)))
                 {
-                    @throw();
+                    Throw();
                 }
             }
             while (diving != null);
@@ -430,9 +430,9 @@ namespace Dapper
 
             // GET READY
             var lastMember = lastMemberAccess.Member;
-            if (lastMember is PropertyInfo)
+            if (lastMember is PropertyInfo propertyInfo)
             {
-                var set = ((PropertyInfo)lastMember).GetSetMethod(true);
+                var set = propertyInfo.GetSetMethod(true);
                 il.Emit(OpCodes.Callvirt, set); // SET
             }
             else

@@ -2023,13 +2023,12 @@ namespace Dapper
                             }
                             if (!isDbString)
                             {
-                                dbType = LookupDbType(item.GetType(), "", true, out ITypeHandler handler);
+                                dbType = LookupDbType(item.GetType(), "", true, out _);
                             }
                         }
-                        var nextName = namePrefix + count.ToString();
-                        if (isDbString && item is DbString)
+                        var nextName = namePrefix + count;
+                        if (isDbString && item is DbString str)
                         {
-                            var str = item as DbString;
                             str.AddParameter(command, nextName);
                         }
                         else
@@ -2218,9 +2217,9 @@ namespace Dapper
             if (value is Enum)
             {
                 TypeCode typeCode;
-                if (value is IConvertible)
+                if (value is IConvertible convertibleValue)
                 {
-                    typeCode = ((IConvertible)value).GetTypeCode();
+                    typeCode = convertibleValue.GetTypeCode();
                 }
                 else
                 {
@@ -2949,7 +2948,7 @@ namespace Dapper
         private static T Parse<T>(object value)
         {
             if (value == null || value is DBNull) return default(T);
-            if (value is T) return (T)value;
+            if (value is T tVal) return tVal;
             var type = typeof(T);
             type = Nullable.GetUnderlyingType(type) ?? type;
             if (type.IsEnum)
