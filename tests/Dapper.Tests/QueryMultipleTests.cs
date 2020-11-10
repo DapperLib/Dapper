@@ -236,7 +236,7 @@ end");
                 }
                 catch (ObjectDisposedException ex)
                 { // expected; success
-                    Assert.Equal("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.", ex.Message);
+                    Assert.Equal("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.", ex.Message, ignoreLineEndingDifferences: true);
                 }
 
                 Assert.Single(one);
