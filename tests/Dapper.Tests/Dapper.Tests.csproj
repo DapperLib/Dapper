@@ -4,6 +4,7 @@
     <Description>Dapper Core Test Suite</Description>
     <TargetFrameworks>netcoreapp3.1;net462;net472;net5.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
+    <NoWarn>$(NoWarn);IDE0063;xUnit1004</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
@@ -13,13 +14,13 @@
   <ItemGroup>
     <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.1" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.6" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
-    <PackageReference Include="MySqlConnector" Version="0.56.0" />
-    <PackageReference Include="Npgsql" Version="4.0.9" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.5.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
+    <PackageReference Include="MySqlConnector" Version="1.1.0" />
+    <PackageReference Include="Npgsql" Version="5.0.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 

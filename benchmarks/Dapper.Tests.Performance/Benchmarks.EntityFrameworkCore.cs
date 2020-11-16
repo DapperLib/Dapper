@@ -40,7 +40,7 @@ namespace Dapper.Tests.Performance
         public Post SqlQuery()
         {
             Step();
-            return Context.Posts.FromSql("select * from Posts where Id = {0}", i).First();
+            return Context.Posts.FromSqlRaw("select * from Posts where Id = {0}", i).First();
         }
 
         [Benchmark(Description = "First (No Tracking)")]
