@@ -69,13 +69,16 @@ namespace Dapper.Tests
             public Car.TrapEnum Trap { get; init; }
         }
 
-        private record PositionalCarRecord(string Name, int Age, Car.TrapEnum Trap);
+        private record PositionalCarRecord(int Age, Car.TrapEnum Trap, string Name)
+        {
+            public PositionalCarRecord() : this(default, default, default) { }
+        }
 
         private record NominalCarRecord
         {
-            public string Name { get; init; }
             public int Age { get; init; }
             public Car.TrapEnum Trap { get; init; }
+            public string Name { get; init; }
         }
 
         [Fact]
