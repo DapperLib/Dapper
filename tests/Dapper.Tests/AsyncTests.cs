@@ -35,7 +35,7 @@ namespace Dapper.Tests
     {
         private DbConnection _marsConnection;
 
-        private DbConnection MarsConnection => _marsConnection ?? (_marsConnection = Provider.GetOpenConnection(true));
+        private DbConnection MarsConnection => _marsConnection ??= Provider.GetOpenConnection(true);
 
         [Fact]
         public async Task TestBasicStringUsageAsync()
@@ -323,7 +323,7 @@ namespace Dapper.Tests
             using (var conn = GetClosedConnection()) await LiteralReplacement(conn).ConfigureAwait(false);
         }
 
-        private async Task LiteralReplacement(IDbConnection conn)
+        private static async Task LiteralReplacement(IDbConnection conn)
         {
             try
             {
@@ -352,7 +352,7 @@ namespace Dapper.Tests
             using (var conn = GetClosedConnection()) await LiteralReplacementDynamic(conn).ConfigureAwait(false);
         }
 
-        private async Task LiteralReplacementDynamic(IDbConnection conn)
+        private static async Task LiteralReplacementDynamic(IDbConnection conn)
         {
             var args = new DynamicParameters();
             args.Add("id", 123);
@@ -841,7 +841,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
         private readonly ITestOutputHelper _log;
         public AsyncQueryCacheTests(ITestOutputHelper log) => _log = log;
         private DbConnection _marsConnection;
-        private DbConnection MarsConnection => _marsConnection ?? (_marsConnection = Provider.GetOpenConnection(true));
+        private DbConnection MarsConnection => _marsConnection ??= Provider.GetOpenConnection(true);
 
         public override void Dispose()
         {

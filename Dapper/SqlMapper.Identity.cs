@@ -39,20 +39,16 @@ namespace Dapper
                 return count;
             }
             internal override int TypeCount => s_typeCount;
-            internal override Type GetType(int index)
-            {
-                switch (index)
-                {
-                    case 0: return typeof(TFirst);
-                    case 1: return typeof(TSecond);
-                    case 2: return typeof(TThird);
-                    case 3: return typeof(TFourth);
-                    case 4: return typeof(TFifth);
-                    case 5: return typeof(TSixth);
-                    case 6: return typeof(TSeventh);
-                    default: return base.GetType(index);
-                }
-            }
+            internal override Type GetType(int index) => index switch {
+                0 => typeof(TFirst),
+                1 => typeof(TSecond),
+                2 => typeof(TThird),
+                3 => typeof(TFourth),
+                4 => typeof(TFifth),
+                5 => typeof(TSixth),
+                6 => typeof(TSeventh),
+                _ => base.GetType(index),
+            };
         }
         internal sealed class IdentityWithTypes : Identity
         {
@@ -199,7 +195,7 @@ namespace Dapper
             public bool Equals(Identity other)
             {
                 if (ReferenceEquals(this, other)) return true;
-                if (ReferenceEquals(other, null)) return false;
+                if (other is null) return false;
 
                 int typeCount;
                 return gridIndex == other.gridIndex

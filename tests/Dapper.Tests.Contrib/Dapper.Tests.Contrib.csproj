@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Contrib</AssemblyName>
     <Description>Dapper Contrib Test Suite</Description>
     <TargetFrameworks>netcoreapp3.1;net462;net5.0</TargetFrameworks>
-    <NoWarn>$(NoWarn);IDE0063;xUnit1004</NoWarn>
+    <NoWarn>$(NoWarn);CA1816;IDE0063;xUnit1004</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Dapper.Tests/Helpers/XunitSkippable.cs" Link="Helpers/XunitSkippable.cs" />

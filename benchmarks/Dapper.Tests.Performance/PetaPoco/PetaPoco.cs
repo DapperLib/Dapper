@@ -612,10 +612,12 @@ namespace PetaPoco
                 throw new Exception("Unable to parse SQL statement for paged query");
 
             // Setup the paged result
-            var result = new Page<T>();
-            result.CurrentPage = page;
-            result.ItemsPerPage = itemsPerPage;
-            result.TotalItems = ExecuteScalar<long>(sqlCount, args);
+            var result = new Page<T>
+            {
+                CurrentPage = page,
+                ItemsPerPage = itemsPerPage,
+                TotalItems = ExecuteScalar<long>(sqlCount, args)
+            };
             result.TotalPages = result.TotalItems / itemsPerPage;
             if ((result.TotalItems % itemsPerPage) != 0)
                 result.TotalPages++;
@@ -829,7 +831,7 @@ namespace PetaPoco
                             // Don't update the primary key, but grab the value if we don't have it
                             if (i.Key == primaryKeyName)
                             {
-                                primaryKeyValue = primaryKeyValue ?? i.Value.PropertyInfo.GetValue(poco, null);
+                                primaryKeyValue ??= i.Value.PropertyInfo.GetValue(poco, null);
                                 continue;
                             }
 

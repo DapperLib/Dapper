@@ -7,6 +7,7 @@
     <Authors>Sam Saffron;Johan Danforth</Authors>
     <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CA1050</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />

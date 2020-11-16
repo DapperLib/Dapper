@@ -6,7 +6,7 @@ namespace Dapper.Tests.Performance.Dashing
     {
         public DashingConfiguration()
         {
-            this.Add<Post>();
+            Add<Post>();
         }
     }
 }
