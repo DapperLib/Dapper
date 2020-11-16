@@ -22,6 +22,8 @@
     <PackageReference Include="Npgsql" Version="5.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+
+
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
@@ -32,5 +34,9 @@
     <!-- Conditionals make the tooling go crazy...just include them for this test project -->
     <Content Include="$(NuGetPackageRoot)\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\**\*.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Remove="Test.DB.sdf" />
+
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

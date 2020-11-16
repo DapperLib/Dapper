@@ -8,6 +8,10 @@
   <ItemGroup>
     <Compile Include="../Dapper.Tests/Helpers/XunitSkippable.cs" Link="Helpers/XunitSkippable.cs" />
     <None Remove="Test.DB.sdf" />
+
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
