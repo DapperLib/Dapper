@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Dapper.Tests</AssemblyName>
     <Description>Dapper Core Test Suite</Description>
-    <TargetFrameworks>netcoreapp3.1;net462;net472</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net462;net472;net5.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
   </PropertyGroup>
 

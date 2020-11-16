@@ -76,7 +76,7 @@ namespace Dapper
                     }
                 }
 
-                return sb.Append('}').__ToStringRecycle();
+                return sb.Append('}').ToStringRecycle();
             }
 
             public IEnumerator<KeyValuePair<string, object>> GetEnumerator()

@@ -31,6 +31,10 @@ namespace Dapper
         }
         public override void Close() { }
         public override DataTable GetSchemaTable() => ThrowDisposed<DataTable>();
+
+#if PLAT_NO_REMOTING
+        [Obsolete("This Remoting API is not supported and throws PlatformNotSupportedException.", DiagnosticId = "SYSLIB0010", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
         public override object InitializeLifetimeService() => ThrowDisposed<object>();
         protected override void Dispose(bool disposing) { }
         public override bool GetBoolean(int ordinal) => ThrowDisposed<bool>();
@@ -116,6 +120,10 @@ namespace Dapper
 
         public override void Close() => _reader.Close();
         public override DataTable GetSchemaTable() => _reader.GetSchemaTable();
+
+#if PLAT_NO_REMOTING
+        [Obsolete("This Remoting API is not supported and throws PlatformNotSupportedException.", DiagnosticId = "SYSLIB0010", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
         public override object InitializeLifetimeService() => _reader.InitializeLifetimeService();
 
         public override int Depth => _reader.Depth;
