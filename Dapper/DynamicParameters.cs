@@ -373,9 +373,12 @@ namespace Dapper
                 names.Insert(0, diving?.Member.Name);
                 chain.Insert(0, diving);
 
+#pragma warning disable IDE0019 // use pattern matching; this is fine!
+                var constant = diving?.Expression as ParameterExpression;
                 diving = diving?.Expression as MemberExpression;
+#pragma warning restore IDE0019 // use pattern matching
 
-                if (diving?.Expression is ParameterExpression constant && constant.Type == typeof(T))
+                if (constant is object && constant.Type == typeof(T))
                 {
                     break;
                 }
