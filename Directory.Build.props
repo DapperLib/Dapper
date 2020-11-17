@@ -13,7 +13,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/StackExchange/Dapper</RepositoryUrl>
     <Deterministic>false</Deterministic>
-    
+    <NoWarn>$(NOWARN);IDE0056;IDE0057;IDE0079</NoWarn>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>
@@ -21,7 +21,7 @@
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

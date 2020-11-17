@@ -187,10 +187,10 @@ namespace Dapper.Contrib.Extensions
 
             if (type.IsInterface)
             {
-                var res = connection.Query(sql, dynParams).FirstOrDefault() as IDictionary<string, object>;
-
-                if (res == null)
+                if (!(connection.Query(sql, dynParams).FirstOrDefault() is IDictionary<string, object> res))
+                {
                     return null;
+                }
 
                 obj = ProxyGenerator.GetInterfaceProxy<T>();
 
@@ -273,7 +273,9 @@ namespace Dapper.Contrib.Extensions
         /// <summary>
         /// Specify a custom table name mapper based on the POCO type name
         /// </summary>
+#pragma warning disable CA2211 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
         public static TableNameMapperDelegate TableNameMapper;
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
         private static string GetTableName(Type type)
         {
@@ -534,7 +536,9 @@ namespace Dapper.Contrib.Extensions
         /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
+#pragma warning disable CA2211 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
         public static GetDatabaseTypeDelegate GetDatabaseType;
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
@@ -552,7 +556,7 @@ namespace Dapper.Contrib.Extensions
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
-#if NETSTANDARD2_0
+#if !NET461
                 return AssemblyBuilder.DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
 #else
                 return Thread.GetDomain().DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
@@ -681,8 +685,8 @@ namespace Dapper.Contrib.Extensions
                 if (isIdentity)
                 {
                     var keyAttribute = typeof(KeyAttribute);
-                    var myConstructorInfo = keyAttribute.GetConstructor(new Type[] { });
-                    var attributeBuilder = new CustomAttributeBuilder(myConstructorInfo, new object[] { });
+                    var myConstructorInfo = keyAttribute.GetConstructor(Type.EmptyTypes);
+                    var attributeBuilder = new CustomAttributeBuilder(myConstructorInfo, Array.Empty<object>());
                     property.SetCustomAttribute(attributeBuilder);
                 }
 

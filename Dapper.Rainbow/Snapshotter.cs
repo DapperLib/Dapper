@@ -69,14 +69,14 @@ namespace Dapper
 
             private static T Clone(T myObject)
             {
-                cloner = cloner ?? GenerateCloner();
+                cloner ??= GenerateCloner();
                 return cloner(myObject);
             }
 
             private static DynamicParameters Diff(T original, T current)
             {
                 var dm = new DynamicParameters();
-                differ = differ ?? GenerateDiffer();
+                differ ??= GenerateDiffer();
                 foreach (var pair in differ(original, current))
                 {
                     dm.Add(pair.Name, pair.NewValue);
@@ -98,8 +98,8 @@ namespace Dapper
 
             private static bool AreEqual<U>(U first, U second)
             {
-                if (EqualityComparer<U>.Default.Equals(first, default(U)) && EqualityComparer<U>.Default.Equals(second, default(U))) return true;
-                if (EqualityComparer<U>.Default.Equals(first, default(U))) return false;
+                if (EqualityComparer<U>.Default.Equals(first, default) && EqualityComparer<U>.Default.Equals(second, default)) return true;
+                if (EqualityComparer<U>.Default.Equals(first, default)) return false;
                 return first.Equals(second);
             }
 
@@ -191,7 +191,7 @@ namespace Dapper
             private static Func<T, T> GenerateCloner()
             {
                 var dm = new DynamicMethod("DoClone", typeof(T), new Type[] { typeof(T) }, true);
-                var ctor = typeof(T).GetConstructor(new Type[] { });
+                var ctor = typeof(T).GetConstructor(Type.EmptyTypes);
 
                 var il = dm.GetILGenerator();
 

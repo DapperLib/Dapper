@@ -13,6 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -73,7 +74,7 @@ namespace Dapper
                 {
                     if (pair.Value.GetHitCount() <= COLLECT_HIT_COUNT_MIN)
                     {
-                        _queryCache.TryRemove(pair.Key, out CacheInfo cache);
+                        _queryCache.TryRemove(pair.Key, out CacheInfo _);
                     }
                 }
             }
@@ -112,7 +113,7 @@ namespace Dapper
             foreach (var entry in _queryCache)
             {
                 if (entry.Key.type == type)
-                    _queryCache.TryRemove(entry.Key, out CacheInfo cache);
+                    _queryCache.TryRemove(entry.Key, out CacheInfo _);
             }
             TypeDeserializerCache.Purge(type);
         }
@@ -339,7 +340,7 @@ namespace Dapper
         {
             if (value == null || value is DBNull) return DbType.Object;
 
-            return LookupDbType(value.GetType(), "n/a", false, out ITypeHandler handler);
+            return LookupDbType(value.GetType(), "n/a", false, out ITypeHandler _);
         }
 
         /// <summary>
@@ -504,7 +505,9 @@ namespace Dapper
 
         private static IEnumerable GetMultiExec(object param)
         {
+#pragma warning disable IDE0038 // Use pattern matching - complicated enough!
             return (param is IEnumerable
+#pragma warning restore IDE0038 // Use pattern matching
                     && !(param is string
                       || param is IEnumerable<KeyValuePair<string, object>>
                       || param is IDynamicParameters)
@@ -1135,22 +1138,22 @@ namespace Dapper
         private static readonly int[] ErrTwoRows = new int[2], ErrZeroRows = Array.Empty<int>();
         private static void ThrowMultipleRows(Row row)
         {
-            switch (row)
-            {  // get the standard exception from the runtime
-                case Row.Single: ErrTwoRows.Single(); break;
-                case Row.SingleOrDefault: ErrTwoRows.SingleOrDefault(); break;
-                default: throw new InvalidOperationException();
-            }
+            _ = row switch
+            {
+                Row.Single => ErrTwoRows.Single(),
+                Row.SingleOrDefault => ErrTwoRows.SingleOrDefault(),
+                _ => throw new InvalidOperationException(),
+            };
         }
 
         private static void ThrowZeroRows(Row row)
         {
-            switch (row)
-            { // get the standard exception from the runtime
-                case Row.First: ErrZeroRows.First(); break;
-                case Row.Single: ErrZeroRows.Single(); break;
-                default: throw new InvalidOperationException();
-            }
+            _ = row switch
+            {   // get the standard exception from the runtime
+                Row.First => ErrZeroRows.First(),
+                Row.Single => ErrZeroRows.Single(),
+                _ => throw new InvalidOperationException(),
+            };
         }
 
         private static T QueryRowImpl<T>(IDbConnection cnn, Row row, ref CommandDefinition command, Type effectiveType)
@@ -1557,25 +1560,16 @@ namespace Dapper
         }
 
         private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
+            => otherDeserializers.Length switch
         {
-            switch (otherDeserializers.Length)
-            {
-                case 1:
-                    return r => ((Func<TFirst, TSecond, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r));
-                case 2:
-                    return r => ((Func<TFirst, TSecond, TThird, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r));
-                case 3:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r));
-                case 4:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r));
-                case 5:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r));
-                case 6:
-                    return r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r), (TSeventh)otherDeserializers[5](r));
-                default:
-                    throw new NotSupportedException();
-            }
-        }
+            1 => r => ((Func<TFirst, TSecond, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r)),
+            2 => r => ((Func<TFirst, TSecond, TThird, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r)),
+            3 => r => ((Func<TFirst, TSecond, TThird, TFourth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r)),
+            4 => r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r)),
+            5 => r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r)),
+            6 => r => ((Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r), (TThird)otherDeserializers[1](r), (TFourth)otherDeserializers[2](r), (TFifth)otherDeserializers[3](r), (TSixth)otherDeserializers[4](r), (TSeventh)otherDeserializers[5](r)),
+            _ => throw new NotSupportedException(),
+        };
 
         private static Func<IDataReader, TReturn> GenerateMapper<TReturn>(int length, Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, Func<object[], TReturn> map)
         {
@@ -1824,9 +1818,15 @@ namespace Dapper
             try { hasFields = reader != null && reader.FieldCount != 0; }
             catch { /* don't throw when trying to throw */ }
             if (hasFields)
+            {
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
                 return new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
+            }
             else
+            {
                 return new InvalidOperationException("No columns were selected");
+            }
         }
 
         internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
@@ -2114,7 +2114,7 @@ namespace Dapper
                                 {
                                     sb.Append(',').Append(variableName).Append(i).Append(suffix);
                                 }
-                                return sb.__ToStringRecycle();
+                                return sb.ToStringRecycle();
                             }
                             else
                             {
@@ -2125,7 +2125,7 @@ namespace Dapper
                                     sb.Append(',').Append(variableName);
                                     if (!byPosition) sb.Append(i); else sb.Append(namePrefix).Append(i).Append(variableName);
                                 }
-                                return sb.Append(')').__ToStringRecycle();
+                                return sb.Append(')').ToStringRecycle();
                             }
                         }, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
                     }
@@ -2136,25 +2136,20 @@ namespace Dapper
         private static bool TryStringSplit(ref IEnumerable list, int splitAt, string namePrefix, IDbCommand command, bool byPosition)
         {
             if (list == null || splitAt < 0) return false;
-            switch (list)
+            return list switch
             {
-                case IEnumerable<int> l:
-                    return TryStringSplit(ref l, splitAt, namePrefix, command, "int", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-                case IEnumerable<long> l:
-                    return TryStringSplit(ref l, splitAt, namePrefix, command, "bigint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-                case IEnumerable<short> l:
-                    return TryStringSplit(ref l, splitAt, namePrefix, command, "smallint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-                case IEnumerable<byte> l:
-                    return TryStringSplit(ref l, splitAt, namePrefix, command, "tinyint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture)));
-            }
-            return false;
+                IEnumerable<int> l => TryStringSplit(ref l, splitAt, namePrefix, command, "int", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture))),
+                IEnumerable<long> l => TryStringSplit(ref l, splitAt, namePrefix, command, "bigint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture))),
+                IEnumerable<short> l => TryStringSplit(ref l, splitAt, namePrefix, command, "smallint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture))),
+                IEnumerable<byte> l => TryStringSplit(ref l, splitAt, namePrefix, command, "tinyint", byPosition, (sb, i) => sb.Append(i.ToString(CultureInfo.InvariantCulture))),
+                _ => false,
+            };
         }
 
         private static bool TryStringSplit<T>(ref IEnumerable<T> list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
-            var typed = list as ICollection<T>;
-            if (typed == null)
+            if (!(list is ICollection<T> typed))
             {
                 typed = list.ToList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
@@ -2217,15 +2212,10 @@ namespace Dapper
             if (value == null) return DBNull.Value;
             if (value is Enum)
             {
-                TypeCode typeCode;
-                if (value is IConvertible)
-                {
-                    typeCode = ((IConvertible)value).GetTypeCode();
-                }
-                else
-                {
-                    typeCode = Type.GetTypeCode(Enum.GetUnderlyingType(value.GetType()));
-                }
+                TypeCode typeCode = value is IConvertible convertible
+                    ? convertible.GetTypeCode()
+                    : Type.GetTypeCode(Enum.GetUnderlyingType(value.GetType()));
+
                 switch (typeCode)
                 {
                     case TypeCode.Byte: return (byte)value;
@@ -2336,7 +2326,7 @@ namespace Dapper
                             }
                             else
                             {
-                                return sb.Append(')').__ToStringRecycle();
+                                return sb.Append(')').ToStringRecycle();
                             }
                         }
                         throw new NotSupportedException($"The type '{value.GetType().Name}' is not supported for SQL literals.");
@@ -2948,8 +2938,8 @@ namespace Dapper
 
         private static T Parse<T>(object value)
         {
-            if (value == null || value is DBNull) return default(T);
-            if (value is T) return (T)value;
+            if (value is null || value is DBNull) return default;
+            if (value is T t) return t;
             var type = typeof(T);
             type = Nullable.GetUnderlyingType(type) ?? type;
             if (type.IsEnum)
@@ -2977,7 +2967,9 @@ namespace Dapper
         /// Gets type-map for the given type
         /// </summary>
         /// <returns>Type map instance, default is to create new instance of DefaultTypeMap</returns>
+#pragma warning disable CA2211 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
         public static Func<Type, ITypeMap> TypeMapProvider = (Type type) => new DefaultTypeMap(type);
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
         /// <summary>
         /// Gets type-map for the given <see cref="Type"/>.
@@ -3537,7 +3529,7 @@ namespace Dapper
             else
             {
                 bool handled = false;
-                OpCode opCode = default(OpCode);
+                OpCode opCode = default;
                 switch (Type.GetTypeCode(from))
                 {
                     case TypeCode.Boolean:
@@ -3773,7 +3765,7 @@ namespace Dapper
             return new StringBuilder();
         }
 
-        private static string __ToStringRecycle(this StringBuilder obj)
+        private static string ToStringRecycle(this StringBuilder obj)
         {
             if (obj == null) return "";
             var s = obj.ToString();

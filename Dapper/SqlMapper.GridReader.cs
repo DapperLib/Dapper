@@ -168,7 +168,7 @@ namespace Dapper
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 IsConsumed = true;
 
-                T result = default(T);
+                T result = default;
                 if (reader.Read() && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);
@@ -210,7 +210,7 @@ namespace Dapper
 
                 try
                 {
-                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default, func, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
@@ -226,7 +226,7 @@ namespace Dapper
                 var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
                 try
                 {
-                    foreach (var r in MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TReturn>(null, default, types, map, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
@@ -383,7 +383,7 @@ namespace Dapper
                 }
             }
 
-            private int gridIndex, readCount;
+            private int gridIndex; //, readCount;
             private readonly IParameterCallbacks callbacks;
 
             /// <summary>
@@ -400,7 +400,7 @@ namespace Dapper
             {
                 if (reader.NextResult())
                 {
-                    readCount++;
+                    // readCount++;
                     gridIndex++;
                     IsConsumed = false;
                 }
@@ -431,6 +431,7 @@ namespace Dapper
                     Command.Dispose();
                     Command = null;
                 }
+                GC.SuppressFinalize(this);
             }
         }
     }

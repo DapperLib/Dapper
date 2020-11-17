@@ -378,9 +378,9 @@ namespace Dapper.Tests
 
             public override RatingValue Parse(object value)
             {
-                if (value is int)
+                if (value is int i)
                 {
-                    return new RatingValue() { Value = (int)value };
+                    return new RatingValue() { Value = i };
                 }
 
                 throw new FormatException("Invalid conversion to RatingValue");

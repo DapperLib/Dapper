@@ -115,9 +115,9 @@ namespace Massive
     {
         private readonly DbProviderFactory _factory;
 #pragma warning disable 0649
-#pragma warning disable RCS1169 // Mark field as read-only.
+#pragma warning disable RCS1169,IDE0044 // Mark field as read-only.
         private string _connectionString;
-#pragma warning restore RCS1169 // Mark field as read-only.
+#pragma warning restore RCS1169,IDE0044 // Mark field as read-only.
 #pragma warning restore 0649
 
         public DynamicModel(string connectionStringName = "", string tableName = "", string primaryKeyField = "")

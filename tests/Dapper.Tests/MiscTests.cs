@@ -1,14 +1,23 @@
-﻿using Microsoft.CSharp.RuntimeBinder;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CSharp.RuntimeBinder;
 using Xunit;
+
+#if NETCOREAPP3_1 || NET462 || NET472
+namespace System.Runtime.CompilerServices
+{
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    internal static class IsExternalInit // yeah, don't do this!
+    {
+    }
+}
+#endif
 
 namespace Dapper.Tests
 {
@@ -56,15 +65,46 @@ namespace Dapper.Tests
         private struct CarWithAllProps
         {
             public string Name { get; set; }
-            public int Age { get; set; }
+            public int Age { get; init; }
+            public Car.TrapEnum Trap { get; init; }
+        }
 
-            public Car.TrapEnum Trap { get; set; }
+        private record PositionalCarRecord(int Age, Car.TrapEnum Trap, string Name)
+        {
+            public PositionalCarRecord() : this(default, default, default) { }
+        }
+
+        private record NominalCarRecord
+        {
+            public int Age { get; init; }
+            public Car.TrapEnum Trap { get; init; }
+            public string Name { get; init; }
         }
 
         [Fact]
         public void TestStructs()
         {
             var car = connection.Query<Car>("select 'Ford' Name, 21 Age, 2 Trap").First();
+
+            Assert.Equal(21, car.Age);
+            Assert.Equal("Ford", car.Name);
+            Assert.Equal(2, (int)car.Trap);
+        }
+
+        [Fact]
+        public void TestPositionalRecord()
+        {
+            var car = connection.Query<PositionalCarRecord>("select 'Ford' Name, 21 Age, 2 Trap").First();
+
+            Assert.Equal(21, car.Age);
+            Assert.Equal("Ford", car.Name);
+            Assert.Equal(2, (int)car.Trap);
+        }
+
+        [Fact]
+        public void TestNominalRecord()
+        {
+            var car = connection.Query<NominalCarRecord>("select 'Ford' Name, 21 Age, 2 Trap").First();
 
             Assert.Equal(21, car.Age);
             Assert.Equal("Ford", car.Name);

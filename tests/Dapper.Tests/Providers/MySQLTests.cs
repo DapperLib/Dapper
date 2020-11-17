@@ -9,7 +9,7 @@ namespace Dapper.Tests
 {
     public sealed class MySqlProvider : DatabaseProvider
     {
-        public override DbProviderFactory Factory => MySql.Data.MySqlClient.MySqlClientFactory.Instance;
+        public override DbProviderFactory Factory => MySqlConnector.MySqlConnectorFactory.Instance;
         public override string GetConnectionString() =>
             GetConnectionString("MySqlConnectionString", "Server=localhost;Database=tests;Uid=test;Pwd=pass;");
 

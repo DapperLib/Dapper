@@ -40,10 +40,10 @@ namespace Dapper.Contrib.Extensions
             if (!type.IsInterface)
                 return (await connection.QueryAsync<T>(sql, dynParams, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
 
-            var res = (await connection.QueryAsync<dynamic>(sql, dynParams).ConfigureAwait(false)).FirstOrDefault() as IDictionary<string, object>;
-
-            if (res == null)
+            if (!((await connection.QueryAsync<dynamic>(sql, dynParams).ConfigureAwait(false)).FirstOrDefault() is IDictionary<string, object> res))
+            {
                 return null;
+            }
 
             var obj = ProxyGenerator.GetInterfaceProxy<T>();
 
@@ -101,7 +101,7 @@ namespace Dapper.Contrib.Extensions
 
         private static async Task<IEnumerable<T>> GetAllAsyncImpl<T>(IDbConnection connection, IDbTransaction transaction, int? commandTimeout, string sql, Type type) where T : class
         {
-            var result = await connection.QueryAsync(sql).ConfigureAwait(false);
+            var result = await connection.QueryAsync(sql, transaction: transaction, commandTimeout: commandTimeout).ConfigureAwait(false);
             var list = new List<T>();
             foreach (IDictionary<string, object> res in result)
             {
@@ -140,7 +140,7 @@ namespace Dapper.Contrib.Extensions
             int? commandTimeout = null, ISqlAdapter sqlAdapter = null) where T : class
         {
             var type = typeof(T);
-            sqlAdapter = sqlAdapter ?? GetFormatter(connection);
+            sqlAdapter ??= GetFormatter(connection);
 
             var isList = false;
             if (type.IsArray)
