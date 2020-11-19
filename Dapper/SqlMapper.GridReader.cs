@@ -159,7 +159,7 @@ namespace Dapper
                 }
                 IsConsumed = true;
                 var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                return buffered ? result.ToList() : result;
+                return buffered ? result?.ToList() : result;
             }
 
             private T ReadRow<T>(Type type, Row row)
@@ -182,15 +182,18 @@ namespace Dapper
                         cache.Deserializer = deserializer;
                     }
                     object val = deserializer.Func(reader);
-                    if (val == null || val is T)
+
+                    if (val != null)
                     {
-                        result = (T)val;
+                        if (val is T t)
+                            result = t;
+                        else
+                        {
+                            var convertToType = Nullable.GetUnderlyingType(type) ?? type;
+                            result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                        }
                     }
-                    else
-                    {
-                        var convertToType = Nullable.GetUnderlyingType(type) ?? type;
-                        result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                    }
+
                     if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);
                     while (reader.Read()) { /* ignore subsequent rows */ }
                 }
@@ -363,15 +366,19 @@ namespace Dapper
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (index == gridIndex && reader.Read())
                     {
+                        T result = default;
                         object val = deserializer(reader);
-                        if (val == null || val is T)
+                        if (val != null)
                         {
-                            yield return (T)val;
+                            if (val is T t)
+                                result = t;
+                            else
+                            {
+                                result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                            }
                         }
-                        else
-                        {
-                            yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                        }
+
+                        yield return result;
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows

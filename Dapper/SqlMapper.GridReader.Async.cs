@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -178,7 +179,7 @@ namespace Dapper
                 else
                 {
                     var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                    if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
+                    if (buffered) result = result?.ToList(); // for the "not a DbDataReader" scenario
                     return Task.FromResult(result);
                 }
             }
@@ -210,7 +211,20 @@ namespace Dapper
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
                     }
-                    result = (T)deserializer.Func(reader);
+
+                    object val = deserializer.Func(reader);
+
+                    if (val != null)
+                    {
+                        if (val is T t)
+                            result = t;
+                        else
+                        {
+                            var convertToType = Nullable.GetUnderlyingType(type) ?? type;
+                            result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                        }
+                    }
+
                     if ((row & Row.Single) != 0 && await reader.ReadAsync(cancel).ConfigureAwait(false)) ThrowMultipleRows(row);
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent rows */ }
                 }
