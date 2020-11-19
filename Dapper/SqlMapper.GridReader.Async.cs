@@ -179,7 +179,7 @@ namespace Dapper
                 else
                 {
                     var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                    if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
+                    if (buffered) result = result?.ToList(); // for the "not a DbDataReader" scenario
                     return Task.FromResult(result);
                 }
             }
@@ -212,18 +212,7 @@ namespace Dapper
                         cache.Deserializer = deserializer;
                     }
 
-                    object val = deserializer.Func(reader);
-
-                    if (val != null)
-                    {
-                        if (val is T)
-                            result = (T)val;
-                        else
-                        {
-                            var convertToType = Nullable.GetUnderlyingType(type) ?? type;
-                            result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                        }
-                    }
+                    result = ConvertTo<T>(deserializer.Func(reader));
 
                     if ((row & Row.Single) != 0 && await reader.ReadAsync(cancel).ConfigureAwait(false)) ThrowMultipleRows(row);
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent rows */ }
