@@ -613,6 +613,15 @@ namespace Dapper.Contrib.Extensions
     public class ExplicitKeyAttribute : Attribute
     {
     }
+    /// <summary>
+    /// Specifies that this field is a explicitly set primary key in the database
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class CompositeKeyAttribute : Attribute
+    {
+        public string KeyName { public get; private set; }
+        public CompositeKeyAttribute(string keyName) => KeyName = keyName;
+    }
 
     /// <summary>
     /// Specifies whether a field is writable in the database.
