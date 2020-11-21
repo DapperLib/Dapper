@@ -999,14 +999,10 @@ public partial class PostgresAdapter : ISqlAdapter
         else
         {
             sb.Append(" RETURNING ");
-            var first = true;
-            foreach (var property in propertyInfos)
-            {
-                if (!first)
-                    sb.Append(", ");
-                first = false;
-                sb.Append(property.Name);
-            }
+            
+            var columnNames = string.Join(", ", 
+                propertyInfos.Select(propertyInfo => FormatColumnName(propertyInfo.Name)));
+            sb.Append(columnNames);
         }
 
         var results = connection.Query(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).ToList();
@@ -1021,6 +1017,15 @@ public partial class PostgresAdapter : ISqlAdapter
                 id = Convert.ToInt32(value);
         }
         return id;
+    }
+
+    /// <summary>
+    /// Returns the name of a column. 
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    public string FormatColumnName(string columnName)
+    {
+        return $"\"{columnName}\"";
     }
 
     /// <summary>
