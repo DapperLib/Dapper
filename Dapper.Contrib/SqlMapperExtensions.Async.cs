@@ -487,14 +487,10 @@ public partial class PostgresAdapter
         else
         {
             sb.Append(" RETURNING ");
-            bool first = true;
-            foreach (var property in propertyInfos)
-            {
-                if (!first)
-                    sb.Append(", ");
-                first = false;
-                sb.Append(property.Name);
-            }
+            
+            var columnNames = string.Join(", ", 
+                propertyInfos.Select(propertyInfo => FormatColumnName(propertyInfo.Name)));
+            sb.Append(columnNames);
         }
 
         var results = await connection.QueryAsync(sb.ToString(), entityToInsert, transaction, commandTimeout).ConfigureAwait(false);
