@@ -9,6 +9,18 @@ using Xunit;
 
 namespace Dapper.Tests.Contrib
 {
+    [Table("CompositeKeyTest")]
+    public interface ICompositeKeyTest
+    {
+        [CompositeKey("Id")]
+        public int IdCol1 { get; set; }
+        [CompositeKey("Id")]
+        public int IdCol2 { get; set; }
+        [ExplicitKey]
+        public string IdUnique { get; set; }
+        public string Value { get; set; }
+    }
+
     [Table("ObjectX")]
     public class ObjectX
     {
@@ -359,6 +371,7 @@ namespace Dapper.Tests.Contrib
 
                 var user = connection.Get<IUserWithOtherName>(id);
                 user.Age = 7;
+                user.Id = user.Id;
                 connection.Update(user);
                 var user2 = connection.Get<IUserWithOtherName>(id);
                 Assert.Equal(user.Age, user2.Age);
@@ -540,6 +553,45 @@ namespace Dapper.Tests.Contrib
         }
 
         [Fact]
+        public void PartialUpdateCompositeKey()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var test = ProxyGenerator.GetInterfaceProxy<ICompositeKeyTest>();
+                test.IdCol1 = 1;
+                test.IdCol2 = 1;
+                test.IdUnique = "1";
+                test.Value = "a";
+                connection.Insert(test);
+                test.IdCol2 = 2;
+                test.IdUnique = "2";
+                test.Value = "b";
+                connection.Insert(test);
+                var orig = connection.QueryFirstOrDefault<ICompositeKeyTest>("SELECT * FROM CompositeKeyTest WHERE IdUnique='2'");
+                Assert.NotNull(orig);
+                Assert.Equal(1, orig.IdCol1);
+
+                test.IdCol1 = 2;
+                connection.Update(test); //because Value as ExplicitKey is present, IdCol1 should be updated to 2
+                var compare = connection.QueryFirstOrDefault<ICompositeKeyTest>("SELECT * FROM CompositeKeyTest WHERE IdUnique='2'");
+                Assert.NotNull(compare);
+                Assert.Equal(2, compare.IdCol1);
+
+                test = ProxyGenerator.GetInterfaceProxy<ICompositeKeyTest>();
+                test.IdCol1 = 3;
+                test.Value = "c";
+                Assert.Throws<ArgumentException>(() => connection.Update(test));
+                test.IdCol2 = 3;
+                Assert.False(connection.Update(test)); //no row with IDCol1 = 3 AND IdCol2 = 3
+                test.IdUnique = "2";
+                Assert.True(connection.Update(test)); //IdUnique is now used in WHERE clause. IdCol1 and IdCol2 will be updated to 3 for IdUnique=2
+                compare = connection.QueryFirstOrDefault<ICompositeKeyTest>("SELECT * FROM CompositeKeyTest WHERE IdCol1 = 3 AND IdCol2 = 3");
+                Assert.NotNull(compare);
+                Assert.Equal(compare.Value, test.Value);
+            }
+        }
+
+        [Fact]
         public void PartialInsert()
         {
             using (var connection = GetOpenConnection())
@@ -624,6 +676,7 @@ namespace Dapper.Tests.Contrib
                 //get a user with "isdirty" tracking
                 var user = connection.Get<IUser>(id);
                 Assert.Equal("Adam", user.Name);
+                user.Id = user.Id; //set ID as dirty, nothing else
                 Assert.False(connection.Update(user));    //returns false if not updated, based on tracking
                 user.Name = "Bob";
                 Assert.True(connection.Update(user));    //returns true if updated, based on tracking

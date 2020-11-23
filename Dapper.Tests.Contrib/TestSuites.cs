@@ -56,6 +56,8 @@ namespace Dapper.Tests.Contrib
                 connection.Execute("CREATE TABLE NullableDates (Id int IDENTITY(1,1) not null, DateValue DateTime null);");
                 dropTable("DefaultValueTests");
                 connection.Execute("CREATE TABLE DefaultValueTests (Id int IDENTITY(1, 1) PRIMARY KEY, Age int DEFAULT 2, Name nvarchar(100) DEFAULT 'default name')");
+                dropTable("CompositeKeyTest");
+                connection.Execute("CREATE TABLE CompositeKeyTest (IdCol1 int not null, IdCol2 int not null, IdUnique nvarchar(100) not null, value nvarchar(100) null, CONSTRAINT PK_CompositeKeyTest PRIMARY KEY (IdCol1, IdCol2), CONSTRAINT UK_CompositeKeyTest_IdUnique UNIQUE (IdUnique))");
             }
         }
     }
@@ -104,6 +106,8 @@ namespace Dapper.Tests.Contrib
                     connection.Execute("CREATE TABLE NullableDates (Id int not null AUTO_INCREMENT PRIMARY KEY, DateValue DateTime);");
                     dropTable("DefaultValueTests");
                     connection.Execute("CREATE TABLE DefaultValueTests (Id int not null AUTO_INCREMENT PRIMARY KEY, Age int not null default '2' , `Name` nvarchar(100) not null default 'default name')");
+                    dropTable("CompositeKeyTest");
+                    connection.Execute("CREATE TABLE CompositeKeyTest (IdCol1 int not null, IdCol2 int not null, IdUnique nvarchar(100) not null, value nvarchar(100) null, PRIMARY KEY (IdCol1, IdCol2), UNIQUE KEY UK_CompositeKeyTest_IdUnique (IdUnique))");
                 }
             }
             catch (MySqlException e)
@@ -142,6 +146,7 @@ namespace Dapper.Tests.Contrib
                 connection.Execute("CREATE TABLE GenericType (Id nvarchar(100) not null, Name nvarchar(100) not null) ");
                 connection.Execute("CREATE TABLE NullableDates (Id integer primary key autoincrement not null, DateValue DateTime) ");
                 connection.Execute("CREATE TABLE DefaultValueTests (Id integer primary key autoincrement not null, Name nvarchar(100) DEFAULT 'default name', Age int DEFAULT 2)");
+                connection.Execute("CREATE TABLE CompositeKeyTest (IdCol1 int not null, IdCol2 int not null, IdUnique nvarchar(100) not null, value nvarchar(100) null, PRIMARY KEY (IdCol1, IdCol2), UNIQUE (IdUnique))");
             }
         }
     }

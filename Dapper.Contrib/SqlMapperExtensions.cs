@@ -45,6 +45,7 @@ namespace Dapper.Contrib.Extensions
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, Dictionary<string, List<PropertyInfo>>> CompositeKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, Dictionary<string, List<PropertyInfo>>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> GetQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
@@ -71,6 +72,31 @@ namespace Dapper.Contrib.Extensions
 
             ComputedProperties[type.TypeHandle] = computedProperties;
             return computedProperties;
+        }
+
+        private static Dictionary<String, List<PropertyInfo>> CompositeKeyPropertyCache(Type type)
+        {
+            if (CompositeKeyProperties.TryGetValue(type.TypeHandle, out Dictionary<string, List<PropertyInfo>> pi))
+            {
+                return pi;
+            }
+
+            pi = new Dictionary<string, List<PropertyInfo>>();
+            foreach (var p in TypePropertiesCache(type))
+            {
+                var attr = p.GetCustomAttributes(true).FirstOrDefault(x => x is CompositeKeyAttribute);
+                if (attr is object)
+                {
+                    CompositeKeyAttribute cka = (CompositeKeyAttribute)attr;
+                    if (!pi.ContainsKey(cka.KeyName))
+                    {
+                        pi.Add(cka.KeyName, new List<PropertyInfo>());
+                    }
+                    pi[cka.KeyName].Add(p);
+                }
+            }
+            CompositeKeyProperties[type.TypeHandle] = pi;
+            return pi;
         }
 
         private static List<PropertyInfo> ExplicitKeyPropertiesCache(Type type)
@@ -447,8 +473,10 @@ namespace Dapper.Contrib.Extensions
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
-            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
-                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
+            var compositeKeyProperties = CompositeKeyPropertyCache(type);
+            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0 && compositeKeyProperties.Count == 0)
+                throw new ArgumentException("Entity must have at least one [Key], [ExplicitKey] or [CompositeKey] property");
+                
 
             var name = GetTableName(type);
 
@@ -456,29 +484,74 @@ namespace Dapper.Contrib.Extensions
             sb.AppendFormat("update {0} set ", name);
 
             var allProperties = TypePropertiesCache(type);
-            keyProperties.AddRange(explicitKeyProperties);
-            var computedProperties = ComputedPropertiesCache(type);
-            var nonIdProps = allProperties.Except(keyProperties.Union(computedProperties)).ToList();
-            if (proxy != null)
+            List<PropertyInfo> whereProperties;
+
+            if (proxy is object)
             {
-                nonIdProps = nonIdProps.Where(x => proxy.DirtyFields.Contains(x.Name)).ToList();
+                whereProperties = new List<PropertyInfo>();
+                foreach (var k in keyProperties)
+                {
+                    if (proxy.DirtyFields.Contains(k.Name))
+                        whereProperties.Add(k);
+                }
+                if (whereProperties.Count == 0)
+                {
+                    foreach (var k in explicitKeyProperties)
+                    {
+                        if (proxy.DirtyFields.Contains(k.Name))
+                            whereProperties.Add(k);
+                    }
+                    if (whereProperties.Count == 0)
+                    {
+                        foreach (var ks in compositeKeyProperties)
+                        {
+                            var complete = true;
+                            foreach (var k in ks.Value)
+                            {
+                                if (!proxy.DirtyFields.Contains(k.Name))
+                                {
+                                    complete = false;
+                                    break;
+                                }
+                            }
+                            if (complete)
+                                whereProperties.AddRange(ks.Value);
+                        }
+                    }
+                }
+                if (whereProperties.Count == 0)
+                    throw new ArgumentException("Entity must have at least one dirty [Key] or [ExplicitKey] property, or at least one set of [CompositeKey] properties which are all dirty");
             }
+            else
+            {
+                whereProperties = keyProperties;
+                whereProperties.AddRange(explicitKeyProperties);
+            }
+
+            var computedProperties = ComputedPropertiesCache(type);
+            var toUpdateProps = allProperties.Except(whereProperties.Union(computedProperties)).ToList();
+            if (proxy is object)
+            {
+                toUpdateProps = toUpdateProps.Where(x => proxy.DirtyFields.Contains(x.Name)).ToList();
+            }
+            if (toUpdateProps.Count == 0)
+                return false;
 
             var adapter = GetFormatter(connection);
 
-            for (var i = 0; i < nonIdProps.Count; i++)
+            for (var i = 0; i < toUpdateProps.Count; i++)
             {
-                var property = nonIdProps[i];
+                var property = toUpdateProps[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
-                if (i < nonIdProps.Count - 1)
+                if (i < toUpdateProps.Count - 1)
                     sb.Append(", ");
             }
             sb.Append(" where ");
-            for (var i = 0; i < keyProperties.Count; i++)
+            for (var i = 0; i < whereProperties.Count; i++)
             {
-                var property = keyProperties[i];
+                var property = whereProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property.Name);  //fix for issue #336
-                if (i < keyProperties.Count - 1)
+                if (i < whereProperties.Count - 1)
                     sb.Append(" and ");
             }
             var updated = connection.Execute(sb.ToString(), entityToUpdate, commandTimeout: commandTimeout, transaction: transaction);
@@ -619,7 +692,14 @@ namespace Dapper.Contrib.Extensions
     [AttributeUsage(AttributeTargets.Property)]
     public class CompositeKeyAttribute : Attribute
     {
-        public string KeyName { public get; private set; }
+        /// <summary>
+        /// Whether a field is part of a composite unique key in the Database.
+        /// </summary>
+        public string KeyName { get; private set; }
+        /// <summary>
+        /// Specifies that the field is part of a composite unique key in the Database.
+        /// </summary>
+        /// <param name="keyName">Whether a field is part of a composite unique key in the Database.</param>
         public CompositeKeyAttribute(string keyName) => KeyName = keyName;
     }
 
