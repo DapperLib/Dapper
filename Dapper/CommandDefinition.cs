@@ -74,6 +74,11 @@ namespace Dapper
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
 
         /// <summary>
+        /// Allow cancellation of command after execution begins?
+        /// </summary>
+        public bool RegisterCancellation  { get; }
+
+        /// <summary>
         /// Initialize the command definition
         /// </summary>
         /// <param name="commandText">The text for this command.</param>
@@ -83,9 +88,10 @@ namespace Dapper
         /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
         /// <param name="flags">The behavior flags for this command.</param>
         /// <param name="cancellationToken">The cancellation token for this command.</param>
+        /// <param name="registerCancellation">The cancellation action for this command.</param>
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
-                                 , CancellationToken cancellationToken = default
+                                 , CancellationToken cancellationToken = default, bool registerCancellation = false
             )
         {
             CommandText = commandText;
@@ -95,6 +101,7 @@ namespace Dapper
             CommandType = commandType;
             Flags = flags;
             CancellationToken = cancellationToken;
+            RegisterCancellation = registerCancellation;
         }
 
         private CommandDefinition(object parameters) : this()
@@ -126,6 +133,8 @@ namespace Dapper
             if (CommandType.HasValue)
                 cmd.CommandType = CommandType.Value;
             paramReader?.Invoke(cmd, Parameters);
+            if (RegisterCancellation)
+                CancellationToken.Register(() => cmd.Cancel()); 
             return cmd;
         }
 
