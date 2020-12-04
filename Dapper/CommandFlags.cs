@@ -24,5 +24,9 @@ namespace Dapper
         /// Should the plan cache be bypassed?
         /// </summary>
         NoCache = 4,
+        /// <summary>
+        /// Should the cancellation be allowed after result collection starts?
+        /// </summary>
+        RegisterCancellation = 5,
     }
 }
