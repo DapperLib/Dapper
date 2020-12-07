@@ -76,7 +76,7 @@ namespace Dapper
         /// <summary>
         /// Allow cancellation of command after result collection begins?
         /// </summary>
-        public bool RegisterCancellation  { get; }
+        public bool RegisterCancellation => (Flags & CommandFlags.RegisterCancellation) != 0;
 
         /// <summary>
         /// Initialize the command definition
