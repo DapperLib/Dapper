@@ -139,7 +139,7 @@ namespace Dapper
 
             private async Task NextResultAsync()
             {
-                if (await ((DbDataReader)reader).NextResultAsync(cancel).ConfigureAwait(false))
+                if (await ((DbDataReader)_reader).NextResultAsync(cancel).ConfigureAwait(false))
                 {
                     // readCount++;
                     gridIndex++;
@@ -149,29 +149,29 @@ namespace Dapper
                 {
                     // happy path; close the reader cleanly - no
                     // need for "Cancel" etc
-                    reader.Dispose();
-                    reader = null;
-                    callbacks?.OnCompleted();
+                    _reader.Dispose();
+                    _reader = null;
+                    _callbacks?.OnCompleted();
                     Dispose();
                 }
             }
 
             private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (_reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
-                var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                var typedIdentity = _identity.ForGrid(type, gridIndex);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, _addToCache);
                 var deserializer = cache.Deserializer;
 
-                int hash = GetColumnHash(reader);
+                int hash = GetColumnHash(_reader);
                 if (deserializer.Func == null || deserializer.Hash != hash)
                 {
-                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                    deserializer = new DeserializerState(hash, GetDeserializer(type, _reader, 0, -1, false));
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
-                if (buffered && reader is DbDataReader)
+                if (buffered && _reader is DbDataReader)
                 {
                     return ReadBufferedAsync<T>(gridIndex, deserializer.Func);
                 }
@@ -185,7 +185,7 @@ namespace Dapper
 
             private Task<T> ReadRowAsyncImpl<T>(Type type, Row row)
             {
-                if (reader is DbDataReader dbReader) return ReadRowAsyncImplViaDbReader<T>(dbReader, type, row);
+                if (_reader is DbDataReader dbReader) return ReadRowAsyncImplViaDbReader<T>(dbReader, type, row);
 
                 // no async API available; use non-async and fake it
                 return Task.FromResult(ReadRow<T>(type, row));
@@ -200,8 +200,8 @@ namespace Dapper
                 T result = default;
                 if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
                 {
-                    var typedIdentity = identity.ForGrid(type, gridIndex);
-                    CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                    var typedIdentity = _identity.ForGrid(type, gridIndex);
+                    CacheInfo cache = GetCacheInfo(typedIdentity, null, _addToCache);
                     var deserializer = cache.Deserializer;
 
                     int hash = GetColumnHash(reader);
@@ -226,7 +226,7 @@ namespace Dapper
             {
                 try
                 {
-                    var reader = (DbDataReader)this.reader;
+                    var reader = (DbDataReader)_reader;
                     var buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {

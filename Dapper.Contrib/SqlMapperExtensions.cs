@@ -187,7 +187,7 @@ namespace Dapper.Contrib.Extensions
 
             if (type.IsInterface)
             {
-                if (!(connection.Query(sql, dynParams).FirstOrDefault() is IDictionary<string, object> res))
+                if (connection.Query(sql, dynParams).FirstOrDefault() is not IDictionary<string, object> res)
                 {
                     return null;
                 }

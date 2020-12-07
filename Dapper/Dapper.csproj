@@ -6,6 +6,7 @@
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
+    <NoWarn>$(NoWarn);MA0006;MA0007;MA0009;MA0003;MA0023;MA0051;MA0071;MA0048;MA0018;MA0012</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -17,5 +18,7 @@
   </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.638" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
   </ItemGroup>
 </Project>

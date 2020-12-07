@@ -946,7 +946,9 @@ namespace Dapper
         {
             if (types.Length < 1)
             {
+#pragma warning disable MA0015 // missing name
                 throw new ArgumentException("you must provide at least one type to deserialize");
+#pragma warning restore MA0015 // missing name
             }
 
             object param = command.Parameters;

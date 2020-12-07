@@ -27,7 +27,7 @@ namespace Dapper
     /// </summary>
     public static partial class SqlMapper
     {
-        private class PropertyInfoByNameComparer : IComparer<PropertyInfo>
+        private sealed class PropertyInfoByNameComparer : IComparer<PropertyInfo>
         {
             public int Compare(PropertyInfo x, PropertyInfo y) => string.CompareOrdinal(x.Name, y.Name);
         }
@@ -112,7 +112,7 @@ namespace Dapper
         {
             foreach (var entry in _queryCache)
             {
-                if (entry.Key.type == type)
+                if (entry.Key._type == type)
                     _queryCache.TryRemove(entry.Key, out CacheInfo _);
             }
             TypeDeserializerCache.Purge(type);
@@ -134,7 +134,7 @@ namespace Dapper
         /// <returns></returns>
         public static IEnumerable<Tuple<string, string, int>> GetCachedSQL(int ignoreHitCountAbove = int.MaxValue)
         {
-            var data = _queryCache.Select(pair => Tuple.Create(pair.Key.connectionString, pair.Key.sql, pair.Value.GetHitCount()));
+            var data = _queryCache.Select(pair => Tuple.Create(pair.Key._connectionString, pair.Key._sql, pair.Value.GetHitCount()));
             return (ignoreHitCountAbove < int.MaxValue)
                     ? data.Where(tuple => tuple.Item3 <= ignoreHitCountAbove)
                     : data;
@@ -149,13 +149,13 @@ namespace Dapper
             var counts = new Dictionary<int, int>();
             foreach (var key in _queryCache.Keys)
             {
-                if (!counts.TryGetValue(key.hashCode, out int count))
+                if (!counts.TryGetValue(key._hashCode, out int count))
                 {
-                    counts.Add(key.hashCode, 1);
+                    counts.Add(key._hashCode, 1);
                 }
                 else
                 {
-                    counts[key.hashCode] = count + 1;
+                    counts[key._hashCode] = count + 1;
                 }
             }
             return from pair in counts
@@ -163,11 +163,11 @@ namespace Dapper
                    select Tuple.Create(pair.Key, pair.Value);
         }
 
-        private static Dictionary<Type, DbType> typeMap;
+        private static Dictionary<Type, DbType> s_typeMap;
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, DbType>(37)
+            s_typeMap = new Dictionary<Type, DbType>(37)
             {
                 [typeof(byte)] = DbType.Byte,
                 [typeof(sbyte)] = DbType.SByte,
@@ -232,11 +232,11 @@ namespace Dapper
         public static void AddTypeMap(Type type, DbType dbType)
         {
             // use clone, mutate, replace to avoid threading issues
-            var snapshot = typeMap;
+            var snapshot = s_typeMap;
 
             if (snapshot.TryGetValue(type, out DbType oldValue) && oldValue == dbType) return; // nothing to do
 
-            typeMap = new Dictionary<Type, DbType>(snapshot) { [type] = dbType };
+            s_typeMap = new Dictionary<Type, DbType>(snapshot) { [type] = dbType };
         }
 
         /// <summary>
@@ -246,14 +246,14 @@ namespace Dapper
         public static void RemoveTypeMap(Type type)
         {
             // use clone, mutate, replace to avoid threading issues
-            var snapshot = typeMap;
+            var snapshot = s_typeMap;
 
             if (!snapshot.ContainsKey(type)) return; // nothing to do
 
             var newCopy = new Dictionary<Type, DbType>(snapshot);
             newCopy.Remove(type);
 
-            typeMap = newCopy;
+            s_typeMap = newCopy;
         }
 
         /// <summary>
@@ -358,11 +358,11 @@ namespace Dapper
             handler = null;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
             if (nullUnderlyingType != null) type = nullUnderlyingType;
-            if (type.IsEnum && !typeMap.ContainsKey(type))
+            if (type.IsEnum && !s_typeMap.ContainsKey(type))
             {
                 type = Enum.GetUnderlyingType(type);
             }
-            if (typeMap.TryGetValue(type, out DbType dbType))
+            if (s_typeMap.TryGetValue(type, out DbType dbType))
             {
                 return dbType;
             }
@@ -424,7 +424,9 @@ namespace Dapper
         /// </summary>
         /// <typeparam name="T">The type of element in the list.</typeparam>
         /// <param name="source">The enumerable to return as a list.</param>
+#pragma warning disable MA0016 // Prefer return collection abstraction instead of implementation
         public static List<T> AsList<T>(this IEnumerable<T> source) =>
+#pragma warning restore MA0016 // Prefer return collection abstraction instead of implementation
             (source == null || source is List<T>) ? (List<T>)source : source.ToList();
 
         /// <summary>
@@ -1150,7 +1152,9 @@ namespace Dapper
         {
             _ = row switch
             {   // get the standard exception from the runtime
+#pragma warning disable MA0098 // use [0] instead of First; nope: I want the error type/message!
                 Row.First => ErrZeroRows.First(),
+#pragma warning restore MA0098 // use [0] instead of First
                 Row.Single => ErrZeroRows.Single(),
                 _ => throw new InvalidOperationException(),
             };
@@ -1498,63 +1502,70 @@ namespace Dapper
         {
             if (types.Length < 1)
             {
+#pragma warning disable MA0015 // missing name
                 throw new ArgumentException("you must provide at least one type to deserialize");
+#pragma warning restore MA0015 // missing name
             }
 
             object param = command.Parameters;
             identity ??= new IdentityWithTypes(command.CommandText, command.CommandType, cnn, types[0], param?.GetType(), types);
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
-            IDbCommand ownedCommand = null;
-            IDataReader ownedReader = null;
+            return Impl(cnn, command, types, map, splitOn, reader, identity, finalize, cinfo);
 
-            bool wasClosed = cnn?.State == ConnectionState.Closed;
-            try
+            static IEnumerable<TReturn> Impl(IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize, CacheInfo cinfo)
             {
-                if (reader == null)
-                {
-                    ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
-                    if (wasClosed) cnn.Open();
-                    ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
-                    reader = ownedReader;
-                }
-                DeserializerState deserializer;
-                Func<IDataReader, object>[] otherDeserializers;
+                IDbCommand ownedCommand = null;
+                IDataReader ownedReader = null;
 
-                int hash = GetColumnHash(reader);
-                if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
-                {
-                    var deserializers = GenerateDeserializers(identity, splitOn, reader);
-                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
-                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
-                    SetQueryCache(identity, cinfo);
-                }
-
-                Func<IDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
-
-                if (mapIt != null)
-                {
-                    while (reader.Read())
-                    {
-                        yield return mapIt(reader);
-                    }
-                    if (finalize)
-                    {
-                        while (reader.NextResult()) { /* ignore subsequent result sets */ }
-                        command.OnCompleted();
-                    }
-                }
-            }
-            finally
-            {
+                bool wasClosed = cnn?.State == ConnectionState.Closed;
                 try
                 {
-                    ownedReader?.Dispose();
+                    if (reader == null)
+                    {
+                        ownedCommand = command.SetupCommand(cnn, cinfo.ParamReader);
+                        if (wasClosed) cnn.Open();
+                        ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+                        reader = ownedReader;
+                    }
+                    DeserializerState deserializer;
+                    Func<IDataReader, object>[] otherDeserializers;
+
+                    int hash = GetColumnHash(reader);
+                    if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
+                    {
+                        var deserializers = GenerateDeserializers(identity, splitOn, reader);
+                        deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
+                        otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+                        SetQueryCache(identity, cinfo);
+                    }
+
+                    Func<IDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
+
+                    if (mapIt != null)
+                    {
+                        while (reader.Read())
+                        {
+                            yield return mapIt(reader);
+                        }
+                        if (finalize)
+                        {
+                            while (reader.NextResult()) { /* ignore subsequent result sets */ }
+                            command.OnCompleted();
+                        }
+                    }
                 }
                 finally
                 {
-                    ownedCommand?.Dispose();
-                    if (wasClosed) cnn.Close();
+                    try
+                    {
+                        ownedReader?.Dispose();
+                    }
+                    finally
+                    {
+                        ownedCommand?.Dispose();
+                        if (wasClosed) cnn.Close();
+                    }
                 }
             }
         }
@@ -1706,7 +1717,7 @@ namespace Dapper
                     throw new InvalidOperationException("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
                 }
                 info = new CacheInfo();
-                if (identity.parametersType != null)
+                if (identity._parametersType != null)
                 {
                     Action<IDbCommand, object> reader;
                     if (exampleParameters is IDynamicParameters)
@@ -1723,10 +1734,10 @@ namespace Dapper
                     }
                     else
                     {
-                        var literals = GetLiteralTokens(identity.sql);
+                        var literals = GetLiteralTokens(identity._sql);
                         reader = CreateParamInfoGenerator(identity, false, true, literals);
                     }
-                    if ((identity.commandType == null || identity.commandType == CommandType.Text) && ShouldPassByPosition(identity.sql))
+                    if ((identity._commandType == null || identity._commandType == CommandType.Text) && ShouldPassByPosition(identity._sql))
                     {
                         var tail = reader;
                         reader = (cmd, obj) =>
@@ -1795,7 +1806,7 @@ namespace Dapper
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
             Type underlyingType = null;
-            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
+            if (!(s_typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
                 || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
             {
                 if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
@@ -1819,9 +1830,9 @@ namespace Dapper
             catch { /* don't throw when trying to throw */ }
             if (hasFields)
             {
-#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+#pragma warning disable CA2208, MA0015 // Instantiate argument exceptions correctly
                 return new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
-#pragma warning restore CA2208 // Instantiate argument exceptions correctly
+#pragma warning restore CA2208, MA0015 // Instantiate argument exceptions correctly
             }
             else
             {
@@ -2004,7 +2015,7 @@ namespace Dapper
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
-                DbType dbType = 0;
+                DbType dbType = default;
 
                 int splitAt = SqlMapper.Settings.InListStringSplitCount;
                 bool viaSplit = splitAt >= 0
@@ -2026,7 +2037,7 @@ namespace Dapper
                                 dbType = LookupDbType(item.GetType(), "", true, out ITypeHandler handler);
                             }
                         }
-                        var nextName = namePrefix + count.ToString();
+                        var nextName = namePrefix + count.ToString(CultureInfo.InvariantCulture);
                         if (isDbString && item is DbString)
                         {
                             var str = item as DbString;
@@ -2063,7 +2074,7 @@ namespace Dapper
                         {
                             count++;
                             var padParam = command.CreateParameter();
-                            padParam.ParameterName = namePrefix + count.ToString();
+                            padParam.ParameterName = namePrefix + count.ToString(CultureInfo.InvariantCulture);
                             if (isString) padParam.Size = DbString.DefaultLength;
                             padParam.DbType = dbType;
                             padParam.Value = lastValue;
@@ -2149,7 +2160,7 @@ namespace Dapper
         private static bool TryStringSplit<T>(ref IEnumerable<T> list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
-            if (!(list is ICollection<T> typed))
+            if (list is not ICollection<T> typed)
             {
                 typed = list.ToList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
@@ -2374,7 +2385,7 @@ namespace Dapper
         /// <param name="checkForDuplicates">Whether to check for duplicates.</param>
         /// <param name="removeUnused">Whether to remove unused parameters.</param>
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused) =>
-            CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
+            CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity._sql));
 
         private static bool IsValueTuple(Type type) => (type?.IsValueType == true
                                                        && type.FullName.StartsWith("System.ValueTuple`", StringComparison.Ordinal))
@@ -2382,7 +2393,7 @@ namespace Dapper
 
         internal static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
-            Type type = identity.parametersType;
+            Type type = identity._parametersType;
 
             if (IsValueTuple(type))
             {
@@ -2390,9 +2401,9 @@ namespace Dapper
             }
 
             bool filterParams = false;
-            if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
+            if (removeUnused && identity._commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
             {
-                filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
+                filterParams = !smellsLikeOleDb.IsMatch(identity._sql);
             }
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
@@ -2485,7 +2496,7 @@ namespace Dapper
             }
             if (filterParams)
             {
-                props = FilterParameters(props, identity.sql);
+                props = FilterParameters(props, identity._sql);
             }
 
             var callOpCode = isStruct ? OpCodes.Call : OpCodes.Callvirt;
@@ -2967,9 +2978,9 @@ namespace Dapper
         /// Gets type-map for the given type
         /// </summary>
         /// <returns>Type map instance, default is to create new instance of DefaultTypeMap</returns>
-#pragma warning disable CA2211 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
+#pragma warning disable CA2211, MA0069 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
         public static Func<Type, ITypeMap> TypeMapProvider = (Type type) => new DefaultTypeMap(type);
-#pragma warning restore CA2211 // Non-constant fields should not be visible
+#pragma warning restore CA2211, MA0069 // Non-constant fields should not be visible
 
         /// <summary>
         /// Gets type-map for the given <see cref="Type"/>.
@@ -3648,7 +3659,7 @@ namespace Dapper
                         }
                         else
                         {
-                            formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
+                            formattedValue = Convert.ToString(value, CultureInfo.InvariantCulture) + " - " + Type.GetTypeCode(value.GetType());
                         }
                     }
                     catch (Exception valEx)
@@ -3656,7 +3667,9 @@ namespace Dapper
                         formattedValue = valEx.Message;
                     }
                 }
+#pragma warning disable MA0076 // do not use implicit culture-sensitive ToString - I'm fine with it in this context
                 toThrow = new DataException($"Error parsing column {index} ({name}={formattedValue})", ex);
+#pragma warning restore MA0076
             }
             catch
             { // throw the **original** exception, wrapped as DataException

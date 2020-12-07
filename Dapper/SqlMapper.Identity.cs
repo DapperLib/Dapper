@@ -93,15 +93,15 @@ namespace Dapper
             internal virtual Type GetType(int index) => throw new IndexOutOfRangeException(nameof(index));
 
             internal Identity ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(Type primaryType, int gridIndex) =>
-                new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(sql, commandType, connectionString, primaryType, parametersType, gridIndex);
+                new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(_sql, _commandType, _connectionString, primaryType, _parametersType, gridIndex);
 
             internal Identity ForGrid(Type primaryType, int gridIndex) =>
-                new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex);
+                new Identity(_sql, _commandType, _connectionString, primaryType, _parametersType, 0, gridIndex);
 
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex) =>
                 (otherTypes == null || otherTypes.Length == 0)
-                ? new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex)
-                : new IdentityWithTypes(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
+                ? new Identity(_sql, _commandType, _connectionString, primaryType, _parametersType, 0, gridIndex)
+                : new IdentityWithTypes(_sql, _commandType, _connectionString, primaryType, _parametersType, otherTypes, gridIndex);
 
             /// <summary>
             /// Create an identity for use with DynamicParameters, internal use only.
@@ -109,29 +109,31 @@ namespace Dapper
             /// <param name="type">The parameters type to create an <see cref="Identity"/> for.</param>
             /// <returns></returns>
             public Identity ForDynamicParameters(Type type) =>
-                new Identity(sql, commandType, connectionString, this.type, type, 0, -1);
+                new Identity(_sql, _commandType, _connectionString, _type, type, 0, -1);
 
             internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType)
                 : this(sql, commandType, connection.ConnectionString, type, parametersType, 0, 0) { /* base call */ }
 
             private protected Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, int otherTypesHash, int gridIndex)
             {
-                this.sql = sql;
-                this.commandType = commandType;
-                this.connectionString = connectionString;
-                this.type = type;
-                this.parametersType = parametersType;
-                this.gridIndex = gridIndex;
+                _sql = sql;
+                _commandType = commandType;
+                _connectionString = connectionString;
+                _type = type;
+                _parametersType = parametersType;
+                _gridIndex = gridIndex;
                 unchecked
                 {
-                    hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
-                    hashCode = (hashCode * 23) + commandType.GetHashCode();
-                    hashCode = (hashCode * 23) + gridIndex.GetHashCode();
-                    hashCode = (hashCode * 23) + (sql?.GetHashCode() ?? 0);
-                    hashCode = (hashCode * 23) + (type?.GetHashCode() ?? 0);
-                    hashCode = (hashCode * 23) + otherTypesHash;
-                    hashCode = (hashCode * 23) + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
-                    hashCode = (hashCode * 23) + (parametersType?.GetHashCode() ?? 0);
+                    _hashCode = 17; // we *know* we are using this in a dictionary, so pre-compute this
+                    _hashCode = (_hashCode * 23) + commandType.GetHashCode();
+                    _hashCode = (_hashCode * 23) + gridIndex.GetHashCode();
+#pragma warning disable MA0021 // use specific StringComparer to compute hash codes
+                    _hashCode = (_hashCode * 23) + (sql?.GetHashCode() ?? 0);
+#pragma warning restore MA0021
+                    _hashCode = (_hashCode * 23) + (type?.GetHashCode() ?? 0);
+                    _hashCode = (_hashCode * 23) + otherTypesHash;
+                    _hashCode = (_hashCode * 23) + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
+                    _hashCode = (_hashCode * 23) + (parametersType?.GetHashCode() ?? 0);
                 }
             }
 
@@ -144,48 +146,48 @@ namespace Dapper
             /// <summary>
             /// The raw SQL command.
             /// </summary>
-            public readonly string sql;
+            public readonly string _sql;
 
             /// <summary>
             /// The SQL command type.
             /// </summary>
-            public readonly CommandType? commandType;
+            public readonly CommandType? _commandType;
 
             /// <summary>
             /// The hash code of this Identity.
             /// </summary>
-            public readonly int hashCode;
+            public readonly int _hashCode;
 
             /// <summary>
             /// The grid index (position in the reader) of this Identity.
             /// </summary>
-            public readonly int gridIndex;
+            public readonly int _gridIndex;
 
             /// <summary>
             /// This <see cref="Type"/> of this Identity.
             /// </summary>
-            public readonly Type type;
+            public readonly Type _type;
 
             /// <summary>
             /// The connection string for this Identity.
             /// </summary>
-            public readonly string connectionString;
+            public readonly string _connectionString;
 
             /// <summary>
             /// The type of the parameters object for this Identity.
             /// </summary>
-            public readonly Type parametersType;
+            public readonly Type _parametersType;
 
             /// <summary>
             /// Gets the hash code for this identity.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode() => hashCode;
+            public override int GetHashCode() => _hashCode;
 
             /// <summary>
             /// See object.ToString()
             /// </summary>
-            public override string ToString() => sql;
+            public override string ToString() => _sql;
 
             /// <summary>
             /// Compare 2 Identity objects
@@ -198,12 +200,12 @@ namespace Dapper
                 if (other is null) return false;
 
                 int typeCount;
-                return gridIndex == other.gridIndex
-                    && type == other.type
-                    && sql == other.sql
-                    && commandType == other.commandType
-                    && connectionStringComparer.Equals(connectionString, other.connectionString)
-                    && parametersType == other.parametersType
+                return _gridIndex == other._gridIndex
+                    && _type == other._type
+                    && _sql == other._sql
+                    && _commandType == other._commandType
+                    && connectionStringComparer.Equals(_connectionString, other._connectionString)
+                    && _parametersType == other._parametersType
                     && (typeCount = TypeCount) == other.TypeCount
                     && (typeCount == 0 || TypesEqual(this, other, typeCount));
             }

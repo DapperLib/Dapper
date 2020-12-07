@@ -15,7 +15,7 @@ namespace Dapper
     {
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         private static readonly Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
-        private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
+        private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>(StringComparer.Ordinal);
         private List<object> templates;
 
         object SqlMapper.IParameterLookup.this[string name] =>
@@ -162,7 +162,7 @@ namespace Dapper
         /// <param name="identity">Information about the query</param>
         protected void AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
-            var literals = SqlMapper.GetLiteralTokens(identity.sql);
+            var literals = SqlMapper.GetLiteralTokens(identity._sql);
 
             if (templates != null)
             {
@@ -316,7 +316,7 @@ namespace Dapper
             {
                 if (default(T) != null)
                 {
-                    throw new ApplicationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
+                    throw new InvalidOperationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
                 }
                 return default;
             }

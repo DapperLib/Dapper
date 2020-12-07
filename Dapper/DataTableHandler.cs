@@ -6,7 +6,7 @@ namespace Dapper
     {
         public object Parse(Type destinationType, object value)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public void SetValue(IDbDataParameter parameter, object value)

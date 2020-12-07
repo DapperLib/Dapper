@@ -15,7 +15,11 @@ namespace Dapper
             if (task is null) throw new ArgumentNullException(nameof(task));
 
             if (task.Status == TaskStatus.RanToCompletion)
+            {
+#pragma warning disable MA0042 // use await instead of Result; nope, we've already checked
                 return Task.FromResult((TTo)task.Result);
+#pragma warning restore MA0042
+            }
 
             var source = new TaskCompletionSource<TTo>();
             task.ContinueWith(OnTaskCompleted<TFrom, TTo>, state: source, TaskContinuationOptions.ExecuteSynchronously);

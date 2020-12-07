@@ -25,7 +25,9 @@ namespace Dapper
         [MethodImpl(MethodImplOptions.NoInlining)]
         private async static Task<T> ThrowDisposedAsync<T>()
         {
+#pragma warning disable MA0042 // use ThrowDisposedAsync - that's us!
             var result = ThrowDisposed<T>();
+#pragma warning restore MA0042
             await Task.Yield(); // will never hit this - already thrown and handled
             return result;
         }
@@ -213,7 +215,7 @@ namespace Dapper
         protected override DbDataReader GetDbDataReader(int ordinal) => (((IDataReader)_reader).GetData(ordinal) as DbDataReader) ?? throw new NotSupportedException();
     }
 
-    internal class BasicWrappedReader : IWrappedDataReader
+    internal sealed class BasicWrappedReader : IWrappedDataReader
     {
         private IDataReader _reader;
         private IDbCommand _cmd;

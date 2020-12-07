@@ -5,6 +5,6 @@
         /// <summary>
         /// Dummy type for excluding from multi-map
         /// </summary>
-        private class DontMap { /* hiding constructor */ }
+        private sealed class DontMap { /* hiding constructor */ }
     }
 }

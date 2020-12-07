@@ -40,7 +40,7 @@ namespace Dapper.Contrib.Extensions
             if (!type.IsInterface)
                 return (await connection.QueryAsync<T>(sql, dynParams, transaction, commandTimeout).ConfigureAwait(false)).FirstOrDefault();
 
-            if (!((await connection.QueryAsync<dynamic>(sql, dynParams).ConfigureAwait(false)).FirstOrDefault() is IDictionary<string, object> res))
+            if ((await connection.QueryAsync<dynamic>(sql, dynParams).ConfigureAwait(false)).FirstOrDefault() is not IDictionary<string, object> res)
             {
                 return null;
             }

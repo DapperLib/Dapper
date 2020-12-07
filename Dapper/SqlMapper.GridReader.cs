@@ -12,17 +12,17 @@ namespace Dapper
         /// </summary>
         public partial class GridReader : IDisposable
         {
-            private IDataReader reader;
-            private readonly Identity identity;
-            private readonly bool addToCache;
+            private IDataReader _reader;
+            private readonly Identity _identity;
+            private readonly bool _addToCache;
 
             internal GridReader(IDbCommand command, IDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
             {
                 Command = command;
-                this.reader = reader;
-                this.identity = identity;
-                this.callbacks = callbacks;
-                this.addToCache = addToCache;
+                _reader = reader;
+                _identity = identity;
+                _callbacks = callbacks;
+                _addToCache = addToCache;
             }
 
             /// <summary>
@@ -145,16 +145,16 @@ namespace Dapper
 
             private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (_reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
-                var typedIdentity = identity.ForGrid(type, gridIndex);
-                CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                var typedIdentity = _identity.ForGrid(type, gridIndex);
+                CacheInfo cache = GetCacheInfo(typedIdentity, null, _addToCache);
                 var deserializer = cache.Deserializer;
 
-                int hash = GetColumnHash(reader);
+                int hash = GetColumnHash(_reader);
                 if (deserializer.Func == null || deserializer.Hash != hash)
                 {
-                    deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                    deserializer = new DeserializerState(hash, GetDeserializer(type, _reader, 0, -1, false));
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
@@ -164,24 +164,24 @@ namespace Dapper
 
             private T ReadRow<T>(Type type, Row row)
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (_reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 IsConsumed = true;
 
                 T result = default;
-                if (reader.Read() && reader.FieldCount != 0)
+                if (_reader.Read() && _reader.FieldCount != 0)
                 {
-                    var typedIdentity = identity.ForGrid(type, gridIndex);
-                    CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
+                    var typedIdentity = _identity.ForGrid(type, gridIndex);
+                    CacheInfo cache = GetCacheInfo(typedIdentity, null, _addToCache);
                     var deserializer = cache.Deserializer;
 
-                    int hash = GetColumnHash(reader);
+                    int hash = GetColumnHash(_reader);
                     if (deserializer.Func == null || deserializer.Hash != hash)
                     {
-                        deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
+                        deserializer = new DeserializerState(hash, GetDeserializer(type, _reader, 0, -1, false));
                         cache.Deserializer = deserializer;
                     }
-                    object val = deserializer.Func(reader);
+                    object val = deserializer.Func(_reader);
                     if (val == null || val is T)
                     {
                         result = (T)val;
@@ -191,8 +191,8 @@ namespace Dapper
                         var convertToType = Nullable.GetUnderlyingType(type) ?? type;
                         result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
                     }
-                    if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);
-                    while (reader.Read()) { /* ignore subsequent rows */ }
+                    if ((row & Row.Single) != 0 && _reader.Read()) ThrowMultipleRows(row);
+                    while (_reader.Read()) { /* ignore subsequent rows */ }
                 }
                 else if ((row & Row.FirstOrDefault) == 0) // demanding a row, and don't have one
                 {
@@ -204,13 +204,13 @@ namespace Dapper
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Delegate func, string splitOn)
             {
-                var identity = this.identity.ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(typeof(TReturn), gridIndex);
+                var identity = _identity.ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(typeof(TReturn), gridIndex);
 
                 IsConsumed = true;
 
                 try
                 {
-                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default, func, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default, func, splitOn, _reader, identity, false))
                     {
                         yield return r;
                     }
@@ -223,10 +223,10 @@ namespace Dapper
 
             private IEnumerable<TReturn> MultiReadInternal<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn)
             {
-                var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
+                var identity = _identity.ForGrid(typeof(TReturn), types, gridIndex);
                 try
                 {
-                    foreach (var r in MultiMapImpl<TReturn>(null, default, types, map, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TReturn>(null, default, types, map, splitOn, _reader, identity, false))
                     {
                         yield return r;
                     }
@@ -361,9 +361,9 @@ namespace Dapper
                 try
                 {
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                    while (index == gridIndex && reader.Read())
+                    while (index == gridIndex && _reader.Read())
                     {
-                        object val = deserializer(reader);
+                        object val = deserializer(_reader);
                         if (val == null || val is T)
                         {
                             yield return (T)val;
@@ -384,7 +384,7 @@ namespace Dapper
             }
 
             private int gridIndex; //, readCount;
-            private readonly IParameterCallbacks callbacks;
+            private readonly IParameterCallbacks _callbacks;
 
             /// <summary>
             /// Has the underlying reader been consumed?
@@ -398,7 +398,7 @@ namespace Dapper
 
             private void NextResult()
             {
-                if (reader.NextResult())
+                if (_reader.NextResult())
                 {
                     // readCount++;
                     gridIndex++;
@@ -408,9 +408,9 @@ namespace Dapper
                 {
                     // happy path; close the reader cleanly - no
                     // need for "Cancel" etc
-                    reader.Dispose();
-                    reader = null;
-                    callbacks?.OnCompleted();
+                    _reader.Dispose();
+                    _reader = null;
+                    _callbacks?.OnCompleted();
                     Dispose();
                 }
             }
@@ -420,11 +420,11 @@ namespace Dapper
             /// </summary>
             public void Dispose()
             {
-                if (reader != null)
+                if (_reader != null)
                 {
-                    if (!reader.IsClosed) Command?.Cancel();
-                    reader.Dispose();
-                    reader = null;
+                    if (!_reader.IsClosed) Command?.Cancel();
+                    _reader.Dispose();
+                    _reader = null;
                 }
                 if (Command != null)
                 {

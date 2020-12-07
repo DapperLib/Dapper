@@ -177,6 +177,8 @@ namespace Dapper
         /// <summary>
         /// The settable properties for this typemap
         /// </summary>
+#pragma warning disable MA0016 // Prefer return collection abstraction instead of implementation
         public List<PropertyInfo> Properties { get; }
+#pragma warning restore MA0016 // Prefer return collection abstraction instead of implementation
     }
 }
