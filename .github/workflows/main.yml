@@ -43,6 +43,10 @@ jobs:
         ports:
         - 8123:8123
     steps:
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.x'
     - name: Checkout code
       uses: actions/checkout@v1
     - name: .NET Build
@@ -62,6 +66,6 @@ jobs:
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         PostgesConnectionString: Server=localhost;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
-        ClickHouseConnectionString: Host=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default;Database=default
+        ClickHouseConnectionString: Host=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default
     - name: .NET Lib Pack
       run: dotnet pack Build.csproj --no-build --framework net5.0 -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
