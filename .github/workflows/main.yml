@@ -48,7 +48,7 @@ jobs:
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
     - name: Dapper Tests
-      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions /p:CI=true
+      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj --framework net5.0 -c Release --logger GitHubActions /p:CI=true
       env:
         MySqlConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
@@ -56,7 +56,7 @@ jobs:
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         ClickHouseConnectionString: Host=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default
     - name: Dapper.Contrib Tests
-      run: dotnet test tests/Dapper.Tests.Contrib/Dapper.Tests.Contrib.csproj -c Release --logger GitHubActions /p:CI=true
+      run: dotnet test tests/Dapper.Tests.Contrib/Dapper.Tests.Contrib.csproj --framework net5.0 -c Release --logger GitHubActions /p:CI=true
       env:
         MySqlConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
@@ -64,4 +64,4 @@ jobs:
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         ClickHouseConnectionString: Host=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default
     - name: .NET Lib Pack
-      run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
+      run: dotnet pack Build.csproj --no-build --framework net5.0 -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
