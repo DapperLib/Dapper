@@ -46,7 +46,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '5.x'
+        dotnet-version: '5.0.100'
     - name: Checkout code
       uses: actions/checkout@v1
     - name: .NET Build
