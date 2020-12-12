@@ -68,4 +68,4 @@ jobs:
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         ClickHouseConnectionString: Host=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default
     - name: .NET Lib Pack
-      run: dotnet pack Build.csproj --no-build --framework net5.0 -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
+      run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
