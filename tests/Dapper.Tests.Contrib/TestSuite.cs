@@ -15,6 +15,7 @@ namespace Dapper.Tests.Contrib
         [ExplicitKey]
         public string ObjectXId { get; set; }
         public string Name { get; set; }
+        public int Id { get; set; }
     }
 
     [Table("ObjectY")]
