@@ -114,7 +114,7 @@ Performance
 
 A key feature of Dapper is performance. The following metrics show how long it takes to execute a `SELECT` statement against a DB (in various config, each labeled) and map the data returned to objects.
 
-The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/main/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
+The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/main/benchmarks/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
 ```bash
 dotnet run -p .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
 ```
