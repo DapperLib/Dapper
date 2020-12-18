@@ -186,15 +186,25 @@ namespace Dapper.Contrib.Extensions
                     sbParameterList.Append(", ");
             }
 
-            if (!isList)    //single entity
+            var wasClosed = connection.State == ConnectionState.Closed;
+            if (wasClosed) connection.Open();
+            try
             {
-                return sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
-                    sbParameterList.ToString(), keyProperties, entityToInsert);
+                if (!isList)    //single entity
+                {
+                    return sqlAdapter.InsertAsync(connection, transaction, commandTimeout, name, sbColumnList.ToString(),
+                        sbParameterList.ToString(), keyProperties, entityToInsert);
+                }
+
+                //insert list of entities
+                var cmd = $"INSERT INTO {name} ({sbColumnList}) values ({sbParameterList})";
+                return connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
+            }
+            finally
+            {
+                if (wasClosed) connection.Close();
             }
 
-            //insert list of entities
-            var cmd = $"INSERT INTO {name} ({sbColumnList}) values ({sbParameterList})";
-            return connection.ExecuteAsync(cmd, entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>
