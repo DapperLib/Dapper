@@ -654,7 +654,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types.
+        /// Perform an asynchronous multi-mapping query with 2 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -675,7 +675,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types.
+        /// Perform an asynchronous multi-mapping query with 2 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -690,7 +690,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types.
+        /// Perform an asynchronous multi-mapping query with 3 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -712,7 +712,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types.
+        /// Perform an asynchronous multi-mapping query with 3 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -728,7 +728,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types.
+        /// Perform an asynchronous multi-mapping query with 4 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -751,7 +751,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types.
+        /// Perform an asynchronous multi-mapping query with 4 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -768,7 +768,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types.
+        /// Perform an asynchronous multi-mapping query with 5 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -792,7 +792,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types.
+        /// Perform an asynchronous multi-mapping query with 5 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -810,7 +810,7 @@ namespace Dapper
             MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 6 input types.
+        /// Perform an asynchronous multi-mapping query with 6 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -835,7 +835,7 @@ namespace Dapper
                 new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 6 input types.
+        /// Perform an asynchronous multi-mapping query with 6 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -854,7 +854,7 @@ namespace Dapper
              MultiMapAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn, command, map, splitOn);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 7 input types.
+        /// Perform an asynchronous multi-mapping query with 7 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -921,7 +921,7 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with an arbitrary number of input types.
+        /// Perform an asynchronous multi-mapping query with an arbitrary number of input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TReturn">The combined type to return.</typeparam>
