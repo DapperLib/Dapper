@@ -131,8 +131,6 @@ namespace Dapper
             if (CommandType.HasValue)
                 cmd.CommandType = CommandType.Value;
             paramReader?.Invoke(cmd, Parameters);
-            if (RegisterCancellation)
-                CancellationToken.Register(() => cmd.Cancel()); 
             return cmd;
         }
 
