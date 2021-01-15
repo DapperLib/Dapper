@@ -27,6 +27,6 @@ namespace Dapper
         /// <summary>
         /// Should the cancellation be allowed after result collection starts?
         /// </summary>
-        RegisterCancellation = 5,
+        RegisterCancellation = 8,
     }
 }
