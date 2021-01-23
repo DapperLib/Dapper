@@ -63,12 +63,13 @@ namespace Dapper
                 internal static PropertyDescriptorCollection GetProperties(DapperTable table, IDictionary<string,object> row = null)
                 {
                     string[] names = table?.FieldNames;
+                    Type[] types = table?.FieldTypes;
                     if (names == null || names.Length == 0) return PropertyDescriptorCollection.Empty;
                     var arr = new PropertyDescriptor[names.Length];
                     for (int i = 0; i < arr.Length; i++)
                     {
                         var type = row != null && row.TryGetValue(names[i], out var value) && value != null
-                            ? value.GetType() : typeof(object);
+                            ? value.GetType() : types[i];
                         arr[i] = new RowBoundPropertyDescriptor(type, names[i], i);
                     }
                     return new PropertyDescriptorCollection(arr, true);
