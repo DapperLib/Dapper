@@ -8,13 +8,16 @@ namespace Dapper
         private sealed class DapperTable
         {
             private string[] fieldNames;
+            private Type[] fieldTypes;
             private readonly Dictionary<string, int> fieldNameLookup;
 
             internal string[] FieldNames => fieldNames;
-
-            public DapperTable(string[] fieldNames)
+            internal Type[] FieldTypes => fieldTypes;
+            
+            public DapperTable(string[] fieldNames, Type[] fieldTypes)
             {
                 this.fieldNames = fieldNames ?? throw new ArgumentNullException(nameof(fieldNames));
+                this.fieldTypes = fieldTypes ?? throw new ArgumentNullException(nameof(fieldTypes));
 
                 fieldNameLookup = new Dictionary<string, int>(fieldNames.Length, StringComparer.Ordinal);
                 // if there are dups, we want the **first** key to be the "winner" - so iterate backwards
