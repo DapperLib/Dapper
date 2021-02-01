@@ -67,6 +67,17 @@ namespace Dapper.Tests.Contrib
         public string Name { get; set; }
     }
 
+    [Table("Things")]
+    public class Thing
+    {
+        [ExplicitKey]
+        public string FirstId { get; set; }
+        [ExplicitKey]
+        public string SecondId { get; set; }
+        public string Name { get; set; }
+        public DateTime? Created { get; set; }
+    }
+
     [Table("Stuff")]
     public class Stuff
     {
@@ -285,6 +296,31 @@ namespace Dapper.Tests.Contrib
                 Assert.Single(list2);
                 o2 = connection.Get<ObjectZ>(id);
                 Assert.Equal(o2.Id, id);
+            }
+        }
+
+        [Fact]
+        public void InsertGetUpdateDeleteWithCompositeKey()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var guid1 = Guid.NewGuid().ToString();
+                var guid2 = Guid.NewGuid().ToString();
+                var thing1 = new Thing { FirstId = guid1, SecondId = guid2, Name = "Foo", Created = DateTime.Now };
+                var originalThingCount = connection.Query<int>("Select Count(*) From Things").First();
+                connection.Insert(thing1);
+                var list1 = connection.Query<Thing>("select * from Things").ToList();
+                Assert.Equal(list1.Count, originalThingCount + 1);
+                thing1 = connection.Get<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                Assert.Equal(thing1.FirstId, guid1);
+                Assert.Equal(thing1.SecondId, guid2);
+                thing1.Name = "Bar";
+                connection.Update(thing1);
+                thing1 = connection.Get<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                Assert.Equal("Bar", thing1.Name);
+                connection.Delete(thing1);
+                thing1 = connection.Get<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                Assert.Null(thing1);
             }
         }
 

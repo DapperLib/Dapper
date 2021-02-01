@@ -34,6 +34,8 @@ namespace Dapper.Tests.Contrib
                 // ReSharper disable once AccessToDisposedClosure
                 void dropTable(string name) => connection.Execute($"IF OBJECT_ID('{name}', 'U') IS NOT NULL DROP TABLE [{name}]; ");
                 connection.Open();
+                dropTable("Things");
+                connection.Execute("CREATE TABLE Things (FirstId nchar(36) not null, SecondId nchar(36) not null, Name nvarchar(100) not null, Created DateTime null, PRIMARY KEY (FirstId, SecondId));");
                 dropTable("Stuff");
                 connection.Execute("CREATE TABLE Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null);");
                 dropTable("People");
@@ -80,6 +82,8 @@ namespace Dapper.Tests.Contrib
                     // ReSharper disable once AccessToDisposedClosure
                     void dropTable(string name) => connection.Execute($"DROP TABLE IF EXISTS `{name}`;");
                     connection.Open();
+                    dropTable("Things");
+                    connection.Execute("CREATE TABLE Things (FirstId nvarchar(36) not null, SecondId nvarchar(36) not null, Name nvarchar(100) not null, Created DateTime null, PRIMARY KEY (FirstId, SecondId));");
                     dropTable("Stuff");
                     connection.Execute("CREATE TABLE Stuff (TheId int not null AUTO_INCREMENT PRIMARY KEY, Name nvarchar(100) not null, Created DateTime null);");
                     dropTable("People");
@@ -127,6 +131,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
+                connection.Execute("CREATE TABLE Things (FirstId nchar(36) not null, SecondId nchar(36) not null, Name nvarchar(100) not null, Created DateTime null, PRIMARY KEY (FirstId, SecondId));");
                 connection.Execute("CREATE TABLE Stuff (TheId integer primary key autoincrement not null, Name nvarchar(100) not null, Created DateTime null) ");
                 connection.Execute("CREATE TABLE People (Id integer primary key autoincrement not null, Name nvarchar(100) not null) ");
                 connection.Execute("CREATE TABLE Users (Id integer primary key autoincrement not null, Name nvarchar(100) not null, Age int not null) ");
@@ -160,6 +165,7 @@ namespace Dapper.Tests.Contrib
             using (var connection = new SqlCeConnection(ConnectionString))
             {
                 connection.Open();
+                connection.Execute(@"CREATE TABLE Things (FirstId nchar(36) not null, SecondId nchar(36) not null, Name nvarchar(100) not null, Created DateTime null, PRIMARY KEY (FirstId, SecondId));");
                 connection.Execute(@"CREATE TABLE Stuff (TheId int IDENTITY(1,1) not null, Name nvarchar(100) not null, Created DateTime null) ");
                 connection.Execute(@"CREATE TABLE People (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null) ");
                 connection.Execute(@"CREATE TABLE Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null) ");

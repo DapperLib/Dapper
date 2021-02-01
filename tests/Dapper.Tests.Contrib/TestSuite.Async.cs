@@ -136,6 +136,32 @@ namespace Dapper.Tests.Contrib
             }
         }
 
+
+        [Fact]
+        public async Task InsertGetUpdateDeleteWithCompositeKeyAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var guid1 = Guid.NewGuid().ToString();
+                var guid2 = Guid.NewGuid().ToString();
+                var thing1 = new Thing { FirstId = guid1, SecondId = guid2, Name = "Foo", Created = DateTime.Now };
+                var originalThingCount = (await connection.QueryAsync<int>("Select Count(*) From Things")).First();
+                await connection.InsertAsync(thing1);
+                var list1 = (await connection.QueryAsync<Thing>("select * from Things")).ToList();
+                Assert.Equal(list1.Count, originalThingCount + 1);
+                thing1 = await connection.GetAsync<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                Assert.Equal(thing1.FirstId, guid1);
+                Assert.Equal(thing1.SecondId, guid2);
+                thing1.Name = "Bar";
+                await connection.UpdateAsync(thing1);
+                thing1 = await connection.GetAsync<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                Assert.Equal("Bar", thing1.Name);
+                connection.Delete(thing1);
+                thing1 = await connection.GetAsync<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                Assert.Null(thing1);
+            }
+        }
+
         [Fact]
         public async Task TableNameAsync()
         {
