@@ -71,9 +71,9 @@ namespace Dapper.Tests.Contrib
     public class Thing
     {
         [ExplicitKey]
-        public string FirstId { get; set; }
+        public int FirstId { get; set; }
         [ExplicitKey]
-        public string SecondId { get; set; }
+        public int SecondId { get; set; }
         public string Name { get; set; }
         public DateTime? Created { get; set; }
     }
@@ -304,22 +304,23 @@ namespace Dapper.Tests.Contrib
         {
             using (var connection = GetOpenConnection())
             {
-                var guid1 = Guid.NewGuid().ToString();
-                var guid2 = Guid.NewGuid().ToString();
-                var thing1 = new Thing { FirstId = guid1, SecondId = guid2, Name = "Foo", Created = DateTime.Now };
+                var rand = new Random();
+                var id1 = rand.Next(21, 30);
+                var id2 = rand.Next(31, 40);;
+                var thing1 = new Thing { FirstId = id1, SecondId = id2, Name = "Foo", Created = DateTime.Now };
                 var originalThingCount = connection.Query<int>("Select Count(*) From Things").First();
                 connection.Insert(thing1);
                 var list1 = connection.Query<Thing>("select * from Things").ToList();
                 Assert.Equal(list1.Count, originalThingCount + 1);
-                thing1 = connection.Get<Thing>(new { FirstId = guid1, SecondId = guid2 });
-                Assert.Equal(thing1.FirstId, guid1);
-                Assert.Equal(thing1.SecondId, guid2);
+                thing1 = connection.Get<Thing>(new { FirstId = id1, SecondId = id2 });
+                Assert.Equal(thing1.FirstId, id1);
+                Assert.Equal(thing1.SecondId, id2);
                 thing1.Name = "Bar";
                 connection.Update(thing1);
-                thing1 = connection.Get<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                thing1 = connection.Get<Thing>(new { FirstId = id1, SecondId = id2 });
                 Assert.Equal("Bar", thing1.Name);
                 connection.Delete(thing1);
-                thing1 = connection.Get<Thing>(new { FirstId = guid1, SecondId = guid2 });
+                thing1 = connection.Get<Thing>(new { FirstId = id1, SecondId = id2 });
                 Assert.Null(thing1);
             }
         }
