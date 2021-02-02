@@ -660,5 +660,15 @@ Order by p.Id
                 // expecting an app exception due to multi mapping being bodged 
             }
         }
+
+        [Fact]
+        public void TestMultiMapWithConversion()
+        {
+            // int to string conversion
+            var result = connection.Query("select 1 A, 2 B", (string x, string y) => new { x, y }, splitOn: "B");
+            var record = Assert.Single(result);
+            Assert.Equal("1", record.x);
+            Assert.Equal("2", record.y);
+        }
     }
 }
