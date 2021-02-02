@@ -3622,8 +3622,8 @@ namespace Dapper
         /// Throws a data exception, only used internally
         /// </summary>
         /// <param name="ex">The exception to throw.</param>
-        /// <param name="index">The index the exception occured at.</param>
-        /// <param name="reader">The reader the exception occured in.</param>
+        /// <param name="index">The index the exception occurred at.</param>
+        /// <param name="reader">The reader the exception occurred in.</param>
         /// <param name="value">The value that caused the exception.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
         public static void ThrowDataException(Exception ex, int index, IDataReader reader, object value)
