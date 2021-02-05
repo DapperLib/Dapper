@@ -166,14 +166,14 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             var type = typeof(T);
 
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(Get));
-                var name = GetTableName(type);
+                var name = tableName ?? GetTableName(type);
 
                 sql = $"select * from {name} where {key.Name} = @id";
                 GetQueries[type.TypeHandle] = sql;
@@ -228,7 +228,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             var type = typeof(T);
             var cacheType = typeof(List<T>);
@@ -236,7 +236,7 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
                 GetSingleKey<T>(nameof(GetAll));
-                var name = GetTableName(type);
+                var name = tableName ?? GetTableName(type);
 
                 sql = "select * from " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
@@ -396,7 +396,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static bool Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             if (entityToUpdate is IProxy proxy && !proxy.IsDirty)
             {
@@ -427,7 +427,7 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var name = tableName ?? GetTableName(type);
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
@@ -467,7 +467,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if not found</returns>
-        public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static bool Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             if (entityToDelete == null)
                 throw new ArgumentException("Cannot Delete null Object", nameof(entityToDelete));
@@ -496,7 +496,7 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var name = tableName ?? GetTableName(type);
             keyProperties.AddRange(explicitKeyProperties);
 
             var sb = new StringBuilder();
@@ -523,10 +523,10 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if none found</returns>
-        public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static bool DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             var type = typeof(T);
-            var name = GetTableName(type);
+            var name = tableName ?? GetTableName(type);
             var statement = $"delete from {name}";
             var deleted = connection.Execute(statement, null, transaction, commandTimeout);
             return deleted > 0;

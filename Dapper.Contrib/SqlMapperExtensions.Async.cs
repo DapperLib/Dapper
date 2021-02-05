@@ -22,13 +22,13 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             var type = typeof(T);
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 var key = GetSingleKey<T>(nameof(GetAsync));
-                var name = GetTableName(type);
+                var name = tableName ?? GetTableName(type);
 
                 sql = $"SELECT * FROM {name} WHERE {key.Name} = @id";
                 GetQueries[type.TypeHandle] = sql;
@@ -78,7 +78,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             var type = typeof(T);
             var cacheType = typeof(List<T>);
@@ -86,7 +86,7 @@ namespace Dapper.Contrib.Extensions
             if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
                 GetSingleKey<T>(nameof(GetAll));
-                var name = GetTableName(type);
+                var name = tableName ?? GetTableName(type);
 
                 sql = "SELECT * FROM " + name;
                 GetQueries[cacheType.TypeHandle] = sql;
@@ -207,7 +207,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<bool> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             if ((entityToUpdate is IProxy proxy) && !proxy.IsDirty)
             {
@@ -238,7 +238,7 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var name = tableName ?? GetTableName(type);
 
             var sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", name);
@@ -278,7 +278,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if not found</returns>
-        public static async Task<bool> DeleteAsync<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<bool> DeleteAsync<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             if (entityToDelete == null)
                 throw new ArgumentException("Cannot Delete null Object", nameof(entityToDelete));
@@ -307,7 +307,7 @@ namespace Dapper.Contrib.Extensions
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
 
-            var name = GetTableName(type);
+            var name = tableName ?? GetTableName(type);
             var allKeyProperties = keyProperties.Concat(explicitKeyProperties).ToList();
 
             var sb = new StringBuilder();
@@ -334,10 +334,11 @@ namespace Dapper.Contrib.Extensions
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if none found</returns>
-        public static async Task<bool> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static async Task<bool> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null, string tableName = null) where T : class
         {
             var type = typeof(T);
-            var statement = "DELETE FROM " + GetTableName(type);
+            var name = tableName ?? GetTableName(type);
+            var statement = "DELETE FROM " + name;
             var deleted = await connection.ExecuteAsync(statement, null, transaction, commandTimeout).ConfigureAwait(false);
             return deleted > 0;
         }
