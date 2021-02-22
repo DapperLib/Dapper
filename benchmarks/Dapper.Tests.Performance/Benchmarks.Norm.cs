@@ -1,6 +1,4 @@
-﻿#if NET4X 
-#else
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using System.ComponentModel;
 using System.Linq;
 using Norm;
@@ -39,4 +37,4 @@ namespace Dapper.Tests.Performance
         }
     }
 }
-#endif
+

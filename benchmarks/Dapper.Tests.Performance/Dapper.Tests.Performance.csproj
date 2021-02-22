@@ -48,9 +48,12 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' Or '$(TargetFramework)' == 'net5.0'">
     <PackageReference Include="Norm.net">
       <Version>3.1.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Benchmarks.Norm.cs" Condition="'$(TargetFramework)' != 'netcoreapp3.1' And '$(TargetFramework)' != 'net5.0'" />
   </ItemGroup>
 </Project>
