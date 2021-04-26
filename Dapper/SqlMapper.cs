@@ -3200,7 +3200,7 @@ namespace Dapper
 
                 if (i < length)
                 {
-                    var canBeNull = CanBeNull(reader, i);
+                    var canBeNull = GetColumnAllowsDBNull(reader, i);
                     LoadReaderValueOrBranchToDBNullLabel(
                         il,
                         startBound + i,
@@ -3242,14 +3242,15 @@ namespace Dapper
             il.Emit(OpCodes.Ret);
         }
 
-        static bool CanBeNull(IDataReader reader, int ordinal)
+        static bool GetColumnAllowsDBNull(IDataReader reader, int ordinal)
         {
 #if NET461
             // Could use GetSchemaTable to try to determine if AllowDbNull is set or not.
             // GetSchemaTable is ugly to work with though, so for now, just assume yes.
             return true;
 #else
-            // TODO: GetColumnSchema might be expensive to be calling repeatedly. Might be best to access it once in the caller and hold on to it.
+            // At least for SqlClient, the schema objects get cached internally, so calling
+            // GetColumnSchema repeatedly on the same instance shouldn't be expensive.
             var schema = (reader as IDbColumnSchemaGenerator)?.GetColumnSchema();
             if (schema == null)
             {
@@ -3260,9 +3261,6 @@ namespace Dapper
             else
             {
                 var col = schema[ordinal];
-                // GetColumnSchema is not documented to require that the columns are returned ordered
-                // by ordinal. It would seem crazy for them not to be though...
-                Debug.Assert(col.ColumnOrdinal == ordinal);
                 return col.AllowDBNull != false;
             }
 #endif
@@ -3381,7 +3379,7 @@ namespace Dapper
                     // Save off the current index for access if an exception is thrown
                     EmitInt32(il, index);
                     il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
-                    var canBeNull = CanBeNull(reader, index);
+                    var canBeNull = GetColumnAllowsDBNull(reader, index);
                     LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel, canBeNull);
 
                     if (specializedConstructor == null)
@@ -3511,15 +3509,23 @@ namespace Dapper
             bool isValueType;
             var accessor = GetAccessorMethod(colType, out isValueType);
             il.Emit(OpCodes.Callvirt, accessor); // stack is now [...][value]
-
+            
             if (valueCopyLocal != null)
             {
-                //il.Emit(OpCodes.Dup); // stack is now [...][value][value]
                 //if (isValueType)
                 //{
-                //    il.Emit(OpCodes.Box, colType); // stack is now [...][value][value-as-object]
+                //    // if it is a value type, we want to avoid boxing it
+                //    // this comes at the cost of not seeing the value in the exception message.
+                //    // however, such messages would typically only happen for string values
+                //    // which would still be handled.
+                //    il.Emit(OpCodes.Dup);
+                //    il.Emit(OpCodes.Box, colType);
                 //}
-                //il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value]
+                //else
+                //{
+                //    il.Emit(OpCodes.Dup); // stack is now [...][value][value]
+                //    il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value]
+                //}
             }
 
             if (memberType == typeof(char) || memberType == typeof(char?))
