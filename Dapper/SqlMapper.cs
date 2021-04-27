@@ -3628,7 +3628,6 @@ namespace Dapper
             else if ((op = GetOperator(from, to)) != null)
             {
                 // this is handy for things like decimal <===> double
-                //il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][data-typed-value]
                 il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
             }
             else
