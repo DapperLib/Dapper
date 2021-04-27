@@ -2,6 +2,7 @@
 using Belgrade.SqlClient.SqlDb;
 using Belgrade.SqlClient;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace Dapper.Tests.Performance
 {
@@ -18,11 +19,11 @@ namespace Dapper.Tests.Performance
         }
 
         [Benchmark(Description = "ExecuteReader")]
-        public Post ExecuteReader()
+        public async Task<Post> ExecuteReader()
         {
             Step();
             var post = new Post();
-            _mapper.Sql("SELECT TOP 1 * FROM Posts WHERE Id = @Id").Param("Id", i).Map(
+            await _mapper.Sql("SELECT TOP 1 * FROM Posts WHERE Id = @Id").Param("Id", i).Map(
                         reader =>
                         {
                             post.Id = reader.GetInt32(0);
