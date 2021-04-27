@@ -3214,7 +3214,6 @@ namespace Dapper
                     var finishLabel = il.DefineLabel();
                     il.Emit(OpCodes.Br_S, finishLabel);
                     il.MarkLabel(isDbNullLabel);
-                    il.Emit(OpCodes.Pop);
 
                     LoadDefaultValue(il, targetType);
 
@@ -3512,20 +3511,20 @@ namespace Dapper
             
             if (valueCopyLocal != null)
             {
-                //if (isValueType)
-                //{
-                //    // if it is a value type, we want to avoid boxing it
-                //    // this comes at the cost of not seeing the value in the exception message.
-                //    // however, such messages would typically only happen for string values
-                //    // which would still be handled.
-                //    il.Emit(OpCodes.Dup);
-                //    il.Emit(OpCodes.Box, colType);
-                //}
-                //else
-                //{
-                //    il.Emit(OpCodes.Dup); // stack is now [...][value][value]
-                //    il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value]
-                //}
+                if (isValueType)
+                {
+                    // if it is a value type, we want to avoid boxing it
+                    // this comes at the cost of not seeing the value in the exception message.
+                    // however, such messages would typically only happen for string values
+                    // which would still be handled.
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value]
+                }
+                else
+                {
+                    il.Emit(OpCodes.Dup); // stack is now [...][value][value]
+                    il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value]
+                }
             }
 
             if (memberType == typeof(char) || memberType == typeof(char?))
@@ -3582,6 +3581,10 @@ namespace Dapper
                     {
                         if (hasTypeHandler)
                         {
+                            if (isValueType)
+                            {
+                                il.Emit(OpCodes.Box, colType);
+                            }
 #pragma warning disable 618
                             il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [...][typed-value]
 #pragma warning restore 618
@@ -3591,6 +3594,13 @@ namespace Dapper
                             if (nullUnderlyingType != null)
                             {
                                 il.Emit(OpCodes.Newobj, unboxType.GetConstructor(new[] { nullUnderlyingType })); // stack is now [...][typed-value]
+                            } 
+                            else
+                            {
+                                if(unboxType == typeof(object) && isValueType)
+                                {
+                                    il.Emit(OpCodes.Box, colType);
+                                }
                             }
                         }
                     }
@@ -3669,8 +3679,7 @@ namespace Dapper
                         break;
                 }
                 if (handled)
-                {
-                    //il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][col-typed-value]
+                {                    
                     il.Emit(opCode); // stack is now [target][target][value]
                     if (to == typeof(bool))
                     { // compare to zero; I checked "csc" - this is the trick it uses; nice
@@ -3682,6 +3691,7 @@ namespace Dapper
                 }
                 else
                 {
+                    il.Emit(OpCodes.Box, from);
                     il.Emit(OpCodes.Ldtoken, via ?? to); // stack is now [target][target][value][member-type-token]
                     il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)), null); // stack is now [target][target][value][member-type]
                     il.EmitCall(OpCodes.Call, InvariantCulture, null); // stack is now [target][target][value][member-type][culture]
