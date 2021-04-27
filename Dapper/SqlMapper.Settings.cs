@@ -44,7 +44,7 @@ namespace Dapper
                 {
                     if (ex.Message.Contains(nameof(CommandBehavior.SingleResult))
                         || ex.Message.Contains(nameof(CommandBehavior.SingleRow)))
-                    { // some providers just just allow these, so: try again without them and stop issuing them
+                    { // some providers just allow these, so: try again without them and stop issuing them
                         SetAllowedCommandBehaviors(CommandBehavior.SingleResult | CommandBehavior.SingleRow, false);
                         return true;
                     }
