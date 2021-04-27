@@ -23,6 +23,7 @@
     <PackageReference Include="Npgsql" Version="5.0.0" />
     <PackageReference Include="PetaPoco" Version="5.1.306" />
     <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="5.10.2" />
+    <PackageReference Include="SqlMarshal" Version="0.1.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.113.6" />
   </ItemGroup>
