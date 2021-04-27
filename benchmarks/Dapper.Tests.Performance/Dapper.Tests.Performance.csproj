@@ -38,7 +38,6 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
-    <PackageReference Include="Soma" Version="1.9.0.1" />
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
     <PackageReference Include="Susanoo.SqlServer" Version="1.2.4.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="[3.1.10]" />
