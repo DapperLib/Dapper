@@ -3246,8 +3246,19 @@ namespace Dapper
         static bool GetColumnAllowsDBNull(IDataReader reader, int ordinal)
         {
 #if NET461
-            // Could use GetSchemaTable to try to determine if AllowDbNull is set or not.
-            // GetSchemaTable is ugly to work with though, so for now, just assume yes.
+            var schema = reader.GetSchemaTable();
+            if(schema != null)
+            {
+                var col = schema.Columns["AllowDBNull"];
+                if (col != null)
+                {
+                    object allowDBNull = schema.Rows[ordinal][col];
+                    if (allowDBNull is bool b && b == false)
+                    {
+                        return false;
+                    }
+                }
+            }
             return true;
 #else
             // At least for SqlClient, the schema objects get cached internally, so calling
