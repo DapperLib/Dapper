@@ -3218,6 +3218,8 @@ namespace Dapper
                     LoadDefaultValue(il, targetType);
 
                     il.MarkLabel(finishLabel);
+                    // without this cast an VerificationException is thrown when JITing
+                    il.Emit(OpCodes.Castclass, targetType);
                 }
                 else
                 {
@@ -3513,11 +3515,15 @@ namespace Dapper
             {
                 if (isValueType)
                 {
+                    // TODO: decide if this compromise is acceptable. The only unit test affected was processing a Guid value.
+
                     // if it is a value type, we want to avoid boxing it
-                    // this comes at the cost of not seeing the value in the exception message.
-                    // however, such messages would typically only happen for string values
-                    // which would still be handled.
-                    il.Emit(OpCodes.Ldnull);
+                    // unfortunately, conveying the value to the exception block
+                    // without boxing it is extremely complex (and probably slow).
+                    // Compromise by passing  the type of the column instead of the value.
+                    // Most commonly these exceptions would happen when processing strings,
+                    // in which case the value would still be passed, since it is a ref-type (else block below).
+                    il.Emit(OpCodes.Ldtoken, colType);
                     il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value]
                 }
                 else
@@ -3746,13 +3752,22 @@ namespace Dapper
                     }
                     try
                     {
-                        if (value == null || value is DBNull)
+                        // for value-type columns the value isn't available here,
+                        // but the type is. This is to avoid boxing the value.
+                        if (value is Type type)
                         {
-                            formattedValue = "<null>";
+                            formattedValue = "[" + type.Name + " value]";
                         }
                         else
                         {
-                            formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
+                            if (value == null || value is DBNull)
+                            {
+                                formattedValue = "<null>";
+                            }
+                            else
+                            {
+                                formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
+                            }
                         }
                     }
                     catch (Exception valEx)
