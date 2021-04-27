@@ -641,7 +641,7 @@ namespace Dapper.Tests
         {
             Guid guid = Guid.Parse("cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e");
             var ex = Assert.ThrowsAny<Exception>(() => connection.Query<Issue149_Person>("select @guid as Id", new { guid }).First());
-            Assert.Equal("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Object)", ex.Message);
+            Assert.Equal("Error parsing column 0 (Id=[Guid value])", ex.Message);
         }
 
         public class Issue149_Person { public string Id { get; set; } }
