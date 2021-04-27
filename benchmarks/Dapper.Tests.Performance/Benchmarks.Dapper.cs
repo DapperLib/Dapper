@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Dapper.Contrib.Extensions;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
@@ -12,6 +13,12 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
+        }
+
+        [Benchmark(Description = "Query all posts")]
+        public List<Post> QueryAllPost()
+        {           
+            return _connection.Query<Post>("select * from PostsLite").ToList();
         }
 
         [Benchmark(Description = "Query<T> (buffered)")]

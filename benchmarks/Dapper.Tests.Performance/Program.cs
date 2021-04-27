@@ -56,6 +56,9 @@ namespace Dapper.Tests.Performance
                 cnn.Open();
                 var cmd = cnn.CreateCommand();
                 cmd.CommandText = @"
+
+Declare @i int = 0;
+
 If (Object_Id('Posts') Is Null)
 Begin
 	Create Table Posts
@@ -76,11 +79,40 @@ Begin
 	);
 	   
 	Set NoCount On;
-	Declare @i int = 0;
+    Set @i = 0;
 
 	While @i <= 5001
 	Begin
 		Insert Posts ([Text],CreationDate, LastChangeDate) values (replicate('x', 2000), GETDATE(), GETDATE());
+		Set @i = @i + 1;
+	End
+End
+
+If (Object_Id('PostsLite') Is Null)
+Begin
+	Create Table PostsLite
+	(
+		Id int identity primary key, 
+		[Text] varchar(max) not null, 
+		CreationDate datetime not null, 
+		LastChangeDate datetime not null,
+		Counter1 int not null,
+		Counter2 int not null,
+		Counter3 int not null,
+		Counter4 int not null,
+		Counter5 int not null,
+		Counter6 int not null,
+		Counter7 int not null,
+		Counter8 int not null,
+		Counter9 int not null
+	);
+	   
+	Set NoCount On;
+	Set @i = 0;
+
+	While @i <= 5001
+	Begin
+		Insert PostsLite values ('Test text', GETDATE(), GETDATE(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
 		Set @i = @i + 1;
 	End
 End
