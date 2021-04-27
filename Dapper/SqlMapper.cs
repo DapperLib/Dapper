@@ -3218,8 +3218,11 @@ namespace Dapper
                     LoadDefaultValue(il, targetType);
 
                     il.MarkLabel(finishLabel);
-                    // without this cast an VerificationException is thrown when JITing
-                    il.Emit(OpCodes.Castclass, targetType);
+                    if (targetType.IsValueType == false)
+                    {
+                        // without this cast a VerificationException is thrown when JITing
+                        il.Emit(OpCodes.Castclass, targetType);
+                    }
                 }
                 else
                 {
