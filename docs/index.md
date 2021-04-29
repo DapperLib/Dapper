@@ -2,7 +2,7 @@
 
 ## Overview
 
-A brief guide is available [on github](https://github.com/StackExchange/Dapper/blob/main/Readme.md)
+A brief guide is available [on github](https://github.com/DapperLib/Dapper/blob/main/Readme.md)
 
 Questions on Stack Overflow should be tagged [`dapper`](https://stackoverflow.com/questions/tagged/dapper)
 
@@ -67,14 +67,14 @@ Other changes merged:
 
 ### 1.60.1
 
-- Fix [#1196](https://github.com/StackExchange/Dapper/issues/1196) - versioning fix only ([#1198](https://github.com/StackExchange/Dapper/pull/1198)) - assembly version is now locked at 1.60.0 to resolve some mismatch issues with .NET Core assembly loading/binding.
+- Fix [#1196](https://github.com/DapperLib/Dapper/issues/1196) - versioning fix only ([#1198](https://github.com/DapperLib/Dapper/pull/1198)) - assembly version is now locked at 1.60.0 to resolve some mismatch issues with .NET Core assembly loading/binding.
 
 ### 1.50.7
 
-- Fix [#1190](https://github.com/StackExchange/Dapper/issues/1190) - incorrect unmanaged pointer when processing parameters that are a boxed struct (rare error relating to GC)
-- Fix [#1111](https://github.com/StackExchange/Dapper/issues/1111) - make `SqlMapper.Parse` consistent with `QueryImpl`
+- Fix [#1190](https://github.com/DapperLib/Dapper/issues/1190) - incorrect unmanaged pointer when processing parameters that are a boxed struct (rare error relating to GC)
+- Fix [#1111](https://github.com/DapperLib/Dapper/issues/1111) - make `SqlMapper.Parse` consistent with `QueryImpl`
 - Fix #111- - improve error message for invalid literal types
-- Fix [#1149](https://github.com/StackExchange/Dapper/pull/1149) - improve error messages in "contrib"
+- Fix [#1149](https://github.com/DapperLib/Dapper/pull/1149) - improve error messages in "contrib"
 - Improved detection of empty table-valued-parameters
 
 ### 1.50.5
@@ -91,7 +91,7 @@ Other changes merged:
 
 ### 1.50.2
 
-- Fix issue [#569](https://github.com/StackExchange/Dapper/issues/569) (`in` expansions using ODBC pseudo-positional arguments)
+- Fix issue [#569](https://github.com/DapperLib/Dapper/issues/569) (`in` expansions using ODBC pseudo-positional arguments)
 
 ### 1.50.1
 
@@ -108,7 +108,7 @@ Other changes merged:
 ### 1.50.0-rc2b
 
 - New `InListStringSplitCount` global setting; if set (non-negative), `in @foo` expansions (of at least the specified size) of primitive types (`int`, `tinyint`, `smallint`, `bigint`) are implemented via the SQL Server 2016 (compat level 130) `STRING_SPLIT` function
-- Fix for incorrect conversions in `GridReader` ([#254](https://github.com/StackExchange/Dapper/issues/254))
+- Fix for incorrect conversions in `GridReader` ([#254](https://github.com/DapperLib/Dapper/issues/254))
 
 ### 1.50.0-rc2 / 1.50.0-rc2a
 
@@ -117,18 +117,18 @@ Other changes merged:
 ### 1.50-beta9
 
 - Fix for `PadListExpansions` to work correctly with `not in` scenarios; now uses last non-null value instead of `null`; if none available, don't pad
-- Fix problems with single-result/single-row not being supported by all providers (basically: sqlite, [#466](https://github.com/StackExchange/Dapper/issues/466))
-- Fix problems with enums - nulls ([#467](https://github.com/StackExchange/Dapper/issues/467)) and primitive values ([#468](https://github.com/StackExchange/Dapper/issues/468))
-- Add support for C# 6 get-only properties ([#473](https://github.com/StackExchange/Dapper/issues/473))
-- Add support for various xml types ([#427](https://github.com/StackExchange/Dapper/issues/427))
+- Fix problems with single-result/single-row not being supported by all providers (basically: sqlite, [#466](https://github.com/DapperLib/Dapper/issues/466))
+- Fix problems with enums - nulls ([#467](https://github.com/DapperLib/Dapper/issues/467)) and primitive values ([#468](https://github.com/DapperLib/Dapper/issues/468))
+- Add support for C# 6 get-only properties ([#473](https://github.com/DapperLib/Dapper/issues/473))
+- Add support for various xml types ([#427](https://github.com/DapperLib/Dapper/issues/427))
 
 ### 1.50-beta8
 
 - Addition of `GetRowParser<T>` extension method on `IDataReader` API - allows manual construction of discriminated unions, etc
 - Addition of `Settings.PadListExpansions` - reduces query-plan saturation by padding list expansions with `null` values (opt-in, because on some DB configurations this could change the meaning) *(note: bad choice of `null` revised in 1.50-beta9)*
 - Addition of `Settings.ApplyNullValues` - assigns (rather than ignores) `null` values when possible
-- Fix for [#461](https://github.com/StackExchange/Dapper/issues/461) - ensure type-handlers work for constructor-based initialization
-- Fix for [#455](https://github.com/StackExchange/Dapper/issues/455) - make the `LookupDbType` method available again
+- Fix for [#461](https://github.com/DapperLib/Dapper/issues/461) - ensure type-handlers work for constructor-based initialization
+- Fix for [#455](https://github.com/DapperLib/Dapper/issues/455) - make the `LookupDbType` method available again
 
 ### 1.50-beta7
 
@@ -137,7 +137,7 @@ Other changes merged:
 
 ### 1.50-beta6
 
-- Fix for issue [#424](https://github.com/StackExchange/Dapper/issues/424) - defensive `SqlDataRecord` handling
+- Fix for issue [#424](https://github.com/DapperLib/Dapper/issues/424) - defensive `SqlDataRecord` handling
 
 ### 1.50-beta5
 
@@ -170,7 +170,7 @@ Other changes merged:
 - improve error message if an array is used as a parameter in an invalid context
 - Add `Type[]` support for `GridReader.Read` scenarios (@NikolayGlynchak)
 - Support for custom type-maps in collection parameters (@gjsduarte)
-- Fix incorrect cast in `QueryAsync<T>` (@phnx47, [#346](https://github.com/StackExchange/Dapper/issues/346))
+- Fix incorrect cast in `QueryAsync<T>` (@phnx47, [#346](https://github.com/DapperLib/Dapper/issues/346))
 - Fix incorrect null handling re `UdtTypeName` (@perliedman)
 - Support for `SqlDataRecord` (@sqmgh)
 - Allow `DbString` default for `IsAnsi` to be specified (@kppullin)
@@ -221,11 +221,11 @@ Other changes merged:
 
 ### 1.36
 
-- Fix Issue [#192](https://github.com/StackExchange/Dapper/issues/192) (expanded parameter naming glitch) and Issue [#178](https://github.com/StackExchange/Dapper/issues/178) (execute reader now wraps the command/reader pair, to extend the command lifetime; note that the underlying command/reader are available by casting to `IWrappedDataReader`)
+- Fix Issue [#192](https://github.com/DapperLib/Dapper/issues/192) (expanded parameter naming glitch) and Issue [#178](https://github.com/DapperLib/Dapper/issues/178) (execute reader now wraps the command/reader pair, to extend the command lifetime; note that the underlying command/reader are available by casting to `IWrappedDataReader`)
 
 ### 1.35
 
-- Fix Issue [#151](https://github.com/StackExchange/Dapper/issues/151) (Execute should work with `ExpandoObject` etc); Fix Issue #182 (better support for db-type when using `object` values);
+- Fix Issue [#151](https://github.com/DapperLib/Dapper/issues/151) (Execute should work with `ExpandoObject` etc); Fix Issue #182 (better support for db-type when using `object` values);
 - Output expressions / callbacks in dynamic args (via Derek); arbitrary number of types in multi-mapping (via James Holwell);
 - Fix `DbString`/Oracle bug (via Mauro Cerutti); new support for **named positional arguments**
 

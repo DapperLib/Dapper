@@ -7,11 +7,11 @@
     <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
 
     <PackageId>$(AssemblyName)</PackageId>
-    <PackageReleaseNotes>https://stackexchange.github.io/Dapper/</PackageReleaseNotes>
-    <PackageProjectUrl>https://github.com/StackExchange/Dapper</PackageProjectUrl>
+    <PackageReleaseNotes>https://dapperlib.github.io/Dapper/</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/DapperLib/Dapper</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/StackExchange/Dapper</RepositoryUrl>
+    <RepositoryUrl>https://github.com/DapperLib/Dapper</RepositoryUrl>
     <Deterministic>false</Deterministic>
     <NoWarn>$(NOWARN);IDE0056;IDE0057;IDE0079</NoWarn>
     <DebugSymbols>true</DebugSymbols>

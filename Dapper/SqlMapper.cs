@@ -1,6 +1,6 @@
 ﻿/*
  License: http://www.apache.org/licenses/LICENSE-2.0
- Home page: https://github.com/StackExchange/dapper-dot-net
+ Home page: https://github.com/DapperLib/Dapper-dot-net
  */
 
 using System;
