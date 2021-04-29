@@ -20,6 +20,35 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
+### unreleased
+
+(note: new PRs will note be merged until they add release note wording here)
+
+### 2.0.90
+
+- logo added; license updated to mention logo usage (via mgravell)
+- moved to DapperLib org; links updated (#1656)
+- RepoDb benchmark added (#1626 via stevedesmond-ca)
+- excise unrelated Soma tests (#1642 via kant2002)
+- SqlMarshl benchmark added (#1646 via kant2002)
+- documentation fixes (#1615 via Rollerss, #1604 via GitHubPang)
+
+### 2.0.78
+
+- fix `DynamicParameters` loop bug - wrong index (#1443 via DamirAinullin)
+- fix nullable tuple handling (#1400 via JulianRooze)
+- support update set in `SqlBuilder` (#1404 via Wei)
+- initialize collections with counts when possible (#1449 via DamirAinullin)
+- general code cleanup (#1452, #1457, #1458, #1459 all via DamirAinullin)
+- C# 9 and .NET 5 preparation/cleanup (#1572 via mgravell)
+- GitHub action, Docker, AppVeyor work (build/test) work (#1563 via Tyrrrz, #1559 via craver, #1450 via craver)
+- Test project rationalization (#1556 via craver)
+- ClickHouse detection (#1462 via DarkWanderer)
+- Switched to "main" branch (via craver)
+- documentation fixed (#1596 via royal, #1560 via wswind, #1558 via paul42, #1507 via imba-tjd, #1508 via dogac00, 899c9feb via BlackjacketMack, 0b17133 via BlackjacketMack, 9b6c8c7d via bryancrosby, #1202 via craver)
+- MightyOrm benchmark added (455b3f3b via cdonnellytx)
+- EF6 performance test updates (#1361 via AlexBagnolini)
+
 ### 2.0.35
 
 - build tooling: enable "deterministic builds" and enable SDK roll-foward
