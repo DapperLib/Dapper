@@ -10,6 +10,7 @@
     <PackageReleaseNotes>https://dapperlib.github.io/Dapper/</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/DapperLib/Dapper</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageIcon>protobuf-net.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/DapperLib/Dapper</RepositoryUrl>
     <Deterministic>false</Deterministic>
@@ -37,5 +38,9 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.3.37" PrivateAssets="all" />
+    <None Include="../Dapper.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 </Project>
