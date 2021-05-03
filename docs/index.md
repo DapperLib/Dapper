@@ -22,7 +22,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
-(note: new PRs will note be merged until they add release note wording here)
+(note: new PRs will not be merged until they add release note wording here)
 
 ### 2.0.90
 
