@@ -77,6 +77,17 @@ namespace Dapper.Tests
             }
         }
 
+        [FactPostgresql]
+        public void TestPostgresqlSelectArray()
+        {
+            using (var conn = GetOpenNpgsqlConnection())
+            {
+                var r = conn.Query<int[]>("select array[1,2,3]").ToList();
+                Assert.Single(r);
+                Assert.Equal(new[] { 1, 2, 3 }, r.Single());
+            }
+        }
+
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactPostgresqlAttribute : FactAttribute
         {

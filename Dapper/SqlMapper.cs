@@ -1251,6 +1251,14 @@ namespace Dapper
             {
                 return default;
             }
+            else if (val is Array array && typeof(T).IsArray)
+            {
+                var elementType = typeof(T).GetElementType();
+                var result = Array.CreateInstance(elementType, array.Length);
+                for (int i = 0; i < array.Length; i++)
+                    result.SetValue(Convert.ChangeType(array.GetValue(i), elementType, CultureInfo.InvariantCulture), i);
+                return (T)(object)result;
+            }
             else
             {
                 try
@@ -1802,7 +1810,7 @@ namespace Dapper
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
             Type underlyingType = null;
-            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.FullName == LinqBinary
+            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.IsArray || type.FullName == LinqBinary
                 || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
             {
                 if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
