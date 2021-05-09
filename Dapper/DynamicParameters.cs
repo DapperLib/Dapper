@@ -49,24 +49,7 @@ namespace Dapper
             var obj = param;
             if (obj != null)
             {
-                var subDynamic = obj as DynamicParameters;
-                if (subDynamic == null)
-                {
-                    var dictionary = obj as IEnumerable<KeyValuePair<string, object>>;
-                    if (dictionary == null)
-                    {
-                        templates = templates ?? new List<object>();
-                        templates.Add(obj);
-                    }
-                    else
-                    {
-                        foreach (var kvp in dictionary)
-                        {
-                            Add(kvp.Key, kvp.Value, null, null, null);
-                        }
-                    }
-                }
-                else
+                if (obj is DynamicParameters subDynamic)
                 {
                     if (subDynamic.parameters != null)
                     {
@@ -78,11 +61,26 @@ namespace Dapper
 
                     if (subDynamic.templates != null)
                     {
-                        templates = templates ?? new List<object>();
+                        templates ??= new List<object>();
                         foreach (var t in subDynamic.templates)
                         {
                             templates.Add(t);
                         }
+                    }
+                }
+                else
+                {
+                    if (obj is IEnumerable<KeyValuePair<string, object>> dictionary)
+                    {
+                        foreach (var kvp in dictionary)
+                        {
+                            Add(kvp.Key, kvp.Value, null, null, null);
+                        }
+                    }
+                    else
+                    {
+                        templates ??= new List<object>();
+                        templates.Add(obj);
                     }
                 }
             }
@@ -294,7 +292,7 @@ namespace Dapper
                 }
             }
 
-            // note: most non-priveleged implementations would use: this.ReplaceLiterals(command);
+            // note: most non-privileged implementations would use: this.ReplaceLiterals(command);
             if (literals.Count != 0) SqlMapper.ReplaceLiterals(this, command, literals);
         }
 
@@ -320,7 +318,7 @@ namespace Dapper
                 {
                     throw new ApplicationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
                 }
-                return default(T);
+                return default;
             }
             return (T)val;
         }
@@ -337,12 +335,13 @@ namespace Dapper
         /// <returns>The DynamicParameters instance</returns>
         public DynamicParameters Output<T>(T target, Expression<Func<T, object>> expression, DbType? dbType = null, int? size = null)
         {
-            var failMessage = "Expression must be a property/field chain off of a(n) {0} instance";
-            failMessage = string.Format(failMessage, typeof(T).Name);
-            Action @throw = () => throw new InvalidOperationException(failMessage);
+            static void ThrowInvalidChain()
+                => throw new InvalidOperationException($"Expression must be a property/field chain off of a(n) {typeof(T).Name} instance");
 
             // Is it even a MemberExpression?
+#pragma warning disable IDE0019 // Use pattern matching - already complex enough
             var lastMemberAccess = expression.Body as MemberExpression;
+#pragma warning restore IDE0019 // Use pattern matching
 
             if (lastMemberAccess == null
                 || (!(lastMemberAccess.Member is PropertyInfo)
@@ -350,14 +349,14 @@ namespace Dapper
             {
                 if (expression.Body.NodeType == ExpressionType.Convert
                     && expression.Body.Type == typeof(object)
-                    && ((UnaryExpression)expression.Body).Operand is MemberExpression)
+                    && ((UnaryExpression)expression.Body).Operand is MemberExpression member)
                 {
                     // It's got to be unboxed
-                    lastMemberAccess = (MemberExpression)((UnaryExpression)expression.Body).Operand;
+                    lastMemberAccess = member;
                 }
                 else
                 {
-                    @throw();
+                    ThrowInvalidChain();
                 }
             }
 
@@ -374,10 +373,12 @@ namespace Dapper
                 names.Insert(0, diving?.Member.Name);
                 chain.Insert(0, diving);
 
+#pragma warning disable IDE0019 // use pattern matching; this is fine!
                 var constant = diving?.Expression as ParameterExpression;
                 diving = diving?.Expression as MemberExpression;
+#pragma warning restore IDE0019 // use pattern matching
 
-                if (constant != null && constant.Type == typeof(T))
+                if (constant is object && constant.Type == typeof(T))
                 {
                     break;
                 }
@@ -385,7 +386,7 @@ namespace Dapper
                     || (!(diving.Member is PropertyInfo)
                         && !(diving.Member is FieldInfo)))
                 {
-                    @throw();
+                    ThrowInvalidChain();
                 }
             }
             while (diving != null);
@@ -411,9 +412,9 @@ namespace Dapper
             {
                 var member = chain[i].Member;
 
-                if (member is PropertyInfo)
+                if (member is PropertyInfo info)
                 {
-                    var get = ((PropertyInfo)member).GetGetMethod(true);
+                    var get = info.GetGetMethod(true);
                     il.Emit(OpCodes.Callvirt, get); // [Member{i}]
                 }
                 else // Else it must be a field!
@@ -430,9 +431,9 @@ namespace Dapper
 
             // GET READY
             var lastMember = lastMemberAccess.Member;
-            if (lastMember is PropertyInfo)
+            if (lastMember is PropertyInfo property)
             {
-                var set = ((PropertyInfo)lastMember).GetSetMethod(true);
+                var set = property.GetSetMethod(true);
                 il.Emit(OpCodes.Callvirt, set); // SET
             }
             else
@@ -448,9 +449,9 @@ namespace Dapper
                 cache[lookup] = setter;
             }
 
-            // Queue the preparation to be fired off when adding parameters to the DbCommand
-            MAKECALLBACK:
-            (outputCallbacks ?? (outputCallbacks = new List<Action>())).Add(() =>
+        // Queue the preparation to be fired off when adding parameters to the DbCommand
+        MAKECALLBACK:
+            (outputCallbacks ??= new List<Action>()).Add(() =>
             {
                 // Finally, prep the parameter and attach the callback to it
                 var targetMemberType = lastMemberAccess?.Type;

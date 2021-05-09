@@ -1,13 +1,10 @@
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 skip_branch_with_pr: true
 skip_tags: true
 skip_commits:
   files:
     - '**/*.md'
-
-install:
-  - choco install dotnetcore-sdk --version 3.0.100
 
 environment:
   Appveyor: true
@@ -24,14 +21,20 @@ environment:
   MYSQL_ENV_MYSQL_USER: root
   MYSQL_ENV_MYSQL_PASSWORD: Password12!
   MYSQL_ENV_MYSQL_DATABASE: test
+  # Connection strings for tests:
+  MySqlConnectionString: Server=localhost;Database=test;Uid=root;Pwd=Password12!
+  OLEDBConnectionString: Provider=SQLOLEDB;Data Source=(local)\SQL2019;Initial Catalog=tempdb;User Id=sa;Password=Password12!
+  PostgesConnectionString: Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test
+  SqlServerConnectionString: Server=(local)\SQL2019;Database=tempdb;User ID=sa;Password=Password12!
+
 services:
-  - mssql2016
   - mysql
   - postgresql
 
 init:
   - git config --global core.autocrlf input
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
+  - net start MSSQL$SQL2019
 
 nuget:
   disable_publish_on_pr: true
@@ -52,14 +55,14 @@ deploy:
 - provider: NuGet
   server: https://www.myget.org/F/stackoverflow/api/v2
   on:
-    branch: master  
+    branch: main  
   api_key:
     secure: P/UHxq2DEs0GI1SoDXDesHjRVsSVgdywz5vmsnhFQQY5aJgO3kP+QfhwfhXz19Rw
   symbol_server: https://www.myget.org/F/stackoverflow/symbols/api/v2/package
 - provider: NuGet
   server: https://www.myget.org/F/dapper/api/v2
   on:
-    branch: master  
+    branch: main  
   api_key:
     secure: PV7ERAltWWLhy7AT2h+Vb5c1BM9/WFgvggb+rKyQ8hDg3fYqpZauYdidOOgt2lp4
   symbol_server: https://www.myget.org/F/dapper/api/v2/package

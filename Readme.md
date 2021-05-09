@@ -4,7 +4,7 @@ Dapper - a simple object mapper for .Net
 
 Release Notes
 -------------
-Located at [stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
+Located at [dapperlib.github.io/Dapper](https://dapperlib.github.io/Dapper/)
 
 Packages
 --------
@@ -65,7 +65,7 @@ This method will execute SQL and return a dynamic list.
 Example usage:
 
 ```csharp
-var rows = connection.Query("select 1 A, 2 B union all select 3, 4");
+var rows = connection.Query("select 1 A, 2 B union all select 3, 4").AsList();
 
 Assert.Equal(1, (int)rows[0].A);
 Assert.Equal(2, (int)rows[0].B);
@@ -114,58 +114,57 @@ Performance
 
 A key feature of Dapper is performance. The following metrics show how long it takes to execute a `SELECT` statement against a DB (in various config, each labeled) and map the data returned to objects.
 
-The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests.Performance) (contributions welcome!) and can be run once compiled via:
-```
-Dapper.Tests.Performance.exe -f * --join
+The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/DapperLib/Dapper/tree/main/benchmarks/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
+```bash
+dotnet run -p .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
 ```
 Output from the latest run is:
 ``` ini
-BenchmarkDotNet=v0.11.1, OS=Windows 10.0.17134.254 (1803/April2018Update/Redstone4)
+BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19041.208 (2004/?/20H1)
 Intel Core i7-7700HQ CPU 2.80GHz (Kaby Lake), 1 CPU, 8 logical and 4 physical cores
-Frequency=2742188 Hz, Resolution=364.6723 ns, Timer=TSC
-  [Host]   : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3163.0
-  ShortRun : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3163.0
+.NET Core SDK=3.1.201
+  [Host]   : .NET Core 3.1.3 (CoreCLR 4.700.20.11803, CoreFX 4.700.20.12001), X64 RyuJIT
+  ShortRun : .NET Core 3.1.3 (CoreCLR 4.700.20.11803, CoreFX 4.700.20.12001), X64 RyuJIT
 
 ```
-|          ORM |                        Method |  Return |        Mean |   Gen 0 |  Gen 1 |  Gen 2 | Allocated |
-|------------- |------------------------------ |-------- |------------:|--------:|-------:|-------:|----------:|
-|   LINQ to DB |            &#39;First (Compiled)&#39; |    Post |    78.75 us |  0.7500 |      - |      - |   2.66 KB |
-|   LINQ to DB |                      Query&lt;T&gt; |    Post |    80.38 us |  2.1250 |      - |      - |   6.87 KB |
-|   Hand Coded |                    SqlCommand |    Post |    87.16 us |  2.5000 | 1.0000 | 0.2500 |  12.24 KB |
-|       Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | dynamic |    87.80 us |  4.3750 |      - |      - |   13.5 KB |
-|     Belgrade |                 ExecuteReader |    Post |    87.85 us |  3.6250 | 0.7500 |      - |  11.27 KB |
-|       Dapper |        QueryFirstOrDefault&lt;T&gt; |    Post |    91.51 us |  2.8750 | 0.8750 | 0.2500 |  13.46 KB |
-|   Hand Coded |                     DataTable | dynamic |    91.74 us |  2.2500 | 0.6250 |      - |  12.45 KB |
-|       Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |    Post |    94.05 us |  2.8750 | 0.8750 | 0.2500 |  13.79 KB |
-|       Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | dynamic |    95.25 us |  2.5000 | 1.0000 | 0.2500 |  13.87 KB |
-|      Massive |             &#39;Query (dynamic)&#39; | dynamic |    96.18 us |  3.2500 | 0.8750 | 0.3750 |  14.19 KB |
-|     PetaPoco |             &#39;Fetch&lt;T&gt; (Fast)&#39; |    Post |    96.57 us |  2.7500 | 0.8750 | 0.2500 |  13.65 KB |
-|     PetaPoco |                      Fetch&lt;T&gt; |    Post |    97.62 us |  2.8750 | 0.8750 | 0.2500 |  14.59 KB |
-|       Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |    Post |    98.85 us |  2.8750 | 1.0000 | 0.2500 |  14.45 KB |
-| ServiceStack |                 SingleById&lt;T&gt; |    Post |   102.39 us |  3.1250 | 0.8750 | 0.3750 |  17.52 KB |
-|   LINQ to DB |                         First |    Post |   103.54 us |  1.7500 |      - |      - |   5.51 KB |
-|      Susanoo |         &#39;Execute&lt;T&gt; (Static)&#39; |    Post |   105.07 us |  2.8750 | 0.8750 | 0.2500 |  14.98 KB |
-|      Dashing |                           Get |    Post |   105.80 us |  3.1250 | 0.8750 | 0.3750 |  14.82 KB |
-|      Susanoo |    &#39;Execut&lt;dynamic&gt; (Static)&#39; | dynamic |   109.26 us |  3.1250 | 0.8750 | 0.2500 |  14.97 KB |
-|  LINQ to SQL |            &#39;First (Compiled)&#39; |    Post |   114.62 us |  3.1250 |      - |      - |   9.82 KB |
-|       Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |    Post |   119.72 us |  3.1250 | 0.8750 | 0.2500 |  13.83 KB |
-|      Susanoo |    &#39;Execute&lt;dynamic&gt; (Cache)&#39; | dynamic |   124.02 us |  3.6250 | 1.0000 | 0.5000 |   20.4 KB |
-|      Susanoo |          &#39;Execute&lt;T&gt; (Cache)&#39; |    Post |   126.92 us |  4.2500 | 1.0000 | 0.5000 |  20.88 KB |
-|       Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | dynamic |   139.89 us |  2.5000 | 1.0000 | 0.2500 |  13.87 KB |
-|         EF 6 |                      SqlQuery |    Post |   143.86 us |  5.2500 | 0.7500 |      - |  27.86 KB |
-|      EF Core |            &#39;First (Compiled)&#39; |    Post |   148.42 us |  5.0000 |      - |      - |  16.08 KB |
-|   NHibernate |                        Get&lt;T&gt; |    Post |   196.88 us |  5.7500 | 1.0000 |      - |   32.5 KB |
-|      EF Core |                         First |    Post |   197.91 us |  6.5000 |      - |      - |  20.25 KB |
-|   NHibernate |                           HQL |    Post |   207.84 us |  6.0000 | 0.7500 |      - |     35 KB |
-|      EF Core |         &#39;First (No Tracking)&#39; |    Post |   213.58 us |  4.2500 | 0.7500 | 0.2500 |  21.36 KB |
-|      EF Core |                      SqlQuery |    Post |   247.25 us |  6.5000 |      - |      - |  20.56 KB |
-|         EF 6 |                         First |    Post |   247.53 us | 15.5000 |      - |      - |  48.29 KB |
-|   NHibernate |                      Criteria |    Post |   253.30 us | 13.2500 | 1.2500 | 0.2500 |  65.32 KB |
-|         EF 6 |         &#39;First (No Tracking)&#39; |    Post |   265.80 us | 10.5000 | 1.0000 |      - |  55.09 KB |
-|  LINQ to SQL |                  ExecuteQuery |    Post |   284.74 us |  7.0000 | 1.0000 | 0.5000 |  42.33 KB |
-|   NHibernate |                           SQL |    Post |   313.85 us | 26.5000 | 1.0000 |      - | 101.01 KB |
-|  LINQ to SQL |                         First |    Post |   968.14 us |  4.0000 | 1.0000 |      - |  14.68 KB |
-|   NHibernate |                          LINQ |    Post | 1,062.16 us | 11.0000 | 2.0000 |      - |  62.37 KB |
+|            ORM |                        Method |  Return |      Mean |    StdDev |     Error |   Gen 0 |  Gen 1 |  Gen 2 | Allocated |
+|--------------- |------------------------------ |-------- |----------:|----------:|----------:|--------:|-------:|-------:|----------:|
+|       Belgrade |                 ExecuteReader |    Post |  94.46 μs |  8.115 μs | 12.268 μs |  1.7500 | 0.5000 |      - |   8.42 KB |
+|     Hand Coded |                     DataTable | dynamic | 105.43 μs |  0.998 μs |  1.508 μs |  3.0000 |      - |      - |   9.37 KB |
+|     Hand Coded |                    SqlCommand |    Post | 106.58 μs |  1.191 μs |  1.801 μs |  1.5000 | 0.7500 | 0.1250 |   7.42 KB |
+|         Dapper |  QueryFirstOrDefault&lt;dynamic&gt; | dynamic | 119.52 μs |  1.320 μs |  2.219 μs |  3.6250 |      - |      - |  11.39 KB |
+|         Dapper |   &#39;Query&lt;dynamic&gt; (buffered)&#39; | dynamic | 119.93 μs |  1.943 μs |  2.937 μs |  2.3750 | 1.0000 | 0.2500 |  11.73 KB |
+|        Massive |             &#39;Query (dynamic)&#39; | dynamic | 120.31 μs |  1.340 μs |  2.252 μs |  2.2500 | 1.0000 | 0.1250 |  12.07 KB |
+|         Dapper |        QueryFirstOrDefault&lt;T&gt; |    Post | 121.57 μs |  1.564 μs |  2.364 μs |  1.7500 | 0.7500 |      - |  11.35 KB |
+|         Dapper |         &#39;Query&lt;T&gt; (buffered)&#39; |    Post | 121.67 μs |  2.913 μs |  4.403 μs |  1.8750 | 0.8750 |      - |  11.65 KB |
+|       PetaPoco |             &#39;Fetch&lt;T&gt; (Fast)&#39; |    Post | 124.91 μs |  4.015 μs |  6.747 μs |  2.0000 | 1.0000 |      - |   11.5 KB |
+|         Mighty |                      Query&lt;T&gt; |    Post | 125.23 μs |  2.932 μs |  4.433 μs |  2.2500 | 1.0000 |      - |   12.6 KB |
+|     LINQ to DB |                      Query&lt;T&gt; |    Post | 125.76 μs |  2.038 μs |  3.081 μs |  2.2500 | 0.7500 | 0.2500 |  10.62 KB |
+|       PetaPoco |                      Fetch&lt;T&gt; |    Post | 127.48 μs |  4.283 μs |  6.475 μs |  2.0000 | 1.0000 |      - |  12.18 KB |
+|     LINQ to DB |            &#39;First (Compiled)&#39; |    Post | 128.89 μs |  2.627 μs |  3.971 μs |  2.5000 | 0.7500 |      - |  10.92 KB |
+|         Mighty |                Query&lt;dynamic&gt; | dynamic | 129.20 μs |  2.577 μs |  3.896 μs |  2.0000 | 1.0000 |      - |  12.43 KB |
+|         Mighty |            SingleFromQuery&lt;T&gt; |    Post | 129.41 μs |  2.094 μs |  3.166 μs |  2.2500 | 1.0000 |      - |   12.6 KB |
+|         Mighty |      SingleFromQuery&lt;dynamic&gt; | dynamic | 130.59 μs |  2.432 μs |  3.677 μs |  2.0000 | 1.0000 |      - |  12.43 KB |
+|         Dapper |              &#39;Contrib Get&lt;T&gt;&#39; |    Post | 134.74 μs |  1.816 μs |  2.746 μs |  2.5000 | 1.0000 | 0.2500 |  12.29 KB |
+|   ServiceStack |                 SingleById&lt;T&gt; |    Post | 135.01 μs |  1.213 μs |  2.320 μs |  3.0000 | 1.0000 | 0.2500 |  15.27 KB |
+|     LINQ to DB |                         First |    Post | 151.87 μs |  3.826 μs |  5.784 μs |  3.0000 | 1.0000 | 0.2500 |  13.97 KB |
+|           EF 6 |                      SqlQuery |    Post | 171.00 μs |  1.460 μs |  2.791 μs |  3.7500 | 1.0000 |      - |  23.67 KB |
+| DevExpress.XPO |             GetObjectByKey&lt;T&gt; |    Post | 172.36 μs |  3.758 μs |  5.681 μs |  5.5000 | 1.2500 |      - |  29.06 KB |
+|         Dapper |       &#39;Query&lt;T&gt; (unbuffered)&#39; |    Post | 174.40 μs |  3.296 μs |  4.983 μs |  2.0000 | 1.0000 |      - |  11.77 KB |
+|         Dapper | &#39;Query&lt;dynamic&gt; (unbuffered)&#39; | dynamic | 174.45 μs |  1.988 μs |  3.340 μs |  2.0000 | 1.0000 |      - |  11.81 KB |
+| DevExpress.XPO |                 FindObject&lt;T&gt; |    Post | 181.76 μs |  5.554 μs |  9.333 μs |  8.0000 |      - |      - |  27.15 KB |
+| DevExpress.XPO |                      Query&lt;T&gt; |    Post | 189.81 μs |  4.187 μs |  8.004 μs | 10.0000 |      - |      - |  31.61 KB |
+|        EF Core |            &#39;First (Compiled)&#39; |    Post | 199.72 μs |  3.983 μs |  7.616 μs |  4.5000 |      - |      - |   13.8 KB |
+|     NHibernate |                        Get&lt;T&gt; |    Post | 248.71 μs |  6.604 μs | 11.098 μs |  5.0000 | 1.0000 |      - |  29.79 KB |
+|        EF Core |                         First |    Post | 253.20 μs |  3.033 μs |  5.097 μs |  5.5000 |      - |      - |   17.7 KB |
+|     NHibernate |                           HQL |    Post | 258.70 μs | 11.716 μs | 17.712 μs |  5.0000 | 1.0000 |      - |   32.1 KB |
+|        EF Core |                      SqlQuery |    Post | 268.89 μs | 19.349 μs | 32.516 μs |  6.0000 |      - |      - |   18.5 KB |
+|           EF 6 |                         First |    Post | 278.46 μs | 12.094 μs | 18.284 μs | 13.5000 |      - |      - |  44.18 KB |
+|        EF Core |         &#39;First (No Tracking)&#39; |    Post | 280.88 μs |  8.192 μs | 13.765 μs |  3.0000 | 0.5000 |      - |  19.38 KB |
+|     NHibernate |                      Criteria |    Post | 304.90 μs |  2.232 μs |  4.267 μs | 11.0000 | 1.0000 |      - |  60.29 KB |
+|           EF 6 |         &#39;First (No Tracking)&#39; |    Post | 316.55 μs |  7.667 μs | 11.592 μs |  8.5000 | 1.0000 |      - |  50.95 KB |
+|     NHibernate |                           SQL |    Post | 335.41 μs |  3.111 μs |  4.703 μs | 19.0000 | 1.0000 |      - |  78.86 KB |
+|     NHibernate |                          LINQ |    Post | 807.79 μs | 27.207 μs | 45.719 μs |  8.0000 | 2.0000 |      - |  53.65 KB |
 
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (<kbd>Ctrl</kbd>+<kbd>F5</kbd>).
@@ -202,7 +201,7 @@ Literal replacements
 Dapper supports literal replacements for bool and numeric types.
 
 ```csharp
-connection.Query("select * from User where UserTypeId = {=Admin}", new { UserTypeId.Admin }));
+connection.Query("select * from User where UserTypeId = {=Admin}", new { UserTypeId.Admin });
 ```
 
 The literal replacement is not sent as a parameter; this allows better plans and filtered index usage but should usually be used sparingly and after testing. This feature is particularly useful when the value being injected
@@ -390,7 +389,7 @@ Dapper has no DB specific implementation details, it works across all .NET ADO p
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/Dapper/tree/master/Dapper.Tests).
+Dapper has a comprehensive test suite in the [test project](https://github.com/DapperLib/Dapper/tree/main/tests/Dapper.Tests).
 
 Who is using this?
 ---------------------

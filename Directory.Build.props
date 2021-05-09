@@ -7,24 +7,40 @@
     <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
 
     <PackageId>$(AssemblyName)</PackageId>
-    <PackageReleaseNotes>https://stackexchange.github.io/Dapper/</PackageReleaseNotes>
-    <PackageProjectUrl>https://github.com/StackExchange/Dapper</PackageProjectUrl>
+    <PackageReleaseNotes>https://dapperlib.github.io/Dapper/</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/DapperLib/Dapper</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageIcon>Dapper.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/StackExchange/Dapper</RepositoryUrl>
+    <RepositoryUrl>https://github.com/DapperLib/Dapper</RepositoryUrl>
     <Deterministic>false</Deterministic>
-    
+    <NoWarn>$(NOWARN);IDE0056;IDE0057;IDE0079</NoWarn>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>
     <IncludeSymbols>false</IncludeSymbols>
-    <xUnitVersion>2.4.1</xUnitVersion>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Release' and '$(SourceRoot)'==''">
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
+  </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.0.26" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.3.37" PrivateAssets="all" />
+    <None Include="../Dapper.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 </Project>

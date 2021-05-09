@@ -47,7 +47,7 @@ namespace Dapper.Contrib.Extensions
         /// <param name="connection">The connection to get a database type name from.</param>
         public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
         /// <summary>
-        /// The function to get a a table name from a given <see cref="Type"/>
+        /// The function to get a table name from a given <see cref="Type"/>
         /// </summary>
         /// <param name="type">The <see cref="Type"/> to get a table name for.</param>
         public delegate string TableNameMapperDelegate(Type type);
@@ -61,7 +61,7 @@ namespace Dapper.Contrib.Extensions
 
         private static readonly ISqlAdapter DefaultAdapter = new SqlServerAdapter();
         private static readonly Dictionary<string, ISqlAdapter> AdapterDictionary
-            = new Dictionary<string, ISqlAdapter>
+            = new Dictionary<string, ISqlAdapter>(6)
             {
                 ["sqlconnection"] = new SqlServerAdapter(),
                 ["sqlceconnection"] = new SqlCeServerAdapter(),
@@ -180,17 +180,17 @@ namespace Dapper.Contrib.Extensions
                 GetQueries[type.TypeHandle] = sql;
             }
 
-            var dynParms = new DynamicParameters();
-            dynParms.Add("@id", id);
+            var dynParams = new DynamicParameters();
+            dynParams.Add("@id", id);
 
             T obj;
 
             if (type.IsInterface)
             {
-                var res = connection.Query(sql, dynParms).FirstOrDefault() as IDictionary<string, object>;
-
-                if (res == null)
+                if (!(connection.Query(sql, dynParams).FirstOrDefault() is IDictionary<string, object> res))
+                {
                     return null;
+                }
 
                 obj = ProxyGenerator.GetInterfaceProxy<T>();
 
@@ -213,16 +213,16 @@ namespace Dapper.Contrib.Extensions
             }
             else
             {
-                obj = connection.Query<T>(sql, dynParms, transaction, commandTimeout: commandTimeout).FirstOrDefault();
+                obj = connection.Query<T>(sql, dynParams, transaction, commandTimeout: commandTimeout).FirstOrDefault();
             }
             return obj;
         }
 
         /// <summary>
-        /// Returns a list of entites from table "Ts".  
+        /// Returns a list of entities from table "Ts".
         /// Id of T must be marked with [Key] attribute.
         /// Entities created from interfaces are tracked/intercepted for changes and used by the Update() extension
-        /// for optimal performance. 
+        /// for optimal performance.
         /// </summary>
         /// <typeparam name="T">Interface or type to create and populate</typeparam>
         /// <param name="connection">Open SqlConnection</param>
@@ -273,7 +273,9 @@ namespace Dapper.Contrib.Extensions
         /// <summary>
         /// Specify a custom table name mapper based on the POCO type name
         /// </summary>
+#pragma warning disable CA2211 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
         public static TableNameMapperDelegate TableNameMapper;
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
         private static string GetTableName(Type type)
         {
@@ -534,7 +536,9 @@ namespace Dapper.Contrib.Extensions
         /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
         /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
         /// </summary>
+#pragma warning disable CA2211 // Non-constant fields should not be visible - I agree with you, but we can't do that until we break the API
         public static GetDatabaseTypeDelegate GetDatabaseType;
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
@@ -552,7 +556,7 @@ namespace Dapper.Contrib.Extensions
 
             private static AssemblyBuilder GetAsmBuilder(string name)
             {
-#if NETSTANDARD2_0
+#if !NET461
                 return AssemblyBuilder.DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
 #else
                 return Thread.GetDomain().DefineDynamicAssembly(new AssemblyName { Name = name }, AssemblyBuilderAccess.Run);
@@ -681,8 +685,8 @@ namespace Dapper.Contrib.Extensions
                 if (isIdentity)
                 {
                     var keyAttribute = typeof(KeyAttribute);
-                    var myConstructorInfo = keyAttribute.GetConstructor(new Type[] { });
-                    var attributeBuilder = new CustomAttributeBuilder(myConstructorInfo, new object[] { });
+                    var myConstructorInfo = keyAttribute.GetConstructor(Type.EmptyTypes);
+                    var attributeBuilder = new CustomAttributeBuilder(myConstructorInfo, Array.Empty<object>());
                     property.SetCustomAttribute(attributeBuilder);
                 }
 
@@ -726,7 +730,7 @@ namespace Dapper.Contrib.Extensions
     }
 
     /// <summary>
-    /// Specifies that this field is a explicitly set primary key in the database
+    /// Specifies that this field is an explicitly set primary key in the database
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ExplicitKeyAttribute : Attribute
@@ -1007,7 +1011,7 @@ public partial class PostgresAdapter : ISqlAdapter
 
         var results = connection.Query(sb.ToString(), entityToInsert, transaction, commandTimeout: commandTimeout).ToList();
 
-        // Return the key by assinging the corresponding property in the object - by product is that it supports compound primary keys
+        // Return the key by assigning the corresponding property in the object - by product is that it supports compound primary keys
         var id = 0;
         foreach (var p in propertyInfos)
         {
@@ -1094,7 +1098,7 @@ public partial class SQLiteAdapter : ISqlAdapter
 }
 
 /// <summary>
-/// The Firebase SQL adapeter.
+/// The Firebase SQL adapter.
 /// </summary>
 public partial class FbAdapter : ISqlAdapter
 {

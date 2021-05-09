@@ -3,11 +3,11 @@ using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
-#nullable enable
+
 namespace Dapper.ProviderTools
 {
     /// <summary>
-    /// Helper utilties for working with database exceptions
+    /// Helper utilities for working with database exceptions
     /// </summary>
     public static class DbExceptionExtensions
     {
@@ -17,7 +17,7 @@ namespace Dapper.ProviderTools
         public static bool IsNumber(this DbException exception, int number)
             => exception != null && ByTypeHelpers.Get(exception.GetType()).IsNumber(exception, number);
 
-        
+
         private sealed class ByTypeHelpers
         {
             private static readonly ConcurrentDictionary<Type, ByTypeHelpers> s_byType

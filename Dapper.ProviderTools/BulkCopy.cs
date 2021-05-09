@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper.ProviderTools.Internal;
-#nullable enable
+
 namespace Dapper.ProviderTools
 {
     /// <summary>
@@ -136,7 +136,11 @@ namespace Dapper.ProviderTools
         /// <summary>
         /// Release any resources associated with this instance
         /// </summary>
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Release any resources associated with this instance
