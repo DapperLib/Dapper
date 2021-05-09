@@ -32,6 +32,16 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void TestMultiConversion()
+        {
+            using (SqlMapper.GridReader multi = connection.QueryMultiple("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2"))
+            {
+                Assert.Equal(1, multi.Read<int>().Single());
+                Assert.Equal(2, multi.Read<int>().Single());
+            }
+        }
+
+        [Fact]
         public void TestQueryMultipleNonBufferedIncorrectOrder()
         {
             using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -210,7 +211,16 @@ namespace Dapper
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
                     }
-                    result = (T)deserializer.Func(reader);
+                    object val = deserializer.Func(reader);
+                    if (val == null || val is T)
+                    {
+                        result = (T)val;
+                    }
+                    else
+                    {
+                        var convertToType = Nullable.GetUnderlyingType(type) ?? type;
+                        result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
+                    }
                     if ((row & Row.Single) != 0 && await reader.ReadAsync(cancel).ConfigureAwait(false)) ThrowMultipleRows(row);
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent rows */ }
                 }
@@ -230,7 +240,16 @@ namespace Dapper
                     var buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
-                        buffer.Add((T)deserializer(reader));
+                        object val = deserializer(reader);
+                        if (val == null || val is T)
+                        {
+                            buffer.Add((T)val);
+                        }
+                        else
+                        {
+                            var convertToType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+                            buffer.Add((T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture));
+                        }
                     }
                     return buffer;
                 }
