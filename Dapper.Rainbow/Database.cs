@@ -473,12 +473,12 @@ namespace Dapper
         /// </summary>
         public virtual void Dispose()
         {
-            if (_connection.State != ConnectionState.Closed)
+            var connection = _connection;
+            if (connection.State != ConnectionState.Closed)
             {
-                _transaction?.Rollback();
-
-                _connection.Close();
                 _connection = null;
+                _transaction = null;
+                connection?.Close();
             }
             GC.SuppressFinalize(this);
         }
