@@ -45,7 +45,7 @@ namespace Dapper
             {
                 get
                 {
-                    tableName = tableName ?? database.DetermineTableName<T>(likelyTableName);
+                    tableName ??= database.DetermineTableName<T>(likelyTableName);
                     return tableName;
                 }
             }
@@ -142,7 +142,9 @@ namespace Dapper
                     foreach (var prop in o.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetGetMethod(false) != null))
                     {
                         var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
+#pragma warning disable IDE0019 // Use pattern matching - complex enough here
                         var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
+#pragma warning restore IDE0019 // Use pattern matching
                         if (attr == null || (!attr.Value))
                         {
                             paramNames.Add(prop.Name);
@@ -176,6 +178,11 @@ namespace Dapper
         private DbTransaction _transaction;
 
         /// <summary>
+        /// Get underlying database connection.
+        /// </summary>
+        public DbConnection Connection => _connection;
+
+        /// <summary>
         /// Initializes the database.
         /// </summary>
         /// <param name="connection">The connection to use.</param>
@@ -194,7 +201,7 @@ namespace Dapper
         {
             _connection = connection;
             _commandTimeout = commandTimeout;
-            tableConstructor = tableConstructor ?? CreateTableConstructorForTable();
+            tableConstructor ??= CreateTableConstructorForTable();
 
             tableConstructor(this as TDatabase);
         }
@@ -252,7 +259,7 @@ namespace Dapper
             var il = dm.GetILGenerator();
 
             var setters = GetType().GetProperties()
-                .Where(p => p.PropertyType.IsGenericType() && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
+                .Where(p => p.PropertyType.IsGenericType && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
                 .Select(p => Tuple.Create(
                         p.GetSetMethod(true),
                         p.PropertyType.GetConstructor(new[] { typeof(TDatabase), typeof(string) }),
@@ -315,7 +322,7 @@ namespace Dapper
             name = name.Replace("[", "");
             name = name.Replace("]", "");
 
-            if (name.Contains("."))
+            if (name.IndexOf('.') > 0)
             {
                 var parts = name.Split('.');
                 if (parts.Length == 2)
@@ -464,12 +471,16 @@ namespace Dapper
         /// <summary>
         /// Disposes the current database, rolling back current transactions.
         /// </summary>
-        public void Dispose()
-        {
+        public virtual void Dispose()
+        {                
             var connection = _connection;
-            _connection = null;
-            _transaction = null;
-            connection?.Close();
+            if (connection.State != ConnectionState.Closed)
+            {
+                _connection = null;
+                _transaction = null;
+                connection?.Close();
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

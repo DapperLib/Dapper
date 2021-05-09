@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Dapper
 {
@@ -25,7 +26,7 @@ namespace Dapper
                 Member = member;
             }
 
-            internal static readonly IList<LiteralToken> None = new LiteralToken[0];
+            internal static IList<LiteralToken> None => Array.Empty<LiteralToken>();
         }
     }
 }
