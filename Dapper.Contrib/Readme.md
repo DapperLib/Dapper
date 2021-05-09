@@ -118,7 +118,7 @@ Special Attributes
 ----------
 Dapper.Contrib makes use of some optional attributes:
 
-* `[Table("Tablename")]` - use another table name instead of the name of the class
+* `[Table("Tablename")]` - use another table name instead of the (by default pluralized) name of the class
 
     ```csharp
     [Table ("emps")]

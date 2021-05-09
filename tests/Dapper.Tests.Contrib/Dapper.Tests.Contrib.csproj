@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Dapper.Tests.Contrib</AssemblyName>
+    <Description>Dapper Contrib Test Suite</Description>
+    <TargetFrameworks>netcoreapp3.1;net462;net5.0</TargetFrameworks>
+    <NoWarn>$(NoWarn);CA1816;IDE0063;xUnit1004</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Dapper.Tests/Helpers/XunitSkippable.cs" Link="Helpers/XunitSkippable.cs" />
+    <None Remove="Test.DB.sdf" />
+
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.0" />
+    <PackageReference Include="MySqlConnector" Version="1.1.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+</Project>

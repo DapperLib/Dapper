@@ -56,7 +56,7 @@ namespace Dapper
             protected abstract T Parse(string xml);
 
             /// <summary>
-            /// Format an instace into a string (the instance will never be null)
+            /// Format an instance into a string (the instance will never be null)
             /// </summary>
             /// <param name="xml">The string to format.</param>
             protected abstract string Format(T xml);
@@ -78,7 +78,7 @@ namespace Dapper
             /// <returns>The typed value</returns>
             public override T Parse(object value)
             {
-                if (value == null || value is DBNull) return default(T);
+                if (value == null || value is DBNull) return default;
                 return Parse((string)value);
             }
         }

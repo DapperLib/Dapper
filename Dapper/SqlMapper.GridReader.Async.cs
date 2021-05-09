@@ -141,7 +141,7 @@ namespace Dapper
             {
                 if (await ((DbDataReader)reader).NextResultAsync(cancel).ConfigureAwait(false))
                 {
-                    readCount++;
+                    // readCount++;
                     gridIndex++;
                     IsConsumed = false;
                 }
@@ -197,7 +197,7 @@ namespace Dapper
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
 
                 IsConsumed = true;
-                T result = default(T);
+                T result = default;
                 if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);

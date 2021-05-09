@@ -44,7 +44,7 @@ namespace Dapper
                 {
                     if (ex.Message.Contains(nameof(CommandBehavior.SingleResult))
                         || ex.Message.Contains(nameof(CommandBehavior.SingleRow)))
-                    { // some providers just just allow these, so: try again without them and stop issuing them
+                    { // some providers just allow these, so: try again without them and stop issuing them
                         SetAllowedCommandBehaviors(CommandBehavior.SingleResult | CommandBehavior.SingleRow, false);
                         return true;
                     }
@@ -90,7 +90,7 @@ namespace Dapper
             public static bool PadListExpansions { get; set; }
             /// <summary>
             /// If set (non-negative), when performing in-list expansions of integer types ("where id in @ids", etc), switch to a string_split based
-            /// operation if there are more than this many elements. Note that this feautre requires SQL Server 2016 / compatibility level 130 (or above).
+            /// operation if there are this many elements or more. Note that this feature requires SQL Server 2016 / compatibility level 130 (or above).
             /// </summary>
             public static int InListStringSplitCount { get; set; } = -1;
         }
