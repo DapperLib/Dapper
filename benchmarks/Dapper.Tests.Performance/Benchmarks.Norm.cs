@@ -15,21 +15,21 @@ namespace Dapper.Tests.Performance
             BaseSetup();
         }
 
-        [Benchmark(Description = "Read<T> (class)")]
+        [Benchmark(Description = "Read<> (class)")]
         public Post Read()
         {
             Step();
             return _connection.Read<Post>("select * from Posts where Id = @Id", i).First();
         }
 
-        [Benchmark(Description = "Read<T1, T2, ...> (simple values in a tuple)")]
+        [Benchmark(Description = "Read<> (tuples)")]
         public (int, string, DateTime, DateTime, int?, int?, int?, int?, int?, int?, int?, int?) ReadSimpleValues()
         {
             Step();
             return _connection.Read<int, string, DateTime, DateTime, int?, int?, int?, int?, int?, int?, int?, int?>("select * from Posts where Id = @Id", i).First();
         }
 
-        [Benchmark(Description = "Read<(T1, T2, ...)> (named tuple)")]
+        [Benchmark(Description = "Read<()> (named tuples)")]
         public (int Id, string Text, DateTime CreationDate, DateTime LastChangeDate, int? Counter1, int? Counter2, int? Counter3, int? Counter4, int? Counter5, int? Counter6, int? Counter7, int? Counter8) ReadTuple()
         {
             Step();
