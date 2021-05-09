@@ -263,8 +263,8 @@ namespace Dapper
         /// <summary>
         /// Determine if the specified type will be processed by a custom handler.
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
+        /// <param name="type">The type to handle.</param>
+        /// <returns>Boolean value specifying whether the type will be processed by a custom handler.</returns>
         public static bool HasTypeHandler(Type type) => typeHandlers.ContainsKey(type);
 
         /// <summary>
