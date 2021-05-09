@@ -24,6 +24,8 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 (note: new PRs will not be merged until they add release note wording here)
 
+- Parameters can now be re-used on subsequent commands (#952 via jamescrowley)
+
 ### 2.0.90
 
 - logo added; license updated to mention logo usage (via mgravell)
