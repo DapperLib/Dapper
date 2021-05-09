@@ -26,7 +26,7 @@ namespace Dapper.Tests
 #endif
     public abstract class ParameterTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
-        public class DbParams : SqlMapper.IDynamicParameters, IEnumerable<IDbDataParameter>
+        public class DbDynamicParams : SqlMapper.IDynamicParameters, IEnumerable<IDbDataParameter>
         {
             private readonly List<IDbDataParameter> parameters = new List<IDbDataParameter>();
             public IEnumerator<IDbDataParameter> GetEnumerator() { return parameters.GetEnumerator(); }
@@ -40,6 +40,21 @@ namespace Dapper.Tests
             {
                 foreach (IDbDataParameter parameter in parameters)
                     command.Parameters.Add(parameter);
+            }
+        }
+        
+        public class DbCustomParam : SqlMapper.ICustomQueryParameter
+        {
+            private readonly IDbDataParameter _sqlParameter;
+
+            public DbCustomParam(IDbDataParameter sqlParameter)
+            {
+                _sqlParameter = sqlParameter;
+            }
+
+            public void AddParameter(IDbCommand command, string name)
+            {
+                command.Parameters.Add(_sqlParameter);
             }
         }
 
@@ -799,9 +814,9 @@ namespace Dapper.Tests
 #endif
 
         [Fact]
-        public void TestCustomParameters()
+        public void TestDynamicParameters()
         {
-            var args = new DbParams {
+            var args = new DbDynamicParams {
                 Provider.CreateRawParameter("foo", 123),
                 Provider.CreateRawParameter("bar", "abc")
             };
@@ -811,7 +826,53 @@ namespace Dapper.Tests
             Assert.Equal(123, foo);
             Assert.Equal("abc", bar);
         }
+        
+        [Fact]
+        public void TestDynamicParametersReuse()
+        {
+            var args = new DbDynamicParams {
+                Provider.CreateRawParameter("foo", 123),
+                Provider.CreateRawParameter("bar", "abc")
+            };
+            var result1 = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            var result2 = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            Assert.Equal(123, result1.Foo);
+            Assert.Equal("abc", result1.Bar);
+            Assert.Equal(123, result2.Foo);
+            Assert.Equal("abc", result2.Bar);
+        }
 
+        
+        [Fact]
+        public void TestCustomParameter()
+        {
+            var args = new {
+                foo = new DbCustomParam(Provider.CreateRawParameter("foo", 123)),
+                bar = "abc"
+            };
+            var result = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            int foo = result.Foo;
+            string bar = result.Bar;
+            Assert.Equal(123, foo);
+            Assert.Equal("abc", bar);
+        }
+        
+        [Fact]
+        public void TestCustomParameterReuse()
+        {
+            var args = new {
+                foo = new DbCustomParam(Provider.CreateRawParameter("foo", 123)),
+                bar = "abc"
+            };
+            var result1 = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            var result2 = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            Assert.Equal(123, result1.Foo);
+            Assert.Equal("abc", result1.Bar);
+            Assert.Equal(123, result2.Foo);
+            Assert.Equal("abc", result2.Bar);
+        }
+        
+        
         [Fact]
         public void TestDynamicParamNullSupport()
         {
