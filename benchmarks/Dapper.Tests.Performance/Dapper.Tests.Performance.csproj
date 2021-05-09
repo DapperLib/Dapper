@@ -48,5 +48,6 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0" />
+    <PackageReference Include="Norm.net" Version="3.2.0" />
   </ItemGroup>
 </Project>
