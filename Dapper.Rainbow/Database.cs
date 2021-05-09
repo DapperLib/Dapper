@@ -472,7 +472,7 @@ namespace Dapper
         /// Disposes the current database, rolling back current transactions.
         /// </summary>
         public virtual void Dispose()
-        {                
+        {
             var connection = _connection;
             if (connection.State != ConnectionState.Closed)
             {
