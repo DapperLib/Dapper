@@ -15,10 +15,20 @@ namespace Dapper
         {
             if (reader.Read())
             {
-                var deser = GetDeserializer(typeof(T), reader, 0, -1, false);
+                var effectiveType = typeof(T);
+                var deser = GetDeserializer(effectiveType, reader, 0, -1, false);
+                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 do
                 {
-                    yield return (T)deser(reader);
+                    object val = deser(reader);
+                    if (val == null || val is T)
+                    {
+                        yield return (T)val;
+                    }
+                    else
+                    {
+                        yield return (T)Convert.ChangeType(val, convertToType, System.Globalization.CultureInfo.InvariantCulture);
+                    }
                 } while (reader.Read());
             }
         }
@@ -128,9 +138,9 @@ namespace Dapper
         public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            concreteType = concreteType ?? typeof(T);
+            concreteType ??= typeof(T);
             var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
-            if (concreteType.IsValueType())
+            if (concreteType.IsValueType)
             {
                 return _ => (T)func(_);
             }

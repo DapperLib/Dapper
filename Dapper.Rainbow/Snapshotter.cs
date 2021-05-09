@@ -12,7 +12,7 @@ namespace Dapper
     public static class Snapshotter
     {
         /// <summary>
-        /// Starts the snapshot of an objec by making a copy of the current state.
+        /// Starts the snapshot of an object by making a copy of its current state.
         /// </summary>
         /// <typeparam name="T">The type of object to snapshot.</typeparam>
         /// <param name="obj">The object to snapshot.</param>
@@ -69,14 +69,14 @@ namespace Dapper
 
             private static T Clone(T myObject)
             {
-                cloner = cloner ?? GenerateCloner();
+                cloner ??= GenerateCloner();
                 return cloner(myObject);
             }
 
             private static DynamicParameters Diff(T original, T current)
             {
                 var dm = new DynamicParameters();
-                differ = differ ?? GenerateDiffer();
+                differ ??= GenerateDiffer();
                 foreach (var pair in differ(original, current))
                 {
                     dm.Add(pair.Name, pair.NewValue);
@@ -91,15 +91,15 @@ namespace Dapper
                         p.GetSetMethod(true) != null
                         && p.GetGetMethod(true) != null
                         && (p.PropertyType == typeof(string)
-                             || p.PropertyType.IsValueType()
-                             || (p.PropertyType.IsGenericType() && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
+                             || p.PropertyType.IsValueType
+                             || (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>)))
                         ).ToList();
             }
 
             private static bool AreEqual<U>(U first, U second)
             {
-                if (EqualityComparer<U>.Default.Equals(first, default(U)) && EqualityComparer<U>.Default.Equals(second, default(U))) return true;
-                if (EqualityComparer<U>.Default.Equals(first, default(U))) return false;
+                if (EqualityComparer<U>.Default.Equals(first, default) && EqualityComparer<U>.Default.Equals(second, default)) return true;
+                if (EqualityComparer<U>.Default.Equals(first, default)) return false;
                 return first.Equals(second);
             }
 
@@ -109,13 +109,13 @@ namespace Dapper
 
                 var il = dm.GetILGenerator();
                 // change list
-                il.DeclareLocal(typeof(List<Change>));
-                il.DeclareLocal(typeof(Change));
-                il.DeclareLocal(typeof(object)); // boxed change
+                var list = il.DeclareLocal(typeof(List<Change>));
+                var change = il.DeclareLocal(typeof(Change));
+                var boxed = il.DeclareLocal(typeof(object)); // boxed change
 
                 il.Emit(OpCodes.Newobj, typeof(List<Change>).GetConstructor(Type.EmptyTypes));
                 // [list]
-                il.Emit(OpCodes.Stloc_0);
+                il.Emit(OpCodes.Stloc, list);
 
                 foreach (var prop in RelevantProperties())
                 {
@@ -138,7 +138,7 @@ namespace Dapper
                         // [original prop val, current prop val, current prop val boxed]
                     }
 
-                    il.Emit(OpCodes.Stloc_2);
+                    il.Emit(OpCodes.Stloc, boxed);
                     // [original prop val, current prop val]
 
                     il.EmitCall(OpCodes.Call, typeof(Snapshot<T>).GetMethod(nameof(AreEqual), BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(new Type[] { prop.PropertyType }), null);
@@ -153,7 +153,7 @@ namespace Dapper
                     il.Emit(OpCodes.Dup);
                     // [change,change]
 
-                    il.Emit(OpCodes.Stloc_1);
+                    il.Emit(OpCodes.Stloc, change);
                     // [change]
 
                     il.Emit(OpCodes.Ldstr, prop.Name);
@@ -161,18 +161,18 @@ namespace Dapper
                     il.Emit(OpCodes.Callvirt, typeof(Change).GetMethod("set_Name"));
                     // []
 
-                    il.Emit(OpCodes.Ldloc_1);
+                    il.Emit(OpCodes.Ldloc, change);
                     // [change]
 
-                    il.Emit(OpCodes.Ldloc_2);
+                    il.Emit(OpCodes.Ldloc, boxed);
                     // [change, boxed]
 
                     il.Emit(OpCodes.Callvirt, typeof(Change).GetMethod("set_NewValue"));
                     // []
 
-                    il.Emit(OpCodes.Ldloc_0);
+                    il.Emit(OpCodes.Ldloc, list);
                     // [change list]
-                    il.Emit(OpCodes.Ldloc_1);
+                    il.Emit(OpCodes.Ldloc, change);
                     // [change list, change]
                     il.Emit(OpCodes.Callvirt, typeof(List<Change>).GetMethod("Add"));
                     // []
@@ -180,7 +180,7 @@ namespace Dapper
                     il.MarkLabel(skip);
                 }
 
-                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldloc, list);
                 // [change list]
                 il.Emit(OpCodes.Ret);
 
@@ -191,18 +191,18 @@ namespace Dapper
             private static Func<T, T> GenerateCloner()
             {
                 var dm = new DynamicMethod("DoClone", typeof(T), new Type[] { typeof(T) }, true);
-                var ctor = typeof(T).GetConstructor(new Type[] { });
+                var ctor = typeof(T).GetConstructor(Type.EmptyTypes);
 
                 var il = dm.GetILGenerator();
 
-                il.DeclareLocal(typeof(T));
+                var typed = il.DeclareLocal(typeof(T));
 
                 il.Emit(OpCodes.Newobj, ctor);
-                il.Emit(OpCodes.Stloc_0);
+                il.Emit(OpCodes.Stloc, typed);
 
                 foreach (var prop in RelevantProperties())
                 {
-                    il.Emit(OpCodes.Ldloc_0);
+                    il.Emit(OpCodes.Ldloc, typed);
                     // [clone]
                     il.Emit(OpCodes.Ldarg_0);
                     // [clone, source]
@@ -213,7 +213,7 @@ namespace Dapper
                 }
 
                 // Load new constructed obj on eval stack -> 1 item on stack
-                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldloc, typed);
                 // Return constructed object.   --> 0 items on stack
                 il.Emit(OpCodes.Ret);
 

@@ -2,11 +2,9 @@
 
 ## Overview
 
-A brief guide is available [on github](https://github.com/StackExchange/dapper-dot-net/blob/master/Readme.md)
+A brief guide is available [on github](https://github.com/DapperLib/Dapper/blob/main/Readme.md)
 
-More examples coming soon on Stack Overflow docs.
-
-Questions on Stack Overflow should be tagged [`dapper`](http://stackoverflow.com/questions/tagged/dapper)
+Questions on Stack Overflow should be tagged [`dapper`](https://stackoverflow.com/questions/tagged/dapper)
 
 ## Installation
 
@@ -22,6 +20,99 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
+### unreleased
+
+(note: new PRs will not be merged until they add release note wording here)
+
+### 2.0.90
+
+- logo added; license updated to mention logo usage (via mgravell)
+- moved to DapperLib org; links updated (#1656)
+- RepoDb benchmark added (#1626 via stevedesmond-ca)
+- excise unrelated Soma tests (#1642 via kant2002)
+- SqlMarshl benchmark added (#1646 via kant2002)
+- documentation fixes (#1615 via Rollerss, #1604 via GitHubPang)
+
+### 2.0.78
+
+- fix `DynamicParameters` loop bug - wrong index (#1443 via DamirAinullin)
+- fix nullable tuple handling (#1400 via JulianRooze)
+- support update set in `SqlBuilder` (#1404 via Wei)
+- initialize collections with counts when possible (#1449 via DamirAinullin)
+- general code cleanup (#1452, #1457, #1458, #1459 all via DamirAinullin)
+- C# 9 and .NET 5 preparation/cleanup (#1572 via mgravell)
+- GitHub action, Docker, AppVeyor work (build/test) work (#1563 via Tyrrrz, #1559 via craver, #1450 via craver)
+- Test project rationalization (#1556 via craver)
+- ClickHouse detection (#1462 via DarkWanderer)
+- Switched to "main" branch (via craver)
+- documentation fixed (#1596 via royal, #1560 via wswind, #1558 via paul42, #1507 via imba-tjd, #1508 via dogac00, 899c9feb via BlackjacketMack, 0b17133 via BlackjacketMack, 9b6c8c7d via bryancrosby, #1202 via craver)
+- MightyOrm benchmark added (455b3f3b via cdonnellytx)
+- EF6 performance test updates (#1361 via AlexBagnolini)
+
+### 2.0.35
+
+- build tooling: enable "deterministic builds" and enable SDK roll-foward
+- fix culture related formatting/parsing issue with Sqlite (#1363 via sebastienros)
+- documentation fixes (#1357 via jawn)
+- add tests for `SqlBuilder` (#1369 via shps951023)
+
+### 2.0.30
+
+- upstream library updates; project (build) cleanup
+- reinstated net461 build target
+- add Dapper.ProviderTools library (to help with System vs Microsoft SqlClient migration, etc)
+- fix double dictionary lookup (#1339 via DamirAinullin)
+- fix bug with dynamic parameters accessing the wrong member (#1334 via DamirAinullin)
+- fix explicit-key issue with `DeleteAsync` (#1309 via james-hester-ah)
+- fix for `char` on Postgres (#1326 via jjonescz)
+- documentation fixes (#1340 via jawn)
+- test and benchmark fixes (#1337 via DamirAinullin, #1206 via yesmey, #1331 via andresrsanchez, #1335 via DamirAinullin)
+
+### 2.0.4
+
+Primary changes:
+
+- remove the System.Data.SqlClient dependency, allowing consumers to use System.Data.SqlClient or Microsoft.Data.SqlClient (or neither, or both) as they choose
+ - this means that some users may need to *re-add* one of the above as a `<PackageReference>` for their project to build, if they were previously relying on Dapper to provide System.Data.SqlClient
+ - the `AsTableValuedParameter(this IEnumerable<SqlDataRecord>)` extension method is now `AsTableValuedParameter<T>(this IEnumerable<T>) where T : IDataRecord`; this is a breaking change but should be code-compatible and just requires a rebuild
+- unify the target platform at NetStandard2.0 (and .NET Framework 4.6.2 for the EF DB geometry/geography types)
+- fix bug with `Identity` not enforcing type identity of multi-mapped types
+
+Other changes merged:
+
+- fix #1242, #1280, #1282 - fix value-tuple mapping
+- fix #1295 - add `ExecuteReaderAsync` overload to expose `DbDataReader`
+- fix #569 - handing of `IN` and similar clauses in some scenarios
+- fix #1256 - make `Dispose()` polymorphic in "rainbow"
+- fix #1257 - make the `.Connection` available in "rainbow"
+
+### 1.60.6
+
+- improve performance of descriptor API
+
+### 1.60.5
+
+- add descriptor API to `DapperRow` (enables UI binding with non-generic `Query()` API)
+
+### 1.60.1
+
+- Fix [#1196](https://github.com/DapperLib/Dapper/issues/1196) - versioning fix only ([#1198](https://github.com/DapperLib/Dapper/pull/1198)) - assembly version is now locked at 1.60.0 to resolve some mismatch issues with .NET Core assembly loading/binding.
+
+### 1.50.7
+
+- Fix [#1190](https://github.com/DapperLib/Dapper/issues/1190) - incorrect unmanaged pointer when processing parameters that are a boxed struct (rare error relating to GC)
+- Fix [#1111](https://github.com/DapperLib/Dapper/issues/1111) - make `SqlMapper.Parse` consistent with `QueryImpl`
+- Fix #111- - improve error message for invalid literal types
+- Fix [#1149](https://github.com/DapperLib/Dapper/pull/1149) - improve error messages in "contrib"
+- Improved detection of empty table-valued-parameters
+
+### 1.50.5
+
+- Fixes empty result set hanging with `QueryAsync`
+- `DapperRow` now implements `IReadOnlyDictionary<string, object>`
+- Improved error messages for `Async` when the provided `IDbConnection` is not a `DbConnection`
+- Contrib: `GetAll` now handles nullable types
+
 ### 1.50.4
 
 - Added back missing .NET Standard functionality (restored in `netstandard2.0`)
@@ -29,15 +120,15 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### 1.50.2
 
-- fix issue 569 (`in` expansions using ODBC pseudo-positional arguments)
+- Fix issue [#569](https://github.com/DapperLib/Dapper/issues/569) (`in` expansions using ODBC pseudo-positional arguments)
 
 ### 1.50.1
 
-- change to how `string_split` is used for `InListStringSplitCount`
+- Change to how `string_split` is used for `InListStringSplitCount`
 
 ### 1.50.0
 
-- no changes; stable release
+- No changes; stable release
 
 ### 1.50.0-rc3
 
@@ -45,37 +136,37 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### 1.50.0-rc2b
 
-- new `InListStringSplitCount` global setting; if set (non-negative), `in @foo` expansions (of at least the specified size) of primitive types (`int`, `tinyint`, `smallint`, `bigint`) are implemented via the SQL Server 2016 (compat level 130) `STRING_SPLIT` function
-- fix for incorrect conversions in `GridReader` (#254)
+- New `InListStringSplitCount` global setting; if set (non-negative), `in @foo` expansions (of at least the specified size) of primitive types (`int`, `tinyint`, `smallint`, `bigint`) are implemented via the SQL Server 2016 (compat level 130) `STRING_SPLIT` function
+- Fix for incorrect conversions in `GridReader` ([#254](https://github.com/DapperLib/Dapper/issues/254))
 
 ### 1.50.0-rc2 / 1.50.0-rc2a
 
-- packaging for .NET Core rc2
+- Packaging for .NET Core rc2
 
 ### 1.50-beta9
 
-- fix for `PadListExpansions` to work correctly with `not in` scenarios; now uses last non-null value instead of `null`; if none available, don't pad
-- fix problems with single-result/single-row not being supported by all providers (basically: sqlite, #466)
-- fix problems with enums - nulls (#467) and primitive values (#468)
-- add support for C# 6 get-only properties (#473)
-- add support for various xml types (#427)
+- Fix for `PadListExpansions` to work correctly with `not in` scenarios; now uses last non-null value instead of `null`; if none available, don't pad
+- Fix problems with single-result/single-row not being supported by all providers (basically: sqlite, [#466](https://github.com/DapperLib/Dapper/issues/466))
+- Fix problems with enums - nulls ([#467](https://github.com/DapperLib/Dapper/issues/467)) and primitive values ([#468](https://github.com/DapperLib/Dapper/issues/468))
+- Add support for C# 6 get-only properties ([#473](https://github.com/DapperLib/Dapper/issues/473))
+- Add support for various xml types ([#427](https://github.com/DapperLib/Dapper/issues/427))
 
 ### 1.50-beta8
 
-- addition of `GetRowParser<T>` extension method on `IDataReader` API - allows manual construction of discriminated unions, etc
-- addition of `Settings.PadListExpansions` - reduces query-plan saturation by padding list expansions with `null` values (opt-in, because on some DB configurations this could change the meaning) *(note: bad choice of `null` revised in 1.50-beta9)*
-- addition of `Settings.ApplyNullValues` - assigns (rather than ignores) `null` values when possible
-- fix for #461 - ensure type-handlers work for constructor-based initialization
-- fix for #455 - make the `LookupDbType` method available again
+- Addition of `GetRowParser<T>` extension method on `IDataReader` API - allows manual construction of discriminated unions, etc
+- Addition of `Settings.PadListExpansions` - reduces query-plan saturation by padding list expansions with `null` values (opt-in, because on some DB configurations this could change the meaning) *(note: bad choice of `null` revised in 1.50-beta9)*
+- Addition of `Settings.ApplyNullValues` - assigns (rather than ignores) `null` values when possible
+- Fix for [#461](https://github.com/DapperLib/Dapper/issues/461) - ensure type-handlers work for constructor-based initialization
+- Fix for [#455](https://github.com/DapperLib/Dapper/issues/455) - make the `LookupDbType` method available again
 
 ### 1.50-beta7
 
-- addition of `GetRowParser(Type)` (and refactor the backing store for readers to suit)
-- column hash should consider type, not just name
+- Addition of `GetRowParser(Type)` (and refactor the backing store for readers to suit)
+- Column hash should consider type, not just name
 
 ### 1.50-beta6
 
-- fix for issue #424 - defensive `SqlDataRecord` handling
+- Fix for issue [#424](https://github.com/DapperLib/Dapper/issues/424) - defensive `SqlDataRecord` handling
 
 ### 1.50-beta5
 
@@ -86,9 +177,9 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### 1.50-beta4
 
 - Add `QueryFirstOrDefault` / `ReadFirstOrDefault` methods that optimize the single-row scenario
-- remove some legacy `dynamic` usage from the async API
-- make `DynamicTypeMap` public again (error during core-clr migration)
-- use `Hashtable` again on core-clr 
+- Remove some legacy `dynamic` usage from the async API
+- Make `DynamicTypeMap` public again (error during core-clr migration)
+- Use `Hashtable` again on core-clr
 
 ### 1.50-beta3
 
@@ -97,61 +188,61 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### 1.50-beta2
 
 - Core CLR now targets rc1 / 23516
-- various Core CLR fixes
-- code cleanup and C# 6 usage (assorted)
+- Various Core CLR fixes
+- Code cleanup and C# 6 usage (assorted)
 
 ### 1.50-beta1
 
-- split `SqlMapper.cs` as it was becoming too unmaintainable; NuGet is now the only supported deployment channel
-- remove down-level C# requirements, as "drop in the file" is no longer the expected usage
+- Split `SqlMapper.cs` as it was becoming too unmaintainable; NuGet is now the only supported deployment channel
+- Remove down-level C# requirements, as "drop in the file" is no longer the expected usage
 - `SqlMapper.Settings` added; provides high-level global configuration; initially `CommandTimeout` (@Irrational86)
 - improve error message if an array is used as a parameter in an invalid context
-- add `Type[]` support for `GridReader.Read` scenarios (@NikolayGlynchak)
-- support for custom type-maps in collection parameters (@gjsduarte)
-- fix incorrect cast in `QueryAsync<T>` (@phnx47, #346)
-- fix incorrect null handling re `UdtTypeName` (@perliedman)
-- support for `SqlDataRecord` (@sqmgh)
-- allow `DbString` default for `IsAnsi` to be specified (@kppullin)
+- Add `Type[]` support for `GridReader.Read` scenarios (@NikolayGlynchak)
+- Support for custom type-maps in collection parameters (@gjsduarte)
+- Fix incorrect cast in `QueryAsync<T>` (@phnx47, [#346](https://github.com/DapperLib/Dapper/issues/346))
+- Fix incorrect null handling re `UdtTypeName` (@perliedman)
+- Support for `SqlDataRecord` (@sqmgh)
+- Allow `DbString` default for `IsAnsi` to be specified (@kppullin)
 - provide `TypeMapProvider` with lazy func-based initialization (@garyhuntddn)
-- core-clr updated to beta-8 and various cleanups/fixes
-- built using core-clr build tools
+- Core-clr updated to beta-8 and various cleanups/fixes
+- Built using core-clr build tools
 
 
 ### 1.42
 
-- fix bug with dynamic parameters where `.Get<T>` is called before the command is executed
+- Fix bug with dynamic parameters where `.Get<T>` is called before the command is executed
 
 ### 1.41-beta5
 
-- core-clr packaging build and workarounds
-- fix bug with literal `{=val}` boolean replacements
+- Core-clr packaging build and workarounds
+- Fix bug with literal `{=val}` boolean replacements
 
 ### 1.41-beta4
 
-- core-clr packaging build
-- improve mapping to enum members (@BrianJolly)
+- Core-clr packaging build
+- Improve mapping to enum members (@BrianJolly)
 
 ### 1.41-beta
 
-- core-clr packaging build
+- Core-clr packaging build
 
 ### 1.41-alpha
 
-- introduces dnx (core-clr) experimental changes
-- adds `SqlBuilder` project
-- improve error message when incorrectly accessing parameter values
+- Introduces dnx (core-clr) experimental changes
+- Adds `SqlBuilder` project
+- Improve error message when incorrectly accessing parameter values
 
 ### 1.40
 
-- workaround for broken `GetValues()` on Mono; add `AsList()`
+- Workaround for broken `GetValues()` on Mono; add `AsList()`
 
 ### 1.39
 
-- fix case on SQL CLR types; grid-reader should respect no-cache flags; make parameter inclusion case-insensitive
+- Fix case on SQL CLR types; grid-reader should respect no-cache flags; make parameter inclusion case-insensitive
 
 ### 1.38
 
-- specify constructor explicitly; allow value-type parameters (albeit: boxed)
+- Specify constructor explicitly; allow value-type parameters (albeit: boxed)
 
 ### 1.37
 
@@ -159,13 +250,13 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### 1.36
 
-- Fix Issue #192 (expanded parameter naming glitch) and Issue #178 (execute reader now wraps the command/reader pair, to extend the command lifetime; note that the underlying command/reader are available by casting to `IWrappedDataReader`)
+- Fix Issue [#192](https://github.com/DapperLib/Dapper/issues/192) (expanded parameter naming glitch) and Issue [#178](https://github.com/DapperLib/Dapper/issues/178) (execute reader now wraps the command/reader pair, to extend the command lifetime; note that the underlying command/reader are available by casting to `IWrappedDataReader`)
 
 ### 1.35
 
-- Fix Issue #151 (Execute should work with `ExpandoObject` etc); Fix Issue #182 (better support for db-type when using `object` values);
-- output expressions / callbacks in dynamic args (via Derek); arbitrary number of types in multi-mapping (via James Holwell);
-- fix `DbString`/Oracle bug (via Mauro Cerutti); new support for **named positional arguments**
+- Fix Issue [#151](https://github.com/DapperLib/Dapper/issues/151) (Execute should work with `ExpandoObject` etc); Fix Issue #182 (better support for db-type when using `object` values);
+- Output expressions / callbacks in dynamic args (via Derek); arbitrary number of types in multi-mapping (via James Holwell);
+- Fix `DbString`/Oracle bug (via Mauro Cerutti); new support for **named positional arguments**
 
 ### 1.34
 

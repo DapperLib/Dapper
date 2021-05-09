@@ -19,3 +19,5 @@ TestResults/
 Dapper.Tests/*.sdf
 Dapper.Tests/SqlServerTypes/
 .dotnet/*
+BenchmarkDotNet.Artifacts/
+.idea/
