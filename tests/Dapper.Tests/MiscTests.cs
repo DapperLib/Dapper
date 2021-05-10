@@ -656,6 +656,24 @@ select * from @bar", new { foo }).Single();
         }
 
         [Fact]
+        public void TestDbStringToString()
+        {
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: True, IsFixedLength: True)", 
+                new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true }.ToString());
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: False, IsFixedLength: True)",
+                new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = false }.ToString());
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: True, IsFixedLength: False)",
+                new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true }.ToString());
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: False, IsFixedLength: False)",
+                new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false }.ToString());
+
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: -1, IsAnsi: True, IsFixedLength: False)",
+                new DbString { Value = "abcde", IsAnsi = true }.ToString());
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: -1, IsAnsi: False, IsFixedLength: False)",
+                new DbString { Value = "abcde", IsAnsi = false }.ToString());
+        }
+
+        [Fact]
         public void TestDefaultDbStringDbType()
         {
             var origDefaultStringDbType = DbString.IsAnsiDefault;

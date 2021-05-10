@@ -27,7 +27,8 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 - Parameters can now be re-used on subsequent commands (#952 via jamescrowley)
 - Array query support (`.Query<int[]>`) on supported platforms (e.g. Postgres) (#1598 via DarkWanderer)
 - `SqlMapper.HasTypeHandler` is made public for consumers (#1405 via brendangooden)
-- Improves multi-mapping error message when a specified column in splitOn can't be found (#1664 by NickCraver)
+- Improves multi-mapping error message when a specified column in splitOn can't be found (#1664 via NickCraver)
+- Improves DbString.ToString() (#1665 via NickCraver)
 
 ### 2.0.90
 
