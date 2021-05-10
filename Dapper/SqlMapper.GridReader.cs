@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -418,15 +420,13 @@ namespace Dapper
                 GC.SuppressFinalize(this);
             }
 
-            private static T ConvertTo<T>(object value)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private static T ConvertTo<T>(object value) => value switch
             {
-                if (value is null or DBNull)
-                    return default;
-                else if (value is T t)
-                    return t;
-                else
-                    return (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T), CultureInfo.InvariantCulture);
-            }
+                T typed => typed,
+                null or DBNull => default,
+                _ => (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T), CultureInfo.InvariantCulture),
+            };
         }
     }
 }

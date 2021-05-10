@@ -233,7 +233,7 @@ namespace Dapper
                     var buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
-                        buffer.Add((T)deserializer(reader));
+                        buffer.Add(ConvertTo<T>(deserializer(reader)));
                     }
                     return buffer;
                 }
