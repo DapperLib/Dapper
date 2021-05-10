@@ -1679,7 +1679,7 @@ namespace Dapper
         {
             if (startIdx == reader.FieldCount)
             {
-                throw MultiMapException(reader);
+                throw MultiMapException(reader, splitOn);
             }
 
             if (splitOn == "*")
@@ -1713,7 +1713,7 @@ namespace Dapper
                 }
             }
 
-            throw MultiMapException(reader);
+            throw MultiMapException(reader, splitOn);
         }
 
         private static CacheInfo GetCacheInfo(Identity identity, object exampleParameters, bool addToCache)
@@ -1831,16 +1831,18 @@ namespace Dapper
             return reader => handler.Parse(type, reader.GetValue(startBound));
         }
 
-        private static Exception MultiMapException(IDataRecord reader)
+        private static Exception MultiMapException(IDataRecord reader, string splitOnColumnName = null)
         {
             bool hasFields = false;
             try { hasFields = reader != null && reader.FieldCount != 0; }
             catch { /* don't throw when trying to throw */ }
             if (hasFields)
             {
-#pragma warning disable CA2208 // Instantiate argument exceptions correctly
-                return new ArgumentException("When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id", "splitOn");
-#pragma warning restore CA2208 // Instantiate argument exceptions correctly
+                return new ArgumentException(
+                    string.IsNullOrEmpty(splitOnColumnName)
+                    ? "When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id"
+                    : $"Multi-map error: splitOn column '{splitOnColumnName}' was not found - please ensure your splitOn parameter is set and in the correct order", 
+                    "splitOn");
             }
             else
             {
