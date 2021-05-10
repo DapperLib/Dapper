@@ -195,6 +195,13 @@ Order by p.Id";
         }
 
         [Fact]
+        public void TestMultiMapperSplitOnError()
+        {
+            var ex = Assert.Throws<ArgumentException>(() => connection.Query<Foo1, Bar1, Tuple<Foo1, Bar1>>("select 1 as Id, 2 as BarId", Tuple.Create, splitOn: "DoesntExist").First());
+            Assert.StartsWith("Multi-map error: splitOn column 'DoesntExist' was not found - please ensure your splitOn parameter is set and in the correct order", ex.Message);
+        }
+
+        [Fact]
         public void TestMultiMapDynamic()
         {
             const string createSql = @"
