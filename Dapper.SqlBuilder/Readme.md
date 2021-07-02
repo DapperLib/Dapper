@@ -18,7 +18,7 @@ Dapper.SqlBuilder contains a number of helper methods for generating sql.
 
 The list of extension methods in Dapper.SqlBuilder right now are:
 
-```csharp=
+```csharp
 SqlBuilder AddParameters(dynamic parameters);
 SqlBuilder Select(string sql, dynamic parameters = null);
 SqlBuilder Where(string sql, dynamic parameters = null);
@@ -39,7 +39,7 @@ Template
 --------
 
 SqlBuilder allows you to generate N SQL templates from a composed query, it can easily format sql when you are attaching parameters and how, e.g:  
-```csharp=
+```csharp
 var builder = new SqlBuilder()
     .Where("a = @a", new { a = 1 })
     .Where("b = @b", new { b = 2 })
@@ -52,7 +52,7 @@ var rows = cnn.Query(selector.RawSql, selector.Parameters);
 ```
 
 it's same as 
-```csharp=
+```csharp
 var count = cnn.Query("select count(*) from table where a = @a and b = @b", new { a = 1, b = 1 });
 var rows = cnn.Query("select * from table where a = @a and b = @b order by a, b", new { a = 1, b = 1 });
 ```
@@ -60,7 +60,7 @@ var rows = cnn.Query("select * from table where a = @a and b = @b order by a, b"
 Dynamic Filter Paging Example
 ----------
 
-```csharp=
+```csharp
 var builder = new SqlBuilder();
 var selectTemplate = builder.AddTemplate(@"select X.* from (
         select us.*, ROW_NUMBER() OVER (/**orderby**/) AS RowNumber 
@@ -89,7 +89,7 @@ OrWhere use `and` not `or` to concat sql problem
 
 [Issue 647](https://github.com/DapperLib/Dapper/issues/647) 
 
-```csharp=
+```csharp
 sql.Where("a = @a1");
 sql.OrWhere("b = @b1");
 sql.Where("a = @a2");
