@@ -30,7 +30,7 @@ Execute a query and map the results to a strongly typed List
 ------------------------------------------------------------
 
 ```csharp
-public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
+public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
 ```
 Example usage:
 
@@ -57,7 +57,7 @@ Execute a query and map it to a list of dynamic objects
 -------------------------------------------------------
 
 ```csharp
-public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
+public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
 ```
 This method will execute SQL and return a dynamic list.
 
@@ -76,7 +76,7 @@ Execute a Command that returns no results
 -----------------------------------------
 
 ```csharp
-public static int Execute(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
 ```
 
 Example usage:
