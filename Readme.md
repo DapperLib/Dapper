@@ -106,6 +106,20 @@ var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
   );
 Assert.Equal(3, count); // 3 rows inserted: "1,1", "2,2" and "3,3"
 ```
+
+Another example usage when you _already_ have an existing collection:
+```csharp
+var foos = new List<Foo>
+{
+    { new Foo { A = 1, B = 1 } }
+    { new Foo { A = 2, B = 2 } }
+    { new Foo { A = 3, B = 3 } } 
+};
+
+var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", foos);
+Assert.Equal(foos.Count, count);
+```
+
 This works for any parameter that implements IEnumerable<T> for some T.
 
 Performance
