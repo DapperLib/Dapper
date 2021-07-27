@@ -20,10 +20,9 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
     <PackageReference Include="MySqlConnector" Version="1.1.0" />
     <PackageReference Include="Npgsql" Version="5.0.0" />
+    <PackageReference Include="Snowflake.Data" Version="2.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-
-
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">

@@ -1778,6 +1778,8 @@ namespace Dapper
             }
             HashSet<string> consumed = new HashSet<string>(StringComparer.Ordinal);
             bool firstMatch = true;
+            int index = 0; // use this to spoof names; in most pseudo-positional cases, the name is ignored, however:
+                           // for "snowflake", the name needs to be incremental i.e. "1", "2", "3"
             cmd.CommandText = pseudoPositional.Replace(cmd.CommandText, match =>
             {
                 string key = match.Groups[1].Value;
@@ -1793,6 +1795,10 @@ namespace Dapper
                         cmd.Parameters.Clear(); // only clear if we are pretty positive that we've found this pattern successfully
                     }
                     // if found, return the anonymous token "?"
+                    if (Settings.UseIncrementalPseudoPositionalParameterNames)
+                    {
+                        param.ParameterName = (++index).ToString();
+                    }
                     cmd.Parameters.Add(param);
                     parameters.Remove(key);
                     consumed.Add(key);
