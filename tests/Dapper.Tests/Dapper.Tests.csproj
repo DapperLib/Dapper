@@ -29,6 +29,9 @@
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="System.Linq.Async" Version="5.0.0" />
+  </ItemGroup>
   <ItemGroup>
     <!-- Conditionals make the tooling go crazy...just include them for this test project -->
     <Content Include="$(NuGetPackageRoot)\microsoft.sqlserver.types\14.0.1016.290\nativeBinaries\**\*.dll" CopyToOutputDirectory="PreserveNewest" />

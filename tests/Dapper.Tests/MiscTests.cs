@@ -222,6 +222,13 @@ namespace Dapper.Tests
             Assert.Null(Assert.Single(list));
             list = await connection.QueryAsync<int?>(sql);
             Assert.Null(Assert.Single(list));
+            list = await connection.QueryAsync<int?>(sql);
+            Assert.Null(Assert.Single(list));
+
+#if NETCOREAPP3_1 || NET5_0
+            list = await connection.StreamAsync<int?>(sql).ToListAsync();
+            Assert.Null(Assert.Single(list));
+#endif
 
             // Single row paths
             Assert.Null(connection.QueryFirst<int?>(sql));
@@ -257,6 +264,10 @@ namespace Dapper.Tests
                 Assert.Equal(exception, ex.Message);
                 ex = await Assert.ThrowsAsync<DataException>(() => connection.QuerySingleOrDefaultAsync<T>(sql));
                 Assert.Equal(exception, ex.Message);
+#if NETCOREAPP3_1 || NET5_0
+                ex = await Assert.ThrowsAsync<DataException>(async () => await connection.StreamAsync<T>(sql).ToListAsync());
+                Assert.Equal(exception, ex.Message);
+#endif
             }
 
             // Null value throws
