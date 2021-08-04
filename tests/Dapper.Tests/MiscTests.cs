@@ -222,8 +222,6 @@ namespace Dapper.Tests
             Assert.Null(Assert.Single(list));
             list = await connection.QueryAsync<int?>(sql);
             Assert.Null(Assert.Single(list));
-            list = await connection.QueryAsync<int?>(sql);
-            Assert.Null(Assert.Single(list));
 
 #if NETCOREAPP3_1 || NET5_0
             list = await connection.StreamAsync<int?>(sql).ToListAsync();
