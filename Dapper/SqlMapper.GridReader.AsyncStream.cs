@@ -1,4 +1,4 @@
-﻿#if NET5_0 || NETSTANDARD2_1
+﻿#if NET5_0 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -97,4 +97,4 @@ namespace Dapper
         }
     }
 }
-#endif // NET5_0 || NETSTANDARD2_1
+#endif // NET5_0 || NETSTANDARD2_0

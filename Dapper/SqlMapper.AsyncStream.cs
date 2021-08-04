@@ -1,4 +1,4 @@
-﻿#if NET5_0 || NETSTANDARD2_1
+﻿#if NET5_0 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -96,7 +96,10 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-            await using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+#if NET5_0
+            await
+#endif
+            using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
             DbDataReader reader = null;
             try
             {
@@ -131,7 +134,10 @@ namespace Dapper
             }
             finally
             {
-                await using (reader) { /* dispose if non-null */ }
+#if NET5_0
+                await
+#endif
+                using (reader) { /* dispose if non-null */ }
                 if (wasClosed) cnn.Close();
             }
         }
@@ -392,8 +398,14 @@ namespace Dapper
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                await using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                await using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
+#if NET5_0
+                await
+#endif
+                using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+#if NET5_0
+                await
+#endif
+                using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
                 if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                 var results = MultiMapStreamImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
 
@@ -451,8 +463,14 @@ namespace Dapper
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                await using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                await using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
+#if NET5_0
+                await
+#endif
+                using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+#if NET5_0
+                await
+#endif
+                using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
                 var results = MultiMapAsyncImpl(null, default, types, map, splitOn, reader, identity, true);
 
                 var buffer = command.Buffered ? new List<TReturn>() : null;
@@ -523,12 +541,18 @@ namespace Dapper
             {
                 try
                 {
-                    await using (ownedReader) { /* dispose if non-null */ }
+#if NET5_0
+                    await
+#endif
+                    using (ownedReader) { /* dispose if non-null */ }
                 }
                 finally
                 {
                     ownedCommand?.Parameters.Clear();
-                    await using (ownedCommand) { /* dispose if non-null */ }
+#if NET5_0
+                    await
+#endif
+                    using (ownedCommand) { /* dispose if non-null */ }
                     if (wasClosed) cnn.Close();
                 }
             }
@@ -590,16 +614,22 @@ namespace Dapper
             {
                 try
                 {
-                    await using (ownedReader) { /* dispose if non-null */ }
+#if NET5_0
+                    await
+#endif
+                    using (ownedReader) { /* dispose if non-null */ }
                 }
                 finally
                 {
                     ownedCommand?.Parameters.Clear();
-                    await using (ownedCommand) { /* dispose if non-null */ }
+#if NET5_0
+                    await
+#endif
+                    using (ownedCommand) { /* dispose if non-null */ }
                     if (wasClosed) cnn.Close();
                 }
             }
         }
     }
 }
-#endif // NET5_0
+#endif // NET5_0 || NETSTANDARD2_0
