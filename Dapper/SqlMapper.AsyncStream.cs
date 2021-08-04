@@ -1,4 +1,4 @@
-﻿#if NET5_0
+﻿#if NET5_0 || NETSTANDARD2_1
 using System;
 using System.Collections.Generic;
 using System.Data;

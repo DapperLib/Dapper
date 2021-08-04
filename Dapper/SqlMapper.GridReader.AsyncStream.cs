@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP
+﻿#if NET5_0 || NETSTANDARD2_1
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -97,4 +97,4 @@ namespace Dapper
         }
     }
 }
-#endif // NETCOREAPP
+#endif // NET5_0 || NETSTANDARD2_1
