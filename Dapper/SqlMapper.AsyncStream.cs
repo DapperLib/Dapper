@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP
+﻿#if NET5_0
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -602,4 +602,4 @@ namespace Dapper
         }
     }
 }
-#endif
+#endif // NET5_0
