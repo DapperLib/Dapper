@@ -214,7 +214,7 @@ DynamicParameters also supports copying multiple parameters from existing object
     queryParams.AddDynamicParams(objectOfType2);
 ```
     
-Any object passed into `Execute` or `Query` functions that supports the `IDynamicParameters` interface will pull parameter values from this interface. Obviously, the most likely object class to use for this purpose would be the built-in `DynamicParameters` class.
+When an object that implements the `IDynamicParameters` interface passed into `Execute` or `Query` functions, parameter values will be extracted via this interface. Obviously, the most likely object class to use for this purpose would be the built-in `DynamicParameters` class.
     
 List Support
 ------------
