@@ -200,10 +200,10 @@ Parameters can also be built up dynamically using the DynamicParameters class. T
     if (boolExpression)
     {
         sqlPredicates.Add("column1 = @param1");
-        queryParams.Add("param1", dynamicValue1);
+        queryParams.Add("param1", dynamicValue1, System.Data.DbType.Guid);
     } else {
         sqlPredicates.Add("column2 = @param2");
-        queryParams.Add("param2", dynamicValue2);
+        queryParams.Add("param2", dynamicValue2, System.Data.DbType.String);
     }
 ```
 
