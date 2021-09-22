@@ -187,12 +187,35 @@ Alternatively, you might prefer Frans Bouma's [RawDataAccessBencher](https://git
 Parameterized queries
 ---------------------
 
-Parameters are passed in as anonymous classes. This allow you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
+Parameters are usually passed in as anonymous classes. This allow you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
 
 ```csharp
 new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 ```
+Parameters can also be built up dynamically using the DynamicParameters class. This allows for building a dynamic SQL statement while still using parameters for safety and performance.
 
+```csharp
+    var sqlPredicates = new List<string>();
+    var queryParams = new DynamicParameters();
+    if (boolExpression)
+    {
+        sqlPredicates.Add("column1 = @param1");
+        queryParams.Add("param1", dynamicValue1);
+    } else {
+        sqlPredicates.Add("column2 = @param2");
+        queryParams.Add("param2", dynamicValue2);
+    }
+```
+
+DynamicParameters also supports copying multiple parameters from existing objects of different types.
+    
+```csharp
+    var queryParams = new DynamicParameters(objectOfType1);
+    queryParams.AddDynamicParams(objectOfType2);
+```
+    
+Any object passed into `Execute` or `Query` functions that supports the `IDynamicParameters` interface will pull parameter values from this interface. Obviously, the most likely object class to use for this purpose would be the built-in `DynamicParameters` class.
+    
 List Support
 ------------
 Dapper allows you to pass in `IEnumerable<int>` and will automatically parameterize your query.
@@ -226,7 +249,7 @@ Dapper's default behavior is to execute your SQL and buffer the entire reader on
 
 However when executing huge queries you may need to minimize memory footprint and only load objects as needed. To do so pass, `buffered: false` into the `Query` method.
 
-Multi Mapping
+Multi Output Mapping
 ---------------------
 Dapper allows you to map a single row to multiple objects. This is a key feature if you want to avoid extraneous querying and eager load associations.
 
@@ -253,6 +276,60 @@ class User
 Now let us say that we want to map a query that joins both the posts and the users table. Until now if we needed to combine the result of 2 queries, we'd need a new object to express it but it makes more sense in this case to put the `User` object inside the `Post` object.
 
 This is the use case for multi mapping. You tell dapper that the query returns a `Post` and a `User` object and then give it a function describing what you want to do with each of the rows containing both a `Post` and a `User` object. In our case, we want to take the user object and put it inside the post object. So we write the function:
+
+```csharp
+(post, user) => { post.Owner = user; return post; }
+```
+
+The 3 type arguments to the `Query` method specify what objects dapper should use to deserialize the row and what is going to be returned. We're going to interpret both rows as a combination of `Post` and `User` and we're returning back a `Post` object. Hence the type declaration becomes
+
+```csharp
+<Post, User, Post>
+```
+
+Everything put together, looks like this:
+
+```csharp
+var sql =
+@"select * from #Posts p
+left join #Users u on u.Id = p.OwnerId
+Order by p.Id";
+
+var data = connection.Query<Post, User, Post>(sql, (post, user) => { post.Owner = user; return post;});
+var post = data.First();
+
+Assert.Equal("Sams Post1", post.Content);
+Assert.Equal(1, post.Id);
+Assert.Equal("Sam", post.Owner.Name);
+Assert.Equal(99, post.Owner.Id);
+```
+
+Dapper is able to split the returned row by making an assumption that your Id columns are named `Id` or `id`. If your primary key is different or you would like to split the row at a point other than `Id`, use the optional `splitOn` parameter.
+
+Multi Input Mapping
+---------------------
+Dapper allows you to map a multiple objects to a single set of parameters. This is a handy feature to combine data from multiple sources into one query.
+
+Example:
+
+Consider 2 classes: `Post` and `User`
+
+```csharp
+class Post
+{
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string Content { get; set; }
+}
+
+class UserInfo
+{
+    public int UserId { get; set; }
+    public string Name { get; set; }
+}
+```
+
+Now let us say that we want to map a query that posts userinformation. Until now if we needed to combine the result of 2 queries, we'd need a new object to express it but it makes more sense in this case to put the `User` object inside the `Post` object.
 
 ```csharp
 (post, user) => { post.Owner = user; return post; }
