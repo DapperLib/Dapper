@@ -282,5 +282,41 @@ end");
             Assert.Equal(456, a);
             Assert.Equal("def", b);
         }
+
+        [Fact]
+        public void TestReadMultipleWithSomeEmptyGrids()
+        {
+            using (var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 'Test';"))
+            {
+                var results = reader.ReadMultiple<(int, int, int, string)>().ToList();
+
+                Assert.Single(results[0]);
+                Assert.IsType<List<int>>(results[0]);
+                Assert.Equal(1, results[0][0]);
+                Assert.Empty(results[1]);
+                Assert.Empty(results[2]);
+                Assert.Single(results[3]);
+                Assert.IsType<List<string>>(results[3]);
+                Assert.Equal("Test", results[3][0]);
+            }
+        }
+
+        [Fact]
+        public void TestReadMultipleWithInvalidNumberOfTypes()
+        {
+            using (var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 'Test';"))
+            {
+
+                try
+                {   // only returned four grids; expect a fifth read to fail
+                    var results = reader.ReadMultiple<(int, int, int, string, int)>().ToList();
+                    throw new InvalidOperationException("this should not have worked!");
+                }
+                catch (Exception e)
+                {   // expected; success
+                    Assert.Equal("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.", e.InnerException.Message, ignoreLineEndingDifferences: true);
+                }
+            }
+        }
     }
 }
