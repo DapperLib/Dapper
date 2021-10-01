@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Reflection;
 
 namespace Dapper
 {
@@ -33,6 +34,13 @@ namespace Dapper
             /// <param name="buffered">Whether the results should be buffered in memory.</param>
             /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             public IEnumerable<dynamic> Read(bool buffered = true) => ReadImpl<dynamic>(typeof(DapperRow), buffered);
+
+            /// <summary>
+            /// Read multiple results, returned as a dynamic object.
+            /// </summary>
+            /// <typeparam name="Tuple">List of types to read.</typeparam>
+            /// <param name="buffered">Whether the results should be buffered in memory.</param>
+            public IEnumerable<dynamic> ReadMultiple<Tuple>(bool buffered = true) => ReadMultipleImpl<Tuple>(buffered);
 
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object.
@@ -143,6 +151,23 @@ namespace Dapper
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.SingleOrDefault);
+            }
+            
+            private IEnumerable<dynamic> ReadMultipleImpl<Tuple>(bool buffered)
+            {
+                var results = new List<dynamic>();
+                var resultTypes = typeof(Tuple).GetGenericArguments().ToList();
+                foreach(Type type in resultTypes)
+                {
+                    string typeName = type.FullName;
+                    string AssemblyName = type.Module.Assembly.FullName;
+                    Type typeArgument = Type.GetType($"{typeName}, {AssemblyName}");
+                    MethodInfo method = GetType().GetMethod("ReadImpl", BindingFlags.NonPublic | BindingFlags.Instance);
+                    method = method.MakeGenericMethod(new Type[] { typeArgument });
+
+                    results.Add(method.Invoke(this, new object[] { typeArgument, buffered }));
+                }
+                return results;
             }
 
             private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
