@@ -2942,6 +2942,14 @@ namespace Dapper
             }
 #pragma warning restore 618
 
+            if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
+            {
+                return r =>
+                {
+                    var val = r.GetValue(index);
+                    return val is DBNull ? null : handler.Parse(type, val);
+                };
+            }
             if (effectiveType.IsEnum)
             {   // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
                 return r =>
@@ -2952,14 +2960,6 @@ namespace Dapper
                         val = Convert.ChangeType(val, Enum.GetUnderlyingType(effectiveType), CultureInfo.InvariantCulture);
                     }
                     return val is DBNull ? null : Enum.ToObject(effectiveType, val);
-                };
-            }
-            if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
-            {
-                return r =>
-                {
-                    var val = r.GetValue(index);
-                    return val is DBNull ? null : handler.Parse(type, val);
                 };
             }
             return r =>
