@@ -287,7 +287,7 @@ Multiple Results
 ---------------------
 Dapper allows you to process multiple result grids in a single query.
 
-Example:
+Example using single read:
 
 ```csharp
 var sql =
@@ -301,6 +301,25 @@ using (var multi = connection.QueryMultiple(sql, new {id=selectedId}))
    var customer = multi.Read<Customer>().Single();
    var orders = multi.Read<Order>().ToList();
    var returns = multi.Read<Return>().ToList();
+   ...
+}
+```
+
+Example using miltiple read:
+
+```csharp
+var sql =
+@"
+select * from Customers where CustomerId = @id
+select * from Orders where CustomerId = @id
+select * from Returns where CustomerId = @id";
+
+using (var multi = connection.QueryMultiple(sql, new {id=selectedId}))
+{
+   var results = multi.ReadMultiple<(Customer,Order,Return)>().ToList().
+   var customer = (List<Customer>results[0]).Single();
+   var orders = results[1];
+   var returns = results[2];
    ...
 }
 ```
