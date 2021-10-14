@@ -346,7 +346,7 @@ namespace Dapper
             if (value == null || value is DBNull) return;
 
             var dbType = LookupDbType(value.GetType(), "n/a", false, out ITypeHandler _);
-            if (dbType.HasValue)
+            if (DynamicParameters.ShouldSetDbType(dbType))
             {
                 parameter.DbType = dbType.GetValueOrDefault();
             }
@@ -2081,7 +2081,7 @@ namespace Dapper
                             if (tmp != null && !(tmp is DBNull))
                                 lastValue = tmp; // only interested in non-trivial values for padding
 
-                            if (dbType.HasValue && listParam.DbType != dbType.GetValueOrDefault())
+                            if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
                             {
                                 listParam.DbType = dbType.GetValueOrDefault();
                             }
@@ -2097,7 +2097,7 @@ namespace Dapper
                             var padParam = command.CreateParameter();
                             padParam.ParameterName = namePrefix + count.ToString();
                             if (isString) padParam.Size = DbString.DefaultLength;
-                            if (dbType.HasValue)
+                            if (DynamicParameters.ShouldSetDbType(dbType))
                             {
                                 padParam.DbType = dbType.GetValueOrDefault();
                             }
@@ -2571,7 +2571,7 @@ namespace Dapper
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [parameters] [parameter] [parameter] [name]
                     il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.ParameterName)).GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
                 }
-                if (dbType.HasValue && dbType != DbType.Time && handler == null) // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
+                if (DynamicParameters.ShouldSetDbType(dbType) && dbType != DbType.Time && handler == null) // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
                 {
                     il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
                     if (dbType.GetValueOrDefault() == DbType.Object && prop.PropertyType == typeof(object)) // includes dynamic

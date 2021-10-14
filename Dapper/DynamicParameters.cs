@@ -155,6 +155,12 @@ namespace Dapper
         /// </summary>
         public bool RemoveUnused { get; set; }
 
+        internal static bool ShouldSetDbType(DbType? dbType)
+            => dbType.HasValue && dbType.GetValueOrDefault() != EnumerableMultiParameter;
+
+        internal static bool ShouldSetDbType(DbType dbType)
+            => dbType != EnumerableMultiParameter; // just in case called with non-nullable
+
         /// <summary>
         /// Add all the parameters needed to the command just before it executes
         /// </summary>
@@ -262,7 +268,7 @@ namespace Dapper
 #pragma warning disable 0618
                         p.Value = SqlMapper.SanitizeParameterValue(val);
 #pragma warning restore 0618
-                        if (dbType.HasValue && p.DbType != dbType)
+                        if (ShouldSetDbType(dbType) && p.DbType != dbType.GetValueOrDefault())
                         {
                             p.DbType = dbType.GetValueOrDefault();
                         }
@@ -277,7 +283,7 @@ namespace Dapper
                     }
                     else
                     {
-                        if (dbType.HasValue) p.DbType = dbType.GetValueOrDefault();
+                        if (ShouldSetDbType(dbType)) p.DbType = dbType.GetValueOrDefault();
                         if (param.Size != null) p.Size = param.Size.Value;
                         if (param.Precision != null) p.Precision = param.Precision.Value;
                         if (param.Scale != null) p.Scale = param.Scale.Value;
