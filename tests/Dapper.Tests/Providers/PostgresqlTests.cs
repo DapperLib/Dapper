@@ -88,6 +88,15 @@ namespace Dapper.Tests
             }
         }
 
+        [FactPostgresql]
+        public void TestPostgresqlDateTimeUsage()
+        {
+            using (var conn = GetOpenNpgsqlConnection())
+            {
+                _ = conn.ExecuteScalar("SELECT @Now", new { Now = DateTime.UtcNow });
+            }
+        }
+
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactPostgresqlAttribute : FactAttribute
         {
