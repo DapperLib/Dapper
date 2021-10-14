@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -47,6 +48,24 @@ namespace Dapper.Tests
                 conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", Cats);
 
                 var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new[] { 1, 3, 5 } });
+                Assert.Equal(3, r.Count());
+                Assert.Equal(1, r.Count(c => c.Id == 1));
+                Assert.Equal(1, r.Count(c => c.Id == 3));
+                Assert.Equal(1, r.Count(c => c.Id == 5));
+                transaction.Rollback();
+            }
+        }
+
+        [FactPostgresql]
+        public void TestPostgresqlListParameters()
+        {
+            using (var conn = GetOpenNpgsqlConnection())
+            {
+                IDbTransaction transaction = conn.BeginTransaction();
+                conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
+                conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", new List<Cat>(Cats));
+
+                var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new List<int> { 1, 3, 5 } });
                 Assert.Equal(3, r.Count());
                 Assert.Equal(1, r.Count(c => c.Id == 1));
                 Assert.Equal(1, r.Count(c => c.Id == 3));
