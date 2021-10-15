@@ -2030,7 +2030,7 @@ namespace Dapper
                 var list = value as IEnumerable;
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
-                bool isDbString = value is IEnumerable<DbString>;
+                bool isCustomQueryParameter = value is IEnumerable<ICustomQueryParameter>;
                 DbType dbType = 0;
 
                 int splitAt = SqlMapper.Settings.InListStringSplitCount;
@@ -2048,16 +2048,16 @@ namespace Dapper
                             {
                                 throw new NotSupportedException("The first item in a list-expansion cannot be null");
                             }
-                            if (!isDbString)
+                            if (!isCustomQueryParameter)
                             {
                                 dbType = LookupDbType(item.GetType(), "", true, out ITypeHandler handler);
                             }
                         }
                         var nextName = namePrefix + count.ToString();
-                        if (isDbString && item is DbString)
+                        if (isCustomQueryParameter && item is ICustomQueryParameter)
                         {
-                            var str = item as DbString;
-                            str.AddParameter(command, nextName);
+                            var parameterItem = item as ICustomQueryParameter;
+                            parameterItem.AddParameter(command, nextName);
                         }
                         else
                         {
@@ -2083,7 +2083,7 @@ namespace Dapper
                             command.Parameters.Add(listParam);
                         }
                     }
-                    if (Settings.PadListExpansions && !isDbString && lastValue != null)
+                    if (Settings.PadListExpansions && !isCustomQueryParameter && lastValue != null)
                     {
                         int padCount = GetListPaddingExtraCount(count);
                         for (int i = 0; i < padCount; i++)
