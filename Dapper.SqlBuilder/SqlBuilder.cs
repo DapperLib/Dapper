@@ -102,7 +102,7 @@ namespace Dapper
         public Template AddTemplate(string sql, dynamic parameters = null) =>
             new Template(this, sql, parameters);
 
-        protected SqlBuilder AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool isInclusive = false)
+        protected virtual SqlBuilder AddClause(string name, string sql, object parameters, string joiner, string prefix = "", string postfix = "", bool isInclusive = false)
         {
             if (!_data.TryGetValue(name, out Clauses clauses))
             {
