@@ -45,7 +45,7 @@ namespace Dapper.Tests
             {
                 IDbTransaction transaction = conn.BeginTransaction();
                 conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
-                conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", Cats);
+                conn.Execute("insert into tcat(breed, name) values(:Breed, :Name) ", Cats);
 
                 var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new[] { 1, 3, 5 } });
                 Assert.Equal(3, r.Count());
@@ -63,7 +63,7 @@ namespace Dapper.Tests
             {
                 IDbTransaction transaction = conn.BeginTransaction();
                 conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
-                conn.Execute("insert into tcat(breed, name) values(:breed, :name) ", new List<Cat>(Cats));
+                conn.Execute("insert into tcat(breed, name) values(:Breed, :Name) ", new List<Cat>(Cats));
 
                 var r = conn.Query<Cat>("select * from tcat where id=any(:catids)", new { catids = new List<int> { 1, 3, 5 } });
                 Assert.Equal(3, r.Count());
