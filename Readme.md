@@ -30,7 +30,7 @@ Execute a query and map the results to a strongly typed List
 ------------------------------------------------------------
 
 ```csharp
-public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
+public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
 ```
 Example usage:
 
@@ -57,7 +57,7 @@ Execute a query and map it to a list of dynamic objects
 -------------------------------------------------------
 
 ```csharp
-public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
+public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
 ```
 This method will execute SQL and return a dynamic list.
 
@@ -76,7 +76,7 @@ Execute a Command that returns no results
 -----------------------------------------
 
 ```csharp
-public static int Execute(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
 ```
 
 Example usage:
@@ -106,6 +106,20 @@ var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
   );
 Assert.Equal(3, count); // 3 rows inserted: "1,1", "2,2" and "3,3"
 ```
+
+Another example usage when you _already_ have an existing collection:
+```csharp
+var foos = new List<Foo>
+{
+    { new Foo { A = 1, B = 1 } }
+    { new Foo { A = 2, B = 2 } }
+    { new Foo { A = 3, B = 3 } } 
+};
+
+var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", foos);
+Assert.Equal(foos.Count, count);
+```
+
 This works for any parameter that implements IEnumerable<T> for some T.
 
 Performance
