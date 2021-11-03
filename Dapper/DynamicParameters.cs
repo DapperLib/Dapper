@@ -155,6 +155,12 @@ namespace Dapper
         /// </summary>
         public bool RemoveUnused { get; set; }
 
+        internal static bool ShouldSetDbType(DbType? dbType)
+            => dbType.HasValue && dbType.GetValueOrDefault() != EnumerableMultiParameter;
+
+        internal static bool ShouldSetDbType(DbType dbType)
+            => dbType != EnumerableMultiParameter; // just in case called with non-nullable
+
         /// <summary>
         /// Add all the parameters needed to the command just before it executes
         /// </summary>
@@ -262,9 +268,9 @@ namespace Dapper
 #pragma warning disable 0618
                         p.Value = SqlMapper.SanitizeParameterValue(val);
 #pragma warning restore 0618
-                        if (dbType != null && p.DbType != dbType)
+                        if (ShouldSetDbType(dbType) && p.DbType != dbType.GetValueOrDefault())
                         {
-                            p.DbType = dbType.Value;
+                            p.DbType = dbType.GetValueOrDefault();
                         }
                         var s = val as string;
                         if (s?.Length <= DbString.DefaultLength)
@@ -277,7 +283,7 @@ namespace Dapper
                     }
                     else
                     {
-                        if (dbType != null) p.DbType = dbType.Value;
+                        if (ShouldSetDbType(dbType)) p.DbType = dbType.GetValueOrDefault();
                         if (param.Size != null) p.Size = param.Size.Value;
                         if (param.Precision != null) p.Precision = param.Precision.Value;
                         if (param.Scale != null) p.Scale = param.Scale.Value;
@@ -468,15 +474,9 @@ namespace Dapper
                 }
                 else
                 {
-                    dbType = (!dbType.HasValue)
-#pragma warning disable 618
-                    ? SqlMapper.LookupDbType(targetMemberType, targetMemberType?.Name, true, out SqlMapper.ITypeHandler handler)
-#pragma warning restore 618
-                    : dbType;
-
                     // CameFromTemplate property would not apply here because this new param
                     // Still needs to be added to the command
-                    Add(dynamicParamName, expression.Compile().Invoke(target), null, ParameterDirection.InputOutput, sizeToSet);
+                    Add(dynamicParamName, expression.Compile().Invoke(target), dbType, ParameterDirection.InputOutput, sizeToSet);
                 }
 
                 parameter = parameters[dynamicParamName];
