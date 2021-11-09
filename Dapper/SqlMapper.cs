@@ -187,6 +187,10 @@ namespace Dapper
                 [typeof(DateTime)] = null,
                 [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
                 [typeof(TimeSpan)] = null,
+#if NET6_0_OR_GREATER
+                [typeof(DateOnly)] = null,
+                [typeof(TimeOnly)] = null,
+#endif
                 [typeof(byte[])] = DbType.Binary,
                 [typeof(byte?)] = DbType.Byte,
                 [typeof(sbyte?)] = DbType.SByte,
@@ -205,6 +209,10 @@ namespace Dapper
                 [typeof(DateTime?)] = null,
                 [typeof(DateTimeOffset?)] = DbType.DateTimeOffset,
                 [typeof(TimeSpan?)] = null,
+#if NET6_0_OR_GREATER
+                [typeof(DateOnly?)] = null,
+                [typeof(TimeOnly?)] = null,
+#endif
                 [typeof(object)] = DbType.Object
             };
             ResetTypeHandlers(false);
