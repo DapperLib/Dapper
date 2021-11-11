@@ -114,7 +114,7 @@ namespace Dapper.Tests
             {
                 DateTime now = DateTime.UtcNow;
                 DateTime? nilA = now, nilB = null;
-                _ = conn.ExecuteScalar("SELECT @now, @nilA, @nilB", new { now, nilA, nilB });
+                _ = conn.ExecuteScalar("SELECT @now, @nilA, @nilB::timestamp", new { now, nilA, nilB });
             }
         }
 
