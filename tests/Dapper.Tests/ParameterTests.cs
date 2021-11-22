@@ -1593,5 +1593,27 @@ select @hits as [Hits], (@count - @misses) as [Misses], @query as [Query];
             if (delta != 0) blocks++;
             return blocks * padFactor;
         }
+
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void TestDateOnlyTimeOnly()
+        {
+
+            var now = DateTime.UtcNow;
+            var args = new { day = DateOnly.FromDateTime(now), time = TimeOnly.FromDateTime(now) };
+            //try
+            //{
+                var (day, time) = connection.QuerySingle<(DateOnly, TimeOnly)>("select @day, @time", args);
+
+                Assert.Equal(args.day, day);
+                Assert.Equal(args.time, time);
+            //}
+            //catch (ArgumentException ex) when (ex.StackTrace.Contains("MetaType.GetMetaTypeFromValue"))
+            //{
+            //    Skip.Inconclusive("Feature not supported by provider");
+            //}
+        }
+
+#endif
     }
 }
