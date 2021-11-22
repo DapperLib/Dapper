@@ -112,7 +112,9 @@ namespace Dapper.Tests
         {
             using (var conn = GetOpenNpgsqlConnection())
             {
-                _ = conn.ExecuteScalar("SELECT @Now", new { Now = DateTime.UtcNow });
+                DateTime now = DateTime.UtcNow;
+                DateTime? nilA = now, nilB = null;
+                _ = conn.ExecuteScalar("SELECT @now, @nilA, @nilB::timestamp", new { now, nilA, nilB });
             }
         }
 
