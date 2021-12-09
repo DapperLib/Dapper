@@ -160,6 +160,23 @@ namespace Dapper.Tests
             }
         }
 
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void TestDateOnlyTimeOnly()
+        {
+
+            var now = DateTime.UtcNow;
+            var args = new { day = DateOnly.FromDateTime(now), time = TimeOnly.FromDateTime(now) };
+            var result = connection.QuerySingle("select @day as day, @time as time", args);
+
+            var day = DateOnly.Parse(Assert.IsType<string>(result.day));
+            var time = TimeOnly.Parse(Assert.IsType<string>(result.time));
+            
+            Assert.Equal(args.day, day);
+            Assert.Equal(args.time, time);
+        }
+#endif
+
         private class PersonWithDob
         {
             public int Id { get; set; }

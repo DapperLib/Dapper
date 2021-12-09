@@ -141,5 +141,25 @@ namespace Dapper.Tests
                 }
             }
         }
+
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void TestDateOnlyTimeOnly()
+        {
+
+            var now = DateTime.UtcNow;
+            var args = new { day = DateOnly.FromDateTime(now), time = TimeOnly.FromDateTime(now) };
+            var result = connection.QuerySingle("select @day::date as day, @time::time as time", args);
+
+            var day = DateOnly.FromDateTime(Assert.IsType<DateTime>(result.day));
+            var time = TimeOnly.FromTimeSpan(Assert.IsType<TimeSpan>(result.time));
+
+            Assert.Equal(args.day, day);
+            Assert.Equal(Round(args.time), Round(time));
+
+            static TimeOnly Round(TimeOnly value)
+                => new TimeOnly(value.Hour, value.Minute, value.Second);
+        }
+#endif
     }
 }
