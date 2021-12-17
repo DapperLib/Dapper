@@ -97,6 +97,11 @@ namespace Dapper.Tests
 
         static TestBase()
         {
+            var defaultCultureInfo = CultureInfo.GetCultureInfo("en-US");
+            CultureInfo.DefaultThreadCurrentCulture = defaultCultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = defaultCultureInfo;
+            Thread.CurrentThread.CurrentCulture = defaultCultureInfo;
+            Thread.CurrentThread.CurrentUICulture = defaultCultureInfo;
             Console.WriteLine("Dapper: " + typeof(SqlMapper).AssemblyQualifiedName);
             var provider = DatabaseProvider<TProvider>.Instance;
             Console.WriteLine("Using Connectionstring: {0}", provider.GetConnectionString());
@@ -114,6 +119,13 @@ namespace Dapper.Tests
                 Console.WriteLine("failed.");
                 Console.Error.WriteLine(ex.Message);
             }
+        }
+
+        public TestBase()
+        {
+            var defaultCultureInfo = CultureInfo.GetCultureInfo("en-US");
+            Thread.CurrentThread.CurrentCulture = defaultCultureInfo;
+            Thread.CurrentThread.CurrentUICulture = defaultCultureInfo;
         }
 
         public virtual void Dispose()
