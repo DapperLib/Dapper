@@ -20,9 +20,10 @@ namespace Dapper
         /// <param name="transaction">The transaction to use, if any.</param>
         /// <param name="commandTimeout">The command timeout (in seconds).</param>
         /// <param name="commandType">The type of command to execute.</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static IAsyncEnumerable<dynamic> StreamAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            StreamAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
+        public static IAsyncEnumerable<dynamic> StreamAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
+            StreamAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, cancellationToken));
 
         /// <summary>
         /// Execute a query using an asynchronous stream.
@@ -43,12 +44,13 @@ namespace Dapper
         /// <param name="transaction">The transaction to use, if any.</param>
         /// <param name="commandTimeout">The command timeout (in seconds).</param>
         /// <param name="commandType">The type of command to execute.</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>
         /// A sequence of data of <typeparamref name="T"/>; if a basic type (int, string, etc) is queried then the data from the first column in assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static IAsyncEnumerable<T> StreamAsync<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
-            StreamAsync<T>(cnn, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
+        public static IAsyncEnumerable<T> StreamAsync<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
+            StreamAsync<T>(cnn, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, cancellationToken));
 
         /// <summary>
         /// Execute a query using an asynchronous stream.
@@ -60,11 +62,12 @@ namespace Dapper
         /// <param name="transaction">The transaction to use, if any.</param>
         /// <param name="commandTimeout">The command timeout (in seconds).</param>
         /// <param name="commandType">The type of command to execute.</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-        public static IAsyncEnumerable<object> StreamAsync(this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        public static IAsyncEnumerable<object> StreamAsync(this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            return StreamAsync<object>(cnn, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
+            return StreamAsync<object>(cnn, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, cancellationToken));
         }
 
         /// <summary>
@@ -158,10 +161,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
             MultiMapStreamAsync<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken), map, splitOn);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 2 input types.
@@ -195,10 +199,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
             MultiMapStreamAsync<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken), map, splitOn);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 3 input types.
@@ -234,10 +239,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
             MultiMapStreamAsync<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken), map, splitOn);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 4 input types.
@@ -275,10 +281,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
             MultiMapStreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken), map, splitOn);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 5 input types.
@@ -318,10 +325,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
             MultiMapStreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken), map, splitOn);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 6 input types.
@@ -363,10 +371,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<TReturn> StreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default) =>
             MultiMapStreamAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn,
-                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default), map, splitOn);
+                new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken), map, splitOn);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 7 input types.
@@ -441,10 +450,11 @@ namespace Dapper
         /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
         /// <param name="commandType">Is it a stored proc or a batch?</param>
+        /// <param name="cancellationToken">The cancellation token for this query.</param>
         /// <returns>An asynchronous stream of <typeparamref name="TReturn"/>.</returns>
-        public static IAsyncEnumerable<TReturn> StreamAsync<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
+        public static IAsyncEnumerable<TReturn> StreamAsync<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, object param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null, CancellationToken cancellationToken = default)
         {
-            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default);
+            var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, cancellationToken);
             return MultiMapStreamAsync(cnn, command, types, map, splitOn);
         }
 
@@ -462,7 +472,7 @@ namespace Dapper
             CancellationToken cancel = command.CancellationToken;
             try
             {
-                if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
+                if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
 #if NET5_0
                 await
 #endif
