@@ -163,11 +163,11 @@ namespace Dapper
                    select Tuple.Create(pair.Key, pair.Value);
         }
 
-        private static Dictionary<Type, DbType> typeMap;
+        private static Dictionary<Type, DbType?> typeMap;
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, DbType>(37)
+            typeMap = new Dictionary<Type, DbType?>(37)
             {
                 [typeof(byte)] = DbType.Byte,
                 [typeof(sbyte)] = DbType.SByte,
@@ -184,9 +184,9 @@ namespace Dapper
                 [typeof(string)] = DbType.String,
                 [typeof(char)] = DbType.StringFixedLength,
                 [typeof(Guid)] = DbType.Guid,
-                [typeof(DateTime)] = DbType.DateTime,
+                [typeof(DateTime)] = null,
                 [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
-                [typeof(TimeSpan)] = DbType.Time,
+                [typeof(TimeSpan)] = null,
                 [typeof(byte[])] = DbType.Binary,
                 [typeof(byte?)] = DbType.Byte,
                 [typeof(sbyte?)] = DbType.SByte,
@@ -202,9 +202,9 @@ namespace Dapper
                 [typeof(bool?)] = DbType.Boolean,
                 [typeof(char?)] = DbType.StringFixedLength,
                 [typeof(Guid?)] = DbType.Guid,
-                [typeof(DateTime?)] = DbType.DateTime,
+                [typeof(DateTime?)] = null,
                 [typeof(DateTimeOffset?)] = DbType.DateTimeOffset,
-                [typeof(TimeSpan?)] = DbType.Time,
+                [typeof(TimeSpan?)] = null,
                 [typeof(object)] = DbType.Object
             };
             ResetTypeHandlers(false);
@@ -234,9 +234,9 @@ namespace Dapper
             // use clone, mutate, replace to avoid threading issues
             var snapshot = typeMap;
 
-            if (snapshot.TryGetValue(type, out DbType oldValue) && oldValue == dbType) return; // nothing to do
+            if (snapshot.TryGetValue(type, out var oldValue) && oldValue == dbType) return; // nothing to do
 
-            typeMap = new Dictionary<Type, DbType>(snapshot) { [type] = dbType };
+            typeMap = new Dictionary<Type, DbType?>(snapshot) { [type] = dbType };
         }
 
         /// <summary>
@@ -250,7 +250,7 @@ namespace Dapper
 
             if (!snapshot.ContainsKey(type)) return; // nothing to do
 
-            var newCopy = new Dictionary<Type, DbType>(snapshot);
+            var newCopy = new Dictionary<Type, DbType?>(snapshot);
             newCopy.Remove(type);
 
             typeMap = newCopy;
@@ -336,15 +336,20 @@ namespace Dapper
         /// <summary>
         /// Get the DbType that maps to a given value.
         /// </summary>
+        /// <param name="parameter">The parameter to configure the value for.</param>
         /// <param name="value">The object to get a corresponding database type for.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
         [Browsable(false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DbType GetDbType(object value)
+        public static void SetDbType(IDataParameter parameter, object value)
         {
-            if (value == null || value is DBNull) return DbType.Object;
+            if (value == null || value is DBNull) return;
 
-            return LookupDbType(value.GetType(), "n/a", false, out ITypeHandler _);
+            var dbType = LookupDbType(value.GetType(), "n/a", false, out ITypeHandler _);
+            if (DynamicParameters.ShouldSetDbType(dbType))
+            {
+                parameter.DbType = dbType.GetValueOrDefault();
+            }
         }
 
         /// <summary>
@@ -357,7 +362,7 @@ namespace Dapper
         [Obsolete(ObsoleteInternalUsageOnly, false)]
         [Browsable(false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DbType LookupDbType(Type type, string name, bool demand, out ITypeHandler handler)
+        public static DbType? LookupDbType(Type type, string name, bool demand, out ITypeHandler handler)
         {
             handler = null;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
@@ -366,7 +371,7 @@ namespace Dapper
             {
                 type = Enum.GetUnderlyingType(type);
             }
-            if (typeMap.TryGetValue(type, out DbType dbType))
+            if (typeMap.TryGetValue(type, out var dbType))
             {
                 return dbType;
             }
@@ -2031,7 +2036,7 @@ namespace Dapper
                 var count = 0;
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
-                DbType dbType = 0;
+                DbType? dbType = null;
 
                 int splitAt = SqlMapper.Settings.InListStringSplitCount;
                 bool viaSplit = splitAt >= 0
@@ -2076,9 +2081,9 @@ namespace Dapper
                             if (tmp != null && !(tmp is DBNull))
                                 lastValue = tmp; // only interested in non-trivial values for padding
 
-                            if (listParam.DbType != dbType)
+                            if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
                             {
-                                listParam.DbType = dbType;
+                                listParam.DbType = dbType.GetValueOrDefault();
                             }
                             command.Parameters.Add(listParam);
                         }
@@ -2092,7 +2097,10 @@ namespace Dapper
                             var padParam = command.CreateParameter();
                             padParam.ParameterName = namePrefix + count.ToString();
                             if (isString) padParam.Size = DbString.DefaultLength;
-                            padParam.DbType = dbType;
+                            if (DynamicParameters.ShouldSetDbType(dbType))
+                            {
+                                padParam.DbType = dbType.GetValueOrDefault();
+                            }
                             padParam.Value = lastValue;
                             command.Parameters.Add(padParam);
                         }
@@ -2528,7 +2536,7 @@ namespace Dapper
                     continue;
                 }
 #pragma warning disable 618
-                DbType dbType = LookupDbType(prop.PropertyType, prop.Name, true, out ITypeHandler handler);
+                DbType? dbType = LookupDbType(prop.PropertyType, prop.Name, true, out ITypeHandler handler);
 #pragma warning restore 618
                 if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
@@ -2563,22 +2571,22 @@ namespace Dapper
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [parameters] [parameter] [parameter] [name]
                     il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.ParameterName)).GetSetMethod(), null);// stack is now [parameters] [parameters] [parameter]
                 }
-                if (dbType != DbType.Time && handler == null) // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
+                if (DynamicParameters.ShouldSetDbType(dbType) && dbType != DbType.Time && handler == null) // https://connect.microsoft.com/VisualStudio/feedback/details/381934/sqlparameter-dbtype-dbtype-time-sets-the-parameter-to-sqldbtype-datetime-instead-of-sqldbtype-time
                 {
                     il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
-                    if (dbType == DbType.Object && prop.PropertyType == typeof(object)) // includes dynamic
+                    if (dbType.GetValueOrDefault() == DbType.Object && prop.PropertyType == typeof(object)) // includes dynamic
                     {
                         // look it up from the param value
                         il.Emit(OpCodes.Ldloc, typedParameterLocal); // stack is now [parameters] [[parameters]] [parameter] [parameter] [typed-param]
                         il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [[parameters]] [parameter] [parameter] [object-value]
-                        il.Emit(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SqlMapper.GetDbType), BindingFlags.Static | BindingFlags.Public)); // stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
+                        il.Emit(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SqlMapper.SetDbType), BindingFlags.Static | BindingFlags.Public)); // stack is now [parameters] [[parameters]] [parameter]
                     }
                     else
                     {
                         // constant value; nice and simple
-                        EmitInt32(il, (int)dbType);// stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
+                        EmitInt32(il, (int)dbType.GetValueOrDefault());// stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
+                        il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.DbType)).GetSetMethod(), null);// stack is now [parameters] [[parameters]] [parameter]
                     }
-                    il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.DbType)).GetSetMethod(), null);// stack is now [parameters] [[parameters]] [parameter]
                 }
 
                 il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
