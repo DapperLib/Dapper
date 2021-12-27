@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using Xunit;
 using System.Data.Common;
-using System.Linq;
 using Xunit.Abstractions;
 
 namespace Dapper.Tests
@@ -17,6 +16,19 @@ namespace Dapper.Tests
 #if MSSQLCLIENT
     [Collection(NonParallelDefinition.Name)]
     public sealed class MicrosoftSqlClientAsyncStreamTests : AsyncStreamTests<MicrosoftSqlClientProvider> { }
+#endif
+
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class SystemSqlClientAsyncStreamCacheTests : AsyncStreamCacheTests<SystemSqlClientProvider>
+    {
+        public SystemSqlClientAsyncStreamCacheTests(ITestOutputHelper log) : base(log) { }
+    }
+#if MSSQLCLIENT
+    [Collection(NonParallelDefinition.Name)]
+    public sealed class MicrosoftSqlClientAsyncStreamCacheTests : AsyncStreamCacheTests<MicrosoftSqlClientProvider>
+    {
+        public MicrosoftSqlClientAsyncStreamCacheTests(ITestOutputHelper log) : base(log) { }
+    }
 #endif
 
     public abstract class AsyncStreamTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
@@ -50,6 +62,7 @@ namespace Dapper.Tests
             {
                 if (!task.Wait(TimeSpan.FromSeconds(7)))
                 {
+                    await task;
                     throw new TimeoutException(); // should have cancelled
                 }
             }
@@ -545,6 +558,49 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 Assert.True(false, "Expected Exception");
             }
             catch (Exception ex) when (ex.GetType().Name == "SqlException" && ex.Message == "after select") { /* swallow only this */ }
+        }
+    }
+
+    [Collection(NonParallelDefinition.Name)]
+    public abstract class AsyncStreamCacheTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
+    {
+        private readonly ITestOutputHelper _log;
+        public AsyncStreamCacheTests(ITestOutputHelper log) => _log = log;
+        private DbConnection _marsConnection;
+        private DbConnection MarsConnection => _marsConnection ??= Provider.GetOpenConnection(true);
+
+        public override void Dispose()
+        {
+            _marsConnection?.Dispose();
+            _marsConnection = null;
+            base.Dispose();
+        }
+
+        [Fact]
+        public async Task AssertNoCacheWorksForQueryMultiple()
+        {
+            const int a = 123, b = 456;
+            var cmdDef = new CommandDefinition("select @a; select @b;", new
+            {
+                a,
+                b
+            }, commandType: CommandType.Text, flags: CommandFlags.NoCache);
+
+            int c, d;
+            SqlMapper.PurgeQueryCache();
+            int before = SqlMapper.GetCachedSQLCount();
+            using (var multi = await MarsConnection.QueryMultipleAsync(cmdDef))
+            {
+                c = await multi.StreamAsync<int>().SingleAsync();
+                d = await multi.StreamAsync<int>().SingleAsync();
+            }
+            int after = SqlMapper.GetCachedSQLCount();
+            _log?.WriteLine($"before: {before}; after: {after}");
+            // too brittle in concurrent tests to assert
+            // Assert.Equal(0, before);
+            // Assert.Equal(0, after);
+            Assert.Equal(123, c);
+            Assert.Equal(456, d);
         }
     }
 }
