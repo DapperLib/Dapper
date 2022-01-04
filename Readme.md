@@ -120,7 +120,7 @@ var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", fo
 Assert.Equal(foos.Count, count);
 ```
 
-This works for any parameter that implements IEnumerable<T> for some T.
+This works for any parameter that implements `IEnumerable<T>` for some T.
 
 Performance
 -----------
@@ -187,7 +187,7 @@ Alternatively, you might prefer Frans Bouma's [RawDataAccessBencher](https://git
 Parameterized queries
 ---------------------
 
-Parameters are usually passed in as anonymous classes. This allow you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
+Parameters are usually passed in as anonymous classes. This allows you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
 
 ```csharp
 new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
