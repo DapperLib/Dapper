@@ -24,11 +24,15 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 (note: new PRs will not be merged until they add release note wording here)
 
+### 2.0.123
+
 - Parameters can now be re-used on subsequent commands (#952 via jamescrowley)
 - Array query support (`.Query<int[]>`) on supported platforms (e.g. Postgres) (#1598 via DarkWanderer)
 - `SqlMapper.HasTypeHandler` is made public for consumers (#1405 via brendangooden)
 - Improves multi-mapping error message when a specified column in splitOn can't be found (#1664 via NickCraver)
-- Improves DbString.ToString() (#1665 via NickCraver)
+- Improves `DbString.ToString()` (#1665 via NickCraver)
+- `DbType` for date/time types is no longer explicitly specified (resolves `Npgsql` v6 issue)
+- add `Settings.UseIncrementalPseudoPositionalParameterNames`, to support "snowflake" parameter naming conventions
 
 ### 2.0.90
 

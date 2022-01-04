@@ -129,7 +129,7 @@ A key feature of Dapper is performance. The following metrics show how long it t
 
 The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/DapperLib/Dapper/tree/main/benchmarks/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
 ```bash
-dotnet run -p .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
+dotnet run --project .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
 ```
 Output from the latest run is:
 ``` ini
@@ -187,12 +187,35 @@ Alternatively, you might prefer Frans Bouma's [RawDataAccessBencher](https://git
 Parameterized queries
 ---------------------
 
-Parameters are passed in as anonymous classes. This allows you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
+Parameters are usually passed in as anonymous classes. This allows you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
 
 ```csharp
 new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 ```
+Parameters can also be built up dynamically using the DynamicParameters class. This allows for building a dynamic SQL statement while still using parameters for safety and performance.
 
+```csharp
+    var sqlPredicates = new List<string>();
+    var queryParams = new DynamicParameters();
+    if (boolExpression)
+    {
+        sqlPredicates.Add("column1 = @param1");
+        queryParams.Add("param1", dynamicValue1, System.Data.DbType.Guid);
+    } else {
+        sqlPredicates.Add("column2 = @param2");
+        queryParams.Add("param2", dynamicValue2, System.Data.DbType.String);
+    }
+```
+
+DynamicParameters also supports copying multiple parameters from existing objects of different types.
+    
+```csharp
+    var queryParams = new DynamicParameters(objectOfType1);
+    queryParams.AddDynamicParams(objectOfType2);
+```
+    
+When an object that implements the `IDynamicParameters` interface passed into `Execute` or `Query` functions, parameter values will be extracted via this interface. Obviously, the most likely object class to use for this purpose would be the built-in `DynamicParameters` class.
+    
 List Support
 ------------
 Dapper allows you to pass in `IEnumerable<int>` and will automatically parameterize your query.

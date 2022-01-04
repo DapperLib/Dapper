@@ -19,7 +19,7 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            Context = new EFCoreContext(_connection.ConnectionString);
+            Context = new EFCoreContext(ConnectionString);
         }
 
         [Benchmark(Description = "First")]
