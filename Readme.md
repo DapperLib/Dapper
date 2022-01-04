@@ -120,7 +120,7 @@ var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", fo
 Assert.Equal(foos.Count, count);
 ```
 
-This works for any parameter that implements IEnumerable&lt;T&gt; for some T.
+This works for any parameter that implements `IEnumerable<T>` for some T.
 
 Performance
 -----------
