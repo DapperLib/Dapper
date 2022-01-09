@@ -20,6 +20,18 @@ MyGet Pre-release feed: https://www.myget.org/gallery/dapper
 | [Dapper.SqlBuilder](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder](https://img.shields.io/nuget/v/Dapper.SqlBuilder.svg)](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder](https://img.shields.io/nuget/vpre/Dapper.SqlBuilder.svg)](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder](https://img.shields.io/nuget/dt/Dapper.SqlBuilder.svg)](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.SqlBuilder.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.SqlBuilder) |
 | [Dapper.StrongName](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/v/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/vpre/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/dt/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.StrongName.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.StrongName) |
 
+Package Purposes:
+* Dapper.EntityFramework
+  * Extension handlers for EntityFramework
+* Dapper.EntityFramework.StrongName
+  * Extension handlers for EntityFramework
+* Dapper.Rainbow
+  * Micro-ORM implemented on Dapper, provides CRUD helpers
+* Dapper.SqlBuilder
+  * Component for building SQL queries dynamically and composably
+* Dapper.StrongName
+  * High-performance micro-ORM supporting MySQL, Sqlite, SqlICE, and Firebird
+
 Features
 --------
 Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will extend your `IDbConnection` interface.
@@ -113,7 +125,7 @@ var foos = new List<Foo>
 {
     { new Foo { A = 1, B = 1 } }
     { new Foo { A = 2, B = 2 } }
-    { new Foo { A = 3, B = 3 } } 
+    { new Foo { A = 3, B = 3 } }
 };
 
 var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", foos);
