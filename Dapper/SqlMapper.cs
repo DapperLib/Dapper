@@ -3201,7 +3201,8 @@ namespace Dapper
                         valueCopyLocal: null,
                         reader.GetFieldType(startBound + i),
                         targetType,
-                        out var isDbNullLabel);
+                        out var isDbNullLabel,
+                        out _);
 
                     var finishLabel = il.DefineLabel();
                     il.Emit(OpCodes.Br_S, finishLabel);
@@ -3348,7 +3349,7 @@ namespace Dapper
                     EmitInt32(il, index);
                     il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
 
-                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel);
+                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel, out var nullHandlerMethod);
 
                     if (specializedConstructor == null)
                     {
@@ -3371,19 +3372,29 @@ namespace Dapper
                         il.Emit(OpCodes.Pop);
                         LoadDefaultValue(il, item.MemberType);
                     }
-                    else if (applyNullSetting && (!memberType.IsValueType || Nullable.GetUnderlyingType(memberType) != null))
+                    else if (nullHandlerMethod != null 
+                        || (applyNullSetting  && (!memberType.IsValueType || Nullable.GetUnderlyingType(memberType) != null)))
                     {
-                        il.Emit(OpCodes.Pop); // stack is now [target][target]
-                        // can load a null with this value
-                        if (memberType.IsValueType)
-                        { // must be Nullable<T> for some T
-                            GetTempLocal(il, ref structLocals, memberType, true); // stack is now [target][target][null]
+                        if (nullHandlerMethod != null)
+                        {
+                            // We have a null type handler for this value
+                            il.Emit(OpCodes.Pop); // stack is now [target][target]
+                            il.Emit(OpCodes.Call, nullHandlerMethod);
+                            // stack is now [target][target][type handler returned value])
                         }
                         else
-                        { // regular reference-type
-                            il.Emit(OpCodes.Ldnull); // stack is now [target][target][null]
+                        {
+                            il.Emit(OpCodes.Pop); // stack is now [target][target]
+                            // can load a null with this value
+                            if (memberType.IsValueType)
+                            { // must be Nullable<T> for some T
+                                GetTempLocal(il, ref structLocals, memberType, true); // stack is now [target][target][null]
+                            }
+                            else
+                            { // regular reference-type
+                                il.Emit(OpCodes.Ldnull); // stack is now [target][target][null]
+                            }
                         }
-
                         // Store the value in the property/field
                         if (item.Property != null)
                         {
@@ -3462,8 +3473,9 @@ namespace Dapper
             }
         }
 
-        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder stringEnumLocal, LocalBuilder valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel)
+        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder stringEnumLocal, LocalBuilder valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel, out MethodInfo nullHandlerMethod)
         {
+            nullHandlerMethod = null;
             isDbNullLabel = il.DefineLabel();
             il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
             EmitInt32(il, index); // stack is now [...][reader][index]
@@ -3527,14 +3539,23 @@ namespace Dapper
                 else
                 {
                     TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
+
                     bool hasTypeHandler;
                     if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
                     {
                         if (hasTypeHandler)
                         {
 #pragma warning disable 618
-                            il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [...][typed-value]
+                            Type genericType = typeof(TypeHandlerCache<>).MakeGenericType(unboxType);
+                            var typeHandlerMethod = genericType.GetMethod(nameof(TypeHandlerCache<int>.Parse));
+                            var hasNullHandlerMethod = genericType.GetMethod(nameof(TypeHandlerCache<int>.HasNullHandler));
+
+                            if((bool)hasNullHandlerMethod.Invoke(null, new object[] { }))
+                            {
+                                nullHandlerMethod = genericType.GetMethod(nameof(TypeHandlerCache<int>.ParseNull));
+                            }
 #pragma warning restore 618
+                            il.EmitCall(OpCodes.Call, typeHandlerMethod, null); // stack is now [...][typed-value]
                         }
                         else
                         {
