@@ -49,6 +49,16 @@ namespace Dapper
         public int? CommandTimeout { get; }
 
         /// <summary>
+        /// The effective byte limit for the command
+        /// </summary>
+        public int CommandLimitBytes { get; set; }
+
+        /// <summary>
+        /// The effective byte limit for the command
+        /// </summary>
+        public int CommandLimitBytesEveryRows { get; }
+
+        /// <summary>
         /// The type of command that the command-text represents
         /// </summary>
         public CommandType? CommandType { get; }
@@ -83,15 +93,19 @@ namespace Dapper
         /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
         /// <param name="flags">The behavior flags for this command.</param>
         /// <param name="cancellationToken">The cancellation token for this command.</param>
+        /// <param name="commandLimitBytes">Limit the memory of this command in bytes.</param>
+        /// <param name="commandLimitBytesEveryRows">Check whether the memory has exceeded the limit every (n = 1000 by default) rows received.</param>
         public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
-                                 , CancellationToken cancellationToken = default
+                                 , CancellationToken cancellationToken = default, int commandLimitBytes = 0, int commandLimitBytesEveryRows = 1000
             )
         {
             CommandText = commandText;
             Parameters = parameters;
             Transaction = transaction;
             CommandTimeout = commandTimeout;
+            CommandLimitBytes = commandLimitBytes;
+            CommandLimitBytesEveryRows = commandLimitBytesEveryRows;
             CommandType = commandType;
             Flags = flags;
             CancellationToken = cancellationToken;

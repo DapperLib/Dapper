@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Performance</AssemblyName>
     <Description>Dapper Core Performance Suite</Description>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net48;netcoreapp3.1</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <NoWarn>$(NoWarn);IDE0063;IDE0034;IDE0059;IDE0060</NoWarn>
   </PropertyGroup>
@@ -33,10 +33,10 @@
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
@@ -46,7 +46,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net48'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0" />
     <PackageReference Include="Norm.net" Version="3.2.0" />
   </ItemGroup>

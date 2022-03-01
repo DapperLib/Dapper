@@ -431,13 +431,31 @@ namespace Dapper
 
                 if (command.Buffered)
                 {
+                    var initialMemory = GC.GetAllocatedBytesForCurrentThread();
                     var buffer = new List<T>();
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                    while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    if (command.CommandLimitBytes > 0)
                     {
-                        object val = func(reader);
-                        buffer.Add(GetValue<T>(reader, effectiveType, val));
+                        var numRecords = 0;
+                        while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                        {
+                            numRecords++;
+                            object val = func(reader);
+                            buffer.Add(GetValue<T>(reader, effectiveType, val));
+                            if (numRecords % command.CommandLimitBytesEveryRows == 0 && ((GC.GetAllocatedBytesForCurrentThread() - initialMemory) > command.CommandLimitBytes))
+                            {
+                                throw new InvalidOperationException($"Query memory exceeded limit of {command.CommandLimitBytes} bytes");
+                            }
+                        }
+                    } else
+                    {
+                        while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                        {
+                            object val = func(reader);
+                            buffer.Add(GetValue<T>(reader, effectiveType, val));
+                        }
                     }
+
                     while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
                     command.OnCompleted();
                     return buffer;
@@ -967,13 +985,30 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader, object> func, object parameters)
+        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader, object> func, object parameters, int commandLimitBytes = 0, int commandLimitBytesEveryRows = 1000)
         {
             using (reader)
             {
-                while (reader.Read())
+                if (commandLimitBytes > 0)
                 {
-                    yield return (T)func(reader);
+                    var initialMemory = GC.GetAllocatedBytesForCurrentThread();
+                    var numRecords = 0;
+                    while (reader.Read())
+                    {
+                        numRecords++;
+                        if (numRecords % commandLimitBytesEveryRows == 0 && ((GC.GetAllocatedBytesForCurrentThread() - initialMemory) > commandLimitBytes))
+                        {
+                            throw new InvalidOperationException($"Query memory exceeded limit of {commandLimitBytes} bytes");
+                        }
+                        yield return (T)func(reader);
+                    }                    
+                }
+                else
+                {
+                    while (reader.Read())
+                    {
+                        yield return (T)func(reader);
+                    }
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 (parameters as IParameterCallbacks)?.OnCompleted();

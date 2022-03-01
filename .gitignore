@@ -22,3 +22,4 @@ Dapper.Tests/SqlServerTypes/
 BenchmarkDotNet.Artifacts/
 .idea/
 .DS_Store
+tests/Dapper.Tests/mono_crash.*.json
