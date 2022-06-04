@@ -371,6 +371,10 @@ namespace Dapper
             {
                 type = Enum.GetUnderlyingType(type);
             }
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeMap.TryGetValue(type, out var dbType))
             {
                 return dbType;
@@ -379,10 +383,7 @@ namespace Dapper
             {
                 return DbType.Binary;
             }
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
-            }
+
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
                 // auto-detect things like IEnumerable<SqlDataRecord> as a family
