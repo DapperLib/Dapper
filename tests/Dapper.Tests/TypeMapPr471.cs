@@ -39,7 +39,7 @@ namespace Dapper.Tests
         }
 
         [Fact]
-        public void Test1()
+        public void TestMapDateTimeOffsetToInt()
         {
             DateTimeOffset? myTimestamp = DateTimeOffset.UtcNow;
             Dapper.SqlMapper.AddTypeHandler(new DateTimeToTimestampHandler(output));
