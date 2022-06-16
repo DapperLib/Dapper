@@ -74,7 +74,8 @@ namespace Dapper
                 int i = 0;
                 for (; i < ctorParameters.Length; i++)
                 {
-                    if (!string.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                    var denseName = MatchConstructorParametersWithUnderscores ? names[i].Replace("_", "") : names[i];
+                    if (!string.Equals(ctorParameters[i].Name, denseName, StringComparison.OrdinalIgnoreCase))
                         break;
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;
@@ -120,8 +121,9 @@ namespace Dapper
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
             var parameters = constructor.GetParameters();
+            var denseColumnName = MatchConstructorParametersWithUnderscores ? columnName.Replace("_", "") : columnName;
 
-            return new SimpleMemberMap(columnName, parameters.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase)));
+            return new SimpleMemberMap(columnName, parameters.FirstOrDefault(p => string.Equals(p.Name, denseColumnName, StringComparison.OrdinalIgnoreCase)));
         }
 
         /// <summary>
@@ -134,7 +136,7 @@ namespace Dapper
             var property = Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
                ?? Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
 
-            if (property == null && MatchNamesWithUnderscores)
+            if (property == null && MatchFieldsAndPropertiesWithUnderscores)
             {
                 property = Properties.Find(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
                     ?? Properties.Find(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
@@ -153,7 +155,7 @@ namespace Dapper
                 ?? _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
                 ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
 
-            if (field == null && MatchNamesWithUnderscores)
+            if (field == null && MatchFieldsAndPropertiesWithUnderscores)
             {
                 var effectiveColumnName = columnName.Replace("_", "");
                 backingFieldName = "<" + effectiveColumnName + ">k__BackingField";
@@ -172,7 +174,22 @@ namespace Dapper
         /// <summary>
         /// Should column names like User_Id be allowed to match properties/fields like UserId ?
         /// </summary>
-        public static bool MatchNamesWithUnderscores { get; set; }
+        [Obsolete("Use MatchFieldsAndPropertiesWithUnderscores for clarity")]
+        public static bool MatchNamesWithUnderscores
+        {
+            get { return MatchFieldsAndPropertiesWithUnderscores; }
+            set { MatchFieldsAndPropertiesWithUnderscores = value; }
+        }
+
+        /// <summary>
+        /// Should column names like User_Id be allowed to match properties/fields like UserId ?
+        /// </summary>
+        public static bool MatchFieldsAndPropertiesWithUnderscores { get; set; }
+
+        /// <summary>
+        /// Should column names like User_Id be allowed to match constructor arguments like userId ?
+        /// </summary>
+        public static bool MatchConstructorParametersWithUnderscores { get; set; }
 
         /// <summary>
         /// The settable properties for this typemap
