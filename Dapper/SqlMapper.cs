@@ -2532,7 +2532,7 @@ namespace Dapper
                     il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [custom]
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [custom] [command]
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [custom] [command] [name]
-                    il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod(nameof(ICustomQueryParameter.AddParameter)), null); // stack is now [parameters]
+                    il.EmitCall(OpCodes.Callvirt, typeof(ICustomQueryParameter).GetMethod(nameof(ICustomQueryParameter.AddParameter)), null); // stack is now [parameters]
                     continue;
                 }
 #pragma warning disable 618
