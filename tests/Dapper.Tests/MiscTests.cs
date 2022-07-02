@@ -1287,5 +1287,42 @@ insert TPTable (Value) values (2), (568)");
                 NameProperty = nameProperty;
             }
         }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForByte()
+        {
+            const string sql = "select cast(200 as smallint) as [value]"; // 200 more than sbyte.MaxValue but less than byte.MaxValue 
+            Issue1164Object<byte> obj = connection.QuerySingle<Issue1164Object<byte>>(sql);
+            Assert.StrictEqual(200, obj.Value);
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForUInt16()
+        {
+            const string sql = "select cast(40000 as bigint) as [value]"; // 40000 more than short.MaxValue but less than ushort.MaxValue 
+            Issue1164Object<ushort> obj = connection.QuerySingle<Issue1164Object<ushort>>(sql);
+            Assert.StrictEqual(40000, obj.Value);
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForUInt32()
+        {
+            const string sql = "select cast(4000000000 as bigint) as [value]"; // 4000000000 more than int.MaxValue but less than uint.MaxValue 
+            Issue1164Object<uint> obj = connection.QuerySingle<Issue1164Object<uint>>(sql);
+            Assert.StrictEqual(4000000000, obj.Value);
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForUInt64()
+        {
+            const string sql = "select cast(10000000000000000000.0 as float) as [value]"; // 10000000000000000000 more than long.MaxValue but less than ulong.MaxValue 
+            Issue1164Object<ulong> obj = connection.QuerySingle<Issue1164Object<ulong>>(sql);
+            Assert.StrictEqual(10000000000000000000, obj.Value);
+        }
+
+        private class Issue1164Object<T>
+        {
+            public T Value;
+        }
     }
 }
