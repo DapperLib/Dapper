@@ -2535,6 +2535,16 @@ namespace Dapper
                     il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod(nameof(ICustomQueryParameter.AddParameter)), null); // stack is now [parameters]
                     continue;
                 }
+                var addParameterMethod = prop.PropertyType.GetMethod(nameof(ICustomQueryParameter.AddParameter), BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic, Type.DefaultBinder, new[] { typeof(IDbCommand), typeof(string) }, null);
+                if (addParameterMethod is not null)
+                {
+                    il.Emit(OpCodes.Ldloc, typedParameterLocal); // stack is now [parameters] [typed-param]
+                    il.Emit(callOpCode, prop.GetGetMethod()); // stack is [parameters] [custom]
+                    il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [custom] [command]
+                    il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [custom] [command] [name]
+                    il.EmitCall(OpCodes.Callvirt, addParameterMethod, null); // stack is now [parameters]
+                    continue;
+                }
 #pragma warning disable 618
                 DbType? dbType = LookupDbType(prop.PropertyType, prop.Name, true, out ITypeHandler handler);
 #pragma warning restore 618
