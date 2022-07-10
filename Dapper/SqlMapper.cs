@@ -427,6 +427,55 @@ namespace Dapper
             return DbType.Object;
         }
 
+        private static Func<Type, Type> abstractTypeMap;
+
+        /// <summary>
+        /// Gets the current abstract to concrete mapper (can be null).
+        /// Use <see cref="AddAbstractTypeMap(Func{Func{Type, Type}, Func{Type, Type}})"/> to combine
+        /// it with a any new mapping. This function must simply return null (or the type itself) if
+        /// the type has no mapping or must not be mapped.
+        /// </summary>
+        /// <remarks>
+        /// Once a type has been mapped, it will keep its original mapping until <see cref="PurgeQueryCache"/> is called.
+        /// </remarks>
+        public static Func<Type, Type> CurrentAbstractTypeMap => abstractTypeMap;
+
+        /// <summary>
+        /// Updates <see cref="CurrentAbstractTypeMap"/> with a new one that should combine the 
+        /// current one with any new mappings in a thread safe manner.
+        /// </summary>
+        /// <remarks>
+        /// The <paramref name="combiner"/> may be called more than once in case of concurrent calls.
+        /// </remarks>
+        /// <param name="combiner">A function that must combine its input with any rules and returns a new mapper.</param>
+        public static void AddAbstractTypeMap(Func<Func<Type, Type>, Func<Type, Type>> combiner)
+        {
+            var spinWait = new SpinWait();
+            while( true )
+            {
+                var current = abstractTypeMap;
+                if( Interlocked.CompareExchange(ref abstractTypeMap, combiner(current), current) == current )
+                {
+                    return;
+                }
+                spinWait.SpinOnce();
+            }
+        }
+
+        /// <summary>
+        /// Sets the <see cref="CurrentAbstractTypeMap"/> to a new function, regardless of its current 
+        /// value. Use <see cref="AddAbstractTypeMap(Func{Func{Type, Type}, Func{Type, Type}})"/> to safely
+        /// combine a new mapper with the current one.
+        /// </summary>
+        /// <remarks>
+        /// Once a type has been mapped, it will keep its original mapping until <see cref="PurgeQueryCache"/> is called.
+        /// </remarks>
+        /// <param name="map">The new mapping function to set. Null to reset it.</param>
+        public static void SetAbstractTypeMap(Func<Type, Type> map)
+        {
+            abstractTypeMap = map;
+        }
+
         /// <summary>
         /// Obtains the data as a list; if it is *already* a list, the original object is returned without
         /// any duplication; otherwise, ToList() is invoked.
