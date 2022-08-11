@@ -223,6 +223,14 @@ namespace Dapper
                 }
             }
 
+            foreach (IDbDataParameter param in command.Parameters)
+            {
+                if (!cleanNames.Contains(param.ParameterName))
+                {
+                    cleanNames.Add(param.ParameterName);
+                }
+            }
+
             foreach (var param in parameters.Values)
             {
                 if (param.CameFromTemplate) continue;
