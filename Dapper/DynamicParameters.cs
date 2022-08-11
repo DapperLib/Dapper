@@ -170,8 +170,6 @@ namespace Dapper
         {
             var literals = SqlMapper.GetLiteralTokens(identity.sql);
 
-            HashSet<string> cleanNames = new HashSet<string>();
-
             if (templates != null)
             {
                 foreach (var template in templates)
@@ -224,12 +222,6 @@ namespace Dapper
                 }
             }
 
-            bool hasPROCEDURE = false;
-            if (command.CommandText != null && command.CommandText.ToUpper().IndexOf("PROCEDURE") >= 0)
-            {
-                hasPROCEDURE = true;
-            }
-
             foreach (var param in parameters.Values)
             {
                 if (param.CameFromTemplate) continue;
@@ -258,15 +250,7 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add;
-                    if (hasPROCEDURE)
-                    {
-                        add = !command.Parameters.Contains(name);
-                    }
-                    else
-                    {
-                        add = !cleanNames.Contains(name);
-                    }
+                    bool add = !command.Parameters.Contains(name);
                     IDbDataParameter p;
                     if (add)
                     {
