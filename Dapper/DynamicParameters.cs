@@ -250,7 +250,7 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add = !command.Parameters.Contains(name);
+                    bool add = !parameters.ContainsKey(param.Name);
                     IDbDataParameter p;
                     if (add)
                     {
