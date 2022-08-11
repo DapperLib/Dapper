@@ -16,6 +16,7 @@ namespace Dapper
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         private static readonly Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
         private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
+        private readonly HashSet<string> cleanNames = new HashSet<string>();
         private List<object> templates;
 
         object SqlMapper.IParameterLookup.this[string name] =>
@@ -250,7 +251,7 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add = !command.Parameters.Contains(name);
+                    bool add = !cleanNames.Contains(name);
                     IDbDataParameter p;
                     if (add)
                     {
@@ -293,6 +294,7 @@ namespace Dapper
                     if (add)
                     {
                         command.Parameters.Add(p);
+                        cleanNames.Add(name);
                     }
                     param.AttachedParam = p;
                 }
