@@ -210,7 +210,6 @@ namespace Dapper
                             Size = param.Size,
                             Value = param.Value
                         });
-                        cleanNames.Add(Clean(param.ParameterName));
                     }
                 }
 
@@ -226,7 +225,7 @@ namespace Dapper
             }
 
             bool hasPROCEDURE = false;
-            if (command.CommandText.ToUpper().IndexOf("PROCEDURE") >= 0)
+            if (command.CommandText != null && command.CommandText.ToUpper().IndexOf("PROCEDURE") >= 0)
             {
                 hasPROCEDURE = true;
             }
