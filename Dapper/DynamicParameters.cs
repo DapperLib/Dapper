@@ -262,7 +262,7 @@ namespace Dapper
                     bool add;
                     if (hasPROCEDURE)
                     {
-                        add = command.Parameters.Contains(name);
+                        add = !command.Parameters.Contains(name);
                     }
                     else
                     {
