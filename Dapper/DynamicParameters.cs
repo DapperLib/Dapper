@@ -296,6 +296,7 @@ namespace Dapper
                     if (add)
                     {
                         command.Parameters.Add(p);
+                        cleanNames.Add(name);
                     }
                     param.AttachedParam = p;
                 }
