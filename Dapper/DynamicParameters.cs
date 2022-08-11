@@ -248,14 +248,6 @@ namespace Dapper
 #pragma warning disable 612, 618
                     SqlMapper.PackListParameters(command, name, val);
 #pragma warning restore 612, 618
-                    foreach (IDbDataParameter paramItem in command.Parameters)
-                    {
-                        string cleanName = Clean(paramItem.ParameterName);
-                        if (!cleanNames.Contains(cleanName))
-                        {
-                            cleanNames.Add(cleanName);
-                        }
-                    }
                 }
                 else
                 {
