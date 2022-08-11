@@ -225,6 +225,12 @@ namespace Dapper
                 }
             }
 
+            bool hasPROCEDURE = false;
+            if (command.CommandText.ToUpper().IndexOf("PROCEDURE") >= 0)
+            {
+                hasPROCEDURE = true;
+            }
+
             foreach (var param in parameters.Values)
             {
                 if (param.CameFromTemplate) continue;
@@ -253,7 +259,15 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add = !cleanNames.Contains(name);
+                    bool add;
+                    if (hasPROCEDURE)
+                    {
+                        add = command.Parameters.Contains(name);
+                    }
+                    else
+                    {
+                        add = !cleanNames.Contains(name);
+                    }
                     IDbDataParameter p;
                     if (add)
                     {
