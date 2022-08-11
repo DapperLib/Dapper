@@ -170,6 +170,8 @@ namespace Dapper
         {
             var literals = SqlMapper.GetLiteralTokens(identity.sql);
 
+            HashSet<string> cleanNames = new HashSet<string>();
+
             if (templates != null)
             {
                 foreach (var template in templates)
@@ -208,6 +210,7 @@ namespace Dapper
                             Size = param.Size,
                             Value = param.Value
                         });
+                        cleanNames.Add(Clean(param.ParameterName));
                     }
                 }
 
@@ -250,7 +253,7 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add = !parameters.ContainsKey(param.Name);
+                    bool add = !cleanNames.Contains(name);
                     IDbDataParameter p;
                     if (add)
                     {
