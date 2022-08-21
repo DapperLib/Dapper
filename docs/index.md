@@ -1,4 +1,4 @@
-# Dapper - a simple object mapper for .Net
+# Dapper - a simple object mapper for .NET
 
 ## Overview
 
