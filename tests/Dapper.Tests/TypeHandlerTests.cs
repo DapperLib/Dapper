@@ -114,6 +114,114 @@ namespace Dapper.Tests
             result = connection.Query<LocalDateResult>("SELECT @NotNullable AS NotNullable, @NullableNotNull AS NullableNotNull, @NullableIsNull AS NullableIsNull", param).Single();
         }
 
+        [Fact]
+        public void Issue1754_Given_a_type_handler_when_I_implement_a_null_parser_I_expect_a_null_field_to_be_passed_to_it()
+        {
+            // Assemble
+            // Requires supporting classes - see Optional<T>, OptionalTypeHandler<T> and Issue1754Class below
+            string sql = "SELECT 1 as MyField, cast(null as int) as MyNullField";
+            SqlMapper.AddTypeHandler<Optional<int?>>(new OptionalWithNullParserTypeHandler<int?>());
+
+            // Act
+            SqlMapper.PurgeQueryCache();
+            var row = connection.Query<Issue1754Class>(sql).FirstOrDefault();
+
+            // Assert
+            Assert.True(row.MyField.IsSet, "MyField should be set because 1 was passed");
+            Assert.True(row.MyNullField.IsSet, "My Nullable Field should be set, even though it was selected back as null");
+            Assert.False(row.MyUnSelectedField.IsSet, "My unselected field shouldn't be set because it wasn't in the select");
+        }
+
+        [Fact]
+        public void Issue1754_Given_a_type_handler_when_I_dont_implement_a_null_parser_I_dont_expect_a_null_field_to_be_passed_to_it()
+        {
+            // Assemble
+            // Requires supporting classes - see Optional<T>, OptionalTypeHandler<T> and Issue1754Class below
+            string sql = "SELECT 1 as MyField, cast(null as int) as MyNullField";
+            SqlMapper.AddTypeHandler<Optional<int?>>(new OptionalTypeHandler<int?>());
+
+            // Act
+            SqlMapper.PurgeQueryCache();
+            var row = connection.Query<Issue1754Class>(sql).FirstOrDefault();
+
+            // Assert
+            Assert.True(row.MyField.IsSet, "MyField should be set because 1 was passed");
+            Assert.False(row.MyNullField.IsSet, "My Nullable Field should be not be set because it was selected as null");
+            Assert.False(row.MyUnSelectedField.IsSet, "My unselected field shouldn't be set because it wasn't in the select");
+        }
+
+        public class Issue1754Class
+        {
+            public Optional<int?> MyField { get; set; }
+            public Optional<int?> MyNullField { get; set; }
+            public Optional<int?> MyUnSelectedField { get; set; }
+        }
+
+        public struct Optional<T>
+        {
+            public bool IsSet { get; private set; }
+            private T wrappedValue { get; set; }
+
+            public T Value
+            {
+                get
+                {
+                    return wrappedValue;
+                }
+            }
+
+            public void SetValue(T value)
+            {
+                this.wrappedValue = value;
+                this.IsSet = true;
+            }
+            public override string ToString()
+            {
+                if (!IsSet)
+                {
+                    return "undefined";
+                }
+                else
+                {
+                    return wrappedValue == null ? String.Empty : wrappedValue.ToString() ?? String.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// This class is used to demonstrate default behaviour for a type handler
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public class OptionalTypeHandler<T> : SqlMapper.TypeHandler<Optional<T>> 
+        {
+            public override Optional<T> Parse(object value)
+            {
+                var ret = new Optional<T>();
+                dynamic v = value;
+                ret.SetValue(v);
+                return ret;
+            }
+
+            public override void SetValue(IDbDataParameter parameter, Optional<T> value)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// This class is used to demonstrate how INullTypeHandler can be used to describe parsing of nulls
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public class OptionalWithNullParserTypeHandler<T> : OptionalTypeHandler<T>, SqlMapper.INullTypeHandler
+        {
+            public object ParseNull(Type destinationType)
+            {
+                var ret = new Optional<T>();
+                ret.SetValue(default(T));
+                return ret;
+            }
+        }
+
         public class LocalDateHandler : SqlMapper.TypeHandler<LocalDate>
         {
             private LocalDateHandler() { /* private constructor */ }

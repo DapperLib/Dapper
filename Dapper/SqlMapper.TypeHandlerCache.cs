@@ -25,6 +25,19 @@ namespace Dapper
             /// <summary>
             /// Not intended for direct usage.
             /// </summary>
+            [Obsolete(ObsoleteInternalUsageOnly, true)]
+            public static bool HasNullHandler() => handler is SqlMapper.INullTypeHandler;
+
+            /// <summary>
+            /// Not intended for direct usage.
+            /// </summary>
+            [Obsolete(ObsoleteInternalUsageOnly, true)]
+            public static T ParseNull() => (T)((SqlMapper.INullTypeHandler)handler).ParseNull(typeof(T));
+
+
+            /// <summary>
+            /// Not intended for direct usage.
+            /// </summary>
             /// <param name="parameter">The parameter to set a value for.</param>
             /// <param name="value">The value to set.</param>
             [Obsolete(ObsoleteInternalUsageOnly, true)]

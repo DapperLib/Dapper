@@ -25,5 +25,18 @@ namespace Dapper
             /// <returns>The typed value</returns>
             object Parse(Type destinationType, object value);
         }
+
+        /// <summary>
+        /// Implement this interface along side ITypeHandler if you want nulls to be passed to your custom value parsing
+        /// </summary>
+        public interface INullTypeHandler
+        {
+            /// <summary>
+            /// Parse a database back to a typed value (or null if not required)
+            /// </summary>
+            /// <param name="destinationType">The type to parse to</param>
+            /// <returns>The typed value</returns>
+            object ParseNull(Type destinationType);
+        }
     }
 }
