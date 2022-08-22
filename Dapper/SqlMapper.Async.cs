@@ -1124,7 +1124,7 @@ namespace Dapper
 
         private static async Task<DbDataReader> ExecuteWrappedReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
-            Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
+            Action<IDbCommand, object> paramReader = GetParameterReader(cnn, command);
 
             DbCommand cmd = null;
             bool wasClosed = cnn.State == ConnectionState.Closed, disposeCommand = true;

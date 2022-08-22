@@ -9,7 +9,7 @@ namespace Dapper
     /// <summary>
     /// Represents the key aspects of a sql operation
     /// </summary>
-    public struct CommandDefinition
+    public readonly struct CommandDefinition
     {
         internal static CommandDefinition ForCallback(object parameters)
         {
