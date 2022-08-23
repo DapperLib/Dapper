@@ -144,6 +144,25 @@ namespace Dapper.Tests
             }
         }
 
+        private class IntExplicitCustomParam : SqlMapper.ICustomQueryParameter
+        {
+            private readonly IEnumerable<int> numbers;
+            public IntExplicitCustomParam(IEnumerable<int> numbers)
+            {
+                this.numbers = numbers;
+            }
+
+            void SqlMapper.ICustomQueryParameter.AddParameter(IDbCommand command, string name)
+            {
+                command.CommandType = CommandType.StoredProcedure;
+
+                var number_list = CreateSqlDataRecordList(command, numbers);
+
+                // Add the table parameter.
+                AddStructured(command, number_list);
+            }
+        }
+
         private static IDbDataParameter AddStructured(IDbCommand command, object value)
         {
             if (command is System.Data.SqlClient.SqlCommand sdcmd)
@@ -288,6 +307,33 @@ namespace Dapper.Tests
                 connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
 
                 var nums = connection.Query<int>("get_ints", new { integers = new IntCustomParam(new int[] { 1, 2, 3 }) }, commandType: CommandType.StoredProcedure).ToList();
+                Assert.Equal(1, nums[0]);
+                Assert.Equal(2, nums[1]);
+                Assert.Equal(3, nums[2]);
+                Assert.Equal(3, nums.Count);
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
+        [Fact]
+        public void TestExplicitTVPWithAnonymousObject()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+                var nums = connection.Query<int>("get_ints", new { integers = new IntExplicitCustomParam(new int[] { 1, 2, 3 }) }, commandType: CommandType.StoredProcedure).ToList();
                 Assert.Equal(1, nums[0]);
                 Assert.Equal(2, nums[1]);
                 Assert.Equal(3, nums[2]);
