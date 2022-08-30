@@ -58,6 +58,21 @@ namespace Dapper.Tests
             }
         }
 
+        public class DbLooselyCoupledCustomParam
+        {
+            private readonly IDbDataParameter _sqlParameter;
+
+            public DbLooselyCoupledCustomParam(IDbDataParameter sqlParameter)
+            {
+                _sqlParameter = sqlParameter;
+            }
+
+            private void AddParameter(IDbCommand command, string name)
+            {
+                command.Parameters.Add(_sqlParameter);
+            }
+        }
+
         private static IEnumerable<IDataRecord> CreateSqlDataRecordList(IDbCommand command, IEnumerable<int> numbers)
         {
             if (command is System.Data.SqlClient.SqlCommand) return CreateSqlDataRecordList_SD(numbers);
@@ -871,8 +886,23 @@ namespace Dapper.Tests
             Assert.Equal(123, result2.Foo);
             Assert.Equal("abc", result2.Bar);
         }
-        
-        
+
+        [Fact]
+        public void TestLooselyCoupledCustomParameter()
+        {
+            var args = new
+            {
+                foo = new DbLooselyCoupledCustomParam(Provider.CreateRawParameter("foo", 123)),
+                bar = "abc"
+            };
+            var result = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            int foo = result.Foo;
+            string bar = result.Bar;
+            Assert.Equal(123, foo);
+            Assert.Equal("abc", bar);
+        }
+
+
         [Fact]
         public void TestDynamicParamNullSupport()
         {
