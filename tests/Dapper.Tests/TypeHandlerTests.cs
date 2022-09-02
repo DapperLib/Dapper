@@ -207,6 +207,64 @@ namespace Dapper.Tests
             public decimal? N_N_Decimal { get; set; }
         }
 
+        [Theory]
+        [InlineData(1)] // CustomEnum.A
+        [InlineData(2)] // CustomEnum.B
+        public void CustomEnumHandler(int enumValue)
+        {
+            var expected = (CustomEnum)enumValue;
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandler(typeof(CustomEnum), new EnumHandler());
+
+            var result = connection.Query<CustomEnum>($"SELECT 'ShouldBe{expected}'").Single();
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData(1)] // CustomEnum.A
+        [InlineData(2)] // CustomEnum.B
+        public void CustomEnumHandlerForParameter(int enumValue)
+        {
+            var expected = (CustomEnum)enumValue;
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandler(typeof(CustomEnum), new EnumHandler());
+
+            var result = connection.Query<CustomEnum>($"SELECT @param", new {param = "ShouldBe" + expected}).Single();
+
+            Assert.Equal(expected, result);
+        }
+
+        public class EnumHandler : SqlMapper.TypeHandler<CustomEnum>
+        {
+            public override CustomEnum Parse(object value)
+            {
+                var str = (string) value;
+
+                switch (str)
+                {
+                    case "ShouldBeA":
+                        return CustomEnum.A;
+                    case "ShouldBeB":
+                        return CustomEnum.B;
+                }
+
+                return 0;
+            }
+
+            public override void SetValue(IDbDataParameter parameter, CustomEnum value)
+            {
+                parameter.Value = value == CustomEnum.A ? "ShouldBeA" : "ShouldBeB";
+            }
+        }
+        
+        public enum CustomEnum { A = 1, B }
+
+        public class EnumContainer
+        {
+            public CustomEnum EnumValue { get; set; }
+        }
+
         [Fact]
         public void TestBigIntForEverythingWorks()
         {
