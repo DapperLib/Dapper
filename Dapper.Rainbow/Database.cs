@@ -212,12 +212,19 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Begins a transaction in this database.
+        /// Begins a transaction in this database. Automatically opens the underlying connection if needed.
         /// </summary>
         /// <param name="isolation">The isolation level to use.</param>
-        public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
+        public DbTransaction BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
         {
+            if (_transaction != null)
+                throw new InvalidOperationException("The database already has an active transaction");
+
+            if (_connection.State != ConnectionState.Open)
+                _connection.Open();
+
             _transaction = _connection.BeginTransaction(isolation);
+            return _transaction;
         }
 
         /// <summary>
@@ -225,6 +232,9 @@ namespace Dapper
         /// </summary>
         public void CommitTransaction()
         {
+            if (_transaction == null)
+                throw new InvalidOperationException("The database does not have an active transaction");
+
             _transaction.Commit();
             _transaction = null;
         }
@@ -234,8 +244,32 @@ namespace Dapper
         /// </summary>
         public void RollbackTransaction()
         {
+            if (_transaction == null)
+                throw new InvalidOperationException("The database does not have an active transaction");
+
             _transaction.Rollback();
             _transaction = null;
+        }
+
+        /// <summary>
+        /// Implicitly set the underlying transaction
+        /// </summary>
+        /// <param name="transaction"></param>
+        public void SetTransaction(DbTransaction transaction)
+        {
+            if (transaction == null)
+            {
+                _transaction = null;
+                return;
+            }
+
+            if (_transaction != null)
+                throw new InvalidOperationException("The database already has an active transaction");
+
+            if (transaction.Connection != _connection)
+                throw new InvalidOperationException("The transaction should belong to the same connection");
+
+            _transaction = transaction;
         }
 
         /// <summary>
