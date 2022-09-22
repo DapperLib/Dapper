@@ -140,14 +140,11 @@ namespace Dapper
         {
             concreteType ??= typeof(T);
             var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
-            if (concreteType.IsValueType)
-            {
+            if (func.Method.ReturnType != typeof(T))
+            { // Always use a wrapper: this works for value and ref types (delegate casting is not an option).
                 return _ => (T)func(_);
             }
-            else
-            {
-                return (Func<IDataReader, T>)(Delegate)func;
-            }
+            return (Func<IDataReader, T>)(Delegate)func;
         }
     }
 }

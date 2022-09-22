@@ -146,6 +146,21 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
             Assert.Equal("qwe", bar.HazNameIdObject.Name);
         }
 
+        /// <summary>
+        /// See https://github.com/DapperLib/Dapper/issues/1822
+        /// </summary>
+        [Fact]
+        public void issue_number_1822()
+        {
+            var reader = connection.ExecuteReader("select 'test' as col");
+            var rowParser = reader.GetRowParser<string>();
+
+            reader.Read();
+            // This should not throw!
+            string result = rowParser(reader);
+            Assert.Equal("test", result);
+        }
+
         private abstract class Discriminated_BaseType
         {
             public abstract int Type { get; }
