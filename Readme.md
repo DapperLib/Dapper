@@ -368,7 +368,7 @@ Ansi Strings and varchar
 Dapper supports varchar params, if you are executing a where clause on a varchar column using a param be sure to pass it in this way:
 
 ```csharp
-Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true });
+Query<Thing>("select * from Thing where Name = @Name", new {Name = new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true }});
 ```
 
 On SQL Server it is crucial to use the unicode when querying unicode and ANSI when querying non unicode.
