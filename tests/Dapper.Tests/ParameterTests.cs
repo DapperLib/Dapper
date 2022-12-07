@@ -1593,5 +1593,29 @@ select @hits as [Hits], (@count - @misses) as [Misses], @query as [Query];
             if (delta != 0) blocks++;
             return blocks * padFactor;
         }
+
+        [Fact]
+        public void TestGetParameterFromAnonymousType()
+        {
+            // https://github.com/DapperLib/Dapper/issues/343
+            // https://github.com/DapperLib/Dapper/issues/1113
+
+            var parameters = new DynamicParameters(new { par = 1 });
+
+            Assert.Equal(1, parameters.GetTemplateParameter<int>("par"));
+            Assert.Equal("par", parameters.TemplateParameterNames.First());
+        }
+
+        [Fact]
+        public void TestGetAllParemeters()
+        {
+            var parameters = new DynamicParameters(new { par1 = 1 });
+            parameters.Add("par2", 2);
+
+            var paramNames = parameters.AllParameterNames.ToList();
+
+            Assert.Equal("par2", paramNames[0]);
+            Assert.Equal("par1", paramNames[1]);
+        }
     }
 }
