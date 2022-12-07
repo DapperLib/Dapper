@@ -330,6 +330,39 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Param names from templates
+        /// </summary>
+        public IEnumerable<string> TemplateParameterNames => templates.Select(t => t.GetType().GetProperties().Select(p => p.Name)).SelectMany(p => p);
+
+        /// <summary>
+        /// Get the value of a parameter that was created from a template
+        /// </summary>
+        /// <typeparam name="T">The type of a parameter</typeparam>
+        /// <param name="name"></param>
+        /// <returns>The value of the parameter</returns>
+        /// <exception cref="Exception">When templates is null or the param wasn't found</exception>
+        public T GetTemplateParameter<T>(string name)
+        {
+            if (templates == null)
+                throw new Exception("There are no templates");
+
+            foreach (object t in templates)
+            {
+                var property = t.GetType().GetProperties().Where(p => p.Name == name).FirstOrDefault();
+
+                if (property != null)
+                    return (T)property.GetValue(t);
+            }
+
+            throw new Exception($"Parameter name {name} not present in templates");
+        }
+
+        /// <summary>
+        /// Param names from templates and bag
+        /// </summary>
+        public IEnumerable<string> AllParameterNames => ParameterNames.Concat(TemplateParameterNames);
+
+        /// <summary>
         /// Allows you to automatically populate a target property/field from output parameters. It actually
         /// creates an InputOutput parameter, so you can still pass data in.
         /// </summary>
