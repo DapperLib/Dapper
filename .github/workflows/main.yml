@@ -23,6 +23,10 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      cockroachdb:
+        image: timveil/cockroachdb-single-node:latest
+        ports:
+          - 26257:26257
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2019-latest
         ports:
@@ -38,8 +42,15 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v1
+    - name: .NET setup
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: |
+          3.1.x
+          5.0.x
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
     - name: Dapper Tests
