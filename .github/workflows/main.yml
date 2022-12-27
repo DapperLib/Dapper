@@ -1,13 +1,9 @@
 name: Main Build
 
 on:
-  pull_request:
   push:
     branches:
     - main
-    paths:
-    - '*'
-    - '!/docs/*' # Don't run workflow when files are only in the /docs directory
 
 jobs:
   vm-job:
