@@ -230,7 +230,7 @@ When an object that implements the `IDynamicParameters` interface passed into `E
     
 List Support
 ------------
-Dapper allows you to pass in `IEnumerable<int>` and will automatically parameterize your query.
+Dapper allows you to pass in `IEnumerable<int>` and will automatically parameterize your query if your database driver does not natively support passing a list as a parameter.
 
 For example:
 
@@ -243,6 +243,8 @@ Will be translated to:
 ```csharp
 select * from (select 1 as Id union all select 2 union all select 3) as X where Id in (@Ids1, @Ids2, @Ids3)" // @Ids1 = 1 , @Ids2 = 2 , @Ids2 = 3
 ```
+
+For database drivers that do support list parameters (at this time, Postgres and ClickHouse), list expansion is not performed since it is not required. However, automatic expansion can be used even if the driver does not require it by setting the global flag `SqlMapper.Settings.ForceListExpansion`. This is only needed when writing SQL that is intended for use by multiple databases, when trying to ensure consistent list handling and is disabled by default.
 
 Literal replacements
 ------------

@@ -99,6 +99,13 @@ namespace Dapper
             /// instead of the original name; for most scenarios, this is ignored since the name is redundant, but "snowflake" requires this.
             /// </summary>
             public static bool UseIncrementalPseudoPositionalParameterNames { get; set; }
+
+            /// <summary>
+            /// If set, this causes Dapper to perform list expansion on any list provided as a query parameter, even if the RDBMS driver has
+            /// native list support. Enabling this will be less efficient than using native support, but provides for consistent list
+            /// handling regardless of underlying RDBMS. See https://github.com/DapperLib/Dapper/issues/1871.
+            /// </summary>
+            public static bool ForceListExpansion { get; set; }
         }
     }
 }
