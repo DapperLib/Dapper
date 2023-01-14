@@ -111,7 +111,7 @@ namespace Dapper
             _connection.QueryFirstOrDefaultAsync<T>(sql, param as object, _transaction, _commandTimeout);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 2 input types. 
+        /// Perform an asynchronous multi-mapping query with 2 input types. 
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -129,7 +129,7 @@ namespace Dapper
             _connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 3 input types. 
+        /// Perform an asynchronous multi-mapping query with 3 input types. 
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -148,7 +148,7 @@ namespace Dapper
             _connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 4 input types. 
+        /// Perform an asynchronous multi-mapping query with 4 input types. 
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -168,7 +168,7 @@ namespace Dapper
             _connection.QueryAsync(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Perform a asynchronous multi-mapping query with 5 input types. 
+        /// Perform an asynchronous multi-mapping query with 5 input types. 
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>

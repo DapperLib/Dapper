@@ -4,7 +4,7 @@ Dapper - a simple object mapper for .Net
 
 Release Notes
 -------------
-Located at [stackexchange.github.io/Dapper](https://stackexchange.github.io/Dapper/)
+Located at [dapperlib.github.io/Dapper](https://dapperlib.github.io/Dapper/)
 
 Packages
 --------
@@ -14,12 +14,23 @@ MyGet Pre-release feed: https://www.myget.org/gallery/dapper
 | Package | NuGet Stable | NuGet Pre-release | Downloads | MyGet |
 | ------- | ------------ | ----------------- | --------- | ----- |
 | [Dapper](https://www.nuget.org/packages/Dapper/) | [![Dapper](https://img.shields.io/nuget/v/Dapper.svg)](https://www.nuget.org/packages/Dapper/) | [![Dapper](https://img.shields.io/nuget/vpre/Dapper.svg)](https://www.nuget.org/packages/Dapper/) | [![Dapper](https://img.shields.io/nuget/dt/Dapper.svg)](https://www.nuget.org/packages/Dapper/) | [![Dapper MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper) |
-| [Dapper.Contrib](https://www.nuget.org/packages/Dapper.Contrib/) | [![Dapper.Contrib](https://img.shields.io/nuget/v/Dapper.Contrib.svg)](https://www.nuget.org/packages/Dapper.Contrib/) | [![Dapper.Contrib](https://img.shields.io/nuget/vpre/Dapper.Contrib.svg)](https://www.nuget.org/packages/Dapper.Contrib/) | [![Dapper.Contrib](https://img.shields.io/nuget/dt/Dapper.Contrib.svg)](https://www.nuget.org/packages/Dapper.Contrib/) | [![Dapper.Contrib MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.Contrib.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.Contrib) |
 | [Dapper.EntityFramework](https://www.nuget.org/packages/Dapper.EntityFramework/) | [![Dapper.EntityFramework](https://img.shields.io/nuget/v/Dapper.EntityFramework.svg)](https://www.nuget.org/packages/Dapper.EntityFramework/) | [![Dapper.EntityFramework](https://img.shields.io/nuget/vpre/Dapper.EntityFramework.svg)](https://www.nuget.org/packages/Dapper.EntityFramework/) | [![Dapper.EntityFramework](https://img.shields.io/nuget/dt/Dapper.EntityFramework.svg)](https://www.nuget.org/packages/Dapper.EntityFramework/) | [![Dapper.EntityFramework MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.EntityFramework.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.EntityFramework) |
 | [Dapper.EntityFramework.StrongName](https://www.nuget.org/packages/Dapper.EntityFramework.StrongName/) | [![Dapper.EntityFramework.StrongName](https://img.shields.io/nuget/v/Dapper.EntityFramework.StrongName.svg)](https://www.nuget.org/packages/Dapper.EntityFramework.StrongName/) | [![Dapper.EntityFramework.StrongName](https://img.shields.io/nuget/vpre/Dapper.EntityFramework.StrongName.svg)](https://www.nuget.org/packages/Dapper.EntityFramework.StrongName/) | [![Dapper.EntityFramework.StrongName](https://img.shields.io/nuget/dt/Dapper.EntityFramework.StrongName.svg)](https://www.nuget.org/packages/Dapper.EntityFramework.StrongName/) | [![Dapper.EntityFramework.StrongName MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.EntityFramework.StrongName.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.EntityFramework.StrongName) |
 | [Dapper.Rainbow](https://www.nuget.org/packages/Dapper.Rainbow/) | [![Dapper.Rainbow](https://img.shields.io/nuget/v/Dapper.Rainbow.svg)](https://www.nuget.org/packages/Dapper.Rainbow/) | [![Dapper.Rainbow](https://img.shields.io/nuget/vpre/Dapper.Rainbow.svg)](https://www.nuget.org/packages/Dapper.Rainbow/) | [![Dapper.Rainbow](https://img.shields.io/nuget/dt/Dapper.Rainbow.svg)](https://www.nuget.org/packages/Dapper.Rainbow/) | [![Dapper.Rainbow MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.Rainbow.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.Rainbow) |
 | [Dapper.SqlBuilder](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder](https://img.shields.io/nuget/v/Dapper.SqlBuilder.svg)](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder](https://img.shields.io/nuget/vpre/Dapper.SqlBuilder.svg)](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder](https://img.shields.io/nuget/dt/Dapper.SqlBuilder.svg)](https://www.nuget.org/packages/Dapper.SqlBuilder/) | [![Dapper.SqlBuilder MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.SqlBuilder.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.SqlBuilder) |
 | [Dapper.StrongName](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/v/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/vpre/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/dt/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.StrongName.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.StrongName) |
+
+Package Purposes:
+* Dapper.EntityFramework
+  * Extension handlers for EntityFramework
+* Dapper.EntityFramework.StrongName
+  * Extension handlers for EntityFramework
+* Dapper.Rainbow
+  * Micro-ORM implemented on Dapper, provides CRUD helpers
+* Dapper.SqlBuilder
+  * Component for building SQL queries dynamically and composably
+* Dapper.StrongName
+  * High-performance micro-ORM supporting MySQL, Sqlite, SqlICE, and Firebird
 
 Features
 --------
@@ -31,7 +42,7 @@ Execute a query and map the results to a strongly typed List
 ------------------------------------------------------------
 
 ```csharp
-public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
+public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
 ```
 Example usage:
 
@@ -58,7 +69,7 @@ Execute a query and map it to a list of dynamic objects
 -------------------------------------------------------
 
 ```csharp
-public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null, bool buffered = true)
+public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
 ```
 This method will execute SQL and return a dynamic list.
 
@@ -77,7 +88,7 @@ Execute a Command that returns no results
 -----------------------------------------
 
 ```csharp
-public static int Execute(this IDbConnection cnn, string sql, object param = null, SqlTransaction transaction = null)
+public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
 ```
 
 Example usage:
@@ -107,16 +118,30 @@ var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)",
   );
 Assert.Equal(3, count); // 3 rows inserted: "1,1", "2,2" and "3,3"
 ```
-This works for any parameter that implements IEnumerable<T> for some T.
+
+Another example usage when you _already_ have an existing collection:
+```csharp
+var foos = new List<Foo>
+{
+    { new Foo { A = 1, B = 1 } }
+    { new Foo { A = 2, B = 2 } }
+    { new Foo { A = 3, B = 3 } }
+};
+
+var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", foos);
+Assert.Equal(foos.Count, count);
+```
+
+This works for any parameter that implements `IEnumerable<T>` for some T.
 
 Performance
 -----------
 
 A key feature of Dapper is performance. The following metrics show how long it takes to execute a `SELECT` statement against a DB (in various config, each labeled) and map the data returned to objects.
 
-The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/StackExchange/Dapper/tree/main/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
+The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/DapperLib/Dapper/tree/main/benchmarks/Dapper.Tests.Performance) (contributions welcome!) and can be run via:
 ```bash
-dotnet run -p .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
+dotnet run --project .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
 ```
 Output from the latest run is:
 ``` ini
@@ -174,12 +199,35 @@ Alternatively, you might prefer Frans Bouma's [RawDataAccessBencher](https://git
 Parameterized queries
 ---------------------
 
-Parameters are passed in as anonymous classes. This allow you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
+Parameters are usually passed in as anonymous classes. This allows you to name your parameters easily and gives you the ability to simply cut-and-paste SQL snippets and run them in your db platform's Query analyzer.
 
 ```csharp
 new {A = 1, B = "b"} // A will be mapped to the param @A, B to the param @B
 ```
+Parameters can also be built up dynamically using the DynamicParameters class. This allows for building a dynamic SQL statement while still using parameters for safety and performance.
 
+```csharp
+    var sqlPredicates = new List<string>();
+    var queryParams = new DynamicParameters();
+    if (boolExpression)
+    {
+        sqlPredicates.Add("column1 = @param1");
+        queryParams.Add("param1", dynamicValue1, System.Data.DbType.Guid);
+    } else {
+        sqlPredicates.Add("column2 = @param2");
+        queryParams.Add("param2", dynamicValue2, System.Data.DbType.String);
+    }
+```
+
+DynamicParameters also supports copying multiple parameters from existing objects of different types.
+    
+```csharp
+    var queryParams = new DynamicParameters(objectOfType1);
+    queryParams.AddDynamicParams(objectOfType2);
+```
+    
+When an object that implements the `IDynamicParameters` interface passed into `Execute` or `Query` functions, parameter values will be extracted via this interface. Obviously, the most likely object class to use for this purpose would be the built-in `DynamicParameters` class.
+    
 List Support
 ------------
 Dapper allows you to pass in `IEnumerable<int>` and will automatically parameterize your query.
@@ -389,7 +437,7 @@ Dapper has no DB specific implementation details, it works across all .NET ADO p
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper has a comprehensive test suite in the [test project](https://github.com/StackExchange/Dapper/tree/main/tests/Dapper.Tests).
+Dapper has a comprehensive test suite in the [test project](https://github.com/DapperLib/Dapper/tree/main/tests/Dapper.Tests).
 
 Who is using this?
 ---------------------

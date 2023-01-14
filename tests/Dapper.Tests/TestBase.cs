@@ -18,7 +18,7 @@ namespace Dapper.Tests
         public virtual void Dispose() { }
         public abstract string GetConnectionString();
 
-        protected string GetConnectionString(string name, string defaultConnectionString) =>
+        protected static string GetConnectionString(string name, string defaultConnectionString) =>
             Environment.GetEnvironmentVariable(name) ?? defaultConnectionString;
 
         public DbConnection GetOpenConnection()
@@ -85,7 +85,7 @@ namespace Dapper.Tests
         protected DbConnection GetOpenConnection() => Provider.GetOpenConnection();
         protected DbConnection GetClosedConnection() => Provider.GetClosedConnection();
         protected DbConnection _connection;
-        protected DbConnection connection => _connection ?? (_connection = Provider.GetOpenConnection());
+        protected DbConnection connection => _connection ??= Provider.GetOpenConnection();
 
         public TProvider Provider { get; } = DatabaseProvider<TProvider>.Instance;
 

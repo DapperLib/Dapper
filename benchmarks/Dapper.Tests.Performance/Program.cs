@@ -16,7 +16,7 @@ namespace Dapper.Tests.Performance
 #endif
             WriteLine("Welcome to Dapper's ORM performance benchmark suite, based on BenchmarkDotNet.");
             Write("  If you find a problem, please report it at: ");
-            WriteLineColor("https://github.com/StackExchange/Dapper", ConsoleColor.Blue);
+            WriteLineColor("https://github.com/DapperLib/Dapper", ConsoleColor.Blue);
             WriteLine("  Or if you're up to it, please submit a pull request! We welcome new additions.");
             WriteLine();
 

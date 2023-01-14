@@ -106,7 +106,7 @@ namespace Dapper.Tests
             => Test<MicrosoftSqlClientProvider>(create, test, result);
 #endif
 
-        private void Test<T>(int create, int test, bool result)
+        private static void Test<T>(int create, int test, bool result)
             where T : SqlServerDatabaseProvider, new()
         {
             var provider = new T();

@@ -19,8 +19,10 @@ namespace Dapper.Tests.Performance
             BaseSetup();
             IDataLayer dataLayer = XpoDefault.GetDataLayer(_connection, DevExpress.Xpo.DB.AutoCreateOption.SchemaAlreadyExists);
             dataLayer.Dictionary.GetDataStoreSchema(typeof(Xpo.Post));
-            _session = new UnitOfWork(dataLayer, dataLayer);
-            _session.IdentityMapBehavior = IdentityMapBehavior.Strong;
+            _session = new UnitOfWork(dataLayer, dataLayer)
+            {
+                IdentityMapBehavior = IdentityMapBehavior.Strong
+            };
             _session.TypesManager.EnsureIsTypedObjectValid();
         }
 

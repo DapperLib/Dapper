@@ -5,26 +5,28 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net462;netcoreapp3.1</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
+    <NoWarn>$(NoWarn);IDE0063;IDE0034;IDE0059;IDE0060</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Dashing" Version="2.2.0" />
+    <PackageReference Include="Dashing" Version="2.4.3" />
     <PackageReference Include="Belgrade.Sql.Client" Version="1.1.4" />
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
-    <PackageReference Include="DevExpress.Xpo" Version="19.1.5" />
+    <PackageReference Include="DevExpress.Xpo" Version="20.2.3" />
     <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
-    <PackageReference Include="EntityFramework" Version="6.3.0" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.0.0" />
-    <PackageReference Include="linq2db.SqlServer" Version="2.9.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
-    <PackageReference Include="MySqlConnector" Version="0.56.0" />
-    <PackageReference Include="NHibernate" Version="5.2.5" />
+    <PackageReference Include="EntityFramework" Version="6.4.4" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="7.5.0" />
+    <PackageReference Include="linq2db.SqlServer" Version="3.1.6" />
+    <PackageReference Include="MySqlConnector" Version="1.1.0" />
+    <PackageReference Include="NHibernate" Version="5.3.5" />
     <PackageReference Include="Iesi.Collections" Version="4.0.4" />
-    <PackageReference Include="Mighty" Version="3.0.6" />
-    <PackageReference Include="Npgsql" Version="4.0.9" />
+    <PackageReference Include="Mighty" Version="3.1.3" />
+    <PackageReference Include="Npgsql" Version="5.0.0" />
     <PackageReference Include="PetaPoco" Version="5.1.306" />
-    <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="5.6.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.111" />
+    <PackageReference Include="RepoDb.SqlServer" Version="1.1.4" />
+    <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="5.10.2" />
+    <PackageReference Include="SqlMarshal" Version="0.2.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.113.6" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NHibernate\*.xml" />
@@ -37,11 +39,15 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
-    <PackageReference Include="Soma" Version="1.9.0.1" />
     <PackageReference Include="SubSonic" Version="3.0.0.4" />
     <PackageReference Include="Susanoo.SqlServer" Version="1.2.4.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="[3.1.10]" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.Linq" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0" />
+    <PackageReference Include="Norm.net" Version="3.2.0" />
   </ItemGroup>
 </Project>

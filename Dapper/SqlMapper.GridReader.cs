@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+
 namespace Dapper
 {
     public static partial class SqlMapper
@@ -159,7 +161,7 @@ namespace Dapper
                 }
                 IsConsumed = true;
                 var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                return buffered ? result.ToList() : result;
+                return buffered ? result?.ToList() : result;
             }
 
             private T ReadRow<T>(Type type, Row row)
@@ -168,7 +170,7 @@ namespace Dapper
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 IsConsumed = true;
 
-                T result = default(T);
+                T result = default;
                 if (reader.Read() && reader.FieldCount != 0)
                 {
                     var typedIdentity = identity.ForGrid(type, gridIndex);
@@ -181,16 +183,9 @@ namespace Dapper
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
                     }
-                    object val = deserializer.Func(reader);
-                    if (val == null || val is T)
-                    {
-                        result = (T)val;
-                    }
-                    else
-                    {
-                        var convertToType = Nullable.GetUnderlyingType(type) ?? type;
-                        result = (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                    }
+
+                    result = ConvertTo<T>(deserializer.Func(reader));
+
                     if ((row & Row.Single) != 0 && reader.Read()) ThrowMultipleRows(row);
                     while (reader.Read()) { /* ignore subsequent rows */ }
                 }
@@ -210,7 +205,7 @@ namespace Dapper
 
                 try
                 {
-                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default(CommandDefinition), func, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, default, func, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
@@ -226,7 +221,7 @@ namespace Dapper
                 var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
                 try
                 {
-                    foreach (var r in MultiMapImpl<TReturn>(null, default(CommandDefinition), types, map, splitOn, reader, identity, false))
+                    foreach (var r in MultiMapImpl<TReturn>(null, default, types, map, splitOn, reader, identity, false))
                     {
                         yield return r;
                     }
@@ -360,18 +355,9 @@ namespace Dapper
             {
                 try
                 {
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (index == gridIndex && reader.Read())
                     {
-                        object val = deserializer(reader);
-                        if (val == null || val is T)
-                        {
-                            yield return (T)val;
-                        }
-                        else
-                        {
-                            yield return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture);
-                        }
+                        yield return ConvertTo<T>(deserializer(reader));
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows
@@ -383,7 +369,7 @@ namespace Dapper
                 }
             }
 
-            private int gridIndex, readCount;
+            private int gridIndex; //, readCount;
             private readonly IParameterCallbacks callbacks;
 
             /// <summary>
@@ -400,7 +386,7 @@ namespace Dapper
             {
                 if (reader.NextResult())
                 {
-                    readCount++;
+                    // readCount++;
                     gridIndex++;
                     IsConsumed = false;
                 }
@@ -431,7 +417,16 @@ namespace Dapper
                     Command.Dispose();
                     Command = null;
                 }
+                GC.SuppressFinalize(this);
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private static T ConvertTo<T>(object value) => value switch
+            {
+                T typed => typed,
+                null or DBNull => default,
+                _ => (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T), CultureInfo.InvariantCulture),
+            };
         }
     }
 }

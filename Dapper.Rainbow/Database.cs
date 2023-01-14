@@ -45,7 +45,7 @@ namespace Dapper
             {
                 get
                 {
-                    tableName = tableName ?? database.DetermineTableName<T>(likelyTableName);
+                    tableName ??= database.DetermineTableName<T>(likelyTableName);
                     return tableName;
                 }
             }
@@ -142,7 +142,9 @@ namespace Dapper
                     foreach (var prop in o.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetGetMethod(false) != null))
                     {
                         var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
+#pragma warning disable IDE0019 // Use pattern matching - complex enough here
                         var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
+#pragma warning restore IDE0019 // Use pattern matching
                         if (attr == null || (!attr.Value))
                         {
                             paramNames.Add(prop.Name);
@@ -471,13 +473,14 @@ namespace Dapper
         /// </summary>
         public virtual void Dispose()
         {
-            if (_connection.State != ConnectionState.Closed)
+            var connection = _connection;
+            if (connection.State != ConnectionState.Closed)
             {
-                _transaction?.Rollback();
-
-                _connection.Close();
                 _connection = null;
+                _transaction = null;
+                connection?.Close();
             }
+            GC.SuppressFinalize(this);
         }
     }
 }

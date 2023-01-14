@@ -143,7 +143,7 @@ namespace Dapper.Tests.Performance
                     tests.Add(id => entityContext.Posts.First(p => p.Id == id), "Entity Framework Core");
 
                     var entityContext2 = new EFCoreContext(ConnectionString);
-                    tests.Add(id => entityContext2.Posts.FromSql("select * from Posts where Id = {0}", id).First(), "Entity Framework Core: FromSql");
+                    tests.Add(id => entityContext2.Posts.FromSqlRaw("select * from Posts where Id = {0}", id).First(), "Entity Framework Core: FromSql");
 
                     var entityContext3 = new EFCoreContext(ConnectionString);
                     tests.Add(id => entityContext3.Posts.AsNoTracking().First(p => p.Id == id), "Entity Framework Core: No Tracking");

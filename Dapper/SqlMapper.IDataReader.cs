@@ -138,7 +138,7 @@ namespace Dapper
         public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            concreteType = concreteType ?? typeof(T);
+            concreteType ??= typeof(T);
             var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
             if (concreteType.IsValueType)
             {
