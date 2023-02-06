@@ -220,7 +220,7 @@ namespace Dapper.Tests
             // List paths
             var list = connection.Query<int?>(sql);
             Assert.Null(Assert.Single(list));
-            list = await connection.QueryAsync<int?>(sql);
+            list = await connection.QueryAsync<int?>(sql).ToListAsync();
             Assert.Null(Assert.Single(list));
 
             // Single row paths
@@ -247,7 +247,7 @@ namespace Dapper.Tests
                 ex = Assert.Throws<DataException>(() => connection.QuerySingleOrDefault<T>(sql));
                 Assert.Equal(exception, ex.Message);
 
-                ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryAsync<T>(sql));
+                ex = await Assert.ThrowsAsync<DataException>(async () => await connection.QueryAsync<T>(sql).ToListAsync());
                 Assert.Equal(exception, ex.Message);
                 ex = await Assert.ThrowsAsync<DataException>(() => connection.QueryFirstAsync<T>(sql));
                 Assert.Equal(exception, ex.Message);
@@ -1237,8 +1237,10 @@ create table TPTable (Pid int not null primary key identity(1,1), Value int not 
 insert TPTable (Value) values (2), (568)");
 
             // fetch the data using the query in the question, then force to a dictionary
-            var rows = (await connection.QueryAsync<TPTable>("select * from TPTable").ConfigureAwait(false))
-                .ToDictionary(x => x.Pid);
+            var rows = 
+                await connection.QueryAsync<TPTable>("select * from TPTable")
+                .ToDictionaryAsync(x => x.Pid)
+                .ConfigureAwait(false);
 
             // check the number of rows
             Assert.Equal(2, rows.Count);

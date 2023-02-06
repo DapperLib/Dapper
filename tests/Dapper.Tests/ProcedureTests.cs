@@ -277,7 +277,8 @@ namespace Dapper.Tests
                 end
             end
             
-            exec {tempSPName}");
+            exec {tempSPName}")
+                .ToListAsync();
 
             Assert.Empty(result);
         }

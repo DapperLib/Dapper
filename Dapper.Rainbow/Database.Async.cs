@@ -26,7 +26,7 @@ namespace Dapper
                 string colsParams = string.Join(",", paramNames.Select(p => "@" + p));
                 var sql = "set nocount on insert " + TableName + " (" + cols + ") values (" + colsParams + ") select cast(scope_identity() as int)";
 
-                return (await database.QueryAsync<int?>(sql, o).ConfigureAwait(false)).Single();
+                return await database.QueryAsync<int?>(sql, o).SingleAsync().ConfigureAwait(false);
             }
 
             /// <summary>
@@ -77,7 +77,7 @@ namespace Dapper
             /// Asynchronously gets the all rows from this table.
             /// </summary>
             /// <returns>Data from all table rows.</returns>
-            public Task<IEnumerable<T>> AllAsync() =>
+            public IAsyncEnumerable<T> AllAsync() =>
                 database.QueryAsync<T>("select * from " + TableName);
         }
 
@@ -97,7 +97,7 @@ namespace Dapper
         /// <param name="sql">The SQL to execute.</param>
         /// <param name="param">The parameters to use.</param>
         /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
-        public Task<IEnumerable<T>> QueryAsync<T>(string sql, dynamic param = null) =>
+        public IAsyncEnumerable<T> QueryAsync<T>(string sql, dynamic param = null) =>
             _connection.QueryAsync<T>(sql, param as object, _transaction, _commandTimeout);
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace Dapper
         /// <param name="sql">The SQL to execute.</param>
         /// <param name="param">The parameters to use.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public Task<IEnumerable<dynamic>> QueryAsync(string sql, dynamic param = null) =>
+        public IAsyncEnumerable<dynamic> QueryAsync(string sql, dynamic param = null) =>
             _connection.QueryAsync(sql, param as object, _transaction);
 
         /// <summary>

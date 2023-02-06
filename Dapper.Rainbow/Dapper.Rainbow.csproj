@@ -6,17 +6,18 @@
     <Description>Trivial micro-orm implemented on Dapper, provides with CRUD helpers.</Description>
     <Authors>Sam Saffron</Authors>
     <Copyright>2017 Sam Saffron</Copyright>
-    <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
+    <TargetFrameworks>net48;netstandard2.1;net5.0</TargetFrameworks>
     <!-- TODO: Docs -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 </Project>

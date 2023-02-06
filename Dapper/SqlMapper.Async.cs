@@ -22,7 +22,7 @@ namespace Dapper
         /// <param name="commandTimeout">The command timeout (in seconds).</param>
         /// <param name="commandType">The type of command to execute.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<dynamic> QueryAsync(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
             QueryAsync<dynamic>(cnn, typeof(DapperRow), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default));
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="command">The command used to query on this connection.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-        public static Task<IEnumerable<dynamic>> QueryAsync(this IDbConnection cnn, CommandDefinition command) =>
+        public static IAsyncEnumerable<dynamic> QueryAsync(this IDbConnection cnn, CommandDefinition command) =>
             QueryAsync<dynamic>(cnn, typeof(DapperRow), command);
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace Dapper
         /// A sequence of data of <typeparamref name="T"/>; if a basic type (int, string, etc) is queried then the data from the first column is assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
+        public static IAsyncEnumerable<T> QueryAsync<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
             QueryAsync<T>(cnn, typeof(T), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default));
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace Dapper
         /// <param name="commandTimeout">The command timeout (in seconds).</param>
         /// <param name="commandType">The type of command to execute.</param>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-        public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        public static IAsyncEnumerable<object> QueryAsync(this IDbConnection cnn, Type type, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             return QueryAsync<object>(cnn, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default));
@@ -279,7 +279,7 @@ namespace Dapper
         /// A sequence of data of <typeparamref name="T"/>; if a basic type (int, string, etc) is queried then the data from the first column is assumed, otherwise an instance is
         /// created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
         /// </returns>
-        public static Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
+        public static IAsyncEnumerable<T> QueryAsync<T>(this IDbConnection cnn, CommandDefinition command) =>
             QueryAsync<T>(cnn, typeof(T), command);
 
         /// <summary>
@@ -288,7 +288,7 @@ namespace Dapper
         /// <param name="cnn">The connection to query on.</param>
         /// <param name="type">The type to return.</param>
         /// <param name="command">The command used to query on this connection.</param>
-        public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
+        public static IAsyncEnumerable<object> QueryAsync(this IDbConnection cnn, Type type, CommandDefinition command) =>
             QueryAsync<object>(cnn, type, command);
 
         /// <summary>
@@ -403,7 +403,7 @@ namespace Dapper
             }
         }
 
-        private static async Task<IEnumerable<T>> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
+        private static async IAsyncEnumerable<T> QueryAsync<T>(this IDbConnection cnn, Type effectiveType, CommandDefinition command)
         {
             object param = command.Parameters;
             var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType());
@@ -412,6 +412,7 @@ namespace Dapper
             var cancel = command.CancellationToken;
             using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
             DbDataReader reader = null;
+
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
@@ -422,7 +423,7 @@ namespace Dapper
                 if (tuple.Func == null || tuple.Hash != hash)
                 {
                     if (reader.FieldCount == 0)
-                        return Enumerable.Empty<T>();
+                        yield break;
                     tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
@@ -433,27 +434,52 @@ namespace Dapper
                 {
                     var buffer = new List<T>();
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                    while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+
+#if (NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+                    await using (reader)
+#else
+                    using (reader)
+#endif
                     {
-                        object val = func(reader);
-                        buffer.Add(GetValue<T>(reader, effectiveType, val));
+                        while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                        {
+                            object val = func(reader);
+                            buffer.Add(GetValue<T>(reader, effectiveType, val));
+                        }
+                        while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
                     }
-                    while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+
+                    reader = null;
                     command.OnCompleted();
-                    return buffer;
+                    if (wasClosed)
+                    {
+                        cnn.Close();
+                        wasClosed = false;
+                    }
+
+                    foreach (var item in buffer)
+                    {
+                        yield return item;
+                    }
                 }
                 else
                 {
-                    // can't use ReadAsync / cancellation; but this will have to do
-                    wasClosed = false; // don't close if handing back an open reader; rely on the command-behavior
-                    var deferred = ExecuteReaderSync<T>(reader, func, command.Parameters);
-                    reader = null; // to prevent it being disposed before the caller gets to see it
-                    return deferred;
+                    while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    {
+                        object val = func(reader);
+                        yield return GetValue<T>(reader, effectiveType, val);
+                    }
+                    while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+                    command.OnCompleted();
                 }
             }
             finally
             {
+#if (NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+                await using (reader) { /* dispose if non-null */ }
+#else
                 using (reader) { /* dispose if non-null */ }
+#endif
                 if (wasClosed) cnn.Close();
             }
         }
