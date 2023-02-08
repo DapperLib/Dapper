@@ -246,8 +246,10 @@ namespace Dapper.Tests
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
             {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                var first = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                Assert.Equal(1, first);
+                var second = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                Assert.Equal(2, second);
             }
         }
 
@@ -256,8 +258,10 @@ namespace Dapper.Tests
         {
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2").ConfigureAwait(false))
             {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                var first = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                Assert.Equal(1, first);
+                var second = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                Assert.Equal(2, second);
             }
         }
 
@@ -267,9 +271,11 @@ namespace Dapper.Tests
             using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
             {
                 Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                var second = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                Assert.Equal(2, second);
                 Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+                var fourth = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                Assert.Equal(4, fourth);
                 Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
             }
         }
@@ -281,8 +287,8 @@ namespace Dapper.Tests
             {
                 using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
                 {
-                    Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                    Assert.Equal(1, await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false));
+                    Assert.Equal(2, await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false));
                 }
             }
         }
@@ -295,9 +301,11 @@ namespace Dapper.Tests
                 using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
                 {
                     Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+                    var second = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                    Assert.Equal(2, second);
                     Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                    Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+                    var fourth = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                    Assert.Equal(4, fourth);
                     Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
                 }
             }
@@ -691,8 +699,8 @@ select 42
 select 17
 SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             {
-                x = multi.ReadAsync<int>().Result.Single();
-                y = multi.ReadAsync<int>().Result.Single();
+                x = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
+                y = await multi.ReadAsync<int>().SingleAsync().ConfigureAwait(false);
             }
 
             Assert.Equal("grillmaster", bob.Occupation);

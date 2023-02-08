@@ -25,7 +25,7 @@ namespace Dapper
             /// </summary>
             /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
             /// <param name="buffered">Whether to buffer the results.</param>
-            public Task<IEnumerable<dynamic>> ReadAsync(bool buffered = true) => ReadAsyncImpl<dynamic>(typeof(DapperRow), buffered);
+            public IAsyncEnumerable<dynamic> ReadAsync(bool buffered = true) => ReadAsyncImpl<dynamic>(typeof(DapperRow), buffered);
 
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object
@@ -57,7 +57,7 @@ namespace Dapper
             /// <param name="type">The type to read.</param>
             /// <param name="buffered">Whether to buffer the results.</param>
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-            public Task<IEnumerable<object>> ReadAsync(Type type, bool buffered = true)
+            public IAsyncEnumerable<object> ReadAsync(Type type, bool buffered = true)
             {
                 if (type == null) throw new ArgumentNullException(nameof(type));
                 return ReadAsyncImpl<object>(type, buffered);
@@ -112,7 +112,7 @@ namespace Dapper
             /// </summary>
             /// <typeparam name="T">The type to read.</typeparam>
             /// <param name="buffered">Whether the results should be buffered in memory.</param>
-            public Task<IEnumerable<T>> ReadAsync<T>(bool buffered = true) => ReadAsyncImpl<T>(typeof(T), buffered);
+            public IAsyncEnumerable<T> ReadAsync<T>(bool buffered = true) => ReadAsyncImpl<T>(typeof(T), buffered);
 
             /// <summary>
             /// Read an individual row of the next grid of results.
@@ -157,7 +157,7 @@ namespace Dapper
                 }
             }
 
-            private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
+            private async IAsyncEnumerable<T> ReadAsyncImpl<T>(Type type, bool buffered)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
@@ -172,15 +172,58 @@ namespace Dapper
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
-                if (buffered && reader is DbDataReader)
+                if(reader is DbDataReader dbDataReader)
                 {
-                    return ReadBufferedAsync<T>(gridIndex, deserializer.Func);
+                    var index = gridIndex;
+                    if (buffered)
+                    {
+                        var buffer = new List<T>();
+                        try
+                        {
+                            while (index == gridIndex && await dbDataReader.ReadAsync(cancel).ConfigureAwait(false))
+                            {
+                                buffer.Add(ConvertTo<T>(deserializer.Func(dbDataReader)));
+                            }
+                        }
+                        finally // finally so that First etc progresses things even when multiple rows
+                        {
+                            if (index == gridIndex)
+                            {
+                                await NextResultAsync().ConfigureAwait(false);
+                            }
+                        }
+
+                        foreach (var item in buffer)
+                        {
+                            yield return item;
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            while (index == gridIndex && await dbDataReader.ReadAsync(cancel).ConfigureAwait(false))
+                            {
+                                yield return ConvertTo<T>(deserializer.Func(dbDataReader));
+                            }
+                        }
+                        finally // finally so that First etc progresses things even when multiple rows
+                        {
+                            if (index == gridIndex)
+                            {
+                                await NextResultAsync().ConfigureAwait(false);
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                    if (buffered) result = result?.ToList(); // for the "not a DbDataReader" scenario
-                    return Task.FromResult(result);
+                    if (buffered) result = result?.ToList();
+                    foreach (var item in result)
+                    {
+                        yield return item;
+                    }
                 }
             }
 
@@ -223,27 +266,6 @@ namespace Dapper
                 }
                 await NextResultAsync().ConfigureAwait(false);
                 return result;
-            }
-
-            private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer)
-            {
-                try
-                {
-                    var reader = (DbDataReader)this.reader;
-                    var buffer = new List<T>();
-                    while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
-                    {
-                        buffer.Add(ConvertTo<T>(deserializer(reader)));
-                    }
-                    return buffer;
-                }
-                finally // finally so that First etc progresses things even when multiple rows
-                {
-                    if (index == gridIndex)
-                    {
-                        await NextResultAsync().ConfigureAwait(false);
-                    }
-                }
             }
         }
     }
