@@ -1120,7 +1120,6 @@ namespace PetaPoco
                 // Build column list for automatic select
                 QueryColumns = string.Join(", ", (from c in Columns where !c.Value.ResultColumn select c.Key).ToArray());
             }
-
             // Create factory function that can convert a IDataReader record into a POCO
             public Func<IDataReader, T> GetFactory<T>(string key, bool ForceDateTimesToUtc, IDataReader r)
             {
@@ -1133,18 +1132,20 @@ namespace PetaPoco
                     lock (m_Converters)
                     {
                         // Create the method
-                        var m = new DynamicMethod("petapoco_factory_" + PocoFactories.Count.ToString(), typeof(T), new Type[] { typeof(IDataReader) }, true);
-                        var il = m.GetILGenerator();
-
+                        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString()), AssemblyBuilderAccess.RunAndCollect);
+                        var moduleBuilder = assemblyBuilder.DefineDynamicModule("DynamicModule");
+                        var typeBuilder = moduleBuilder.DefineType("DynamicType", TypeAttributes.Public);
+                        var methodBuilder = typeBuilder.DefineMethod("petapoco_factory_" + PocoFactories.Count.ToString(), MethodAttributes.Public | MethodAttributes.Static, typeof(T), new Type[] { typeof(IDataReader) });
+                        var ilGenerator = methodBuilder.GetILGenerator();
                         // Running under mono?
                         int p = (int)Environment.OSVersion.Platform;
                         bool Mono = (p == 4) || (p == 6) || (p == 128);
 
                         // var poco=new T()
-                        il.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes));
-
+                        ilGenerator.Emit(OpCodes.Newobj, typeof(T).GetConstructor(Type.EmptyTypes));
+                        var numberOfFields = 4;
                         // Enumerate all fields generating a set assignment for the column
-                        for (int i = 0; i < r.FieldCount; i++)
+                        for (int i = 0; i < r.FieldCount && i < numberOfFields; i++)
                         {
                             // Get the PocoColumn for this db column, ignore if not known
                             if (!Columns.TryGetValue(r.GetName(i), out PocoColumn pc))
@@ -1155,13 +1156,13 @@ namespace PetaPoco
                             var dstType = pc.PropertyInfo.PropertyType;
 
                             // "if (!rdr.IsDBNull(i))"
-                            il.Emit(OpCodes.Ldarg_0);                                       // poco,rdr
-                            il.Emit(OpCodes.Ldc_I4, i);                                     // poco,rdr,i
-                            il.Emit(OpCodes.Callvirt, fnIsDBNull);                          // poco,bool
-                            var lblNext = il.DefineLabel();
-                            il.Emit(OpCodes.Brtrue_S, lblNext);                             // poco
+                            ilGenerator.Emit(OpCodes.Ldarg_0);                                       // poco,rdr
+                            ilGenerator.Emit(OpCodes.Ldc_I4, i);                                     // poco,rdr,i
+                            ilGenerator.Emit(OpCodes.Callvirt, fnIsDBNull);                          // poco,bool
+                            var lblNext = ilGenerator.DefineLabel();
+                            ilGenerator.Emit(OpCodes.Brtrue_S, lblNext);                             // poco
 
-                            il.Emit(OpCodes.Dup);                                           // poco,poco
+                            ilGenerator.Emit(OpCodes.Dup);                                           // poco,poco
 
                             // Do we need to install a converter?
                             Func<object, object> converter = null;
@@ -1193,17 +1194,17 @@ namespace PetaPoco
                                         && valuegetter.ReturnType == srcType
                                         && (valuegetter.ReturnType == dstType || valuegetter.ReturnType == Nullable.GetUnderlyingType(dstType)))
                                 {
-                                    il.Emit(OpCodes.Ldarg_0);                                       // *,rdr
-                                    il.Emit(OpCodes.Ldc_I4, i);                                     // *,rdr,i
-                                    il.Emit(OpCodes.Callvirt, valuegetter);                         // *,value
+                                    ilGenerator.Emit(OpCodes.Ldarg_0);                                       // *,rdr
+                                    ilGenerator.Emit(OpCodes.Ldc_I4, i);                                     // *,rdr,i
+                                    ilGenerator.Emit(OpCodes.Callvirt, valuegetter);                         // *,value
 
                                     // Mono give IL error if we don't explicitly create Nullable instance for the assignment
                                     if (Mono && Nullable.GetUnderlyingType(dstType) != null)
                                     {
-                                        il.Emit(OpCodes.Newobj, dstType.GetConstructor(new Type[] { Nullable.GetUnderlyingType(dstType) }));
+                                        ilGenerator.Emit(OpCodes.Newobj, dstType.GetConstructor(new Type[] { Nullable.GetUnderlyingType(dstType) }));
                                     }
 
-                                    il.Emit(OpCodes.Callvirt, pc.PropertyInfo.GetSetMethod());      // poco
+                                    ilGenerator.Emit(OpCodes.Callvirt, pc.PropertyInfo.GetSetMethod());      // poco
                                     Handled = true;
                                 }
                             }
@@ -1220,32 +1221,34 @@ namespace PetaPoco
                                     m_Converters.Add(converter);
 
                                     // Generate IL to push the converter onto the stack
-                                    il.Emit(OpCodes.Ldsfld, fldConverters);
-                                    il.Emit(OpCodes.Ldc_I4, converterIndex);
-                                    il.Emit(OpCodes.Callvirt, fnListGetItem);                   // Converter
+                                    ilGenerator.Emit(OpCodes.Ldsfld, fldConverters);
+                                    ilGenerator.Emit(OpCodes.Ldc_I4, converterIndex);
+                                    ilGenerator.Emit(OpCodes.Callvirt, fnListGetItem);                   // Converter
                                 }
 
                                 // "value = rdr.GetValue(i)"
-                                il.Emit(OpCodes.Ldarg_0);                                       // *,rdr
-                                il.Emit(OpCodes.Ldc_I4, i);                                     // *,rdr,i
-                                il.Emit(OpCodes.Callvirt, fnGetValue);                          // *,value
+                                ilGenerator.Emit(OpCodes.Ldarg_0);                                       // *,rdr
+                                ilGenerator.Emit(OpCodes.Ldc_I4, i);                                     // *,rdr,i
+                                ilGenerator.Emit(OpCodes.Callvirt, fnGetValue);                          // *,value
 
                                 // Call the converter
                                 if (converter != null)
-                                    il.Emit(OpCodes.Callvirt, fnInvoke);
+                                    ilGenerator.Emit(OpCodes.Callvirt, fnInvoke);
 
                                 // Assign it
-                                il.Emit(OpCodes.Unbox_Any, pc.PropertyInfo.PropertyType);       // poco,poco,value
-                                il.Emit(OpCodes.Callvirt, pc.PropertyInfo.GetSetMethod());      // poco
+                                ilGenerator.Emit(OpCodes.Unbox_Any, pc.PropertyInfo.PropertyType);       // poco,poco,value
+                                ilGenerator.Emit(OpCodes.Callvirt, pc.PropertyInfo.GetSetMethod());      // poco
                             }
 
-                            il.MarkLabel(lblNext);
+                            ilGenerator.MarkLabel(lblNext);
                         }
 
-                        il.Emit(OpCodes.Ret);
+                        ilGenerator.Emit(OpCodes.Ret);
 
                         // Cache it, return it
-                        var del = (Func<IDataReader, T>)m.CreateDelegate(typeof(Func<IDataReader, T>));
+                        var type = typeBuilder.CreateType();
+                        var methodInfo = type.GetMethod("petapoco_factory_" + PocoFactories.Count.ToString());
+                        var del = (Func<IDataReader, T>)methodInfo.CreateDelegate(typeof(Func<IDataReader, T>));
                         PocoFactories.Add(key, del);
                         return del;
                     }

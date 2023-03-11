@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Running;
 using System;
 using System.Data.SqlClient;
 using System.Linq;
@@ -45,7 +46,11 @@ namespace Dapper.Tests.Performance
             else
             {
                 WriteLine("Iterations: " + Config.Iterations);
+#if !DEBUG
                 new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new Config());
+#endif
+                new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new DebugInProcessConfig());
+
             }
         }
 

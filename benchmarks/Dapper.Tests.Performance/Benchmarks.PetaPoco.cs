@@ -17,6 +17,7 @@ namespace Dapper.Tests.Performance
             RegisterSqlFactory();
             _db = new Database(ConnectionString, "System.Data.SqlClient");
             _db.OpenSharedConnection();
+            _db.ForceDateTimesToUtc = false;
             _dbFast = new Database(ConnectionString, "System.Data.SqlClient");
             _dbFast.OpenSharedConnection();
             _dbFast.EnableAutoSelect = false;

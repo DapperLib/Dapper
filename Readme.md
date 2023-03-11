@@ -143,6 +143,11 @@ The benchmarks can be found in [Dapper.Tests.Performance](https://github.com/Dap
 ```bash
 dotnet run --project .\benchmarks\Dapper.Tests.Performance\ -c Release -f netcoreapp3.1 -- -f * --join
 ```
+or, if you want to run a specific benchmar, you can do so via:
+```bash
+dotnet run --project .\benchmarks\Dapper.Tests.Performance\ -c Release -f net6.0 -- --filter *PetaPocoBenchmarks* --join
+```
+
 Output from the latest run is:
 ``` ini
 BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19041.208 (2004/?/20H1)
