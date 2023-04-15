@@ -38,4 +38,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="ClickHouse.Client">
+      <Version>6.5.2</Version>
+    </PackageReference>
+  </ItemGroup>
 </Project>
