@@ -36,7 +36,7 @@ namespace Dapper.Tests.Providers
             }
         }
 
-        [Theory]
+        [TheoryClickHouse]
         [MemberData(nameof(SelectTestCases))]
         public void ShouldSelect(string sql, object expected) => Assert.Equal(expected, connection.ExecuteScalar(sql));
 
