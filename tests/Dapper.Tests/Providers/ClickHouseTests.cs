@@ -6,7 +6,9 @@ using System.Linq;
 using ClickHouse.Client.ADO;
 using Xunit;
 
-namespace Dapper.Tests
+#if NETCOREAPP3_1_OR_GREATER
+
+namespace Dapper.Tests.Providers
 {
     public class ClickHouseProvider : DatabaseProvider
     {
@@ -113,7 +115,7 @@ namespace Dapper.Tests
         {
             using (var conn = GetOpenNpgsqlConnection())
             {
-                DateTime now = DateTime.UtcNow;
+                var now = DateTime.UtcNow;
                 DateTime? nilA = now, nilB = null;
                 _ = conn.ExecuteScalar("SELECT @now, @nilA, @nilB::timestamp", new { now, nilA, nilB });
             }
@@ -144,3 +146,5 @@ namespace Dapper.Tests
         }
     }
 }
+
+#endif
