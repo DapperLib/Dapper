@@ -37,6 +37,10 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test
+      clickhouse:
+        image: clickhouse/clickhouse-server:latest
+        ports:
+          - 8123/tcp
     steps:
     - name: Checkout code
       uses: actions/checkout@v1
