@@ -66,6 +66,6 @@ jobs:
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         PostgesConnectionString: Server=localhost;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
-        ClickHouseConnectionString: Server=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default;Database=test
+        ClickHouseConnectionString: Server=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default
     - name: .NET Lib Pack
       run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true

@@ -16,7 +16,7 @@ namespace Dapper.Tests.Providers
         public override DbProviderFactory Factory { get; } = new ClickHouseConnectionFactory();
 
         public override string GetConnectionString() =>
-            GetConnectionString("ClickHouseConnectionString", "Server=localhost;Port=8123;Username=default;Database=test");
+            GetConnectionString("ClickHouseConnectionString", "Server=localhost;Port=8123;Username=default");
     }
 
     public class ClickHouseTests : TestBase<ClickHouseProvider>
