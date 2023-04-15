@@ -48,6 +48,13 @@ jobs:
         dotnet-version: |
           3.1.x
           5.x
+    - uses: actions/cache@v3
+      name: Cache NuGet packages
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
     - name: Checkout code
       uses: actions/checkout@v1
     - name: .NET Build
@@ -59,5 +66,6 @@ jobs:
         OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
         PostgesConnectionString: Server=localhost;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
         SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
+        ClickHouseConnectionString: Server=localhost;Port=${{ job.services.clickhouse.ports[8123] }};Username=default;Database=test
     - name: .NET Lib Pack
       run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
