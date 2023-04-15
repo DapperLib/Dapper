@@ -1,12 +1,12 @@
-﻿using System;
+﻿#if NETCOREAPP3_1_OR_GREATER
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
 using ClickHouse.Client.ADO;
 using Xunit;
-
-#if NETCOREAPP3_1_OR_GREATER
 
 namespace Dapper.Tests.Providers
 {
