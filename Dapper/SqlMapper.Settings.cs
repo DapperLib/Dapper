@@ -99,6 +99,11 @@ namespace Dapper
             /// instead of the original name; for most scenarios, this is ignored since the name is redundant, but "snowflake" requires this.
             /// </summary>
             public static bool UseIncrementalPseudoPositionalParameterNames { get; set; }
+
+            /// <summary>
+            /// Whether to persist an enum by its name (<see cref="Enum.ToString()"/>) instead of by its underlying numeric value.
+            /// </summary>
+            public static bool PersistEnumsByName { get; set; }
         }
     }
 }

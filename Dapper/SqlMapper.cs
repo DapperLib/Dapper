@@ -369,7 +369,10 @@ namespace Dapper
             if (nullUnderlyingType != null) type = nullUnderlyingType;
             if (type.IsEnum && !typeMap.ContainsKey(type))
             {
-                type = Enum.GetUnderlyingType(type);
+                if (Settings.PersistEnumsByName)
+                    type = typeof(string);
+                else
+                    type = Enum.GetUnderlyingType(type);
             }
             if (typeMap.TryGetValue(type, out var dbType))
             {
@@ -2247,6 +2250,9 @@ namespace Dapper
             if (value == null) return DBNull.Value;
             if (value is Enum)
             {
+                if (Settings.PersistEnumsByName)
+                    return value.ToString();
+                
                 TypeCode typeCode = value is IConvertible convertible
                     ? convertible.GetTypeCode()
                     : Type.GetTypeCode(Enum.GetUnderlyingType(value.GetType()));
@@ -2609,6 +2615,11 @@ namespace Dapper
                         {
                             // Nullable<SomeEnum>; we want to box as the underlying type; that's just *hard*; for
                             // simplicity, box as Nullable<SomeEnum> and call SanitizeParameterValue
+                            callSanitize = checkForNull = true;
+                        }
+                        else if (Settings.PersistEnumsByName)
+                        {
+                            // When PersistEnumsByName is true, SanitizeParameterValue calls ToString on an enum value.
                             callSanitize = checkForNull = true;
                         }
                         else

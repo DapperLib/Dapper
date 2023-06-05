@@ -24,6 +24,8 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 (note: new PRs will not be merged until they add release note wording here)
 
+- Add `Settings.PersistEnumsByName`, to support persisting an enum by its name (`Enum.ToString()`) instead of by its underlying value. (#1762 via bfriesen)
+
 ### 2.0.123
 
 - Parameters can now be re-used on subsequent commands (#952 via jamescrowley)
