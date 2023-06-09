@@ -22,6 +22,10 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
+(note: new PRs will not be merged until they add release note wording here)
+
+### 2.0.138
+
 - (#1910 via mgravell, fix #1907, #1263)
   - add support for `SqlDecimal` and other types that need to be accessed via `DbDataReader.GetFieldValue<T>`
   - add an overload of `AddTypeMap` that supports `DbDataReader.GetFieldValue<T>` for additional types
@@ -29,8 +33,6 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 - (#1912 via mgravell)
   - add missing `AsyncEnumerable<T> QueryUnbufferedAsync<T>(...)` and `GridReader.ReadUnbufferedAsync<T>(...)` APIs (.NET 5 and later)
   - implement `IAsyncDisposable` on `GridReader` (.NET 5 and later)
-
-(note: new PRs will not be merged until they add release note wording here)
 
 ### 2.0.123
 
