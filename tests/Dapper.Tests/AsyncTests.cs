@@ -63,7 +63,7 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestBasicStringUsageUnbufferedAsync_Cancellation()
         {
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             var results = new List<string>();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
             {
@@ -76,6 +76,50 @@ namespace Dapper.Tests
             });
             var arr = results.ToArray();
             Assert.Equal(new[] { "abc" }, arr); // we don't expect the "def" because of the cancellation
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageViaGridReaderUnbufferedAsync()
+        {
+            var results = new List<string>();
+            await using (var grid = connection.QueryMultiple("select 'abc' union select 'def'; select @txt", new { txt = "ghi" }))
+            {
+                while (!grid.IsConsumed)
+                {
+                    await foreach (var value in grid.ReadUnbufferedAsync<string>()
+                        .ConfigureAwait(false))
+                    {
+                        results.Add(value);
+                    }
+                }
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def", "ghi" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageViaGridReaderUnbufferedAsync_Cancellation()
+        {
+            using var cts = new CancellationTokenSource();
+            var results = new List<string>();
+            await using (var grid = connection.QueryMultiple("select 'abc' union select 'def'; select @txt", new { txt = "ghi" }))
+            {
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+                {
+                    while (!grid.IsConsumed)
+                    {
+                        await foreach (var value in grid.ReadUnbufferedAsync<string>()
+                            .ConfigureAwait(false)
+                            .WithCancellation(cts.Token))
+                        {
+                            results.Add(value);
+                        }
+                        cts.Cancel();
+                    }
+                });
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr); // don't expect the ghi because of cancellation
         }
 
         [Fact]
