@@ -197,7 +197,7 @@ namespace Dapper
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, TypeMapEntry>(21)
+            typeMap = new Dictionary<Type, TypeMapEntry>(41)
             {
                 [typeof(byte)] = DbType.Byte,
                 [typeof(sbyte)] = DbType.SByte,
