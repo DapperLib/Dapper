@@ -22,11 +22,13 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
-- add support for `SqlDecimal` and other types that need to be accessed via `DbDataReader.GetFieldValue<T>`
-- add an overload of `AddTypeMap` that supports `DbDataReader.GetFieldValue<T>` for additional types
-- acknowledge that in reality we only support `DbDataReader`; this has been true (via `DbConnection`) for `async` forever
-- add missing `AsyncEnumerable<T> QueryUnbufferedAsync<T>(...)` and `GridReader.ReadUnbufferedAsync<T>(...)` APIs (.NET 5 and later)
-- implement `IAsyncDisposable` on `GridReader` (.NET 5 and later)
+- (#1910 via mgravell, fix #1907, #1263)
+  - add support for `SqlDecimal` and other types that need to be accessed via `DbDataReader.GetFieldValue<T>`
+  - add an overload of `AddTypeMap` that supports `DbDataReader.GetFieldValue<T>` for additional types
+  - acknowledge that in reality we only support `DbDataReader`; this has been true (via `DbConnection`) for `async` forever
+- (#1912 via mgravell)
+  - add missing `AsyncEnumerable<T> QueryUnbufferedAsync<T>(...)` and `GridReader.ReadUnbufferedAsync<T>(...)` APIs (.NET 5 and later)
+  - implement `IAsyncDisposable` on `GridReader` (.NET 5 and later)
 
 (note: new PRs will not be merged until they add release note wording here)
 
