@@ -81,7 +81,8 @@ namespace Dapper.Tests
         public async Task TestBasicStringUsageViaGridReaderUnbufferedAsync()
         {
             var results = new List<string>();
-            await using (var grid = connection.QueryMultiple("select 'abc' union select 'def'; select @txt", new { txt = "ghi" }))
+            await using (var grid = await connection.QueryMultipleAsync("select 'abc' union select 'def'; select @txt", new { txt = "ghi" })
+                .ConfigureAwait(false))
             {
                 while (!grid.IsConsumed)
                 {
@@ -101,7 +102,8 @@ namespace Dapper.Tests
         {
             using var cts = new CancellationTokenSource();
             var results = new List<string>();
-            await using (var grid = connection.QueryMultiple("select 'abc' union select 'def'; select @txt", new { txt = "ghi" }))
+            await using (var grid = await connection.QueryMultipleAsync("select 'abc' union select 'def'; select @txt", new { txt = "ghi" })
+                .ConfigureAwait(false))
             {
                 await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
                 {
