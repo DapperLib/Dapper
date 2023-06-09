@@ -96,7 +96,7 @@ namespace Dapper.Tests
         [Fact]
         public void DiscriminatedUnion_IDataReader()
         {
-            List<Discriminated_BaseType> result = new List<Discriminated_BaseType>();
+            var result = new List<Discriminated_BaseType>();
             using (var reader = connection.ExecuteReader(@"
 select 'abc' as Name, 1 as Type, 3.0 as Value
 union all
@@ -137,7 +137,7 @@ select 'def' as Name, 2 as Type, 4.0 as Value"))
         [Fact]
         public void DiscriminatedUnion_DbDataReader()
         {
-            List<Discriminated_BaseType> result = new List<Discriminated_BaseType>();
+            var result = new List<Discriminated_BaseType>();
             using (var reader = Assert.IsAssignableFrom<DbDataReader>(connection.ExecuteReader(@"
 select 'abc' as Name, 1 as Type, 3.0 as Value
 union all
