@@ -1286,7 +1286,6 @@ namespace Dapper
                     if (reader is not null)
                     {
                         await reader.DisposeAsync();
-                        reader.Dispose();
                     }
                     if (wasClosed) cnn.Close();
                 }
