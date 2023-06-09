@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +12,9 @@ namespace Dapper
     public static partial class SqlMapper
     {
         public partial class GridReader
+#if NET5_0_OR_GREATER
+            : IAsyncDisposable
+#endif
         {
             private readonly CancellationToken cancel;
             internal GridReader(IDbCommand command, DbDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
@@ -140,7 +143,7 @@ namespace Dapper
 
             private async Task NextResultAsync()
             {
-                if (await ((DbDataReader)reader).NextResultAsync(cancel).ConfigureAwait(false))
+                if (await reader.NextResultAsync(cancel).ConfigureAwait(false))
                 {
                     // readCount++;
                     gridIndex++;
@@ -150,14 +153,37 @@ namespace Dapper
                 {
                     // happy path; close the reader cleanly - no
                     // need for "Cancel" etc
+#if NET5_0_OR_GREATER
+                    await reader.DisposeAsync();
+#else
                     reader.Dispose();
+#endif
                     reader = null;
                     callbacks?.OnCompleted();
+#if NET5_0_OR_GREATER
+                    await DisposeAsync();
+#else
                     Dispose();
+#endif
                 }
             }
 
             private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
+            {
+                var deserializer = ValidateAndMarkConsumed(type);
+                if (buffered)
+                {
+                    return ReadBufferedAsync<T>(gridIndex, deserializer);
+                }
+                else
+                {
+                    var result = ReadDeferred<T>(gridIndex, deserializer, type);
+                    if (buffered) result = result?.ToList(); // for the "not a DbDataReader" scenario
+                    return Task.FromResult(result);
+                }
+            }
+
+            private Func<DbDataReader, object> ValidateAndMarkConsumed(Type type)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
@@ -172,27 +198,10 @@ namespace Dapper
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
-                if (buffered && reader is DbDataReader)
-                {
-                    return ReadBufferedAsync<T>(gridIndex, deserializer.Func);
-                }
-                else
-                {
-                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                    if (buffered) result = result?.ToList(); // for the "not a DbDataReader" scenario
-                    return Task.FromResult(result);
-                }
+                return deserializer.Func;
             }
 
-            private Task<T> ReadRowAsyncImpl<T>(Type type, Row row)
-            {
-                if (reader is DbDataReader dbReader) return ReadRowAsyncImplViaDbReader<T>(dbReader, type, row);
-
-                // no async API available; use non-async and fake it
-                return Task.FromResult(ReadRow<T>(type, row));
-            }
-
-            private async Task<T> ReadRowAsyncImplViaDbReader<T>(DbDataReader reader, Type type, Row row)
+            private async Task<T> ReadRowAsyncImpl<T>(Type type, Row row)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
@@ -229,7 +238,6 @@ namespace Dapper
             {
                 try
                 {
-                    var reader = (DbDataReader)this.reader;
                     var buffer = new List<T>();
                     while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
@@ -245,6 +253,64 @@ namespace Dapper
                     }
                 }
             }
+
+#if NET5_0_OR_GREATER
+            /// <summary>
+            /// Read the next grid of results.
+            /// </summary>
+            /// <typeparam name="T">The type to read.</typeparam>
+            public IAsyncEnumerable<T> ReadUnbufferedAsync<T>() => ReadAsyncUnbufferedImpl<T>(typeof(T));
+
+            private IAsyncEnumerable<T> ReadAsyncUnbufferedImpl<T>(Type type)
+            {
+                var deserializer = ValidateAndMarkConsumed(type);
+                return ReadUnbufferedAsync<T>(gridIndex, deserializer, cancel);
+            }
+
+            private async IAsyncEnumerable<T> ReadUnbufferedAsync<T>(int index, Func<DbDataReader, object> deserializer, [EnumeratorCancellation] CancellationToken cancel)
+            {
+                try
+                {
+                    while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    {
+                        yield return ConvertTo<T>(deserializer(reader));
+                    }
+                }
+                finally // finally so that First etc progresses things even when multiple rows
+                {
+                    if (index == gridIndex)
+                    {
+                        await NextResultAsync().ConfigureAwait(false);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Dispose the grid, closing and disposing both the underlying reader and command.
+            /// </summary>
+            public async ValueTask DisposeAsync()
+            {
+                if (reader != null)
+                {
+                    if (!reader.IsClosed) Command?.Cancel();
+                    await reader.DisposeAsync();
+                    reader = null;
+                }
+                if (Command != null)
+                {
+                    if (Command is DbCommand typed)
+                    {
+                        await typed.DisposeAsync();
+                    }
+                    else
+                    {
+                        Command.Dispose();
+                    }
+                    Command = null;
+                }
+                GC.SuppressFinalize(this);
+            }
+#endif
         }
     }
 }
