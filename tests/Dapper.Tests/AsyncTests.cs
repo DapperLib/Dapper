@@ -7,6 +7,8 @@ using System.Threading;
 using Xunit;
 using System.Data.Common;
 using Xunit.Abstractions;
+using System.Collections.Generic;
+using Org.BouncyCastle.Crypto.Signers;
 
 namespace Dapper.Tests
 {
@@ -43,6 +45,37 @@ namespace Dapper.Tests
             var query = await connection.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
             var arr = query.ToArray();
             Assert.Equal(new[] { "abc", "def" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageUnbufferedAsync()
+        {
+            var results = new List<string>();
+            await foreach (var value in connection.QueryUnbufferedAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" })
+                .ConfigureAwait(false))
+            {
+                results.Add(value);
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageUnbufferedAsync_Cancellation()
+        {
+            var cts = new CancellationTokenSource();
+            var results = new List<string>();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var value in connection.QueryUnbufferedAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" })
+                    .ConfigureAwait(false).WithCancellation(cts.Token))
+                {
+                    results.Add(value);
+                    cts.Cancel(); // cancel after first item
+                }
+            });
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc" }, arr); // we don't expect the "def" because of the cancellation
         }
 
         [Fact]
