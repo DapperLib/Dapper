@@ -170,20 +170,20 @@ namespace Dapper
 
             private Task<IEnumerable<T>> ReadAsyncImpl<T>(Type type, bool buffered)
             {
-                DeserializerState deserializer = ValidateAndMarkConsumed(type);
+                var deserializer = ValidateAndMarkConsumed(type);
                 if (buffered)
                 {
-                    return ReadBufferedAsync<T>(gridIndex, deserializer.Func);
+                    return ReadBufferedAsync<T>(gridIndex, deserializer);
                 }
                 else
                 {
-                    var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
+                    var result = ReadDeferred<T>(gridIndex, deserializer, type);
                     if (buffered) result = result?.ToList(); // for the "not a DbDataReader" scenario
                     return Task.FromResult(result);
                 }
             }
 
-            private DeserializerState ValidateAndMarkConsumed(Type type)
+            private Func<DbDataReader, object> ValidateAndMarkConsumed(Type type)
             {
                 if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
@@ -198,13 +198,13 @@ namespace Dapper
                     cache.Deserializer = deserializer;
                 }
                 IsConsumed = true;
-                return deserializer;
+                return deserializer.Func;
             }
 
             private IAsyncEnumerable<T> ReadAsyncUnbufferedImpl<T>(Type type)
             {
-                DeserializerState deserializer = ValidateAndMarkConsumed(type);
-                return ReadUnbufferedAsync<T>(gridIndex, deserializer.Func, cancel);
+                var deserializer = ValidateAndMarkConsumed(type);
+                return ReadUnbufferedAsync<T>(gridIndex, deserializer, cancel);
             }
 
             private async IAsyncEnumerable<T> ReadUnbufferedAsync<T>(int index, Func<DbDataReader, object> deserializer, [EnumeratorCancellation] CancellationToken cancel)
