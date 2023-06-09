@@ -1,14 +1,13 @@
-﻿using System.Linq;
-using System.Data;
-using System.Diagnostics;
-using System;
-using System.Threading.Tasks;
-using System.Threading;
-using Xunit;
-using System.Data.Common;
-using Xunit.Abstractions;
+﻿using System;
 using System.Collections.Generic;
-using Org.BouncyCastle.Crypto.Signers;
+using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Dapper.Tests
 {
