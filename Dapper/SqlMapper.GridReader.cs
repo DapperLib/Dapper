@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Data.Common;
-using System.Threading.Tasks;
+using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Dapper
 {
@@ -421,43 +420,6 @@ namespace Dapper
                 }
                 GC.SuppressFinalize(this);
             }
-
-#if NET5_0_OR_GREATER
-            /// <summary>
-            /// Dispose the grid, closing and disposing both the underlying reader and command.
-            /// </summary>
-            public async ValueTask DisposeAsync()
-            {
-                if (reader != null)
-                {
-                    if (!reader.IsClosed) Command?.Cancel();
-                    await reader.DisposeAsync();
-                    reader = null;
-                }
-                if (Command != null)
-                {
-                    if (Command is DbCommand typed)
-                    {
-                        await typed.DisposeAsync();
-                    }
-                    else
-                    {
-                        Command.Dispose();
-                    }
-                    Command = null;
-                }
-                GC.SuppressFinalize(this);
-            }
-#else
-            /// <summary>
-            /// Dispose the grid, closing and disposing both the underlying reader and command.
-            /// </summary>
-            public ValueTask DisposeAsync()
-            {
-                Dispose();
-                return default;
-            }
-#endif
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private static T ConvertTo<T>(object value) => value switch
