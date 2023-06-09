@@ -14,7 +14,7 @@ namespace Dapper
         public partial class GridReader
         {
             private readonly CancellationToken cancel;
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
+            internal GridReader(IDbCommand command, DbDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
                 : this(command, reader, identity, dynamicParams, addToCache)
             {
                 this.cancel = cancel;
@@ -225,7 +225,7 @@ namespace Dapper
                 return result;
             }
 
-            private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<IDataReader, object> deserializer)
+            private async Task<IEnumerable<T>> ReadBufferedAsync<T>(int index, Func<DbDataReader, object> deserializer)
             {
                 try
                 {

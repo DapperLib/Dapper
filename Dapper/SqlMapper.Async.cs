@@ -967,7 +967,7 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReaderSync<T>(IDataReader reader, Func<IDataReader, object> func, object parameters)
+        private static IEnumerable<T> ExecuteReaderSync<T>(DbDataReader reader, Func<DbDataReader, object> func, object parameters)
         {
             using (reader)
             {
@@ -1004,7 +1004,7 @@ namespace Dapper
             CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             DbCommand cmd = null;
-            IDataReader reader = null;
+            DbDataReader reader = null;
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {

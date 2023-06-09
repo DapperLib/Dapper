@@ -80,18 +80,7 @@ namespace Dapper
     {
         // the purpose of wrapping here is to allow closing a reader to *also* close
         // the command, without having to explicitly hand the command back to the
-        // caller; what that actually looks like depends on what we get: if we are
-        // given a DbDataReader, we will surface a DbDataReader; if we are given
-        // a raw IDataReader, we will surface that; and if null: null
-        public static IDataReader Create(IDbCommand cmd, IDataReader reader)
-        {
-            if (cmd == null) return reader; // no need to wrap if no command
-
-            if (reader is DbDataReader dbr) return new DbWrappedReader(cmd, dbr);
-            if (reader != null) return new BasicWrappedReader(cmd, reader);
-            cmd.Dispose();
-            return null; // GIGO
-        }
+        // caller
         public static DbDataReader Create(IDbCommand cmd, DbDataReader reader)
         {
             if (cmd == null) return reader; // no need to wrap if no command
@@ -210,97 +199,6 @@ namespace Dapper
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken) => _reader.NextResultAsync(cancellationToken);
         public override Task<bool> ReadAsync(CancellationToken cancellationToken) => _reader.ReadAsync(cancellationToken);
         public override int VisibleFieldCount => _reader.VisibleFieldCount;
-        protected override DbDataReader GetDbDataReader(int ordinal) => (((IDataReader)_reader).GetData(ordinal) as DbDataReader) ?? throw new NotSupportedException();
-    }
-
-    internal class BasicWrappedReader : IWrappedDataReader
-    {
-        private IDataReader _reader;
-        private IDbCommand _cmd;
-
-        IDataReader IWrappedDataReader.Reader => _reader;
-
-        IDbCommand IWrappedDataReader.Command => _cmd;
-
-        public BasicWrappedReader(IDbCommand cmd, IDataReader reader)
-        {
-            _cmd = cmd;
-            _reader = reader;
-        }
-
-        void IDataReader.Close() => _reader.Close();
-
-        int IDataReader.Depth => _reader.Depth;
-
-        DataTable IDataReader.GetSchemaTable() => _reader.GetSchemaTable();
-
-        bool IDataReader.IsClosed => _reader.IsClosed;
-
-        bool IDataReader.NextResult() => _reader.NextResult();
-
-        bool IDataReader.Read() => _reader.Read();
-
-        int IDataReader.RecordsAffected => _reader.RecordsAffected;
-
-        void IDisposable.Dispose()
-        {
-            _reader.Close();
-            _reader.Dispose();
-            _reader = DisposedReader.Instance;
-            _cmd?.Dispose();
-            _cmd = null;
-        }
-
-        int IDataRecord.FieldCount => _reader.FieldCount;
-
-        bool IDataRecord.GetBoolean(int i) => _reader.GetBoolean(i);
-
-        byte IDataRecord.GetByte(int i) => _reader.GetByte(i);
-
-        long IDataRecord.GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length) =>
-            _reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
-
-        char IDataRecord.GetChar(int i) => _reader.GetChar(i);
-
-        long IDataRecord.GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length) =>
-            _reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
-
-        IDataReader IDataRecord.GetData(int i) => _reader.GetData(i);
-
-        string IDataRecord.GetDataTypeName(int i) => _reader.GetDataTypeName(i);
-
-        DateTime IDataRecord.GetDateTime(int i) => _reader.GetDateTime(i);
-
-        decimal IDataRecord.GetDecimal(int i) => _reader.GetDecimal(i);
-
-        double IDataRecord.GetDouble(int i) => _reader.GetDouble(i);
-
-        Type IDataRecord.GetFieldType(int i) => _reader.GetFieldType(i);
-
-        float IDataRecord.GetFloat(int i) => _reader.GetFloat(i);
-
-        Guid IDataRecord.GetGuid(int i) => _reader.GetGuid(i);
-
-        short IDataRecord.GetInt16(int i) => _reader.GetInt16(i);
-
-        int IDataRecord.GetInt32(int i) => _reader.GetInt32(i);
-
-        long IDataRecord.GetInt64(int i) => _reader.GetInt64(i);
-
-        string IDataRecord.GetName(int i) => _reader.GetName(i);
-
-        int IDataRecord.GetOrdinal(string name) => _reader.GetOrdinal(name);
-
-        string IDataRecord.GetString(int i) => _reader.GetString(i);
-
-        object IDataRecord.GetValue(int i) => _reader.GetValue(i);
-
-        int IDataRecord.GetValues(object[] values) => _reader.GetValues(values);
-
-        bool IDataRecord.IsDBNull(int i) => _reader.IsDBNull(i);
-
-        object IDataRecord.this[string name] => _reader[name];
-
-        object IDataRecord.this[int i] => _reader[i];
+        protected override DbDataReader GetDbDataReader(int ordinal) => _reader.GetData(ordinal);
     }
 }

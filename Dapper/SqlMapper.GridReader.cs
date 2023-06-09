@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Data.Common;
 
 namespace Dapper
 {
@@ -14,11 +15,11 @@ namespace Dapper
         /// </summary>
         public partial class GridReader : IDisposable
         {
-            private IDataReader reader;
+            private DbDataReader reader;
             private readonly Identity identity;
             private readonly bool addToCache;
 
-            internal GridReader(IDbCommand command, IDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
+            internal GridReader(IDbCommand command, DbDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
             {
                 Command = command;
                 this.reader = reader;
@@ -351,7 +352,7 @@ namespace Dapper
                 return buffered ? result.ToList() : result;
             }
 
-            private IEnumerable<T> ReadDeferred<T>(int index, Func<IDataReader, object> deserializer, Type effectiveType)
+            private IEnumerable<T> ReadDeferred<T>(int index, Func<DbDataReader, object> deserializer, Type effectiveType)
             {
                 try
                 {

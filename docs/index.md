@@ -22,6 +22,10 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
+- add support for `SqlDecimal` and other types that need to be accessed via `DbDataReader.GetFieldValue<T>`
+- add an overload of `AddTypeMap` that supports `DbDataReader.GetFieldValue<T>` for additional types
+- acknowledge that in reality we only support `DbDataReader`; this has been true (via `DbConnection`) for `async` forever
+
 (note: new PRs will not be merged until they add release note wording here)
 
 ### 2.0.123

@@ -3,6 +3,7 @@ using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Data.Common;
 
 namespace Dapper
 {
@@ -33,7 +34,7 @@ namespace Dapper
                 }
             }
 
-            internal static Func<IDataReader, object> GetReader(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
+            internal static Func<DbDataReader, object> GetReader(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
             {
                 var found = (TypeDeserializerCache)byType[type];
                 if (found == null)
@@ -50,18 +51,18 @@ namespace Dapper
                 return found.GetReader(reader, startBound, length, returnNullIfFirstMissing);
             }
 
-            private readonly Dictionary<DeserializerKey, Func<IDataReader, object>> readers = new Dictionary<DeserializerKey, Func<IDataReader, object>>();
+            private readonly Dictionary<DeserializerKey, Func<DbDataReader, object>> readers = new Dictionary<DeserializerKey, Func<DbDataReader, object>>();
 
             private struct DeserializerKey : IEquatable<DeserializerKey>
             {
                 private readonly int startBound, length;
                 private readonly bool returnNullIfFirstMissing;
-                private readonly IDataReader reader;
+                private readonly DbDataReader reader;
                 private readonly string[] names;
                 private readonly Type[] types;
                 private readonly int hashCode;
 
-                public DeserializerKey(int hashCode, int startBound, int length, bool returnNullIfFirstMissing, IDataReader reader, bool copyDown)
+                public DeserializerKey(int hashCode, int startBound, int length, bool returnNullIfFirstMissing, DbDataReader reader, bool copyDown)
                 {
                     this.hashCode = hashCode;
                     this.startBound = startBound;
@@ -136,14 +137,14 @@ namespace Dapper
                 }
             }
 
-            private Func<IDataReader, object> GetReader(IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
+            private Func<DbDataReader, object> GetReader(DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
             {
                 if (length < 0) length = reader.FieldCount - startBound;
                 int hash = GetColumnHash(reader, startBound, length);
                 if (returnNullIfFirstMissing) hash *= -27;
                 // get a cheap key first: false means don't copy the values down
                 var key = new DeserializerKey(hash, startBound, length, returnNullIfFirstMissing, reader, false);
-                Func<IDataReader, object> deser;
+                Func<DbDataReader, object> deser;
                 lock (readers)
                 {
                     if (readers.TryGetValue(key, out deser)) return deser;

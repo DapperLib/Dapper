@@ -21,8 +21,9 @@
     <IncludeSymbols>false</IncludeSymbols>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    
+
     <LangVersion>9.0</LangVersion>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
