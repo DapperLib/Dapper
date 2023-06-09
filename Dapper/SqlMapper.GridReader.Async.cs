@@ -11,7 +11,10 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
-        public partial class GridReader : IAsyncDisposable
+        public partial class GridReader
+#if NET5_0_OR_GREATER
+            : IAsyncDisposable
+#endif
         {
             private readonly CancellationToken cancel;
             internal GridReader(IDbCommand command, DbDataReader reader, Identity identity, DynamicParameters dynamicParams, bool addToCache, CancellationToken cancel)
@@ -115,12 +118,6 @@ namespace Dapper
             public Task<IEnumerable<T>> ReadAsync<T>(bool buffered = true) => ReadAsyncImpl<T>(typeof(T), buffered);
 
             /// <summary>
-            /// Read the next grid of results.
-            /// </summary>
-            /// <typeparam name="T">The type to read.</typeparam>
-            public IAsyncEnumerable<T> ReadUnbufferedAsync<T>() => ReadAsyncUnbufferedImpl<T>(typeof(T));
-
-            /// <summary>
             /// Read an individual row of the next grid of results.
             /// </summary>
             /// <typeparam name="T">The type to read.</typeparam>
@@ -163,7 +160,11 @@ namespace Dapper
 #endif
                     reader = null;
                     callbacks?.OnCompleted();
+#if NET5_0_OR_GREATER
                     await DisposeAsync();
+#else
+                    Dispose();
+#endif
                 }
             }
 
@@ -198,30 +199,6 @@ namespace Dapper
                 }
                 IsConsumed = true;
                 return deserializer.Func;
-            }
-
-            private IAsyncEnumerable<T> ReadAsyncUnbufferedImpl<T>(Type type)
-            {
-                var deserializer = ValidateAndMarkConsumed(type);
-                return ReadUnbufferedAsync<T>(gridIndex, deserializer, cancel);
-            }
-
-            private async IAsyncEnumerable<T> ReadUnbufferedAsync<T>(int index, Func<DbDataReader, object> deserializer, [EnumeratorCancellation] CancellationToken cancel)
-            {
-                try
-                {
-                    while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
-                    {
-                        yield return ConvertTo<T>(deserializer(reader));
-                    }
-                }
-                finally // finally so that First etc progresses things even when multiple rows
-                {
-                    if (index == gridIndex)
-                    {
-                        await NextResultAsync().ConfigureAwait(false);
-                    }
-                }
             }
 
             private async Task<T> ReadRowAsyncImpl<T>(Type type, Row row)
@@ -279,6 +256,36 @@ namespace Dapper
 
 #if NET5_0_OR_GREATER
             /// <summary>
+            /// Read the next grid of results.
+            /// </summary>
+            /// <typeparam name="T">The type to read.</typeparam>
+            public IAsyncEnumerable<T> ReadUnbufferedAsync<T>() => ReadAsyncUnbufferedImpl<T>(typeof(T));
+
+            private IAsyncEnumerable<T> ReadAsyncUnbufferedImpl<T>(Type type)
+            {
+                var deserializer = ValidateAndMarkConsumed(type);
+                return ReadUnbufferedAsync<T>(gridIndex, deserializer, cancel);
+            }
+
+            private async IAsyncEnumerable<T> ReadUnbufferedAsync<T>(int index, Func<DbDataReader, object> deserializer, [EnumeratorCancellation] CancellationToken cancel)
+            {
+                try
+                {
+                    while (index == gridIndex && await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    {
+                        yield return ConvertTo<T>(deserializer(reader));
+                    }
+                }
+                finally // finally so that First etc progresses things even when multiple rows
+                {
+                    if (index == gridIndex)
+                    {
+                        await NextResultAsync().ConfigureAwait(false);
+                    }
+                }
+            }
+
+            /// <summary>
             /// Dispose the grid, closing and disposing both the underlying reader and command.
             /// </summary>
             public async ValueTask DisposeAsync()
@@ -302,15 +309,6 @@ namespace Dapper
                     Command = null;
                 }
                 GC.SuppressFinalize(this);
-            }
-#else
-            /// <summary>
-            /// Dispose the grid, closing and disposing both the underlying reader and command.
-            /// </summary>
-            public ValueTask DisposeAsync()
-            {
-                Dispose();
-                return default;
             }
 #endif
         }
