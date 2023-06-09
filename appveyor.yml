@@ -1,4 +1,4 @@
-image: Visual Studio 2019
+image: Visual Studio 2022
 
 skip_branch_with_pr: true
 skip_tags: true
@@ -35,12 +35,6 @@ init:
   - git config --global core.autocrlf input
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
   - net start MSSQL$SQL2019
-
-install:
-- cmd: >-
-    choco install dotnet-6.0-sdk
-
-    choco install dotnet-7.0-sdk
     
 nuget:
   disable_publish_on_pr: true
