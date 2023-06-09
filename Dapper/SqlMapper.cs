@@ -8,6 +8,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
+using System.Data.SqlTypes;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -31,7 +33,7 @@ namespace Dapper
         {
             public int Compare(PropertyInfo x, PropertyInfo y) => string.CompareOrdinal(x.Name, y.Name);
         }
-        private static int GetColumnHash(IDataReader reader, int startBound = 0, int length = -1)
+        private static int GetColumnHash(DbDataReader reader, int startBound = 0, int length = -1)
         {
             unchecked
             {
@@ -163,11 +165,39 @@ namespace Dapper
                    select Tuple.Create(pair.Key, pair.Value);
         }
 
-        private static Dictionary<Type, DbType?> typeMap;
+        private static Dictionary<Type, TypeMapEntry> typeMap;
+
+        [Flags]
+        internal enum TypeMapEntryFlags
+        {
+            None = 0,
+            SetType = 1 << 0,
+            UseGetFieldValue = 1 << 1,
+        }
+        internal readonly struct TypeMapEntry : IEquatable<TypeMapEntry>
+        {
+            public readonly DbType DbType { get; }
+            public readonly TypeMapEntryFlags Flags;
+            public TypeMapEntry(DbType dbType, TypeMapEntryFlags flags)
+            {
+                DbType = dbType;
+                Flags = flags;
+            }
+            public override int GetHashCode() => (int)DbType ^ (int)Flags;
+            public override string ToString() => $"{DbType}, {Flags}";
+            public override bool Equals(object obj) => obj is TypeMapEntry other && Equals(other);
+            public bool Equals(TypeMapEntry other) => other.DbType == DbType && other.Flags == Flags;
+            public static readonly TypeMapEntry
+                DoNotSet = new TypeMapEntry((DbType)(-2), TypeMapEntryFlags.None),
+                DecimalFieldValue = new TypeMapEntry(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
+
+            public static implicit operator TypeMapEntry(DbType dbType)
+                => new TypeMapEntry(dbType, TypeMapEntryFlags.SetType);
+        }
 
         static SqlMapper()
         {
-            typeMap = new Dictionary<Type, DbType?>(37)
+            typeMap = new Dictionary<Type, TypeMapEntry>(21)
             {
                 [typeof(byte)] = DbType.Byte,
                 [typeof(sbyte)] = DbType.SByte,
@@ -184,9 +214,9 @@ namespace Dapper
                 [typeof(string)] = DbType.String,
                 [typeof(char)] = DbType.StringFixedLength,
                 [typeof(Guid)] = DbType.Guid,
-                [typeof(DateTime)] = null,
+                [typeof(DateTime)] = TypeMapEntry.DoNotSet,
                 [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
-                [typeof(TimeSpan)] = null,
+                [typeof(TimeSpan)] = TypeMapEntry.DoNotSet,
                 [typeof(byte[])] = DbType.Binary,
                 [typeof(byte?)] = DbType.Byte,
                 [typeof(sbyte?)] = DbType.SByte,
@@ -202,10 +232,14 @@ namespace Dapper
                 [typeof(bool?)] = DbType.Boolean,
                 [typeof(char?)] = DbType.StringFixedLength,
                 [typeof(Guid?)] = DbType.Guid,
-                [typeof(DateTime?)] = null,
+                [typeof(DateTime?)] = TypeMapEntry.DoNotSet,
                 [typeof(DateTimeOffset?)] = DbType.DateTimeOffset,
-                [typeof(TimeSpan?)] = null,
-                [typeof(object)] = DbType.Object
+                [typeof(TimeSpan?)] = TypeMapEntry.DoNotSet,
+                [typeof(object)] = DbType.Object,
+                [typeof(SqlDecimal)] = TypeMapEntry.DecimalFieldValue,
+                [typeof(SqlDecimal?)] = TypeMapEntry.DecimalFieldValue,
+                [typeof(SqlMoney)] = TypeMapEntry.DecimalFieldValue,
+                [typeof(SqlMoney?)] = TypeMapEntry.DecimalFieldValue,
             };
             ResetTypeHandlers(false);
         }
@@ -230,13 +264,42 @@ namespace Dapper
         /// <param name="type">The type to map from.</param>
         /// <param name="dbType">The database type to map to.</param>
         public static void AddTypeMap(Type type, DbType dbType)
+            => AddTypeMap(type, dbType, false);
+
+        /// <summary>
+        /// Configure the specified type to be mapped to a given db-type.
+        /// </summary>
+        /// <param name="type">The type to map from.</param>
+        /// <param name="dbType">The database type to map to.</param>
+        /// <param name="useGetFieldValue">Whether to prefer <see cref="DbDataReader.GetFieldValue{T}(int)"/> over <see cref="DbDataReader.GetValue(int)"/>.</param>
+        public static void AddTypeMap(Type type, DbType dbType, bool useGetFieldValue)
         {
             // use clone, mutate, replace to avoid threading issues
             var snapshot = typeMap;
+            var flags = TypeMapEntryFlags.None;
+            if (dbType >= 0)
+            {
+                flags |= TypeMapEntryFlags.SetType;
+            }
+            if (useGetFieldValue)
+            {
+                flags |= TypeMapEntryFlags.UseGetFieldValue;
+            }
+            var value = new TypeMapEntry(dbType, flags);
+            if (snapshot.TryGetValue(type, out var oldValue) && oldValue.Equals(value)) return; // nothing to do
 
-            if (snapshot.TryGetValue(type, out var oldValue) && oldValue == dbType) return; // nothing to do
+            SetTypeMap(new Dictionary<Type, TypeMapEntry>(snapshot) { [type] = value });
+        }
 
-            typeMap = new Dictionary<Type, DbType?>(snapshot) { [type] = dbType };
+        private static void SetTypeMap(Dictionary<Type, TypeMapEntry> value)
+        {
+            typeMap = value;
+
+            // this cache is predicated on the contents of the type-map; reset it
+            lock (s_ReadViaGetFieldValueCache)
+            {
+                s_ReadViaGetFieldValueCache.Clear();
+            }
         }
 
         /// <summary>
@@ -250,10 +313,10 @@ namespace Dapper
 
             if (!snapshot.ContainsKey(type)) return; // nothing to do
 
-            var newCopy = new Dictionary<Type, DbType?>(snapshot);
+            var newCopy = new Dictionary<Type, TypeMapEntry>(snapshot);
             newCopy.Remove(type);
 
-            typeMap = newCopy;
+            SetTypeMap(newCopy);
         }
 
         /// <summary>
@@ -371,9 +434,13 @@ namespace Dapper
             {
                 type = Enum.GetUnderlyingType(type);
             }
-            if (typeMap.TryGetValue(type, out var dbType))
+            if (typeMap.TryGetValue(type, out var mapEntry))
             {
-                return dbType;
+                if ((mapEntry.Flags & TypeMapEntryFlags.SetType) == 0)
+                {
+                    return null;
+                }
+                return mapEntry.DbType;
             }
             if (type.FullName == LinqBinary)
             {
@@ -1024,7 +1091,7 @@ namespace Dapper
             CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
-            IDataReader reader = null;
+            DbDataReader reader = null;
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
             {
@@ -1059,18 +1126,18 @@ namespace Dapper
             }
         }
 
-        private static IDataReader ExecuteReaderWithFlagsFallback(IDbCommand cmd, bool wasClosed, CommandBehavior behavior)
+        private static DbDataReader ExecuteReaderWithFlagsFallback(IDbCommand cmd, bool wasClosed, CommandBehavior behavior)
         {
             try
             {
-                return cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
+                return GetDbDataReader(cmd.ExecuteReader(GetBehavior(wasClosed, behavior)));
             }
             catch (ArgumentException ex)
             { // thanks, Sqlite!
                 if (Settings.DisableCommandBehaviorOptimizations(behavior, ex))
                 {
                     // we can retry; this time it will have different flags
-                    return cmd.ExecuteReader(GetBehavior(wasClosed, behavior));
+                    return GetDbDataReader(cmd.ExecuteReader(GetBehavior(wasClosed, behavior)));
                 }
                 throw;
             }
@@ -1083,7 +1150,7 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
-            IDataReader reader = null;
+            DbDataReader reader = null;
 
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
@@ -1176,7 +1243,7 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand cmd = null;
-            IDataReader reader = null;
+            DbDataReader reader = null;
 
             bool wasClosed = cnn.State == ConnectionState.Closed;
             try
@@ -1234,7 +1301,7 @@ namespace Dapper
         /// Shared value deserialization path for QueryRowImpl and QueryRowAsync
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static T ReadRow<T>(CacheInfo info, Identity identity, ref CommandDefinition command, Type effectiveType, IDataReader reader)
+        private static T ReadRow<T>(CacheInfo info, Identity identity, ref CommandDefinition command, Type effectiveType, DbDataReader reader)
         {
             var tuple = info.Deserializer;
             int hash = GetColumnHash(reader);
@@ -1250,7 +1317,7 @@ namespace Dapper
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static T GetValue<T>(IDataReader reader, Type effectiveType, object val)
+        private static T GetValue<T>(DbDataReader reader, Type effectiveType, object val)
         {
             if (val is T tVal)
             {
@@ -1451,14 +1518,14 @@ namespace Dapper
             return buffered ? results.ToList() : results;
         }
 
-        private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, CommandDefinition command, Delegate map, string splitOn, DbDataReader reader, Identity identity, bool finalize)
         {
             object param = command.Parameters;
             identity ??= new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandType, cnn, typeof(TFirst), param?.GetType());
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
-            IDataReader ownedReader = null;
+            DbDataReader ownedReader = null;
 
             bool wasClosed = cnn?.State == ConnectionState.Closed;
             try
@@ -1471,7 +1538,7 @@ namespace Dapper
                     reader = ownedReader;
                 }
                 var deserializer = default(DeserializerState);
-                Func<IDataReader, object>[] otherDeserializers;
+                Func<DbDataReader, object>[] otherDeserializers;
 
                 int hash = GetColumnHash(reader);
                 if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
@@ -1482,7 +1549,7 @@ namespace Dapper
                     if (command.AddToCache) SetQueryCache(identity, cinfo);
                 }
 
-                Func<IDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
+                Func<DbDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
 
                 if (mapIt != null)
                 {
@@ -1517,7 +1584,7 @@ namespace Dapper
             return (close ? (@default | CommandBehavior.CloseConnection) : @default) & Settings.AllowedCommandBehaviors;
         }
 
-        private static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, IDataReader reader, Identity identity, bool finalize)
+        private static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, DbDataReader reader, Identity identity, bool finalize)
         {
             if (types.Length < 1)
             {
@@ -1529,7 +1596,7 @@ namespace Dapper
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand ownedCommand = null;
-            IDataReader ownedReader = null;
+            DbDataReader ownedReader = null;
 
             bool wasClosed = cnn?.State == ConnectionState.Closed;
             try
@@ -1542,7 +1609,7 @@ namespace Dapper
                     reader = ownedReader;
                 }
                 DeserializerState deserializer;
-                Func<IDataReader, object>[] otherDeserializers;
+                Func<DbDataReader, object>[] otherDeserializers;
 
                 int hash = GetColumnHash(reader);
                 if ((deserializer = cinfo.Deserializer).Func == null || (otherDeserializers = cinfo.OtherDeserializers) == null || hash != deserializer.Hash)
@@ -1553,7 +1620,7 @@ namespace Dapper
                     SetQueryCache(identity, cinfo);
                 }
 
-                Func<IDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
+                Func<DbDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
 
                 if (mapIt != null)
                 {
@@ -1583,7 +1650,7 @@ namespace Dapper
             }
         }
 
-        private static Func<IDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, object map)
+        private static Func<DbDataReader, TReturn> GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<DbDataReader, object> deserializer, Func<DbDataReader, object>[] otherDeserializers, object map)
             => otherDeserializers.Length switch
         {
             1 => r => ((Func<TFirst, TSecond, TReturn>)map)((TFirst)deserializer(r), (TSecond)otherDeserializers[0](r)),
@@ -1595,7 +1662,7 @@ namespace Dapper
             _ => throw new NotSupportedException(),
         };
 
-        private static Func<IDataReader, TReturn> GenerateMapper<TReturn>(int length, Func<IDataReader, object> deserializer, Func<IDataReader, object>[] otherDeserializers, Func<object[], TReturn> map)
+        private static Func<DbDataReader, TReturn> GenerateMapper<TReturn>(int length, Func<DbDataReader, object> deserializer, Func<DbDataReader, object>[] otherDeserializers, Func<object[], TReturn> map)
         {
             return r =>
             {
@@ -1611,9 +1678,9 @@ namespace Dapper
             };
         }
 
-        private static Func<IDataReader, object>[] GenerateDeserializers(Identity identity, string splitOn, IDataReader reader)
+        private static Func<DbDataReader, object>[] GenerateDeserializers(Identity identity, string splitOn, DbDataReader reader)
         {
-            var deserializers = new List<Func<IDataReader, object>>();
+            var deserializers = new List<Func<DbDataReader, object>>();
             var splits = splitOn.Split(',').Select(s => s.Trim()).ToArray();
             bool isMultiSplit = splits.Length > 1;
 
@@ -1680,7 +1747,7 @@ namespace Dapper
             return deserializers.ToArray();
         }
 
-        private static int GetNextSplitDynamic(int startIdx, string splitOn, IDataReader reader)
+        private static int GetNextSplitDynamic(int startIdx, string splitOn, DbDataReader reader)
         {
             if (startIdx == reader.FieldCount)
             {
@@ -1703,7 +1770,7 @@ namespace Dapper
             return reader.FieldCount;
         }
 
-        private static int GetNextSplit(int startIdx, string splitOn, IDataReader reader)
+        private static int GetNextSplit(int startIdx, string splitOn, DbDataReader reader)
         {
             if (splitOn == "*")
             {
@@ -1817,15 +1884,41 @@ namespace Dapper
             });
         }
 
-        private static Func<IDataReader, object> GetDeserializer(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
+        static DbDataReader GetDbDataReader(IDataReader reader, bool disposeOnFail = true)
         {
+            return reader as DbDataReader ?? Throw(reader, disposeOnFail);
+            static DbDataReader Throw(IDataReader reader, bool disposeOnFail)
+            {
+                if (reader is null)
+                {
+                    throw new ArgumentNullException(nameof(reader));
+                }
+                if (disposeOnFail)
+                {
+                    reader.Dispose(); // don't leak
+                }
+                // in reality, all providers have satisfied this since forever; we should have made Dapper target DbConnection, oops!
+                throw new NotSupportedException("The provided reader is required to be a DbDataReader, and is not");
+            }
+        }
+
+        private static Func<DbDataReader, object> GetDeserializer(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
+        {
+
+
             // dynamic is passed in as Object ... by c# design
             if (type == typeof(object) || type == typeof(DapperRow))
             {
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
+
             Type underlyingType = null;
-            if (!(typeMap.ContainsKey(type) || type.IsEnum || type.IsArray || type.FullName == LinqBinary
+            bool useGetFieldValue = false;
+            if (typeMap.TryGetValue(type, out var mapEntry))
+            {
+                useGetFieldValue = (mapEntry.Flags & TypeMapEntryFlags.UseGetFieldValue) != 0;
+            }
+            else if (!(type.IsEnum || type.IsArray || type.FullName == LinqBinary
                 || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) != null && underlyingType.IsEnum)))
             {
                 if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
@@ -1834,10 +1927,10 @@ namespace Dapper
                 }
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer(type, underlyingType ?? type, startBound);
+            return GetStructDeserializer(type, underlyingType ?? type, startBound, useGetFieldValue);
         }
 
-        private static Func<IDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
+        private static Func<DbDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
         {
             return reader => handler.Parse(type, reader.GetValue(startBound));
         }
@@ -1861,7 +1954,7 @@ namespace Dapper
             }
         }
 
-        internal static Func<IDataReader, object> GetDapperRowDeserializer(IDataRecord reader, int startBound, int length, bool returnNullIfFirstMissing)
+        internal static Func<DbDataReader, object> GetDapperRowDeserializer(DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
         {
             var fieldCount = reader.FieldCount;
             if (length == -1)
@@ -2886,7 +2979,7 @@ namespace Dapper
             return Parse<T>(result);
         }
 
-        private static IDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command, CommandBehavior commandBehavior, out IDbCommand cmd)
+        private static DbDataReader ExecuteReaderImpl(IDbConnection cnn, ref CommandDefinition command, CommandBehavior commandBehavior, out IDbCommand cmd)
         {
             Action<IDbCommand, object> paramReader = GetParameterReader(cnn, ref command);
             cmd = null;
@@ -2932,7 +3025,7 @@ namespace Dapper
             return paramReader;
         }
 
-        private static Func<IDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index)
+        private static Func<DbDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index, bool useGetFieldValue)
         {
             // no point using special per-type handling here; it boils down to the same, plus not all are supported anyway (see: SqlDataReader.GetChar - not supported!)
 #pragma warning disable 618
@@ -2970,12 +3063,41 @@ namespace Dapper
                     return val is DBNull ? null : handler.Parse(type, val);
                 };
             }
-            return r =>
-            {
-                var val = r.GetValue(index);
-                return val is DBNull ? null : val;
-            };
+            return useGetFieldValue ? ReadViaGetFieldValueFactory(type, index) : ReadViaGetValue(index);
+
+            static Func<DbDataReader, object> ReadViaGetValue(int index)
+                => reader =>
+                {
+                    var val = reader.GetValue(index);
+                    return val is DBNull ? null : val;
+                };
         }
+
+        static Func<DbDataReader, object> ReadViaGetFieldValueFactory(Type type, int index)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            var factory = (Func<int, Func<DbDataReader, object>>)s_ReadViaGetFieldValueCache[type];
+            if (factory is null)
+            {
+                factory = (Func<int, Func<DbDataReader, object>>)Delegate.CreateDelegate(
+                    typeof(Func<int, Func<DbDataReader, object>>), null, typeof(SqlMapper).GetMethod(
+                    nameof(UnderlyingReadViaGetFieldValueFactory), BindingFlags.Static | BindingFlags.NonPublic)
+                    .MakeGenericMethod(type));
+                lock (s_ReadViaGetFieldValueCache)
+                {
+                    s_ReadViaGetFieldValueCache[type] = factory;
+                }
+            }
+            return factory(index);
+        }
+        // cache of ReadViaGetFieldValueFactory<T> for per-value T
+        static readonly Hashtable s_ReadViaGetFieldValueCache = new Hashtable();
+
+        static Func<DbDataReader, object> UnderlyingReadViaGetFieldValueFactory<T>(int index)
+            => reader => reader.IsDBNull(index) ? null : reader.GetFieldValue<T>(index);
+
+        static bool UseGetFieldValue(Type type) => typeMap.TryGetValue(type, out var mapEntry)
+            && (mapEntry.Flags & TypeMapEntryFlags.UseGetFieldValue) != 0;
 
         private static T Parse<T>(object value)
         {
@@ -3000,9 +3122,13 @@ namespace Dapper
 
         private static readonly MethodInfo
                     enumParse = typeof(Enum).GetMethod(nameof(Enum.Parse), new Type[] { typeof(Type), typeof(string), typeof(bool) }),
-                    getItem = typeof(IDataRecord).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                    getItem = typeof(DbDataReader).GetProperties(BindingFlags.Instance | BindingFlags.Public)
                         .Where(p => p.GetIndexParameters().Length > 0 && p.GetIndexParameters()[0].ParameterType == typeof(int))
-                        .Select(p => p.GetGetMethod()).First();
+                        .Select(p => p.GetGetMethod()).First(),
+                    getFieldValueT = typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetFieldValue),
+                        BindingFlags.Instance | BindingFlags.Public, null, new Type[] { typeof(int) }, null),
+                    isDbNull = typeof(DbDataReader).GetMethod(nameof(DbDataReader.IsDBNull),
+                        BindingFlags.Instance | BindingFlags.Public, null, new Type[] { typeof(int) }, null);
 
         /// <summary>
         /// Gets type-map for the given type
@@ -3078,8 +3204,30 @@ namespace Dapper
         /// <param name="length"></param>
         /// <param name="returnNullIfFirstMissing"></param>
         /// <returns></returns>
+#if DEBUG // make sure we're not using this internally
+        [Obsolete(nameof(DbDataReader) + " API should be preferred")]
+#endif
         public static Func<IDataReader, object> GetTypeDeserializer(
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
+        )
+        {
+            return WrapObjectReader(GetTypeDeserializer(type, GetDbDataReader(reader, false), startBound, length, returnNullIfFirstMissing));
+        }
+
+        private static Func<IDataReader, object> WrapObjectReader(Func<DbDataReader, object> dbReader)
+                => reader => dbReader(GetDbDataReader(reader)); // we'll eat the extra layer here; this is not a core API
+
+
+        /// <summary>
+        /// Internal use only
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="reader"></param>
+        /// <param name="startBound"></param>
+        /// <param name="length"></param>
+        /// <param name="returnNullIfFirstMissing"></param>
+        public static Func<DbDataReader, object> GetTypeDeserializer(
+            Type type, DbDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
             return TypeDeserializerCache.GetReader(type, reader, startBound, length, returnNullIfFirstMissing);
@@ -3104,8 +3252,8 @@ namespace Dapper
             return found;
         }
 
-        private static Func<IDataReader, object> GetTypeDeserializerImpl(
-            Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
+        private static Func<DbDataReader, object> GetTypeDeserializerImpl(
+            Type type, DbDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
             if (length == -1)
@@ -3119,7 +3267,7 @@ namespace Dapper
             }
 
             var returnType = type.IsValueType ? typeof(object) : type;
-            var dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), returnType, new[] { typeof(IDataReader) }, type, true);
+            var dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), returnType, new[] { typeof(DbDataReader) }, type, true);
             var il = dm.GetILGenerator();
 
             if (IsValueTuple(type))
@@ -3131,11 +3279,11 @@ namespace Dapper
                 GenerateDeserializerFromMap(type, reader, startBound, length, returnNullIfFirstMissing, il);
             }
 
-            var funcType = System.Linq.Expressions.Expression.GetFuncType(typeof(IDataReader), returnType);
-            return (Func<IDataReader, object>)dm.CreateDelegate(funcType);
+            var funcType = System.Linq.Expressions.Expression.GetFuncType(typeof(DbDataReader), returnType);
+            return (Func<DbDataReader, object>)dm.CreateDelegate(funcType);
         }
 
-        private static void GenerateValueTupleDeserializer(Type valueTupleType, IDataReader reader, int startBound, int length, ILGenerator il)
+        private static void GenerateValueTupleDeserializer(Type valueTupleType, DbDataReader reader, int startBound, int length, ILGenerator il)
         {
             var nullableUnderlyingType = Nullable.GetUnderlyingType(valueTupleType);
             var currentValueTupleType = nullableUnderlyingType ?? valueTupleType;
@@ -3201,12 +3349,15 @@ namespace Dapper
                         valueCopyLocal: null,
                         reader.GetFieldType(startBound + i),
                         targetType,
-                        out var isDbNullLabel);
+                        out var isDbNullLabel, out bool popWhenNull);
 
                     var finishLabel = il.DefineLabel();
                     il.Emit(OpCodes.Br_S, finishLabel);
                     il.MarkLabel(isDbNullLabel);
-                    il.Emit(OpCodes.Pop);
+                    if (popWhenNull)
+                    {
+                        il.Emit(OpCodes.Pop);
+                    }
 
                     LoadDefaultValue(il, targetType);
 
@@ -3234,7 +3385,7 @@ namespace Dapper
             il.Emit(OpCodes.Ret);
         }
 
-        private static void GenerateDeserializerFromMap(Type type, IDataReader reader, int startBound, int length, bool returnNullIfFirstMissing, ILGenerator il)
+        private static void GenerateDeserializerFromMap(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing, ILGenerator il)
         {
             var currentIndexDiagnosticLocal = il.DeclareLocal(typeof(int));
             var returnValueLocal = il.DeclareLocal(type);
@@ -3348,7 +3499,7 @@ namespace Dapper
                     EmitInt32(il, index);
                     il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
 
-                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel);
+                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel, out bool popWhenNull);
 
                     if (specializedConstructor == null)
                     {
@@ -3365,15 +3516,14 @@ namespace Dapper
 
                     il.Emit(OpCodes.Br_S, finishLabel); // stack is now [target]
 
-                    il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][value]
+                    il.MarkLabel(isDbNullLabel); // incoming stack: [target][target][(and possibly value)]
+                    if (popWhenNull) il.Emit(OpCodes.Pop); // stack is now [target][target]
                     if (specializedConstructor != null)
                     {
-                        il.Emit(OpCodes.Pop);
                         LoadDefaultValue(il, item.MemberType);
                     }
                     else if (applyNullSetting && (!memberType.IsValueType || Nullable.GetUnderlyingType(memberType) != null))
                     {
-                        il.Emit(OpCodes.Pop); // stack is now [target][target]
                         // can load a null with this value
                         if (memberType.IsValueType)
                         { // must be Nullable<T> for some T
@@ -3397,7 +3547,6 @@ namespace Dapper
                     }
                     else
                     {
-                        il.Emit(OpCodes.Pop); // stack is now [target][target]
                         il.Emit(OpCodes.Pop); // stack is now [target]
                     }
 
@@ -3462,11 +3611,50 @@ namespace Dapper
             }
         }
 
-        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder stringEnumLocal, LocalBuilder valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel)
+        private static void LoadReaderValueViaGetFieldValue(ILGenerator il, int index, Type memberType, LocalBuilder valueCopyLocal, Label isDbNullLabel, out bool popWhenNull)
         {
-            isDbNullLabel = il.DefineLabel();
+            popWhenNull = false;
+            var underlyingType = Nullable.GetUnderlyingType(memberType) ?? memberType;
+
+            // for consistency, always do a null check (the GetValue approach always tests for DbNull and jumps)
             il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
             EmitInt32(il, index); // stack is now [...][reader][index]
+            il.Emit(OpCodes.Callvirt, isDbNull); // stack is now [...][bool]
+            il.Emit(OpCodes.Brtrue_S, isDbNullLabel);
+
+            // DB reports not null; read the value
+            il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
+            EmitInt32(il, index); // stack is now [...][reader][index]
+            il.Emit(OpCodes.Callvirt, getFieldValueT.MakeGenericMethod(underlyingType)); // stack is now [...][T]
+            if (valueCopyLocal is not null)
+            {
+                il.Emit(OpCodes.Dup); // stack is now [...][T][T]
+                if (underlyingType.IsValueType)
+                {
+                    il.Emit(OpCodes.Box, underlyingType); // stack is now [...][T][value-as-object]
+                }
+                il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][T]
+            }
+            if (underlyingType != memberType)
+            {
+                // Nullable<T>; wrap it
+                il.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { underlyingType })); // stack is now [...][T?]
+            }
+        }
+
+        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder stringEnumLocal, LocalBuilder valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel, out bool popWhenNull)
+        {
+            isDbNullLabel = il.DefineLabel();
+            if (UseGetFieldValue(memberType))
+            {
+                LoadReaderValueViaGetFieldValue(il, index, memberType, valueCopyLocal, isDbNullLabel, out popWhenNull);
+                return;
+            }
+
+            popWhenNull = true;
+            il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
+            EmitInt32(il, index); // stack is now [...][reader][index]
+            // default impl: use GetValue
             il.Emit(OpCodes.Callvirt, getItem); // stack is now [...][value-as-object]
 
             if (valueCopyLocal != null)

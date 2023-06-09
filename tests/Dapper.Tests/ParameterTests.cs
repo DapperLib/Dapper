@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlTypes;
-using System.Dynamic;
-using System.Linq;
-using Xunit;
-using System.Globalization;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Dynamic;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Xunit;
 
 #if ENTITY_FRAMEWORK
 using System.Data.Entity.Spatial;
@@ -1592,6 +1593,117 @@ select @hits as [Hits], (@count - @misses) as [Misses], @query as [Query];
             int blocks = count / padFactor, delta = count % padFactor;
             if (delta != 0) blocks++;
             return blocks * padFactor;
+        }
+
+        [Fact]
+        public void Issue1907_SqlDecimalPreciseValues()
+        {
+            bool close = false;
+            try
+            {
+                if (connection.State != ConnectionState.Open)
+                {
+                    connection.Open();
+                    close = true;
+                }
+                connection.Execute(@"
+create table #Issue1907 (
+    Id int not null primary key identity(1,1),
+    Value numeric(30,15) not null);");
+
+                const string PreciseValue = "999999999999999.999999999999999";
+                SqlDecimal sentValue = SqlDecimal.Parse(PreciseValue), recvValue;
+                connection.Execute("insert #Issue1907 (Value) values (@value)", new { value = sentValue });
+
+                // access via vendor-specific API; if this fails, nothing else can work
+                using (var wrappedReader = connection.ExecuteReader("select Id, Value from #Issue1907"))
+                {
+                    var reader = Assert.IsAssignableFrom<IWrappedDataReader>(wrappedReader).Reader;
+                    Assert.True(reader.Read());
+                    if (reader is Microsoft.Data.SqlClient.SqlDataReader msReader)
+                    {
+                        recvValue = msReader.GetSqlDecimal(1);
+                    }
+                    else if (reader is System.Data.SqlClient.SqlDataReader sdReader)
+                    {
+                        recvValue = sdReader.GetSqlDecimal(1);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"unexpected reader type: {reader.GetType().FullName}");
+                    }
+                    Assert.Equal(sentValue, recvValue);
+                    Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                    Assert.False(reader.Read());
+                    Assert.False(reader.NextResult());
+                }
+
+                // access via generic API
+                using (var wrappedReader = connection.ExecuteReader("select Id, Value from #Issue1907"))
+                {
+                    var reader = Assert.IsAssignableFrom<DbDataReader>(Assert.IsAssignableFrom<IWrappedDataReader>(wrappedReader).Reader);
+                    Assert.True(reader.Read());
+                    recvValue = reader.GetFieldValue<SqlDecimal>(1);
+                    Assert.Equal(sentValue, recvValue);
+                    Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                    Assert.False(reader.Read());
+                    Assert.False(reader.NextResult());
+                }
+
+                // prove that we **cannot** fix ExecuteScalar, because ADO.NET itself doesn't work for that
+                Assert.Throws<OverflowException>(() =>
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = "select Value from #Issue1907";
+                    cmd.CommandType = CommandType.Text;
+                    _ = cmd.ExecuteScalar();
+                });
+
+                // prove that simple read: works
+                recvValue = connection.QuerySingle<SqlDecimal>("select Value from #Issue1907");
+                Assert.Equal(sentValue, recvValue);
+                Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                recvValue = connection.QuerySingle<SqlDecimal?>("select Value from #Issue1907").Value;
+                Assert.Equal(sentValue, recvValue);
+                Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                // prove that object read: works
+                recvValue = connection.QuerySingle<HazSqlDecimal>("select Id, Value from #Issue1907").Value;
+                Assert.Equal(sentValue, recvValue);
+                Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                recvValue = connection.QuerySingle<HazNullableSqlDecimal>("select Id, Value from #Issue1907").Value.Value;
+                Assert.Equal(sentValue, recvValue);
+                Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                // prove that value-tuple read: works
+                recvValue = connection.QuerySingle<(int Id, SqlDecimal Value)>("select Id, Value from #Issue1907").Value;
+                Assert.Equal(sentValue, recvValue);
+                Assert.Equal(recvValue.ToString(), PreciseValue);
+
+                recvValue = connection.QuerySingle<(int Id, SqlDecimal? Value)>("select Id, Value from #Issue1907").Value.Value;
+                Assert.Equal(sentValue, recvValue);
+                Assert.Equal(recvValue.ToString(), PreciseValue);
+            }
+            finally
+            {
+                if (close) connection.Close();
+            }
+            
+        }
+        class HazSqlDecimal
+        {
+            public int Id { get; set; }
+            public SqlDecimal Value { get; set; }
+        }
+
+        class HazNullableSqlDecimal
+        {
+            public int Id { get; set; }
+            public SqlDecimal? Value { get; set; }
         }
     }
 }
