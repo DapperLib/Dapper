@@ -13,7 +13,7 @@ namespace Dapper
         /// <summary>
         /// The grid reader provides interfaces for reading multiple result sets from a Dapper query
         /// </summary>
-        public partial class GridReader : IDisposable, IAsyncDisposable
+        public partial class GridReader : IDisposable
         {
             private DbDataReader reader;
             private readonly Identity identity;
