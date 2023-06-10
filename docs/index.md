@@ -23,6 +23,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### unreleased
 
 (note: new PRs will not be merged until they add release note wording here)
+- Enhance `Literal Tokens` capabilities, now we can use `Literal Tokens` as a suffix of table for `Table Sharding`.
 
 ### 2.0.138
 
