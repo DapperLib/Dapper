@@ -15,7 +15,7 @@ namespace Dapper.Tests.Providers
     {
         private FbConnection GetOpenFirebirdConnection() => (FbConnection)Provider.GetOpenConnection();
 
-        [Fact(Skip = "Bug in Firebird; a PR to fix it has been submitted")]
+        [Fact]
         public void Issue178_Firebird()
         {
             using (var connection = GetOpenFirebirdConnection())
