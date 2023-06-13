@@ -74,6 +74,11 @@ namespace Dapper
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
 
         /// <summary>
+        /// Allow cancellation of command after result collection begins?
+        /// </summary>
+        public bool RegisterCancellation => (Flags & CommandFlags.RegisterCancellation) != 0;
+
+        /// <summary>
         /// Initialize the command definition
         /// </summary>
         /// <param name="commandText">The text for this command.</param>
