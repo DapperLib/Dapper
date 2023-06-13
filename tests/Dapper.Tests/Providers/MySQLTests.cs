@@ -7,6 +7,12 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    /// <summary>
+    /// If Docker Desktop is installed, run the following command to start a container suitable for the tests.
+    /// <code>
+    /// docker run -d -p 3306:3306 --name Dapper.Tests.MySQL -e MYSQL_DATABASE=tests -e MYSQL_USER=test -e MYSQL_PASSWORD=pass -e MYSQL_ROOT_PASSWORD=pass mysql
+    /// </code>
+    /// </summary>
     public sealed class MySqlProvider : DatabaseProvider
     {
         public override DbProviderFactory Factory => MySqlConnector.MySqlConnectorFactory.Instance;

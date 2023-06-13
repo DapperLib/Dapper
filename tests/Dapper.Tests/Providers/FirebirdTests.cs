@@ -6,6 +6,12 @@ using Xunit;
 
 namespace Dapper.Tests.Providers
 {
+    /// <summary>
+    /// If Docker Desktop is installed, run the following command to start a container suitable for the tests.
+    /// <code>
+    /// docker run -d -p 3050:3050 --name Dapper.Tests.Firebird -e FIREBIRD_DATABASE=database -e ISC_PASSWORD=masterkey jacobalberty/firebird
+    /// </code>
+    /// </summary>
     public class FirebirdProvider : DatabaseProvider
     {
         public override DbProviderFactory Factory => FirebirdClientFactory.Instance;
