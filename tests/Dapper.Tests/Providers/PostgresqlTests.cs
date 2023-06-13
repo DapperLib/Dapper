@@ -7,6 +7,12 @@ using Xunit;
 
 namespace Dapper.Tests
 {
+    /// <summary>
+    /// If Docker Desktop is installed, run the following command to start a container suitable for the tests.
+    /// <code>
+    /// docker run -d -p 5432:5432 --name Dapper.Tests.PostgreSQL -e POSTGRES_DB=dappertest -e POSTGRES_USER=dappertest -e POSTGRES_PASSWORD=dapperpass postgres
+    /// </code>
+    /// </summary>
     public class PostgresProvider : DatabaseProvider
     {
         public override DbProviderFactory Factory => Npgsql.NpgsqlFactory.Instance;
