@@ -35,6 +35,7 @@ init:
   - git config --global core.autocrlf input
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
   - net start MSSQL$SQL2019
+  - docker run -d -p 3050:3050 --name Dapper.Tests.Firebird -e FIREBIRD_DATABASE=database -e ISC_PASSWORD=masterkey jacobalberty/firebird
     
 nuget:
   disable_publish_on_pr: true
