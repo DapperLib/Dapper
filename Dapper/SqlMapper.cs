@@ -58,7 +58,7 @@ namespace Dapper
             handler?.Invoke(null, EventArgs.Empty);
         }
 
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo> _queryCache = new System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo>();
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Identity, CacheInfo> _queryCache = new();
         private static void SetQueryCache(Identity key, CacheInfo value)
         {
             if (Interlocked.Increment(ref collect) == COLLECT_PER_ITEMS)
@@ -188,11 +188,11 @@ namespace Dapper
             public override bool Equals(object obj) => obj is TypeMapEntry other && Equals(other);
             public bool Equals(TypeMapEntry other) => other.DbType == DbType && other.Flags == Flags;
             public static readonly TypeMapEntry
-                DoNotSet = new TypeMapEntry((DbType)(-2), TypeMapEntryFlags.None),
-                DecimalFieldValue = new TypeMapEntry(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
+                DoNotSet = new((DbType)(-2), TypeMapEntryFlags.None),
+                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
 
             public static implicit operator TypeMapEntry(DbType dbType)
-                => new TypeMapEntry(dbType, TypeMapEntryFlags.SetType);
+                => new(dbType, TypeMapEntryFlags.SetType);
         }
 
         static SqlMapper()
@@ -677,7 +677,7 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered);
             var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
-            return WrappedReader.Create(dbcmd, reader);
+            return DbWrappedReader.Create(dbcmd, reader);
         }
 
         /// <summary>
@@ -693,7 +693,7 @@ namespace Dapper
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command)
         {
             var reader = ExecuteReaderImpl(cnn, ref command, CommandBehavior.Default, out IDbCommand dbcmd);
-            return WrappedReader.Create(dbcmd, reader);
+            return DbWrappedReader.Create(dbcmd, reader);
         }
 
         /// <summary>
@@ -710,7 +710,7 @@ namespace Dapper
         public static IDataReader ExecuteReader(this IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
             var reader = ExecuteReaderImpl(cnn, ref command, commandBehavior, out IDbCommand dbcmd);
-            return WrappedReader.Create(dbcmd, reader);
+            return DbWrappedReader.Create(dbcmd, reader);
         }
 
         /// <summary>
@@ -1842,13 +1842,13 @@ namespace Dapper
         {
             if (cmd.Parameters.Count == 0) return;
 
-            Dictionary<string, IDbDataParameter> parameters = new Dictionary<string, IDbDataParameter>(StringComparer.Ordinal);
+            Dictionary<string, IDbDataParameter> parameters = new(StringComparer.Ordinal);
 
             foreach (IDbDataParameter param in cmd.Parameters)
             {
                 if (!string.IsNullOrEmpty(param.ParameterName)) parameters[param.ParameterName] = param;
             }
-            HashSet<string> consumed = new HashSet<string>(StringComparer.Ordinal);
+            var consumed = new HashSet<string>(StringComparer.Ordinal);
             bool firstMatch = true;
             int index = 0; // use this to spoof names; in most pseudo-positional cases, the name is ignored, however:
                            // for "snowflake", the name needs to be incremental i.e. "1", "2", "3"
@@ -1884,22 +1884,9 @@ namespace Dapper
             });
         }
 
-        static DbDataReader GetDbDataReader(IDataReader reader, bool disposeOnFail = true)
+        static DbDataReader GetDbDataReader(IDataReader reader)
         {
-            return reader as DbDataReader ?? Throw(reader, disposeOnFail);
-            static DbDataReader Throw(IDataReader reader, bool disposeOnFail)
-            {
-                if (reader is null)
-                {
-                    throw new ArgumentNullException(nameof(reader));
-                }
-                if (disposeOnFail)
-                {
-                    reader.Dispose(); // don't leak
-                }
-                // in reality, all providers have satisfied this since forever; we should have made Dapper target DbConnection, oops!
-                throw new NotSupportedException("The provided reader is required to be a DbDataReader, and is not");
-            }
+            return reader as DbDataReader ?? new WrappedBasicReader(reader);
         }
 
         private static Func<DbDataReader, object> GetDeserializer(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
@@ -2171,7 +2158,7 @@ namespace Dapper
                             }
 
                             var tmp = listParam.Value = SanitizeParameterValue(item);
-                            if (tmp != null && !(tmp is DBNull))
+                            if (tmp != null && tmp is not DBNull)
                                 lastValue = tmp; // only interested in non-trivial values for padding
 
                             if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
@@ -2277,7 +2264,7 @@ namespace Dapper
         private static bool TryStringSplit<T>(ref IEnumerable<T> list, int splitAt, string namePrefix, IDbCommand command, string colType, bool byPosition,
             Action<StringBuilder, T> append)
         {
-            if (!(list is ICollection<T> typed))
+            if (list is not ICollection<T> typed)
             {
                 typed = list.ToList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
@@ -2371,9 +2358,9 @@ namespace Dapper
         }
 
         // look for ? / @ / : *by itself*
-        private static readonly Regex smellsLikeOleDb = new Regex(@"(?<![\p{L}\p{N}@_])[?@:](?![\p{L}\p{N}@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
-            literalTokens = new Regex(@"(?<![\p{L}\p{N}_])\{=([\p{L}\p{N}_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
-            pseudoPositional = new Regex(@"\?([\p{L}_][\p{L}\p{N}_]*)\?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex smellsLikeOleDb = new(@"(?<![\p{L}\p{N}@_])[?@:](?![\p{L}\p{N}@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+            literalTokens = new(@"(?<![\p{L}\p{N}_])\{=([\p{L}\p{N}_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+            pseudoPositional = new(@"\?([\p{L}_][\p{L}\p{N}_]*)\?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         /// <summary>
         /// Replace all literal tokens with their text form.
@@ -2483,7 +2470,7 @@ namespace Dapper
 
             var matches = literalTokens.Matches(sql);
             var found = new HashSet<string>(StringComparer.Ordinal);
-            List<LiteralToken> list = new List<LiteralToken>(matches.Count);
+            var list = new List<LiteralToken>(matches.Count);
             foreach (Match match in matches)
             {
                 string token = match.Value;
@@ -3091,7 +3078,7 @@ namespace Dapper
             return factory(index);
         }
         // cache of ReadViaGetFieldValueFactory<T> for per-value T
-        static readonly Hashtable s_ReadViaGetFieldValueCache = new Hashtable();
+        static readonly Hashtable s_ReadViaGetFieldValueCache = new();
 
         static Func<DbDataReader, object> UnderlyingReadViaGetFieldValueFactory<T>(int index)
             => reader => reader.IsDBNull(index) ? null : reader.GetFieldValue<T>(index);
@@ -3165,7 +3152,7 @@ namespace Dapper
         }
 
         // use Hashtable to get free lockless reading
-        private static readonly Hashtable _typeMaps = new Hashtable();
+        private static readonly Hashtable _typeMaps = new();
 
         /// <summary>
         /// Set custom mapping for type deserializers
@@ -3211,7 +3198,7 @@ namespace Dapper
             Type type, IDataReader reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false
         )
         {
-            return WrapObjectReader(GetTypeDeserializer(type, GetDbDataReader(reader, false), startBound, length, returnNullIfFirstMissing));
+            return WrapObjectReader(GetTypeDeserializer(type, GetDbDataReader(reader), startBound, length, returnNullIfFirstMissing));
         }
 
         private static Func<IDataReader, object> WrapObjectReader(Func<DbDataReader, object> dbReader)
@@ -3684,10 +3671,7 @@ namespace Dapper
                     Type numericType = Enum.GetUnderlyingType(unboxType);
                     if (colType == typeof(string))
                     {
-                        if (stringEnumLocal == null)
-                        {
-                            stringEnumLocal = il.DeclareLocal(typeof(string));
-                        }
+                        stringEnumLocal ??= il.DeclareLocal(typeof(string));
                         il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
                         il.Emit(OpCodes.Stloc, stringEnumLocal); // stack is now [...]
                         il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
