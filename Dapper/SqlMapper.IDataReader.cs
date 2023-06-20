@@ -14,7 +14,7 @@ namespace Dapper
         /// <param name="reader">The data reader to parse results from.</param>
         public static IEnumerable<T> Parse<T>(this IDataReader reader)
         {
-            var dbReader = GetDbDataReader(reader, false);
+            var dbReader = GetDbDataReader(reader);
             if (dbReader.Read())
             {
                 var effectiveType = typeof(T);
@@ -42,7 +42,7 @@ namespace Dapper
         /// <param name="type">The type to parse from the <paramref name="reader"/>.</param>
         public static IEnumerable<object> Parse(this IDataReader reader, Type type)
         {
-            var dbReader = GetDbDataReader(reader, false);
+            var dbReader = GetDbDataReader(reader);
             if (dbReader.Read())
             {
                 var deser = GetDeserializer(type, dbReader, 0, -1, false);
@@ -59,7 +59,7 @@ namespace Dapper
         /// <param name="reader">The data reader to parse results from.</param>
         public static IEnumerable<dynamic> Parse(this IDataReader reader)
         {
-            var dbReader = GetDbDataReader(reader, false);
+            var dbReader = GetDbDataReader(reader);
             if (dbReader.Read())
             {
                 var deser = GetDapperRowDeserializer(dbReader, 0, -1, false);
@@ -86,7 +86,7 @@ namespace Dapper
         public static Func<IDataReader, object> GetRowParser(this IDataReader reader, Type type,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            return WrapObjectReader(GetDeserializer(type, GetDbDataReader(reader, false), startIndex, length, returnNullIfFirstMissing));
+            return WrapObjectReader(GetDeserializer(type, GetDbDataReader(reader), startIndex, length, returnNullIfFirstMissing));
         }
 
         /// <summary>
@@ -113,12 +113,12 @@ namespace Dapper
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             concreteType ??= typeof(T);
-            var func = GetDeserializer(concreteType, GetDbDataReader(reader, false), startIndex, length, returnNullIfFirstMissing);
+            var func = GetDeserializer(concreteType, GetDbDataReader(reader), startIndex, length, returnNullIfFirstMissing);
             return Wrap(func);
 
             // this is just to be very clear about what we're capturing
             static Func<IDataReader, T> Wrap(Func<DbDataReader, object> func)
-                => reader => (T)func(GetDbDataReader(reader, false));
+                => reader => (T)func(GetDbDataReader(reader));
         }
 
         /// <summary>

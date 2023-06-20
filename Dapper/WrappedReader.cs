@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -11,7 +13,7 @@ namespace Dapper
 {
     internal sealed class DisposedReader : DbDataReader
     {
-        internal static readonly DisposedReader Instance = new DisposedReader();
+        internal static readonly DisposedReader Instance = new();
         private DisposedReader() { }
         public override int Depth => 0;
         public override int FieldCount => 0;
@@ -76,7 +78,7 @@ namespace Dapper
         public override object this[string name] => ThrowDisposed<object>();
     }
 
-    internal static class WrappedReader
+    internal sealed class DbWrappedReader : DbDataReader, IWrappedDataReader
     {
         // the purpose of wrapping here is to allow closing a reader to *also* close
         // the command, without having to explicitly hand the command back to the
@@ -89,9 +91,7 @@ namespace Dapper
             cmd.Dispose();
             return null; // GIGO
         }
-    }
-    internal sealed class DbWrappedReader : DbDataReader, IWrappedDataReader
-    {
+
         private DbDataReader _reader;
         private IDbCommand _cmd;
 
@@ -200,5 +200,167 @@ namespace Dapper
         public override Task<bool> ReadAsync(CancellationToken cancellationToken) => _reader.ReadAsync(cancellationToken);
         public override int VisibleFieldCount => _reader.VisibleFieldCount;
         protected override DbDataReader GetDbDataReader(int ordinal) => _reader.GetData(ordinal);
+
+#if NET5_0_OR_GREATER
+        public override Task CloseAsync() => _reader.CloseAsync();
+
+        public override ValueTask DisposeAsync() => _reader.DisposeAsync();
+
+        public override Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default) => _reader.GetColumnSchemaAsync(cancellationToken);
+
+        public override Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default) => base.GetSchemaTableAsync(cancellationToken);
+#endif
+    }
+
+    internal sealed class WrappedBasicReader : DbDataReader
+    {
+        private IDataReader _reader;
+
+        public WrappedBasicReader(IDataReader reader)
+        {
+            Debug.Assert(reader is not DbDataReader); // or we wouldn't be here!
+            _reader = reader ?? throw new ArgumentNullException(nameof(reader));
+        }
+
+        public override bool HasRows => true; // have to assume that we do
+        public override void Close() => _reader.Close();
+        public override DataTable GetSchemaTable() => _reader.GetSchemaTable();
+
+#if PLAT_NO_REMOTING
+        [Obsolete("This Remoting API is not supported and throws PlatformNotSupportedException.", DiagnosticId = "SYSLIB0010", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
+        public override object InitializeLifetimeService() => throw new NotSupportedException();
+
+        public override int Depth => _reader.Depth;
+
+        public override bool IsClosed => _reader.IsClosed;
+
+        public override bool NextResult() => _reader.NextResult();
+
+        public override bool Read() => _reader.Read();
+
+        public override int RecordsAffected => _reader.RecordsAffected;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _reader.Close();
+                _reader.Dispose();
+                _reader = DisposedReader.Instance; // all future ops are no-ops
+            }
+        }
+
+        public override int FieldCount => _reader.FieldCount;
+
+        public override bool GetBoolean(int i) => _reader.GetBoolean(i);
+
+        public override byte GetByte(int i) => _reader.GetByte(i);
+
+        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length) =>
+            _reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
+
+        public override char GetChar(int i) => _reader.GetChar(i);
+
+        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length) =>
+            _reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
+
+        public override string GetDataTypeName(int i) => _reader.GetDataTypeName(i);
+
+        public override DateTime GetDateTime(int i) => _reader.GetDateTime(i);
+
+        public override decimal GetDecimal(int i) => _reader.GetDecimal(i);
+
+        public override double GetDouble(int i) => _reader.GetDouble(i);
+
+        public override Type GetFieldType(int i) => _reader.GetFieldType(i);
+
+        public override float GetFloat(int i) => _reader.GetFloat(i);
+
+        public override Guid GetGuid(int i) => _reader.GetGuid(i);
+
+        public override short GetInt16(int i) => _reader.GetInt16(i);
+
+        public override int GetInt32(int i) => _reader.GetInt32(i);
+
+        public override long GetInt64(int i) => _reader.GetInt64(i);
+
+        public override string GetName(int i) => _reader.GetName(i);
+
+        public override int GetOrdinal(string name) => _reader.GetOrdinal(name);
+
+        public override string GetString(int i) => _reader.GetString(i);
+
+        public override object GetValue(int i) => _reader.GetValue(i);
+
+        public override int GetValues(object[] values) => _reader.GetValues(values);
+
+        public override bool IsDBNull(int i) => _reader.IsDBNull(i);
+
+        public override object this[string name] => _reader[name];
+
+        public override object this[int i] => _reader[i];
+
+        public override T GetFieldValue<T>(int ordinal)
+        {
+            var value = _reader.GetValue(ordinal);
+            if (value is DBNull)
+            {
+                value = null;
+            }
+            return (T)value;
+        }
+        public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(GetFieldValue<T>(ordinal));
+        }
+        public override IEnumerator GetEnumerator() => _reader is IEnumerable e ? e.GetEnumerator()
+            : throw new NotImplementedException();
+        public override Type GetProviderSpecificFieldType(int ordinal) => _reader.GetFieldType(ordinal);
+        public override object GetProviderSpecificValue(int ordinal) => _reader.GetValue(ordinal);
+        public override int GetProviderSpecificValues(object[] values) => _reader.GetValues(values);
+        public override Stream GetStream(int ordinal) => throw new NotSupportedException();
+        public override TextReader GetTextReader(int ordinal) => throw new NotSupportedException();
+        public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_reader.IsDBNull(ordinal));
+        }
+        public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_reader.NextResult());
+        }
+        public override Task<bool> ReadAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_reader.Read());
+        }
+        public override int VisibleFieldCount => _reader.FieldCount;
+        protected override DbDataReader GetDbDataReader(int ordinal) => throw new NotSupportedException();
+
+#if NET5_0_OR_GREATER
+        public override Task CloseAsync()
+        {
+            _reader.Close();
+            return Task.CompletedTask;
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            _reader.Dispose();
+            return default;
+        }
+
+        public override Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public override Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_reader.GetSchemaTable());
+        }
+#endif
     }
 }

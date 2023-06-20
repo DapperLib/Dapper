@@ -1136,7 +1136,7 @@ namespace Dapper
                 var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, commandBehavior, command.CancellationToken).ConfigureAwait(false);
                 wasClosed = false;
                 disposeCommand = false;
-                return WrappedReader.Create(cmd, reader);
+                return DbWrappedReader.Create(cmd, reader);
             }
             finally
             {
