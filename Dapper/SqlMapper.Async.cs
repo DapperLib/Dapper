@@ -530,7 +530,7 @@ namespace Dapper
             }
         }
 
-        private struct AsyncExecState
+        private readonly struct AsyncExecState
         {
             public readonly DbCommand Command;
             public readonly Task<int> Task;
@@ -1220,6 +1220,24 @@ namespace Dapper
         }
 
 #if NET5_0_OR_GREATER
+        /// <summary>
+        /// Execute a query asynchronously using <see cref="IAsyncEnumerable{dynamic}"/>.
+        /// </summary>
+        /// <param name="cnn">The connection to query on.</param>
+        /// <param name="sql">The SQL to execute for the query.</param>
+        /// <param name="param">The parameters to pass, if any.</param>
+        /// <param name="transaction">The transaction to use, if any.</param>
+        /// <param name="commandTimeout">The command timeout (in seconds).</param>
+        /// <param name="commandType">The type of command to execute.</param>
+        /// <returns>
+        /// A sequence of data of dynamic data
+        /// </returns>
+        public static IAsyncEnumerable<dynamic> QueryUnbufferedAsync(this DbConnection cnn, string sql, object param = null, DbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            // note: in many cases of adding a new async method I might add a CancellationToken - however, cancellation is expressed via WithCancellation on iterators
+            return QueryUnbufferedAsync<dynamic>(cnn, typeof(object), new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
+        }
+
         /// <summary>
         /// Execute a query asynchronously using <see cref="IAsyncEnumerable{T}"/>.
         /// </summary>

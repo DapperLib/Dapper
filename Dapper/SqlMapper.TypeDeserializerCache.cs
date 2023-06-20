@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Data;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Data.Common;
+using System.Text;
 
 namespace Dapper
 {
@@ -16,7 +15,7 @@ namespace Dapper
                 this.type = type;
             }
 
-            private static readonly Hashtable byType = new Hashtable();
+            private static readonly Hashtable byType = new();
             private readonly Type type;
             internal static void Purge(Type type)
             {
@@ -51,9 +50,9 @@ namespace Dapper
                 return found.GetReader(reader, startBound, length, returnNullIfFirstMissing);
             }
 
-            private readonly Dictionary<DeserializerKey, Func<DbDataReader, object>> readers = new Dictionary<DeserializerKey, Func<DbDataReader, object>>();
+            private readonly Dictionary<DeserializerKey, Func<DbDataReader, object>> readers = new();
 
-            private struct DeserializerKey : IEquatable<DeserializerKey>
+            private readonly struct DeserializerKey : IEquatable<DeserializerKey>
             {
                 private readonly int startBound, length;
                 private readonly bool returnNullIfFirstMissing;
