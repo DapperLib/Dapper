@@ -22,11 +22,13 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
+(note: new PRs will not be merged until they add release note wording here)
+
+### 2.0.138
+
 - add missing non-generic `AsyncEnumerable<dynamic> QueryUnbufferedAsync(...)` API (#1925 via mgravell, fixes #1922)
 - formally mark all `struct` types as `readonly` (#1925 via mgravell)
 - reinstate fallback support for `IDataReader`, and implement missing `DbDataReader` async APIs (#1913 via mgravell)
-
-(note: new PRs will not be merged until they add release note wording here)
 
 ### 2.0.138
 
