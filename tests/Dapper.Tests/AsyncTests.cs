@@ -48,6 +48,20 @@ namespace Dapper.Tests
 
 #if NET5_0_OR_GREATER
         [Fact]
+        public async Task TestBasicStringUsageUnbufferedDynamicAsync()
+        {
+            var results = new List<string>();
+            await foreach (var row in connection.QueryUnbufferedAsync("select 'abc' as [Value] union all select @txt", new { txt = "def" })
+                .ConfigureAwait(false))
+            {
+                string value = row.Value;
+                results.Add(value);
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr);
+        }
+
+        [Fact]
         public async Task TestBasicStringUsageUnbufferedAsync()
         {
             var results = new List<string>();
@@ -192,7 +206,7 @@ namespace Dapper.Tests
         [Fact]
         public void TestLongOperationWithCancellation()
         {
-            CancellationTokenSource cancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            CancellationTokenSource cancel = new(TimeSpan.FromSeconds(5));
             var task = connection.QueryAsync<int>(new CommandDefinition("waitfor delay '00:00:10';select 1", cancellationToken: cancel.Token));
             try
             {
