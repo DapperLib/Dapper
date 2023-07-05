@@ -64,6 +64,7 @@ namespace Dapper
             {
                 CommandTimeout = null;
                 ApplyNullValues = false;
+                EmptyParameterListFormat = "(select null where 1=0)";
             }
 
             /// <summary>
@@ -99,6 +100,11 @@ namespace Dapper
             /// instead of the original name; for most scenarios, this is ignored since the name is redundant, but "snowflake" requires this.
             /// </summary>
             public static bool UseIncrementalPseudoPositionalParameterNames { get; set; }
+
+            /// <summary>
+            /// The SQL used when a list parameter is empty.
+            /// </summary>
+            public static string EmptyParameterListFormat { get; set; }
         }
     }
 }

@@ -2437,7 +2437,7 @@ namespace Dapper
                             }
                             if (first)
                             {
-                                return "(select null where 1=0)";
+                                return Settings.EmptyParameterListFormat;
                             }
                             else
                             {
