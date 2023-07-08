@@ -25,7 +25,7 @@
     <PackageReference Include="RepoDb.SqlServer" Version="1.1.4" />
     <PackageReference Include="ServiceStack.OrmLite.SqlServer" Version="5.10.2" />
     <PackageReference Include="SqlMarshal" Version="0.2.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.113.6" />
   </ItemGroup>
   <ItemGroup>
