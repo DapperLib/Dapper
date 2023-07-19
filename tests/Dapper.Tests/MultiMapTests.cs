@@ -132,13 +132,11 @@ Order by p.Id";
         [Fact]
         public void QueryMultimapFromClosed()
         {
-            using (var conn = GetClosedConnection())
-            {
-                Assert.Equal(ConnectionState.Closed, conn.State);
-                var i = conn.Query<Multi1, Multi2, int>("select 2 as [Id], 3 as [Id]", (x, y) => x.Id + y.Id).Single();
-                Assert.Equal(ConnectionState.Closed, conn.State);
-                Assert.Equal(5, i);
-            }
+            using var conn = GetClosedConnection();
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            var i = conn.Query<Multi1, Multi2, int>("select 2 as [Id], 3 as [Id]", (x, y) => x.Id + y.Id).Single();
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            Assert.Equal(5, i);
         }
 
         [Fact]

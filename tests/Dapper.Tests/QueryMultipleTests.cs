@@ -17,63 +17,58 @@ namespace Dapper.Tests
         [Fact]
         public void TestQueryMultipleBuffered()
         {
-            using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))
-            {
-                var a = grid.Read<int>();
-                var b = grid.Read<int>();
-                var c = grid.Read<int>();
-                var d = grid.Read<int>();
+            using var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 });
 
-                Assert.Equal(1, a.Single());
-                Assert.Equal(2, b.Single());
-                Assert.Equal(3, c.Single());
-                Assert.Equal(4, d.Single());
-            }
+            var a = grid.Read<int>();
+            var b = grid.Read<int>();
+            var c = grid.Read<int>();
+            var d = grid.Read<int>();
+
+            Assert.Equal(1, a.Single());
+            Assert.Equal(2, b.Single());
+            Assert.Equal(3, c.Single());
+            Assert.Equal(4, d.Single());
         }
 
         [Fact]
         public void TestMultiConversion()
         {
-            using (SqlMapper.GridReader multi = connection.QueryMultiple("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2"))
-            {
-                Assert.Equal(1, multi.Read<int>().Single());
-                Assert.Equal(2, multi.Read<int>().Single());
-            }
+            using SqlMapper.GridReader multi = connection.QueryMultiple("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2");
+            Assert.Equal(1, multi.Read<int>().Single());
+            Assert.Equal(2, multi.Read<int>().Single());
         }
 
         [Fact]
         public void TestQueryMultipleNonBufferedIncorrectOrder()
         {
-            using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))
+            using var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 });
+
+            var a = grid.Read<int>(false);
+            try
             {
-                var a = grid.Read<int>(false);
-                try
-                {
-                    var b = grid.Read<int>(false);
-                    throw new InvalidOperationException(); // should have thrown
-                }
-                catch (InvalidOperationException)
-                {
-                    // that's expected
-                }
+                var b = grid.Read<int>(false);
+                throw new InvalidOperationException(); // should have thrown
+            }
+            catch (InvalidOperationException)
+            {
+                // that's expected
             }
         }
 
         [Fact]
         public void TestQueryMultipleNonBufferedCorrectOrder()
         {
-            using (var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 }))
-            {
-                var a = grid.Read<int>(false).Single();
-                var b = grid.Read<int>(false).Single();
-                var c = grid.Read<int>(false).Single();
-                var d = grid.Read<int>(false).Single();
+            using var grid = connection.QueryMultiple("select 1; select 2; select @x; select 4", new { x = 3 });
 
-                Assert.Equal(1, a);
-                Assert.Equal(2, b);
-                Assert.Equal(3, c);
-                Assert.Equal(4, d);
-            }
+            var a = grid.Read<int>(false).Single();
+            var b = grid.Read<int>(false).Single();
+            var c = grid.Read<int>(false).Single();
+            var d = grid.Read<int>(false).Single();
+
+            Assert.Equal(1, a);
+            Assert.Equal(2, b);
+            Assert.Equal(3, c);
+            Assert.Equal(4, d);
         }
 
         [Fact]
@@ -161,68 +156,62 @@ end");
             Assert.Equal(42, connection.QuerySingle<int>("select cast(42 as bigint)"));
 
             // using multi-reader API
-            using (var reader = connection.QueryMultiple("select cast(42 as bigint); select cast(42 as bigint)"))
-            {
-                Assert.Equal(42, reader.Read<int>().Single());
-                Assert.Equal(42, reader.ReadSingle<int>());
-            }
+            using var reader = connection.QueryMultiple("select cast(42 as bigint); select cast(42 as bigint)");
+
+            Assert.Equal(42, reader.Read<int>().Single());
+            Assert.Equal(42, reader.ReadSingle<int>());
         }
 
         [Fact]
         public void QueryMultipleFromClosed()
         {
-            using (var conn = GetClosedConnection())
+            using var conn = GetClosedConnection();
+            using (var multi = conn.QueryMultiple("select 1; select 'abc';"))
             {
-                using (var multi = conn.QueryMultiple("select 1; select 'abc';"))
-                {
-                    Assert.Equal(1, multi.Read<int>().Single());
-                    Assert.Equal("abc", multi.Read<string>().Single());
-                }
-                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(1, multi.Read<int>().Single());
+                Assert.Equal("abc", multi.Read<string>().Single());
             }
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
         [Fact]
         public void QueryMultiple2FromClosed()
         {
-            using (var conn = GetClosedConnection())
+            using var conn = GetClosedConnection();
+
+            Assert.Equal(ConnectionState.Closed, conn.State);
+
+            using (var multi = conn.QueryMultiple("select 1 select 2 select 3"))
             {
-                Assert.Equal(ConnectionState.Closed, conn.State);
-                using (var multi = conn.QueryMultiple("select 1 select 2 select 3"))
-                {
-                    Assert.Equal(1, multi.Read<int>().Single());
-                    Assert.Equal(2, multi.Read<int>().Single());
-                    // not reading 3 is intentional here
-                }
-                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(1, multi.Read<int>().Single());
+                Assert.Equal(2, multi.Read<int>().Single());
+                // not reading 3 is intentional here
             }
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
         [Fact]
         public void SO35554284_QueryMultipleUntilConsumed()
         {
-            using (var reader = connection.QueryMultiple("select 1 as Id; select 2 as Id; select 3 as Id;"))
+            using var reader = connection.QueryMultiple("select 1 as Id; select 2 as Id; select 3 as Id;");
+
+            var items = new List<HazNameId>();
+            while (!reader.IsConsumed)
             {
-                var items = new List<HazNameId>();
-                while (!reader.IsConsumed)
-                {
-                    items.AddRange(reader.Read<HazNameId>());
-                }
-                Assert.Equal(3, items.Count);
-                Assert.Equal(1, items[0].Id);
-                Assert.Equal(2, items[1].Id);
-                Assert.Equal(3, items[2].Id);
+                items.AddRange(reader.Read<HazNameId>());
             }
+            Assert.Equal(3, items.Count);
+            Assert.Equal(1, items[0].Id);
+            Assert.Equal(2, items[1].Id);
+            Assert.Equal(3, items[2].Id);
         }
 
         [Fact]
         public void QueryMultipleInvalidFromClosed()
         {
-            using (var conn = GetClosedConnection())
-            {
-                Assert.ThrowsAny<Exception>(() => conn.QueryMultiple("select gibberish"));
-                Assert.Equal(ConnectionState.Closed, conn.State);
-            }
+            using var conn = GetClosedConnection();
+            Assert.ThrowsAny<Exception>(() => conn.QueryMultiple("select gibberish"));
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
         [Fact]
@@ -233,29 +222,28 @@ end");
 
         private void TestMultiSelectWithSomeEmptyGrids(bool buffered)
         {
-            using (var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 4;"))
-            {
-                var one = reader.Read<int>(buffered: buffered).ToArray();
-                var two = reader.Read<int>(buffered: buffered).ToArray();
-                var three = reader.Read<int>(buffered: buffered).ToArray();
-                var four = reader.Read<int>(buffered: buffered).ToArray();
-                try
-                { // only returned four grids; expect a fifth read to fail
-                    reader.Read<int>(buffered: buffered);
-                    throw new InvalidOperationException("this should not have worked!");
-                }
-                catch (ObjectDisposedException ex)
-                { // expected; success
-                    Assert.Equal("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.", ex.Message, ignoreLineEndingDifferences: true);
-                }
+            using var reader = connection.QueryMultiple("select 1; select 2 where 1 = 0; select 3 where 1 = 0; select 4;");
 
-                Assert.Single(one);
-                Assert.Equal(1, one[0]);
-                Assert.Empty(two);
-                Assert.Empty(three);
-                Assert.Single(four);
-                Assert.Equal(4, four[0]);
+            var one = reader.Read<int>(buffered: buffered).ToArray();
+            var two = reader.Read<int>(buffered: buffered).ToArray();
+            var three = reader.Read<int>(buffered: buffered).ToArray();
+            var four = reader.Read<int>(buffered: buffered).ToArray();
+            try
+            { // only returned four grids; expect a fifth read to fail
+                reader.Read<int>(buffered: buffered);
+                throw new InvalidOperationException("this should not have worked!");
             }
+            catch (ObjectDisposedException ex)
+            { // expected; success
+                Assert.Equal("The reader has been disposed; this can happen after all data has been consumed\r\nObject name: 'Dapper.SqlMapper+GridReader'.", ex.Message, ignoreLineEndingDifferences: true);
+            }
+
+            Assert.Single(one);
+            Assert.Equal(1, one[0]);
+            Assert.Empty(two);
+            Assert.Empty(three);
+            Assert.Single(four);
+            Assert.Equal(4, four[0]);
         }
 
         [Fact]

@@ -909,42 +909,34 @@ select * from @bar", new { foo }).Single();
         [Fact]
         public void ExecuteFromClosed()
         {
-            using (var conn = GetClosedConnection())
-            {
-                conn.Execute("-- nop");
-                Assert.Equal(ConnectionState.Closed, conn.State);
-            }
+            using var conn = GetClosedConnection();
+            conn.Execute("-- nop");
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
         [Fact]
         public void ExecuteInvalidFromClosed()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var ex = Assert.ThrowsAny<Exception>(() => conn.Execute("nop"));
-                Assert.Equal(ConnectionState.Closed, conn.State);
-            }
+            using var conn = GetClosedConnection();
+            var ex = Assert.ThrowsAny<Exception>(() => conn.Execute("nop"));
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
         [Fact]
         public void QueryFromClosed()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var i = conn.Query<int>("select 1").Single();
-                Assert.Equal(ConnectionState.Closed, conn.State);
-                Assert.Equal(1, i);
-            }
+            using var conn = GetClosedConnection();
+            var i = conn.Query<int>("select 1").Single();
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            Assert.Equal(1, i);
         }
 
         [Fact]
         public void QueryInvalidFromClosed()
         {
-            using (var conn = GetClosedConnection())
-            {
-                Assert.ThrowsAny<Exception>(() => conn.Query<int>("select gibberish").Single());
-                Assert.Equal(ConnectionState.Closed, conn.State);
-            }
+            using var conn = GetClosedConnection();
+            Assert.ThrowsAny<Exception>(() => conn.Query<int>("select gibberish").Single());
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
         [Fact]
@@ -1148,13 +1140,11 @@ select * from @bar", new { foo }).Single();
             using (var sqlCmd = connection.CreateCommand())
             {
                 sqlCmd.CommandText = sql;
-                using (IDataReader reader1 = sqlCmd.ExecuteReader())
-                {
-                    Assert.True(reader1.Read());
-                    Assert.Equal(0, reader1.GetInt32(0));
-                    Assert.False(reader1.Read());
-                    Assert.False(reader1.NextResult());
-                }
+                using IDataReader reader1 = sqlCmd.ExecuteReader();
+                Assert.True(reader1.Read());
+                Assert.Equal(0, reader1.GetInt32(0));
+                Assert.False(reader1.Read());
+                Assert.False(reader1.NextResult());
             }
 
             // dapper
