@@ -1964,11 +1964,13 @@ namespace Dapper
                     if (table == null)
                     {
                         string[] names = new string[effectiveFieldCount];
+                        Type[] types = new Type[effectiveFieldCount];
                         for (int i = 0; i < effectiveFieldCount; i++)
                         {
                             names[i] = r.GetName(i + startBound);
+                            types[i] = r.GetFieldType(i + startBound);
                         }
-                        table = new DapperTable(names);
+                        table = new DapperTable(names, types);
                     }
 
                     var values = new object[effectiveFieldCount];
