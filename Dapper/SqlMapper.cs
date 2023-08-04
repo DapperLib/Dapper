@@ -358,29 +358,32 @@ namespace Dapper
                 }
             }
 
-            var snapshot = typeHandlers;
-            if (snapshot.TryGetValue(type, out ITypeHandler oldValue) && handler == oldValue) return; // nothing to do
+            lock (typeHandlersLocker)
+            {
+                var snapshot = typeHandlers;
+                if (snapshot.TryGetValue(type, out ITypeHandler oldValue) && handler == oldValue) return; // nothing to do
 
-            var newCopy = clone ? new Dictionary<Type, ITypeHandler>(snapshot) : snapshot;
+                var newCopy = clone ? new Dictionary<Type, ITypeHandler>(snapshot) : snapshot;
 
-#pragma warning disable 618
-            typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
-            if (secondary != null)
-            {
-                typeof(TypeHandlerCache<>).MakeGenericType(secondary).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+    #pragma warning disable 618
+                typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+                if (secondary != null)
+                {
+                    typeof(TypeHandlerCache<>).MakeGenericType(secondary).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { handler });
+                }
+    #pragma warning restore 618
+                if (handler == null)
+                {
+                    newCopy.Remove(type);
+                    if (secondary != null) newCopy.Remove(secondary);
+                }
+                else
+                {
+                    newCopy[type] = handler;
+                    if (secondary != null) newCopy[secondary] = handler;
+                }
+                typeHandlers = newCopy;
             }
-#pragma warning restore 618
-            if (handler == null)
-            {
-                newCopy.Remove(type);
-                if (secondary != null) newCopy.Remove(secondary);
-            }
-            else
-            {
-                newCopy[type] = handler;
-                if (secondary != null) newCopy[secondary] = handler;
-            }
-            typeHandlers = newCopy;
         }
 
         /// <summary>
@@ -391,6 +394,7 @@ namespace Dapper
         public static void AddTypeHandler<T>(TypeHandler<T> handler) => AddTypeHandlerImpl(typeof(T), handler, true);
 
         private static Dictionary<Type, ITypeHandler> typeHandlers;
+        private static object typeHandlersLocker = new object();
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
 
