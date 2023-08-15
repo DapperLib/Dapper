@@ -3463,9 +3463,21 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloc, returnValueLocal); // [target]
             }
 
-            var members = (specializedConstructor != null
-                ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList();
+            bool reorderConstructorParameters = false;
+            List<IMemberMap> members;
+            if (specializedConstructor != null)
+            {
+                members = names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n)).ToList();
+                var ctorParams = specializedConstructor.GetParameters();
+                reorderConstructorParameters =
+                    ctorParams.Any()
+                    && ctorParams.Length == members.Count
+                    && members.Select((m, i) => i != m.Parameter.Position).Any(x => x);
+            }
+            else
+            {
+                members = names.Select(n => typeMap.GetMember(n)).ToList();
+            }
 
             // stack is now [target]
             bool first = true;
@@ -3558,6 +3570,37 @@ namespace Dapper
             {
                 if (specializedConstructor != null)
                 {
+                    if (reorderConstructorParameters)
+                    {
+                        // stack is already filled with arguments
+                        // save these in local vars and readd to stack in correct order
+
+                        var storedInLocalVars =
+                            members
+                                .AsEnumerable()
+                                .Reverse() // as stack LIFO order
+                                .Select(item =>
+                                {
+                                    var local = il.DeclareLocal(item.MemberType);
+                                    il.Emit(OpCodes.Stloc, local);
+                                    return local;
+                                })
+                                .Reverse() // as FIFO order
+                                .ToArray();
+
+                        var membersConstructorParamPosition =
+                            members
+                                .Select(member => member.Parameter.Position)
+                                .ToArray();
+
+                        Array.Sort(membersConstructorParamPosition, storedInLocalVars);
+
+                        foreach (var item in storedInLocalVars)
+                        {
+                            il.Emit(OpCodes.Ldloc, item);
+                        }
+                    }
+
                     il.Emit(OpCodes.Newobj, specializedConstructor);
                 }
                 il.Emit(OpCodes.Stloc, returnValueLocal); // stack is empty

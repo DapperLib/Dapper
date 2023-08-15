@@ -220,5 +220,61 @@ SELECT * FROM @ExplicitConstructors"
             var output = connection.Query<WithPrivateConstructor>("select 1 as Foo").First();
             Assert.Equal(1, output.Foo);
         }
+
+
+        [Fact]
+        public void FSharpAnonymousRecordConstructor()
+        {
+            // The F# Anonymous record is like C# anonymous classes, but the fields arguments in
+            // the generated constructor is always sorted by field name
+
+            var order = connection.Query<FSharpAnonymousRecordLookAlike>("select Tid = 20, Name = 'enrico', X = 'relative', Y = 15").First();
+
+            Assert.True(order.GetWentThroughProperConstructor());
+            Assert.Equal(20, order.GetTid());
+            Assert.Equal("enrico", order.GetName());
+            Assert.Equal("relative", order.GetX());
+            Assert.Equal(15, order.GetY());
+        }
+
+        private class FSharpAnonymousRecordLookAlike
+        {
+            private readonly int Tid;
+            private readonly string Name;
+            private readonly string X;
+            private readonly int Y;
+            private readonly bool WentThroughProperConstructor;
+
+            public FSharpAnonymousRecordLookAlike(string name, int tid, string x, int y)
+            {
+                WentThroughProperConstructor = true;
+                Name = name;
+                Tid = tid;
+                X = x;
+                Y = y;
+            }
+
+            public bool GetWentThroughProperConstructor()
+            {
+                return WentThroughProperConstructor;
+            }
+            public int GetTid()
+            {
+                return Tid;
+            }
+            public string GetName()
+            {
+                return Name;
+            }
+            public string GetX()
+            {
+                return X;
+            }
+            public int GetY()
+            {
+                return Y;
+            }
+        }
+
     }
 }
