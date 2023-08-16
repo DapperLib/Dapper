@@ -22,6 +22,8 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
+-  add global `FetchSize` setting for use with Oracle (#XXXX via mgravell, fixes #1945)
+
 (note: new PRs will not be merged until they add release note wording here)
 
 ### 2.0.143

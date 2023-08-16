@@ -131,6 +131,9 @@ namespace Dapper
 
         private static SqlMapper.Link<Type, Action<IDbCommand>> commandInitCache;
 
+        internal static void ResetCommandInitCache()
+            => SqlMapper.Link<Type, Action<IDbCommand>>.Clear(ref commandInitCache);
+
         private static Action<IDbCommand> GetInit(Type commandType)
         {
             if (commandType == null)
@@ -141,14 +144,15 @@ namespace Dapper
             }
             var bindByName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
             var initialLongFetchSize = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+            var fetchSize = GetBasicPropertySetter(commandType, "FetchSize", typeof(long));
 
             action = null;
-            if (bindByName != null || initialLongFetchSize != null)
+            if (bindByName is not null || initialLongFetchSize is not null || fetchSize is not null)
             {
                 var method = new DynamicMethod(commandType.Name + "_init", null, new Type[] { typeof(IDbCommand) });
                 var il = method.GetILGenerator();
 
-                if (bindByName != null)
+                if (bindByName is not null)
                 {
                     // .BindByName = true
                     il.Emit(OpCodes.Ldarg_0);
@@ -156,13 +160,25 @@ namespace Dapper
                     il.Emit(OpCodes.Ldc_I4_1);
                     il.EmitCall(OpCodes.Callvirt, bindByName, null);
                 }
-                if (initialLongFetchSize != null)
+                if (initialLongFetchSize is not null)
                 {
                     // .InitialLONGFetchSize = -1
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Castclass, commandType);
                     il.Emit(OpCodes.Ldc_I4_M1);
                     il.EmitCall(OpCodes.Callvirt, initialLongFetchSize, null);
+                }
+                if (fetchSize is not null)
+                {
+                    var snapshot = SqlMapper.Settings.FetchSize;
+                    if (snapshot >= 0)
+                    {
+                        // .FetchSize = {withValue}
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Castclass, commandType);
+                        il.Emit(OpCodes.Ldc_I8, snapshot); // bake it as a constant
+                        il.EmitCall(OpCodes.Callvirt, fetchSize, null);
+                    }
                 }
                 il.Emit(OpCodes.Ret);
                 action = (Action<IDbCommand>)method.CreateDelegate(typeof(Action<IDbCommand>));
