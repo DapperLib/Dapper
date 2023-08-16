@@ -105,7 +105,8 @@ namespace Dapper
 
             /// <summary>
             /// If assigned a non-negative value, then that value is applied to any commands <c>FetchSize</c> property, if it exists;
-            /// see https://docs.oracle.com/en/database/oracle/oracle-database/18/odpnt/CommandFetchSize.html
+            /// see https://docs.oracle.com/en/database/oracle/oracle-database/18/odpnt/CommandFetchSize.html; note that this value
+            /// can only be set globally - it is not intended for frequent/contextual changing.
             /// </summary>
             public static long FetchSize
             {

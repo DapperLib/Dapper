@@ -22,7 +22,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
--  add global `FetchSize` setting for use with Oracle (#1946 via mgravell, fixes #1945)
+-  add global `FetchSize` setting for use with Oracle (#1946 via mgravell, fixes #1945) (also add some missing logic in `Settings.Reset()`)
 
 (note: new PRs will not be merged until they add release note wording here)
 
