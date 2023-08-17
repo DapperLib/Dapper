@@ -74,9 +74,16 @@ namespace Dapper
                 int i = 0;
                 for (; i < ctorParameters.Length; i++)
                 {
-                    var denseName = MatchConstructorParametersWithUnderscores ? names[i].Replace("_", "") : names[i];
-                    if (!string.Equals(ctorParameters[i].Name, denseName, StringComparison.OrdinalIgnoreCase))
+                    if (EqualsCI(ctorParameters[i].Name, names[i]))
+                    { } // exact match
+                    else if (MatchNamesWithUnderscores && EqualsCIU(ctorParameters[i].Name, names[i]))
+                    { } // match after applying underscores
+                    else
+                    {
+                        // not a name match
                         break;
+                    }
+
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;
                     var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
@@ -120,10 +127,8 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
-            var parameters = constructor.GetParameters();
-            var denseColumnName = MatchConstructorParametersWithUnderscores ? columnName.Replace("_", "") : columnName;
-
-            return new SimpleMemberMap(columnName, parameters.FirstOrDefault(p => string.Equals(p.Name, denseColumnName, StringComparison.OrdinalIgnoreCase)));
+            ParameterInfo param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name);
+            return new SimpleMemberMap(columnName, param);
         }
 
         /// <summary>
@@ -133,14 +138,7 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetMember(string columnName)
         {
-            var property = Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
-
-            if (property == null && MatchFieldsAndPropertiesWithUnderscores)
-            {
-                property = Properties.Find(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
-                    ?? Properties.Find(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
-            }
+            var property = MatchFirstOrDefault(Properties, columnName, static p => p.Name);
 
             if (property != null)
                 return new SimpleMemberMap(columnName, property);
@@ -155,7 +153,7 @@ namespace Dapper
                 ?? _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
                 ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
 
-            if (field == null && MatchFieldsAndPropertiesWithUnderscores)
+            if (field == null && MatchNamesWithUnderscores)
             {
                 var effectiveColumnName = columnName.Replace("_", "");
                 backingFieldName = "<" + effectiveColumnName + ">k__BackingField";
@@ -174,22 +172,55 @@ namespace Dapper
         /// <summary>
         /// Should column names like User_Id be allowed to match properties/fields like UserId ?
         /// </summary>
-        [Obsolete("Use MatchFieldsAndPropertiesWithUnderscores for clarity")]
-        public static bool MatchNamesWithUnderscores
+        public static bool MatchNamesWithUnderscores { get; set; }
+
+        static T MatchFirstOrDefault<T>(IList<T> members, string name, Func<T, string> selector) where T : class
         {
-            get { return MatchFieldsAndPropertiesWithUnderscores; }
-            set { MatchFieldsAndPropertiesWithUnderscores = value; }
+            if (members is { Count: > 0 })
+            {
+                // try exact first
+                foreach (var member in members)
+                {
+                    if (string.Equals(name, selector(member), StringComparison.Ordinal))
+                    {
+                        return member;
+                    }
+                }
+                // then exact ignoring case
+                foreach (var member in members)
+                {
+                    if (string.Equals(name, selector(member), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return member;
+                    }
+                }
+                if (MatchNamesWithUnderscores)
+                {
+                    // same again, minus underscore delta
+                    name = name?.Replace("_", "");
+                    foreach (var member in members)
+                    {
+                        if (string.Equals(name, selector(member)?.Replace("_", ""), StringComparison.Ordinal))
+                        {
+                            return member;
+                        }
+                    }
+                    foreach (var member in members)
+                    {
+                        if (string.Equals(name, selector(member)?.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+                        {
+                            return member;
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
-        /// <summary>
-        /// Should column names like User_Id be allowed to match properties/fields like UserId ?
-        /// </summary>
-        public static bool MatchFieldsAndPropertiesWithUnderscores { get; set; }
-
-        /// <summary>
-        /// Should column names like User_Id be allowed to match constructor arguments like userId ?
-        /// </summary>
-        public static bool MatchConstructorParametersWithUnderscores { get; set; }
+        internal static bool EqualsCI(string x, string y)
+            => string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+        internal static bool EqualsCIU(string x, string y)
+            => string.Equals(x?.Replace("_", ""), y?.Replace("_", ""), StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// The settable properties for this typemap

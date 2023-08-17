@@ -1277,8 +1277,7 @@ insert TPTable (Value) values (2), (568)");
         [Fact]
         public void TestConstructorParametersWithUnderscoredColumns()
         {
-            DefaultTypeMap.MatchConstructorParametersWithUnderscores = true;
-            DefaultTypeMap.MatchFieldsAndPropertiesWithUnderscores = true;
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
             var obj = connection.QuerySingle<HazGetOnlyAndCtor>("select 42 as [id_property], 'def' as [name_property];");
             Assert.Equal(42, obj.IdProperty);
             Assert.Equal("def", obj.NameProperty);
