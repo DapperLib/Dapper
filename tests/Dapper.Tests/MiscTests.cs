@@ -1273,5 +1273,26 @@ insert TPTable (Value) values (2), (568)");
             public int Id { get; }
             public string Name { get; } = "abc";
         }
+
+        [Fact]
+        public void TestConstructorParametersWithUnderscoredColumns()
+        {
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
+            var obj = connection.QuerySingle<HazGetOnlyAndCtor>("select 42 as [id_property], 'def' as [name_property];");
+            Assert.Equal(42, obj.IdProperty);
+            Assert.Equal("def", obj.NameProperty);
+        }
+
+        private class HazGetOnlyAndCtor
+        {
+            public int IdProperty { get; }
+            public string NameProperty { get; }
+
+            public HazGetOnlyAndCtor(int idProperty, string nameProperty)
+            {
+                IdProperty = idProperty;
+                NameProperty = nameProperty;
+            }
+        }
     }
 }
