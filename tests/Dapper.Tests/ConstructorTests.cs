@@ -220,5 +220,45 @@ SELECT * FROM @ExplicitConstructors"
             var output = connection.Query<WithPrivateConstructor>("select 1 as Foo").First();
             Assert.Equal(1, output.Foo);
         }
+
+        [Fact]
+        public void CtorWithUnderscores()
+        {
+            var obj = connection.QueryFirst<Type_ParamsWithUnderscores>("select 'abc' as FIRST_NAME, 'def' as LAST_NAME");
+            Assert.NotNull(obj);
+            Assert.Equal("abc", obj.FirstName);
+            Assert.Equal("def", obj.LastName);
+        }
+
+        [Fact]
+        public void CtorWithoutUnderscores()
+        {
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
+            var obj = connection.QueryFirst<Type_ParamsWithoutUnderscores>("select 'abc' as FIRST_NAME, 'def' as LAST_NAME");
+            Assert.NotNull(obj);
+            Assert.Equal("abc", obj.FirstName);
+            Assert.Equal("def", obj.LastName);
+        }
+
+        class Type_ParamsWithUnderscores
+        {
+            public string FirstName { get; }
+            public string LastName { get; }
+            public Type_ParamsWithUnderscores(string first_name, string last_name)
+            {
+                FirstName = first_name;
+                LastName = last_name;
+            }
+        }
+        class Type_ParamsWithoutUnderscores
+        {
+            public string FirstName { get; }
+            public string LastName { get; }
+            public Type_ParamsWithoutUnderscores(string firstName, string lastName)
+            {
+                FirstName = firstName;
+                LastName = lastName;
+            }
+        }
     }
 }
