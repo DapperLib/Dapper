@@ -22,7 +22,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
-- add underscore handling with constructors (#1786 via @jo-goro, fixes #818)
+- add underscore handling with constructors (#1786 via @jo-goro, fixes #818; also #1947 via mgravell)
 
 (note: new PRs will not be merged until they add release note wording here)
 
