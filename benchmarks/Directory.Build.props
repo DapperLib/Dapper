@@ -10,7 +10,7 @@
   
   <ItemGroup>
     <ProjectReference Include="../../Dapper/Dapper.csproj" />
-    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="Dapper.Contrib" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
