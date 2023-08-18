@@ -22,11 +22,12 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ### unreleased
 
+(note: new PRs will not be merged until they add release note wording here)
+
+### 2.0.151
 
 - add global `FetchSize` setting for use with Oracle (#1946 via mgravell, fixes #1945) (also add some missing logic in `Settings.Reset()`)
 - add underscore handling with constructors (#1786 via @jo-goro, fixes #818; also #1947 via mgravell)
-
-(note: new PRs will not be merged until they add release note wording here)
 
 ### 2.0.143
 
