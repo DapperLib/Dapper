@@ -83,6 +83,7 @@ namespace Dapper
 #if DEBUG // make sure we're not using this internally
         [Obsolete(nameof(DbDataReader) + " API should be preferred")]
 #endif
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Func<IDataReader, object> GetRowParser(this IDataReader reader, Type type,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
@@ -109,6 +110,7 @@ namespace Dapper
 #if DEBUG // make sure we're not using this internally
         [Obsolete(nameof(DbDataReader) + " API should be preferred")]
 #endif
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
