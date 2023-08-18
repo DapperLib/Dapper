@@ -19,7 +19,7 @@ namespace Dapper
         /// <param name="type">Entity type</param>
         public DefaultTypeMap(Type type)
         {
-            if (type == null)
+            if (type is null)
                 throw new ArgumentNullException(nameof(type));
 
             _fields = GetSettableFields(type);
@@ -44,7 +44,7 @@ namespace Dapper
         {
             return t
                   .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                  .Where(p => GetPropertySetter(p, t) != null)
+                  .Where(p => GetPropertySetter(p, t) is not null)
                   .ToList();
         }
 
@@ -140,7 +140,7 @@ namespace Dapper
         {
             var property = MatchFirstOrDefault(Properties, columnName, static p => p.Name);
 
-            if (property != null)
+            if (property is not null)
                 return new SimpleMemberMap(columnName, property);
 
             // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
@@ -153,7 +153,7 @@ namespace Dapper
                 ?? _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
                 ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
 
-            if (field == null && MatchNamesWithUnderscores)
+            if (field is null && MatchNamesWithUnderscores)
             {
                 var effectiveColumnName = columnName.Replace("_", "");
                 backingFieldName = "<" + effectiveColumnName + ">k__BackingField";
@@ -164,7 +164,7 @@ namespace Dapper
                     ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
             }
 
-            if (field != null)
+            if (field is not null)
                 return new SimpleMemberMap(columnName, field);
 
             return null;

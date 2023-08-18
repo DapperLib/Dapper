@@ -72,7 +72,7 @@ namespace Dapper
             static int HashTypes(Type[] types)
             {
                 var hashCode = 0;
-                if (types != null)
+                if (types is not null)
                 {
                     foreach (var t in types)
                     {
@@ -99,7 +99,7 @@ namespace Dapper
                 new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex);
 
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex) =>
-                (otherTypes == null || otherTypes.Length == 0)
+                (otherTypes is null || otherTypes.Length == 0)
                 ? new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex)
                 : new IdentityWithTypes(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
 
@@ -130,7 +130,7 @@ namespace Dapper
                     hashCode = (hashCode * 23) + (sql?.GetHashCode() ?? 0);
                     hashCode = (hashCode * 23) + (type?.GetHashCode() ?? 0);
                     hashCode = (hashCode * 23) + otherTypesHash;
-                    hashCode = (hashCode * 23) + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
+                    hashCode = (hashCode * 23) + (connectionString is null ? 0 : connectionStringComparer.GetHashCode(connectionString));
                     hashCode = (hashCode * 23) + (parametersType?.GetHashCode() ?? 0);
                 }
             }

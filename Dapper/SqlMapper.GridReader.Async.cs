@@ -54,7 +54,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public Task<IEnumerable<object>> ReadAsync(Type type, bool buffered = true)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadAsyncImpl<object>(type, buffered);
             }
 
@@ -65,7 +65,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public Task<object> ReadFirstAsync(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object>(type, Row.First);
             }
 
@@ -76,7 +76,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public Task<object?> ReadFirstOrDefaultAsync(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object?>(type, Row.FirstOrDefault);
             }
 
@@ -87,7 +87,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public Task<object> ReadSingleAsync(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object>(type, Row.Single);
             }
 
@@ -98,7 +98,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public Task<object?> ReadSingleOrDefaultAsync(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRowAsyncImpl<object?>(type, Row.SingleOrDefault);
             }
 
@@ -193,7 +193,7 @@ namespace Dapper
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
-                if (deserializer.Func == null || deserializer.Hash != hash)
+                if (deserializer.Func is null || deserializer.Hash != hash)
                 {
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
@@ -213,7 +213,7 @@ namespace Dapper
                     var deserializer = cache.Deserializer;
 
                     int hash = GetColumnHash(reader);
-                    if (deserializer.Func == null || deserializer.Hash != hash)
+                    if (deserializer.Func is null || deserializer.Hash != hash)
                     {
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
@@ -282,13 +282,13 @@ namespace Dapper
             /// </summary>
             public async ValueTask DisposeAsync()
             {
-                if (reader != null)
+                if (reader is not null)
                 {
                     if (!reader.IsClosed) Command?.Cancel();
                     await reader.DisposeAsync();
                     reader = null!;
                 }
-                if (Command != null)
+                if (Command is not null)
                 {
                     if (Command is DbCommand typed)
                     {

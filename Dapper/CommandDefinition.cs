@@ -113,7 +113,7 @@ namespace Dapper
             var cmd = cnn.CreateCommand();
             var init = GetInit(cmd.GetType());
             init?.Invoke(cmd);
-            if (Transaction != null)
+            if (Transaction is not null)
                 cmd.Transaction = Transaction;
             cmd.CommandText = CommandText;
             if (CommandTimeout.HasValue)
@@ -137,7 +137,7 @@ namespace Dapper
 
         private static Action<IDbCommand>? GetInit(Type commandType)
         {
-            if (commandType == null)
+            if (commandType is null)
                 return null; // GIGO
             if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out Action<IDbCommand>? action))
             {

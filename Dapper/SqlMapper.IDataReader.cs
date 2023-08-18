@@ -23,7 +23,7 @@ namespace Dapper
                 do
                 {
                     object val = deser(dbReader);
-                    if (val == null || val is T)
+                    if (val is null || val is T)
                     {
                         yield return (T)val!;
                     }

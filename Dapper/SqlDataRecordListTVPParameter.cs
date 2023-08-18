@@ -37,7 +37,7 @@ namespace Dapper
 
         internal static void Set(IDbDataParameter parameter, IEnumerable<T>? data, string? typeName)
         {
-            parameter.Value = data != null && data.Any() ? data : null;
+            parameter.Value = data is not null && data.Any() ? data : null;
             StructuredHelper.ConfigureTVP(parameter, typeName);
         }
     }
@@ -55,7 +55,7 @@ namespace Dapper
             lock (hashtable)
             {
                 var helper = (Action<IDbDataParameter, string?>?)hashtable[type];
-                if (helper == null)
+                if (helper is null)
                 {
                     helper = CreateFor(type, nameProperty, sqlDbType);
                     hashtable.Add(type, helper);
@@ -67,13 +67,13 @@ namespace Dapper
         static Action<IDbDataParameter, string?> CreateFor(Type type, string nameProperty, int sqlDbType)
         {
             var name = type.GetProperty(nameProperty, BindingFlags.Public | BindingFlags.Instance);
-            if (name == null || !name.CanWrite)
+            if (name is null || !name.CanWrite)
             {
                 return (p, n) => { };
             }
 
             var dbType = type.GetProperty("SqlDbType", BindingFlags.Public | BindingFlags.Instance);
-            if (dbType != null && !dbType.CanWrite) dbType = null;
+            if (dbType is not null && !dbType.CanWrite) dbType = null;
 
             var dm = new DynamicMethod(nameof(CreateFor) + "_" + type.Name, null,
                 new[] { typeof(IDbDataParameter), typeof(string) }, true);
@@ -83,7 +83,7 @@ namespace Dapper
             il.Emit(OpCodes.Ldarg_1);
             il.EmitCall(OpCodes.Callvirt, name.GetSetMethod()!, null);
 
-            if (dbType != null)
+            if (dbType is not null)
             {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Castclass, type);

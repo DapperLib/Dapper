@@ -25,7 +25,7 @@ namespace Dapper
             //    public DapperRowList(DapperTable table) { _table = table; }
             //    PropertyDescriptorCollection ITypedList.GetItemProperties(PropertyDescriptor[] listAccessors)
             //    {
-            //        if (listAccessors != null && listAccessors.Length != 0) return PropertyDescriptorCollection.Empty;
+            //        if (listAccessors is not null && listAccessors.Length != 0) return PropertyDescriptorCollection.Empty;
 
             //        return DapperRowTypeDescriptor.GetProperties(_table);
             //    }
@@ -63,11 +63,11 @@ namespace Dapper
                 internal static PropertyDescriptorCollection GetProperties(DapperTable? table, IDictionary<string,object>? row = null)
                 {
                     string[]? names = table?.FieldNames;
-                    if (names == null || names.Length == 0) return PropertyDescriptorCollection.Empty;
+                    if (names is null || names.Length == 0) return PropertyDescriptorCollection.Empty;
                     var arr = new PropertyDescriptor[names.Length];
                     for (int i = 0; i < arr.Length; i++)
                     {
-                        var type = row != null && row.TryGetValue(names[i], out var value) && value != null
+                        var type = row is not null && row.TryGetValue(names[i], out var value) && value is not null
                             ? value.GetType() : typeof(object);
                         arr[i] = new RowBoundPropertyDescriptor(type, names[i], i);
                     }

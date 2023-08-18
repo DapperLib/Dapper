@@ -40,7 +40,7 @@ namespace Dapper
 #pragma warning disable 0618
             parameter.Value = SqlMapper.SanitizeParameterValue(table);
 #pragma warning restore 0618
-            if (string.IsNullOrEmpty(typeName) && table != null)
+            if (string.IsNullOrEmpty(typeName) && table is not null)
             {
                 typeName = table.GetTypeName();
             }

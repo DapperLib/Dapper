@@ -127,7 +127,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public IEnumerable<object> Read(Type type, bool buffered = true)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadImpl<object>(type, buffered);
             }
 
@@ -138,7 +138,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadFirst(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.First);
             }
 
@@ -149,7 +149,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object? ReadFirstOrDefault(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.FirstOrDefault);
             }
 
@@ -160,7 +160,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadSingle(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.Single);
             }
 
@@ -171,7 +171,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object? ReadSingleOrDefault(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.SingleOrDefault);
             }
 
@@ -182,7 +182,7 @@ namespace Dapper
             /// </summary>
             protected int OnBeforeGrid()
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (reader is null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
                 if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
                 _resultIndexAndConsumedFlag |= CONSUMED_FLAG;
                 return ResultIndex;
@@ -196,7 +196,7 @@ namespace Dapper
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
-                if (deserializer.Func == null || deserializer.Hash != hash)
+                if (deserializer.Func is null || deserializer.Hash != hash)
                 {
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
@@ -217,7 +217,7 @@ namespace Dapper
                     var deserializer = cache.Deserializer;
 
                     int hash = GetColumnHash(reader);
-                    if (deserializer.Func == null || deserializer.Hash != hash)
+                    if (deserializer.Func is null || deserializer.Hash != hash)
                     {
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
@@ -468,13 +468,13 @@ namespace Dapper
             /// </summary>
             public void Dispose()
             {
-                if (reader != null)
+                if (reader is not null)
                 {
                     if (!reader.IsClosed) Command?.Cancel();
                     reader.Dispose();
                     reader = null!;
                 }
-                if (Command != null)
+                if (Command is not null)
                 {
                     Command.Dispose();
                     Command = null!;

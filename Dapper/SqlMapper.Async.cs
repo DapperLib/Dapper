@@ -212,7 +212,7 @@ namespace Dapper
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Task<IEnumerable<object>> QueryAsync(this IDbConnection cnn, Type type, string sql, object? param = null, IDbTransaction? transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type is null) throw new ArgumentNullException(nameof(type));
             return QueryAsync<object>(cnn, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.Buffered, default));
         }
 
@@ -230,7 +230,7 @@ namespace Dapper
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Task<object> QueryFirstAsync(this IDbConnection cnn, Type type, string sql, object? param = null, IDbTransaction? transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type is null) throw new ArgumentNullException(nameof(type));
             return QueryRowAsync<object>(cnn, Row.First, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
         }
         /// <summary>
@@ -247,7 +247,7 @@ namespace Dapper
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Task<object?> QueryFirstOrDefaultAsync(this IDbConnection cnn, Type type, string sql, object? param = null, IDbTransaction? transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type is null) throw new ArgumentNullException(nameof(type));
             return QueryRowAsync<object?>(cnn, Row.FirstOrDefault, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
         }
         /// <summary>
@@ -264,7 +264,7 @@ namespace Dapper
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Task<object> QuerySingleAsync(this IDbConnection cnn, Type type, string sql, object? param = null, IDbTransaction? transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type is null) throw new ArgumentNullException(nameof(type));
             return QueryRowAsync<object>(cnn, Row.Single, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
         }
         /// <summary>
@@ -281,7 +281,7 @@ namespace Dapper
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Task<object?> QuerySingleOrDefaultAsync(this IDbConnection cnn, Type type, string sql, object? param = null, IDbTransaction? transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type is null) throw new ArgumentNullException(nameof(type));
             return QueryRowAsync<object?>(cnn, Row.SingleOrDefault, type, new CommandDefinition(sql, param, transaction, commandTimeout, commandType, CommandFlags.None, default));
         }
 
@@ -435,7 +435,7 @@ namespace Dapper
 
                 var tuple = info.Deserializer;
                 int hash = GetColumnHash(reader);
-                if (tuple.Func == null || tuple.Hash != hash)
+                if (tuple.Func is null || tuple.Hash != hash)
                 {
                     if (reader.FieldCount == 0)
                         return Enumerable.Empty<T>();
@@ -535,7 +535,7 @@ namespace Dapper
         {
             object? param = command.Parameters;
             IEnumerable? multiExec = GetMultiExec(param);
-            if (multiExec != null)
+            if (multiExec is not null)
             {
                 return ExecuteMultiImplAsync(cnn, command, multiExec);
             }
@@ -1050,7 +1050,7 @@ namespace Dapper
             }
             catch
             {
-                if (reader != null)
+                if (reader is not null)
                 {
                     if (!reader.IsClosed)
                     {
@@ -1171,7 +1171,7 @@ namespace Dapper
             finally
             {
                 if (wasClosed) cnn.Close();
-                if (cmd != null && disposeCommand) cmd.Dispose();
+                if (cmd is not null && disposeCommand) cmd.Dispose();
             }
         }
 
@@ -1225,7 +1225,7 @@ namespace Dapper
         {
             Action<IDbCommand, object?>? paramReader = null;
             object? param = command.Parameters;
-            if (param != null)
+            if (param is not null)
             {
                 var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType());
                 paramReader = GetCacheInfo(identity, command.Parameters, command.AddToCache).ParamReader;
@@ -1308,7 +1308,7 @@ namespace Dapper
 
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
-                    if (tuple.Func == null || tuple.Hash != hash)
+                    if (tuple.Func is null || tuple.Hash != hash)
                     {
                         if (reader.FieldCount == 0)
                         {

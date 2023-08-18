@@ -36,12 +36,12 @@ namespace Dapper
             internal static Func<DbDataReader, object> GetReader(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
             {
                 var found = (TypeDeserializerCache?)byType[type];
-                if (found == null)
+                if (found is null)
                 {
                     lock (byType)
                     {
                         found = (TypeDeserializerCache?)byType[type];
-                        if (found == null)
+                        if (found is null)
                         {
                             byType[type] = found = new TypeDeserializerCache(type);
                         }
@@ -92,11 +92,11 @@ namespace Dapper
 
                 public override string ToString()
                 { // only used in the debugger
-                    if (names != null)
+                    if (names is not null)
                     {
                         return string.Join(", ", names);
                     }
-                    if (reader != null)
+                    if (reader is not null)
                     {
                         var sb = new StringBuilder();
                         int index = startBound;

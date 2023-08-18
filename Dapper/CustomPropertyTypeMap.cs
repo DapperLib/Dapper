@@ -56,7 +56,7 @@ namespace Dapper
         public SqlMapper.IMemberMap? GetMember(string columnName)
         {
             var prop = _propertySelector(_type, columnName);
-            return prop != null ? new SimpleMemberMap(columnName, prop) : null;
+            return prop is not null ? new SimpleMemberMap(columnName, prop) : null;
         }
     }
 }

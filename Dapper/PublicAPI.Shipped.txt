@@ -48,10 +48,10 @@ Dapper.DefaultTypeMap.Properties.get -> System.Collections.Generic.List<System.R
 Dapper.DynamicParameters
 Dapper.DynamicParameters.Add(string! name, object? value = null, System.Data.DbType? dbType = null, System.Data.ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null) -> void
 Dapper.DynamicParameters.Add(string! name, object? value, System.Data.DbType? dbType, System.Data.ParameterDirection? direction, int? size) -> void
-Dapper.DynamicParameters.AddDynamicParams(object! param) -> void
+Dapper.DynamicParameters.AddDynamicParams(object? param) -> void
 Dapper.DynamicParameters.AddParameters(System.Data.IDbCommand! command, Dapper.SqlMapper.Identity! identity) -> void
 Dapper.DynamicParameters.DynamicParameters() -> void
-Dapper.DynamicParameters.DynamicParameters(object! template) -> void
+Dapper.DynamicParameters.DynamicParameters(object? template) -> void
 Dapper.DynamicParameters.Get<T>(string! name) -> T
 Dapper.DynamicParameters.Output<T>(T target, System.Linq.Expressions.Expression<System.Func<T, object?>!>! expression, System.Data.DbType? dbType = null, int? size = null) -> Dapper.DynamicParameters!
 Dapper.DynamicParameters.ParameterNames.get -> System.Collections.Generic.IEnumerable<string!>!

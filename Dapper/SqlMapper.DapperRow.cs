@@ -66,7 +66,7 @@ namespace Dapper
                 {
                     var value = kv.Value;
                     sb.Append(", ").Append(kv.Key);
-                    if (value != null)
+                    if (value is not null)
                     {
                         sb.Append(" = '").Append(kv.Value).Append('\'');
                     }
@@ -170,7 +170,7 @@ namespace Dapper
 
             private object SetValue(string key, object value, bool isAdd)
             {
-                if (key == null) throw new ArgumentNullException(nameof(key));
+                if (key is null) throw new ArgumentNullException(nameof(key));
                 int index = table.IndexOfName(key);
                 if (index < 0)
                 {

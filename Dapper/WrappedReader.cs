@@ -85,9 +85,9 @@ namespace Dapper
         // caller
         public static DbDataReader Create(IDbCommand? cmd, DbDataReader reader)
         {
-            if (cmd == null) return reader; // no need to wrap if no command
+            if (cmd is null) return reader; // no need to wrap if no command
 
-            if (reader != null) return new DbWrappedReader(cmd, reader);
+            if (reader is not null) return new DbWrappedReader(cmd, reader);
             cmd.Dispose();
             return null!; // GIGO
         }

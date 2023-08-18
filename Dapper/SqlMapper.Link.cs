@@ -16,7 +16,7 @@ namespace Dapper
             public static void Clear(ref Link<TKey, TValue>? head) => Interlocked.Exchange(ref head, null);
             public static bool TryGet(Link<TKey, TValue>? link, TKey key, out TValue value)
             {
-                while (link != null)
+                while (link is not null)
                 {
                     if ((object)key == (object)link.Key)
                     {

@@ -68,7 +68,7 @@ namespace Dapper
             /// <param name="value">Parameter value</param>
             public override void SetValue(IDbDataParameter parameter, T? value)
             {
-                parameter.Value = value == null ? (object)DBNull.Value : Format(value);
+                parameter.Value = value is null ? (object)DBNull.Value : Format(value);
             }
 
             /// <summary>
@@ -78,7 +78,7 @@ namespace Dapper
             /// <returns>The typed value</returns>
             public override T Parse(object? value)
             {
-                if (value == null || value is DBNull) return default!;
+                if (value is null || value is DBNull) return default!;
                 return Parse((string)value);
             }
         }
