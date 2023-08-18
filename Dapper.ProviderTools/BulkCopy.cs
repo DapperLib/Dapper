@@ -98,14 +98,17 @@ namespace Dapper.ProviderTools
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public abstract Task WriteToServerAsync(DbDataReader source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public abstract Task WriteToServerAsync(DataTable source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public abstract Task WriteToServerAsync(DataRow[] source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Add a mapping between two columns by name

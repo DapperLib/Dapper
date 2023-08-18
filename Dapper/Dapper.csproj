@@ -8,7 +8,18 @@
     <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
+    <!-- common base API goes here -->
+    <AdditionalFiles Include="PublicAPI.*.txt" />
+    <!-- TFM-specific additions go here; in reality this just means "current" (to avoid DisposeAsync etc in netfx/netstandard) -->
+    <AdditionalFiles Include="PublicAPI/$(TargetFramework)/PublicAPI.*.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Properties\" />
+
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0'">
