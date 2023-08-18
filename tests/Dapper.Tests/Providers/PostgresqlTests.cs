@@ -26,8 +26,8 @@ namespace Dapper.Tests
         private class Cat
         {
             public int Id { get; set; }
-            public string Breed { get; set; }
-            public string Name { get; set; }
+            public string? Breed { get; set; }
+            public string? Name { get; set; }
         }
 
         private readonly Cat[] Cats =
@@ -127,13 +127,13 @@ namespace Dapper.Tests
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactPostgresqlAttribute : FactAttribute
         {
-            public override string Skip
+            public override string? Skip
             {
                 get { return unavailable ?? base.Skip; }
                 set { base.Skip = value; }
             }
 
-            private static readonly string unavailable;
+            private static readonly string? unavailable;
 
             static FactPostgresqlAttribute()
             {

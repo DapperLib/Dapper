@@ -11,7 +11,7 @@ namespace Dapper
     /// </summary>
     public readonly struct CommandDefinition
     {
-        internal static CommandDefinition ForCallback(object parameters)
+        internal static CommandDefinition ForCallback(object? parameters)
         {
             if (parameters is DynamicParameters)
             {
@@ -36,12 +36,12 @@ namespace Dapper
         /// <summary>
         /// The parameters associated with the command
         /// </summary>
-        public object Parameters { get; }
+        public object? Parameters { get; }
 
         /// <summary>
         /// The active transaction for the command
         /// </summary>
-        public IDbTransaction Transaction { get; }
+        public IDbTransaction? Transaction { get; }
 
         /// <summary>
         /// The effective timeout for the command
@@ -83,7 +83,7 @@ namespace Dapper
         /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
         /// <param name="flags">The behavior flags for this command.</param>
         /// <param name="cancellationToken">The cancellation token for this command.</param>
-        public CommandDefinition(string commandText, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null,
+        public CommandDefinition(string commandText, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
                                  , CancellationToken cancellationToken = default
             )
@@ -97,9 +97,10 @@ namespace Dapper
             CancellationToken = cancellationToken;
         }
 
-        private CommandDefinition(object parameters) : this()
+        private CommandDefinition(object? parameters) : this()
         {
             Parameters = parameters;
+            CommandText = "";
         }
 
         /// <summary>
@@ -107,7 +108,7 @@ namespace Dapper
         /// </summary>
         public CancellationToken CancellationToken { get; }
 
-        internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
+        internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object?>? paramReader)
         {
             var cmd = cnn.CreateCommand();
             var init = GetInit(cmd.GetType());
@@ -129,16 +130,16 @@ namespace Dapper
             return cmd;
         }
 
-        private static SqlMapper.Link<Type, Action<IDbCommand>> commandInitCache;
+        private static SqlMapper.Link<Type, Action<IDbCommand>>? commandInitCache;
 
         internal static void ResetCommandInitCache()
             => SqlMapper.Link<Type, Action<IDbCommand>>.Clear(ref commandInitCache);
 
-        private static Action<IDbCommand> GetInit(Type commandType)
+        private static Action<IDbCommand>? GetInit(Type commandType)
         {
             if (commandType == null)
                 return null; // GIGO
-            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out Action<IDbCommand> action))
+            if (SqlMapper.Link<Type, Action<IDbCommand>>.TryGet(commandInitCache, commandType, out Action<IDbCommand>? action))
             {
                 return action;
             }
@@ -184,11 +185,11 @@ namespace Dapper
                 action = (Action<IDbCommand>)method.CreateDelegate(typeof(Action<IDbCommand>));
             }
             // cache it
-            SqlMapper.Link<Type, Action<IDbCommand>>.TryAdd(ref commandInitCache, commandType, ref action);
+            SqlMapper.Link<Type, Action<IDbCommand>>.TryAdd(ref commandInitCache, commandType, ref action!);
             return action;
         }
 
-        private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+        private static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
         {
             var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
             if (prop?.CanWrite == true && prop.PropertyType == expectedType && prop.GetIndexParameters().Length == 0)

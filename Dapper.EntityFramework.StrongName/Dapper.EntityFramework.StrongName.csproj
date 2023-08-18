@@ -10,6 +10,7 @@
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <PackageId>Dapper.EntityFramework.StrongName</PackageId>
     <PackageTags>orm;sql;micro-orm</PackageTags>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Dapper.EntityFramework\**\*.cs" Exclude="..\Dapper.EntityFramework\obj\**\*.cs" />

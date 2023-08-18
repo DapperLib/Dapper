@@ -11,10 +11,10 @@ namespace Dapper
             private static readonly int s_typeHash;
             private static readonly int s_typeCount = CountNonTrivial(out s_typeHash);
 
-            internal Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, int gridIndex = 0)
+            internal Identity(string sql, CommandType? commandType, string connectionString, Type type, Type? parametersType, int gridIndex = 0)
                 : base(sql, commandType, connectionString, type, parametersType, s_typeHash, gridIndex)
             {}
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, int gridIndex = 0)
+            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type? parametersType, int gridIndex = 0)
                 : base(sql, commandType, connection.ConnectionString, type, parametersType, s_typeHash, gridIndex)
             { }
 
@@ -54,12 +54,12 @@ namespace Dapper
         {
             private readonly Type[] _types;
 
-            internal IdentityWithTypes(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex = 0)
+            internal IdentityWithTypes(string sql, CommandType? commandType, string connectionString, Type type, Type? parametersType, Type[] otherTypes, int gridIndex = 0)
                 : base(sql, commandType, connectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
             {
                 _types = otherTypes ?? Type.EmptyTypes;
             }
-            internal IdentityWithTypes(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes, int gridIndex = 0)
+            internal IdentityWithTypes(string sql, CommandType? commandType, IDbConnection connection, Type type, Type? parametersType, Type[] otherTypes, int gridIndex = 0)
                 : base(sql, commandType, connection.ConnectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
             {
                 _types = otherTypes ?? Type.EmptyTypes;
@@ -111,10 +111,10 @@ namespace Dapper
             public Identity ForDynamicParameters(Type type) =>
                 new Identity(sql, commandType, connectionString, this.type, type, 0, -1);
 
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType)
+            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type? type, Type? parametersType)
                 : this(sql, commandType, connection.ConnectionString, type, parametersType, 0, 0) { /* base call */ }
 
-            private protected Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, int otherTypesHash, int gridIndex)
+            private protected Identity(string sql, CommandType? commandType, string connectionString, Type? type, Type? parametersType, int otherTypesHash, int gridIndex)
             {
                 this.sql = sql;
                 this.commandType = commandType;
@@ -139,7 +139,7 @@ namespace Dapper
             /// Whether this <see cref="Identity"/> equals another.
             /// </summary>
             /// <param name="obj">The other <see cref="object"/> to compare to.</param>
-            public override bool Equals(object obj) => Equals(obj as Identity);
+            public override bool Equals(object? obj) => Equals(obj as Identity);
 
             /// <summary>
             /// The raw SQL command.
@@ -164,7 +164,7 @@ namespace Dapper
             /// <summary>
             /// This <see cref="Type"/> of this Identity.
             /// </summary>
-            public readonly Type type;
+            public readonly Type? type;
 
             /// <summary>
             /// The connection string for this Identity.
@@ -174,7 +174,7 @@ namespace Dapper
             /// <summary>
             /// The type of the parameters object for this Identity.
             /// </summary>
-            public readonly Type parametersType;
+            public readonly Type? parametersType;
 
             /// <summary>
             /// Gets the hash code for this identity.
@@ -192,7 +192,7 @@ namespace Dapper
             /// </summary>
             /// <param name="other">The other <see cref="Identity"/> object to compare.</param>
             /// <returns>Whether the two are equal</returns>
-            public bool Equals(Identity other)
+            public bool Equals(Identity? other)
             {
                 if (ReferenceEquals(this, other)) return true;
                 if (other is null) return false;

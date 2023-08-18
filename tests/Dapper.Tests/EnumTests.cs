@@ -100,7 +100,7 @@ namespace Dapper.Tests
                 p.DbType = DbType.Int32; // it turns out that this is the key piece; setting the DbType
                 p.Value = AnEnum.B;
                 cmd.Parameters.Add(p);
-                object value = cmd.ExecuteScalar();
+                object value = cmd.ExecuteScalar()!;
                 AnEnum val = (AnEnum)value;
                 Assert.Equal(AnEnum.B, val);
             }

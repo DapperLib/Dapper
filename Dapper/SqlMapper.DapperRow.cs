@@ -46,14 +46,14 @@ namespace Dapper
             {
                 if (index < 0)
                 { // doesn't exist
-                    value = null;
+                    value = null!;
                     return false;
                 }
                 // exists, **even if** we don't have a value; consider table rows heterogeneous
-                value = index < values.Length ? values[index] : null;
+                value = index < values.Length ? values[index] : null!;
                 if (value is DeadValue)
                 { // pretend it isn't here
-                    value = null;
+                    value = null!;
                     return false;
                 }
                 return true;
@@ -84,7 +84,7 @@ namespace Dapper
                 var names = table.FieldNames;
                 for (var i = 0; i < names.Length; i++)
                 {
-                    object value = i < values.Length ? values[i] : null;
+                    object value = i < values.Length ? values[i] : null!;
                     if (!(value is DeadValue))
                     {
                         yield return new KeyValuePair<string, object>(names[i], value);

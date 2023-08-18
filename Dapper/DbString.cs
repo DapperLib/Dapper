@@ -43,7 +43,7 @@ namespace Dapper
         /// <summary>
         /// The value of the string
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
         
         /// <summary>
         /// Gets a string representation of this DbString.

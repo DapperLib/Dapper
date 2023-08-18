@@ -35,7 +35,7 @@ namespace Dapper.Tests
         [Fact]
         public void TupleReturnValue_TooManyColumns_Ignored()
         {
-            var val = connection.QuerySingle<(int id, string name)>("select 42, 'Fred', 123");
+            var val = connection.QuerySingle<(int id, string name)>("select 42, 'Fred', 123")!;
             Assert.Equal(42, val.id);
             Assert.Equal("Fred", val.name);
         }
@@ -45,7 +45,7 @@ namespace Dapper.Tests
         {
             var val = connection.QuerySingleOrDefault<(int id, string name)?>("select 42, 'Fred', 123");
             Assert.NotNull(val);
-            Assert.Equal(42, val.Value.id);
+            Assert.Equal(42, val!.Value.id);
             Assert.Equal("Fred", val.Value.name);
         }
         
@@ -101,7 +101,7 @@ namespace Dapper.Tests
                 "select 1, 2, 3, 4, 5, 6, 7, 8");
 
             Assert.NotNull(val);
-            Assert.Equal(1, val.Value.e1);
+            Assert.Equal(1, val!.Value.e1);
             Assert.Equal(2, val.Value.e2);
             Assert.Equal(3, val.Value.e3);
             Assert.Equal(4, val.Value.e4);
@@ -157,7 +157,7 @@ namespace Dapper.Tests
                 "select 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15");
             
             Assert.NotNull(val);
-            Assert.Equal(1, val.Value.e1);
+            Assert.Equal(1, val!.Value.e1);
             Assert.Equal(2, val.Value.e2);
             Assert.Equal(3, val.Value.e3);
             Assert.Equal(4, val.Value.e4);

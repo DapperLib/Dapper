@@ -7,6 +7,7 @@
     <Authors>Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461</TargetFrameworks>
     <PackageTags>orm;sql;micro-orm</PackageTags>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper\Dapper.csproj" />

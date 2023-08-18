@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Dapper.Tests
 {
@@ -20,8 +16,10 @@ namespace Dapper.Tests
 
         public string ConnectionString
         {
-            get { return _conn.ConnectionString; }
+            get { return _conn?.ConnectionString ?? ""; }
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
             set { _conn.ConnectionString = value; }
+#pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
         }
 
         public int ConnectionTimeout => _conn.ConnectionTimeout;

@@ -21,7 +21,7 @@ namespace Dapper.Tests
             var parents = connection.Query<Parent, Child, Parent>("select 1 as [Id], 1 as [Id] union all select 1,2 union all select 2,3 union all select 1,4 union all select 3,5",
                 (parent, child) =>
                 {
-                    if (!lookup.TryGetValue(parent.Id, out Parent found))
+                    if (!lookup.TryGetValue(parent.Id, out Parent? found))
                     {
                         lookup.Add(parent.Id, found = parent);
                     }
@@ -72,8 +72,8 @@ Order by p.Id";
 
                 Assert.Equal("Sams Post1", p.Content);
                 Assert.Equal(1, p.Id);
-                Assert.Equal("Sam", p.Owner.Name);
-                Assert.Equal(99, p.Owner.Id);
+                Assert.Equal("Sam", p.Owner?.Name);
+                Assert.Equal(99, p.Owner?.Id);
 
                 Assert.Null(data[2].Owner);
             }
@@ -172,10 +172,10 @@ Order by p.Id";
 
                 var post1 = grid.Read<Post>().ToList();
 
-                var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault();
+                var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault()!;
 
-                Assert.Equal(1, post2.Comment.Id);
-                Assert.Equal(99, post2.Owner.Id);
+                Assert.Equal(1, post2.Comment?.Id);
+                Assert.Equal(99, post2.Owner?.Id);
             }
             finally
             {
@@ -248,8 +248,8 @@ Order by p.Id";
             // assertions
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
-            Assert.Equal(2, product.Category.Id);
-            Assert.Equal("def", product.Category.Name);
+            Assert.Equal(2, product.Category?.Id);
+            Assert.Equal("def", product.Category?.Name);
         }
 
         [Fact]
@@ -280,9 +280,9 @@ Order by p.Id";
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
             Assert.NotNull(product.Category);
-            Assert.Equal(0, product.Category.Id);
-            Assert.Equal("def", product.Category.Name);
-            Assert.Null(product.Category.Description);
+            Assert.Equal(0, product.Category?.Id);
+            Assert.Equal("def", product.Category?.Name);
+            Assert.Null(product.Category?.Description);
         }
 
         [Fact]
@@ -351,9 +351,9 @@ Order by p.Id";
             }
 
             public int Ident { get; set; }
-            public UserWithConstructor Owner { get; set; }
+            public UserWithConstructor? Owner { get; set; }
             public string FullContent { get; set; }
-            public Comment Comment { get; set; }
+            public Comment? Comment { get; set; }
         }
 
         [Fact]
@@ -380,8 +380,8 @@ Order by p.Id";
 
                 Assert.Equal("Sams Post1", p.FullContent);
                 Assert.Equal(1, p.Ident);
-                Assert.Equal("Sam", p.Owner.FullName);
-                Assert.Equal(99, p.Owner.Ident);
+                Assert.Equal("Sam", p.Owner?.FullName);
+                Assert.Equal(99, p.Owner?.Ident);
 
                 Assert.Null(data[2].Owner);
             }
@@ -452,24 +452,24 @@ Order by p.Id";
                 var p = data[0];
                 Assert.Equal(1, p.Id);
                 Assert.Equal("Review Board 1", p.Name);
-                Assert.Equal(1, p.User1.Id);
-                Assert.Equal(2, p.User2.Id);
-                Assert.Equal(3, p.User3.Id);
-                Assert.Equal(4, p.User4.Id);
-                Assert.Equal(5, p.User5.Id);
-                Assert.Equal(6, p.User6.Id);
-                Assert.Equal(7, p.User7.Id);
-                Assert.Equal(8, p.User8.Id);
-                Assert.Equal(9, p.User9.Id);
-                Assert.Equal("User 1", p.User1.Name);
-                Assert.Equal("User 2", p.User2.Name);
-                Assert.Equal("User 3", p.User3.Name);
-                Assert.Equal("User 4", p.User4.Name);
-                Assert.Equal("User 5", p.User5.Name);
-                Assert.Equal("User 6", p.User6.Name);
-                Assert.Equal("User 7", p.User7.Name);
-                Assert.Equal("User 8", p.User8.Name);
-                Assert.Equal("User 9", p.User9.Name);
+                Assert.Equal(1, p.User1?.Id);
+                Assert.Equal(2, p.User2?.Id);
+                Assert.Equal(3, p.User3?.Id);
+                Assert.Equal(4, p.User4?.Id);
+                Assert.Equal(5, p.User5?.Id);
+                Assert.Equal(6, p.User6?.Id);
+                Assert.Equal(7, p.User7?.Id);
+                Assert.Equal(8, p.User8?.Id);
+                Assert.Equal(9, p.User9?.Id);
+                Assert.Equal("User 1", p.User1?.Name);
+                Assert.Equal("User 2", p.User2?.Name);
+                Assert.Equal("User 3", p.User3?.Name);
+                Assert.Equal("User 4", p.User4?.Name);
+                Assert.Equal("User 5", p.User5?.Name);
+                Assert.Equal("User 6", p.User6?.Name);
+                Assert.Equal("User 7", p.User7?.Name);
+                Assert.Equal("User 8", p.User8?.Name);
+                Assert.Equal("User 9", p.User9?.Name);
             }
             finally
             {
@@ -512,8 +512,8 @@ Order by p.Id
 
                 Assert.Equal("Sams Post1", p.Content);
                 Assert.Equal(1, p.Id);
-                Assert.Equal(p.Owner.Name, "Sam" + i);
-                Assert.Equal(99, p.Owner.Id);
+                Assert.Equal(p.Owner?.Name, "Sam" + i);
+                Assert.Equal(99, p.Owner?.Id);
 
                 Assert.Null(data[2].Owner);
             }
@@ -565,7 +565,7 @@ Order by p.Id
         private class Extra
         {
             public int Id { get; set; }
-            public string Name { get; set; }
+            public string? Name { get; set; }
         }
 
         [Fact]
@@ -583,22 +583,22 @@ Order by p.Id
 
             Assert.Equal(1, postWithBlog.PostId);
             Assert.Equal("Title", postWithBlog.Title);
-            Assert.Equal(2, postWithBlog.Blog.BlogId);
-            Assert.Equal("Blog", postWithBlog.Blog.Title);
+            Assert.Equal(2, postWithBlog.Blog?.BlogId);
+            Assert.Equal("Blog", postWithBlog.Blog?.Title);
         }
 
         private class Post_DupeProp
         {
             public int PostId { get; set; }
-            public string Title { get; set; }
+            public string? Title { get; set; }
             public int BlogId { get; set; }
-            public Blog_DupeProp Blog { get; set; }
+            public Blog_DupeProp? Blog { get; set; }
         }
 
         private class Blog_DupeProp
         {
             public int BlogId { get; set; }
-            public string Title { get; set; }
+            public string? Title { get; set; }
         }
 
         // see https://stackoverflow.com/questions/16955357/issue-about-dapper
@@ -618,31 +618,31 @@ Order by p.Id
             Assert.Null(result.Name);
             Assert.Null(result.Content);
 
-            Assert.Equal("def", result.Author.Phone);
-            Assert.Equal("ghi", result.Author.Name);
-            Assert.Equal(0, result.Author.ID);
+            Assert.Equal("def", result.Author?.Phone);
+            Assert.Equal("ghi", result.Author?.Name);
+            Assert.Equal(0, result.Author!.ID);
             Assert.Null(result.Author.Address);
         }
 
         public class Profile
         {
             public int ID { get; set; }
-            public string Name { get; set; }
-            public string Phone { get; set; }
-            public string Address { get; set; }
+            public string? Name { get; set; }
+            public string? Phone { get; set; }
+            public string? Address { get; set; }
             //public ExtraInfo Extra { get; set; }
         }
 
         public class Topic
         {
             public int ID { get; set; }
-            public string Title { get; set; }
+            public string? Title { get; set; }
             public DateTime CreateDate { get; set; }
-            public string Content { get; set; }
+            public string? Content { get; set; }
             public int UID { get; set; }
             public int TestColum { get; set; }
-            public string Name { get; set; }
-            public Profile Author { get; set; }
+            public string? Name { get; set; }
+            public Profile? Author { get; set; }
             //public Attachment Attach { get; set; }
         }
 

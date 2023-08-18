@@ -29,15 +29,15 @@ namespace Dapper
 
         internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
-            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
+            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true)!;
 
-            return propertyInfo.DeclaringType.GetProperty(
+            return propertyInfo.DeclaringType!.GetProperty(
                    propertyInfo.Name,
                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                    Type.DefaultBinder,
                    propertyInfo.PropertyType,
                    propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
-                   null).GetSetMethod(true);
+                   null)!.GetSetMethod(true)!;
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)
@@ -59,7 +59,7 @@ namespace Dapper
         /// <param name="names">DataReader column names</param>
         /// <param name="types">DataReader column types</param>
         /// <returns>Matching constructor or default one</returns>
-        public ConstructorInfo FindConstructor(string[] names, Type[] types)
+        public ConstructorInfo? FindConstructor(string[] names, Type[] types)
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
@@ -106,7 +106,7 @@ namespace Dapper
         /// <summary>
         /// Returns the constructor, if any, that has the ExplicitConstructorAttribute on it.
         /// </summary>
-        public ConstructorInfo FindExplicitConstructor()
+        public ConstructorInfo? FindExplicitConstructor()
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();
@@ -127,7 +127,7 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
-            ParameterInfo param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name);
+            ParameterInfo param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name)!;
             return new SimpleMemberMap(columnName, param);
         }
 
@@ -136,7 +136,7 @@ namespace Dapper
         /// </summary>
         /// <param name="columnName">DataReader column name</param>
         /// <returns>Mapping implementation</returns>
-        public SqlMapper.IMemberMap GetMember(string columnName)
+        public SqlMapper.IMemberMap? GetMember(string columnName)
         {
             var property = MatchFirstOrDefault(Properties, columnName, static p => p.Name);
 
@@ -174,7 +174,7 @@ namespace Dapper
         /// </summary>
         public static bool MatchNamesWithUnderscores { get; set; }
 
-        static T MatchFirstOrDefault<T>(IList<T> members, string name, Func<T, string> selector) where T : class
+        static T? MatchFirstOrDefault<T>(IList<T>? members, string? name, Func<T, string?> selector) where T : class
         {
             if (members is { Count: > 0 })
             {
@@ -217,9 +217,9 @@ namespace Dapper
             return null;
         }
 
-        internal static bool EqualsCI(string x, string y)
+        internal static bool EqualsCI(string? x, string? y)
             => string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
-        internal static bool EqualsCIU(string x, string y)
+        internal static bool EqualsCIU(string? x, string? y)
             => string.Equals(x?.Replace("_", ""), y?.Replace("_", ""), StringComparison.OrdinalIgnoreCase);
 
         /// <summary>

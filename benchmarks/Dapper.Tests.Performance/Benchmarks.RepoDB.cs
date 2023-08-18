@@ -12,7 +12,7 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            SqlServerBootstrap.Initialize();
+            GlobalConfiguration.Setup().UseSqlServer();
             ClassMapper.Add<Post>("Posts");
         }
 

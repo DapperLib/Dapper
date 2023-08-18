@@ -24,14 +24,14 @@ namespace Dapper.Tests
 
             // test passing as int, reading as AnEnum
             var k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", new { v = (int)AnEnum.B, y = (int?)(int)AnEnum.B, z = (int?)null });
-            Assert.Equal(k, (int)AnEnum.B);
+            Assert.Equal((int)AnEnum.B, k);
 
             args = new DynamicParameters();
             args.Add("v", (int)AnEnum.B);
             args.Add("y", (int)AnEnum.B);
             args.Add("z", null);
             k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", args);
-            Assert.Equal(k, (int)AnEnum.B);
+            Assert.Equal((int)AnEnum.B, k);
         }
 
         public static void TestDateTime(DbConnection connection)
@@ -45,14 +45,14 @@ namespace Dapper.Tests
                  new { id = 42, dob = now });
 
             var row = connection.QueryFirstOrDefault<NullableDatePerson>(
-                "SELECT id, dob, dob as dob2 FROM Persons WHERE id=@id", new { id = 7 });
+                "SELECT id, dob, dob as dob2 FROM Persons WHERE id=@id", new { id = 7 })!;
             Assert.NotNull(row);
             Assert.Equal(7, row.Id);
             Assert.Null(row.DoB);
             Assert.Null(row.DoB2);
 
             row = connection.QueryFirstOrDefault<NullableDatePerson>(
-                "SELECT id, dob FROM Persons WHERE id=@id", new { id = 42 });
+                "SELECT id, dob FROM Persons WHERE id=@id", new { id = 42 })!;
             Assert.NotNull(row);
             Assert.Equal(42, row.Id);
             row.DoB.Equals(now);

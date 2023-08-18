@@ -87,7 +87,7 @@ namespace Dapper.Tests
             using (var bcp = BulkCopy.TryCreate(connection))
             {
                 Assert.NotNull(bcp);
-                Assert.IsType<T>(bcp.Wrapped);
+                Assert.IsType<T>(bcp!.Wrapped);
                 bcp.EnableStreaming = true;
             }
         }
