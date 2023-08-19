@@ -137,9 +137,9 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
                 };
                 conn.Execute("replace into Issue426_Test values (@Id,@Time)", localObj);
 
-                var dbObj = conn.Query<Issue426_Test>("select * from Issue426_Test where Id = @id", new { id = Id }).Single()!;
+                var dbObj = conn.Query<Issue426_Test>("select * from Issue426_Test where Id = @id", new { id = Id }).Single();
                 Assert.Equal(Id, dbObj.Id);
-                Assert.Equal(ticks, dbObj.Time!.Value.Ticks);
+                Assert.Equal(ticks, dbObj.Time?.Ticks);
             }
         }
 

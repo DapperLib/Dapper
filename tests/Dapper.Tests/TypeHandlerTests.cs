@@ -455,7 +455,7 @@ namespace Dapper.Tests
             SqlMapper.ResetTypeHandlers();
             SqlMapper.AddTypeHandler(StringListTypeHandler.Default);
             var foo = connection.Query<MyObjectWithStringList>("SELECT 'Sam,Kyro' AS Names").Single();
-            Assert.Equal(new[] { "Sam", "Kyro" }, foo.Names!);
+            Assert.Equal(new[] { "Sam", "Kyro" }, foo.Names);
         }
 
         [Fact]
@@ -608,8 +608,10 @@ namespace Dapper.Tests
                 insert @vals (A,B,C) values (1,0,null);
                 select * from @vals").Single()!;
             Assert.NotNull(obj);
-            Assert.True(obj.A!.Value);
-            Assert.False(obj.B!.Value);
+            Assert.True(obj.A.HasValue);
+            Assert.True(obj.A.Value);
+            Assert.True(obj.B.HasValue);
+            Assert.False(obj.B.Value);
             Assert.Null(obj.C);
         }
 

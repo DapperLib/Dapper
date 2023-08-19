@@ -218,7 +218,7 @@ namespace Dapper.Tests
             }
             catch (AggregateException agg)
             {
-                Assert.True(agg.InnerException!.GetType().Name == "SqlException");
+                Assert.Equal("SqlException", agg.InnerException?.GetType().Name);
             }
         }
 
@@ -281,8 +281,9 @@ namespace Dapper.Tests
             // assertions
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
-            Assert.Equal(2, product.Category?.Id);
-            Assert.Equal("def", product.Category?.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
         }
 
         [Fact]
@@ -300,8 +301,9 @@ namespace Dapper.Tests
             // assertions
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
-            Assert.Equal(2, product.Category?.Id);
-            Assert.Equal("def", product.Category?.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
         }
 
         [Fact]
@@ -320,8 +322,9 @@ namespace Dapper.Tests
                 // assertions
                 Assert.Equal(1, product.Id);
                 Assert.Equal("abc", product.Name);
-                Assert.Equal(2, product.Category?.Id);
-                Assert.Equal("def", product.Category?.Name);
+                Assert.NotNull(product.Category);
+                Assert.Equal(2, product.Category.Id);
+                Assert.Equal("def", product.Category.Name);
             }
         }
 
@@ -789,11 +792,13 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             await connection.ExecuteAsync("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')").ConfigureAwait(false);
             try
             {
-                var d = (await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false))!;
+                var d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false);
+                Assert.NotNull(d);
                 Assert.Equal("Alf", d.Name);
                 Assert.Equal(1, d.Age);
                 connection.Execute("alter table #dog drop column Name");
-                d = (await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false))!;
+                d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false);
+                Assert.NotNull(d);
                 Assert.Null(d.Name);
                 Assert.Equal(1, d.Age);
             }
@@ -864,15 +869,24 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 var p = data[0];
                 Assert.Equal(1, p.Id);
                 Assert.Equal("Review Board 1", p.Name);
-                Assert.Equal(1, p.User1!.Id);
-                Assert.Equal(2, p.User2!.Id);
-                Assert.Equal(3, p.User3!.Id);
-                Assert.Equal(4, p.User4!.Id);
-                Assert.Equal(5, p.User5!.Id);
-                Assert.Equal(6, p.User6!.Id);
-                Assert.Equal(7, p.User7!.Id);
-                Assert.Equal(8, p.User8!.Id);
-                Assert.Equal(9, p.User9!.Id);
+                Assert.NotNull(p.User1);
+                Assert.NotNull(p.User2);
+                Assert.NotNull(p.User3);
+                Assert.NotNull(p.User4);
+                Assert.NotNull(p.User5);
+                Assert.NotNull(p.User6);
+                Assert.NotNull(p.User7);
+                Assert.NotNull(p.User8);
+                Assert.NotNull(p.User9);
+                Assert.Equal(1, p.User1.Id);
+                Assert.Equal(2, p.User2.Id);
+                Assert.Equal(3, p.User3.Id);
+                Assert.Equal(4, p.User4.Id);
+                Assert.Equal(5, p.User5.Id);
+                Assert.Equal(6, p.User6.Id);
+                Assert.Equal(7, p.User7.Id);
+                Assert.Equal(8, p.User8.Id);
+                Assert.Equal(9, p.User9.Id);
                 Assert.Equal("User 1", p.User1.Name);
                 Assert.Equal("User 2", p.User2.Name);
                 Assert.Equal("User 3", p.User3.Name);

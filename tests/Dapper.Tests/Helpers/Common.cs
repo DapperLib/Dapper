@@ -45,14 +45,14 @@ namespace Dapper.Tests
                  new { id = 42, dob = now });
 
             var row = connection.QueryFirstOrDefault<NullableDatePerson>(
-                "SELECT id, dob, dob as dob2 FROM Persons WHERE id=@id", new { id = 7 })!;
+                "SELECT id, dob, dob as dob2 FROM Persons WHERE id=@id", new { id = 7 });
             Assert.NotNull(row);
             Assert.Equal(7, row.Id);
             Assert.Null(row.DoB);
             Assert.Null(row.DoB2);
 
             row = connection.QueryFirstOrDefault<NullableDatePerson>(
-                "SELECT id, dob FROM Persons WHERE id=@id", new { id = 42 })!;
+                "SELECT id, dob FROM Persons WHERE id=@id", new { id = 42 });
             Assert.NotNull(row);
             Assert.Equal(42, row.Id);
             row.DoB.Equals(now);

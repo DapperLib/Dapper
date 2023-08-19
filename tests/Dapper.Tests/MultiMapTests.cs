@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using NuGet.Frameworks;
 using Xunit;
 
 namespace Dapper.Tests
@@ -72,8 +73,9 @@ Order by p.Id";
 
                 Assert.Equal("Sams Post1", p.Content);
                 Assert.Equal(1, p.Id);
-                Assert.Equal("Sam", p.Owner?.Name);
-                Assert.Equal(99, p.Owner?.Id);
+                Assert.NotNull(p.Owner);
+                Assert.Equal("Sam", p.Owner.Name);
+                Assert.Equal(99, p.Owner.Id);
 
                 Assert.Null(data[2].Owner);
             }
@@ -172,10 +174,13 @@ Order by p.Id";
 
                 var post1 = grid.Read<Post>().ToList();
 
-                var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault()!;
+                var post2 = grid.Read<Post, User, Comment, Post>((post, user, comment) => { post.Owner = user; post.Comment = comment; return post; }).SingleOrDefault();
 
-                Assert.Equal(1, post2.Comment?.Id);
-                Assert.Equal(99, post2.Owner?.Id);
+                Assert.NotNull(post2);
+                Assert.NotNull(post2.Comment);
+                Assert.Equal(1, post2.Comment.Id);
+                Assert.NotNull(post2.Owner);
+                Assert.Equal(99, post2.Owner.Id);
             }
             finally
             {
@@ -248,8 +253,9 @@ Order by p.Id";
             // assertions
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
-            Assert.Equal(2, product.Category?.Id);
-            Assert.Equal("def", product.Category?.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
         }
 
         [Fact]
@@ -280,9 +286,9 @@ Order by p.Id";
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
             Assert.NotNull(product.Category);
-            Assert.Equal(0, product.Category?.Id);
-            Assert.Equal("def", product.Category?.Name);
-            Assert.Null(product.Category?.Description);
+            Assert.Equal(0, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
+            Assert.Null(product.Category.Description);
         }
 
         [Fact]
@@ -380,8 +386,9 @@ Order by p.Id";
 
                 Assert.Equal("Sams Post1", p.FullContent);
                 Assert.Equal(1, p.Ident);
-                Assert.Equal("Sam", p.Owner?.FullName);
-                Assert.Equal(99, p.Owner?.Ident);
+                Assert.NotNull(p.Owner);
+                Assert.Equal("Sam", p.Owner.FullName);
+                Assert.Equal(99, p.Owner.Ident);
 
                 Assert.Null(data[2].Owner);
             }
@@ -452,24 +459,33 @@ Order by p.Id";
                 var p = data[0];
                 Assert.Equal(1, p.Id);
                 Assert.Equal("Review Board 1", p.Name);
-                Assert.Equal(1, p.User1?.Id);
-                Assert.Equal(2, p.User2?.Id);
-                Assert.Equal(3, p.User3?.Id);
-                Assert.Equal(4, p.User4?.Id);
-                Assert.Equal(5, p.User5?.Id);
-                Assert.Equal(6, p.User6?.Id);
-                Assert.Equal(7, p.User7?.Id);
-                Assert.Equal(8, p.User8?.Id);
-                Assert.Equal(9, p.User9?.Id);
-                Assert.Equal("User 1", p.User1?.Name);
-                Assert.Equal("User 2", p.User2?.Name);
-                Assert.Equal("User 3", p.User3?.Name);
-                Assert.Equal("User 4", p.User4?.Name);
-                Assert.Equal("User 5", p.User5?.Name);
-                Assert.Equal("User 6", p.User6?.Name);
-                Assert.Equal("User 7", p.User7?.Name);
-                Assert.Equal("User 8", p.User8?.Name);
-                Assert.Equal("User 9", p.User9?.Name);
+                Assert.NotNull(p.User1);
+                Assert.NotNull(p.User2);
+                Assert.NotNull(p.User3);
+                Assert.NotNull(p.User4);
+                Assert.NotNull(p.User5);
+                Assert.NotNull(p.User6);
+                Assert.NotNull(p.User7);
+                Assert.NotNull(p.User8);
+                Assert.NotNull(p.User9);
+                Assert.Equal(1, p.User1.Id);
+                Assert.Equal(2, p.User2.Id);
+                Assert.Equal(3, p.User3.Id);
+                Assert.Equal(4, p.User4.Id);
+                Assert.Equal(5, p.User5.Id);
+                Assert.Equal(6, p.User6.Id);
+                Assert.Equal(7, p.User7.Id);
+                Assert.Equal(8, p.User8.Id);
+                Assert.Equal(9, p.User9.Id);
+                Assert.Equal("User 1", p.User1.Name);
+                Assert.Equal("User 2", p.User2.Name);
+                Assert.Equal("User 3", p.User3.Name);
+                Assert.Equal("User 4", p.User4.Name);
+                Assert.Equal("User 5", p.User5.Name);
+                Assert.Equal("User 6", p.User6.Name);
+                Assert.Equal("User 7", p.User7.Name);
+                Assert.Equal("User 8", p.User8.Name);
+                Assert.Equal("User 9", p.User9.Name);
             }
             finally
             {
@@ -512,8 +528,9 @@ Order by p.Id
 
                 Assert.Equal("Sams Post1", p.Content);
                 Assert.Equal(1, p.Id);
-                Assert.Equal(p.Owner?.Name, "Sam" + i);
-                Assert.Equal(99, p.Owner?.Id);
+                Assert.NotNull(p.Owner);
+                Assert.Equal(p.Owner.Name, "Sam" + i);
+                Assert.Equal(99, p.Owner.Id);
 
                 Assert.Null(data[2].Owner);
             }
@@ -583,8 +600,9 @@ Order by p.Id
 
             Assert.Equal(1, postWithBlog.PostId);
             Assert.Equal("Title", postWithBlog.Title);
-            Assert.Equal(2, postWithBlog.Blog?.BlogId);
-            Assert.Equal("Blog", postWithBlog.Blog?.Title);
+            Assert.NotNull(postWithBlog.Blog);
+            Assert.Equal(2, postWithBlog.Blog.BlogId);
+            Assert.Equal("Blog", postWithBlog.Blog.Title);
         }
 
         private class Post_DupeProp
@@ -618,9 +636,10 @@ Order by p.Id
             Assert.Null(result.Name);
             Assert.Null(result.Content);
 
-            Assert.Equal("def", result.Author?.Phone);
-            Assert.Equal("ghi", result.Author?.Name);
-            Assert.Equal(0, result.Author!.ID);
+            Assert.NotNull(result.Author);
+            Assert.Equal("def", result.Author.Phone);
+            Assert.Equal("ghi", result.Author.Name);
+            Assert.Equal(0, result.Author.ID);
             Assert.Null(result.Author.Address);
         }
 

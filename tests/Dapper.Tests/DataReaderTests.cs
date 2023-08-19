@@ -219,11 +219,13 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name"))
             Assert.Equal(2, result[1].Type);
             var foo = (DiscriminatedWithMultiMapping_Foo)result[0];
             Assert.Equal("abc", foo.Name);
-            Assert.Equal(1, foo.HazNameIdObject!.Id);
+            Assert.NotNull(foo.HazNameIdObject);
+            Assert.Equal(1, foo.HazNameIdObject.Id);
             Assert.Equal("zxc", foo.HazNameIdObject!.Name);
             var bar = (DiscriminatedWithMultiMapping_Bar)result[1];
             Assert.Equal((float)4.0, bar.Value);
-            Assert.Equal(2, bar.HazNameIdObject!.Id);
+            Assert.NotNull(bar.HazNameIdObject);
+            Assert.Equal(2, bar.HazNameIdObject.Id);
             Assert.Equal("qwe", bar.HazNameIdObject.Name);
         }
 
@@ -259,7 +261,7 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name")))
                         }
 
                         Assert.NotNull(obj);
-                        obj!.HazNameIdObject = toHaz(reader);
+                        obj.HazNameIdObject = toHaz(reader);
                         result.Add(obj);
 
                     } while (reader.Read());
@@ -271,11 +273,13 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name")))
             Assert.Equal(2, result[1].Type);
             var foo = (DiscriminatedWithMultiMapping_Foo)result[0];
             Assert.Equal("abc", foo.Name);
-            Assert.Equal(1, foo.HazNameIdObject!.Id);
+            Assert.NotNull(foo.HazNameIdObject);
+            Assert.Equal(1, foo.HazNameIdObject.Id);
             Assert.Equal("zxc", foo.HazNameIdObject.Name);
             var bar = (DiscriminatedWithMultiMapping_Bar)result[1];
             Assert.Equal((float)4.0, bar.Value);
-            Assert.Equal(2, bar.HazNameIdObject!.Id);
+            Assert.NotNull(bar.HazNameIdObject);
+            Assert.Equal(2, bar.HazNameIdObject.Id);
             Assert.Equal("qwe", bar.HazNameIdObject.Name);
         }
 

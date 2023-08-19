@@ -104,8 +104,9 @@ namespace Dapper.Tests
             var result = connection.Query<PracticeRebateOrders>("#GetPracticeRebateOrderByInvoiceNumber", new
             {
                 TaxInvoiceNumber = InvoiceNumber
-            }, commandType: CommandType.StoredProcedure).FirstOrDefault()!;
+            }, commandType: CommandType.StoredProcedure).FirstOrDefault();
 
+            Assert.NotNull(result);
             Assert.Equal("INV0000000028PPN", result.TaxInvoiceNumber);
         }
 

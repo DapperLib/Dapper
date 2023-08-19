@@ -1359,7 +1359,8 @@ end");
             var fromDb = connection.Query<Dyno>("select * from #Dyno where Id=@Id", orig).Single();
             Assert.Equal((Guid)fromDb.Id, guid);
             Assert.Equal("T Rex", fromDb.Name);
-            Assert.Equal(123L, (long)fromDb.Foo!);
+            Assert.NotNull(fromDb.Foo);
+            Assert.Equal(123L, (long)fromDb.Foo);
         }
 
         public class Dyno

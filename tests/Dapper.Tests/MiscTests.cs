@@ -161,11 +161,13 @@ namespace Dapper.Tests
             connection.Execute("create table #dog(Age int, Name nvarchar(max)) insert #dog values(1, 'Alf')");
             try
             {
-                var d = connection.QueryFirstOrDefault<Dog>("select * from #dog")!;
+                var d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
+                Assert.NotNull(d);
                 Assert.Equal("Alf", d.Name);
                 Assert.Equal(1, d.Age);
                 connection.Execute("alter table #dog drop column Name");
-                d = connection.QueryFirstOrDefault<Dog>("select * from #dog")!;
+                d = connection.QueryFirstOrDefault<Dog>("select * from #dog");
+                Assert.NotNull(d);
                 Assert.Null(d.Name);
                 Assert.Equal(1, d.Age);
             }
@@ -694,7 +696,8 @@ select * from @bar", new { foo }).Single();
         [Fact]
         public void TestFastExpandoSupportsIDictionary()
         {
-            var row = (connection.Query("select 1 A, 'two' B").First() as IDictionary<string, object>)!;
+            var row = connection.Query("select 1 A, 'two' B").First() as IDictionary<string, object>;
+            Assert.NotNull(row);
             Assert.Equal(1, row["A"]);
             Assert.Equal("two", row["B"]);
         }
@@ -983,7 +986,7 @@ select * from @bar", new { foo }).Single();
                 "SELECT 1 Id, 'Mr' Title, 'John' Surname, 4 AddressCount",
                 (person, addressCount) => person,
                 splitOn: "AddressCount"
-            ).FirstOrDefault()!;
+            ).First();
 
             var asDict = (IDictionary<string, object>)results;
 
@@ -1074,7 +1077,7 @@ select * from @bar", new { foo }).Single();
         {
             Type type = Common.GetSomeType();
 
-            dynamic actual = connection.Query(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).FirstOrDefault()!;
+            dynamic actual = connection.Query(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).First();
             Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
@@ -1084,7 +1087,7 @@ select * from @bar", new { foo }).Single();
 
         private T CheetViaDynamic<T>(T template, string query, object args)
         {
-            return connection.Query<T>(query, args).SingleOrDefault()!;
+            return connection.Query<T>(query, args).Single();
         }
 
         [Fact]
