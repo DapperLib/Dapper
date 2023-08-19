@@ -606,7 +606,7 @@ namespace Dapper.Tests
             var obj = connection.Query<HazBools>(
                 @"declare @vals table (A bit null, B bit null, C bit null);
                 insert @vals (A,B,C) values (1,0,null);
-                select * from @vals").Single()!;
+                select * from @vals").Single();
             Assert.NotNull(obj);
             Assert.True(obj.A.HasValue);
             Assert.True(obj.A.Value);
