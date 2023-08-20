@@ -46,14 +46,14 @@ namespace Dapper
             {
                 if (index < 0)
                 { // doesn't exist
-                    value = null!;
+                    value = null;
                     return false;
                 }
                 // exists, **even if** we don't have a value; consider table rows heterogeneous
                 value = index < values.Length ? values[index] : null;
                 if (value is DeadValue)
                 { // pretend it isn't here
-                    value = null!;
+                    value = null;
                     return false;
                 }
                 return true;

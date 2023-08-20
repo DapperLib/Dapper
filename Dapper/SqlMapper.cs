@@ -89,14 +89,15 @@ namespace Dapper
 
         private const int COLLECT_PER_ITEMS = 1000, COLLECT_HIT_COUNT_MIN = 0;
         private static int collect;
-        private static bool TryGetQueryCache(Identity key, out CacheInfo value)
+
+        private static bool TryGetQueryCache(Identity key, [NotNullWhen(true)] out CacheInfo? value)
         {
             if (_queryCache.TryGetValue(key, out value!))
             {
                 value.RecordHit();
                 return true;
             }
-            value = null!;
+            value = null;
             return false;
         }
 
@@ -1817,7 +1818,7 @@ namespace Dapper
 
         private static CacheInfo GetCacheInfo(Identity identity, object? exampleParameters, bool addToCache)
         {
-            if (!TryGetQueryCache(identity, out CacheInfo info))
+            if (!TryGetQueryCache(identity, out CacheInfo? info))
             {
                 if (GetMultiExec(exampleParameters) is not null)
                 {

@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace Dapper
 {
@@ -14,18 +15,18 @@ namespace Dapper
         internal class Link<TKey, TValue> where TKey : class
         {
             public static void Clear(ref Link<TKey, TValue>? head) => Interlocked.Exchange(ref head, null);
-            public static bool TryGet(Link<TKey, TValue>? link, TKey key, out TValue value)
+            public static bool TryGet(Link<TKey, TValue>? link, TKey key, [NotNullWhen(true)] out TValue? value)
             {
                 while (link is not null)
                 {
                     if ((object)key == (object)link.Key)
                     {
-                        value = link.Value;
+                        value = link.Value!;
                         return true;
                     }
                     link = link.Tail;
                 }
-                value = default!;
+                value = default;
                 return false;
             }
 
@@ -35,7 +36,7 @@ namespace Dapper
                 do
                 {
                     var snapshot = Interlocked.CompareExchange(ref head, null, null);
-                    if (TryGet(snapshot, key, out TValue found))
+                    if (TryGet(snapshot, key, out TValue? found))
                     { // existing match; report the existing value instead
                         value = found;
                         return false;
