@@ -27,9 +27,15 @@ namespace Dapper
             _type = type;
         }
 
-        internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
+        internal static MethodInfo GetPropertySetterOrThrow(PropertyInfo propertyInfo, Type type)
         {
-            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true)!;
+            return GetPropertySetter(propertyInfo, type) ?? Throw(propertyInfo);
+
+            static MethodInfo Throw(PropertyInfo propertyInfo) => throw new InvalidOperationException("Property setting not found for: " + propertyInfo?.Name);
+        }
+        internal static MethodInfo? GetPropertySetter(PropertyInfo propertyInfo, Type type)
+        {
+            if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
 
             return propertyInfo.DeclaringType!.GetProperty(
                    propertyInfo.Name,
@@ -37,7 +43,7 @@ namespace Dapper
                    Type.DefaultBinder,
                    propertyInfo.PropertyType,
                    propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
-                   null)!.GetSetMethod(true)!;
+                   null)!.GetSetMethod(true);
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)

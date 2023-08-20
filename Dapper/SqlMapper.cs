@@ -3521,7 +3521,7 @@ namespace Dapper
                         // Store the value in the property/field
                         if (item.Property is not null)
                         {
-                            il.Emit(type.IsValueType ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type));
+                            il.Emit(type.IsValueType ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetterOrThrow(item.Property, type));
                         }
                         else
                         {
@@ -3552,7 +3552,7 @@ namespace Dapper
                         // Store the value in the property/field
                         if (item.Property is not null)
                         {
-                            il.Emit(type.IsValueType ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetter(item.Property, type));
+                            il.Emit(type.IsValueType ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetterOrThrow(item.Property, type));
                             // stack is now [target]
                         }
                         else
