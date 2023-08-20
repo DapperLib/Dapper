@@ -133,8 +133,10 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
-            ParameterInfo param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name)!;
+            var param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name) ?? Throw(columnName);
             return new SimpleMemberMap(columnName, param);
+
+            static ParameterInfo Throw(string name) => throw new ArgumentException("Constructor parameter not found for " + name);
         }
 
         /// <summary>
