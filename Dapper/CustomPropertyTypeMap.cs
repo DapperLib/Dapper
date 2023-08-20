@@ -28,7 +28,7 @@ namespace Dapper
         /// <param name="names">DataReader column names</param>
         /// <param name="types">DataReader column types</param>
         /// <returns>Default constructor</returns>
-        public ConstructorInfo FindConstructor(string[] names, Type[] types) =>
+        public ConstructorInfo? FindConstructor(string[] names, Type[] types) =>
             _type.GetConstructor(Array.Empty<Type>())!;
 
         /// <summary>
