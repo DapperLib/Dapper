@@ -24,7 +24,7 @@ Dapper.CommandFlags.Pipelined = 2 -> Dapper.CommandFlags
 Dapper.CustomPropertyTypeMap
 Dapper.CustomPropertyTypeMap.CustomPropertyTypeMap(System.Type! type, System.Func<System.Type!, string!, System.Reflection.PropertyInfo!>! propertySelector) -> void
 Dapper.CustomPropertyTypeMap.FindConstructor(string![]! names, System.Type![]! types) -> System.Reflection.ConstructorInfo!
-Dapper.CustomPropertyTypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo!
+Dapper.CustomPropertyTypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo?
 Dapper.CustomPropertyTypeMap.GetConstructorParameter(System.Reflection.ConstructorInfo! constructor, string! columnName) -> Dapper.SqlMapper.IMemberMap!
 Dapper.CustomPropertyTypeMap.GetMember(string! columnName) -> Dapper.SqlMapper.IMemberMap?
 Dapper.DbString

@@ -35,7 +35,7 @@ namespace Dapper
         /// Always returns null
         /// </summary>
         /// <returns></returns>
-        public ConstructorInfo FindExplicitConstructor() => null!;
+        public ConstructorInfo? FindExplicitConstructor() => null;
 
         /// <summary>
         /// Not implemented as far as default constructor used for all cases
