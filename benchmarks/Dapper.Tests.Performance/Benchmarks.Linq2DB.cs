@@ -10,7 +10,7 @@ using System.ComponentModel;
 namespace Dapper.Tests.Performance
 {
     [Description("LINQ to DB")]
-    public class Linq2DBBenchmarks : BenchmarkBase
+    public class LinqToDBBenchmarks : BenchmarkBase // note To not 2 because the "2" confuses BDN CLI
     {
         private Linq2DBContext _dbContext;
 
