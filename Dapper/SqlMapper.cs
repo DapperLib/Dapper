@@ -2108,7 +2108,7 @@ namespace Dapper
 
         private static string GetInListRegex(string name, bool byPosition) => byPosition
             ? (@"(\?)" + Regex.Escape(name) + @"\?(?!\w)(\s+(?i)unknown(?-i))?")
-            : ("([?@:]" + Regex.Escape(name) + @")(?!\w)(\s+(?i)unknown(?-i))?");
+            : ("([?@:$]" + Regex.Escape(name) + @")(?!\w)(\s+(?i)unknown(?-i))?");
 
         /// <summary>
         /// Internal use only.
@@ -2373,14 +2373,14 @@ namespace Dapper
             var list = new List<PropertyInfo>(16);
             foreach (var p in parameters)
             {
-                if (Regex.IsMatch(sql, @"[?@:]" + p.Name + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
+                if (Regex.IsMatch(sql, @"[?@:$]" + p.Name + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
                     list.Add(p);
             }
             return list;
         }
 
         // look for ? / @ / : *by itself*
-        private static readonly Regex smellsLikeOleDb = new(@"(?<![\p{L}\p{N}@_])[?@:](?![\p{L}\p{N}@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+        private static readonly Regex smellsLikeOleDb = new(@"(?<![\p{L}\p{N}@_])[?@:$](?![\p{L}\p{N}@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
             literalTokens = new(@"(?<![\p{L}\p{N}_])\{=([\p{L}\p{N}_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
             pseudoPositional = new(@"\?([\p{L}_][\p{L}\p{N}_]*)\?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
