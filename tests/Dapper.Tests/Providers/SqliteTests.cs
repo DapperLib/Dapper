@@ -22,13 +22,13 @@ namespace Dapper.Tests
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactSqliteAttribute : FactAttribute
         {
-            public override string Skip
+            public override string? Skip
             {
                 get { return unavailable ?? base.Skip; }
                 set { base.Skip = value; }
             }
 
-            private static readonly string unavailable;
+            private static readonly string? unavailable;
 
             static FactSqliteAttribute()
             {

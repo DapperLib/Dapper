@@ -19,11 +19,12 @@
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>
     <IncludeSymbols>false</IncludeSymbols>
-
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-
     <LangVersion>9.0</LangVersion>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -36,12 +37,12 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.133" PrivateAssets="all" />
-    <None Include="../Dapper.png">
-      <Pack>True</Pack>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
+    <None Include="../Dapper.png" Visible="false" Pack="true">
       <PackagePath></PackagePath>
     </None>
+    <None Include="../docs/readme.md" Link="readme.md" Pack="true" PackagePath="/" Visible="false" />
   </ItemGroup>
 </Project>

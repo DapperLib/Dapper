@@ -23,9 +23,9 @@ namespace Dapper
                 do
                 {
                     object val = deser(dbReader);
-                    if (val == null || val is T)
+                    if (val is null || val is T)
                     {
-                        yield return (T)val;
+                        yield return (T)val!;
                     }
                     else
                     {
@@ -111,7 +111,7 @@ namespace Dapper
         [Obsolete(nameof(DbDataReader) + " API should be preferred")]
 #endif
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
-        public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
+        public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type? concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             concreteType ??= typeof(T);
@@ -176,7 +176,7 @@ namespace Dapper
         ///     public override int Type =&gt; 2;
         /// }
         /// </example>
-        public static Func<DbDataReader, T> GetRowParser<T>(this DbDataReader reader, Type concreteType = null,
+        public static Func<DbDataReader, T> GetRowParser<T>(this DbDataReader reader, Type? concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
             concreteType ??= typeof(T);

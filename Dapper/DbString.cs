@@ -43,7 +43,7 @@ namespace Dapper
         /// <summary>
         /// The value of the string
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
         
         /// <summary>
         /// Gets a string representation of this DbString.
@@ -76,7 +76,7 @@ namespace Dapper
 #pragma warning disable 0618
             param.Value = SqlMapper.SanitizeParameterValue(Value);
 #pragma warning restore 0618
-            if (Length == -1 && Value != null && Value.Length <= DefaultLength)
+            if (Length == -1 && Value is not null && Value.Length <= DefaultLength)
             {
                 param.Size = DefaultLength;
             }

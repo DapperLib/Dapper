@@ -14,7 +14,7 @@ namespace Dapper.Tests
         public static void Inconclusive(string reason = "inconclusive")
             => throw new SkipTestException(reason);
 
-        public static void If<T>(object obj, string reason = null)
+        public static void If<T>(object obj, string? reason = null)
             where T : class
         {
             if (obj is T) Skip.Inconclusive(reason ?? $"not valid for {typeof(T).FullName}");
@@ -63,7 +63,7 @@ namespace Dapper.Tests
         [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
         public SkippableTestCase() { }
 
-        public SkippableTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod, object[] testMethodArguments = null)
+        public SkippableTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod, object[]? testMethodArguments = null)
             : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, testMethodArguments)
         {
         }
@@ -113,7 +113,7 @@ namespace Dapper.Tests
         [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
         public NamedSkippedDataRowTestCase() { }
 
-        public NamedSkippedDataRowTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod, string skipReason, object[] testMethodArguments = null)
+        public NamedSkippedDataRowTestCase(IMessageSink diagnosticMessageSink, TestMethodDisplay defaultMethodDisplay, TestMethodDisplayOptions defaultMethodDisplayOptions, ITestMethod testMethod, string skipReason, object[]? testMethodArguments = null)
         : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, skipReason, testMethodArguments) { }
     }
 

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Dapper
 {
@@ -16,16 +18,43 @@ namespace Dapper
         public partial class GridReader : IDisposable
         {
             private DbDataReader reader;
-            private readonly Identity identity;
+            private Identity? _identity;
             private readonly bool addToCache;
+            private readonly Action<object?>? onCompleted;
+            private readonly object? state;
+            private readonly CancellationToken cancel;
 
-            internal GridReader(IDbCommand command, DbDataReader reader, Identity identity, IParameterCallbacks callbacks, bool addToCache)
+            /// <summary>
+            /// Creates a grid reader over an existing command and reader
+            /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            protected GridReader(IDbCommand command, DbDataReader reader, Identity? identity, Action<object?>? onCompleted = null, object? state = null, bool addToCache = false, CancellationToken cancellationToken = default)
             {
                 Command = command;
                 this.reader = reader;
-                this.identity = identity;
-                this.callbacks = callbacks;
+                _identity = identity;
+                this.onCompleted = onCompleted;
+                this.state = state;
                 this.addToCache = addToCache;
+                cancel = cancellationToken;
+            }
+
+            internal GridReader(IDbCommand command, DbDataReader reader, Identity identity, IParameterCallbacks? callbacks, bool addToCache,
+                CancellationToken cancellationToken = default)
+                : this(command, reader, identity, callbacks is null ? null : static state => ((IParameterCallbacks)state!).OnCompleted(),
+                      callbacks, addToCache, cancellationToken)
+            { }
+
+            private Identity Identity => _identity ??= CreateIdentity();
+
+            private Identity CreateIdentity()
+            {
+                var cmd = Command;
+                if (cmd is not null && cmd.Connection is not null)
+                {
+                    return new Identity(cmd.CommandText, cmd.CommandType, cmd.Connection, null, null);
+                }
+                throw new InvalidOperationException("This operation requires an identity or a connected command");
             }
 
             /// <summary>
@@ -45,7 +74,7 @@ namespace Dapper
             /// Read an individual row of the next grid of results, returned as a dynamic object.
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadFirstOrDefault() => ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
+            public dynamic? ReadFirstOrDefault() => ReadRow<dynamic>(typeof(DapperRow), Row.FirstOrDefault);
 
             /// <summary>
             /// Read an individual row of the next grid of results, returned as a dynamic object.
@@ -57,7 +86,7 @@ namespace Dapper
             /// Read an individual row of the next grid of results, returned as a dynamic object.
             /// </summary>
             /// <remarks>Note: the row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
-            public dynamic ReadSingleOrDefault() => ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
+            public dynamic? ReadSingleOrDefault() => ReadRow<dynamic>(typeof(DapperRow), Row.SingleOrDefault);
 
             /// <summary>
             /// Read the next grid of results.
@@ -76,7 +105,7 @@ namespace Dapper
             /// Read an individual row of the next grid of results.
             /// </summary>
             /// <typeparam name="T">The type to read.</typeparam>
-            public T ReadFirstOrDefault<T>() => ReadRow<T>(typeof(T), Row.FirstOrDefault);
+            public T? ReadFirstOrDefault<T>() => ReadRow<T>(typeof(T), Row.FirstOrDefault);
 
             /// <summary>
             /// Read an individual row of the next grid of results.
@@ -88,7 +117,7 @@ namespace Dapper
             /// Read an individual row of the next grid of results.
             /// </summary>
             /// <typeparam name="T">The type to read.</typeparam>
-            public T ReadSingleOrDefault<T>() => ReadRow<T>(typeof(T), Row.SingleOrDefault);
+            public T? ReadSingleOrDefault<T>() => ReadRow<T>(typeof(T), Row.SingleOrDefault);
 
             /// <summary>
             /// Read the next grid of results.
@@ -98,7 +127,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public IEnumerable<object> Read(Type type, bool buffered = true)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadImpl<object>(type, buffered);
             }
 
@@ -109,7 +138,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadFirst(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.First);
             }
 
@@ -118,9 +147,9 @@ namespace Dapper
             /// </summary>
             /// <param name="type">The type to read.</param>
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-            public object ReadFirstOrDefault(Type type)
+            public object? ReadFirstOrDefault(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.FirstOrDefault);
             }
 
@@ -131,7 +160,7 @@ namespace Dapper
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
             public object ReadSingle(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.Single);
             }
 
@@ -140,46 +169,55 @@ namespace Dapper
             /// </summary>
             /// <param name="type">The type to read.</param>
             /// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-            public object ReadSingleOrDefault(Type type)
+            public object? ReadSingleOrDefault(Type type)
             {
-                if (type == null) throw new ArgumentNullException(nameof(type));
+                if (type is null) throw new ArgumentNullException(nameof(type));
                 return ReadRow<object>(type, Row.SingleOrDefault);
+            }
+
+
+            /// <summary>
+            /// Validates that data is available, returning the <see cref="ResultIndex"/> that corresponds to the current grid - and marks the current grid as consumed;
+            /// this call <em>must</em> be paired with a call to <see cref="OnAfterGrid(int)"/> or <see cref="OnAfterGridAsync(int)"/>
+            /// </summary>
+            protected int OnBeforeGrid()
+            {
+                if (reader is null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
+                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
+                _resultIndexAndConsumedFlag |= CONSUMED_FLAG;
+                return ResultIndex;
             }
 
             private IEnumerable<T> ReadImpl<T>(Type type, bool buffered)
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
-                var typedIdentity = identity.ForGrid(type, gridIndex);
+                var index = OnBeforeGrid();
+                var typedIdentity = Identity.ForGrid(type, index);
                 CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
-                if (deserializer.Func == null || deserializer.Hash != hash)
+                if (deserializer.Func is null || deserializer.Hash != hash)
                 {
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
                 }
-                IsConsumed = true;
-                var result = ReadDeferred<T>(gridIndex, deserializer.Func, type);
-                return buffered ? result?.ToList() : result;
+                var result = ReadDeferred<T>(index, deserializer.Func, type);
+                return buffered ? result.ToList() : result;
             }
 
             private T ReadRow<T>(Type type, Row row)
             {
-                if (reader == null) throw new ObjectDisposedException(GetType().FullName, "The reader has been disposed; this can happen after all data has been consumed");
-                if (IsConsumed) throw new InvalidOperationException("Query results must be consumed in the correct order, and each result can only be consumed once");
-                IsConsumed = true;
+                var index = OnBeforeGrid();
 
-                T result = default;
+                T result = default!;
                 if (reader.Read() && reader.FieldCount != 0)
                 {
-                    var typedIdentity = identity.ForGrid(type, gridIndex);
+                    var typedIdentity = Identity.ForGrid(type, index);
                     CacheInfo cache = GetCacheInfo(typedIdentity, null, addToCache);
                     var deserializer = cache.Deserializer;
 
                     int hash = GetColumnHash(reader);
-                    if (deserializer.Func == null || deserializer.Hash != hash)
+                    if (deserializer.Func is null || deserializer.Hash != hash)
                     {
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;
@@ -194,15 +232,14 @@ namespace Dapper
                 {
                     ThrowZeroRows(row);
                 }
-                NextResult();
+                OnAfterGrid(index);
                 return result;
             }
 
             private IEnumerable<TReturn> MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Delegate func, string splitOn)
             {
-                var identity = this.identity.ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(typeof(TReturn), gridIndex);
-
-                IsConsumed = true;
+                var index = OnBeforeGrid();
+                var identity = Identity.ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(typeof(TReturn), index);
 
                 try
                 {
@@ -213,13 +250,14 @@ namespace Dapper
                 }
                 finally
                 {
-                    NextResult();
+                    OnAfterGrid(index);
                 }
             }
 
             private IEnumerable<TReturn> MultiReadInternal<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn)
             {
-                var identity = this.identity.ForGrid(typeof(TReturn), types, gridIndex);
+                var index = OnBeforeGrid();
+                var identity = Identity.ForGrid(typeof(TReturn), types, index);
                 try
                 {
                     foreach (var r in MultiMapImpl<TReturn>(null, default, types, map, splitOn, reader, identity, false))
@@ -229,7 +267,7 @@ namespace Dapper
                 }
                 finally
                 {
-                    NextResult();
+                    OnAfterGrid(index);
                 }
             }
 
@@ -356,48 +394,71 @@ namespace Dapper
             {
                 try
                 {
-                    while (index == gridIndex && reader.Read())
+                    while (index == ResultIndex && reader?.Read() == true)
                     {
                         yield return ConvertTo<T>(deserializer(reader));
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows
                 {
-                    if (index == gridIndex)
-                    {
-                        NextResult();
-                    }
+                    OnAfterGrid(index);
                 }
             }
 
-            private int gridIndex; //, readCount;
-            private readonly IParameterCallbacks callbacks;
+            const int CONSUMED_FLAG = 1 << 31;
+            private int _resultIndexAndConsumedFlag; //, readCount;
+
+            /// <summary>
+            /// Indicates the current result index
+            /// </summary>
+            protected int ResultIndex => _resultIndexAndConsumedFlag & ~CONSUMED_FLAG;
 
             /// <summary>
             /// Has the underlying reader been consumed?
             /// </summary>
-            public bool IsConsumed { get; private set; }
+            /// <remarks>This also reports <c>true</c> if the current grid is actively being consumed</remarks>
+            public bool IsConsumed => (_resultIndexAndConsumedFlag & CONSUMED_FLAG) != 0;
 
             /// <summary>
             /// The command associated with the reader
             /// </summary>
             public IDbCommand Command { get; set; }
 
-            private void NextResult()
+            /// <summary>
+            /// The underlying reader
+            /// </summary>
+            protected DbDataReader Reader => reader;
+
+            /// <summary>
+            /// The cancellation token associated with this reader
+            /// </summary>
+            protected CancellationToken CancellationToken => cancel;
+
+            /// <summary>
+            /// Marks the current grid as consumed, and moves to the next result
+            /// </summary>
+            protected void OnAfterGrid(int index)
             {
-                if (reader.NextResult())
+                if (index != ResultIndex)
+                {
+                    // not our data!
+                }
+                else if (reader is null)
+                {
+                    // nothing to do
+                }
+                else if (reader.NextResult())
                 {
                     // readCount++;
-                    gridIndex++;
-                    IsConsumed = false;
+                    _resultIndexAndConsumedFlag = index + 1;
                 }
                 else
                 {
                     // happy path; close the reader cleanly - no
                     // need for "Cancel" etc
                     reader.Dispose();
-                    reader = null;
-                    callbacks?.OnCompleted();
+                    reader = null!;
+                    onCompleted?.Invoke(state);
                     Dispose();
                 }
             }
@@ -407,25 +468,25 @@ namespace Dapper
             /// </summary>
             public void Dispose()
             {
-                if (reader != null)
+                if (reader is not null)
                 {
                     if (!reader.IsClosed) Command?.Cancel();
                     reader.Dispose();
-                    reader = null;
+                    reader = null!;
                 }
-                if (Command != null)
+                if (Command is not null)
                 {
                     Command.Dispose();
-                    Command = null;
+                    Command = null!;
                 }
                 GC.SuppressFinalize(this);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private static T ConvertTo<T>(object value) => value switch
+            private static T ConvertTo<T>(object? value) => value switch
             {
                 T typed => typed,
-                null or DBNull => default,
+                null or DBNull => default!,
                 _ => (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T), CultureInfo.InvariantCulture),
             };
         }

@@ -35,13 +35,13 @@ namespace Dapper
 
             internal static Func<DbDataReader, object> GetReader(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing)
             {
-                var found = (TypeDeserializerCache)byType[type];
-                if (found == null)
+                var found = (TypeDeserializerCache?)byType[type];
+                if (found is null)
                 {
                     lock (byType)
                     {
-                        found = (TypeDeserializerCache)byType[type];
-                        if (found == null)
+                        found = (TypeDeserializerCache?)byType[type];
+                        if (found is null)
                         {
                             byType[type] = found = new TypeDeserializerCache(type);
                         }
@@ -56,9 +56,9 @@ namespace Dapper
             {
                 private readonly int startBound, length;
                 private readonly bool returnNullIfFirstMissing;
-                private readonly DbDataReader reader;
-                private readonly string[] names;
-                private readonly Type[] types;
+                private readonly DbDataReader? reader;
+                private readonly string[]? names;
+                private readonly Type[]? types;
                 private readonly int hashCode;
 
                 public DeserializerKey(int hashCode, int startBound, int length, bool returnNullIfFirstMissing, DbDataReader reader, bool copyDown)
@@ -92,11 +92,11 @@ namespace Dapper
 
                 public override string ToString()
                 { // only used in the debugger
-                    if (names != null)
+                    if (names is not null)
                     {
                         return string.Join(", ", names);
                     }
-                    if (reader != null)
+                    if (reader is not null)
                     {
                         var sb = new StringBuilder();
                         int index = startBound;
@@ -107,10 +107,10 @@ namespace Dapper
                         }
                         return sb.ToString();
                     }
-                    return base.ToString();
+                    return base.ToString() ?? "";
                 }
 
-                public override bool Equals(object obj)
+                public override bool Equals(object? obj)
                     => obj is DeserializerKey key && Equals(key);
 
                 public bool Equals(DeserializerKey other)
@@ -143,10 +143,10 @@ namespace Dapper
                 if (returnNullIfFirstMissing) hash *= -27;
                 // get a cheap key first: false means don't copy the values down
                 var key = new DeserializerKey(hash, startBound, length, returnNullIfFirstMissing, reader, false);
-                Func<DbDataReader, object> deser;
+                Func<DbDataReader, object>? deser;
                 lock (readers)
                 {
-                    if (readers.TryGetValue(key, out deser)) return deser;
+                    if (readers.TryGetValue(key, out deser)) return deser!;
                 }
                 deser = GetTypeDeserializerImpl(type, reader, startBound, length, returnNullIfFirstMissing);
                 // get a more expensive key: true means copy the values down so it can be used as a key later

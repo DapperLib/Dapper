@@ -23,11 +23,11 @@ namespace Dapper.Tests
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
         {
             string cs = GetConnectionString();
-            var csb = Factory.CreateConnectionStringBuilder();
+            var csb = Factory.CreateConnectionStringBuilder()!;
             csb.ConnectionString = cs;
             ((dynamic)csb).AllowZeroDateTime = allowZeroDatetime;
             ((dynamic)csb).ConvertZeroDateTime = convertZeroDatetime;
-            var conn = Factory.CreateConnection();
+            var conn = Factory.CreateConnection()!;
             conn.ConnectionString = csb.ConnectionString;
             if (open) conn.Open();
             return conn;
@@ -131,7 +131,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
 
             var dbObj = conn.Query<Issue426_Test>("select * from Issue426_Test where Id = @id", new { id = Id }).Single();
             Assert.Equal(Id, dbObj.Id);
-            Assert.Equal(ticks, dbObj.Time.Value.Ticks);
+            Assert.Equal(ticks, dbObj.Time?.Ticks);
         }
 
         [FactMySql]
@@ -211,13 +211,13 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `bar` (
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactMySqlAttribute : FactAttribute
         {
-            public override string Skip
+            public override string? Skip
             {
                 get { return unavailable ?? base.Skip; }
                 set { base.Skip = value; }
             }
 
-            private static readonly string unavailable;
+            private static readonly string? unavailable;
 
             static FactMySqlAttribute()
             {

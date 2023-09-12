@@ -653,7 +653,7 @@ namespace Dapper.Tests
 
         public class WithInit : ISupportInitialize
         {
-            public string Value { get; set; }
+            public string? Value { get; set; }
             public int Flags { get; set; }
 
             void ISupportInitialize.BeginInit() => Flags++;
@@ -718,15 +718,15 @@ namespace Dapper.Tests
         private class HazGeo
         {
             public int Id { get; set; }
-            public DbGeography Geo { get; set; }
-            public DbGeometry Geometry { get; set; }
+            public DbGeography? Geo { get; set; }
+            public DbGeometry? Geometry { get; set; }
         }
 
         private class HazSqlGeo
         {
             public int Id { get; set; }
-            public SqlGeography Geo { get; set; }
-            public SqlGeometry Geometry { get; set; }
+            public SqlGeography? Geo { get; set; }
+            public SqlGeometry? Geometry { get; set; }
         }
 
         [Fact]
@@ -1057,8 +1057,8 @@ option (optimize for (@vals unKnoWn))";
             p.Output(bob, b => b.PersonId);
             p.Output(bob, b => b.Occupation);
             p.Output(bob, b => b.NumberOfLegs);
-            p.Output(bob, b => b.Address.Name);
-            p.Output(bob, b => b.Address.PersonId);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
 
             connection.Execute(@"
 SET @Occupation = 'grillmaster' 
@@ -1085,8 +1085,8 @@ SET @AddressPersonId = @PersonId", p);
                 p.Output(bob, b => b.PersonId);
                 p.Output(bob, b => b.Occupation);
                 p.Output(bob, b => b.NumberOfLegs);
-                p.Output(bob, b => b.Address.Name);
-                p.Output(bob, b => b.Address.PersonId);
+                p.Output(bob, b => b.Address!.Name);
+                p.Output(bob, b => b.Address!.PersonId);
 
                 var result = (int)connection.ExecuteScalar(@"
 SET @Occupation = 'grillmaster' 
@@ -1094,7 +1094,7 @@ SET @PersonId = @PersonId + 1
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
-select 42", p);
+select 42", p)!;
 
                 Assert.Equal("grillmaster", bob.Occupation);
                 Assert.Equal(2, bob.PersonId);
@@ -1116,8 +1116,8 @@ select 42", p);
                 p.Output(bob, b => b.PersonId);
                 p.Output(bob, b => b.Occupation);
                 p.Output(bob, b => b.NumberOfLegs);
-                p.Output(bob, b => b.Address.Name);
-                p.Output(bob, b => b.Address.PersonId);
+                p.Output(bob, b => b.Address!.Name);
+                p.Output(bob, b => b.Address!.PersonId);
 
                 var result = connection.Query<int>(@"
 SET @Occupation = 'grillmaster' 
@@ -1147,8 +1147,8 @@ select 42", p, buffered: true).Single();
                 p.Output(bob, b => b.PersonId);
                 p.Output(bob, b => b.Occupation);
                 p.Output(bob, b => b.NumberOfLegs);
-                p.Output(bob, b => b.Address.Name);
-                p.Output(bob, b => b.Address.PersonId);
+                p.Output(bob, b => b.Address!.Name);
+                p.Output(bob, b => b.Address!.PersonId);
 
                 var result = connection.Query<int>(@"
 SET @Occupation = 'grillmaster' 
@@ -1178,8 +1178,8 @@ select 42", p, buffered: false).Single();
                 p.Output(bob, b => b.PersonId);
                 p.Output(bob, b => b.Occupation);
                 p.Output(bob, b => b.NumberOfLegs);
-                p.Output(bob, b => b.Address.Name);
-                p.Output(bob, b => b.Address.PersonId);
+                p.Output(bob, b => b.Address!.Name);
+                p.Output(bob, b => b.Address!.PersonId);
 
                 int x, y;
                 using (var multi = connection.QueryMultiple(@"
@@ -1233,7 +1233,7 @@ SET @AddressPersonId = @PersonId", p))
 
         public class HazX
         {
-            public string X { get; set; }
+            public string? X { get; set; }
         }
 
         [Fact]
@@ -1309,7 +1309,7 @@ end");
         public class ParameterWithIndexer
         {
             public int A { get; set; }
-            public virtual string this[string columnName]
+            public virtual string? this[string columnName]
             {
                 get { return null; }
                 set { }
@@ -1332,13 +1332,13 @@ end");
 
         public class MultipleParametersWithIndexerDeclaringType
         {
-            public object this[object field]
+            public object? this[object field]
             {
                 get { return null; }
                 set { }
             }
 
-            public object this[object field, int index]
+            public object? this[object field, int index]
             {
                 get { return null; }
                 set { }
@@ -1359,15 +1359,16 @@ end");
             var fromDb = connection.Query<Dyno>("select * from #Dyno where Id=@Id", orig).Single();
             Assert.Equal((Guid)fromDb.Id, guid);
             Assert.Equal("T Rex", fromDb.Name);
+            Assert.NotNull(fromDb.Foo);
             Assert.Equal(123L, (long)fromDb.Foo);
         }
 
         public class Dyno
         {
-            public dynamic Id { get; set; }
-            public string Name { get; set; }
+            public dynamic? Id { get; set; }
+            public string? Name { get; set; }
 
-            public object Foo { get; set; }
+            public object? Foo { get; set; }
         }
 
         [Fact]
@@ -1633,7 +1634,7 @@ create table #Issue1907 (
                         throw new InvalidOperationException($"unexpected reader type: {reader.GetType().FullName}");
                     }
                     Assert.Equal(sentValue, recvValue);
-                    Assert.Equal(recvValue.ToString(), PreciseValue);
+                    Assert.Equal(PreciseValue, recvValue.ToString());
 
                     Assert.False(reader.Read());
                     Assert.False(reader.NextResult());
@@ -1646,7 +1647,7 @@ create table #Issue1907 (
                     Assert.True(reader.Read());
                     recvValue = reader.GetFieldValue<SqlDecimal>(1);
                     Assert.Equal(sentValue, recvValue);
-                    Assert.Equal(recvValue.ToString(), PreciseValue);
+                    Assert.Equal(PreciseValue, recvValue.ToString());
 
                     Assert.False(reader.Read());
                     Assert.False(reader.NextResult());
@@ -1664,29 +1665,29 @@ create table #Issue1907 (
                 // prove that simple read: works
                 recvValue = connection.QuerySingle<SqlDecimal>("select Value from #Issue1907");
                 Assert.Equal(sentValue, recvValue);
-                Assert.Equal(recvValue.ToString(), PreciseValue);
+                Assert.Equal(PreciseValue, recvValue.ToString());
 
-                recvValue = connection.QuerySingle<SqlDecimal?>("select Value from #Issue1907").Value;
+                recvValue = connection.QuerySingle<SqlDecimal?>("select Value from #Issue1907")!.Value;
                 Assert.Equal(sentValue, recvValue);
-                Assert.Equal(recvValue.ToString(), PreciseValue);
+                Assert.Equal(PreciseValue, recvValue.ToString());
 
                 // prove that object read: works
                 recvValue = connection.QuerySingle<HazSqlDecimal>("select Id, Value from #Issue1907").Value;
                 Assert.Equal(sentValue, recvValue);
-                Assert.Equal(recvValue.ToString(), PreciseValue);
+                Assert.Equal(PreciseValue, recvValue.ToString());
 
-                recvValue = connection.QuerySingle<HazNullableSqlDecimal>("select Id, Value from #Issue1907").Value.Value;
+                recvValue = connection.QuerySingle<HazNullableSqlDecimal>("select Id, Value from #Issue1907").Value!.Value;
                 Assert.Equal(sentValue, recvValue);
-                Assert.Equal(recvValue.ToString(), PreciseValue);
+                Assert.Equal(PreciseValue, recvValue.ToString());
 
                 // prove that value-tuple read: works
                 recvValue = connection.QuerySingle<(int Id, SqlDecimal Value)>("select Id, Value from #Issue1907").Value;
                 Assert.Equal(sentValue, recvValue);
-                Assert.Equal(recvValue.ToString(), PreciseValue);
+                Assert.Equal(PreciseValue, recvValue.ToString());
 
-                recvValue = connection.QuerySingle<(int Id, SqlDecimal? Value)>("select Id, Value from #Issue1907").Value.Value;
+                recvValue = connection.QuerySingle<(int Id, SqlDecimal? Value)>("select Id, Value from #Issue1907").Value!.Value;
                 Assert.Equal(sentValue, recvValue);
-                Assert.Equal(recvValue.ToString(), PreciseValue);
+                Assert.Equal(PreciseValue, recvValue.ToString());
             }
             finally
             {

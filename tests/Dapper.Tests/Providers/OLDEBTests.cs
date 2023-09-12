@@ -126,7 +126,8 @@ namespace Dapper.Tests
             var data = new { x = 6 };
             connection.Execute("create table #named_single(val int not null)");
             int count = connection.Execute("insert #named_single (val) values (?x?)", data);
-            int sum = (int)connection.ExecuteScalar("select sum(val) from #named_single");
+            int? sum = (int?)connection.ExecuteScalar("select sum(val) from #named_single");
+            Assert.NotNull(sum);
             Assert.Equal(1, count);
             Assert.Equal(6, sum);
         }
@@ -143,8 +144,9 @@ namespace Dapper.Tests
             };
             connection.Execute("create table #named_multi(val int not null)");
             int count = connection.Execute("insert #named_multi (val) values (?x?)", data);
-            int sum = (int)connection.ExecuteScalar("select sum(val) from #named_multi");
+            int? sum = (int?)connection.ExecuteScalar("select sum(val) from #named_multi");
             Assert.Equal(3, count);
+            Assert.NotNull(sum);
             Assert.Equal(10, sum);
         }
 
@@ -161,7 +163,7 @@ SELECT @since as [Since], @customerCode as [Code]";
             using var connection = GetOleDbConnection();
 
             DateTime? since = null; // DateTime.Now.Date;
-            const string code = null;  // "abc";
+            const string? code = null;  // "abc";
             var row = connection.QuerySingle(sql, new
             {
                 since,
@@ -187,7 +189,7 @@ SELECT @since as [Since], @customerCode as [Code]";
             using var connection = GetOleDbConnection();
 
             DateTime? since = null; // DateTime.Now.Date;
-            const string code = null;  // "abc";
+            const string? code = null;  // "abc";
             var row = connection.QuerySingle(sql, new
             {
                 since,
@@ -213,7 +215,7 @@ SELECT @since as [Since], @customerCode as [Code]";
             using var connection = GetOleDbConnection();
 
             DateTime? since = null; // DateTime.Now.Date;
-            const string code = null;  // "abc";
+            const string? code = null;  // "abc";
             using (var multi = await connection.QueryMultipleAsync(sql, new
             {
                 since,
@@ -222,10 +224,10 @@ SELECT @since as [Since], @customerCode as [Code]";
             {
                 var row = await multi.ReadSingleAsync().ConfigureAwait(false);
                 var a = (DateTime?)row.Since;
-                var b = (string)row.Code;
+                var b = (string?)row.Code;
 
-                Assert.Equal(a, since);
-                Assert.Equal(b, code);
+                Assert.Equal(since, a);
+                Assert.Equal(code, b);
             }
         }
 
@@ -242,7 +244,7 @@ SELECT @since as [Since], @customerCode as [Code]";
             using var connection = GetOleDbConnection();
 
             DateTime? since = null; // DateTime.Now.Date;
-            const string code = null;  // "abc";
+            const string? code = null;  // "abc";
             using (var multi = await connection.QueryMultipleAsync(sql, new
             {
                 since,
@@ -253,8 +255,8 @@ SELECT @since as [Since], @customerCode as [Code]";
                 var a = (DateTime?)row.Since;
                 var b = (string)row.Code;
 
-                Assert.Equal(a, since);
-                Assert.Equal(b, code);
+                Assert.Equal(since, a);
+                Assert.Equal(code, b);
             }
         }
     }

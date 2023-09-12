@@ -9,7 +9,7 @@ namespace Dapper.ProviderTools.Internal
     internal sealed class DynamicBulkCopy : BulkCopy
     {
         internal static BulkCopy? Create(object? wrapped)
-            => wrapped == null ? null : new DynamicBulkCopy(wrapped);
+            => wrapped is null ? null : new DynamicBulkCopy(wrapped);
 
         private DynamicBulkCopy(object wrapped)
             => _wrapped = wrapped;

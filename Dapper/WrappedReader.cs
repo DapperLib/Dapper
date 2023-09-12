@@ -34,18 +34,18 @@ namespace Dapper
         public override void Close() { }
         public override DataTable GetSchemaTable() => ThrowDisposed<DataTable>();
 
-#if PLAT_NO_REMOTING
+#if NET5_0_OR_GREATER
         [Obsolete("This Remoting API is not supported and throws PlatformNotSupportedException.", DiagnosticId = "SYSLIB0010", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
 #endif
         public override object InitializeLifetimeService() => ThrowDisposed<object>();
         protected override void Dispose(bool disposing) { }
         public override bool GetBoolean(int ordinal) => ThrowDisposed<bool>();
-        public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length) => ThrowDisposed<long>();
+        public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length) => ThrowDisposed<long>();
         public override float GetFloat(int ordinal) => ThrowDisposed<float>();
         public override short GetInt16(int ordinal) => ThrowDisposed<short>();
         public override byte GetByte(int ordinal) => ThrowDisposed<byte>();
         public override char GetChar(int ordinal) => ThrowDisposed<char>();
-        public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length) => ThrowDisposed<long>();
+        public override long GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length) => ThrowDisposed<long>();
         public override string GetDataTypeName(int ordinal) => ThrowDisposed<string>();
         public override DateTime GetDateTime(int ordinal) => ThrowDisposed<DateTime>();
         protected override DbDataReader GetDbDataReader(int ordinal) => ThrowDisposed<DbDataReader>();
@@ -83,13 +83,13 @@ namespace Dapper
         // the purpose of wrapping here is to allow closing a reader to *also* close
         // the command, without having to explicitly hand the command back to the
         // caller
-        public static DbDataReader Create(IDbCommand cmd, DbDataReader reader)
+        public static DbDataReader Create(IDbCommand? cmd, DbDataReader reader)
         {
-            if (cmd == null) return reader; // no need to wrap if no command
+            if (cmd is null) return reader; // no need to wrap if no command
 
-            if (reader != null) return new DbWrappedReader(cmd, reader);
+            if (reader is not null) return new DbWrappedReader(cmd, reader);
             cmd.Dispose();
-            return null; // GIGO
+            return null!; // GIGO
         }
 
         private DbDataReader _reader;
@@ -108,9 +108,9 @@ namespace Dapper
         public override bool HasRows => _reader.HasRows;
 
         public override void Close() => _reader.Close();
-        public override DataTable GetSchemaTable() => _reader.GetSchemaTable();
+        public override DataTable? GetSchemaTable() => _reader.GetSchemaTable();
 
-#if PLAT_NO_REMOTING
+#if NET5_0_OR_GREATER
         [Obsolete("This Remoting API is not supported and throws PlatformNotSupportedException.", DiagnosticId = "SYSLIB0010", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
 #endif
         public override object InitializeLifetimeService() => _reader.InitializeLifetimeService();
@@ -133,7 +133,7 @@ namespace Dapper
                 _reader.Dispose();
                 _reader = DisposedReader.Instance; // all future ops are no-ops
                 _cmd?.Dispose();
-                _cmd = null;
+                _cmd = null!;
             }
         }
 
@@ -143,12 +143,12 @@ namespace Dapper
 
         public override byte GetByte(int i) => _reader.GetByte(i);
 
-        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length) =>
+        public override long GetBytes(int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length) =>
             _reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
 
         public override char GetChar(int i) => _reader.GetChar(i);
 
-        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length) =>
+        public override long GetChars(int i, long fieldoffset, char[]? buffer, int bufferoffset, int length) =>
             _reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
 
         public override string GetDataTypeName(int i) => _reader.GetDataTypeName(i);
@@ -208,7 +208,7 @@ namespace Dapper
 
         public override Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default) => _reader.GetColumnSchemaAsync(cancellationToken);
 
-        public override Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default) => base.GetSchemaTableAsync(cancellationToken);
+        public override Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default) => base.GetSchemaTableAsync(cancellationToken);
 #endif
     }
 
@@ -224,9 +224,9 @@ namespace Dapper
 
         public override bool HasRows => true; // have to assume that we do
         public override void Close() => _reader.Close();
-        public override DataTable GetSchemaTable() => _reader.GetSchemaTable();
+        public override DataTable? GetSchemaTable() => _reader.GetSchemaTable();
 
-#if PLAT_NO_REMOTING
+#if NET5_0_OR_GREATER
         [Obsolete("This Remoting API is not supported and throws PlatformNotSupportedException.", DiagnosticId = "SYSLIB0010", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
 #endif
         public override object InitializeLifetimeService() => throw new NotSupportedException();
@@ -257,13 +257,13 @@ namespace Dapper
 
         public override byte GetByte(int i) => _reader.GetByte(i);
 
-        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length) =>
-            _reader.GetBytes(i, fieldOffset, buffer, bufferoffset, length);
+        public override long GetBytes(int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length) =>
+            _reader.GetBytes(i, fieldOffset, buffer!, bufferoffset, length);
 
         public override char GetChar(int i) => _reader.GetChar(i);
 
-        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length) =>
-            _reader.GetChars(i, fieldoffset, buffer, bufferoffset, length);
+        public override long GetChars(int i, long fieldoffset, char[]? buffer, int bufferoffset, int length) =>
+            _reader.GetChars(i, fieldoffset, buffer!, bufferoffset, length);
 
         public override string GetDataTypeName(int i) => _reader.GetDataTypeName(i);
 
@@ -308,7 +308,7 @@ namespace Dapper
             {
                 value = null;
             }
-            return (T)value;
+            return (T)value!;
         }
         public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
         {
@@ -356,7 +356,7 @@ namespace Dapper
         public override Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
-        public override Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default)
+        public override Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(_reader.GetSchemaTable());

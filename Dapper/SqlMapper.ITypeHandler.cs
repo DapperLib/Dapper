@@ -15,7 +15,7 @@ namespace Dapper
             /// </summary>
             /// <param name="parameter">The parameter to configure</param>
             /// <param name="value">Parameter value</param>
-            void SetValue(IDbDataParameter parameter, object value);
+            void SetValue(IDbDataParameter parameter, object? value);
 
             /// <summary>
             /// Parse a database value back to a typed value
@@ -23,7 +23,7 @@ namespace Dapper
             /// <param name="value">The value from the database</param>
             /// <param name="destinationType">The type to parse to</param>
             /// <returns>The typed value</returns>
-            object Parse(Type destinationType, object value);
+            object? Parse(Type destinationType, object? value);
         }
     }
 }

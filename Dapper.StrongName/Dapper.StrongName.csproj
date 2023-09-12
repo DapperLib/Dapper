@@ -8,17 +8,15 @@
     <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
     <Compile Include="..\Dapper\**\*.cs" Exclude="..\Dapper\obj\**\*.cs" />
   </ItemGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0'">
-    <DefineConstants>$(DefineConstants);PLAT_NO_REMOTING;PLAT_SKIP_LOCALS_INIT</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" />
   </ItemGroup>
 </Project>

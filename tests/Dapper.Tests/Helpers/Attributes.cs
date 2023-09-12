@@ -41,7 +41,7 @@ namespace Dapper.Tests
 #endif
         }
 
-        public string Url { get; private set; }
+        public string? Url { get; private set; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
