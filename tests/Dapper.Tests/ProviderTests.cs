@@ -10,19 +10,15 @@ namespace Dapper.Tests
         [Fact]
         public void BulkCopy_SystemDataSqlClient()
         {
-            using (var conn = new System.Data.SqlClient.SqlConnection())
-            {
-                Test<System.Data.SqlClient.SqlBulkCopy>(conn);
-            }
+            using var conn = new System.Data.SqlClient.SqlConnection();
+            Test<System.Data.SqlClient.SqlBulkCopy>(conn);
         }
 
         [Fact]
         public void BulkCopy_MicrosoftDataSqlClient()
         {
-            using (var conn = new Microsoft.Data.SqlClient.SqlConnection())
-            {
-                Test<Microsoft.Data.SqlClient.SqlBulkCopy>(conn);
-            }
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection();
+            Test<Microsoft.Data.SqlClient.SqlBulkCopy>(conn);
         }
 
         [Fact]
@@ -55,41 +51,33 @@ namespace Dapper.Tests
              where T : SqlServerDatabaseProvider, new()
         {
             var provider = new T();
-            using (var conn = provider.GetOpenConnection())
-            {
-                Assert.True(conn.TryGetClientConnectionId(out var id));
-                Assert.NotEqual(Guid.Empty, id);
-            }
+            using var conn = provider.GetOpenConnection();
+            Assert.True(conn.TryGetClientConnectionId(out var id));
+            Assert.NotEqual(Guid.Empty, id);
         }
 
         private static void ClearPool<T>()
      where T : SqlServerDatabaseProvider, new()
         {
             var provider = new T();
-            using (var conn = provider.GetOpenConnection())
-            {
-                Assert.True(conn.TryClearPool());
-            }
+            using var conn = provider.GetOpenConnection();
+            Assert.True(conn.TryClearPool());
         }
 
         private static void ClearAllPools<T>()
      where T : SqlServerDatabaseProvider, new()
         {
             var provider = new T();
-            using (var conn = provider.GetOpenConnection())
-            {
-                Assert.True(conn.TryClearAllPools());
-            }
+            using var conn = provider.GetOpenConnection();
+            Assert.True(conn.TryClearAllPools());
         }
 
         private static void Test<T>(DbConnection connection)
         {
-            using (var bcp = BulkCopy.TryCreate(connection))
-            {
-                Assert.NotNull(bcp);
-                Assert.IsType<T>(bcp.Wrapped);
-                bcp.EnableStreaming = true;
-            }
+            using var bcp = BulkCopy.TryCreate(connection);
+            Assert.NotNull(bcp);
+            Assert.IsType<T>(bcp.Wrapped);
+            bcp.EnableStreaming = true;
         }
 
         [Theory]
@@ -110,17 +98,17 @@ namespace Dapper.Tests
             where T : SqlServerDatabaseProvider, new()
         {
             var provider = new T();
-            using (var conn = provider.GetOpenConnection())
+            
+            using var conn = provider.GetOpenConnection();
+
+            try
             {
-                try
-                {
-                    conn.Execute("throw @create, 'boom', 1;", new { create });
-                    Assert.False(true);
-                }
-                catch(DbException err)
-                {
-                    Assert.Equal(result, err.IsNumber(test));
-                }
+                conn.Execute("throw @create, 'boom', 1;", new { create });
+                Assert.False(true);
+            }
+            catch(DbException err)
+            {
+                Assert.Equal(result, err.IsNumber(test));
             }
         }
     }

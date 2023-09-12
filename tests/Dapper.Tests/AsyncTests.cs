@@ -225,12 +225,10 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestBasicStringUsageClosedAsync()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var query = await conn.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
-                var arr = query.ToArray();
-                Assert.Equal(new[] { "abc", "def" }, arr);
-            }
+            using var conn = GetClosedConnection();
+            var query = await conn.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
+            var arr = query.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
         [Fact]
@@ -259,12 +257,10 @@ namespace Dapper.Tests
         [Fact]
         public void TestExecuteClosedConnAsyncInner()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var query = conn.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
-                var val = query.Result;
-                Assert.Equal(1, val);
-            }
+            using var conn = GetClosedConnection();
+            var query = conn.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
+            var val = query.Result;
+            Assert.Equal(1, val);
         }
 
         [Fact]
@@ -310,84 +306,70 @@ namespace Dapper.Tests
         public async Task TestMultiMapWithSplitClosedConnAsync()
         {
             const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
-            using (var conn = GetClosedConnection())
+
+            using var conn = GetClosedConnection();
+
+            var productQuery = await conn.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
             {
-                var productQuery = await conn.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
-                {
-                    prod.Category = cat;
-                    return prod;
-                }).ConfigureAwait(false);
+                prod.Category = cat;
+                return prod;
+            }).ConfigureAwait(false);
 
-                var product = productQuery.First();
-                // assertions
-                Assert.Equal(1, product.Id);
-                Assert.Equal("abc", product.Name);
-                Assert.NotNull(product.Category);
-                Assert.Equal(2, product.Category.Id);
-                Assert.Equal("def", product.Category.Name);
-            }
-        }
+            var product = productQuery.First();
+            // assertions
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
+    }
 
-        [Fact]
+    [Fact]
         public async Task TestMultiAsync()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
-            {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-            }
+            using SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
         }
 
         [Fact]
         public async Task TestMultiConversionAsync()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2").ConfigureAwait(false))
-            {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-            }
+            using SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
         }
 
         [Fact]
         public async Task TestMultiAsyncViaFirstOrDefault()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
-            {
-                Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
-            }
+            using SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
         }
 
         [Fact]
         public async Task TestMultiClosedConnAsync()
         {
-            using (var conn = GetClosedConnection())
-            {
-                using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
-                {
-                    Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                }
-            }
+            using var conn = GetClosedConnection();
+            using SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
         }
 
         [Fact]
         public async Task TestMultiClosedConnAsyncViaFirstOrDefault()
         {
-            using (var conn = GetClosedConnection())
-            {
-                using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
-                {
-                    Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                    Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
-                }
-            }
+            using var conn = GetClosedConnection();
+            using SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
         }
 
         [Fact]
@@ -406,17 +388,15 @@ namespace Dapper.Tests
         [Fact]
         public async Task ExecuteReaderClosedAsync()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var dt = new DataTable();
-                dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").ConfigureAwait(false));
-                Assert.Equal(2, dt.Columns.Count);
-                Assert.Equal("three", dt.Columns[0].ColumnName);
-                Assert.Equal("four", dt.Columns[1].ColumnName);
-                Assert.Equal(1, dt.Rows.Count);
-                Assert.Equal(3, (int)dt.Rows[0][0]);
-                Assert.Equal(4, (int)dt.Rows[0][1]);
-            }
+            using var conn = GetClosedConnection();
+            var dt = new DataTable();
+            dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").ConfigureAwait(false));
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal("three", dt.Columns[0].ColumnName);
+            Assert.Equal("four", dt.Columns[1].ColumnName);
+            Assert.Equal(1, dt.Rows.Count);
+            Assert.Equal(3, (int)dt.Rows[0][0]);
+            Assert.Equal(4, (int)dt.Rows[0][1]);
         }
 
         [Fact]
@@ -428,7 +408,8 @@ namespace Dapper.Tests
         [Fact]
         public async Task LiteralReplacementClosed()
         {
-            using (var conn = GetClosedConnection()) await LiteralReplacement(conn).ConfigureAwait(false);
+            using var conn = GetClosedConnection();
+            await LiteralReplacement(conn).ConfigureAwait(false);
         }
 
         private static async Task LiteralReplacement(IDbConnection conn)
@@ -457,7 +438,8 @@ namespace Dapper.Tests
         [Fact]
         public async Task LiteralReplacementDynamicClosed()
         {
-            using (var conn = GetClosedConnection()) await LiteralReplacementDynamic(conn).ConfigureAwait(false);
+            using var conn = GetClosedConnection();
+            await LiteralReplacementDynamic(conn).ConfigureAwait(false);
         }
 
         private static async Task LiteralReplacementDynamic(IDbConnection conn)
@@ -932,14 +914,12 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
         [Fact]
         public async Task Issue1281_DataReaderOutOfOrderAsync()
         {
-            using (var reader = await connection.ExecuteReaderAsync("Select 0, 1, 2").ConfigureAwait(false))
-            {
-                Assert.True(reader.Read());
-                Assert.Equal(2, reader.GetInt32(2));
-                Assert.Equal(0, reader.GetInt32(0));
-                Assert.Equal(1, reader.GetInt32(1));
-                Assert.False(reader.Read());
-            }
+            using var reader = await connection.ExecuteReaderAsync("Select 0, 1, 2").ConfigureAwait(false);
+            Assert.True(reader.Read());
+            Assert.Equal(2, reader.GetInt32(2));
+            Assert.Equal(0, reader.GetInt32(0));
+            Assert.Equal(1, reader.GetInt32(1));
+            Assert.False(reader.Read());
         }
 
         [Fact]

@@ -34,11 +34,9 @@ namespace Dapper.Tests
         {
             try
             {
-                using (var cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = "create proc #Issue261Direct @c decimal(10,5) OUTPUT as begin set @c=11.884 end";
-                    cmd.ExecuteNonQuery();
-                }
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "create proc #Issue261Direct @c decimal(10,5) OUTPUT as begin set @c=11.884 end";
+                cmd.ExecuteNonQuery();
             }
             catch { /* we don't care that it already exists */ }
 
