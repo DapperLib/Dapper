@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -180,7 +179,6 @@ namespace Dapper
                 else
                 {
                     var result = ReadDeferred<T>(index, deserializer, type);
-                    if (buffered) result = result.ToList(); // for the "not a DbDataReader" scenario
                     return Task.FromResult(result);
                 }
             }
@@ -255,6 +253,11 @@ namespace Dapper
             /// </summary>
             /// <typeparam name="T">The type to read.</typeparam>
             public IAsyncEnumerable<T> ReadUnbufferedAsync<T>() => ReadAsyncUnbufferedImpl<T>(typeof(T));
+
+            /// <summary>
+            /// Read the next grid of results.
+            /// </summary>
+            public IAsyncEnumerable<dynamic> ReadUnbufferedAsync() => ReadAsyncUnbufferedImpl<dynamic>(typeof(DapperRow));
 
             private IAsyncEnumerable<T> ReadAsyncUnbufferedImpl<T>(Type type)
             {
