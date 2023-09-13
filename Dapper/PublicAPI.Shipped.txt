@@ -1,7 +1,7 @@
 ﻿#nullable enable
 abstract Dapper.SqlMapper.StringTypeHandler<T>.Format(T xml) -> string!
 abstract Dapper.SqlMapper.StringTypeHandler<T>.Parse(string! xml) -> T
-abstract Dapper.SqlMapper.TypeHandler<T>.Parse(object? value) -> T?
+abstract Dapper.SqlMapper.TypeHandler<T>.Parse(object! value) -> T?
 abstract Dapper.SqlMapper.TypeHandler<T>.SetValue(System.Data.IDbDataParameter! parameter, T? value) -> void
 const Dapper.DbString.DefaultLength = 4000 -> int
 Dapper.CommandDefinition
@@ -130,8 +130,8 @@ Dapper.SqlMapper.IParameterCallbacks.OnCompleted() -> void
 Dapper.SqlMapper.IParameterLookup
 Dapper.SqlMapper.IParameterLookup.this[string! name].get -> object?
 Dapper.SqlMapper.ITypeHandler
-Dapper.SqlMapper.ITypeHandler.Parse(System.Type! destinationType, object? value) -> object?
-Dapper.SqlMapper.ITypeHandler.SetValue(System.Data.IDbDataParameter! parameter, object? value) -> void
+Dapper.SqlMapper.ITypeHandler.Parse(System.Type! destinationType, object! value) -> object?
+Dapper.SqlMapper.ITypeHandler.SetValue(System.Data.IDbDataParameter! parameter, object! value) -> void
 Dapper.SqlMapper.ITypeMap
 Dapper.SqlMapper.ITypeMap.FindConstructor(string![]! names, System.Type![]! types) -> System.Reflection.ConstructorInfo?
 Dapper.SqlMapper.ITypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo?
@@ -149,7 +149,7 @@ override Dapper.DbString.ToString() -> string!
 override Dapper.SqlMapper.Identity.Equals(object? obj) -> bool
 override Dapper.SqlMapper.Identity.GetHashCode() -> int
 override Dapper.SqlMapper.Identity.ToString() -> string!
-override Dapper.SqlMapper.StringTypeHandler<T>.Parse(object? value) -> T
+override Dapper.SqlMapper.StringTypeHandler<T>.Parse(object! value) -> T
 override Dapper.SqlMapper.StringTypeHandler<T>.SetValue(System.Data.IDbDataParameter! parameter, T? value) -> void
 readonly Dapper.SqlMapper.Identity.commandType -> System.Data.CommandType?
 readonly Dapper.SqlMapper.Identity.connectionString -> string!
