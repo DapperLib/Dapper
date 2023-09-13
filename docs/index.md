@@ -24,6 +24,8 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 (note: new PRs will not be merged until they add release note wording here)
 
+- add untyped `GridReader.ReadUnbufferedAsync` API (#1958 via @mgravell)
+
 ### 2.1.1
 
 - add NRT annotations (#1928 via @mgravell)
