@@ -799,7 +799,8 @@ namespace Dapper.Tests
             public static void Register() => SqlMapper.AddTypeHandler<Issue1959_Subclass>(Instance);
             private Issue1959_Subclass_Handler() { }
             private static readonly Issue1959_Subclass_Handler Instance = new();
-            public override Issue1959_Subclass Parse(object? value)
+
+            public override Issue1959_Subclass Parse(object value)
             {
                 Assert.NotNull(value);
                 Assert.IsType<DateTime>(value); // checking not DbNull etc
@@ -815,7 +816,7 @@ namespace Dapper.Tests
             private Issue1959_Raw_Handler() { }
             private static readonly Issue1959_Raw_Handler Instance = new();
 
-            void SqlMapper.ITypeHandler.SetValue(IDbDataParameter parameter, object? value)
+            void SqlMapper.ITypeHandler.SetValue(IDbDataParameter parameter, object value)
             {
                 Assert.NotNull(value);
                 if (value is DBNull)
@@ -828,7 +829,7 @@ namespace Dapper.Tests
                     parameter.Value = ((Issue1959_Raw)value).Value;
                 }
             }
-            object? SqlMapper.ITypeHandler.Parse(Type destinationType, object? value)
+            object? SqlMapper.ITypeHandler.Parse(Type destinationType, object value)
             {
                 Assert.NotNull(value);
                 Assert.IsType<DateTime>(value); // checking not DbNull etc
