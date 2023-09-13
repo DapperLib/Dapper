@@ -113,6 +113,26 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public async Task TestBasicStringUsageViaGridReaderUnbufferedDynamicAsync()
+        {
+            var results = new List<string>();
+            await using (var grid = await connection.QueryMultipleAsync("select 'abc' as [Foo] union select 'def'; select @txt as [Foo]", new { txt = "ghi" })
+                .ConfigureAwait(false))
+            {
+                while (!grid.IsConsumed)
+                {
+                    await foreach (var value in grid.ReadUnbufferedAsync()
+                        .ConfigureAwait(false))
+                    {
+                        results.Add((string)value.Foo);
+                    }
+                }
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def", "ghi" }, arr);
+        }
+
+        [Fact]
         public async Task TestBasicStringUsageViaGridReaderUnbufferedAsync_Cancellation()
         {
             using var cts = new CancellationTokenSource();
