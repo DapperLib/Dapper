@@ -374,7 +374,7 @@ namespace Dapper.Tests
             {
             }
 
-            public static readonly RatingValueHandler Default = new RatingValueHandler();
+            public static readonly RatingValueHandler Default = new();
 
             public override RatingValue Parse(object? value)
             {
@@ -431,7 +431,7 @@ namespace Dapper.Tests
             {
             }
 
-            public static readonly StringListTypeHandler Default = new StringListTypeHandler();
+            public static readonly StringListTypeHandler Default = new();
             //Just a simple List<string> type handler implementation
             public override void SetValue(IDbDataParameter parameter, List<string>? value)
             {
@@ -738,6 +738,130 @@ namespace Dapper.Tests
 
             public string SomeValue { get; }
             public Blarg SomeBlargValue { get; }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Issue1959_TypeHandlerNullability_Subclass(bool isNull)
+        {
+            Issue1959_Subclass_Handler.Register();
+            Issue1959_Subclass? when = isNull ? null : new(DateTime.Today);
+            var whenNotNull = when ?? new(new DateTime(1753, 1, 1));
+
+            var args = new HazIssue1959_Subclass { Id = 42, Nullable = when, NonNullable = whenNotNull };
+            var row = connection.QuerySingle<HazIssue1959_Subclass>(
+                "select @Id as [Id], @NonNullable as [NonNullable], @Nullable as [Nullable]",
+                args);
+
+            Assert.NotNull(row);
+            Assert.Equal(42, row.Id);
+            Assert.Equal(when, row.Nullable);
+            Assert.Equal(whenNotNull, row.NonNullable);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Issue1959_TypeHandlerNullability_Raw(bool isNull)
+        {
+            Issue1959_Raw_Handler.Register();
+            Issue1959_Raw? when = isNull ? null : new(DateTime.Today);
+            var whenNotNull = when ?? new(new DateTime(1753, 1, 1));
+
+            var args = new HazIssue1959_Raw { Id = 42, Nullable = when, NonNullable = whenNotNull };
+            var row = connection.QuerySingle<HazIssue1959_Raw>(
+                "select @Id as [Id], @NonNullable as [NonNullable], @Nullable as [Nullable]",
+                args);
+
+            Assert.NotNull(row);
+            Assert.Equal(42, row.Id);
+            Assert.Equal(when, row.Nullable);
+            Assert.Equal(whenNotNull, row.NonNullable);
+        }
+
+        public class HazIssue1959_Subclass
+        {
+            public int Id { get; set; }
+            public Issue1959_Subclass NonNullable { get; set; }
+            public Issue1959_Subclass? Nullable { get; set; }
+        }
+
+        public class HazIssue1959_Raw
+        {
+            public int Id { get; set; }
+            public Issue1959_Raw NonNullable { get; set; }
+            public Issue1959_Raw? Nullable { get; set; }
+        }
+
+        public class Issue1959_Subclass_Handler : SqlMapper.TypeHandler<Issue1959_Subclass>
+        {
+            public static void Register() => SqlMapper.AddTypeHandler<Issue1959_Subclass>(Instance);
+            private Issue1959_Subclass_Handler() { }
+            private static readonly Issue1959_Subclass_Handler Instance = new();
+            public override Issue1959_Subclass Parse(object? value)
+            {
+                Assert.NotNull(value);
+                Assert.IsType<DateTime>(value); // checking not DbNull etc
+                return new Issue1959_Subclass((DateTime)value);
+            }
+            public override void SetValue(IDbDataParameter parameter, TypeHandlerTests<TProvider>.Issue1959_Subclass value)
+                => parameter.Value = value.Value;
+        }
+
+        public class Issue1959_Raw_Handler : SqlMapper.ITypeHandler
+        {
+            public static void Register() => SqlMapper.AddTypeHandler(typeof(Issue1959_Raw), Instance);
+            private Issue1959_Raw_Handler() { }
+            private static readonly Issue1959_Raw_Handler Instance = new();
+
+            void SqlMapper.ITypeHandler.SetValue(IDbDataParameter parameter, object? value)
+            {
+                Assert.NotNull(value);
+                if (value is DBNull)
+                {
+                    parameter.Value = value;
+                }
+                else
+                {
+                    Assert.IsType<Issue1959_Raw>(value); // checking not DbNull etc
+                    parameter.Value = ((Issue1959_Raw)value).Value;
+                }
+            }
+            object? SqlMapper.ITypeHandler.Parse(Type destinationType, object? value)
+            {
+                Assert.NotNull(value);
+                Assert.IsType<DateTime>(value); // checking not DbNull etc
+                return new Issue1959_Raw((DateTime)value);
+            }
+        }
+
+#pragma warning disable CA2231 // Overload operator equals on overriding value type Equals
+        public readonly struct Issue1959_Subclass : IEquatable<Issue1959_Subclass>
+#pragma warning restore CA2231 // Overload operator equals on overriding value type Equals
+        {
+            public Issue1959_Subclass(DateTime value) => Value = value;
+            public readonly DateTime Value;
+            public override int GetHashCode() => Value.GetHashCode();
+            public override bool Equals(object? obj)
+                => obj is Issue1959_Subclass other && Equals(other);
+            public bool Equals(Issue1959_Subclass other)
+                => other.Value == Value;
+            public override string ToString() => Value.ToString();
+        }
+
+#pragma warning disable CA2231 // Overload operator equals on overriding value type Equals
+        public readonly struct Issue1959_Raw : IEquatable<Issue1959_Raw>
+#pragma warning restore CA2231 // Overload operator equals on overriding value type Equals
+        {
+            public Issue1959_Raw(DateTime value) => Value = value;
+            public readonly DateTime Value;
+            public override int GetHashCode() => Value.GetHashCode();
+            public override bool Equals(object? obj)
+                => obj is Issue1959_Raw other && Equals(other);
+            public bool Equals(Issue1959_Raw other)
+                => other.Value == Value;
+            public override string ToString() => Value.ToString();
         }
     }
 }
