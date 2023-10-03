@@ -22,10 +22,21 @@ namespace Dapper.Tests
             try
             {
                 SqlMapper.SetAbstractTypeMap(t => t == typeof(AbstractTypeMapping.IThing) ? typeof(AbstractTypeMapping.Thing) : null);
-                
+
                 var thing = connection.Query<AbstractTypeMapping.IThing>("select 'Hello!' Name, 42 Power").First();
                 Assert.Equal(42, thing.Power);
                 Assert.Equal("Hello!", thing.Name);
+
+                var list = connection.Query<AbstractTypeMapping.IThing>("select 'Hello!' Name, 42 Power union all select 'World!' Name, 3712 Power")
+                                     .ToList();
+                Assert.Equal(42, list[0].Power);
+                Assert.Equal("Hello!", list[0].Name);
+                Assert.Equal(3712, list[1].Power);
+                Assert.Equal("World!", list[1].Name);
+
+                var firstThing = connection.QueryFirstOrDefault<AbstractTypeMapping.IThing>("select 'Hello!' Name, 42 Power");
+                Assert.Equal(42, firstThing.Power);
+                Assert.Equal("Hello!", firstThing.Name);
             }
             finally
             {
