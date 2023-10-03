@@ -1,4 +1,4 @@
-# Dapper - a simple object mapper for .Net
+# Dapper - a simple object mapper for .NET
 
 ## Overview
 
@@ -23,6 +23,37 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 ### unreleased
 
 (note: new PRs will not be merged until they add release note wording here)
+
+- add untyped `GridReader.ReadUnbufferedAsync` API (#1958 via @mgravell)
+- tweak NRT annotations on type-handler API (#1960 via @mgravell, fixes #1959)
+
+### 2.1.1
+
+- add NRT annotations (#1928 via @mgravell)
+- extend `GridReader` API to allow it to be subclassed by external consumers (#1928 via @mgravell)
+- support `$` as a parameter prefix (#1952 via @Giorgi)
+- add public API tracking (#1948 via @mgravell)
+
+### 2.0.151
+
+- add global `FetchSize` setting for use with Oracle (#1946 via mgravell, fixes #1945) (also add some missing logic in `Settings.Reset()`)
+- add underscore handling with constructors (#1786 via @jo-goro, fixes #818; also #1947 via mgravell)
+
+### 2.0.143
+
+- add missing non-generic `AsyncEnumerable<dynamic> QueryUnbufferedAsync(...)` API (#1925 via mgravell, fixes #1922)
+- formally mark all `struct` types as `readonly` (#1925 via mgravell)
+- reinstate fallback support for `IDataReader`, and implement missing `DbDataReader` async APIs (#1913 via mgravell)
+
+### 2.0.138
+
+- (#1910 via mgravell, fix #1907, #1263)
+  - add support for `SqlDecimal` and other types that need to be accessed via `DbDataReader.GetFieldValue<T>`
+  - add an overload of `AddTypeMap` that supports `DbDataReader.GetFieldValue<T>` for additional types
+  - acknowledge that in reality we only support `DbDataReader`; this has been true (via `DbConnection`) for `async` forever
+- (#1912 via mgravell)
+  - add missing `AsyncEnumerable<T> QueryUnbufferedAsync<T>(...)` and `GridReader.ReadUnbufferedAsync<T>(...)` APIs (.NET 5 and later)
+  - implement `IAsyncDisposable` on `GridReader` (.NET 5 and later)
 
 ### 2.0.123
 

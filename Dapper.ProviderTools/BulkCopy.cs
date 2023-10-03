@@ -20,7 +20,7 @@ namespace Dapper.ProviderTools
         /// </summary>
         public static BulkCopy? TryCreate(DbConnection connection)
         {
-            if (connection == null) return null;
+            if (connection is null) return null;
             var type = connection.GetType();
             if (!s_bcpFactory.TryGetValue(type, out var func))
             {
@@ -36,9 +36,9 @@ namespace Dapper.ProviderTools
         public static BulkCopy Create(DbConnection connection)
         {
             var bcp = TryCreate(connection);
-            if (bcp == null)
+            if (bcp is null)
             {
-                if (connection == null) throw new ArgumentNullException(nameof(connection));
+                if (connection is null) throw new ArgumentNullException(nameof(connection));
                 throw new NotSupportedException("Unable to create BulkCopy for " + connection.GetType().FullName);
             }
             return bcp;
@@ -64,10 +64,10 @@ namespace Dapper.ProviderTools
                 {
                     var prefix = match.Groups[1].Value;
                     var bcpType = connectionType.Assembly.GetType($"{connectionType.Namespace}.{prefix}BulkCopy");
-                    if (bcpType != null)
+                    if (bcpType is not null)
                     {
                         var ctor = bcpType.GetConstructor(new[] { connectionType });
-                        if (ctor == null) return null;
+                        if (ctor is null) return null;
 
                         var p = Expression.Parameter(typeof(DbConnection), "conn");
                         var body = Expression.New(ctor, Expression.Convert(p, connectionType));
@@ -98,14 +98,17 @@ namespace Dapper.ProviderTools
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public abstract Task WriteToServerAsync(DbDataReader source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public abstract Task WriteToServerAsync(DataTable source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Write a set of data to the server
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public abstract Task WriteToServerAsync(DataRow[] source, CancellationToken cancellationToken = default);
         /// <summary>
         /// Add a mapping between two columns by name

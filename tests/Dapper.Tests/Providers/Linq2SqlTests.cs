@@ -23,7 +23,7 @@ namespace Dapper.Tests
 
             var output = connection.Query<WithBinary>("select @input as [Value]", new { input }).First().Value;
 
-            Assert.Equal(orig, output.ToArray());
+            Assert.Equal(orig, output?.ToArray());
         }
 
         [Fact]
@@ -40,7 +40,7 @@ namespace Dapper.Tests
 
         private class WithBinary
         {
-            public System.Data.Linq.Binary Value { get; set; }
+            public System.Data.Linq.Binary? Value { get; set; }
         }
 
         private class NoDefaultConstructorWithBinary

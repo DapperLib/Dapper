@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Threading;
 
 namespace Dapper
 {
@@ -63,7 +64,9 @@ namespace Dapper
             public static void SetDefaults()
             {
                 CommandTimeout = null;
-                ApplyNullValues = false;
+                ApplyNullValues = PadListExpansions = UseIncrementalPseudoPositionalParameterNames = false;
+                AllowedCommandBehaviors = DefaultAllowedCommandBehaviors;
+                FetchSize = InListStringSplitCount = -1;
             }
 
             /// <summary>
@@ -99,6 +102,26 @@ namespace Dapper
             /// instead of the original name; for most scenarios, this is ignored since the name is redundant, but "snowflake" requires this.
             /// </summary>
             public static bool UseIncrementalPseudoPositionalParameterNames { get; set; }
+
+            /// <summary>
+            /// If assigned a non-negative value, then that value is applied to any commands <c>FetchSize</c> property, if it exists;
+            /// see https://docs.oracle.com/en/database/oracle/oracle-database/18/odpnt/CommandFetchSize.html; note that this value
+            /// can only be set globally - it is not intended for frequent/contextual changing.
+            /// </summary>
+            public static long FetchSize
+            {
+                get => Volatile.Read(ref s_FetchSize);
+                set
+                {
+                    if (Volatile.Read(ref s_FetchSize) != value)
+                    {
+                        Volatile.Write(ref s_FetchSize, value);
+                        CommandDefinition.ResetCommandInitCache(); // if this setting is useful: we've invalidated things
+                    }
+                }
+            }
+
+            private static long s_FetchSize = -1;
         }
     }
 }

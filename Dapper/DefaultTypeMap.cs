@@ -19,7 +19,7 @@ namespace Dapper
         /// <param name="type">Entity type</param>
         public DefaultTypeMap(Type type)
         {
-            if (type == null)
+            if (type is null)
                 throw new ArgumentNullException(nameof(type));
 
             _fields = GetSettableFields(type);
@@ -27,24 +27,30 @@ namespace Dapper
             _type = type;
         }
 
-        internal static MethodInfo GetPropertySetter(PropertyInfo propertyInfo, Type type)
+        internal static MethodInfo GetPropertySetterOrThrow(PropertyInfo propertyInfo, Type type)
+        {
+            return GetPropertySetter(propertyInfo, type) ?? Throw(propertyInfo);
+
+            static MethodInfo Throw(PropertyInfo propertyInfo) => throw new InvalidOperationException("Property setting not found for: " + propertyInfo?.Name);
+        }
+        internal static MethodInfo? GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
             if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
 
-            return propertyInfo.DeclaringType.GetProperty(
+            return propertyInfo.DeclaringType!.GetProperty(
                    propertyInfo.Name,
                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                    Type.DefaultBinder,
                    propertyInfo.PropertyType,
                    propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
-                   null).GetSetMethod(true);
+                   null)!.GetSetMethod(true);
         }
 
         internal static List<PropertyInfo> GetSettableProps(Type t)
         {
             return t
                   .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                  .Where(p => GetPropertySetter(p, t) != null)
+                  .Where(p => GetPropertySetter(p, t) is not null)
                   .ToList();
         }
 
@@ -59,7 +65,7 @@ namespace Dapper
         /// <param name="names">DataReader column names</param>
         /// <param name="types">DataReader column types</param>
         /// <returns>Matching constructor or default one</returns>
-        public ConstructorInfo FindConstructor(string[] names, Type[] types)
+        public ConstructorInfo? FindConstructor(string[] names, Type[] types)
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             foreach (ConstructorInfo ctor in constructors.OrderBy(c => c.IsPublic ? 0 : (c.IsPrivate ? 2 : 1)).ThenBy(c => c.GetParameters().Length))
@@ -74,8 +80,16 @@ namespace Dapper
                 int i = 0;
                 for (; i < ctorParameters.Length; i++)
                 {
-                    if (!string.Equals(ctorParameters[i].Name, names[i], StringComparison.OrdinalIgnoreCase))
+                    if (EqualsCI(ctorParameters[i].Name, names[i]))
+                    { } // exact match
+                    else if (MatchNamesWithUnderscores && EqualsCIU(ctorParameters[i].Name, names[i]))
+                    { } // match after applying underscores
+                    else
+                    {
+                        // not a name match
                         break;
+                    }
+
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;
                     var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
@@ -98,7 +112,7 @@ namespace Dapper
         /// <summary>
         /// Returns the constructor, if any, that has the ExplicitConstructorAttribute on it.
         /// </summary>
-        public ConstructorInfo FindExplicitConstructor()
+        public ConstructorInfo? FindExplicitConstructor()
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();
@@ -119,9 +133,10 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
-            var parameters = constructor.GetParameters();
+            var param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name) ?? Throw(columnName);
+            return new SimpleMemberMap(columnName, param);
 
-            return new SimpleMemberMap(columnName, parameters.FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase)));
+            static ParameterInfo Throw(string name) => throw new ArgumentException("Constructor parameter not found for " + name);
         }
 
         /// <summary>
@@ -129,18 +144,11 @@ namespace Dapper
         /// </summary>
         /// <param name="columnName">DataReader column name</param>
         /// <returns>Mapping implementation</returns>
-        public SqlMapper.IMemberMap GetMember(string columnName)
+        public SqlMapper.IMemberMap? GetMember(string columnName)
         {
-            var property = Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-               ?? Properties.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
+            var property = MatchFirstOrDefault(Properties, columnName, static p => p.Name);
 
-            if (property == null && MatchNamesWithUnderscores)
-            {
-                property = Properties.Find(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.Ordinal))
-                    ?? Properties.Find(p => string.Equals(p.Name, columnName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (property != null)
+            if (property is not null)
                 return new SimpleMemberMap(columnName, property);
 
             // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
@@ -153,7 +161,7 @@ namespace Dapper
                 ?? _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
                 ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
 
-            if (field == null && MatchNamesWithUnderscores)
+            if (field is null && MatchNamesWithUnderscores)
             {
                 var effectiveColumnName = columnName.Replace("_", "");
                 backingFieldName = "<" + effectiveColumnName + ">k__BackingField";
@@ -164,7 +172,7 @@ namespace Dapper
                     ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
             }
 
-            if (field != null)
+            if (field is not null)
                 return new SimpleMemberMap(columnName, field);
 
             return null;
@@ -173,6 +181,54 @@ namespace Dapper
         /// Should column names like User_Id be allowed to match properties/fields like UserId ?
         /// </summary>
         public static bool MatchNamesWithUnderscores { get; set; }
+
+        static T? MatchFirstOrDefault<T>(IList<T>? members, string? name, Func<T, string?> selector) where T : class
+        {
+            if (members is { Count: > 0 })
+            {
+                // try exact first
+                foreach (var member in members)
+                {
+                    if (string.Equals(name, selector(member), StringComparison.Ordinal))
+                    {
+                        return member;
+                    }
+                }
+                // then exact ignoring case
+                foreach (var member in members)
+                {
+                    if (string.Equals(name, selector(member), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return member;
+                    }
+                }
+                if (MatchNamesWithUnderscores)
+                {
+                    // same again, minus underscore delta
+                    name = name?.Replace("_", "");
+                    foreach (var member in members)
+                    {
+                        if (string.Equals(name, selector(member)?.Replace("_", ""), StringComparison.Ordinal))
+                        {
+                            return member;
+                        }
+                    }
+                    foreach (var member in members)
+                    {
+                        if (string.Equals(name, selector(member)?.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+                        {
+                            return member;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        internal static bool EqualsCI(string? x, string? y)
+            => string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+        internal static bool EqualsCIU(string? x, string? y)
+            => string.Equals(x?.Replace("_", ""), y?.Replace("_", ""), StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// The settable properties for this typemap

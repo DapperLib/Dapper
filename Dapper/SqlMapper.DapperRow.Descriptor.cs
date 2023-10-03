@@ -25,7 +25,7 @@ namespace Dapper
             //    public DapperRowList(DapperTable table) { _table = table; }
             //    PropertyDescriptorCollection ITypedList.GetItemProperties(PropertyDescriptor[] listAccessors)
             //    {
-            //        if (listAccessors != null && listAccessors.Length != 0) return PropertyDescriptorCollection.Empty;
+            //        if (listAccessors is not null && listAccessors.Length != 0) return PropertyDescriptorCollection.Empty;
 
             //        return DapperRowTypeDescriptor.GetProperties(_table);
             //    }
@@ -42,32 +42,32 @@ namespace Dapper
                 AttributeCollection ICustomTypeDescriptor.GetAttributes()
                     => AttributeCollection.Empty;
 
-                string ICustomTypeDescriptor.GetClassName() => typeof(DapperRow).FullName;
+                string ICustomTypeDescriptor.GetClassName() => typeof(DapperRow).FullName!;
 
-                string ICustomTypeDescriptor.GetComponentName() => null;
+                string ICustomTypeDescriptor.GetComponentName() => null!;
 
                 private static readonly TypeConverter s_converter = new ExpandableObjectConverter();
                 TypeConverter ICustomTypeDescriptor.GetConverter() => s_converter;
 
-                EventDescriptor ICustomTypeDescriptor.GetDefaultEvent() => null;
+                EventDescriptor ICustomTypeDescriptor.GetDefaultEvent() => null!;
 
-                PropertyDescriptor ICustomTypeDescriptor.GetDefaultProperty() => null;
+                PropertyDescriptor ICustomTypeDescriptor.GetDefaultProperty() => null!;
 
-                object ICustomTypeDescriptor.GetEditor(Type editorBaseType) => null;
+                object ICustomTypeDescriptor.GetEditor(Type editorBaseType) => null!;
 
                 EventDescriptorCollection ICustomTypeDescriptor.GetEvents() => EventDescriptorCollection.Empty;
 
                 EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[] attributes) => EventDescriptorCollection.Empty;
 
                 internal static PropertyDescriptorCollection GetProperties(DapperRow row) => GetProperties(row?.table, row);
-                internal static PropertyDescriptorCollection GetProperties(DapperTable table, IDictionary<string,object> row = null)
+                internal static PropertyDescriptorCollection GetProperties(DapperTable? table, IDictionary<string,object?>? row = null)
                 {
-                    string[] names = table?.FieldNames;
-                    if (names == null || names.Length == 0) return PropertyDescriptorCollection.Empty;
+                    string[]? names = table?.FieldNames;
+                    if (names is null || names.Length == 0) return PropertyDescriptorCollection.Empty;
                     var arr = new PropertyDescriptor[names.Length];
                     for (int i = 0; i < arr.Length; i++)
                     {
-                        var type = row != null && row.TryGetValue(names[i], out var value) && value != null
+                        var type = row is not null && row.TryGetValue(names[i], out var value) && value is not null
                             ? value.GetType() : typeof(object);
                         arr[i] = new RowBoundPropertyDescriptor(type, names[i], i);
                     }
@@ -97,7 +97,7 @@ namespace Dapper
                 public override Type PropertyType => _type;
                 public override object GetValue(object component)
                     => ((DapperRow)component).TryGetValue(_index, out var val) ? (val ?? DBNull.Value): DBNull.Value;
-                public override void SetValue(object component, object value)
+                public override void SetValue(object component, object? value)
                     => ((DapperRow)component).SetValue(_index, value is DBNull ? null : value);
             }
         }

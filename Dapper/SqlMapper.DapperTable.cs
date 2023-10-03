@@ -21,18 +21,18 @@ namespace Dapper
                 for (int i = fieldNames.Length - 1; i >= 0; i--)
                 {
                     string key = fieldNames[i];
-                    if (key != null) fieldNameLookup[key] = i;
+                    if (key is not null) fieldNameLookup[key] = i;
                 }
             }
 
             internal int IndexOfName(string name)
             {
-                return (name != null && fieldNameLookup.TryGetValue(name, out int result)) ? result : -1;
+                return (name is not null && fieldNameLookup.TryGetValue(name, out int result)) ? result : -1;
             }
 
             internal int AddField(string name)
             {
-                if (name == null) throw new ArgumentNullException(nameof(name));
+                if (name is null) throw new ArgumentNullException(nameof(name));
                 if (fieldNameLookup.ContainsKey(name)) throw new InvalidOperationException("Field already exists: " + name);
                 int oldLen = fieldNames.Length;
                 Array.Resize(ref fieldNames, oldLen + 1); // yes, this is sub-optimal, but this is not the expected common case
@@ -41,7 +41,7 @@ namespace Dapper
                 return oldLen;
             }
 
-            internal bool FieldExists(string key) => key != null && fieldNameLookup.ContainsKey(key);
+            internal bool FieldExists(string key) => key is not null && fieldNameLookup.ContainsKey(key);
 
             public int FieldCount => fieldNames.Length;
         }

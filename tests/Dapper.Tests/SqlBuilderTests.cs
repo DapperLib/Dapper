@@ -52,9 +52,9 @@ namespace Dapper.Tests
             var updatetime = DateTime.Parse("2020/01/01");
 
             var sb = new SqlBuilder()
-                   .Set("vip = @vip", new { vip })
-                   .Set("updatetime = @updatetime", new { updatetime })
-                   .Where("id = @id", new { id })
+                   .Set("Vip = @vip", new { vip })
+                   .Set("Updatetime = @updatetime", new { updatetime })
+                   .Where("Id = @id", new { id })
             ;
             var template = sb.AddTemplate("update #Users /**set**/ /**where**/");
 
@@ -69,7 +69,7 @@ namespace Dapper.Tests
 
                 var result = connection.QueryFirst("select * from #Users where Id = 1");
 
-                Assert.Equal("update #Users SET vip = @vip , updatetime = @updatetime\n WHERE id = @id\n", template.RawSql);
+                Assert.Equal("update #Users SET Vip = @vip , Updatetime = @updatetime\n WHERE Id = @id\n", template.RawSql);
 
 
                 Assert.True((bool)result.Vip);

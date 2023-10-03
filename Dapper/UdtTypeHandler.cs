@@ -22,7 +22,7 @@ namespace Dapper
                 this.udtTypeName = udtTypeName;
             }
 
-            object ITypeHandler.Parse(Type destinationType, object value)
+            object? ITypeHandler.Parse(Type destinationType, object value)
             {
                 return value is DBNull ? null : value;
             }

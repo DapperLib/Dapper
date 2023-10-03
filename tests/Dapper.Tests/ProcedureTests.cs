@@ -106,14 +106,15 @@ namespace Dapper.Tests
                 TaxInvoiceNumber = InvoiceNumber
             }, commandType: CommandType.StoredProcedure).FirstOrDefault();
 
+            Assert.NotNull(result);
             Assert.Equal("INV0000000028PPN", result.TaxInvoiceNumber);
         }
 
         private class PracticeRebateOrders
         {
-            public string fTaxInvoiceNumber;
+            public string? fTaxInvoiceNumber;
             [System.Xml.Serialization.XmlElement(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
-            public string TaxInvoiceNumber
+            public string? TaxInvoiceNumber
             {
                 get { return fTaxInvoiceNumber; }
                 set { fTaxInvoiceNumber = value; }
@@ -139,14 +140,14 @@ namespace Dapper.Tests
         private class Issue327_Person
         {
             public int Id { get; set; }
-            public string Name { get; set; }
+            public string? Name { get; set; }
         }
 
         private class Issue327_Magic
         {
-            public string Creature { get; set; }
-            public string SpiritAnimal { get; set; }
-            public string Location { get; set; }
+            public string? Creature { get; set; }
+            public string? SpiritAnimal { get; set; }
+            public string? Location { get; set; }
         }
 
         [Fact]

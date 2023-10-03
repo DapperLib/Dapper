@@ -27,10 +27,10 @@ namespace Dapper.EntityFramework
         /// </summary>
         /// <param name="parameter">The parameter to configure.</param>
         /// <param name="value">Parameter value.</param>
-        public override void SetValue(IDbDataParameter parameter, DbGeography value)
+        public override void SetValue(IDbDataParameter parameter, DbGeography? value)
         {
-            object parsed = null;
-            if (value != null)
+            object? parsed = null;
+            if (value is not null)
             {
                 parsed = SqlGeography.STGeomFromWKB(new SqlBytes(value.AsBinary()), value.CoordinateSystemId);
             }
@@ -46,9 +46,9 @@ namespace Dapper.EntityFramework
         /// </summary>
         /// <param name="value">The value from the database.</param>
         /// <returns>The typed value.</returns>
-        public override DbGeography Parse(object value)
+        public override DbGeography? Parse(object? value)
         {
-            if (value == null || value is DBNull) return null;
+            if (value is null || value is DBNull) return null;
             if (value is SqlGeography geo)
             {
                 return DbGeography.FromBinary(geo.STAsBinary().Value, geo.STSrid.Value);

@@ -1,0 +1,321 @@
+﻿#nullable enable
+abstract Dapper.SqlMapper.StringTypeHandler<T>.Format(T xml) -> string!
+abstract Dapper.SqlMapper.StringTypeHandler<T>.Parse(string! xml) -> T
+abstract Dapper.SqlMapper.TypeHandler<T>.Parse(object! value) -> T?
+abstract Dapper.SqlMapper.TypeHandler<T>.SetValue(System.Data.IDbDataParameter! parameter, T? value) -> void
+const Dapper.DbString.DefaultLength = 4000 -> int
+Dapper.CommandDefinition
+Dapper.CommandDefinition.Buffered.get -> bool
+Dapper.CommandDefinition.CancellationToken.get -> System.Threading.CancellationToken
+Dapper.CommandDefinition.CommandDefinition() -> void
+Dapper.CommandDefinition.CommandDefinition(string! commandText, object? parameters = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null, Dapper.CommandFlags flags = Dapper.CommandFlags.Buffered, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+Dapper.CommandDefinition.CommandText.get -> string!
+Dapper.CommandDefinition.CommandTimeout.get -> int?
+Dapper.CommandDefinition.CommandType.get -> System.Data.CommandType?
+Dapper.CommandDefinition.Flags.get -> Dapper.CommandFlags
+Dapper.CommandDefinition.Parameters.get -> object?
+Dapper.CommandDefinition.Pipelined.get -> bool
+Dapper.CommandDefinition.Transaction.get -> System.Data.IDbTransaction?
+Dapper.CommandFlags
+Dapper.CommandFlags.Buffered = 1 -> Dapper.CommandFlags
+Dapper.CommandFlags.NoCache = 4 -> Dapper.CommandFlags
+Dapper.CommandFlags.None = 0 -> Dapper.CommandFlags
+Dapper.CommandFlags.Pipelined = 2 -> Dapper.CommandFlags
+Dapper.CustomPropertyTypeMap
+Dapper.CustomPropertyTypeMap.CustomPropertyTypeMap(System.Type! type, System.Func<System.Type!, string!, System.Reflection.PropertyInfo!>! propertySelector) -> void
+Dapper.CustomPropertyTypeMap.FindConstructor(string![]! names, System.Type![]! types) -> System.Reflection.ConstructorInfo?
+Dapper.CustomPropertyTypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo?
+Dapper.CustomPropertyTypeMap.GetConstructorParameter(System.Reflection.ConstructorInfo! constructor, string! columnName) -> Dapper.SqlMapper.IMemberMap!
+Dapper.CustomPropertyTypeMap.GetMember(string! columnName) -> Dapper.SqlMapper.IMemberMap?
+Dapper.DbString
+Dapper.DbString.AddParameter(System.Data.IDbCommand! command, string! name) -> void
+Dapper.DbString.DbString() -> void
+Dapper.DbString.IsAnsi.get -> bool
+Dapper.DbString.IsAnsi.set -> void
+Dapper.DbString.IsFixedLength.get -> bool
+Dapper.DbString.IsFixedLength.set -> void
+Dapper.DbString.Length.get -> int
+Dapper.DbString.Length.set -> void
+Dapper.DbString.Value.get -> string?
+Dapper.DbString.Value.set -> void
+Dapper.DefaultTypeMap
+Dapper.DefaultTypeMap.DefaultTypeMap(System.Type! type) -> void
+Dapper.DefaultTypeMap.FindConstructor(string![]! names, System.Type![]! types) -> System.Reflection.ConstructorInfo?
+Dapper.DefaultTypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo?
+Dapper.DefaultTypeMap.GetConstructorParameter(System.Reflection.ConstructorInfo! constructor, string! columnName) -> Dapper.SqlMapper.IMemberMap!
+Dapper.DefaultTypeMap.GetMember(string! columnName) -> Dapper.SqlMapper.IMemberMap?
+Dapper.DefaultTypeMap.Properties.get -> System.Collections.Generic.List<System.Reflection.PropertyInfo!>!
+Dapper.DynamicParameters
+Dapper.DynamicParameters.Add(string! name, object? value = null, System.Data.DbType? dbType = null, System.Data.ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null) -> void
+Dapper.DynamicParameters.Add(string! name, object? value, System.Data.DbType? dbType, System.Data.ParameterDirection? direction, int? size) -> void
+Dapper.DynamicParameters.AddDynamicParams(object? param) -> void
+Dapper.DynamicParameters.AddParameters(System.Data.IDbCommand! command, Dapper.SqlMapper.Identity! identity) -> void
+Dapper.DynamicParameters.DynamicParameters() -> void
+Dapper.DynamicParameters.DynamicParameters(object? template) -> void
+Dapper.DynamicParameters.Get<T>(string! name) -> T
+Dapper.DynamicParameters.Output<T>(T target, System.Linq.Expressions.Expression<System.Func<T, object?>!>! expression, System.Data.DbType? dbType = null, int? size = null) -> Dapper.DynamicParameters!
+Dapper.DynamicParameters.ParameterNames.get -> System.Collections.Generic.IEnumerable<string!>!
+Dapper.DynamicParameters.RemoveUnused.get -> bool
+Dapper.DynamicParameters.RemoveUnused.set -> void
+Dapper.ExplicitConstructorAttribute
+Dapper.ExplicitConstructorAttribute.ExplicitConstructorAttribute() -> void
+Dapper.IWrappedDataReader
+Dapper.IWrappedDataReader.Command.get -> System.Data.IDbCommand!
+Dapper.IWrappedDataReader.Reader.get -> System.Data.IDataReader!
+Dapper.SqlMapper
+Dapper.SqlMapper.GridReader
+Dapper.SqlMapper.GridReader.CancellationToken.get -> System.Threading.CancellationToken
+Dapper.SqlMapper.GridReader.Command.get -> System.Data.IDbCommand!
+Dapper.SqlMapper.GridReader.Command.set -> void
+Dapper.SqlMapper.GridReader.Dispose() -> void
+Dapper.SqlMapper.GridReader.GridReader(System.Data.IDbCommand! command, System.Data.Common.DbDataReader! reader, Dapper.SqlMapper.Identity? identity, System.Action<object?>? onCompleted = null, object? state = null, bool addToCache = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+Dapper.SqlMapper.GridReader.IsConsumed.get -> bool
+Dapper.SqlMapper.GridReader.OnAfterGrid(int index) -> void
+Dapper.SqlMapper.GridReader.OnAfterGridAsync(int index) -> System.Threading.Tasks.Task!
+Dapper.SqlMapper.GridReader.OnBeforeGrid() -> int
+Dapper.SqlMapper.GridReader.Read(bool buffered = true) -> System.Collections.Generic.IEnumerable<dynamic!>!
+Dapper.SqlMapper.GridReader.Read(System.Type! type, bool buffered = true) -> System.Collections.Generic.IEnumerable<object!>!
+Dapper.SqlMapper.GridReader.Read<T>(bool buffered = true) -> System.Collections.Generic.IEnumerable<T>!
+Dapper.SqlMapper.GridReader.Read<TFirst, TSecond, TReturn>(System.Func<TFirst, TSecond, TReturn>! func, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>! func, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.Read<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>! func, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.Read<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>! func, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.Read<TFirst, TSecond, TThird, TFourth, TReturn>(System.Func<TFirst, TSecond, TThird, TFourth, TReturn>! func, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.Read<TFirst, TSecond, TThird, TReturn>(System.Func<TFirst, TSecond, TThird, TReturn>! func, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.Read<TReturn>(System.Type![]! types, System.Func<object![]!, TReturn>! map, string! splitOn = "id", bool buffered = true) -> System.Collections.Generic.IEnumerable<TReturn>!
+Dapper.SqlMapper.GridReader.ReadAsync(bool buffered = true) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<dynamic!>!>!
+Dapper.SqlMapper.GridReader.ReadAsync(System.Type! type, bool buffered = true) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<object!>!>!
+Dapper.SqlMapper.GridReader.ReadAsync<T>(bool buffered = true) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<T>!>!
+Dapper.SqlMapper.GridReader.Reader.get -> System.Data.Common.DbDataReader!
+Dapper.SqlMapper.GridReader.ReadFirst() -> dynamic!
+Dapper.SqlMapper.GridReader.ReadFirst(System.Type! type) -> object!
+Dapper.SqlMapper.GridReader.ReadFirst<T>() -> T
+Dapper.SqlMapper.GridReader.ReadFirstAsync() -> System.Threading.Tasks.Task<dynamic!>!
+Dapper.SqlMapper.GridReader.ReadFirstAsync(System.Type! type) -> System.Threading.Tasks.Task<object!>!
+Dapper.SqlMapper.GridReader.ReadFirstAsync<T>() -> System.Threading.Tasks.Task<T>!
+Dapper.SqlMapper.GridReader.ReadFirstOrDefault() -> dynamic?
+Dapper.SqlMapper.GridReader.ReadFirstOrDefault(System.Type! type) -> object?
+Dapper.SqlMapper.GridReader.ReadFirstOrDefault<T>() -> T?
+Dapper.SqlMapper.GridReader.ReadFirstOrDefaultAsync() -> System.Threading.Tasks.Task<dynamic?>!
+Dapper.SqlMapper.GridReader.ReadFirstOrDefaultAsync(System.Type! type) -> System.Threading.Tasks.Task<object?>!
+Dapper.SqlMapper.GridReader.ReadFirstOrDefaultAsync<T>() -> System.Threading.Tasks.Task<T?>!
+Dapper.SqlMapper.GridReader.ReadSingle() -> dynamic!
+Dapper.SqlMapper.GridReader.ReadSingle(System.Type! type) -> object!
+Dapper.SqlMapper.GridReader.ReadSingle<T>() -> T
+Dapper.SqlMapper.GridReader.ReadSingleAsync() -> System.Threading.Tasks.Task<dynamic!>!
+Dapper.SqlMapper.GridReader.ReadSingleAsync(System.Type! type) -> System.Threading.Tasks.Task<object!>!
+Dapper.SqlMapper.GridReader.ReadSingleAsync<T>() -> System.Threading.Tasks.Task<T>!
+Dapper.SqlMapper.GridReader.ReadSingleOrDefault() -> dynamic?
+Dapper.SqlMapper.GridReader.ReadSingleOrDefault(System.Type! type) -> object?
+Dapper.SqlMapper.GridReader.ReadSingleOrDefault<T>() -> T?
+Dapper.SqlMapper.GridReader.ReadSingleOrDefaultAsync() -> System.Threading.Tasks.Task<dynamic?>!
+Dapper.SqlMapper.GridReader.ReadSingleOrDefaultAsync(System.Type! type) -> System.Threading.Tasks.Task<object?>!
+Dapper.SqlMapper.GridReader.ReadSingleOrDefaultAsync<T>() -> System.Threading.Tasks.Task<T?>!
+Dapper.SqlMapper.GridReader.ResultIndex.get -> int
+Dapper.SqlMapper.ICustomQueryParameter
+Dapper.SqlMapper.ICustomQueryParameter.AddParameter(System.Data.IDbCommand! command, string! name) -> void
+Dapper.SqlMapper.Identity
+Dapper.SqlMapper.Identity.Equals(Dapper.SqlMapper.Identity? other) -> bool
+Dapper.SqlMapper.Identity.ForDynamicParameters(System.Type! type) -> Dapper.SqlMapper.Identity!
+Dapper.SqlMapper.IDynamicParameters
+Dapper.SqlMapper.IDynamicParameters.AddParameters(System.Data.IDbCommand! command, Dapper.SqlMapper.Identity! identity) -> void
+Dapper.SqlMapper.IMemberMap
+Dapper.SqlMapper.IMemberMap.ColumnName.get -> string!
+Dapper.SqlMapper.IMemberMap.Field.get -> System.Reflection.FieldInfo?
+Dapper.SqlMapper.IMemberMap.MemberType.get -> System.Type!
+Dapper.SqlMapper.IMemberMap.Parameter.get -> System.Reflection.ParameterInfo?
+Dapper.SqlMapper.IMemberMap.Property.get -> System.Reflection.PropertyInfo?
+Dapper.SqlMapper.IParameterCallbacks
+Dapper.SqlMapper.IParameterCallbacks.OnCompleted() -> void
+Dapper.SqlMapper.IParameterLookup
+Dapper.SqlMapper.IParameterLookup.this[string! name].get -> object?
+Dapper.SqlMapper.ITypeHandler
+Dapper.SqlMapper.ITypeHandler.Parse(System.Type! destinationType, object! value) -> object?
+Dapper.SqlMapper.ITypeHandler.SetValue(System.Data.IDbDataParameter! parameter, object! value) -> void
+Dapper.SqlMapper.ITypeMap
+Dapper.SqlMapper.ITypeMap.FindConstructor(string![]! names, System.Type![]! types) -> System.Reflection.ConstructorInfo?
+Dapper.SqlMapper.ITypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo?
+Dapper.SqlMapper.ITypeMap.GetConstructorParameter(System.Reflection.ConstructorInfo! constructor, string! columnName) -> Dapper.SqlMapper.IMemberMap!
+Dapper.SqlMapper.ITypeMap.GetMember(string! columnName) -> Dapper.SqlMapper.IMemberMap?
+Dapper.SqlMapper.Settings
+Dapper.SqlMapper.StringTypeHandler<T>
+Dapper.SqlMapper.StringTypeHandler<T>.StringTypeHandler() -> void
+Dapper.SqlMapper.TypeHandler<T>
+Dapper.SqlMapper.TypeHandler<T>.TypeHandler() -> void
+Dapper.SqlMapper.TypeHandlerCache<T>
+Dapper.SqlMapper.UdtTypeHandler
+Dapper.SqlMapper.UdtTypeHandler.UdtTypeHandler(string! udtTypeName) -> void
+override Dapper.DbString.ToString() -> string!
+override Dapper.SqlMapper.Identity.Equals(object? obj) -> bool
+override Dapper.SqlMapper.Identity.GetHashCode() -> int
+override Dapper.SqlMapper.Identity.ToString() -> string!
+override Dapper.SqlMapper.StringTypeHandler<T>.Parse(object! value) -> T
+override Dapper.SqlMapper.StringTypeHandler<T>.SetValue(System.Data.IDbDataParameter! parameter, T? value) -> void
+readonly Dapper.SqlMapper.Identity.commandType -> System.Data.CommandType?
+readonly Dapper.SqlMapper.Identity.connectionString -> string!
+readonly Dapper.SqlMapper.Identity.gridIndex -> int
+readonly Dapper.SqlMapper.Identity.hashCode -> int
+readonly Dapper.SqlMapper.Identity.parametersType -> System.Type?
+readonly Dapper.SqlMapper.Identity.sql -> string!
+readonly Dapper.SqlMapper.Identity.type -> System.Type?
+static Dapper.DbString.IsAnsiDefault.get -> bool
+static Dapper.DbString.IsAnsiDefault.set -> void
+static Dapper.DefaultTypeMap.MatchNamesWithUnderscores.get -> bool
+static Dapper.DefaultTypeMap.MatchNamesWithUnderscores.set -> void
+static Dapper.SqlMapper.AddTypeHandler(System.Type! type, Dapper.SqlMapper.ITypeHandler! handler) -> void
+static Dapper.SqlMapper.AddTypeHandler<T>(Dapper.SqlMapper.TypeHandler<T>! handler) -> void
+static Dapper.SqlMapper.AddTypeHandlerImpl(System.Type! type, Dapper.SqlMapper.ITypeHandler? handler, bool clone) -> void
+static Dapper.SqlMapper.AddTypeMap(System.Type! type, System.Data.DbType dbType) -> void
+static Dapper.SqlMapper.AddTypeMap(System.Type! type, System.Data.DbType dbType, bool useGetFieldValue) -> void
+static Dapper.SqlMapper.AsList<T>(this System.Collections.Generic.IEnumerable<T>? source) -> System.Collections.Generic.List<T>!
+static Dapper.SqlMapper.AsTableValuedParameter(this System.Data.DataTable! table, string? typeName = null) -> Dapper.SqlMapper.ICustomQueryParameter!
+static Dapper.SqlMapper.AsTableValuedParameter<T>(this System.Collections.Generic.IEnumerable<T>! list, string? typeName = null) -> Dapper.SqlMapper.ICustomQueryParameter!
+static Dapper.SqlMapper.ConnectionStringComparer.get -> System.Collections.Generic.IEqualityComparer<string!>!
+static Dapper.SqlMapper.ConnectionStringComparer.set -> void
+static Dapper.SqlMapper.CreateParamInfoGenerator(Dapper.SqlMapper.Identity! identity, bool checkForDuplicates, bool removeUnused) -> System.Action<System.Data.IDbCommand!, object!>!
+static Dapper.SqlMapper.Execute(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> int
+static Dapper.SqlMapper.Execute(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> int
+static Dapper.SqlMapper.ExecuteAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<int>!
+static Dapper.SqlMapper.ExecuteAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<int>!
+static Dapper.SqlMapper.ExecuteReader(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Data.IDataReader!
+static Dapper.SqlMapper.ExecuteReader(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Data.CommandBehavior commandBehavior) -> System.Data.IDataReader!
+static Dapper.SqlMapper.ExecuteReader(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Data.IDataReader!
+static Dapper.SqlMapper.ExecuteReaderAsync(this System.Data.Common.DbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+static Dapper.SqlMapper.ExecuteReaderAsync(this System.Data.Common.DbConnection! cnn, Dapper.CommandDefinition command, System.Data.CommandBehavior commandBehavior) -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+static Dapper.SqlMapper.ExecuteReaderAsync(this System.Data.Common.DbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+static Dapper.SqlMapper.ExecuteReaderAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<System.Data.IDataReader!>!
+static Dapper.SqlMapper.ExecuteReaderAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Data.CommandBehavior commandBehavior) -> System.Threading.Tasks.Task<System.Data.IDataReader!>!
+static Dapper.SqlMapper.ExecuteReaderAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Data.IDataReader!>!
+static Dapper.SqlMapper.ExecuteScalar(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> object?
+static Dapper.SqlMapper.ExecuteScalar(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> object?
+static Dapper.SqlMapper.ExecuteScalar<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> T?
+static Dapper.SqlMapper.ExecuteScalar<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> T?
+static Dapper.SqlMapper.ExecuteScalarAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<object?>!
+static Dapper.SqlMapper.ExecuteScalarAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<object?>!
+static Dapper.SqlMapper.ExecuteScalarAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.ExecuteScalarAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.FindOrAddParameter(System.Data.IDataParameterCollection! parameters, System.Data.IDbCommand! command, string! name) -> System.Data.IDbDataParameter!
+static Dapper.SqlMapper.Format(object? value) -> string!
+static Dapper.SqlMapper.GetCachedSQL(int ignoreHitCountAbove = 2147483647) -> System.Collections.Generic.IEnumerable<System.Tuple<string!, string!, int>!>!
+static Dapper.SqlMapper.GetCachedSQLCount() -> int
+static Dapper.SqlMapper.GetHashCollissions() -> System.Collections.Generic.IEnumerable<System.Tuple<int, int>!>!
+static Dapper.SqlMapper.GetRowParser(this System.Data.Common.DbDataReader! reader, System.Type! type, int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false) -> System.Func<System.Data.Common.DbDataReader!, object!>!
+static Dapper.SqlMapper.GetRowParser(this System.Data.IDataReader! reader, System.Type! type, int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false) -> System.Func<System.Data.IDataReader!, object!>!
+static Dapper.SqlMapper.GetRowParser<T>(this System.Data.Common.DbDataReader! reader, System.Type? concreteType = null, int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false) -> System.Func<System.Data.Common.DbDataReader!, T>!
+static Dapper.SqlMapper.GetRowParser<T>(this System.Data.IDataReader! reader, System.Type? concreteType = null, int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false) -> System.Func<System.Data.IDataReader!, T>!
+static Dapper.SqlMapper.GetTypeDeserializer(System.Type! type, System.Data.Common.DbDataReader! reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false) -> System.Func<System.Data.Common.DbDataReader!, object!>!
+static Dapper.SqlMapper.GetTypeDeserializer(System.Type! type, System.Data.IDataReader! reader, int startBound = 0, int length = -1, bool returnNullIfFirstMissing = false) -> System.Func<System.Data.IDataReader!, object!>!
+static Dapper.SqlMapper.GetTypeMap(System.Type! type) -> Dapper.SqlMapper.ITypeMap!
+static Dapper.SqlMapper.GetTypeName(this System.Data.DataTable! table) -> string?
+static Dapper.SqlMapper.HasTypeHandler(System.Type! type) -> bool
+static Dapper.SqlMapper.LookupDbType(System.Type! type, string! name, bool demand, out Dapper.SqlMapper.ITypeHandler? handler) -> System.Data.DbType?
+static Dapper.SqlMapper.PackListParameters(System.Data.IDbCommand! command, string! namePrefix, object? value) -> void
+static Dapper.SqlMapper.Parse(this System.Data.IDataReader! reader) -> System.Collections.Generic.IEnumerable<dynamic!>!
+static Dapper.SqlMapper.Parse(this System.Data.IDataReader! reader, System.Type! type) -> System.Collections.Generic.IEnumerable<object!>!
+static Dapper.SqlMapper.Parse<T>(this System.Data.IDataReader! reader) -> System.Collections.Generic.IEnumerable<T>!
+static Dapper.SqlMapper.PurgeQueryCache() -> void
+static Dapper.SqlMapper.Query(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<dynamic!>!
+static Dapper.SqlMapper.Query(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<object!>!
+static Dapper.SqlMapper.Query<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Collections.Generic.IEnumerable<T>!
+static Dapper.SqlMapper.Query<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<T>!
+static Dapper.SqlMapper.Query<TFirst, TSecond, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.Query<TFirst, TSecond, TThird, TFourth, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.Query<TFirst, TSecond, TThird, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.Query<TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Type![]! types, System.Func<object![]!, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IEnumerable<TReturn>!
+static Dapper.SqlMapper.QueryAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<dynamic!>!>!
+static Dapper.SqlMapper.QueryAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<dynamic!>!>!
+static Dapper.SqlMapper.QueryAsync(this System.Data.IDbConnection! cnn, System.Type! type, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<object!>!>!
+static Dapper.SqlMapper.QueryAsync(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<object!>!>!
+static Dapper.SqlMapper.QueryAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<T>!>!
+static Dapper.SqlMapper.QueryAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<T>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Func<TFirst, TSecond, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Func<TFirst, TSecond, TThird, TFourth, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TFourth, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TFourth, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Func<TFirst, TSecond, TThird, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TFirst, TSecond, TThird, TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Func<TFirst, TSecond, TThird, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryAsync<TReturn>(this System.Data.IDbConnection! cnn, string! sql, System.Type![]! types, System.Func<object![]!, TReturn>! map, object? param = null, System.Data.IDbTransaction? transaction = null, bool buffered = true, string! splitOn = "Id", int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
+static Dapper.SqlMapper.QueryCachePurged -> System.EventHandler?
+static Dapper.SqlMapper.QueryFirst(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> dynamic!
+static Dapper.SqlMapper.QueryFirst(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> object!
+static Dapper.SqlMapper.QueryFirst<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> T
+static Dapper.SqlMapper.QueryFirst<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> T
+static Dapper.SqlMapper.QueryFirstAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<dynamic!>!
+static Dapper.SqlMapper.QueryFirstAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<dynamic!>!
+static Dapper.SqlMapper.QueryFirstAsync(this System.Data.IDbConnection! cnn, System.Type! type, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<object!>!
+static Dapper.SqlMapper.QueryFirstAsync(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<object!>!
+static Dapper.SqlMapper.QueryFirstAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<T>!
+static Dapper.SqlMapper.QueryFirstAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<T>!
+static Dapper.SqlMapper.QueryFirstOrDefault(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> dynamic?
+static Dapper.SqlMapper.QueryFirstOrDefault(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> object?
+static Dapper.SqlMapper.QueryFirstOrDefault<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> T?
+static Dapper.SqlMapper.QueryFirstOrDefault<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> T?
+static Dapper.SqlMapper.QueryFirstOrDefaultAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<dynamic?>!
+static Dapper.SqlMapper.QueryFirstOrDefaultAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<dynamic?>!
+static Dapper.SqlMapper.QueryFirstOrDefaultAsync(this System.Data.IDbConnection! cnn, System.Type! type, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<object?>!
+static Dapper.SqlMapper.QueryFirstOrDefaultAsync(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<object?>!
+static Dapper.SqlMapper.QueryFirstOrDefaultAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.QueryFirstOrDefaultAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.QueryMultiple(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> Dapper.SqlMapper.GridReader!
+static Dapper.SqlMapper.QueryMultiple(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> Dapper.SqlMapper.GridReader!
+static Dapper.SqlMapper.QueryMultipleAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<Dapper.SqlMapper.GridReader!>!
+static Dapper.SqlMapper.QueryMultipleAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<Dapper.SqlMapper.GridReader!>!
+static Dapper.SqlMapper.QuerySingle(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> dynamic!
+static Dapper.SqlMapper.QuerySingle(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> object!
+static Dapper.SqlMapper.QuerySingle<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> T
+static Dapper.SqlMapper.QuerySingle<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> T
+static Dapper.SqlMapper.QuerySingleAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<dynamic!>!
+static Dapper.SqlMapper.QuerySingleAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<dynamic!>!
+static Dapper.SqlMapper.QuerySingleAsync(this System.Data.IDbConnection! cnn, System.Type! type, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<object!>!
+static Dapper.SqlMapper.QuerySingleAsync(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<object!>!
+static Dapper.SqlMapper.QuerySingleAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<T>!
+static Dapper.SqlMapper.QuerySingleAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<T>!
+static Dapper.SqlMapper.QuerySingleOrDefault(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> dynamic?
+static Dapper.SqlMapper.QuerySingleOrDefault(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> object?
+static Dapper.SqlMapper.QuerySingleOrDefault<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> T?
+static Dapper.SqlMapper.QuerySingleOrDefault<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> T?
+static Dapper.SqlMapper.QuerySingleOrDefaultAsync(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<dynamic?>!
+static Dapper.SqlMapper.QuerySingleOrDefaultAsync(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<dynamic?>!
+static Dapper.SqlMapper.QuerySingleOrDefaultAsync(this System.Data.IDbConnection! cnn, System.Type! type, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<object?>!
+static Dapper.SqlMapper.QuerySingleOrDefaultAsync(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<object?>!
+static Dapper.SqlMapper.QuerySingleOrDefaultAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.QuerySingleOrDefaultAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.ReadChar(object! value) -> char
+static Dapper.SqlMapper.ReadNullableChar(object! value) -> char?
+static Dapper.SqlMapper.RemoveTypeMap(System.Type! type) -> void
+static Dapper.SqlMapper.ReplaceLiterals(this Dapper.SqlMapper.IParameterLookup! parameters, System.Data.IDbCommand! command) -> void
+static Dapper.SqlMapper.ResetTypeHandlers() -> void
+static Dapper.SqlMapper.SanitizeParameterValue(object? value) -> object!
+static Dapper.SqlMapper.SetDbType(System.Data.IDataParameter! parameter, object! value) -> void
+static Dapper.SqlMapper.Settings.ApplyNullValues.get -> bool
+static Dapper.SqlMapper.Settings.ApplyNullValues.set -> void
+static Dapper.SqlMapper.Settings.CommandTimeout.get -> int?
+static Dapper.SqlMapper.Settings.CommandTimeout.set -> void
+static Dapper.SqlMapper.Settings.FetchSize.get -> long
+static Dapper.SqlMapper.Settings.FetchSize.set -> void
+static Dapper.SqlMapper.Settings.InListStringSplitCount.get -> int
+static Dapper.SqlMapper.Settings.InListStringSplitCount.set -> void
+static Dapper.SqlMapper.Settings.PadListExpansions.get -> bool
+static Dapper.SqlMapper.Settings.PadListExpansions.set -> void
+static Dapper.SqlMapper.Settings.SetDefaults() -> void
+static Dapper.SqlMapper.Settings.UseIncrementalPseudoPositionalParameterNames.get -> bool
+static Dapper.SqlMapper.Settings.UseIncrementalPseudoPositionalParameterNames.set -> void
+static Dapper.SqlMapper.Settings.UseSingleResultOptimization.get -> bool
+static Dapper.SqlMapper.Settings.UseSingleResultOptimization.set -> void
+static Dapper.SqlMapper.Settings.UseSingleRowOptimization.get -> bool
+static Dapper.SqlMapper.Settings.UseSingleRowOptimization.set -> void
+static Dapper.SqlMapper.SetTypeMap(System.Type! type, Dapper.SqlMapper.ITypeMap? map) -> void
+static Dapper.SqlMapper.SetTypeName(this System.Data.DataTable! table, string! typeName) -> void
+static Dapper.SqlMapper.ThrowDataException(System.Exception! ex, int index, System.Data.IDataReader! reader, object? value) -> void
+static Dapper.SqlMapper.TypeHandlerCache<T>.Parse(object! value) -> T?
+static Dapper.SqlMapper.TypeHandlerCache<T>.SetValue(System.Data.IDbDataParameter! parameter, object! value) -> void
+static Dapper.SqlMapper.TypeMapProvider -> System.Func<System.Type!, Dapper.SqlMapper.ITypeMap!>!

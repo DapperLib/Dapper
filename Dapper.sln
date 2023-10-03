@@ -1,15 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28917.182
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.33906.173
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A34907DF-958A-4E4C-8491-84CF303FD13E}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		appveyor.yml = appveyor.yml
+		Build.csproj = Build.csproj
 		build.ps1 = build.ps1
 		Dapper.png = Dapper.png
 		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
 		docs\index.md = docs\index.md
 		License.txt = License.txt
@@ -31,9 +33,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Rainbow", "Dapper.Rainbow\Dapper.Rainbow.csproj", "{8A74F0B6-188F-45D2-8A4B-51E4F211805A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4E956F6B-6BD8-46F5-BC85-49292FF8F9AB}"
-	ProjectSection(SolutionItems) = preProject
-		Directory.Build.props = Directory.Build.props
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{568BD46C-1C65-4D44-870C-12CD72563262}"
 	ProjectSection(SolutionItems) = preProject
@@ -51,6 +50,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{9D960D4D-80A2-4DAC-B386-8F4235EC73E6}"
 	ProjectSection(SolutionItems) = preProject
 		docs\index.md = docs\index.md
+		docs\readme.md = docs\readme.md
 	EndProjectSection
 EndProject
 Global

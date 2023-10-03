@@ -6,16 +6,25 @@
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
-  </PropertyGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0'">
-    <DefineConstants>$(DefineConstants);PLAT_NO_REMOTING;PLAT_SKIP_LOCALS_INIT</DefineConstants>
+    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- common base API goes here -->
+    <AdditionalFiles Include="PublicAPI.*.txt" />
+    <!-- TFM-specific additions go here; in reality this just means "current" (to avoid DisposeAsync etc in netfx/netstandard) -->
+    <AdditionalFiles Include="PublicAPI/$(TargetFramework)/PublicAPI.*.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" />
   </ItemGroup>
 </Project>
