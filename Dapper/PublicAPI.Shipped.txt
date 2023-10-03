@@ -319,3 +319,6 @@ static Dapper.SqlMapper.ThrowDataException(System.Exception! ex, int index, Syst
 static Dapper.SqlMapper.TypeHandlerCache<T>.Parse(object! value) -> T?
 static Dapper.SqlMapper.TypeHandlerCache<T>.SetValue(System.Data.IDbDataParameter! parameter, object! value) -> void
 static Dapper.SqlMapper.TypeMapProvider -> System.Func<System.Type!, Dapper.SqlMapper.ITypeMap!>!
+static Dapper.SqlMapper.CurrentAbstractTypeMap.get -> System.Func<System.Type!, System.Type?>!
+static Dapper.SqlMapper.AddAbstractTypeMap(System.Func<System.Func<System.Type!, System.Type?>!, System.Func<System.Type!, System.Type?>!>! combiner) -> void
+static Dapper.SqlMapper.SetAbstractTypeMap(System.Func<System.Type!, System.Type?>? map) -> void

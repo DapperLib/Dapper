@@ -43,7 +43,15 @@ namespace Dapper
                         found = (TypeDeserializerCache?)byType[type];
                         if (found is null)
                         {
-                            byType[type] = found = new TypeDeserializerCache(type);
+                            var mapped = SqlMapper.abstractTypeMap?.Invoke(type);
+                            if( mapped != null && mapped != type )
+                            {
+                                byType[type] = byType[mapped] = found = new TypeDeserializerCache(mapped);
+                            }
+                            else
+                            {
+                                byType[type] = found = new TypeDeserializerCache(type);
+                            }
                         }
                     }
                 }
