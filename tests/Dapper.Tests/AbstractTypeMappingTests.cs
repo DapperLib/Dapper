@@ -35,6 +35,7 @@ namespace Dapper.Tests
                 Assert.Equal("World!", list[1].Name);
 
                 var firstThing = connection.QueryFirstOrDefault<AbstractTypeMapping.IThing>("select 'Hello!' Name, 42 Power");
+                Assert.True(firstThing != null);
                 Assert.Equal(42, firstThing.Power);
                 Assert.Equal("Hello!", firstThing.Name);
             }
@@ -82,14 +83,14 @@ namespace Dapper.Tests
             {
                 int Power { get; }
 
-                string Name { get; }
+                string? Name { get; }
             }
 
             public class Thing : IThing
             {
                 public int Power { get; set; }
 
-                public string Name { get; set; }
+                public string? Name { get; set; }
             }
 
             public class ThingMultiplier : IThing
@@ -98,7 +99,7 @@ namespace Dapper.Tests
 
                 public int Power { get => _power * 2; set => _power = value; }
 
-                public string Name { get; set; }
+                public string? Name { get; set; }
             }
         }
 

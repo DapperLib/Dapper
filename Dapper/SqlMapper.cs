@@ -243,6 +243,7 @@ namespace Dapper
                 [typeof(SqlMoney?)] = TypeMapEntry.DecimalFieldValue,
             };
             ResetTypeHandlers(false);
+            abstractTypeMap = t => null;
         }
 
         /// <summary>
@@ -496,7 +497,7 @@ namespace Dapper
             return DbType.Object;
         }
 
-        private static Func<Type, Type> abstractTypeMap;
+        private static Func<Type, Type?> abstractTypeMap;
 
         /// <summary>
         /// Gets the current abstract to concrete mapper (can be null).
@@ -507,7 +508,7 @@ namespace Dapper
         /// <remarks>
         /// Once a type has been mapped, it will keep its original mapping until <see cref="PurgeQueryCache"/> is called.
         /// </remarks>
-        public static Func<Type, Type> CurrentAbstractTypeMap => abstractTypeMap;
+        public static Func<Type, Type?> CurrentAbstractTypeMap => abstractTypeMap;
 
         /// <summary>
         /// Updates <see cref="CurrentAbstractTypeMap"/> with a new one that should combine the 
@@ -517,7 +518,7 @@ namespace Dapper
         /// The <paramref name="combiner"/> may be called more than once in case of concurrent calls.
         /// </remarks>
         /// <param name="combiner">A function that must combine its input with any rules and returns a new mapper.</param>
-        public static void AddAbstractTypeMap(Func<Func<Type, Type>, Func<Type, Type>> combiner)
+        public static void AddAbstractTypeMap(Func<Func<Type, Type?>, Func<Type, Type?>> combiner)
         {
             var spinWait = new SpinWait();
             while( true )
@@ -540,8 +541,9 @@ namespace Dapper
         /// Once a type has been mapped, it will keep its original mapping until <see cref="PurgeQueryCache"/> is called.
         /// </remarks>
         /// <param name="map">The new mapping function to set. Null to reset it.</param>
-        public static void SetAbstractTypeMap(Func<Type, Type> map)
+        public static void SetAbstractTypeMap(Func<Type, Type?>? map)
         {
+            if (map == null) map = t => null;
             abstractTypeMap = map;
         }
 
