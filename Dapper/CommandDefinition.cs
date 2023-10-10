@@ -2,6 +2,7 @@
 using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Dapper
@@ -48,10 +49,15 @@ namespace Dapper
         /// </summary>
         public int? CommandTimeout { get; }
 
+        internal readonly CommandType CommandTypeDirect;
+
         /// <summary>
         /// The type of command that the command-text represents
         /// </summary>
-        public CommandType? CommandType { get; }
+#if DEBUG // prevent use in our own code
+        [Obsolete("Prefer " + nameof(CommandTypeDirect), true)]
+#endif
+        public CommandType? CommandType => CommandTypeDirect;
 
         /// <summary>
         /// Should data be buffered before returning?
@@ -92,10 +98,16 @@ namespace Dapper
             Parameters = parameters;
             Transaction = transaction;
             CommandTimeout = commandTimeout;
-            CommandType = commandType;
+
+            // if the sql contains any whitespace character (mostly space, tab, cr/lf): interpret as ad-hoc; but "SomeName" is a stored-proc
+            // (note TableDirect would need to be specified explicitly, but in reality providers don't usually support TableDirect anyway)
+            CommandTypeDirect = commandType ?? ((commandText is null || AnyWhitespace.IsMatch(commandText)) ? System.Data.CommandType.Text : System.Data.CommandType.StoredProcedure);
+
             Flags = flags;
             CancellationToken = cancellationToken;
         }
+
+        private static readonly Regex AnyWhitespace = new Regex(@"\s", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         private CommandDefinition(object? parameters) : this()
         {
@@ -124,8 +136,7 @@ namespace Dapper
             {
                 cmd.CommandTimeout = SqlMapper.Settings.CommandTimeout.Value;
             }
-            if (CommandType.HasValue)
-                cmd.CommandType = CommandType.Value;
+            cmd.CommandType = CommandTypeDirect;
             paramReader?.Invoke(cmd, Parameters);
             return cmd;
         }

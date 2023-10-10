@@ -92,6 +92,26 @@ namespace Dapper.Tests
             Assert.Equal("Completed successfully", p.Get<string>("ErrorDescription"));
         }
 
+        [Theory]
+        [InlineData(CommandType.StoredProcedure)]
+        [InlineData(null)] // auto
+        public void InferProcedure(CommandType? commandType)
+        {
+            connection.Execute("CREATE PROCEDURE #InferProcedure @id int AS BEGIN SELECT -@id END");
+            var result = connection.QuerySingle<int>("#InferProcedure", new { id = 42 }, commandType: commandType);
+            Assert.Equal(-42, result);
+        }
+
+        [Theory]
+        [InlineData(CommandType.Text)]
+        [InlineData(null)] // auto
+        public void InferNotProcedure(CommandType? commandType)
+        {
+            connection.Execute("CREATE PROCEDURE #InferNotProcedure @id int AS BEGIN SELECT -@id END");
+            var result = connection.QuerySingle<int>("EXEC #InferNotProcedure @id", new { id = 42 }, commandType: commandType);
+            Assert.Equal(-42, result);
+        }
+
         [Fact]
         public void SO24605346_ProcsAndStrings()
         {

@@ -115,7 +115,7 @@ namespace Dapper
         {
             foreach (var entry in _queryCache)
             {
-                if (entry.Key.type == type)
+                if (entry.Key.Type == type)
                     _queryCache.TryRemove(entry.Key, out _);
             }
             TypeDeserializerCache.Purge(type);
@@ -137,7 +137,9 @@ namespace Dapper
         /// <returns></returns>
         public static IEnumerable<Tuple<string, string, int>> GetCachedSQL(int ignoreHitCountAbove = int.MaxValue)
         {
-            var data = _queryCache.Select(pair => Tuple.Create(pair.Key.connectionString, pair.Key.sql, pair.Value.GetHitCount()));
+#pragma warning disable CS0618 // Type or member is obsolete
+            var data = _queryCache.Select(pair => Tuple.Create(pair.Key.connectionString, pair.Key.Sql, pair.Value.GetHitCount()));
+#pragma warning restore CS0618 // Type or member is obsolete
             return (ignoreHitCountAbove < int.MaxValue)
                     ? data.Where(tuple => tuple.Item3 <= ignoreHitCountAbove)
                     : data;
@@ -146,19 +148,19 @@ namespace Dapper
         /// <summary>
         /// Deep diagnostics only: find any hash collisions in the cache
         /// </summary>
-        /// <returns></returns>
-        public static IEnumerable<Tuple<int, int>> GetHashCollissions()
+        public static IEnumerable<Tuple<int, int>> GetHashCollissions() // legacy incorrect spelling, oops
         {
             var counts = new Dictionary<int, int>();
             foreach (var key in _queryCache.Keys)
             {
-                if (!counts.TryGetValue(key.hashCode, out int count))
+                var hash = key.GetHashCode();
+                if (!counts.TryGetValue(hash, out int count))
                 {
-                    counts.Add(key.hashCode, 1);
+                    counts.Add(hash, 1);
                 }
                 else
                 {
-                    counts[key.hashCode] = count + 1;
+                    counts[hash] = count + 1;
                 }
             }
             return from pair in counts
@@ -648,7 +650,7 @@ namespace Dapper
             // nice and simple
             if (param is not null)
             {
-                identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType());
+                identity = new Identity(command.CommandText, command.CommandTypeDirect, cnn, null, param.GetType());
                 info = GetCacheInfo(identity, param, command.AddToCache);
             }
             return ExecuteCommand(cnn, ref command, param is null ? null : info!.ParamReader);
@@ -1108,7 +1110,7 @@ namespace Dapper
         private static GridReader QueryMultipleImpl(this IDbConnection cnn, ref CommandDefinition command)
         {
             object? param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, typeof(GridReader), param?.GetType());
+            var identity = new Identity(command.CommandText, command.CommandTypeDirect, cnn, typeof(GridReader), param?.GetType());
             CacheInfo info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? cmd = null;
@@ -1167,7 +1169,7 @@ namespace Dapper
         private static IEnumerable<T> QueryImpl<T>(this IDbConnection cnn, CommandDefinition command, Type effectiveType)
         {
             object? param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType());
+            var identity = new Identity(command.CommandText, command.CommandTypeDirect, cnn, effectiveType, param?.GetType());
             var info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? cmd = null;
@@ -1260,7 +1262,7 @@ namespace Dapper
         private static T QueryRowImpl<T>(IDbConnection cnn, Row row, ref CommandDefinition command, Type effectiveType)
         {
             object? param = command.Parameters;
-            var identity = new Identity(command.CommandText, command.CommandType, cnn, effectiveType, param?.GetType());
+            var identity = new Identity(command.CommandText, command.CommandTypeDirect, cnn, effectiveType, param?.GetType());
             var info = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? cmd = null;
@@ -1549,7 +1551,7 @@ namespace Dapper
         private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection? cnn, CommandDefinition command, Delegate map, string splitOn, DbDataReader? reader, Identity? identity, bool finalize)
         {
             object? param = command.Parameters;
-            identity ??= new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandType, cnn!, typeof(TFirst), param?.GetType());
+            identity ??= new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandTypeDirect, cnn!, typeof(TFirst), param?.GetType());
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? ownedCommand = null;
@@ -1620,7 +1622,7 @@ namespace Dapper
             }
 
             object? param = command.Parameters;
-            identity ??= new IdentityWithTypes(command.CommandText, command.CommandType, cnn!, types[0], param?.GetType(), types);
+            identity ??= new IdentityWithTypes(command.CommandText, command.CommandTypeDirect, cnn!, types[0], param?.GetType(), types);
             CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? ownedCommand = null;
@@ -1825,7 +1827,7 @@ namespace Dapper
                     throw new InvalidOperationException("An enumerable sequence of parameters (arrays, lists, etc) is not allowed in this context");
                 }
                 info = new CacheInfo();
-                if (identity.parametersType is not null)
+                if (identity.ParametersType is not null)
                 {
                     Action<IDbCommand, object?> reader;
                     if (exampleParameters is IDynamicParameters)
@@ -1842,10 +1844,10 @@ namespace Dapper
                     }
                     else
                     {
-                        var literals = GetLiteralTokens(identity.sql);
+                        var literals = GetLiteralTokens(identity.Sql);
                         reader = CreateParamInfoGenerator(identity, false, true, literals);
                     }
-                    if ((identity.commandType is null || identity.commandType == CommandType.Text) && ShouldPassByPosition(identity.sql))
+                    if ((identity.CommandType is null || identity.CommandType == CommandType.Text) && ShouldPassByPosition(identity.Sql))
                     {
                         var tail = reader;
                         reader = (cmd, obj) =>
@@ -2517,7 +2519,7 @@ namespace Dapper
         /// <param name="checkForDuplicates">Whether to check for duplicates.</param>
         /// <param name="removeUnused">Whether to remove unused parameters.</param>
         public static Action<IDbCommand, object> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused) =>
-            CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.sql));
+            CreateParamInfoGenerator(identity, checkForDuplicates, removeUnused, GetLiteralTokens(identity.Sql));
 
         private static bool IsValueTuple(Type? type) => (type?.IsValueType == true
                                                        && type.FullName?.StartsWith("System.ValueTuple`", StringComparison.Ordinal) == true)
@@ -2525,7 +2527,7 @@ namespace Dapper
 
         internal static Action<IDbCommand, object?> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
-            Type type = identity.parametersType!;
+            Type type = identity.ParametersType!;
 
             if (IsValueTuple(type))
             {
@@ -2533,9 +2535,9 @@ namespace Dapper
             }
 
             bool filterParams = false;
-            if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
+            if (removeUnused && identity.CommandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
             {
-                filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
+                filterParams = !smellsLikeOleDb.IsMatch(identity.Sql);
             }
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
@@ -2628,7 +2630,7 @@ namespace Dapper
             }
             if (filterParams)
             {
-                props = FilterParameters(props, identity.sql);
+                props = FilterParameters(props, identity.Sql);
             }
 
             var callOpCode = isStruct ? OpCodes.Call : OpCodes.Callvirt;
@@ -2971,7 +2973,7 @@ namespace Dapper
             object? param = command.Parameters;
             if (param is not null)
             {
-                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType());
+                var identity = new Identity(command.CommandText, command.CommandTypeDirect, cnn, null, param.GetType());
                 paramReader = GetCacheInfo(identity, command.Parameters, command.AddToCache).ParamReader;
             }
 
@@ -3033,7 +3035,7 @@ namespace Dapper
             // nice and simple
             if (param is not null)
             {
-                var identity = new Identity(command.CommandText, command.CommandType, cnn, null, param.GetType());
+                var identity = new Identity(command.CommandText, command.CommandTypeDirect, cnn, null, param.GetType());
                 info = GetCacheInfo(identity, param, command.AddToCache);
             }
             var paramReader = info?.ParamReader;

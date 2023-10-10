@@ -152,12 +152,17 @@ override Dapper.SqlMapper.Identity.ToString() -> string!
 override Dapper.SqlMapper.StringTypeHandler<T>.Parse(object! value) -> T
 override Dapper.SqlMapper.StringTypeHandler<T>.SetValue(System.Data.IDbDataParameter! parameter, T? value) -> void
 readonly Dapper.SqlMapper.Identity.commandType -> System.Data.CommandType?
+Dapper.SqlMapper.Identity.CommandType.get -> System.Data.CommandType?
 readonly Dapper.SqlMapper.Identity.connectionString -> string!
 readonly Dapper.SqlMapper.Identity.gridIndex -> int
+Dapper.SqlMapper.Identity.GridIndex.get -> int
 readonly Dapper.SqlMapper.Identity.hashCode -> int
 readonly Dapper.SqlMapper.Identity.parametersType -> System.Type?
+Dapper.SqlMapper.Identity.ParametersType.get -> System.Type?
 readonly Dapper.SqlMapper.Identity.sql -> string!
+Dapper.SqlMapper.Identity.Sql.get -> string!
 readonly Dapper.SqlMapper.Identity.type -> System.Type?
+Dapper.SqlMapper.Identity.Type.get -> System.Type?
 static Dapper.DbString.IsAnsiDefault.get -> bool
 static Dapper.DbString.IsAnsiDefault.set -> void
 static Dapper.DefaultTypeMap.MatchNamesWithUnderscores.get -> bool
