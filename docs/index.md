@@ -25,6 +25,7 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 (note: new PRs will not be merged until they add release note wording here)
 
 - infer command text without any whitespace as stored-procedure (#1975 via @mgravell)
+- add global `SupportLegacyParameterTokens` setting to enable or disable single-character parameter tokens (#1974 via @Giorgi)
 
 ### 2.1.4
 
