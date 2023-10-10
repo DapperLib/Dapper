@@ -121,6 +121,11 @@ namespace Dapper
                 }
             }
 
+            /// <summary>
+            /// If true, Dapper will try to determine if the current sql statement is ole db statement and not filter
+            /// </summary>
+            public static bool OleDbCheckEnabled { get; set; } = true;
+
             private static long s_FetchSize = -1;
         }
     }

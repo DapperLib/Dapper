@@ -2533,9 +2533,16 @@ namespace Dapper
             }
 
             bool filterParams = false;
-            if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
+            if (Settings.OleDbCheckEnabled)
             {
-                filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
+                if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
+                {
+                    filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
+                } 
+            }
+            else
+            {
+                filterParams = true;
             }
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
