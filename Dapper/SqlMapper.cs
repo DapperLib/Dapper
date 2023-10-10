@@ -2532,18 +2532,13 @@ namespace Dapper
                 throw new NotSupportedException("ValueTuple should not be used for parameters - the language-level names are not available to use as parameter names, and it adds unnecessary boxing");
             }
 
-            bool filterParams = false;
-            if (Settings.OleDbCheckEnabled)
+            bool filterParams = removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
+            
+            if (Settings.SupportLegacyParameterTokens && filterParams)
             {
-                if (removeUnused && identity.commandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
-                {
-                    filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
-                } 
+                filterParams = !smellsLikeOleDb.IsMatch(identity.sql);
             }
-            else
-            {
-                filterParams = true;
-            }
+            
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();

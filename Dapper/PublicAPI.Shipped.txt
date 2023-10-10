@@ -298,8 +298,8 @@ static Dapper.SqlMapper.SanitizeParameterValue(object? value) -> object!
 static Dapper.SqlMapper.SetDbType(System.Data.IDataParameter! parameter, object! value) -> void
 static Dapper.SqlMapper.Settings.ApplyNullValues.get -> bool
 static Dapper.SqlMapper.Settings.ApplyNullValues.set -> void
-static Dapper.SqlMapper.Settings.OleDbCheckEnabled.get -> bool
-static Dapper.SqlMapper.Settings.OleDbCheckEnabled.set -> void
+static Dapper.SqlMapper.Settings.SupportLegacyParameterTokens.get -> bool
+static Dapper.SqlMapper.Settings.SupportLegacyParameterTokens.set -> void
 static Dapper.SqlMapper.Settings.CommandTimeout.get -> int?
 static Dapper.SqlMapper.Settings.CommandTimeout.set -> void
 static Dapper.SqlMapper.Settings.FetchSize.get -> long

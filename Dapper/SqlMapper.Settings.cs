@@ -122,9 +122,11 @@ namespace Dapper
             }
 
             /// <summary>
-            /// If true, Dapper will try to determine if the current sql statement is ole db statement and not filter
+            /// Indicates whether single-character parameter tokens (<c>?</c> etc) will be detected and used where possible;
+            /// this feature is not recommended and will be disabled by default in future versions;
+            /// where possible, prefer named parameters (<c>@yourParam</c> etc) or Dapper's "pseudo-positional" parameters (<c>?yourParam? etc</c>).
             /// </summary>
-            public static bool OleDbCheckEnabled { get; set; } = true;
+            public static bool SupportLegacyParameterTokens { get; set; } = true;
 
             private static long s_FetchSize = -1;
         }
