@@ -1524,7 +1524,7 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
 
                 if (legacyParameterToken) // OLE DB parameter support enabled; can false-positive
                 {
-                    Assert.Throws<NotImplementedException>(() => GetValue(connection));
+                    Assert.Throws<NotSupportedException>(() => GetValue(connection));
                 }
                 else // OLE DB parameter support disabled; more reliable
                 {
