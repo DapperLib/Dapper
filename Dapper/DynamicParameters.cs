@@ -168,7 +168,7 @@ namespace Dapper
         /// <param name="identity">Information about the query</param>
         protected void AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
-            var literals = SqlMapper.GetLiteralTokens(identity.sql);
+            var literals = SqlMapper.GetLiteralTokens(identity.Sql);
 
             if (templates is not null)
             {
