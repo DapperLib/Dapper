@@ -2534,11 +2534,13 @@ namespace Dapper
                 throw new NotSupportedException("ValueTuple should not be used for parameters - the language-level names are not available to use as parameter names, and it adds unnecessary boxing");
             }
 
-            bool filterParams = false;
-            if (removeUnused && identity.CommandType.GetValueOrDefault(CommandType.Text) == CommandType.Text)
+            bool filterParams = removeUnused && identity.CommandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
+            
+            if (filterParams && Settings.SupportLegacyParameterTokens)
             {
                 filterParams = !smellsLikeOleDb.IsMatch(identity.Sql);
             }
+            
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
 
             var il = dm.GetILGenerator();

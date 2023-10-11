@@ -1511,6 +1511,36 @@ SELECT * FROM @Issue192 WHERE Field IN @µ AND Field_1 IN @µµ",
         [FactLongRunning]
         public void TestListExpansionPadding_Disabled() => TestListExpansionPadding(false);
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void OleDbParamFilterFails(bool legacyParameterToken)
+        {
+            SqlMapper.PurgeQueryCache();
+            var oldValue = SqlMapper.Settings.SupportLegacyParameterTokens;
+            try
+            {
+                SqlMapper.Settings.SupportLegacyParameterTokens = legacyParameterToken;
+
+                if (legacyParameterToken) // OLE DB parameter support enabled; can false-positive
+                {
+                    Assert.Throws<NotSupportedException>(() => GetValue(connection));
+                }
+                else // OLE DB parameter support disabled; more reliable
+                {
+                    Assert.Equal("this ? could be awkward", GetValue(connection));
+                }
+            }
+            finally
+            {
+                SqlMapper.Settings.SupportLegacyParameterTokens = oldValue;
+            }
+
+            static string GetValue(DbConnection connection)
+                => connection.QuerySingle<string>("select 'this ? could be awkward'",
+                    new TypeWithDodgyProperties());
+        }
+
         private void TestListExpansionPadding(bool enabled)
         {
             bool oldVal = SqlMapper.Settings.PadListExpansions;
@@ -1705,6 +1735,11 @@ create table #Issue1907 (
         {
             public int Id { get; set; }
             public SqlDecimal? Value { get; set; }
+        }
+
+        class TypeWithDodgyProperties
+        {
+            public string Name => throw new NotSupportedException();
         }
     }
 }
