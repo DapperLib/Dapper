@@ -135,7 +135,7 @@ Dapper.SqlMapper.ITypeHandler.SetValue(System.Data.IDbDataParameter! parameter, 
 Dapper.SqlMapper.ITypeMap
 Dapper.SqlMapper.ITypeMap.FindConstructor(string![]! names, System.Type![]! types) -> System.Reflection.ConstructorInfo?
 Dapper.SqlMapper.ITypeMap.FindExplicitConstructor() -> System.Reflection.ConstructorInfo?
-Dapper.SqlMapper.ITypeMap.GetConstructorParameter(System.Reflection.ConstructorInfo! constructor, string! columnName) -> Dapper.SqlMapper.IMemberMap!
+Dapper.SqlMapper.ITypeMap.GetConstructorParameter(System.Reflection.ConstructorInfo! constructor, string! columnName) -> Dapper.SqlMapper.IMemberMap?
 Dapper.SqlMapper.ITypeMap.GetMember(string! columnName) -> Dapper.SqlMapper.IMemberMap?
 Dapper.SqlMapper.Settings
 Dapper.SqlMapper.StringTypeHandler<T>

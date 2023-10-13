@@ -33,7 +33,7 @@ namespace Dapper
             /// <param name="constructor">Constructor to resolve</param>
             /// <param name="columnName">DataReader column name</param>
             /// <returns>Mapping implementation</returns>
-            IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName);
+            IMemberMap? GetConstructorParameter(ConstructorInfo constructor, string columnName);
 
             /// <summary>
             /// Gets member mapping for column
