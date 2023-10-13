@@ -20,7 +20,13 @@ Note: to get the latest pre-release build, add ` -Pre` to the end of the command
 
 ## Release  Notes
 
-### unreleased
+**RELEASE NOTE TRACKING HAS MOVED TO GITHUB**
+
+See: https://github.com/DapperLib/Dapper/releases
+
+Archive only (no new entries):
+
+### 2.1.11
 
 (note: new PRs will not be merged until they add release note wording here)
 
