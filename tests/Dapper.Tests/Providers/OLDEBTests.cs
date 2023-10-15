@@ -80,7 +80,7 @@ namespace Dapper.Tests
 
             const int score = 2;
             int[] ids = { 1, 2, 5, 7 };
-            var list = connection.Query<int>(sql, new { ids, score }).AsList();
+            var list = connection.Query<int>(sql, new { ids, score });
             list.Sort();
             Assert.Equal("1,2,5", string.Join(",", list));
         }
@@ -90,7 +90,7 @@ namespace Dapper.Tests
         {
             using var connection = GetOleDbConnection();
             int[] ids = { 1, 2, 5, 7 };
-            var list = connection.Query<int>("select * from string_split('1,2,3,4,5',',') where value in ?ids?", new { ids }).AsList();
+            var list = connection.Query<int>("select * from string_split('1,2,3,4,5',',') where value in ?ids?", new { ids });
             list.Sort();
             Assert.Equal("1,2,5", string.Join(",", list));
         }
