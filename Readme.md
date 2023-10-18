@@ -21,6 +21,8 @@ MyGet Pre-release feed: https://www.myget.org/gallery/dapper
 | [Dapper.StrongName](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/v/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/vpre/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName](https://img.shields.io/nuget/dt/Dapper.StrongName.svg)](https://www.nuget.org/packages/Dapper.StrongName/) | [![Dapper.StrongName MyGet](https://img.shields.io/myget/dapper/vpre/Dapper.StrongName.svg)](https://www.myget.org/feed/dapper/package/nuget/Dapper.StrongName) |
 
 Package Purposes:
+* Dapper
+  * The core library
 * Dapper.EntityFramework
   * Extension handlers for EntityFramework
 * Dapper.EntityFramework.StrongName
@@ -29,24 +31,44 @@ Package Purposes:
   * Micro-ORM implemented on Dapper, provides CRUD helpers
 * Dapper.SqlBuilder
   * Component for building SQL queries dynamically and composably
-* Dapper.StrongName
-  * High-performance micro-ORM supporting MySQL, Sqlite, SqlICE, and Firebird
+
+Sponsors
+--------
+
+Dapper was originally developed for and by Stack Overflow, but is F/OSS. Sponsorship is welcome and invited - see the sponsor link at the top of the page.
+A huge thanks to everyone (individuals or organisations) who have sponsored Dapper, but a massive thanks in particular to:
+
+- [AWS](https://github.com/aws) who sponsored Dapper from Oct 2023 via the [.NET on AWS Open Source Software Fund](https://github.com/aws/dotnet-foss)
 
 Features
 --------
-Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will extend your `IDbConnection` interface.
+Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will enhance your ADO.NET connections via
+extension methods on your `DbConnection` instance. This provides a simple and efficient API for invoking SQL, with support for both synchronous and
+asynchronous data access, and allows bother buffered and non-buffered queries.
 
-It provides 3 helpers:
+It provides multiple helpers, but the key APIs are:
 
-Execute a query and map the results to a strongly typed List
-------------------------------------------------------------
+``` csharp
+// insert/update/delete etc
+var count  = connection.Execute(sql [, args]);
 
-```csharp
-public static IEnumerable<T> Query<T>(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
+// multi-row query
+IEnumerable<T> rows = connection.Query<T>(sql [, args]);
+
+// single-row query ({Single|First}[OrDefault])
+T row = connection.QuerySingle<T>(sql [, args]);
 ```
-Example usage:
 
-```csharp
+where `args` can be (among other things):
+
+- a simple POCO (including anonyomous types) for named parameters
+- a `Dictionary<string,object>`
+- a `DynamicParameters` instance
+
+Execute a query and map it to a list of typed objects
+-------------------------------------------------------
+
+``` csharp
 public class Dog
 {
     public int? Age { get; set; }
@@ -68,9 +90,6 @@ Assert.Equal(guid, dog.First().Id);
 Execute a query and map it to a list of dynamic objects
 -------------------------------------------------------
 
-```csharp
-public static IEnumerable<dynamic> Query (this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
-```
 This method will execute SQL and return a dynamic list.
 
 Example usage:
@@ -86,10 +105,6 @@ Assert.Equal(4, (int)rows[1].B);
 
 Execute a Command that returns no results
 -----------------------------------------
-
-```csharp
-public static int Execute(this IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
-```
 
 Example usage:
 
