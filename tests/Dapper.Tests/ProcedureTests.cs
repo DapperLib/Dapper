@@ -311,7 +311,7 @@ namespace Dapper.Tests
         [InlineData("\t")]
         [InlineData("\r")]
         [InlineData("\n")]
-        public async Task Issue1975_AutoProc_Whitespace(string space)
+        public async Task Issue1986_AutoProc_Whitespace(string space)
         {
             var sql = "select!42".Replace("!", space);
             var result = await connection.QuerySingleAsync<int>(sql);
