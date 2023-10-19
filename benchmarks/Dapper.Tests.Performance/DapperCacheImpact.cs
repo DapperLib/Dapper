@@ -20,20 +20,20 @@ namespace Dapper.Tests.Performance
 
         // note: custom BDN setup means [Params] is awkward; unroll manually instead
         [Benchmark]
-        public void ExecuteNoParameters_Cache() => _connection.Execute(new CommandDefinition("select '42' as Id, 'abc' as Name", flags: CommandFlags.None));
+        public void ExecuteNoParameters_Cache() => _connection.Execute("select '42' as Id, 'abc' as Name", flags: CommandFlags.None);
         [Benchmark]
-        public void ExecuteParameters_Cache() => _connection.Execute(new CommandDefinition("select @id as Id, @name as Name", args, flags: CommandFlags.None));
+        public void ExecuteParameters_Cache() => _connection.Execute("select @id as Id, @name as Name", args, flags: CommandFlags.None);
         [Benchmark]
-        public void QueryFirstNoParameters_Cache() => _connection.QueryFirst<Foo>(new CommandDefinition("select '42' as Id, 'abc' as Name", flags: CommandFlags.None));
+        public void QueryFirstNoParameters_Cache() => _connection.QueryFirst<Foo>("select '42' as Id, 'abc' as Name", flags: CommandFlags.None);
         [Benchmark]
-        public void QueryFirstParameters_Cache() => _connection.QueryFirst<Foo>(new CommandDefinition("select @id as Id, @name as Name", args, flags: CommandFlags.None));
+        public void QueryFirstParameters_Cache() => _connection.QueryFirst<Foo>("select @id as Id, @name as Name", args, flags: CommandFlags.None);
         [Benchmark]
-        public void ExecuteNoParameters_NoCache() => _connection.Execute(new CommandDefinition("select '42' as Id, 'abc' as Name", flags: CommandFlags.NoCache));
+        public void ExecuteNoParameters_NoCache() => _connection.Execute("select '42' as Id, 'abc' as Name", flags: CommandFlags.NoCache);
         [Benchmark]
-        public void ExecuteParameters_NoCache() => _connection.Execute(new CommandDefinition("select @id as Id, @name as Name", args, flags: CommandFlags.NoCache));
+        public void ExecuteParameters_NoCache() => _connection.Execute("select @id as Id, @name as Name", args, flags: CommandFlags.NoCache);
         [Benchmark]
-        public void QueryFirstNoParameters_NoCache() => _connection.QueryFirst<Foo>(new CommandDefinition("select '42' as Id, 'abc' as Name", flags: CommandFlags.NoCache));
+        public void QueryFirstNoParameters_NoCache() => _connection.QueryFirst<Foo>("select '42' as Id, 'abc' as Name", flags: CommandFlags.NoCache);
         [Benchmark]
-        public void QueryFirstParameters_NoCache() => _connection.QueryFirst<Foo>(new CommandDefinition("select @id as Id, @name as Name", args, flags: CommandFlags.NoCache));
+        public void QueryFirstParameters_NoCache() => _connection.QueryFirst<Foo>("select @id as Id, @name as Name", args, flags: CommandFlags.NoCache);
     }
 }

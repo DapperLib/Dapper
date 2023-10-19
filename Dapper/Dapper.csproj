@@ -5,7 +5,7 @@
     <PackageTags>orm;sql;micro-orm</PackageTags>
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard2.0;net5.0;net7.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -23,8 +23,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+  </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" />
   </ItemGroup>
 </Project>

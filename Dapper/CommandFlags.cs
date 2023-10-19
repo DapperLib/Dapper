@@ -24,5 +24,7 @@ namespace Dapper
         /// Should the plan cache be bypassed?
         /// </summary>
         NoCache = 4,
+
+        // reserved: DisposeConnection = 1 << 30
     }
 }

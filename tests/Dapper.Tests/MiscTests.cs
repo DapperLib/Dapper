@@ -493,14 +493,14 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         [Fact]
         public void TestEnumeration()
         {
-            var en = connection.Query<int>("select 1 as one union all select 2 as one", buffered: false);
+            var en = connection.QueryUnbuffered<int>("select 1 as one union all select 2 as one");
             var i = en.GetEnumerator();
             i.MoveNext();
 
             bool gotException = false;
             try
             {
-                var x = connection.Query<int>("select 1 as one", buffered: false).First();
+                var x = connection.QueryUnbuffered<int>("select 1 as one").First();
             }
             catch (Exception)
             {
@@ -512,7 +512,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             }
 
             // should not exception, since enumerated
-            en = connection.Query<int>("select 1 as one", buffered: false);
+            en = connection.QueryUnbuffered<int>("select 1 as one");
 
             Assert.True(gotException);
         }
@@ -520,14 +520,14 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         [Fact]
         public void TestEnumerationDynamic()
         {
-            var en = connection.Query("select 1 as one union all select 2 as one", buffered: false);
+            var en = connection.QueryUnbuffered("select 1 as one union all select 2 as one");
             var i = en.GetEnumerator();
             i.MoveNext();
 
             bool gotException = false;
             try
             {
-                var x = connection.Query("select 1 as one", buffered: false).First();
+                var x = connection.QueryUnbuffered("select 1 as one").First();
             }
             catch (Exception)
             {
@@ -539,7 +539,7 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
             }
 
             // should not exception, since enumertated
-            en = connection.Query("select 1 as one", buffered: false);
+            en = connection.QueryUnbuffered("select 1 as one");
 
             Assert.True(gotException);
         }
@@ -1178,7 +1178,7 @@ select * from @bar", new { foo }).Single();
         public void Issue263_Timeout()
         {
             var watch = Stopwatch.StartNew();
-            var i = connection.Query<int>("waitfor delay '00:01:00'; select 42;", commandTimeout: 300, buffered: false).Single();
+            var i = connection.QueryUnbuffered<int>("waitfor delay '00:01:00'; select 42;", commandTimeout: 300).Single();
             watch.Stop();
             Assert.Equal(42, i);
             var minutes = watch.ElapsedMilliseconds / 1000 / 60;

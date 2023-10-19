@@ -432,7 +432,7 @@ namespace Dapper.Tests
             await LiteralReplacement(conn).ConfigureAwait(false);
         }
 
-        private static async Task LiteralReplacement(IDbConnection conn)
+        private static async Task LiteralReplacement(DbConnection conn)
         {
             try
             {
@@ -462,7 +462,7 @@ namespace Dapper.Tests
             await LiteralReplacementDynamic(conn).ConfigureAwait(false);
         }
 
-        private static async Task LiteralReplacementDynamic(IDbConnection conn)
+        private static async Task LiteralReplacementDynamic(DbConnection conn)
         {
             var args = new DynamicParameters();
             args.Add("id", 123);

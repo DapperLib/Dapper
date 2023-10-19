@@ -21,10 +21,15 @@
     <IncludeSymbols>false</IncludeSymbols>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>preview</LangVersion>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <AnalysisMode>latest-Recommended</AnalysisMode>
+    <LangVersion>preview</LangVersion>
+    <Features>($Features);strict</Features>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
