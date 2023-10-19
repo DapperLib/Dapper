@@ -302,5 +302,20 @@ namespace Dapper.Tests
 
             Assert.Empty(result);
         }
+
+        [Theory]
+        [InlineData(" ")]
+        [InlineData("\u00A0")] // nbsp
+        [InlineData("\u202F")] // narrow nbsp
+        [InlineData("\u2000")] // n quad
+        [InlineData("\t")]
+        [InlineData("\r")]
+        [InlineData("\n")]
+        public async Task Issue1986_AutoProc_Whitespace(string space)
+        {
+            var sql = "select!42".Replace("!", space);
+            var result = await connection.QuerySingleAsync<int>(sql);
+            Assert.Equal(42, result);
+        }
     }
 }
