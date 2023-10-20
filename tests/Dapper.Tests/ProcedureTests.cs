@@ -317,5 +317,27 @@ namespace Dapper.Tests
             var result = await connection.QuerySingleAsync<int>(sql);
             Assert.Equal(42, result);
         }
+
+        [Theory]
+        [InlineData("foo", CommandType.StoredProcedure)]
+        [InlineData("foo;", CommandType.Text)]
+        [InlineData("foo bar", CommandType.Text)]
+        [InlineData("foo bar;", CommandType.Text)]
+        [InlineData("vacuum", CommandType.Text)]
+        [InlineData("vacuum;", CommandType.Text)]
+        [InlineData("FOO", CommandType.StoredProcedure)]
+        [InlineData("FOO;", CommandType.Text)]
+        [InlineData("FOO BAR", CommandType.Text)]
+        [InlineData("FOO BAR;", CommandType.Text)]
+        [InlineData("VACUUM", CommandType.Text)]
+        [InlineData("VACUUM;", CommandType.Text)]
+
+        // comments imply text
+        [InlineData("foo--bar", CommandType.Text)]
+        [InlineData("foo/*bar*/", CommandType.Text)]
+        public void InferCommandType(string sql, CommandType commandType)
+        {
+            Assert.Equal(commandType, CommandDefinition.InferCommandType(sql));
+        }
     }
 }

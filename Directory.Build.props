@@ -21,7 +21,7 @@
     <IncludeSymbols>false</IncludeSymbols>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>11</LangVersion>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <PackageReadmeFile>readme.md</PackageReadmeFile>

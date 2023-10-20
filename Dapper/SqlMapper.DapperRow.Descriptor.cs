@@ -13,8 +13,8 @@ namespace Dapper
             {
                 public override ICustomTypeDescriptor GetExtendedTypeDescriptor(object instance)
                     => new DapperRowTypeDescriptor(instance);
-                public override ICustomTypeDescriptor GetTypeDescriptor(Type objectType, object instance)
-                    => new DapperRowTypeDescriptor(instance);
+                public override ICustomTypeDescriptor GetTypeDescriptor(Type objectType, object? instance)
+                    => new DapperRowTypeDescriptor(instance!);
             }
 
             //// in theory we could implement this for zero-length results to bind; would require
@@ -57,7 +57,7 @@ namespace Dapper
 
                 EventDescriptorCollection ICustomTypeDescriptor.GetEvents() => EventDescriptorCollection.Empty;
 
-                EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[] attributes) => EventDescriptorCollection.Empty;
+                EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[]? attributes) => EventDescriptorCollection.Empty;
 
                 internal static PropertyDescriptorCollection GetProperties(DapperRow row) => GetProperties(row?.table, row);
                 internal static PropertyDescriptorCollection GetProperties(DapperTable? table, IDictionary<string,object?>? row = null)
@@ -75,9 +75,9 @@ namespace Dapper
                 }
                 PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties() => GetProperties(_row);
 
-                PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties(Attribute[] attributes) => GetProperties(_row);
+                PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties(Attribute[]? attributes) => GetProperties(_row);
 
-                object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor pd) => _row;
+                object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor? pd) => _row;
             }
 
             private sealed class RowBoundPropertyDescriptor : PropertyDescriptor
@@ -95,10 +95,10 @@ namespace Dapper
                 public override bool ShouldSerializeValue(object component) => ((DapperRow)component).TryGetValue(_index, out _);
                 public override Type ComponentType => typeof(DapperRow);
                 public override Type PropertyType => _type;
-                public override object GetValue(object component)
-                    => ((DapperRow)component).TryGetValue(_index, out var val) ? (val ?? DBNull.Value): DBNull.Value;
-                public override void SetValue(object component, object? value)
-                    => ((DapperRow)component).SetValue(_index, value is DBNull ? null : value);
+                public override object GetValue(object? component)
+                    => ((DapperRow)component!).TryGetValue(_index, out var val) ? (val ?? DBNull.Value): DBNull.Value;
+                public override void SetValue(object? component, object? value)
+                    => ((DapperRow)component!).SetValue(_index, value is DBNull ? null : value);
             }
         }
     }

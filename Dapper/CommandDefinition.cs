@@ -2,7 +2,6 @@
 using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Dapper
@@ -101,17 +100,18 @@ namespace Dapper
             CommandTypeDirect = commandType ?? InferCommandType(commandText);
             Flags = flags;
             CancellationToken = cancellationToken;
-
-            static CommandType InferCommandType(string sql)
-            {
-                if (sql is null || WhitespaceChars.IsMatch(sql)) return System.Data.CommandType.Text;
-                return System.Data.CommandType.StoredProcedure;
-            }
         }
 
-        // if the sql contains any whitespace character (space/tab/cr/lf/etc - via unicode): interpret as ad-hoc; but "SomeName" should be treated as a stored-proc
-        // (note TableDirect would need to be specified explicitly, but in reality providers don't usually support TableDirect anyway)
-        private static readonly Regex WhitespaceChars = new(@"\s", RegexOptions.Compiled);
+        internal static CommandType InferCommandType(string sql)
+        {
+            // if the sql contains any whitespace character (space/tab/cr/lf/etc - via unicode),
+            // has operators, comments, semi-colon, or a known exception: interpret as ad-hoc;
+            // otherwise, simple names like "SomeName" should be treated as a stored-proc
+            // (note TableDirect would need to be specified explicitly, but in reality providers don't usually support TableDirect anyway)
+
+            if (sql is null || CompiledRegex.WhitespaceOrReserved.IsMatch(sql)) return System.Data.CommandType.Text;
+            return System.Data.CommandType.StoredProcedure;
+        }
 
         private CommandDefinition(object? parameters) : this()
         {

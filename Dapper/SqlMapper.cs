@@ -1865,7 +1865,7 @@ namespace Dapper
 
         private static bool ShouldPassByPosition(string sql)
         {
-            return sql?.IndexOf('?') >= 0 && pseudoPositional.IsMatch(sql);
+            return sql?.IndexOf('?') >= 0 && CompiledRegex.PseudoPositional.IsMatch(sql);
         }
 
         private static void PassByPosition(IDbCommand cmd)
@@ -1882,7 +1882,7 @@ namespace Dapper
             bool firstMatch = true;
             int index = 0; // use this to spoof names; in most pseudo-positional cases, the name is ignored, however:
                            // for "snowflake", the name needs to be incremental i.e. "1", "2", "3"
-            cmd.CommandText = pseudoPositional.Replace(cmd.CommandText, match =>
+            cmd.CommandText = CompiledRegex.PseudoPositional.Replace(cmd.CommandText, match =>
             {
                 string key = match.Groups[1].Value;
                 if (!consumed.Add(key))
@@ -2386,11 +2386,6 @@ namespace Dapper
             return list;
         }
 
-        // look for ? / @ / : *by itself*
-        private static readonly Regex smellsLikeOleDb = new(@"(?<![\p{L}\p{N}@_])[?@:](?![\p{L}\p{N}@_])", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
-            literalTokens = new(@"(?<![\p{L}\p{N}_])\{=([\p{L}\p{N}_]+)\}", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant | RegexOptions.Compiled),
-            pseudoPositional = new(@"\?([\p{L}_][\p{L}\p{N}_]*)\?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
         /// <summary>
         /// Replace all literal tokens with their text form.
         /// </summary>
@@ -2496,9 +2491,9 @@ namespace Dapper
         internal static IList<LiteralToken> GetLiteralTokens(string sql)
         {
             if (string.IsNullOrEmpty(sql)) return LiteralToken.None;
-            if (!literalTokens.IsMatch(sql)) return LiteralToken.None;
+            if (!CompiledRegex.LiteralTokens.IsMatch(sql)) return LiteralToken.None;
 
-            var matches = literalTokens.Matches(sql);
+            var matches = CompiledRegex.LiteralTokens.Matches(sql);
             var found = new HashSet<string>(StringComparer.Ordinal);
             var list = new List<LiteralToken>(matches.Count);
             foreach (Match match in matches)
@@ -2538,7 +2533,7 @@ namespace Dapper
             
             if (filterParams && Settings.SupportLegacyParameterTokens)
             {
-                filterParams = !smellsLikeOleDb.IsMatch(identity.Sql);
+                filterParams = !CompiledRegex.LegacyParameter.IsMatch(identity.Sql);
             }
             
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, new[] { typeof(IDbCommand), typeof(object) }, type, true);
