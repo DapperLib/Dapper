@@ -44,7 +44,7 @@ Features
 --------
 Dapper is a [NuGet library](https://www.nuget.org/packages/Dapper) that you can add in to your project that will enhance your ADO.NET connections via
 extension methods on your `DbConnection` instance. This provides a simple and efficient API for invoking SQL, with support for both synchronous and
-asynchronous data access, and allows bother buffered and non-buffered queries.
+asynchronous data access, and allows both buffered and non-buffered queries.
 
 It provides multiple helpers, but the key APIs are:
 
