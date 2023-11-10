@@ -9,7 +9,7 @@ internal static partial class CompiledRegex
     [StringSyntax("Regex")]
 #endif
     private const string
-        WhitespaceOrReservedPattern = @"[\s;/\-+*]|^vacuum$",
+        WhitespaceOrReservedPattern = @"[\s;/\-+*]|^vacuum$|^commit$|^rollback$",
         LegacyParameterPattern = @"(?<![\p{L}\p{N}@_])[?@:](?![\p{L}\p{N}@_])", // look for ? / @ / : *by itself* - see SupportLegacyParameterTokens
         LiteralTokensPattern = @"(?<![\p{L}\p{N}_])\{=([\p{L}\p{N}_]+)\}", // look for {=abc} to inject member abc as a literal
         PseudoPositionalPattern = @"\?([\p{L}_][\p{L}\p{N}_]*)\?"; // look for ?abc? for the purpose of subst back to ? using member abc

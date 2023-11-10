@@ -218,7 +218,7 @@ namespace Dapper.Tests
         {
             const string tempSPName = "#" + nameof(TestDateTime2PrecisionPreservedInDynamicParameters);
 
-            DateTime datetimeDefault = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime datetimeDefault = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime datetime2 = datetimeDefault.AddTicks(1); // Add 100 ns
 
             Assert.True(datetimeDefault < datetime2);
@@ -252,7 +252,7 @@ namespace Dapper.Tests
         {
             const string tempSPName = "#" + nameof(TestDateTime2LosePrecisionInDynamicParameters);
 
-            DateTime datetimeDefault = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime datetimeDefault = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime datetime2 = datetimeDefault.AddTicks(1); // Add 100 ns
 
             Assert.True(datetimeDefault < datetime2);
@@ -331,6 +331,8 @@ namespace Dapper.Tests
         [InlineData("FOO BAR;", CommandType.Text)]
         [InlineData("VACUUM", CommandType.Text)]
         [InlineData("VACUUM;", CommandType.Text)]
+        [InlineData("cOmmiT", CommandType.Text)]
+        [InlineData("rOllbAck", CommandType.Text)]
 
         // comments imply text
         [InlineData("foo--bar", CommandType.Text)]
