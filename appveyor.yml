@@ -31,7 +31,7 @@ environment:
   SqlServerConnectionString: Server=(local)\SQL2019;Database=tempdb;User ID=sa;Password=Password12!
 
 services:
-  - mysql
+  # - mysql
   - postgresql
 
 init:
@@ -46,7 +46,7 @@ build_script:
   # Postgres
   - createdb test
   # MySQL
-  - mysql -e "create database test;" --user=root
+  # - mysql -e "create database test;" --user=root
   # Our stuff
   - ps: .\build.ps1 -PullRequestNumber "$env:APPVEYOR_PULL_REQUEST_NUMBER" -CreatePackages $true
 
