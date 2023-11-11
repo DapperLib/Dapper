@@ -206,6 +206,24 @@ namespace Dapper
                 {
                     // same again, minus underscore delta
                     name = name?.Replace("_", "");
+
+                    // match normalized column name vs actual property name
+                    foreach (var member in members)
+                    {
+                        if (string.Equals(name, selector(member), StringComparison.Ordinal))
+                        {
+                            return member;
+                        }
+                    }
+                    foreach (var member in members)
+                    {
+                        if (string.Equals(name, selector(member), StringComparison.OrdinalIgnoreCase))
+                        {
+                            return member;
+                        }
+                    }
+
+                    // match normalized column name vs normalized property name
                     foreach (var member in members)
                     {
                         if (string.Equals(name, selector(member)?.Replace("_", ""), StringComparison.Ordinal))

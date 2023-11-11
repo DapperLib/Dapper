@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Linq;
 using Xunit;
 
@@ -239,6 +238,72 @@ SELECT * FROM @ExplicitConstructors"
             Assert.NotNull(obj);
             Assert.Equal("abc", obj.FirstName);
             Assert.Equal("def", obj.LastName);
+        }
+
+        [Fact]
+        public void Issue1993_PreferPropertyOverField() // https://github.com/DapperLib/Dapper/issues/1993
+        {
+            var oldValue = DefaultTypeMap.MatchNamesWithUnderscores;
+            try
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = true;
+
+                var map = new DefaultTypeMap(typeof(ShowIssue1993));
+                var first = map.GetMember("field_first");
+                Assert.NotNull(first);
+                Assert.Null(first.Field);
+                Assert.Equal(nameof(ShowIssue1993.FieldFirst), first.Property?.Name);
+
+                var last = map.GetMember("field_last");
+                Assert.NotNull(last);
+                Assert.Null(last.Field);
+                Assert.Equal(nameof(ShowIssue1993.FieldLast), last.Property?.Name);
+            }
+            finally
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = oldValue;
+            }
+        }
+
+        [Fact]
+        public void Issue1993_Query()
+        {
+            var oldValue = DefaultTypeMap.MatchNamesWithUnderscores;
+            try
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = true;
+
+                var obj = connection.QueryFirst<ShowIssue1993>("select 'abc' as field_first, 'def' as field_last");
+                Assert.Equal("abc", obj.FieldFirst);
+                Assert.Equal("def", obj.FieldLast);
+
+                Assert.Equal("abc", obj.AltFieldFirst);
+                Assert.Equal("def", obj.AltFieldLast);
+            }
+            finally
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = oldValue;
+            }
+        }
+
+        public class ShowIssue1993
+        {
+            private string _fieldFirst { get; set; } = null!; // not actually a field
+            public string FieldFirst
+            {
+                get => _fieldFirst;
+                set => _fieldFirst = AltFieldFirst = value;
+            }
+
+            public string FieldLast
+            {
+                get => _fieldLast;
+                set => _fieldLast = AltFieldLast = value;
+            }
+            private string _fieldLast { get; set; } = null!;// not actually a field
+
+            public string AltFieldFirst { get; set; } = null!;
+            public string AltFieldLast { get; set; } = null!;
         }
 
         class Type_ParamsWithUnderscores
