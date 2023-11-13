@@ -39,15 +39,15 @@ init:
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
   - net start MSSQL$SQL2019
   - ps: Start-Service MySQL80
+  # Postgres
+  - createdb test
+  # MySQL
+  - C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql -e "create database test;" --user=root
     
 nuget:
   disable_publish_on_pr: true
 
 build_script:
-  # Postgres
-  - createdb test
-  # MySQL
-  - mysql -e "create database test;" --user=root
   # Our stuff
   - ps: .\build.ps1 -PullRequestNumber "$env:APPVEYOR_PULL_REQUEST_NUMBER" -CreatePackages $true
 
