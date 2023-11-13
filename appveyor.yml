@@ -47,7 +47,7 @@ before_build:
   # Postgres
   - createdb test
   # MySQL
-  - C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql -e "create database test;" --user=root
+  - '"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql" -e "create database test;" --user=root'
 
 build_script:
   # Our stuff
