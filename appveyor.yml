@@ -19,7 +19,7 @@ environment:
   POSTGRES_ENV_POSTGRES_PASSWORD: Password12!
   POSTGRES_ENV_POSTGRES_DB: test
   # MySQL
-  MYSQL_PATH: C:\Program Files\MySql\MySQL Server 5.7
+  MYSQL_PATH: C:\Program Files\MySQL\MySQL Server 8.0
   MYSQL_PWD: Password12!
   MYSQL_ENV_MYSQL_USER: root
   MYSQL_ENV_MYSQL_PASSWORD: Password12!
