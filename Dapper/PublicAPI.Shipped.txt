@@ -117,6 +117,7 @@ Dapper.SqlMapper.ICustomQueryParameter.AddParameter(System.Data.IDbCommand! comm
 Dapper.SqlMapper.Identity
 Dapper.SqlMapper.Identity.Equals(Dapper.SqlMapper.Identity? other) -> bool
 Dapper.SqlMapper.Identity.ForDynamicParameters(System.Type! type) -> Dapper.SqlMapper.Identity!
+Dapper.SqlMapper.Identity.Identity(string! sql, System.Data.CommandType commandType, System.Data.IDbConnection! connection, System.Type? type, System.Type? parametersType) -> void
 Dapper.SqlMapper.IDynamicParameters
 Dapper.SqlMapper.IDynamicParameters.AddParameters(System.Data.IDbCommand! command, Dapper.SqlMapper.Identity! identity) -> void
 Dapper.SqlMapper.IMemberMap
