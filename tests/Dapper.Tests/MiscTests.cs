@@ -658,6 +658,27 @@ select * from @bar", new { foo }).Single();
         }
 
         [Fact]
+        public void DbStringNullHandling()
+        {
+            // without lengths
+            var obj = new { x = new DbString("abc"), y = (DbString?)new DbString(null) };
+            var row = connection.QuerySingle<(string? x,string? y)>("select @x as x, @y as y", obj);
+            Assert.Equal("abc", row.x);
+            Assert.Null(row.y);
+
+            // with lengths
+            obj = new { x = new DbString("abc", 200), y = (DbString?)new DbString(null, 200) };
+            row = connection.QuerySingle<(string? x, string? y)>("select @x as x, @y as y", obj);
+            Assert.Equal("abc", row.x);
+            Assert.Null(row.y);
+
+            // null raw value - give clear message, at least
+            obj = obj with { y = null };
+            var ex = Assert.Throws<InvalidOperationException>(() => connection.QuerySingle<(string? x, string? y)>("select @x as x, @y as y", obj));
+            Assert.Equal("Member 'y' is an ICustomQueryParameter and cannot be null", ex.Message);
+        }
+
+        [Fact]
         public void TestDbStringToString()
         {
             Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: True, IsFixedLength: True)", 
@@ -668,6 +689,8 @@ select * from @bar", new { foo }).Single();
                 new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = true }.ToString());
             Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: False, IsFixedLength: False)",
                 new DbString { Value = "abcde", IsFixedLength = false, Length = 10, IsAnsi = false }.ToString());
+            Assert.Equal("Dapper.DbString (Value: null, Length: -1, IsAnsi: False, IsFixedLength: False)",
+                new DbString { Value = null }.ToString());
 
             Assert.Equal("Dapper.DbString (Value: 'abcde', Length: -1, IsAnsi: True, IsFixedLength: False)",
                 new DbString { Value = "abcde", IsAnsi = true }.ToString());
