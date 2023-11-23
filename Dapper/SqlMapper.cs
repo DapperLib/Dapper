@@ -2637,6 +2637,16 @@ namespace Dapper
                 {
                     il.Emit(OpCodes.Ldloc, typedParameterLocal); // stack is now [parameters] [typed-param]
                     il.Emit(callOpCode, prop.GetGetMethod()!); // stack is [parameters] [custom]
+                    if (!prop.PropertyType.IsValueType)
+                    {
+                        // throw if null
+                        var notNull = il.DefineLabel();
+                        il.Emit(OpCodes.Dup); // stack is [parameters] [custom] [custom]
+                        il.Emit(OpCodes.Brtrue_S, notNull); // stack is [parameters] [custom]
+                        il.Emit(OpCodes.Ldstr, prop.Name); // stack is [parameters] [custom] [name]
+                        il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(ThrowNullCustomQueryParameter))!, null); // stack is [parameters] [custom]
+                        il.MarkLabel(notNull);
+                    }
                     il.Emit(OpCodes.Ldarg_0); // stack is now [parameters] [custom] [command]
                     il.Emit(OpCodes.Ldstr, prop.Name); // stack is now [parameters] [custom] [command] [name]
                     il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod(nameof(ICustomQueryParameter.AddParameter))!, null); // stack is now [parameters]
@@ -3860,6 +3870,14 @@ namespace Dapper
         }
 
         /// <summary>
+        /// For internal use only
+        /// </summary>
+        [Obsolete(ObsoleteInternalUsageOnly, false)]
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        public static void ThrowNullCustomQueryParameter(string name)
+            => throw new InvalidOperationException($"Member '{name}' is an {nameof(ICustomQueryParameter)} and cannot be null");
+
+        /// <summary>
         /// Throws a data exception, only used internally
         /// </summary>
         /// <param name="ex">The exception to throw.</param>
@@ -3867,6 +3885,7 @@ namespace Dapper
         /// <param name="reader">The reader the exception occurred in.</param>
         /// <param name="value">The value that caused the exception.</param>
         [Obsolete(ObsoleteInternalUsageOnly, false)]
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         public static void ThrowDataException(Exception ex, int index, IDataReader reader, object? value)
         {
             Exception toThrow;

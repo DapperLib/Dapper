@@ -28,6 +28,17 @@ namespace Dapper
             Length = -1;
             IsAnsi = IsAnsiDefault;
         }
+
+        /// <summary>
+        /// Create a new DbString
+        /// </summary>
+        public DbString(string? value, int length = -1)
+        {
+            Value = value;
+            Length = length;
+            IsAnsi = IsAnsiDefault;
+        }
+
         /// <summary>
         /// Ansi vs Unicode 
         /// </summary>
@@ -44,12 +55,13 @@ namespace Dapper
         /// The value of the string
         /// </summary>
         public string? Value { get; set; }
-        
+
         /// <summary>
         /// Gets a string representation of this DbString.
         /// </summary>
-        public override string ToString() =>
-            $"Dapper.DbString (Value: '{Value}', Length: {Length}, IsAnsi: {IsAnsi}, IsFixedLength: {IsFixedLength})";
+        public override string ToString() => Value is null
+            ? $"Dapper.DbString (Value: null, Length: {Length}, IsAnsi: {IsAnsi}, IsFixedLength: {IsFixedLength})"
+            : $"Dapper.DbString (Value: '{Value}', Length: {Length}, IsAnsi: {IsAnsi}, IsFixedLength: {IsFixedLength})";
 
         /// <summary>
         /// Add the parameter to the command... internal use only

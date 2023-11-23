@@ -30,6 +30,7 @@ Dapper.CustomPropertyTypeMap.GetMember(string! columnName) -> Dapper.SqlMapper.I
 Dapper.DbString
 Dapper.DbString.AddParameter(System.Data.IDbCommand! command, string! name) -> void
 Dapper.DbString.DbString() -> void
+Dapper.DbString.DbString(string? value, int length = -1) -> void
 Dapper.DbString.IsAnsi.get -> bool
 Dapper.DbString.IsAnsi.set -> void
 Dapper.DbString.IsFixedLength.get -> bool
@@ -323,6 +324,7 @@ static Dapper.SqlMapper.Settings.UseSingleRowOptimization.set -> void
 static Dapper.SqlMapper.SetTypeMap(System.Type! type, Dapper.SqlMapper.ITypeMap? map) -> void
 static Dapper.SqlMapper.SetTypeName(this System.Data.DataTable! table, string! typeName) -> void
 static Dapper.SqlMapper.ThrowDataException(System.Exception! ex, int index, System.Data.IDataReader! reader, object? value) -> void
+static Dapper.SqlMapper.ThrowNullCustomQueryParameter(string! name) -> void
 static Dapper.SqlMapper.TypeHandlerCache<T>.Parse(object! value) -> T?
 static Dapper.SqlMapper.TypeHandlerCache<T>.SetValue(System.Data.IDbDataParameter! parameter, object! value) -> void
 static Dapper.SqlMapper.TypeMapProvider -> System.Func<System.Type!, Dapper.SqlMapper.ITypeMap!>!
