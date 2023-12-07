@@ -631,7 +631,7 @@ namespace Dapper
                             }
                             else
                             {
-                                cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
+                                cmd.CommandText = masterSql; // because we do magic replacements on "in" etc
                                 cmd.Parameters.Clear(); // current code is Add-tastic
                             }
                             info!.ParamReader!(cmd, obj);
