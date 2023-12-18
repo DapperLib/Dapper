@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using RepoDb;
+using RepoDb.DbHelpers;
+using RepoDb.DbSettings;
+using RepoDb.StatementBuilders;
 
 namespace Dapper.Tests.Performance
 {
-#if !NET5_0_OR_GREATER
     [Description("RepoDB")]
     public class RepoDbBenchmarks : BenchmarkBase
     {
@@ -15,6 +16,16 @@ namespace Dapper.Tests.Performance
         {
             BaseSetup();
             GlobalConfiguration.Setup().UseSqlServer();
+
+            // We need this since benchmarks using System.Data.SqlClient
+            var dbSetting = new SqlServerDbSetting();
+            DbSettingMapper
+                .Add<System.Data.SqlClient.SqlConnection>(dbSetting, true);
+            DbHelperMapper
+                .Add<System.Data.SqlClient.SqlConnection>(new SqlServerDbHelper(), true);
+            StatementBuilderMapper
+                .Add<System.Data.SqlClient.SqlConnection>(new SqlServerStatementBuilder(dbSetting), true);
+
             ClassMapper.Add<Post>("Posts");
         }
 
@@ -53,5 +64,4 @@ namespace Dapper.Tests.Performance
             return _connection.ExecuteQuery<Post>("select * from Posts where Id = @Id", new { Id = i }).First();
         }
     }
-#endif
 }

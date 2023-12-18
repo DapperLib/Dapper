@@ -167,54 +167,59 @@ Intel Core i7-3630QM CPU 2.40GHz (Ivy Bridge), 1 CPU, 8 logical and 4 physical c
   ShortRun : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX
 
 ```
-|                 ORM |                         Method |       Return |     Mean |    StdDev |     Error |    Gen0 |   Gen1 |   Gen2 | Allocated |
-|-------------------- |------------------------------- |------------- |---------:|----------:|----------:|--------:|-------:|-------:|----------:|
-| Dapper cache impact |     QueryFirstParameters_Cache |         Void | 104.0 us |   0.64 us |   0.97 us |  0.8750 |      - |      - |    2824 B |
-| Dapper cache impact |        ExecuteParameters_Cache |         Void | 106.6 us |   1.24 us |   2.08 us |  0.6250 |      - |      - |    2184 B |
-|          Hand Coded |                     SqlCommand |         Post | 129.1 us |   0.60 us |   0.91 us |  1.2500 | 1.0000 |      - |    7584 B |
-|          Hand Coded |                      DataTable |      dynamic | 133.4 us |   1.55 us |   2.34 us |  3.0000 |      - |      - |    9576 B |
-|          SqlMarshal |                     SqlCommand |         Post | 141.9 us |   2.56 us |   3.88 us |  1.7500 | 1.5000 |      - |   11529 B |
-|          LINQ to DB |                       Query<T> |         Post | 144.3 us |   2.14 us |   3.24 us |  1.7500 | 1.2500 |      - |   10904 B |
-|              Mighty |             SingleFromQuery<T> |         Post | 144.5 us |   1.30 us |   2.19 us |  2.2500 | 1.2500 |      - |   12201 B |
-|              Mighty |       SingleFromQuery<dynamic> |      dynamic | 145.5 us |   2.50 us |   3.79 us |  2.0000 | 1.7500 |      - |   12710 B |
-|              Mighty |                 Query<dynamic> |      dynamic | 146.3 us |   1.38 us |   2.32 us |  2.0000 | 1.7500 |      - |   12710 B |
-|              Dapper |    'Query<dynamic> (buffered)' |      dynamic | 148.4 us |   1.19 us |   2.00 us |  2.0000 | 1.5000 |      - |   11968 B |
-|              Mighty |                       Query<T> |         Post | 149.1 us |   2.63 us |   3.98 us |  1.7500 | 1.5000 |      - |   12201 B |
-|          LINQ to DB |             'First (Compiled)' |         Post | 150.1 us |   1.97 us |   3.31 us |  2.0000 | 1.5000 |      - |   12128 B |
-|              Dapper |   QueryFirstOrDefault<dynamic> |      dynamic | 151.0 us |   5.48 us |   8.29 us |  3.5000 |      - |      - |   11648 B |
-|        ServiceStack |                  SingleById<T> |         Post | 154.1 us |   2.24 us |   3.38 us |  2.5000 | 1.2500 | 0.2500 |   15248 B |
-|              Dapper |         QueryFirstOrDefault<T> |         Post | 154.9 us |   4.10 us |   6.20 us |  1.7500 | 1.5000 |      - |   11608 B |
-|             Massive |              'Query (dynamic)' |      dynamic | 156.9 us |   4.05 us |   6.12 us |  2.0000 | 1.5000 |      - |   12342 B |
-|                Norm |              'Read<> (tuples)' | ValueTuple`8 | 157.2 us |   3.16 us |   5.31 us |  2.0000 | 1.7500 |      - |   12745 B |
-|              Dapper |               'Contrib Get<T>' |         Post | 157.9 us |   3.14 us |   4.75 us |  2.0000 | 1.5000 |      - |   12440 B |
-|              Dapper |          'Query<T> (buffered)' |         Post | 158.0 us |   4.28 us |   6.47 us |  2.0000 | 1.0000 |      - |   11888 B |
-|                Norm |      'Read<()> (named tuples)' | ValueTuple`8 | 163.3 us |   1.03 us |   1.56 us |  2.2500 | 2.0000 | 1.2500 |   14562 B |
-| Dapper cache impact |      ExecuteNoParameters_Cache |         Void | 177.0 us |   6.37 us |   9.64 us |       - |      - |      - |     760 B |
-| Dapper cache impact | QueryFirstNoParameters_NoCache |         Void | 177.6 us |   2.62 us |   3.96 us |  0.5000 |      - |      - |    1576 B |
-|      DevExpress.XPO |                  FindObject<T> |         Post | 182.0 us |   3.41 us |   5.73 us |  8.5000 |      - |      - |   28099 B |
-|          LINQ to DB |                          First |         Post | 183.3 us |   5.28 us |   7.98 us |  2.5000 | 1.5000 |      - |   14041 B |
-|                EF 6 |                       SqlQuery |         Post | 185.9 us |   3.08 us |   4.66 us |  4.5000 | 0.5000 |      - |   24210 B |
-| Dapper cache impact |    ExecuteNoParameters_NoCache |         Void | 187.5 us |   3.17 us |   4.80 us |       - |      - |      - |     760 B |
-| Dapper cache impact |   QueryFirstNoParameters_Cache |         Void | 187.6 us |   7.54 us |  11.40 us |       - |      - |      - |    1520 B |
-|      DevExpress.XPO |              GetObjectByKey<T> |         Post | 188.0 us |   2.66 us |   4.46 us |  4.5000 | 1.0000 |      - |   30114 B |
-|                Norm |               'Read<> (class)' |         Post | 199.9 us |   1.98 us |   3.79 us |  3.0000 | 0.5000 |      - |   17579 B |
-|              Dapper |  'Query<dynamic> (unbuffered)' |      dynamic | 204.3 us |   2.79 us |   4.22 us |  1.5000 | 1.0000 |      - |   12048 B |
-|      DevExpress.XPO |                       Query<T> |         Post | 213.9 us |   7.82 us |  13.15 us | 10.0000 |      - |      - |   32083 B |
-|              Dapper |        'Query<T> (unbuffered)' |         Post | 217.6 us |   5.62 us |   8.50 us |  1.5000 | 1.0000 |      - |   12008 B |
-|             EF Core |             'First (Compiled)' |         Post | 228.1 us |   5.69 us |   8.60 us |  2.0000 |      - |      - |    7521 B |
-|          NHibernate |                            HQL |         Post | 239.4 us |   6.76 us |  10.21 us |  6.5000 | 0.5000 |      - |   31885 B |
-|          NHibernate |                         Get<T> |         Post | 247.1 us |   6.55 us |   9.91 us |  6.0000 | 0.5000 |      - |   29885 B |
-|                EF 6 |                          First |         Post | 297.6 us |  28.83 us |  48.45 us | 13.0000 |      - |      - |   43309 B |
-|          NHibernate |                       Criteria |         Post | 300.1 us |  13.37 us |  25.57 us | 14.0000 | 1.0000 |      - |   57562 B |
-|             EF Core |          'First (No Tracking)' |         Post | 314.2 us |  43.80 us |  73.60 us |  3.0000 | 1.0000 |      - |   17987 B |
-|             EF Core |                          First |         Post | 319.8 us |  32.72 us |  54.99 us |  3.0000 |      - |      - |   11306 B |
-|                EF 6 |          'First (No Tracking)' |         Post | 327.2 us |  33.05 us |  55.54 us | 12.0000 | 1.0000 |      - |   50237 B |
-|          NHibernate |                            SQL |         Post | 327.7 us |  16.66 us |  28.00 us | 21.0000 | 1.0000 |      - |   80007 B |
-|             EF Core |                       SqlQuery |         Post | 334.2 us |  33.86 us |  56.90 us |  5.0000 |      - |      - |   18195 B |
-|            Belgrade |                 FirstOrDefault |       Task`1 | 384.4 us |  20.30 us |  34.11 us |  4.0000 | 1.0000 |      - |   20556 B |
-| Dapper cache impact |   QueryFirstParameters_NoCache |         Void | 677.3 us |   5.55 us |   8.40 us |  3.0000 | 2.0000 |      - |   10640 B |
-|          NHibernate |                           LINQ |         Post | 936.0 us | 168.35 us | 254.52 us | 10.0000 |      - |      - |   46181 B |
-| Dapper cache impact |      ExecuteParameters_NoCache |         Void | 986.8 us | 198.13 us | 299.55 us |  3.0000 | 2.0000 |      - |   10001 B |
+|                 ORM |                         Method |       Return |      Mean |    StdDev |     Error |    Gen0 |   Gen1 |   Gen2 | Allocated |
+|-------------------- |------------------------------- |------------- |----------:|----------:|----------:|--------:|-------:|-------:|----------:|
+| Dapper cache impact |        ExecuteParameters_Cache |         Void |  96.75 us |  0.668 us |  1.010 us |  0.6250 |      - |      - |    2184 B |
+| Dapper cache impact |     QueryFirstParameters_Cache |         Void |  96.86 us |  0.493 us |  0.746 us |  0.8750 |      - |      - |    2824 B |
+|          Hand Coded |                     SqlCommand |         Post | 119.70 us |  0.706 us |  1.067 us |  1.3750 | 1.0000 | 0.1250 |    7584 B |
+|          Hand Coded |                      DataTable |      dynamic | 126.64 us |  1.239 us |  1.873 us |  3.0000 |      - |      - |    9576 B |
+|          SqlMarshal |                     SqlCommand |         Post | 132.36 us |  1.008 us |  1.523 us |  2.0000 | 1.0000 | 0.2500 |   11529 B |
+|              Dapper |         QueryFirstOrDefault<T> |         Post | 133.73 us |  1.301 us |  2.186 us |  1.7500 | 1.5000 |      - |   11608 B |
+|              Mighty |                 Query<dynamic> |      dynamic | 133.92 us |  1.075 us |  1.806 us |  2.0000 | 1.7500 |      - |   12710 B |
+|          LINQ to DB |                       Query<T> |         Post | 134.24 us |  1.068 us |  1.614 us |  1.7500 | 1.2500 |      - |   10904 B |
+|              RepoDB |                ExecuteQuery<T> |         Post | 135.83 us |  1.839 us |  3.091 us |  1.7500 | 1.5000 |      - |   11649 B |
+|              Dapper |          'Query<T> (buffered)' |         Post | 136.14 us |  1.755 us |  2.653 us |  2.0000 | 1.5000 |      - |   11888 B |
+|              Mighty |                       Query<T> |         Post | 137.96 us |  1.485 us |  2.244 us |  2.2500 | 1.2500 |      - |   12201 B |
+|              Dapper |   QueryFirstOrDefault<dynamic> |      dynamic | 139.04 us |  1.507 us |  2.279 us |  3.5000 |      - |      - |   11648 B |
+|              Mighty |       SingleFromQuery<dynamic> |      dynamic | 139.74 us |  2.521 us |  3.811 us |  2.0000 | 1.7500 |      - |   12710 B |
+|              Dapper |    'Query<dynamic> (buffered)' |      dynamic | 140.13 us |  1.382 us |  2.090 us |  2.0000 | 1.5000 |      - |   11968 B |
+|        ServiceStack |                  SingleById<T> |         Post | 140.76 us |  1.147 us |  2.192 us |  2.5000 | 1.2500 | 0.2500 |   15248 B |
+|              Dapper |               'Contrib Get<T>' |         Post | 141.09 us |  1.394 us |  2.108 us |  2.0000 | 1.5000 |      - |   12440 B |
+|              Mighty |             SingleFromQuery<T> |         Post | 141.17 us |  1.941 us |  2.935 us |  1.7500 | 1.5000 |      - |   12201 B |
+|             Massive |              'Query (dynamic)' |      dynamic | 142.01 us |  4.957 us |  7.494 us |  2.0000 | 1.5000 |      - |   12342 B |
+|          LINQ to DB |             'First (Compiled)' |         Post | 144.59 us |  1.295 us |  1.958 us |  1.7500 | 1.5000 |      - |   12128 B |
+|              RepoDB |                  QueryField<T> |         Post | 148.31 us |  1.742 us |  2.633 us |  2.0000 | 1.5000 | 0.5000 |   13938 B |
+|                Norm |              'Read<> (tuples)' | ValueTuple`8 | 148.58 us |  2.172 us |  3.283 us |  2.0000 | 1.7500 |      - |   12745 B |
+|                Norm |      'Read<()> (named tuples)' | ValueTuple`8 | 150.60 us |  0.658 us |  1.106 us |  2.2500 | 2.0000 | 1.2500 |   14562 B |
+|              RepoDB |                       Query<T> |         Post | 152.34 us |  2.164 us |  3.271 us |  2.2500 | 1.5000 | 0.2500 |   14106 B |
+|              RepoDB |                QueryDynamic<T> |         Post | 154.15 us |  4.108 us |  6.210 us |  2.2500 | 1.7500 | 0.5000 |   13930 B |
+|              RepoDB |                  QueryWhere<T> |         Post | 155.90 us |  1.953 us |  3.282 us |  2.5000 | 0.5000 |      - |   14858 B |
+| Dapper cache impact |    ExecuteNoParameters_NoCache |         Void | 162.35 us |  1.584 us |  2.394 us |       - |      - |      - |     760 B |
+| Dapper cache impact |      ExecuteNoParameters_Cache |         Void | 162.42 us |  2.740 us |  4.142 us |       - |      - |      - |     760 B |
+| Dapper cache impact |   QueryFirstNoParameters_Cache |         Void | 164.35 us |  1.206 us |  1.824 us |  0.2500 |      - |      - |    1520 B |
+|      DevExpress.XPO |                  FindObject<T> |         Post | 165.87 us |  1.012 us |  1.934 us |  8.5000 |      - |      - |   28099 B |
+| Dapper cache impact | QueryFirstNoParameters_NoCache |         Void | 173.87 us |  1.178 us |  1.781 us |  0.5000 |      - |      - |    1576 B |
+|          LINQ to DB |                          First |         Post | 175.21 us |  2.292 us |  3.851 us |  2.0000 | 0.5000 |      - |   14041 B |
+|                EF 6 |                       SqlQuery |         Post | 175.36 us |  2.259 us |  3.415 us |  4.0000 | 0.7500 |      - |   24209 B |
+|                Norm |               'Read<> (class)' |         Post | 186.37 us |  1.305 us |  2.496 us |  3.0000 | 0.5000 |      - |   17579 B |
+|      DevExpress.XPO |              GetObjectByKey<T> |         Post | 186.78 us |  3.407 us |  5.151 us |  4.5000 | 1.0000 |      - |   30114 B |
+|              Dapper |  'Query<dynamic> (unbuffered)' |      dynamic | 194.62 us |  1.335 us |  2.019 us |  1.7500 | 1.5000 |      - |   12048 B |
+|              Dapper |        'Query<T> (unbuffered)' |         Post | 195.01 us |  0.888 us |  1.343 us |  2.0000 | 1.5000 |      - |   12008 B |
+|      DevExpress.XPO |                       Query<T> |         Post | 199.46 us |  5.500 us |  9.243 us | 10.0000 |      - |      - |   32083 B |
+|            Belgrade |                 FirstOrDefault |       Task`1 | 228.70 us |  2.181 us |  3.665 us |  4.5000 | 0.5000 |      - |   20555 B |
+|             EF Core |             'First (Compiled)' |         Post | 265.45 us | 17.745 us | 26.828 us |  2.0000 |      - |      - |    7521 B |
+|          NHibernate |                         Get<T> |         Post | 276.02 us |  8.029 us | 12.139 us |  6.5000 | 1.0000 |      - |   29885 B |
+|          NHibernate |                            HQL |         Post | 277.74 us | 13.032 us | 19.703 us |  8.0000 | 1.0000 |      - |   31886 B |
+|          NHibernate |                       Criteria |         Post | 300.22 us | 14.908 us | 28.504 us | 13.0000 | 1.0000 |      - |   57562 B |
+|                EF 6 |                          First |         Post | 310.55 us | 27.254 us | 45.799 us | 13.0000 |      - |      - |   43309 B |
+|             EF Core |                          First |         Post | 317.12 us |  1.354 us |  2.046 us |  3.5000 |      - |      - |   11306 B |
+|             EF Core |                       SqlQuery |         Post | 322.34 us | 23.990 us | 40.314 us |  5.0000 |      - |      - |   18195 B |
+|          NHibernate |                            SQL |         Post | 325.54 us |  3.937 us |  7.527 us | 22.0000 | 1.0000 |      - |   80007 B |
+|                EF 6 |          'First (No Tracking)' |         Post | 331.14 us | 27.760 us | 46.649 us | 12.0000 | 1.0000 |      - |   50237 B |
+|             EF Core |          'First (No Tracking)' |         Post | 337.82 us | 27.814 us | 46.740 us |  3.0000 | 1.0000 |      - |   17986 B |
+|          NHibernate |                           LINQ |         Post | 604.74 us |  5.549 us | 10.610 us | 10.0000 |      - |      - |   46061 B |
+| Dapper cache impact |      ExecuteParameters_NoCache |         Void | 623.42 us |  3.978 us |  6.684 us |  3.0000 | 2.0000 |      - |   10001 B |
+| Dapper cache impact |   QueryFirstParameters_NoCache |         Void | 630.77 us |  3.027 us |  4.576 us |  3.0000 | 2.0000 |      - |   10640 B |
 
 Feel free to submit patches that include other ORMs - when running benchmarks, be sure to compile in Release and not attach a debugger (<kbd>Ctrl</kbd>+<kbd>F5</kbd>).
 
