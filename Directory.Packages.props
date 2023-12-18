@@ -22,8 +22,8 @@
       <PackageVersion Include="Iesi.Collections" Version="4.0.5" />
       <PackageVersion Include="linq2db.SqlServer" Version="3.7.0" />
       <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.1.1" />
-      <PackageVersion Include="Microsoft.Data.Sqlite" Version="7.0.10" />
-      <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0" />
+      <PackageVersion Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+      <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
       <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.7.1" />
       <PackageVersion Include="Mighty" Version="3.2.0" />
       <PackageVersion Include="MySqlConnector" Version="2.2.7" />
