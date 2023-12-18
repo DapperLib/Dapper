@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 using RepoDb;
 
 namespace Dapper.Tests.Performance
 {
+#if !NET5_0_OR_GREATER
     [Description("RepoDB")]
     public class RepoDbBenchmarks : BenchmarkBase
     {
@@ -51,4 +53,5 @@ namespace Dapper.Tests.Performance
             return _connection.ExecuteQuery<Post>("select * from Posts where Id = @Id", new { Id = i }).First();
         }
     }
+#endif
 }

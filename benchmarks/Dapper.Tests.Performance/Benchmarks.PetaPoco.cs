@@ -1,10 +1,12 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 using PetaPoco;
 using System.ComponentModel;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
 {
+#if !NET5_0_OR_GREATER
     [Description("PetaPoco")]
     public class PetaPocoBenchmarks : BenchmarkBase
     {
@@ -38,4 +40,5 @@ namespace Dapper.Tests.Performance
             return _dbFast.Fetch<Post>("SELECT * from Posts where Id=@0", i).First();
         }
     }
+#endif
 }

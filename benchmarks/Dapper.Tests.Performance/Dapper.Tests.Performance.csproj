@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Performance</AssemblyName>
     <Description>Dapper Core Performance Suite</Description>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net5.0</TargetFrameworks>
+    <TargetFrameworks>net462;net8.0</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <NoWarn>$(NoWarn);IDE0063;IDE0034;IDE0059;IDE0060</NoWarn>
   </PropertyGroup>
