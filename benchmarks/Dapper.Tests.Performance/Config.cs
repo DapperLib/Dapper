@@ -37,8 +37,9 @@ namespace Dapper.Tests.Performance
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
                    .WithUnrollFactor(Iterations)
-                   .WithIterationCount(10)
+                   .WithIterationCount(20)
             );
+            // AddJob(Job.Default);
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;
         }

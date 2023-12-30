@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Performance</AssemblyName>
     <Description>Dapper Core Performance Suite</Description>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net5.0</TargetFrameworks>
+    <TargetFrameworks>net462;net5.0;net8.0</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <NoWarn>$(NoWarn);IDE0063;IDE0034;IDE0059;IDE0060</NoWarn>
   </PropertyGroup>
@@ -46,9 +46,21 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.Linq" />
+    <Compile Remove="Benchmarks.Nextorm.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Norm.net" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="5.0.17" />
+    <Compile Remove="Benchmarks.Nextorm.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" VersionOverride="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" VersionOverride="8.0.0" />
+    <PackageReference Include="OneOf" VersionOverride="3.0.263" />
+    <Reference Include="C:\Users\alexey.CORP\sources\repos\nextorm\nextorm.core\bin\Release\net8.0\nextorm.core.dll"/>
+    <Reference Include="C:\Users\alexey.CORP\sources\repos\nextorm\nextorm.sqlserver\bin\Release\net8.0\nextorm.sqlserver.dll"/>
   </ItemGroup>
 </Project>

@@ -44,8 +44,20 @@ namespace Dapper.Tests.Performance
             }
             else
             {
-                WriteLine("Iterations: " + Config.Iterations);
-                new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new Config());
+                // var d = new DapperBenchmarks();
+                // d.Setup();
+                // for (var i = 0; i < 10; i++)
+                //     d.QueryFirstOrDefault();
+#if NET8_0_OR_GREATER
+                var norm = new NextormBenchmarks();
+                norm.Setup(false);
+                for(var i=0;i<100;i++)
+                    norm.QueryBufferedCompiled();
+#endif
+                // Console.WriteLine("Press any key to exit");
+                // Console.ReadKey();
+                // WriteLine("Iterations: " + Config.Iterations);
+                // new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new Config());
             }
         }
 
