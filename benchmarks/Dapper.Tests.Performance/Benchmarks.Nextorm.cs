@@ -19,9 +19,6 @@ public class NextormBenchmarks : BenchmarkBase
     private QueryCommand<Post> _queryBufferedCompiled;
     private QueryCommand<Post> _queryUnbufferedCompiled;
 
-    // private QueryCommand<Post> _getPosts;
-    // private QueryCommand<Post> _getPostsStream;
-
     [GlobalSetup]
     public void GlobalSetup() => Setup(false);
     public void Setup(bool withLogging)
@@ -38,14 +35,11 @@ public class NextormBenchmarks : BenchmarkBase
 
         _repository = new NextormRepository(builder);
 
-        var c = _repository.Posts.Where(it => it.Id == NORM.Param<int>(0));
-        _queryBufferedCompiled = c.ToCommand().Compile();
-        _queryUnbufferedCompiled = c.ToCommand().Compile(false);
-        _getPostByIdCompiled = c.FirstOrFirstOrDefaultCommand().Compile();
-        _getPostById = _repository.Posts.Where(it => it.Id == NORM.Param<int>(0)).FirstOrFirstOrDefaultCommand();
-        // _getPosts = _repository.Posts.Limit(QueryLimit).ToCommand().Compile(true);
-        // _getPostsStream = _repository.Posts.Limit(QueryLimit).ToCommand().Compile(false);
-        //Console.WriteLine("Setup complete");
+        var cmdBuilder = _repository.Posts.Where(it => it.Id == NORM.Param<int>(0));
+        _queryBufferedCompiled = cmdBuilder.ToCommand().Compile();
+        _queryUnbufferedCompiled = cmdBuilder.ToCommand().Compile(false);
+        _getPostById = cmdBuilder.FirstOrFirstOrDefaultCommand();
+        _getPostByIdCompiled = _getPostById.Compile();
     }
     [Benchmark(Description = "First")]
     public Post First()
@@ -53,7 +47,18 @@ public class NextormBenchmarks : BenchmarkBase
         Step();
         return _repository.Posts.Where(it => it.Id == i).FirstOrDefault();
     }
-
+    [Benchmark(Description = "Query<T> (buffered)")]
+    public Post QueryBuffered()
+    {
+        Step();
+        return _repository.Posts.Where(it => it.Id == i).ToList().FirstOrDefault();
+    }
+    [Benchmark(Description = "Query<T> (unbuffered)")]
+    public Post QueryUnbuffered()
+    {
+        Step();
+        return _repository.Posts.Where(it => it.Id == i).AsEnumerable().FirstOrDefault();
+    }
     [Benchmark(Description = "First with param")]
     public Post FirstParam()
     {
@@ -79,32 +84,6 @@ public class NextormBenchmarks : BenchmarkBase
         Step();
         return _queryUnbufferedCompiled.AsEnumerable(i).FirstOrDefault();
     }
-    // [Benchmark(Description = "Query<T> (buffered) compiled")]
-    // public Post CompiledQueryBuffered()
-    // {
-    //     return _getPosts.ToList().FirstOrDefault();
-    // }
-    // [Benchmark(Description = "Query<T> (unbuffered) compiled")]
-    // public Post CompiledQueryUnbuffered()
-    // {
-    //     foreach (var p in _getPostsStream.AsEnumerable())
-    //         return p;
-
-    //     return null;
-    // }
-    // [Benchmark(Description = "Query<T> (buffered)")]
-    // public Post QueryBuffered()
-    // {
-    //     return _repository.Posts.Limit(QueryLimit).ToList().First();
-    // }
-    // [Benchmark(Description = "Query<T> (unbuffered)")]
-    // public Post QueryUnbuffered()
-    // {
-    //     foreach (var p in _repository.Posts.Limit(QueryLimit).ToCommand().AsEnumerable())
-    //         return p;
-
-    //     return null;
-    // }
 }
 
 public class NextormRepository
