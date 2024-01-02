@@ -1944,7 +1944,7 @@ namespace Dapper
                 }
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
-            return GetStructDeserializer(type, underlyingType ?? type, startBound, useGetFieldValue);
+            return GetSimpleValueDeserializer(type, underlyingType ?? type, startBound, useGetFieldValue);
         }
 
         private static Func<DbDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
@@ -3049,7 +3049,7 @@ namespace Dapper
             return paramReader;
         }
 
-        private static Func<DbDataReader, object> GetStructDeserializer(Type type, Type effectiveType, int index, bool useGetFieldValue)
+        private static Func<DbDataReader, object> GetSimpleValueDeserializer(Type type, Type effectiveType, int index, bool useGetFieldValue)
         {
             // no point using special per-type handling here; it boils down to the same, plus not all are supported anyway (see: SqlDataReader.GetChar - not supported!)
 #pragma warning disable 618
@@ -3578,8 +3578,11 @@ namespace Dapper
                     if (first && returnNullIfFirstMissing)
                     {
                         il.Emit(OpCodes.Pop);
-                        il.Emit(OpCodes.Ldnull); // stack is now [null]
-                        il.Emit(OpCodes.Stloc, returnValueLocal);
+                        if (!type.IsValueType) // for struct, the retval is already initialized as default
+                        {
+                            il.Emit(OpCodes.Ldnull); // stack is now [null]
+                            il.Emit(OpCodes.Stloc, returnValueLocal);
+                        }
                         il.Emit(OpCodes.Br, allDone);
                     }
 
