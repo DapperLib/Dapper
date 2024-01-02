@@ -1310,5 +1310,16 @@ insert TPTable (Value) values (2), (568)");
                 NameProperty = nameProperty;
             }
         }
+
+        internal record struct One(int OID);
+        internal record struct Two(int OID, string Name);
+
+        [Fact]
+        public async Task QuerySplitStruct() // https://github.com/DapperLib/Dapper/issues/2005
+        {
+            var results = await connection.QueryAsync<One, Two, (One,Two)>(@"SELECT 1 AS OID, 2 AS OID, 'Name' AS Name", (x,y) => (x,y), splitOn: "OID");
+
+            Assert.Single(results);
+        }
     }
 }
