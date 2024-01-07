@@ -3801,20 +3801,20 @@ namespace Dapper
                         switch (Type.GetTypeCode(via ?? to))
                         {
                             case TypeCode.Byte:
-                                opCode = OpCodes.Conv_Ovf_I1_Un; break;
+                                opCode = OpCodes.Conv_Ovf_U1_Un; break;
                             case TypeCode.SByte:
                                 opCode = OpCodes.Conv_Ovf_I1; break;
                             case TypeCode.UInt16:
-                                opCode = OpCodes.Conv_Ovf_I2_Un; break;
+                                opCode = OpCodes.Conv_Ovf_U2_Un; break;
                             case TypeCode.Int16:
                                 opCode = OpCodes.Conv_Ovf_I2; break;
                             case TypeCode.UInt32:
-                                opCode = OpCodes.Conv_Ovf_I4_Un; break;
+                                opCode = OpCodes.Conv_Ovf_U4_Un; break;
                             case TypeCode.Boolean: // boolean is basically an int, at least at this level
                             case TypeCode.Int32:
                                 opCode = OpCodes.Conv_Ovf_I4; break;
                             case TypeCode.UInt64:
-                                opCode = OpCodes.Conv_Ovf_I8_Un; break;
+                                opCode = OpCodes.Conv_Ovf_U8_Un; break;
                             case TypeCode.Int64:
                                 opCode = OpCodes.Conv_Ovf_I8; break;
                             case TypeCode.Single:
