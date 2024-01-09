@@ -10,7 +10,7 @@ namespace Dapper.Tests.Performance
         [GlobalSetup]
         public void Setup() => BaseSetup();
 
-        private object args = new { Id = 42, Name = "abc" };
+        private readonly object args = new { Id = 42, Name = "abc" };
 
         public class Foo
         {
