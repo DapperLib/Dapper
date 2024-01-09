@@ -9,8 +9,8 @@
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.6.133" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" />
-    <PackageVersion Include="nextorm.sqlserver" Version="1.0.1-alpha" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageVersion Include="nextorm.sqlserver" Version="1.0.1-alpha" />
     <!-- tests -->
     <PackageVersion Include="Belgrade.Sql.Client" Version="1.1.4" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.13.7" />
