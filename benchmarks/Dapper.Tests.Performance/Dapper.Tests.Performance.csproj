@@ -14,7 +14,7 @@
     <PackageReference Include="Belgrade.Sql.Client" />
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="DevExpress.Xpo" />
-    <PackageReference Include="EntityFramework" VersionOverride="6.4.4"/>
+    <PackageReference Include="EntityFramework" VersionOverride="6.4.4" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="linq2db.SqlServer" />
     <PackageReference Include="MySqlConnector" />
@@ -33,7 +33,7 @@
     <EmbeddedResource Include="NHibernate\*.xml" />
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
   </ItemGroup>
-
+  
   <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
     <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
   </PropertyGroup>
@@ -56,11 +56,10 @@
     <Compile Remove="Benchmarks.Nextorm.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="nextorm.sqlserver" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" VersionOverride="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" VersionOverride="8.0.0" />
-    <PackageReference Include="OneOf" VersionOverride="3.0.263" />
-    <Reference Include="C:\Users\alexey.CORP\sources\repos\nextorm\nextorm.core\bin\Release\net8.0\nextorm.core.dll"/>
-    <Reference Include="C:\Users\alexey.CORP\sources\repos\nextorm\nextorm.sqlserver\bin\Release\net8.0\nextorm.sqlserver.dll"/>
+    <PackageReference Include="OneOf" VersionOverride="3.0.263" />    
   </ItemGroup>
 </Project>

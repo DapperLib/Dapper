@@ -30,7 +30,7 @@ public class NextormBenchmarks : BenchmarkBase
         {
             var logFactory = LoggerFactory.Create(config => config.AddConsole().SetMinimumLevel(LogLevel.Debug));
             builder.UseLoggerFactory(logFactory);
-            builder.LogSensetiveData(true);
+            builder.LogSensitiveData(true);
         }
 
         _repository = new NextormRepository(builder);
