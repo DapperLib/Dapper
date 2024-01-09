@@ -1,9 +1,7 @@
-using System;
+#if !NET4X
 using System.ComponentModel;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
-using DevExpress.Data.Access;
-using System.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using nextorm.core;
 using nextorm.sqlserver;
@@ -98,3 +96,4 @@ public class NextormRepository
 
     public Entity<Post> Posts { get; set; }
 }
+#endif
