@@ -51,8 +51,8 @@
     <PackageReference Include="Norm.net" />
     <PackageReference Include="nextorm.sqlserver" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" VersionOverride="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" VersionOverride="8.0.0" />
-    <PackageReference Include="OneOf" VersionOverride="3.0.263" />    
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" />
+    <PackageReference Include="OneOf" />    
   </ItemGroup>
 </Project>
