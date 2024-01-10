@@ -100,7 +100,7 @@ namespace Dapper
             }
 
             /// <summary>
-            /// Gets a record with a particular Id from the DB 
+            /// Gets a record with a particular Id from the DB
             /// </summary>
             /// <param name="id">The primary key of the table to fetch.</param>
             /// <returns>The record with the specified Id.</returns>
@@ -173,14 +173,14 @@ namespace Dapper
             }
         }
 
-        private DbConnection _connection;
+        private IDbConnection _connection;
         private int _commandTimeout;
-        private DbTransaction _transaction;
+        private IDbTransaction _transaction;
 
         /// <summary>
         /// Get underlying database connection.
         /// </summary>
-        public DbConnection Connection => _connection;
+        public IDbConnection Connection => _connection;
 
         /// <summary>
         /// Initializes the database.
@@ -188,7 +188,7 @@ namespace Dapper
         /// <param name="connection">The connection to use.</param>
         /// <param name="commandTimeout">The timeout to use (in seconds).</param>
         /// <returns></returns>
-        public static TDatabase Init(DbConnection connection, int commandTimeout)
+        public static TDatabase Init(IDbConnection connection, int commandTimeout)
         {
             TDatabase db = new TDatabase();
             db.InitDatabase(connection, commandTimeout);
@@ -197,7 +197,7 @@ namespace Dapper
 
         internal static Action<TDatabase> tableConstructor;
 
-        internal void InitDatabase(DbConnection connection, int commandTimeout)
+        internal void InitDatabase(IDbConnection connection, int commandTimeout)
         {
             _connection = connection;
             _commandTimeout = commandTimeout;
@@ -370,7 +370,7 @@ namespace Dapper
             _connection.QueryFirstOrDefault<T>(sql, param as object, _transaction, _commandTimeout);
 
         /// <summary>
-        /// Perform a multi-mapping query with 2 input types. 
+        /// Perform a multi-mapping query with 2 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -388,7 +388,7 @@ namespace Dapper
             _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Perform a multi-mapping query with 3 input types. 
+        /// Perform a multi-mapping query with 3 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -407,7 +407,7 @@ namespace Dapper
             _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Perform a multi-mapping query with 4 input types. 
+        /// Perform a multi-mapping query with 4 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
@@ -427,7 +427,7 @@ namespace Dapper
             _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
         /// <summary>
-        /// Perform a multi-mapping query with 5 input types. 
+        /// Perform a multi-mapping query with 5 input types.
         /// This returns a single type, combined from the raw types via <paramref name="map"/>.
         /// </summary>
         /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
