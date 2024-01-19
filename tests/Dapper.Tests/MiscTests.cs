@@ -74,6 +74,10 @@ namespace Dapper.Tests
             public PositionalCarRecord() : this(default, default, default) { }
         }
 
+        private record SimpleRecord(int InternalId, int ExternalId, string? Name);
+
+        private record SimpleRecordReordered(int InternalId, string? Name, Guid ExternalId);
+
         private record NominalCarRecord
         {
             public int Age { get; init; }
@@ -99,6 +103,46 @@ namespace Dapper.Tests
             Assert.Equal(21, car.Age);
             Assert.Equal("Ford", car.Name);
             Assert.Equal(2, (int)car.Trap);
+        }
+
+        [Fact]
+        public void TestSimpleRecord()
+        {
+            var simple = connection.Query<SimpleRecord>("select 1 InternalId, 42 ExternalId, 'Ford' Name").First();
+
+            Assert.Equal(1, simple.InternalId);
+            Assert.Equal(42, simple.ExternalId);
+            Assert.Equal("Ford", simple.Name);
+        }
+
+        [Fact]
+        public void TestSimpleRecordReordered()
+        {
+            var simple = connection.Query<SimpleRecordReordered>("select 1 InternalId, 42 ExternalId, 'Ford' Name").First();
+
+            Assert.Equal(1, simple.InternalId);
+            Assert.Equal(42, simple.ExternalId);
+            Assert.Equal("Ford", simple.Name);
+        }
+
+        [Fact]
+        public void TestSimpleRecordWithUnderscoreMapping()
+        {
+            var simple = connection.Query<SimpleRecord>("select 1 internal_id, 42 external_id, 'Ford' name").First();
+
+            Assert.Equal(1, simple.InternalId);
+            Assert.Equal(42, simple.ExternalId);
+            Assert.Equal("Ford", simple.Name);
+        }
+
+        [Fact]
+        public void TestSimpleRecordWithUnderscoreMappingRearranged()
+        {
+            var simple = connection.Query<SimpleRecordReordered>("select 1 internal_id, 42 external_id, 'Ford' name").First();
+
+            Assert.Equal(1, simple.InternalId);
+            Assert.Equal(42, simple.ExternalId);
+            Assert.Equal("Ford", simple.Name);
         }
 
         [Fact]
@@ -319,7 +363,7 @@ WHERE (first_name LIKE {0} OR last_name LIKE {0});";
             const string use_end_only = "CONCAT(@search_term, '%')";
             const string use_both = "CONCAT('%', @search_term, '%')";
 
-            // if true, slower query due to not being able to use indices, but will allow searching inside strings 
+            // if true, slower query due to not being able to use indices, but will allow searching inside strings
             const bool allow_start_wildcards = false;
 
             string query = string.Format(formatted, allow_start_wildcards ? use_both : use_end_only);
@@ -390,12 +434,12 @@ insert #users16726709 values ('Fred','Bloggs') insert #users16726709 values ('To
         public void TestExecuteCommand()
         {
             Assert.Equal(2, connection.Execute(@"
-    set nocount on 
-    create table #t(i int) 
-    set nocount off 
-    insert #t 
-    select @a a union all select @b 
-    set nocount on 
+    set nocount on
+    create table #t(i int)
+    set nocount off
+    insert #t
+    select @a a union all select @b
+    set nocount on
     drop table #t", new { a = 1, b = 2 }));
         }
 
@@ -681,7 +725,7 @@ select * from @bar", new { foo }).Single();
         [Fact]
         public void TestDbStringToString()
         {
-            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: True, IsFixedLength: True)", 
+            Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: True, IsFixedLength: True)",
                 new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = true }.ToString());
             Assert.Equal("Dapper.DbString (Value: 'abcde', Length: 10, IsAnsi: False, IsFixedLength: True)",
                 new DbString { Value = "abcde", IsFixedLength = true, Length = 10, IsAnsi = false }.ToString());
@@ -1314,7 +1358,7 @@ insert TPTable (Value) values (2), (568)");
         [Fact]
         public void Issue1164_OverflowExceptionForByte()
         {
-            const string sql = "select cast(200 as smallint) as [value]"; // 200 more than sbyte.MaxValue but less than byte.MaxValue 
+            const string sql = "select cast(200 as smallint) as [value]"; // 200 more than sbyte.MaxValue but less than byte.MaxValue
             Issue1164Object<byte> obj = connection.QuerySingle<Issue1164Object<byte>>(sql);
             Assert.StrictEqual(200, obj.Value);
         }
@@ -1322,7 +1366,7 @@ insert TPTable (Value) values (2), (568)");
         [Fact]
         public void Issue1164_OverflowExceptionForUInt16()
         {
-            const string sql = "select cast(40000 as bigint) as [value]"; // 40000 more than short.MaxValue but less than ushort.MaxValue 
+            const string sql = "select cast(40000 as bigint) as [value]"; // 40000 more than short.MaxValue but less than ushort.MaxValue
             Issue1164Object<ushort> obj = connection.QuerySingle<Issue1164Object<ushort>>(sql);
             Assert.StrictEqual(40000, obj.Value);
         }
@@ -1330,7 +1374,7 @@ insert TPTable (Value) values (2), (568)");
         [Fact]
         public void Issue1164_OverflowExceptionForUInt32()
         {
-            const string sql = "select cast(4000000000 as bigint) as [value]"; // 4000000000 more than int.MaxValue but less than uint.MaxValue 
+            const string sql = "select cast(4000000000 as bigint) as [value]"; // 4000000000 more than int.MaxValue but less than uint.MaxValue
             Issue1164Object<uint> obj = connection.QuerySingle<Issue1164Object<uint>>(sql);
             Assert.StrictEqual(4000000000, obj.Value);
         }
@@ -1338,7 +1382,7 @@ insert TPTable (Value) values (2), (568)");
         [Fact]
         public void Issue1164_OverflowExceptionForUInt64()
         {
-            const string sql = "select cast(10000000000000000000.0 as float) as [value]"; // 10000000000000000000 more than long.MaxValue but less than ulong.MaxValue 
+            const string sql = "select cast(10000000000000000000.0 as float) as [value]"; // 10000000000000000000 more than long.MaxValue but less than ulong.MaxValue
             Issue1164Object<ulong> obj = connection.QuerySingle<Issue1164Object<ulong>>(sql);
             Assert.StrictEqual(10000000000000000000, obj.Value);
         }
