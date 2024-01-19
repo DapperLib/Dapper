@@ -76,7 +76,7 @@ namespace Dapper.Tests
 
         private record SimpleRecord(int InternalId, int ExternalId, string? Name);
 
-        private record SimpleRecordReordered(int InternalId, string? Name, Guid ExternalId);
+        private record SimpleRecordReordered(int InternalId, string? Name, int ExternalId);
 
         private record NominalCarRecord
         {
@@ -128,21 +128,39 @@ namespace Dapper.Tests
         [Fact]
         public void TestSimpleRecordWithUnderscoreMapping()
         {
-            var simple = connection.Query<SimpleRecord>("select 1 internal_id, 42 external_id, 'Ford' name").First();
+            var matchVal = DefaultTypeMap.MatchNamesWithUnderscores;
+            try
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = true;
+                var simple = connection.Query<SimpleRecord>("select 1 internal_id, 42 external_id, 'Ford' name").First();
 
-            Assert.Equal(1, simple.InternalId);
-            Assert.Equal(42, simple.ExternalId);
-            Assert.Equal("Ford", simple.Name);
+                Assert.Equal(1, simple.InternalId);
+                Assert.Equal(42, simple.ExternalId);
+                Assert.Equal("Ford", simple.Name);
+            }
+            finally
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = matchVal;
+            }
         }
 
         [Fact]
         public void TestSimpleRecordWithUnderscoreMappingRearranged()
         {
-            var simple = connection.Query<SimpleRecordReordered>("select 1 internal_id, 42 external_id, 'Ford' name").First();
+            var matchVal = DefaultTypeMap.MatchNamesWithUnderscores;
+            try
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = true;
+                var simple = connection.Query<SimpleRecordReordered>("select 1 internal_id, 42 external_id, 'Ford' name").First();
 
-            Assert.Equal(1, simple.InternalId);
-            Assert.Equal(42, simple.ExternalId);
-            Assert.Equal("Ford", simple.Name);
+                Assert.Equal(1, simple.InternalId);
+                Assert.Equal(42, simple.ExternalId);
+                Assert.Equal("Ford", simple.Name);
+            }
+            finally
+            {
+                DefaultTypeMap.MatchNamesWithUnderscores = matchVal;
+            }
         }
 
         [Fact]
