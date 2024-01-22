@@ -143,24 +143,7 @@ namespace Dapper.Contrib.Extensions
             sqlAdapter ??= GetFormatter(connection);
 
             var isList = false;
-            if (type.IsArray)
-            {
-                isList = true;
-                type = type.GetElementType();
-            }
-            else if (type.IsGenericType)
-            {
-                var typeInfo = type.GetTypeInfo();
-                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-
-                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
-                {
-                    isList = true;
-                    type = type.GetGenericArguments()[0];
-                }
-            }
+            isList = IsArrayAndGetElementType(ref type);
 
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
@@ -215,22 +198,7 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
-            if (type.IsArray)
-            {
-                type = type.GetElementType();
-            }
-            else if (type.IsGenericType)
-            {
-                var typeInfo = type.GetTypeInfo();
-                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-
-                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
-                {
-                    type = type.GetGenericArguments()[0];
-                }
-            }
+            _ = IsArrayAndGetElementType(ref type);
 
             var keyProperties = KeyPropertiesCache(type).ToList();
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
@@ -284,22 +252,7 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
-            if (type.IsArray)
-            {
-                type = type.GetElementType();
-            }
-            else if (type.IsGenericType)
-            {
-                var typeInfo = type.GetTypeInfo();
-                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-
-                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
-                {
-                    type = type.GetGenericArguments()[0];
-                }
-            }
+            _ = IsArrayAndGetElementType(ref type);
 
             var keyProperties = KeyPropertiesCache(type);
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);

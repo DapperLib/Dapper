@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using System.Threading;
 
 using Dapper;
+using System.Collections;
 
 namespace Dapper.Contrib.Extensions
 {
@@ -322,25 +323,7 @@ namespace Dapper.Contrib.Extensions
             var isList = false;
 
             var type = typeof(T);
-
-            if (type.IsArray)
-            {
-                isList = true;
-                type = type.GetElementType();
-            }
-            else if (type.IsGenericType)
-            {
-                var typeInfo = type.GetTypeInfo();
-                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-
-                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
-                {
-                    isList = true;
-                    type = type.GetGenericArguments()[0];
-                }
-            }
+            isList = IsArrayAndGetElementType(ref type);
 
             var name = GetTableName(type);
             var sbColumnList = new StringBuilder(null);
@@ -386,6 +369,7 @@ namespace Dapper.Contrib.Extensions
             if (wasClosed) connection.Close();
             return returnVal;
         }
+        
 
         /// <summary>
         /// Updates entity in table "Ts", checks if the entity is modified if the entity is tracked by the Get() extension.
@@ -404,23 +388,7 @@ namespace Dapper.Contrib.Extensions
             }
 
             var type = typeof(T);
-
-            if (type.IsArray)
-            {
-                type = type.GetElementType();
-            }
-            else if (type.IsGenericType)
-            {
-                var typeInfo = type.GetTypeInfo();
-                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-
-                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
-                {
-                    type = type.GetGenericArguments()[0];
-                }
-            }
+            _ = IsArrayAndGetElementType(ref type);
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
@@ -474,22 +442,7 @@ namespace Dapper.Contrib.Extensions
 
             var type = typeof(T);
 
-            if (type.IsArray)
-            {
-                type = type.GetElementType();
-            }
-            else if (type.IsGenericType)
-            {
-                var typeInfo = type.GetTypeInfo();
-                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-
-                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
-                {
-                    type = type.GetGenericArguments()[0];
-                }
-            }
+            IsArrayAndGetElementType(ref type);
 
             var keyProperties = KeyPropertiesCache(type).ToList();  //added ToList() due to issue #418, must work on a list copy
             var explicitKeyProperties = ExplicitKeyPropertiesCache(type);
@@ -530,6 +483,30 @@ namespace Dapper.Contrib.Extensions
             var statement = $"delete from {name}";
             var deleted = connection.Execute(statement, null, transaction, commandTimeout);
             return deleted > 0;
+        }
+
+        private static bool IsArrayAndGetElementType(ref Type type)
+        {
+            var isList = false;
+            if (type.IsArray)
+            {
+                isList = true;
+                type = type.GetElementType();
+            }
+            else if (type.IsGenericType)
+            {
+                var typeInfo = type.GetTypeInfo();
+                bool implementsGenericIEnumerableOrIsGenericIEnumerable =
+                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+
+                if (implementsGenericIEnumerableOrIsGenericIEnumerable)
+                {
+                    isList = true;
+                    type = type.GetGenericArguments()[0];
+                }
+            }
+            return isList;
         }
 
         /// <summary>
