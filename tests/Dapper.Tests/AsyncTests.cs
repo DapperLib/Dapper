@@ -1,11 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System;
-using System.Threading.Tasks;
-using System.Threading;
-using Xunit;
 using System.Data.Common;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Dapper.Tests
@@ -33,7 +34,7 @@ namespace Dapper.Tests
 
     public abstract class AsyncTests<TProvider> : TestBase<TProvider> where TProvider : SqlServerDatabaseProvider
     {
-        private DbConnection _marsConnection;
+        private DbConnection? _marsConnection;
 
         private DbConnection MarsConnection => _marsConnection ??= Provider.GetOpenConnection(true);
 
@@ -44,6 +45,120 @@ namespace Dapper.Tests
             var arr = query.ToArray();
             Assert.Equal(new[] { "abc", "def" }, arr);
         }
+
+#if NET5_0_OR_GREATER
+        [Fact]
+        public async Task TestBasicStringUsageUnbufferedDynamicAsync()
+        {
+            var results = new List<string>();
+            await foreach (var row in connection.QueryUnbufferedAsync("select 'abc' as [Value] union all select @txt", new { txt = "def" })
+                .ConfigureAwait(false))
+            {
+                string value = row.Value;
+                results.Add(value);
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageUnbufferedAsync()
+        {
+            var results = new List<string>();
+            await foreach (var value in connection.QueryUnbufferedAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" })
+                .ConfigureAwait(false))
+            {
+                results.Add(value);
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageUnbufferedAsync_Cancellation()
+        {
+            using var cts = new CancellationTokenSource();
+            var results = new List<string>();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var value in connection.QueryUnbufferedAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" })
+                    .ConfigureAwait(false).WithCancellation(cts.Token))
+                {
+                    results.Add(value);
+                    cts.Cancel(); // cancel after first item
+                }
+            });
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc" }, arr); // we don't expect the "def" because of the cancellation
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageViaGridReaderUnbufferedAsync()
+        {
+            var results = new List<string>();
+            await using (var grid = await connection.QueryMultipleAsync("select 'abc' union select 'def'; select @txt", new { txt = "ghi" })
+                .ConfigureAwait(false))
+            {
+                while (!grid.IsConsumed)
+                {
+                    await foreach (var value in grid.ReadUnbufferedAsync<string>()
+                        .ConfigureAwait(false))
+                    {
+                        results.Add(value);
+                    }
+                }
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def", "ghi" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageViaGridReaderUnbufferedDynamicAsync()
+        {
+            var results = new List<string>();
+            await using (var grid = await connection.QueryMultipleAsync("select 'abc' as [Foo] union select 'def'; select @txt as [Foo]", new { txt = "ghi" })
+                .ConfigureAwait(false))
+            {
+                while (!grid.IsConsumed)
+                {
+                    await foreach (var value in grid.ReadUnbufferedAsync()
+                        .ConfigureAwait(false))
+                    {
+                        results.Add((string)value.Foo);
+                    }
+                }
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def", "ghi" }, arr);
+        }
+
+        [Fact]
+        public async Task TestBasicStringUsageViaGridReaderUnbufferedAsync_Cancellation()
+        {
+            using var cts = new CancellationTokenSource();
+            var results = new List<string>();
+            await using (var grid = await connection.QueryMultipleAsync("select 'abc' union select 'def'; select @txt", new { txt = "ghi" })
+                .ConfigureAwait(false))
+            {
+                var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
+                {
+                    while (!grid.IsConsumed)
+                    {
+                        await foreach (var value in grid.ReadUnbufferedAsync<string>()
+                            .ConfigureAwait(false)
+                            .WithCancellation(cts.Token))
+                        {
+                            results.Add(value);
+                        }
+                        cts.Cancel();
+                    }
+                });
+                Assert.True(ex is OperationCanceledException or DbException { Message: "Operation cancelled by user." });
+            }
+            var arr = results.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr); // don't expect the ghi because of cancellation
+        }
+#endif
 
         [Fact]
         public async Task TestBasicStringUsageQueryFirstAsync()
@@ -70,7 +185,7 @@ namespace Dapper.Tests
         public async Task TestBasicStringUsageQueryFirstOrDefaultAsyncDynamic()
         {
             var str = await connection.QueryFirstOrDefaultAsync("select null as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
-            Assert.Null(str.Value);
+            Assert.Null(str!.Value);
         }
 
         [Fact]
@@ -97,7 +212,7 @@ namespace Dapper.Tests
         [Fact]
         public async Task TestBasicStringUsageQuerySingleOrDefaultAsyncDynamic()
         {
-            var str = await connection.QuerySingleOrDefaultAsync("select null as [Value]").ConfigureAwait(false);
+            var str = (await connection.QuerySingleOrDefaultAsync("select null as [Value]").ConfigureAwait(false))!;
             Assert.Null(str.Value);
         }
 
@@ -112,7 +227,7 @@ namespace Dapper.Tests
         [Fact]
         public void TestLongOperationWithCancellation()
         {
-            CancellationTokenSource cancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            CancellationTokenSource cancel = new(TimeSpan.FromSeconds(5));
             var task = connection.QueryAsync<int>(new CommandDefinition("waitfor delay '00:00:10';select 1", cancellationToken: cancel.Token));
             try
             {
@@ -123,19 +238,17 @@ namespace Dapper.Tests
             }
             catch (AggregateException agg)
             {
-                Assert.True(agg.InnerException.GetType().Name == "SqlException");
+                Assert.Equal("SqlException", agg.InnerException?.GetType().Name);
             }
         }
 
         [Fact]
         public async Task TestBasicStringUsageClosedAsync()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var query = await conn.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
-                var arr = query.ToArray();
-                Assert.Equal(new[] { "abc", "def" }, arr);
-            }
+            using var conn = GetClosedConnection();
+            var query = await conn.QueryAsync<string>("select 'abc' as [Value] union all select @txt", new { txt = "def" }).ConfigureAwait(false);
+            var arr = query.ToArray();
+            Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
         [Fact]
@@ -164,12 +277,10 @@ namespace Dapper.Tests
         [Fact]
         public void TestExecuteClosedConnAsyncInner()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var query = conn.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
-                var val = query.Result;
-                Assert.Equal(1, val);
-            }
+            using var conn = GetClosedConnection();
+            var query = conn.ExecuteAsync("declare @foo table(id int not null); insert @foo values(@id);", new { id = 1 });
+            var val = query.Result;
+            Assert.Equal(1, val);
         }
 
         [Fact]
@@ -186,6 +297,7 @@ namespace Dapper.Tests
             // assertions
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
+            Assert.NotNull(product.Category);
             Assert.Equal(2, product.Category.Id);
             Assert.Equal("def", product.Category.Name);
         }
@@ -205,6 +317,7 @@ namespace Dapper.Tests
             // assertions
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
+            Assert.NotNull(product.Category);
             Assert.Equal(2, product.Category.Id);
             Assert.Equal("def", product.Category.Name);
         }
@@ -213,83 +326,70 @@ namespace Dapper.Tests
         public async Task TestMultiMapWithSplitClosedConnAsync()
         {
             const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
-            using (var conn = GetClosedConnection())
+
+            using var conn = GetClosedConnection();
+
+            var productQuery = await conn.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
             {
-                var productQuery = await conn.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
-                {
-                    prod.Category = cat;
-                    return prod;
-                }).ConfigureAwait(false);
+                prod.Category = cat;
+                return prod;
+            }).ConfigureAwait(false);
 
-                var product = productQuery.First();
-                // assertions
-                Assert.Equal(1, product.Id);
-                Assert.Equal("abc", product.Name);
-                Assert.Equal(2, product.Category.Id);
-                Assert.Equal("def", product.Category.Name);
-            }
-        }
+            var product = productQuery.First();
+            // assertions
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
+    }
 
-        [Fact]
+    [Fact]
         public async Task TestMultiAsync()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
-            {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-            }
+            using SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
         }
 
         [Fact]
         public async Task TestMultiConversionAsync()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2").ConfigureAwait(false))
-            {
-                Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-            }
+            using SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select Cast(1 as BigInt) Col1; select Cast(2 as BigInt) Col2").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
         }
 
         [Fact]
         public async Task TestMultiAsyncViaFirstOrDefault()
         {
-            using (SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
-            {
-                Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
-                Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
-            }
+            using SqlMapper.GridReader multi = await connection.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
         }
 
         [Fact]
         public async Task TestMultiClosedConnAsync()
         {
-            using (var conn = GetClosedConnection())
-            {
-                using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false))
-                {
-                    Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                }
-            }
+            using var conn = GetClosedConnection();
+            using SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
         }
 
         [Fact]
         public async Task TestMultiClosedConnAsyncViaFirstOrDefault()
         {
-            using (var conn = GetClosedConnection())
-            {
-                using (SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false))
-                {
-                    Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
-                    Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
-                    Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
-                    Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
-                }
-            }
+            using var conn = GetClosedConnection();
+            using SqlMapper.GridReader multi = await conn.QueryMultipleAsync("select 1; select 2; select 3; select 4; select 5").ConfigureAwait(false);
+            Assert.Equal(1, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(2, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(3, multi.ReadFirstOrDefaultAsync<int>().Result);
+            Assert.Equal(4, multi.ReadAsync<int>().Result.Single());
+            Assert.Equal(5, multi.ReadFirstOrDefaultAsync<int>().Result);
         }
 
         [Fact]
@@ -308,17 +408,15 @@ namespace Dapper.Tests
         [Fact]
         public async Task ExecuteReaderClosedAsync()
         {
-            using (var conn = GetClosedConnection())
-            {
-                var dt = new DataTable();
-                dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").ConfigureAwait(false));
-                Assert.Equal(2, dt.Columns.Count);
-                Assert.Equal("three", dt.Columns[0].ColumnName);
-                Assert.Equal("four", dt.Columns[1].ColumnName);
-                Assert.Equal(1, dt.Rows.Count);
-                Assert.Equal(3, (int)dt.Rows[0][0]);
-                Assert.Equal(4, (int)dt.Rows[0][1]);
-            }
+            using var conn = GetClosedConnection();
+            var dt = new DataTable();
+            dt.Load(await conn.ExecuteReaderAsync("select 3 as [three], 4 as [four]").ConfigureAwait(false));
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal("three", dt.Columns[0].ColumnName);
+            Assert.Equal("four", dt.Columns[1].ColumnName);
+            Assert.Equal(1, dt.Rows.Count);
+            Assert.Equal(3, (int)dt.Rows[0][0]);
+            Assert.Equal(4, (int)dt.Rows[0][1]);
         }
 
         [Fact]
@@ -330,7 +428,8 @@ namespace Dapper.Tests
         [Fact]
         public async Task LiteralReplacementClosed()
         {
-            using (var conn = GetClosedConnection()) await LiteralReplacement(conn).ConfigureAwait(false);
+            using var conn = GetClosedConnection();
+            await LiteralReplacement(conn).ConfigureAwait(false);
         }
 
         private static async Task LiteralReplacement(IDbConnection conn)
@@ -347,7 +446,7 @@ namespace Dapper.Tests
             var count = (await conn.QueryAsync<int>("select count(1) from literal1 where id={=foo}", new { foo = 123 }).ConfigureAwait(false)).Single();
             Assert.Equal(1, count);
             int sum = (await conn.QueryAsync<int>("select sum(id) + sum(foo) from literal1").ConfigureAwait(false)).Single();
-            Assert.Equal(sum, 123 + 456 + 1 + 2 + 3 + 4);
+            Assert.Equal(123 + 456 + 1 + 2 + 3 + 4, sum);
         }
 
         [Fact]
@@ -359,7 +458,8 @@ namespace Dapper.Tests
         [Fact]
         public async Task LiteralReplacementDynamicClosed()
         {
-            using (var conn = GetClosedConnection()) await LiteralReplacementDynamic(conn).ConfigureAwait(false);
+            using var conn = GetClosedConnection();
+            await LiteralReplacementDynamic(conn).ConfigureAwait(false);
         }
 
         private static async Task LiteralReplacementDynamic(IDbConnection conn)
@@ -427,7 +527,7 @@ namespace Dapper.Tests
 
         private class BasicType
         {
-            public string Value { get; set; }
+            public string? Value { get; set; }
         }
 
         [Fact]
@@ -435,7 +535,7 @@ namespace Dapper.Tests
         {
             Type type = Common.GetSomeType();
 
-            dynamic actual = (await MarsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false)).FirstOrDefault();
+            dynamic actual = (await MarsConnection.QueryAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false)).FirstOrDefault()!;
             Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
@@ -448,7 +548,7 @@ namespace Dapper.Tests
         {
             Type type = Common.GetSomeType();
 
-            dynamic actual = await MarsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false);
+            dynamic actual = (await MarsConnection.QueryFirstOrDefaultAsync(type, "select @A as [A], @B as [B]", new { A = 123, B = "abc" }).ConfigureAwait(false))!;
             Assert.Equal(((object)actual).GetType(), type);
             int a = actual.A;
             string b = actual.B;
@@ -492,9 +592,9 @@ namespace Dapper.Tests
                 p.Output(bob, b => b.PersonId);
                 p.Output(bob, b => b.Occupation);
                 p.Output(bob, b => b.NumberOfLegs);
-                p.Output(bob, b => b.Address.Name);
-                p.Output(bob, b => b.Address.PersonId);
-                p.Output(bob, b => b.Address.Index.Id);
+                p.Output(bob, b => b.Address!.Name);
+                p.Output(bob, b => b.Address!.PersonId);
+                p.Output(bob, b => b.Address!.Index!.Id);
 
                 await connection.ExecuteAsync(@"
 SET @Occupation = 'grillmaster' 
@@ -522,8 +622,8 @@ SET @AddressIndexId = '01088'", p).ConfigureAwait(false);
             p.Output(bob, b => b.PersonId);
             p.Output(bob, b => b.Occupation);
             p.Output(bob, b => b.NumberOfLegs);
-            p.Output(bob, b => b.Address.Name);
-            p.Output(bob, b => b.Address.PersonId);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
 
             var result = (int)(await connection.ExecuteScalarAsync(@"
 SET @Occupation = 'grillmaster' 
@@ -531,7 +631,7 @@ SET @PersonId = @PersonId + 1
 SET @NumberOfLegs = @NumberOfLegs - 1
 SET @AddressName = 'bobs burgers'
 SET @AddressPersonId = @PersonId
-select 42", p).ConfigureAwait(false));
+select 42", p).ConfigureAwait(false))!;
 
             Assert.Equal("grillmaster", bob.Occupation);
             Assert.Equal(2, bob.PersonId);
@@ -550,8 +650,8 @@ select 42", p).ConfigureAwait(false));
             p.Output(bob, b => b.PersonId);
             p.Output(bob, b => b.Occupation);
             p.Output(bob, b => b.NumberOfLegs);
-            p.Output(bob, b => b.Address.Name);
-            p.Output(bob, b => b.Address.PersonId);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
 
             var result = (await connection.QueryAsync<int>(@"
 SET @Occupation = 'grillmaster' 
@@ -578,8 +678,8 @@ select 42", p).ConfigureAwait(false)).Single();
             p.Output(bob, b => b.PersonId);
             p.Output(bob, b => b.Occupation);
             p.Output(bob, b => b.NumberOfLegs);
-            p.Output(bob, b => b.Address.Name);
-            p.Output(bob, b => b.Address.PersonId);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
 
             var result = (await connection.QueryAsync<int>(new CommandDefinition(@"
 SET @Occupation = 'grillmaster' 
@@ -606,8 +706,8 @@ select 42", p, flags: CommandFlags.Buffered)).ConfigureAwait(false)).Single();
             p.Output(bob, b => b.PersonId);
             p.Output(bob, b => b.Occupation);
             p.Output(bob, b => b.NumberOfLegs);
-            p.Output(bob, b => b.Address.Name);
-            p.Output(bob, b => b.Address.PersonId);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
 
             var result = (await connection.QueryAsync<int>(new CommandDefinition(@"
 SET @Occupation = 'grillmaster' 
@@ -634,8 +734,8 @@ select 42", p, flags: CommandFlags.None)).ConfigureAwait(false)).Single();
             p.Output(bob, b => b.PersonId);
             p.Output(bob, b => b.Occupation);
             p.Output(bob, b => b.NumberOfLegs);
-            p.Output(bob, b => b.Address.Name);
-            p.Output(bob, b => b.Address.PersonId);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
 
             int x, y;
             using (var multi = await connection.QueryMultipleAsync(@"
@@ -695,10 +795,12 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             try
             {
                 var d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false);
+                Assert.NotNull(d);
                 Assert.Equal("Alf", d.Name);
                 Assert.Equal(1, d.Age);
                 connection.Execute("alter table #dog drop column Name");
                 d = await connection.QueryFirstOrDefaultAsync<Dog>("select * from #dog").ConfigureAwait(false);
+                Assert.NotNull(d);
                 Assert.Null(d.Name);
                 Assert.Equal(1, d.Age);
             }
@@ -769,6 +871,15 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                 var p = data[0];
                 Assert.Equal(1, p.Id);
                 Assert.Equal("Review Board 1", p.Name);
+                Assert.NotNull(p.User1);
+                Assert.NotNull(p.User2);
+                Assert.NotNull(p.User3);
+                Assert.NotNull(p.User4);
+                Assert.NotNull(p.User5);
+                Assert.NotNull(p.User6);
+                Assert.NotNull(p.User7);
+                Assert.NotNull(p.User8);
+                Assert.NotNull(p.User9);
                 Assert.Equal(1, p.User1.Id);
                 Assert.Equal(2, p.User2.Id);
                 Assert.Equal(3, p.User3.Id);
@@ -823,14 +934,12 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
         [Fact]
         public async Task Issue1281_DataReaderOutOfOrderAsync()
         {
-            using (var reader = await connection.ExecuteReaderAsync("Select 0, 1, 2").ConfigureAwait(false))
-            {
-                Assert.True(reader.Read());
-                Assert.Equal(2, reader.GetInt32(2));
-                Assert.Equal(0, reader.GetInt32(0));
-                Assert.Equal(1, reader.GetInt32(1));
-                Assert.False(reader.Read());
-            }
+            using var reader = await connection.ExecuteReaderAsync("Select 0, 1, 2").ConfigureAwait(false);
+            Assert.True(reader.Read());
+            Assert.Equal(2, reader.GetInt32(2));
+            Assert.Equal(0, reader.GetInt32(0));
+            Assert.Equal(1, reader.GetInt32(1));
+            Assert.False(reader.Read());
         }
 
         [Fact]
@@ -839,7 +948,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             try
             {
                 var data = (await connection.QueryAsync<int>("select 1 union all select 2; RAISERROR('after select', 16, 1);").ConfigureAwait(false)).ToList();
-                Assert.True(false, "Expected Exception");
+                Assert.Fail("Expected Exception");
             }
             catch (Exception ex) when (ex.GetType().Name == "SqlException" && ex.Message == "after select") { /* swallow only this */ }
         }
@@ -850,7 +959,7 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
     {
         private readonly ITestOutputHelper _log;
         public AsyncQueryCacheTests(ITestOutputHelper log) => _log = log;
-        private DbConnection _marsConnection;
+        private DbConnection? _marsConnection;
         private DbConnection MarsConnection => _marsConnection ??= Provider.GetOpenConnection(true);
 
         public override void Dispose()

@@ -9,7 +9,7 @@ using System.Linq;
 namespace Dapper.Tests.Performance
 {
     [Description("LINQ to SQL")]
-    public class Linq2SqlBenchmarks : BenchmarkBase
+    public class LinqToSqlBenchmarks : BenchmarkBase // note To not 2 because the "2" confuses BDN CLI
     {
         private DataClassesDataContext Linq2SqlContext;
 

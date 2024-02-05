@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Threading;
 
 namespace Dapper
 {
@@ -63,7 +64,9 @@ namespace Dapper
             public static void SetDefaults()
             {
                 CommandTimeout = null;
-                ApplyNullValues = false;
+                ApplyNullValues = PadListExpansions = UseIncrementalPseudoPositionalParameterNames = false;
+                AllowedCommandBehaviors = DefaultAllowedCommandBehaviors;
+                FetchSize = InListStringSplitCount = -1;
             }
 
             /// <summary>
@@ -106,6 +109,32 @@ namespace Dapper
             /// handling regardless of underlying RDBMS. See https://github.com/DapperLib/Dapper/issues/1871.
             /// </summary>
             public static bool ForceListExpansion { get; set; }
+
+            /// If assigned a non-negative value, then that value is applied to any commands <c>FetchSize</c> property, if it exists;
+            /// see https://docs.oracle.com/en/database/oracle/oracle-database/18/odpnt/CommandFetchSize.html; note that this value
+            /// can only be set globally - it is not intended for frequent/contextual changing.
+            /// </summary>
+            public static long FetchSize
+            {
+                get => Volatile.Read(ref s_FetchSize);
+                set
+                {
+                    if (Volatile.Read(ref s_FetchSize) != value)
+                    {
+                        Volatile.Write(ref s_FetchSize, value);
+                        CommandDefinition.ResetCommandInitCache(); // if this setting is useful: we've invalidated things
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Indicates whether single-character parameter tokens (<c>?</c> etc) will be detected and used where possible;
+            /// this feature is not recommended and will be disabled by default in future versions;
+            /// where possible, prefer named parameters (<c>@yourParam</c> etc) or Dapper's "pseudo-positional" parameters (<c>?yourParam? etc</c>).
+            /// </summary>
+            public static bool SupportLegacyParameterTokens { get; set; } = true;
+
+            private static long s_FetchSize = -1;
         }
     }
 }

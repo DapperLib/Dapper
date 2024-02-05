@@ -22,10 +22,10 @@ namespace Dapper
             return source.Task;
         }
 
-        private static void OnTaskCompleted<TFrom, TTo>(Task<TFrom> completedTask, object state)
+        private static void OnTaskCompleted<TFrom, TTo>(Task<TFrom> completedTask, object? state)
             where TFrom : TTo
         {
-            var source = (TaskCompletionSource<TTo>)state;
+            var source = (TaskCompletionSource<TTo>)state!;
 
             switch (completedTask.Status)
             {
@@ -36,7 +36,7 @@ namespace Dapper
                     source.SetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    source.SetException(completedTask.Exception.InnerExceptions);
+                    source.SetException(completedTask.Exception!.InnerExceptions);
                     break;
             }
         }
