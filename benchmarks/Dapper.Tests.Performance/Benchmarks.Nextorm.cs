@@ -12,10 +12,10 @@ namespace Dapper.Tests.Performance;
 public class NextormBenchmarks : BenchmarkBase
 {
     private NextormRepository _repository;
-    private QueryCommand<Post> _getPostByIdCompiled;
+    private IPreparedQueryCommand<Post> _getPostByIdPrepared;
     private QueryCommand<Post> _getPostById;
-    private QueryCommand<Post> _queryBufferedCompiled;
-    private QueryCommand<Post> _queryUnbufferedCompiled;
+    private IPreparedQueryCommand<Post> _queryBufferedPrepared;
+    private IPreparedQueryCommand<Post> _queryUnbufferedPrepared;
 
     [GlobalSetup]
     public void GlobalSetup() => Setup(false);
@@ -34,12 +34,12 @@ public class NextormBenchmarks : BenchmarkBase
         _repository = new NextormRepository(builder);
 
         var cmdBuilder = _repository.Posts.Where(it => it.Id == NORM.Param<int>(0));
-        _queryBufferedCompiled = cmdBuilder.ToCommand().Compile();
-        _queryUnbufferedCompiled = cmdBuilder.ToCommand().Compile(false);
+        _queryBufferedPrepared = cmdBuilder.ToCommand().Prepare();
+        _queryUnbufferedPrepared = cmdBuilder.ToCommand().Prepare(false);
         _getPostById = cmdBuilder.FirstOrFirstOrDefaultCommand();
-        _getPostByIdCompiled = _getPostById.Compile();
+        _getPostByIdPrepared = _getPostById.Prepare();
     }
-    [Benchmark(Description = "First")]
+    [Benchmark(Description = "QueryFirstOrDefault<T>")]
     public Post First()
     {
         Step();
@@ -55,45 +55,49 @@ public class NextormBenchmarks : BenchmarkBase
     public Post QueryUnbuffered()
     {
         Step();
-        return _repository.Posts.Where(it => it.Id == i).AsEnumerable().FirstOrDefault();
+        return _repository.Posts.Where(it => it.Id == i).ToEnumerable().FirstOrDefault();
     }
-    [Benchmark(Description = "First with param")]
+    [Benchmark(Description = "QueryFirstOrDefault<T> with param")]
     public Post FirstParam()
     {
         Step();
         return _getPostById.FirstOrDefault(i);
     }
 
-    [Benchmark(Description = "First compiled")]
-    public Post FirstCompiled()
+    [Benchmark(Description = "QueryFirstOrDefault<T> prepared")]
+    public Post FirstPrepared()
     {
         Step();
-        return _getPostByIdCompiled.FirstOrDefault(i);
+        return _getPostByIdPrepared.FirstOrDefault(_repository.DataContext, i);
     }
-    [Benchmark(Description = "Query<T> (compiled buffered)")]
-    public Post QueryBufferedCompiled()
+    [Benchmark(Description = "Query<T> (buffered prepared)")]
+    public Post QueryBufferedPrepared()
     {
         Step();
-        return _queryBufferedCompiled.ToList(i).FirstOrDefault();
+        return _queryBufferedPrepared.ToList(_repository.DataContext, i).FirstOrDefault();
     }
-    [Benchmark(Description = "Query<T> (compiled unbuffered)")]
-    public Post QueryUnbufferedCompiled()
+    [Benchmark(Description = "Query<T> (unbuffered prepared)")]
+    public Post QueryUnbufferedPrepared()
     {
         Step();
-        return _queryUnbufferedCompiled.AsEnumerable(i).FirstOrDefault();
+        return _queryUnbufferedPrepared.ToEnumerable(_repository.DataContext, i).FirstOrDefault();
     }
 }
 
 public class NextormRepository
 {
+    private readonly IDataContext _dataContext;
+
     public NextormRepository(DbContextBuilder builder) : this(builder.CreateDbContext())
     {
     }
     public NextormRepository(IDataContext dataContext)
     {
         Posts = dataContext.Create<Post>(config => config.Table("posts"));
+        _dataContext = dataContext;
     }
 
     public Entity<Post> Posts { get; set; }
+    public IDataContext DataContext => _dataContext;
 }
 #endif

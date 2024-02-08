@@ -38,7 +38,7 @@
       <PackageVersion Include="SqlMarshal" Version="0.4.4" />
       <PackageVersion Include="SubSonic" Version="3.0.0.4" />
       <PackageVersion Include="Susanoo.SqlServer" Version="1.2.4.2" />
-      <PackageVersion Include="System.Data.SqlClient" Version="4.8.5" />
+      <PackageVersion Include="System.Data.SqlClient" Version="4.8.6" />
       <PackageVersion Include="System.Data.SQLite" Version="1.0.118" />
       <PackageVersion Include="System.ValueTuple" Version="4.5.0" />
       <PackageVersion Include="xunit" Version="2.6.4" />

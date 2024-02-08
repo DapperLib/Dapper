@@ -49,7 +49,9 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Norm.net" />
-    <PackageReference Include="nextorm.sqlserver" />
+    <Reference Include="C:\Users\alexey.CORP\sources\repos\nextorm\nextorm.sqlserver\bin\Release\net8.0\nextorm.core.dll"/>
+    <Reference Include="C:\Users\alexey.CORP\sources\repos\nextorm\nextorm.sqlserver\bin\Release\net8.0\nextorm.sqlserver.dll"/>
+    <!-- <PackageReference Include="nextorm.sqlserver" /> -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" />
