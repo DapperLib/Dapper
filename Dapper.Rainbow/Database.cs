@@ -179,7 +179,7 @@ namespace Dapper
         /// <summary>
         /// Get access to the underlying transaction
         /// </summary>
-        public DbTransaction Transaction { get; }
+        public DbTransaction Transaction { get; private set; }
 
         /// <summary>
         /// Get underlying database connection.
