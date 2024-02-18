@@ -28,7 +28,7 @@ Package Purposes:
 * Dapper.EntityFramework.StrongName
   * Extension handlers for EntityFramework
 * Dapper.Rainbow
-  * Micro-ORM implemented on Dapper, provides CRUD helpers ([readme](Dapper.Rainbow\readme.md))
+  * Micro-ORM implemented on Dapper, provides CRUD helpers ([readme](Dapper.Rainbow/readme.md))
 * Dapper.SqlBuilder
   * Component for building SQL queries dynamically and composably
 
