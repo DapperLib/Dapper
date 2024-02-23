@@ -90,7 +90,7 @@ namespace Dapper.Tests
 
         protected DbConnection GetOpenConnection() => Provider.GetOpenConnection();
         protected DbConnection GetClosedConnection() => Provider.GetClosedConnection();
-        protected DbConnection? _connection;
+        private DbConnection? _connection;
         protected DbConnection connection => _connection ??= Provider.GetOpenConnection();
 
         public TProvider Provider { get; } = DatabaseProvider<TProvider>.Instance;
