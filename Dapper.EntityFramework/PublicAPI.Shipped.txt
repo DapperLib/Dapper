@@ -1,0 +1,13 @@
+﻿#nullable enable
+Dapper.EntityFramework.DbGeographyHandler
+Dapper.EntityFramework.DbGeographyHandler.DbGeographyHandler() -> void
+Dapper.EntityFramework.DbGeometryHandler
+Dapper.EntityFramework.DbGeometryHandler.DbGeometryHandler() -> void
+Dapper.EntityFramework.Handlers
+override Dapper.EntityFramework.DbGeographyHandler.Parse(object? value) -> System.Data.Entity.Spatial.DbGeography?
+override Dapper.EntityFramework.DbGeographyHandler.SetValue(System.Data.IDbDataParameter! parameter, System.Data.Entity.Spatial.DbGeography? value) -> void
+override Dapper.EntityFramework.DbGeometryHandler.Parse(object? value) -> System.Data.Entity.Spatial.DbGeometry?
+override Dapper.EntityFramework.DbGeometryHandler.SetValue(System.Data.IDbDataParameter! parameter, System.Data.Entity.Spatial.DbGeometry? value) -> void
+static Dapper.EntityFramework.Handlers.Register() -> void
+static readonly Dapper.EntityFramework.DbGeographyHandler.Default -> Dapper.EntityFramework.DbGeographyHandler!
+static readonly Dapper.EntityFramework.DbGeometryHandler.Default -> Dapper.EntityFramework.DbGeometryHandler!

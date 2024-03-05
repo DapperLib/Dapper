@@ -35,9 +35,9 @@ namespace Dapper
             command.Parameters.Add(param);
         }
 
-        internal static void Set(IDbDataParameter parameter, IEnumerable<T> data, string typeName)
+        internal static void Set(IDbDataParameter parameter, IEnumerable<T>? data, string? typeName)
         {
-            parameter.Value = data != null && data.Any() ? data : null;
+            parameter.Value = data is not null && data.Any() ? data : null;
             StructuredHelper.ConfigureTVP(parameter, typeName);
         }
     }
@@ -46,16 +46,16 @@ namespace Dapper
         private static readonly Hashtable s_udt = new Hashtable(), s_tvp = new Hashtable();
 
         private static Action<IDbDataParameter, string> GetUDT(Type type)
-            => (Action<IDbDataParameter, string>)s_udt[type] ?? SlowGetHelper(type, s_udt, "UdtTypeName", 29); // 29 = SqlDbType.Udt (avoiding ref)
-        private static Action<IDbDataParameter, string> GetTVP(Type type)
-            => (Action<IDbDataParameter, string>)s_tvp[type] ?? SlowGetHelper(type, s_tvp, "TypeName", 30); // 30 = SqlDbType.Structured (avoiding ref)
+            => (Action<IDbDataParameter, string?>?)s_udt[type] ?? SlowGetHelper(type, s_udt, "UdtTypeName", 29); // 29 = SqlDbType.Udt (avoiding ref)
+        private static Action<IDbDataParameter, string?> GetTVP(Type type)
+            => (Action<IDbDataParameter, string?>?)s_tvp[type] ?? SlowGetHelper(type, s_tvp, "TypeName", 30); // 30 = SqlDbType.Structured (avoiding ref)
 
-        static Action<IDbDataParameter, string> SlowGetHelper(Type type, Hashtable hashtable, string nameProperty, int sqlDbType)
+        static Action<IDbDataParameter, string?> SlowGetHelper(Type type, Hashtable hashtable, string nameProperty, int sqlDbType)
         {
             lock (hashtable)
             {
-                var helper = (Action<IDbDataParameter, string>)hashtable[type];
-                if (helper == null)
+                var helper = (Action<IDbDataParameter, string?>?)hashtable[type];
+                if (helper is null)
                 {
                     helper = CreateFor(type, nameProperty, sqlDbType);
                     hashtable.Add(type, helper);
@@ -64,16 +64,16 @@ namespace Dapper
             }
         }
 
-        static Action<IDbDataParameter, string> CreateFor(Type type, string nameProperty, int sqlDbType)
+        static Action<IDbDataParameter, string?> CreateFor(Type type, string nameProperty, int sqlDbType)
         {
             var name = type.GetProperty(nameProperty, BindingFlags.Public | BindingFlags.Instance);
-            if (name == null || !name.CanWrite)
+            if (name is null || !name.CanWrite)
             {
                 return (p, n) => { };
             }
 
             var dbType = type.GetProperty("SqlDbType", BindingFlags.Public | BindingFlags.Instance);
-            if (dbType != null && !dbType.CanWrite) dbType = null;
+            if (dbType is not null && !dbType.CanWrite) dbType = null;
 
             var dm = new DynamicMethod(nameof(CreateFor) + "_" + type.Name, null,
                 new[] { typeof(IDbDataParameter), typeof(string) }, true);
@@ -81,18 +81,18 @@ namespace Dapper
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Castclass, type);
             il.Emit(OpCodes.Ldarg_1);
-            il.EmitCall(OpCodes.Callvirt, name.GetSetMethod(), null);
+            il.EmitCall(OpCodes.Callvirt, name.GetSetMethod()!, null);
 
-            if (dbType != null)
+            if (dbType is not null)
             {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Castclass, type);
                 il.Emit(OpCodes.Ldc_I4, sqlDbType);
-                il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod(), null);
+                il.EmitCall(OpCodes.Callvirt, dbType.GetSetMethod()!, null);
             }
 
             il.Emit(OpCodes.Ret);
-            return (Action<IDbDataParameter, string>)dm.CreateDelegate(typeof(Action<IDbDataParameter, string>));
+            return (Action<IDbDataParameter, string?>)dm.CreateDelegate(typeof(Action<IDbDataParameter, string?>));
 
         }
 
@@ -100,7 +100,7 @@ namespace Dapper
         // would be a fair option otherwise
         internal static void ConfigureUDT(IDbDataParameter parameter, string typeName)
             => GetUDT(parameter.GetType())(parameter, typeName);
-        internal static void ConfigureTVP(IDbDataParameter parameter, string typeName)
+        internal static void ConfigureTVP(IDbDataParameter parameter, string? typeName)
             => GetTVP(parameter.GetType())(parameter, typeName);
     }
 }

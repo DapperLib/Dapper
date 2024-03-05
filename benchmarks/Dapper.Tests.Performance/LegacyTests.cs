@@ -128,6 +128,7 @@ namespace Dapper.Tests.Performance
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1806:Do not ignore method results", Justification = "Intentional - just make sure we have something")]
         public async Task RunAsync(int iterations)
         {
             using (var connection = GetOpenConnection())

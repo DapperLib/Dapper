@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 
 namespace Dapper
 {
     public static partial class SqlMapper
     {
-        private struct DeserializerState
+        private readonly struct DeserializerState
         {
             public readonly int Hash;
-            public readonly Func<IDataReader, object> Func;
+            public readonly Func<DbDataReader, object> Func;
 
-            public DeserializerState(int hash, Func<IDataReader, object> func)
+            public DeserializerState(int hash, Func<DbDataReader, object> func)
             {
                 Hash = hash;
                 Func = func;

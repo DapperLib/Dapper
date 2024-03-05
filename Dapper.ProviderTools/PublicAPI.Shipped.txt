@@ -1,0 +1,30 @@
+﻿#nullable enable
+abstract Dapper.ProviderTools.BulkCopy.AddColumnMapping(int sourceColumn, int destinationColumn) -> void
+abstract Dapper.ProviderTools.BulkCopy.AddColumnMapping(string! sourceColumn, string! destinationColumn) -> void
+abstract Dapper.ProviderTools.BulkCopy.DestinationTableName.get -> string!
+abstract Dapper.ProviderTools.BulkCopy.DestinationTableName.set -> void
+abstract Dapper.ProviderTools.BulkCopy.Dispose(bool disposing) -> void
+abstract Dapper.ProviderTools.BulkCopy.Wrapped.get -> object!
+abstract Dapper.ProviderTools.BulkCopy.WriteToServer(System.Data.DataRow![]! source) -> void
+abstract Dapper.ProviderTools.BulkCopy.WriteToServer(System.Data.DataTable! source) -> void
+abstract Dapper.ProviderTools.BulkCopy.WriteToServer(System.Data.IDataReader! source) -> void
+abstract Dapper.ProviderTools.BulkCopy.WriteToServerAsync(System.Data.Common.DbDataReader! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+abstract Dapper.ProviderTools.BulkCopy.WriteToServerAsync(System.Data.DataRow![]! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+abstract Dapper.ProviderTools.BulkCopy.WriteToServerAsync(System.Data.DataTable! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Dapper.ProviderTools.BulkCopy
+Dapper.ProviderTools.BulkCopy.BatchSize.get -> int
+Dapper.ProviderTools.BulkCopy.BatchSize.set -> void
+Dapper.ProviderTools.BulkCopy.BulkCopy() -> void
+Dapper.ProviderTools.BulkCopy.BulkCopyTimeout.get -> int
+Dapper.ProviderTools.BulkCopy.BulkCopyTimeout.set -> void
+Dapper.ProviderTools.BulkCopy.Dispose() -> void
+Dapper.ProviderTools.BulkCopy.EnableStreaming.get -> bool
+Dapper.ProviderTools.BulkCopy.EnableStreaming.set -> void
+Dapper.ProviderTools.DbConnectionExtensions
+Dapper.ProviderTools.DbExceptionExtensions
+static Dapper.ProviderTools.BulkCopy.Create(System.Data.Common.DbConnection! connection) -> Dapper.ProviderTools.BulkCopy!
+static Dapper.ProviderTools.BulkCopy.TryCreate(System.Data.Common.DbConnection! connection) -> Dapper.ProviderTools.BulkCopy?
+static Dapper.ProviderTools.DbConnectionExtensions.TryClearAllPools(this System.Data.Common.DbConnection! connection) -> bool
+static Dapper.ProviderTools.DbConnectionExtensions.TryClearPool(this System.Data.Common.DbConnection! connection) -> bool
+static Dapper.ProviderTools.DbConnectionExtensions.TryGetClientConnectionId(this System.Data.Common.DbConnection! connection, out System.Guid clientConnectionId) -> bool
+static Dapper.ProviderTools.DbExceptionExtensions.IsNumber(this System.Data.Common.DbException! exception, int number) -> bool

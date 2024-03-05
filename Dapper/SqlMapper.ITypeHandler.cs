@@ -23,7 +23,7 @@ namespace Dapper
             /// <param name="value">The value from the database</param>
             /// <param name="destinationType">The type to parse to</param>
             /// <returns>The typed value</returns>
-            object Parse(Type destinationType, object value);
+            object? Parse(Type destinationType, object value);
         }
     }
 }

@@ -23,7 +23,7 @@ namespace Dapper.Tests
 
         public DbConnection GetOpenConnection()
         {
-            var conn = Factory.CreateConnection();
+            var conn = Factory.CreateConnection()!;
             conn.ConnectionString = GetConnectionString();
             conn.Open();
             if (conn.State != ConnectionState.Open) throw new InvalidOperationException("should be open!");
@@ -32,7 +32,7 @@ namespace Dapper.Tests
 
         public DbConnection GetClosedConnection()
         {
-            var conn = Factory.CreateConnection();
+            var conn = Factory.CreateConnection()!;
             conn.ConnectionString = GetConnectionString();
             if (conn.State != ConnectionState.Closed) throw new InvalidOperationException("should be closed!");
             return conn;
@@ -40,7 +40,7 @@ namespace Dapper.Tests
 
         public DbParameter CreateRawParameter(string name, object value)
         {
-            var p = Factory.CreateParameter();
+            var p = Factory.CreateParameter()!;
             p.ParameterName = name;
             p.Value = value ?? DBNull.Value;
             return p;
@@ -49,18 +49,24 @@ namespace Dapper.Tests
 
     public abstract class SqlServerDatabaseProvider : DatabaseProvider
     {
-        public override string GetConnectionString() => 
-            GetConnectionString("SqlServerConnectionString", "Data Source=.;Initial Catalog=tempdb;Integrated Security=True");
+        public override string GetConnectionString() => GetConnectionString(false);
+
+        private string GetConnectionString(bool mars)
+        {
+            var builder = Factory.CreateConnectionStringBuilder()!;
+            builder.ConnectionString = GetConnectionString("SqlServerConnectionString", "Data Source=.;Initial Catalog=tempdb;Integrated Security=True");
+            builder["TrustServerCertificate"] = true;
+            if (mars)
+            {
+                ((dynamic)builder).MultipleActiveResultSets = true;
+            }
+            return builder.ConnectionString;
+        }
 
         public DbConnection GetOpenConnection(bool mars)
         {
-            if (!mars) return GetOpenConnection();
-
-            var scsb = Factory.CreateConnectionStringBuilder();
-            scsb.ConnectionString = GetConnectionString();
-            ((dynamic)scsb).MultipleActiveResultSets = true;
-            var conn = Factory.CreateConnection();
-            conn.ConnectionString = scsb.ConnectionString;
+            var conn = Factory.CreateConnection()!;
+            conn.ConnectionString = GetConnectionString(mars);
             conn.Open();
             if (conn.State != ConnectionState.Open) throw new InvalidOperationException("should be open!");
             return conn;
@@ -84,7 +90,7 @@ namespace Dapper.Tests
 
         protected DbConnection GetOpenConnection() => Provider.GetOpenConnection();
         protected DbConnection GetClosedConnection() => Provider.GetClosedConnection();
-        protected DbConnection _connection;
+        protected DbConnection? _connection;
         protected DbConnection connection => _connection ??= Provider.GetOpenConnection();
 
         public TProvider Provider { get; } = DatabaseProvider<TProvider>.Instance;

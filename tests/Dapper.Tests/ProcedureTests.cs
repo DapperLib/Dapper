@@ -92,6 +92,26 @@ namespace Dapper.Tests
             Assert.Equal("Completed successfully", p.Get<string>("ErrorDescription"));
         }
 
+        [Theory]
+        [InlineData(CommandType.StoredProcedure)]
+        [InlineData(null)] // auto
+        public void InferProcedure(CommandType? commandType)
+        {
+            connection.Execute("CREATE PROCEDURE #InferProcedure @id int AS BEGIN SELECT -@id END");
+            var result = connection.QuerySingle<int>("#InferProcedure", new { id = 42 }, commandType: commandType);
+            Assert.Equal(-42, result);
+        }
+
+        [Theory]
+        [InlineData(CommandType.Text)]
+        [InlineData(null)] // auto
+        public void InferNotProcedure(CommandType? commandType)
+        {
+            connection.Execute("CREATE PROCEDURE #InferNotProcedure @id int AS BEGIN SELECT -@id END");
+            var result = connection.QuerySingle<int>("EXEC #InferNotProcedure @id", new { id = 42 }, commandType: commandType);
+            Assert.Equal(-42, result);
+        }
+
         [Fact]
         public void SO24605346_ProcsAndStrings()
         {
@@ -106,14 +126,15 @@ namespace Dapper.Tests
                 TaxInvoiceNumber = InvoiceNumber
             }, commandType: CommandType.StoredProcedure).FirstOrDefault();
 
+            Assert.NotNull(result);
             Assert.Equal("INV0000000028PPN", result.TaxInvoiceNumber);
         }
 
         private class PracticeRebateOrders
         {
-            public string fTaxInvoiceNumber;
+            public string? fTaxInvoiceNumber;
             [System.Xml.Serialization.XmlElement(Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
-            public string TaxInvoiceNumber
+            public string? TaxInvoiceNumber
             {
                 get { return fTaxInvoiceNumber; }
                 set { fTaxInvoiceNumber = value; }
@@ -139,14 +160,14 @@ namespace Dapper.Tests
         private class Issue327_Person
         {
             public int Id { get; set; }
-            public string Name { get; set; }
+            public string? Name { get; set; }
         }
 
         private class Issue327_Magic
         {
-            public string Creature { get; set; }
-            public string SpiritAnimal { get; set; }
-            public string Location { get; set; }
+            public string? Creature { get; set; }
+            public string? SpiritAnimal { get; set; }
+            public string? Location { get; set; }
         }
 
         [Fact]
@@ -197,7 +218,7 @@ namespace Dapper.Tests
         {
             const string tempSPName = "#" + nameof(TestDateTime2PrecisionPreservedInDynamicParameters);
 
-            DateTime datetimeDefault = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime datetimeDefault = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime datetime2 = datetimeDefault.AddTicks(1); // Add 100 ns
 
             Assert.True(datetimeDefault < datetime2);
@@ -231,7 +252,7 @@ namespace Dapper.Tests
         {
             const string tempSPName = "#" + nameof(TestDateTime2LosePrecisionInDynamicParameters);
 
-            DateTime datetimeDefault = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime datetimeDefault = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime datetime2 = datetimeDefault.AddTicks(1); // Add 100 ns
 
             Assert.True(datetimeDefault < datetime2);
@@ -280,6 +301,45 @@ namespace Dapper.Tests
             exec {tempSPName}");
 
             Assert.Empty(result);
+        }
+
+        [Theory]
+        [InlineData(" ")]
+        [InlineData("\u00A0")] // nbsp
+        [InlineData("\u202F")] // narrow nbsp
+        [InlineData("\u2000")] // n quad
+        [InlineData("\t")]
+        [InlineData("\r")]
+        [InlineData("\n")]
+        public async Task Issue1986_AutoProc_Whitespace(string space)
+        {
+            var sql = "select!42".Replace("!", space);
+            var result = await connection.QuerySingleAsync<int>(sql);
+            Assert.Equal(42, result);
+        }
+
+        [Theory]
+        [InlineData("foo", CommandType.StoredProcedure)]
+        [InlineData("foo;", CommandType.Text)]
+        [InlineData("foo bar", CommandType.Text)]
+        [InlineData("foo bar;", CommandType.Text)]
+        [InlineData("vacuum", CommandType.Text)]
+        [InlineData("vacuum;", CommandType.Text)]
+        [InlineData("FOO", CommandType.StoredProcedure)]
+        [InlineData("FOO;", CommandType.Text)]
+        [InlineData("FOO BAR", CommandType.Text)]
+        [InlineData("FOO BAR;", CommandType.Text)]
+        [InlineData("VACUUM", CommandType.Text)]
+        [InlineData("VACUUM;", CommandType.Text)]
+        [InlineData("cOmmiT", CommandType.Text)]
+        [InlineData("rOllbAck", CommandType.Text)]
+
+        // comments imply text
+        [InlineData("foo--bar", CommandType.Text)]
+        [InlineData("foo/*bar*/", CommandType.Text)]
+        public void InferCommandType(string sql, CommandType commandType)
+        {
+            Assert.Equal(commandType, CommandDefinition.InferCommandType(sql));
         }
     }
 }

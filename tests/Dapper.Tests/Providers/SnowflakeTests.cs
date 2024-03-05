@@ -10,7 +10,7 @@ namespace Dapper.Tests
 {
     public class SnowflakeTests
     {
-        static readonly string s_ConnectionString;
+        static readonly string? s_ConnectionString;
         static SnowflakeTests()
         {
             SqlMapper.Settings.UseIncrementalPseudoPositionalParameterNames = true;
@@ -77,9 +77,9 @@ namespace Dapper.Tests
         public class Nation
         {
             public int N_NATIONKEY { get; set; }
-            public string N_NAME{ get; set; }
+            public string? N_NAME{ get; set; }
             public int N_REGIONKEY { get; set; }
-            public string N_COMMENT { get; set; }
+            public string? N_COMMENT { get; set; }
         }
     }
 }

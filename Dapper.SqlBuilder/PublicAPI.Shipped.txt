@@ -1,0 +1,22 @@
+﻿#nullable enable
+Dapper.SqlBuilder
+Dapper.SqlBuilder.AddClause(string! name, string! sql, object? parameters, string! joiner, string! prefix = "", string! postfix = "", bool isInclusive = false) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.AddParameters(dynamic! parameters) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.AddTemplate(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder.Template!
+Dapper.SqlBuilder.GroupBy(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.Having(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.InnerJoin(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.Intersect(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.Join(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.LeftJoin(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.OrderBy(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.OrWhere(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.RightJoin(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.Select(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.Set(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
+Dapper.SqlBuilder.SqlBuilder() -> void
+Dapper.SqlBuilder.Template
+Dapper.SqlBuilder.Template.Parameters.get -> object?
+Dapper.SqlBuilder.Template.RawSql.get -> string!
+Dapper.SqlBuilder.Template.Template(Dapper.SqlBuilder! builder, string! sql, dynamic? parameters) -> void
+Dapper.SqlBuilder.Where(string! sql, dynamic? parameters = null) -> Dapper.SqlBuilder!
