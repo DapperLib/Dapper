@@ -265,7 +265,7 @@ namespace Dapper.Tests
             await TestExceptionsAsync<int>(
                 connection,
                 "Select null as Foo",
-                "Error parsing column 0 (Foo=<null>)");
+                "Error parsing column 0 (Foo=n/a - Null object cannot be converted to a value type.)");
             // Incompatible value throws (testing unnamed column bits here too)
             await TestExceptionsAsync<int>(
                 connection,

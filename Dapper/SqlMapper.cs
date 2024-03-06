@@ -192,7 +192,9 @@ namespace Dapper
             public bool Equals(TypeMapEntry other) => other.DbType == DbType && other.Flags == Flags;
             public static readonly TypeMapEntry
                 DoNotSet = new((DbType)(-2), TypeMapEntryFlags.None),
-                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
+                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue),
+                StringFieldValue = new(DbType.String, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue),
+                BinaryFieldValue = new(DbType.Binary, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
 
             public static implicit operator TypeMapEntry(DbType dbType)
                 => new(dbType, TypeMapEntryFlags.SetType);
@@ -214,13 +216,13 @@ namespace Dapper
                 [typeof(double)] = DbType.Double,
                 [typeof(decimal)] = DbType.Decimal,
                 [typeof(bool)] = DbType.Boolean,
-                [typeof(string)] = DbType.String,
+                [typeof(string)] = TypeMapEntry.StringFieldValue,
                 [typeof(char)] = DbType.StringFixedLength,
                 [typeof(Guid)] = DbType.Guid,
                 [typeof(DateTime)] = TypeMapEntry.DoNotSet,
                 [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
                 [typeof(TimeSpan)] = TypeMapEntry.DoNotSet,
-                [typeof(byte[])] = DbType.Binary,
+                [typeof(byte[])] = TypeMapEntry.BinaryFieldValue,
                 [typeof(byte?)] = DbType.Byte,
                 [typeof(sbyte?)] = DbType.SByte,
                 [typeof(short?)] = DbType.Int16,
@@ -3905,7 +3907,11 @@ namespace Dapper
                     }
                     try
                     {
-                        if (value is null || value is DBNull)
+                        if (value is null && ex is InvalidCastException)
+                        {
+                            formattedValue = "n/a - " + ex.Message; // provide some context
+                        }
+                        else if (value is null || value is DBNull)
                         {
                             formattedValue = "<null>";
                         }
