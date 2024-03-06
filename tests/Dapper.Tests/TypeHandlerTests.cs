@@ -28,12 +28,12 @@ namespace Dapper.Tests
 
             SqlMapper.PurgeQueryCache();
 
-            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString, true); // Change Default String Handling to AnsiString
             var result02 = connection.Query<string>(sql, param).FirstOrDefault();
             Assert.Equal("varchar", result02);
 
             SqlMapper.PurgeQueryCache();
-            SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+            SqlMapper.AddTypeMap(typeof(string), DbType.String, true);  // Restore Default to Unicode String
         }
 
         [Fact]
@@ -47,12 +47,12 @@ namespace Dapper.Tests
 
             SqlMapper.PurgeQueryCache();
 
-            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString);   // Change Default String Handling to AnsiString
+            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString, true); // Change Default String Handling to AnsiString
             var result02 = connection.QueryFirstOrDefault<string>(sql, param);
             Assert.Equal("varchar", result02);
 
             SqlMapper.PurgeQueryCache();
-            SqlMapper.AddTypeMap(typeof(string), DbType.String);  // Restore Default to Unicode String
+            SqlMapper.AddTypeMap(typeof(string), DbType.String, true);  // Restore Default to Unicode String
         }
 
         [Fact]
