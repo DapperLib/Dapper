@@ -3907,7 +3907,11 @@ namespace Dapper
                     }
                     try
                     {
-                        if (value is null || value is DBNull)
+                        if (value is null && ex is InvalidCastException)
+                        {
+                            formattedValue = "n/a - " + ex.Message; // provide some context
+                        }
+                        else if (value is null || value is DBNull)
                         {
                             formattedValue = "<null>";
                         }
