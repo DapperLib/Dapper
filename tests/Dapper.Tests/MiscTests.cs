@@ -1345,7 +1345,7 @@ insert TPTable (Value) values (2), (568)");
 
         private class Issue1164Object<T>
         {
-            public T Value;
+            public T Value = default!;
         }
 
         internal record struct One(int OID);
