@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Xunit;
 
@@ -1134,6 +1135,32 @@ select 42", p, buffered: true).Single();
                 Assert.Equal(2, bob.Address.PersonId);
                 Assert.Equal(42, result);
             }
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(9)]
+        [InlineData(10)]
+        [InlineData(11)]
+        [InlineData(150)]
+        [InlineData(1500)]
+
+        public void DynamicParameterNumber(int count)
+        {
+            // checking no oddities adding different numbers of dynamic parameters
+            int expected = 0;
+            var sql = new StringBuilder("select 0");
+            var args = new DynamicParameters();
+            for (int i = 1; i <= count; i++)
+            {
+                expected += i;
+                sql.Append("+@a").Append(i);
+                args.Add("a" + i, i);
+            }
+            var actual = connection.QuerySingle<int>(sql.ToString(), args);
+            Assert.Equal(expected, actual);
         }
 
         [Fact]

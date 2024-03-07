@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -223,9 +222,50 @@ namespace Dapper
                 }
             }
 
-            HashSet<string> addedParameters = new HashSet<string>(command.Parameters.Cast<IDbDataParameter>()
-                .Select(x => x.ParameterName), comparer: StringComparer.CurrentCultureIgnoreCase);
+            static IDbDataParameter GetOrAdd(IDbCommand command, string name, ref Dictionary<string, IDbDataParameter>? lookup)
+            {
+                IDbDataParameter p;
+                if (lookup is null && command.Parameters.Count <= 10)
+                {
+                    // don't pay dictionary overhead for small collections
+                    if (command.Parameters.Contains(name))
+                    {
+                        // already exists
+                        p = (IDbDataParameter)command.Parameters[name];
+                    }
+                    else
+                    {
+                        // new
+                        p = command.CreateParameter();
+                        p.ParameterName = name;
+                        command.Parameters.Add(p);
+                    }
+                }
+                else
+                {
+                    if (lookup is null)
+                    {
+                        // build the initial map
+                        lookup = new Dictionary<string, IDbDataParameter>(command.Parameters.Count + 10, StringComparer.CurrentCultureIgnoreCase);
+                        foreach (IDbDataParameter existing in command.Parameters)
+                        {
+                            lookup[existing.ParameterName] = existing;
+                        }
+                    }
 
+                    // add if necessary
+                    if (!lookup.TryGetValue(name, out p!))
+                    {
+                        p = command.CreateParameter();
+                        p.ParameterName = name;
+                        lookup.Add(name, p);
+                        command.Parameters.Add(p);
+                    }
+                }
+                return p;
+            }
+            
+            Dictionary<string, IDbDataParameter>? paramLookup = null;
             foreach (var param in parameters.Values)
             {
                 if (param.CameFromTemplate) continue;
@@ -254,17 +294,7 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add = !addedParameters.Contains(name);
-                    IDbDataParameter p;
-                    if (add)
-                    {
-                        p = command.CreateParameter();
-                        p.ParameterName = name;
-                    }
-                    else
-                    {
-                        p = (IDbDataParameter)command.Parameters[name];
-                    }
+                    var p = GetOrAdd(command, name, ref paramLookup);
 
                     p.Direction = param.ParameterDirection;
                     if (handler is null)
@@ -294,14 +324,8 @@ namespace Dapper
                         handler.SetValue(p, val ?? DBNull.Value);
                     }
 
-                    if (add)
-                    {
-                        command.Parameters.Add(p);
-                    }
                     param.AttachedParam = p;
                 }
-
-                addedParameters.Add(name);
             }
 
             // note: most non-privileged implementations would use: this.ReplaceLiterals(command);
