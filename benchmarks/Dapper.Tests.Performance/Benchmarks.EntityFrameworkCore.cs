@@ -3,6 +3,7 @@ using Dapper.Tests.Performance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel;
+using System.Data.SqlClient;
 using System.Linq;
 
 namespace Dapper.Tests.Performance
@@ -19,7 +20,8 @@ namespace Dapper.Tests.Performance
         public void Setup()
         {
             BaseSetup();
-            Context = new EFCoreContext(ConnectionString);
+            var connBuilder = new SqlConnectionStringBuilder(ConnectionString) { TrustServerCertificate = true };
+            Context = new EFCoreContext(connBuilder.ConnectionString);
         }
 
         [Benchmark(Description = "First")]
