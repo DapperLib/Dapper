@@ -59,7 +59,7 @@ namespace Dapper.Tests
         public void TestCustomTypeMap()
         {
             // default mapping
-            var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            var item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B, 'CVal' as C").Single();
             Assert.Equal("AVal", item.A);
             Assert.Equal("BVal", item.B);
 
@@ -68,13 +68,13 @@ namespace Dapper.Tests
                 (type, columnName) => type.GetProperties().FirstOrDefault(prop => GetDescriptionFromAttribute(prop) == columnName)!);
             SqlMapper.SetTypeMap(typeof(TypeWithMapping), map);
 
-            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B, 'CVal' as C").Single();
             Assert.Equal("BVal", item.A);
             Assert.Equal("AVal", item.B);
 
             // reset to default
             SqlMapper.SetTypeMap(typeof(TypeWithMapping), null);
-            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B").Single();
+            item = connection.Query<TypeWithMapping>("Select 'AVal' as A, 'BVal' as B, 'CVal' as C").Single();
             Assert.Equal("AVal", item.A);
             Assert.Equal("BVal", item.B);
         }
