@@ -8,7 +8,7 @@ namespace Dapper
     internal sealed class TableValuedParameter : SqlMapper.ICustomQueryParameter
     {
         private readonly DataTable table;
-        private readonly string typeName;
+        private readonly string? typeName;
 
         /// <summary>
         /// Create a new instance of <see cref="TableValuedParameter"/>.
@@ -21,7 +21,7 @@ namespace Dapper
         /// </summary>
         /// <param name="table">The <see cref="DataTable"/> to create this parameter for.</param>
         /// <param name="typeName">The name of the type this parameter is for.</param>
-        public TableValuedParameter(DataTable table, string typeName)
+        public TableValuedParameter(DataTable table, string? typeName)
         {
             this.table = table;
             this.typeName = typeName;
@@ -35,12 +35,12 @@ namespace Dapper
             command.Parameters.Add(param);
         }
 
-        internal static void Set(IDbDataParameter parameter, DataTable table, string typeName)
+        internal static void Set(IDbDataParameter parameter, DataTable? table, string? typeName)
         {
 #pragma warning disable 0618
             parameter.Value = SqlMapper.SanitizeParameterValue(table);
 #pragma warning restore 0618
-            if (string.IsNullOrEmpty(typeName) && table != null)
+            if (string.IsNullOrEmpty(typeName) && table is not null)
             {
                 typeName = table.GetTypeName();
             }

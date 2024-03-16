@@ -8,13 +8,13 @@ namespace Dapper
     public static partial class SqlMapper
     {
         private sealed partial class DapperRow
-            : IDictionary<string, object>
-            , IReadOnlyDictionary<string, object>
+            : IDictionary<string, object?>
+            , IReadOnlyDictionary<string, object?>
         {
             private readonly DapperTable table;
-            private object[] values;
+            private object?[] values;
 
-            public DapperRow(DapperTable table, object[] values)
+            public DapperRow(DapperTable table, object?[] values)
             {
                 this.table = table ?? throw new ArgumentNullException(nameof(table));
                 this.values = values ?? throw new ArgumentNullException(nameof(values));
@@ -26,7 +26,7 @@ namespace Dapper
                 private DeadValue() { /* hiding constructor */ }
             }
 
-            int ICollection<KeyValuePair<string, object>>.Count
+            int ICollection<KeyValuePair<string, object?>>.Count
             {
                 get
                 {
@@ -39,10 +39,10 @@ namespace Dapper
                 }
             }
 
-            public bool TryGetValue(string key, out object value)
+            public bool TryGetValue(string key, out object? value)
                 => TryGetValue(table.IndexOfName(key), out value);
 
-            internal bool TryGetValue(int index, out object value)
+            internal bool TryGetValue(int index, out object? value)
             {
                 if (index < 0)
                 { // doesn't exist
@@ -66,7 +66,7 @@ namespace Dapper
                 {
                     var value = kv.Value;
                     sb.Append(", ").Append(kv.Key);
-                    if (value != null)
+                    if (value is not null)
                     {
                         sb.Append(" = '").Append(kv.Value).Append('\'');
                     }
@@ -79,15 +79,15 @@ namespace Dapper
                 return sb.Append('}').ToStringRecycle();
             }
 
-            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
             {
                 var names = table.FieldNames;
                 for (var i = 0; i < names.Length; i++)
                 {
-                    object value = i < values.Length ? values[i] : null;
+                    object? value = i < values.Length ? values[i] : null!;
                     if (!(value is DeadValue))
                     {
-                        yield return new KeyValuePair<string, object>(names[i], value);
+                        yield return new KeyValuePair<string, object?>(names[i], value);
                     }
                 }
             }
@@ -99,24 +99,24 @@ namespace Dapper
 
             #region Implementation of ICollection<KeyValuePair<string,object>>
 
-            void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
+            void ICollection<KeyValuePair<string, object?>>.Add(KeyValuePair<string, object?> item)
             {
-                IDictionary<string, object> dic = this;
+                IDictionary<string, object?> dic = this;
                 dic.Add(item.Key, item.Value);
             }
 
-            void ICollection<KeyValuePair<string, object>>.Clear()
+            void ICollection<KeyValuePair<string, object?>>.Clear()
             { // removes values for **this row**, but doesn't change the fundamental table
                 for (int i = 0; i < values.Length; i++)
                     values[i] = DeadValue.Default;
             }
 
-            bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
+            bool ICollection<KeyValuePair<string, object?>>.Contains(KeyValuePair<string, object?> item)
             {
-                return TryGetValue(item.Key, out object value) && Equals(value, item.Value);
+                return TryGetValue(item.Key, out object? value) && Equals(value, item.Value);
             }
 
-            void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
+            void ICollection<KeyValuePair<string, object?>>.CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
             {
                 foreach (var kv in this)
                 {
@@ -124,30 +124,30 @@ namespace Dapper
                 }
             }
 
-            bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
+            bool ICollection<KeyValuePair<string, object?>>.Remove(KeyValuePair<string, object?> item)
             {
-                IDictionary<string, object> dic = this;
+                IDictionary<string, object?> dic = this;
                 return dic.Remove(item.Key);
             }
 
-            bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+            bool ICollection<KeyValuePair<string, object?>>.IsReadOnly => false;
             #endregion
 
             #region Implementation of IDictionary<string,object>
 
-            bool IDictionary<string, object>.ContainsKey(string key)
+            bool IDictionary<string, object?>.ContainsKey(string key)
             {
                 int index = table.IndexOfName(key);
                 if (index < 0 || index >= values.Length || values[index] is DeadValue) return false;
                 return true;
             }
 
-            void IDictionary<string, object>.Add(string key, object value)
+            void IDictionary<string, object?>.Add(string key, object? value)
             {
                 SetValue(key, value, true);
             }
 
-            bool IDictionary<string, object>.Remove(string key)
+            bool IDictionary<string, object?>.Remove(string key)
                 => Remove(table.IndexOfName(key));
 
             internal bool Remove(int index)
@@ -157,20 +157,20 @@ namespace Dapper
                 return true;
             }
 
-            object IDictionary<string, object>.this[string key]
+            object? IDictionary<string, object?>.this[string key]
             {
-                get { TryGetValue(key, out object val); return val; }
+                get { TryGetValue(key, out object? val); return val; }
                 set { SetValue(key, value, false); }
             }
 
-            public object SetValue(string key, object value)
+            public object? SetValue(string key, object? value)
             {
                 return SetValue(key, value, false);
             }
 
-            private object SetValue(string key, object value, bool isAdd)
+            private object? SetValue(string key, object? value, bool isAdd)
             {
-                if (key == null) throw new ArgumentNullException(nameof(key));
+                if (key is null) throw new ArgumentNullException(nameof(key));
                 int index = table.IndexOfName(key);
                 if (index < 0)
                 {
@@ -183,7 +183,7 @@ namespace Dapper
                 }
                 return SetValue(index, value);
             }
-            internal object SetValue(int index, object value)
+            internal object? SetValue(int index, object? value)
             {
                 int oldLength = values.Length;
                 if (oldLength <= index)
@@ -199,12 +199,12 @@ namespace Dapper
                 return values[index] = value;
             }
 
-            ICollection<string> IDictionary<string, object>.Keys
+            ICollection<string> IDictionary<string, object?>.Keys
             {
                 get { return this.Select(kv => kv.Key).ToArray(); }
             }
 
-            ICollection<object> IDictionary<string, object>.Values
+            ICollection<object?> IDictionary<string, object?>.Values
             {
                 get { return this.Select(kv => kv.Value).ToArray(); }
             }
@@ -215,7 +215,7 @@ namespace Dapper
             #region Implementation of IReadOnlyDictionary<string,object>
 
 
-            int IReadOnlyCollection<KeyValuePair<string, object>>.Count
+            int IReadOnlyCollection<KeyValuePair<string, object?>>.Count
             {
                 get
                 {
@@ -223,23 +223,23 @@ namespace Dapper
                 }
             }
 
-            bool IReadOnlyDictionary<string, object>.ContainsKey(string key)
+            bool IReadOnlyDictionary<string, object?>.ContainsKey(string key)
             {
                 int index = table.IndexOfName(key);
                 return index >= 0 && index < values.Length && !(values[index] is DeadValue);
             }
 
-            object IReadOnlyDictionary<string, object>.this[string key]
+            object? IReadOnlyDictionary<string, object?>.this[string key]
             {
-                get { TryGetValue(key, out object val); return val; }
+                get { TryGetValue(key, out object? val); return val; }
             }
 
-            IEnumerable<string> IReadOnlyDictionary<string, object>.Keys
+            IEnumerable<string> IReadOnlyDictionary<string, object?>.Keys
             {
                 get { return this.Select(kv => kv.Key); }
             }
 
-            IEnumerable<object> IReadOnlyDictionary<string, object>.Values
+            IEnumerable<object?> IReadOnlyDictionary<string, object?>.Values
             {
                 get { return this.Select(kv => kv.Value); }
             }

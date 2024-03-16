@@ -22,21 +22,19 @@ namespace Dapper.Tests
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public class FactSqliteAttribute : FactAttribute
         {
-            public override string Skip
+            public override string? Skip
             {
                 get { return unavailable ?? base.Skip; }
                 set { base.Skip = value; }
             }
 
-            private static readonly string unavailable;
+            private static readonly string? unavailable;
 
             static FactSqliteAttribute()
             {
                 try
                 {
-                    using (DatabaseProvider<SqliteProvider>.Instance.GetOpenConnection())
-                    {
-                    }
+                    using var _ = DatabaseProvider<SqliteProvider>.Instance.GetOpenConnection();
                 }
                 catch (Exception ex)
                 {
@@ -52,39 +50,37 @@ namespace Dapper.Tests
         [FactSqlite]
         public void Issue466_SqliteHatesOptimizations()
         {
-            using (var connection = GetSQLiteConnection())
-            {
-                SqlMapper.ResetTypeHandlers();
-                var row = connection.Query<HazNameId>("select 42 as Id").First();
-                Assert.Equal(42, row.Id);
-                row = connection.Query<HazNameId>("select 42 as Id").First();
-                Assert.Equal(42, row.Id);
+            using var connection = GetSQLiteConnection();
 
-                SqlMapper.ResetTypeHandlers();
-                row = connection.QueryFirst<HazNameId>("select 42 as Id");
-                Assert.Equal(42, row.Id);
-                row = connection.QueryFirst<HazNameId>("select 42 as Id");
-                Assert.Equal(42, row.Id);
-            }
+            SqlMapper.ResetTypeHandlers();
+            var row = connection.Query<HazNameId>("select 42 as Id").First();
+            Assert.Equal(42, row.Id);
+            row = connection.Query<HazNameId>("select 42 as Id").First();
+            Assert.Equal(42, row.Id);
+
+            SqlMapper.ResetTypeHandlers();
+            row = connection.QueryFirst<HazNameId>("select 42 as Id");
+            Assert.Equal(42, row.Id);
+            row = connection.QueryFirst<HazNameId>("select 42 as Id");
+            Assert.Equal(42, row.Id);
         }
 
         [FactSqlite]
         public async Task Issue466_SqliteHatesOptimizations_Async()
         {
-            using (var connection = GetSQLiteConnection())
-            {
-                SqlMapper.ResetTypeHandlers();
-                var row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
-                Assert.Equal(42, row.Id);
-                row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
-                Assert.Equal(42, row.Id);
+            using var connection = GetSQLiteConnection();
 
-                SqlMapper.ResetTypeHandlers();
-                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
-                Assert.Equal(42, row.Id);
-                row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
-                Assert.Equal(42, row.Id);
-            }
+            SqlMapper.ResetTypeHandlers();
+            var row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
+            Assert.Equal(42, row.Id);
+            row = (await connection.QueryAsync<HazNameId>("select 42 as Id").ConfigureAwait(false)).First();
+            Assert.Equal(42, row.Id);
+
+            SqlMapper.ResetTypeHandlers();
+            row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
+            Assert.Equal(42, row.Id);
+            row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
+            Assert.Equal(42, row.Id);
         }
     }
 
@@ -93,10 +89,8 @@ namespace Dapper.Tests
         [FactSqlite]
         public void DapperEnumValue_Sqlite()
         {
-            using (var connection = GetSQLiteConnection())
-            {
-                Common.DapperEnumValue(connection);
-            }
+            using var connection = GetSQLiteConnection();
+            Common.DapperEnumValue(connection);
         }
 
         
@@ -115,15 +109,14 @@ namespace Dapper.Tests
 
         private void Isse467_SqliteParameterNaming(bool prefix)
         {
-            using (var connection = GetSQLiteConnection())
-            {
-                var cmd = connection.CreateCommand();
-                cmd.CommandText = "select @foo";
-                const SqliteType type = SqliteType.Integer;
-                cmd.Parameters.Add(prefix ? "@foo" : "foo", type).Value = 42;
-                var i = Convert.ToInt32(cmd.ExecuteScalar());
-                Assert.Equal(42, i);
-            }
+            using var connection = GetSQLiteConnection();
+
+            var cmd = connection.CreateCommand();
+            cmd.CommandText = "select @foo";
+            const SqliteType type = SqliteType.Integer;
+            cmd.Parameters.Add(prefix ? "@foo" : "foo", type).Value = 42;
+            var i = Convert.ToInt32(cmd.ExecuteScalar());
+            Assert.Equal(42, i);
         }
 
         [FactSqlite]

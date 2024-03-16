@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace Dapper
 {
@@ -13,13 +14,14 @@ namespace Dapper
         /// <typeparam name="TValue">The value type of the cache.</typeparam>
         internal class Link<TKey, TValue> where TKey : class
         {
-            public static bool TryGet(Link<TKey, TValue> link, TKey key, out TValue value)
+            public static void Clear(ref Link<TKey, TValue>? head) => Interlocked.Exchange(ref head, null);
+            public static bool TryGet(Link<TKey, TValue>? link, TKey key, [NotNullWhen(true)] out TValue? value)
             {
-                while (link != null)
+                while (link is not null)
                 {
                     if ((object)key == (object)link.Key)
                     {
-                        value = link.Value;
+                        value = link.Value!;
                         return true;
                     }
                     link = link.Tail;
@@ -28,13 +30,13 @@ namespace Dapper
                 return false;
             }
 
-            public static bool TryAdd(ref Link<TKey, TValue> head, TKey key, ref TValue value)
+            public static bool TryAdd(ref Link<TKey, TValue>? head, TKey key, ref TValue value)
             {
                 bool tryAgain;
                 do
                 {
                     var snapshot = Interlocked.CompareExchange(ref head, null, null);
-                    if (TryGet(snapshot, key, out TValue found))
+                    if (TryGet(snapshot, key, out TValue? found))
                     { // existing match; report the existing value instead
                         value = found;
                         return false;
@@ -46,7 +48,7 @@ namespace Dapper
                 return true;
             }
 
-            private Link(TKey key, TValue value, Link<TKey, TValue> tail)
+            private Link(TKey key, TValue value, Link<TKey, TValue>? tail)
             {
                 Key = key;
                 Value = value;
@@ -55,7 +57,7 @@ namespace Dapper
 
             public TKey Key { get; }
             public TValue Value { get; }
-            public Link<TKey, TValue> Tail { get; }
+            public Link<TKey, TValue>? Tail { get; }
         }
     }
 }
