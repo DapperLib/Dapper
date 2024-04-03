@@ -425,6 +425,24 @@ namespace Dapper.Tests
             Assert.Equal(200, foo.Value);
         }
 
+        [Fact]
+        public void Issue2067_TestCustomValueCollection()
+        {
+            SqlMapper.AddTypeHandler(RatingValueHandler.Default);
+
+            var parameters = new
+            {
+                ListOfRatingValues = new List<RatingValue>
+                {
+                    new() { Value = 1 },
+                    new() { Value = 2 },
+                }
+            };
+
+            var result = connection.Query<int>("SELECT 1 WHERE 1 IN @ListOfRatingValues", parameters).Single();
+            Assert.Equal(1, result);
+        }
+
         public class StringListTypeHandler : SqlMapper.TypeHandler<List<string>>
         {
             private StringListTypeHandler()
