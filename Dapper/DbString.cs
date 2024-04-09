@@ -28,6 +28,17 @@ namespace Dapper
             Length = -1;
             IsAnsi = IsAnsiDefault;
         }
+
+        /// <summary>
+        /// Create a new DbString
+        /// </summary>
+        public DbString(string? value, int length = -1)
+        {
+            Value = value;
+            Length = length;
+            IsAnsi = IsAnsiDefault;
+        }
+
         /// <summary>
         /// Ansi vs Unicode 
         /// </summary>
@@ -43,7 +54,15 @@ namespace Dapper
         /// <summary>
         /// The value of the string
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
+
+        /// <summary>
+        /// Gets a string representation of this DbString.
+        /// </summary>
+        public override string ToString() => Value is null
+            ? $"Dapper.DbString (Value: null, Length: {Length}, IsAnsi: {IsAnsi}, IsFixedLength: {IsFixedLength})"
+            : $"Dapper.DbString (Value: '{Value}', Length: {Length}, IsAnsi: {IsAnsi}, IsFixedLength: {IsFixedLength})";
+
         /// <summary>
         /// Add the parameter to the command... internal use only
         /// </summary>
@@ -69,7 +88,7 @@ namespace Dapper
 #pragma warning disable 0618
             param.Value = SqlMapper.SanitizeParameterValue(Value);
 #pragma warning restore 0618
-            if (Length == -1 && Value != null && Value.Length <= DefaultLength)
+            if (Length == -1 && Value is not null && Value.Length <= DefaultLength)
             {
                 param.Size = DefaultLength;
             }

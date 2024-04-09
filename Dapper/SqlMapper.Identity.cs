@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Data;
 using System.Runtime.CompilerServices;
 
@@ -11,10 +12,10 @@ namespace Dapper
             private static readonly int s_typeHash;
             private static readonly int s_typeCount = CountNonTrivial(out s_typeHash);
 
-            internal Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, int gridIndex = 0)
+            internal Identity(string sql, CommandType? commandType, string connectionString, Type type, Type? parametersType, int gridIndex = 0)
                 : base(sql, commandType, connectionString, type, parametersType, s_typeHash, gridIndex)
             {}
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, int gridIndex = 0)
+            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type? parametersType, int gridIndex = 0)
                 : base(sql, commandType, connection.ConnectionString, type, parametersType, s_typeHash, gridIndex)
             { }
 
@@ -39,31 +40,27 @@ namespace Dapper
                 return count;
             }
             internal override int TypeCount => s_typeCount;
-            internal override Type GetType(int index)
-            {
-                switch (index)
-                {
-                    case 0: return typeof(TFirst);
-                    case 1: return typeof(TSecond);
-                    case 2: return typeof(TThird);
-                    case 3: return typeof(TFourth);
-                    case 4: return typeof(TFifth);
-                    case 5: return typeof(TSixth);
-                    case 6: return typeof(TSeventh);
-                    default: return base.GetType(index);
-                }
-            }
+            internal override Type GetType(int index) => index switch {
+                0 => typeof(TFirst),
+                1 => typeof(TSecond),
+                2 => typeof(TThird),
+                3 => typeof(TFourth),
+                4 => typeof(TFifth),
+                5 => typeof(TSixth),
+                6 => typeof(TSeventh),
+                _ => base.GetType(index),
+            };
         }
         internal sealed class IdentityWithTypes : Identity
         {
             private readonly Type[] _types;
 
-            internal IdentityWithTypes(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, Type[] otherTypes, int gridIndex = 0)
+            internal IdentityWithTypes(string sql, CommandType? commandType, string connectionString, Type type, Type? parametersType, Type[] otherTypes, int gridIndex = 0)
                 : base(sql, commandType, connectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
             {
                 _types = otherTypes ?? Type.EmptyTypes;
             }
-            internal IdentityWithTypes(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType, Type[] otherTypes, int gridIndex = 0)
+            internal IdentityWithTypes(string sql, CommandType? commandType, IDbConnection connection, Type type, Type? parametersType, Type[] otherTypes, int gridIndex = 0)
                 : base(sql, commandType, connection.ConnectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
             {
                 _types = otherTypes ?? Type.EmptyTypes;
@@ -76,7 +73,7 @@ namespace Dapper
             static int HashTypes(Type[] types)
             {
                 var hashCode = 0;
-                if (types != null)
+                if (types is not null)
                 {
                     foreach (var t in types)
                     {
@@ -96,6 +93,7 @@ namespace Dapper
 
             internal virtual Type GetType(int index) => throw new IndexOutOfRangeException(nameof(index));
 
+#pragma warning disable CS0618 // Type or member is obsolete
             internal Identity ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(Type primaryType, int gridIndex) =>
                 new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(sql, commandType, connectionString, primaryType, parametersType, gridIndex);
 
@@ -103,7 +101,7 @@ namespace Dapper
                 new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex);
 
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex) =>
-                (otherTypes == null || otherTypes.Length == 0)
+                (otherTypes is null || otherTypes.Length == 0)
                 ? new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex)
                 : new IdentityWithTypes(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
 
@@ -114,12 +112,14 @@ namespace Dapper
             /// <returns></returns>
             public Identity ForDynamicParameters(Type type) =>
                 new Identity(sql, commandType, connectionString, this.type, type, 0, -1);
+#pragma warning restore CS0618 // Type or member is obsolete
 
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type parametersType)
+            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type? type, Type? parametersType)
                 : this(sql, commandType, connection.ConnectionString, type, parametersType, 0, 0) { /* base call */ }
 
-            private protected Identity(string sql, CommandType? commandType, string connectionString, Type type, Type parametersType, int otherTypesHash, int gridIndex)
+            private protected Identity(string sql, CommandType? commandType, string connectionString, Type? type, Type? parametersType, int otherTypesHash, int gridIndex)
             {
+#pragma warning disable CS0618 // Type or member is obsolete
                 this.sql = sql;
                 this.commandType = commandType;
                 this.connectionString = connectionString;
@@ -134,74 +134,129 @@ namespace Dapper
                     hashCode = (hashCode * 23) + (sql?.GetHashCode() ?? 0);
                     hashCode = (hashCode * 23) + (type?.GetHashCode() ?? 0);
                     hashCode = (hashCode * 23) + otherTypesHash;
-                    hashCode = (hashCode * 23) + (connectionString == null ? 0 : connectionStringComparer.GetHashCode(connectionString));
+                    hashCode = (hashCode * 23) + (connectionString is null ? 0 : connectionStringComparer.GetHashCode(connectionString));
                     hashCode = (hashCode * 23) + (parametersType?.GetHashCode() ?? 0);
                 }
+#pragma warning restore CS0618 // Type or member is obsolete
             }
 
             /// <summary>
             /// Whether this <see cref="Identity"/> equals another.
             /// </summary>
             /// <param name="obj">The other <see cref="object"/> to compare to.</param>
-            public override bool Equals(object obj) => Equals(obj as Identity);
+            public override bool Equals(object? obj) => Equals(obj as Identity);
 
             /// <summary>
             /// The raw SQL command.
             /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Please use " + nameof(Sql) + ". This API may be removed at a later date.")]
             public readonly string sql;
+
+            /// <summary>
+            /// The raw SQL command.
+            /// </summary>
+#pragma warning disable CS0618 // Type or member is obsolete
+            public string Sql => sql;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             /// <summary>
             /// The SQL command type.
             /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Please use " + nameof(CommandType) + ". This API may be removed at a later date.")]
             public readonly CommandType? commandType;
+
+            /// <summary>
+            /// The SQL command type.
+            /// </summary>
+#pragma warning disable CS0618 // Type or member is obsolete
+            public CommandType? CommandType => commandType;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             /// <summary>
             /// The hash code of this Identity.
             /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Please use " + nameof(GetHashCode) + ". This API may be removed at a later date.")]
             public readonly int hashCode;
 
             /// <summary>
             /// The grid index (position in the reader) of this Identity.
             /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Please use " + nameof(GridIndex) + ". This API may be removed at a later date.")]
             public readonly int gridIndex;
 
             /// <summary>
-            /// This <see cref="Type"/> of this Identity.
+            /// The grid index (position in the reader) of this Identity.
             /// </summary>
-            public readonly Type type;
+#pragma warning disable CS0618 // Type or member is obsolete
+            public int GridIndex => gridIndex;
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            /// <summary>
+            /// The <see cref="Type"/> of this Identity.
+            /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Please use " + nameof(Type) + ". This API may be removed at a later date.")]
+            public readonly Type? type;
+
+            /// <summary>
+            /// The <see cref="Type"/> of this Identity.
+            /// </summary>
+#pragma warning disable CS0618 // Type or member is obsolete
+            public Type? Type => type;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             /// <summary>
             /// The connection string for this Identity.
             /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("This API may be removed at a later date.")]
             public readonly string connectionString;
 
             /// <summary>
             /// The type of the parameters object for this Identity.
             /// </summary>
-            public readonly Type parametersType;
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Please use " + nameof(ParametersType) + ". This API may be removed at a later date.")]
+            public readonly Type? parametersType;
+
+            /// <summary>
+            /// The type of the parameters object for this Identity.
+            /// </summary>
+#pragma warning disable CS0618 // Type or member is obsolete
+            public Type? ParametersType => parametersType;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             /// <summary>
             /// Gets the hash code for this identity.
             /// </summary>
             /// <returns></returns>
+#pragma warning disable CS0618 // Type or member is obsolete
             public override int GetHashCode() => hashCode;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             /// <summary>
             /// See object.ToString()
             /// </summary>
+#pragma warning disable CS0618 // Type or member is obsolete
             public override string ToString() => sql;
+#pragma warning restore CS0618 // Type or member is obsolete
 
             /// <summary>
             /// Compare 2 Identity objects
             /// </summary>
             /// <param name="other">The other <see cref="Identity"/> object to compare.</param>
             /// <returns>Whether the two are equal</returns>
-            public bool Equals(Identity other)
+            public bool Equals(Identity? other)
             {
                 if (ReferenceEquals(this, other)) return true;
-                if (ReferenceEquals(other, null)) return false;
+                if (other is null) return false;
 
                 int typeCount;
+#pragma warning disable CS0618 // Type or member is obsolete
                 return gridIndex == other.gridIndex
                     && type == other.type
                     && sql == other.sql
@@ -210,6 +265,7 @@ namespace Dapper
                     && parametersType == other.parametersType
                     && (typeCount = TypeCount) == other.TypeCount
                     && (typeCount == 0 || TypesEqual(this, other, typeCount));
+#pragma warning restore CS0618 // Type or member is obsolete
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]

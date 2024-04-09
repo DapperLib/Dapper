@@ -28,14 +28,14 @@ namespace Dapper
         /// <param name="names">DataReader column names</param>
         /// <param name="types">DataReader column types</param>
         /// <returns>Default constructor</returns>
-        public ConstructorInfo FindConstructor(string[] names, Type[] types) =>
-            _type.GetConstructor(new Type[0]);
+        public ConstructorInfo? FindConstructor(string[] names, Type[] types) =>
+            _type.GetConstructor(Array.Empty<Type>())!;
 
         /// <summary>
         /// Always returns null
         /// </summary>
         /// <returns></returns>
-        public ConstructorInfo FindExplicitConstructor() => null;
+        public ConstructorInfo? FindExplicitConstructor() => null;
 
         /// <summary>
         /// Not implemented as far as default constructor used for all cases
@@ -52,11 +52,11 @@ namespace Dapper
         /// Returns property based on selector strategy
         /// </summary>
         /// <param name="columnName">DataReader column name</param>
-        /// <returns>Poperty member map</returns>
-        public SqlMapper.IMemberMap GetMember(string columnName)
+        /// <returns>Property member map</returns>
+        public SqlMapper.IMemberMap? GetMember(string columnName)
         {
             var prop = _propertySelector(_type, columnName);
-            return prop != null ? new SimpleMemberMap(columnName, prop) : null;
+            return prop is not null ? new SimpleMemberMap(columnName, prop) : null;
         }
     }
 }

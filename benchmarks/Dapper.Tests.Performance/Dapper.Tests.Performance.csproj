@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Dapper.Tests.Performance</AssemblyName>
+    <Description>Dapper Core Performance Suite</Description>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;net8.0</TargetFrameworks>
+    <IsTestProject>false</IsTestProject>
+    <NoWarn>$(NoWarn);IDE0063;IDE0034;IDE0059;IDE0060</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!--<PackageReference Include="BLToolkit" Version="4.3.6" />-->
+
+    <PackageReference Include="Dashing" />
+    <PackageReference Include="Belgrade.Sql.Client" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="DevExpress.Xpo" />
+    <PackageReference Include="EntityFramework" VersionOverride="6.4.4"/>
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
+    <PackageReference Include="linq2db.SqlServer" />
+    <PackageReference Include="MySqlConnector" />
+    <PackageReference Include="NHibernate" />
+    <PackageReference Include="Iesi.Collections" />
+    <PackageReference Include="Mighty" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="PetaPoco" />
+    <PackageReference Include="RepoDb.SqlServer" />
+    <PackageReference Include="ServiceStack.OrmLite.SqlServer" />
+    <PackageReference Include="SqlMarshal" />
+    <PackageReference Include="System.Data.SqlClient" />
+    <PackageReference Include="System.Data.SQLite" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NHibernate\*.xml" />
+    <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
+    <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
+    <PackageReference Include="Microsoft.SqlServer.Types" />
+    <PackageReference Include="SubSonic" />
+    <PackageReference Include="Susanoo.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="[3.1.10]" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data.Linq" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Norm.net" />
+  </ItemGroup>
+</Project>

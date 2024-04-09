@@ -16,10 +16,10 @@ namespace Dapper
         internal const DbType EnumerableMultiParameter = (DbType)(-1);
         private static readonly Dictionary<SqlMapper.Identity, Action<IDbCommand, object>> paramReaderCache = new Dictionary<SqlMapper.Identity, Action<IDbCommand, object>>();
         private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
-        private List<object> templates;
+        private List<object>? templates;
 
-        object SqlMapper.IParameterLookup.this[string name] =>
-            parameters.TryGetValue(name, out ParamInfo param) ? param.Value : null;
+        object? SqlMapper.IParameterLookup.this[string name] =>
+            parameters.TryGetValue(name, out ParamInfo? param) ? param.Value : null;
 
         /// <summary>
         /// construct a dynamic parameter bag
@@ -33,7 +33,7 @@ namespace Dapper
         /// construct a dynamic parameter bag
         /// </summary>
         /// <param name="template">can be an anonymous type or a DynamicParameters bag</param>
-        public DynamicParameters(object template)
+        public DynamicParameters(object? template)
         {
             RemoveUnused = true;
             AddDynamicParams(template);
@@ -44,31 +44,14 @@ namespace Dapper
         /// EG: AddDynamicParams(new {A = 1, B = 2}) // will add property A and B to the dynamic
         /// </summary>
         /// <param name="param"></param>
-        public void AddDynamicParams(object param)
+        public void AddDynamicParams(object? param)
         {
             var obj = param;
-            if (obj != null)
+            if (obj is not null)
             {
-                var subDynamic = obj as DynamicParameters;
-                if (subDynamic == null)
+                if (obj is DynamicParameters subDynamic)
                 {
-                    var dictionary = obj as IEnumerable<KeyValuePair<string, object>>;
-                    if (dictionary == null)
-                    {
-                        templates = templates ?? new List<object>();
-                        templates.Add(obj);
-                    }
-                    else
-                    {
-                        foreach (var kvp in dictionary)
-                        {
-                            Add(kvp.Key, kvp.Value, null, null, null);
-                        }
-                    }
-                }
-                else
-                {
-                    if (subDynamic.parameters != null)
+                    if (subDynamic.parameters is not null)
                     {
                         foreach (var kvp in subDynamic.parameters)
                         {
@@ -76,13 +59,28 @@ namespace Dapper
                         }
                     }
 
-                    if (subDynamic.templates != null)
+                    if (subDynamic.templates is not null)
                     {
-                        templates = templates ?? new List<object>();
+                        templates ??= new List<object>();
                         foreach (var t in subDynamic.templates)
                         {
                             templates.Add(t);
                         }
+                    }
+                }
+                else
+                {
+                    if (obj is IEnumerable<KeyValuePair<string, object>> dictionary)
+                    {
+                        foreach (var kvp in dictionary)
+                        {
+                            Add(kvp.Key, kvp.Value, null, null, null);
+                        }
+                    }
+                    else
+                    {
+                        templates ??= new List<object>();
+                        templates.Add(obj);
                     }
                 }
             }
@@ -96,7 +94,7 @@ namespace Dapper
         /// <param name="dbType">The type of the parameter.</param>
         /// <param name="direction">The in or out direction of the parameter.</param>
         /// <param name="size">The size of the parameter.</param>
-        public void Add(string name, object value, DbType? dbType, ParameterDirection? direction, int? size)
+        public void Add(string name, object? value, DbType? dbType, ParameterDirection? direction, int? size)
         {
             parameters[Clean(name)] = new ParamInfo
             {
@@ -118,7 +116,7 @@ namespace Dapper
         /// <param name="size">The size of the parameter.</param>
         /// <param name="precision">The precision of the parameter.</param>
         /// <param name="scale">The scale of the parameter.</param>
-        public void Add(string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
+        public void Add(string name, object? value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
         {
             parameters[Clean(name)] = new ParamInfo
             {
@@ -157,6 +155,12 @@ namespace Dapper
         /// </summary>
         public bool RemoveUnused { get; set; }
 
+        internal static bool ShouldSetDbType(DbType? dbType)
+            => dbType.HasValue && dbType.GetValueOrDefault() != EnumerableMultiParameter;
+
+        internal static bool ShouldSetDbType(DbType dbType)
+            => dbType != EnumerableMultiParameter; // just in case called with non-nullable
+
         /// <summary>
         /// Add all the parameters needed to the command just before it executes
         /// </summary>
@@ -164,9 +168,9 @@ namespace Dapper
         /// <param name="identity">Information about the query</param>
         protected void AddParameters(IDbCommand command, SqlMapper.Identity identity)
         {
-            var literals = SqlMapper.GetLiteralTokens(identity.sql);
+            var literals = SqlMapper.GetLiteralTokens(identity.Sql);
 
-            if (templates != null)
+            if (templates is not null)
             {
                 foreach (var template in templates)
                 {
@@ -175,7 +179,7 @@ namespace Dapper
 
                     lock (paramReaderCache)
                     {
-                        if (!paramReaderCache.TryGetValue(newIdent, out appender))
+                        if (!paramReaderCache.TryGetValue(newIdent, out appender!))
                         {
                             appender = SqlMapper.CreateParamInfoGenerator(newIdent, true, RemoveUnused, literals);
                             paramReaderCache[newIdent] = appender;
@@ -209,7 +213,7 @@ namespace Dapper
 
                 // Now that the parameters are added to the command, let's place our output callbacks
                 var tmp = outputCallbacks;
-                if (tmp != null)
+                if (tmp is not null)
                 {
                     foreach (var generator in tmp)
                     {
@@ -227,8 +231,8 @@ namespace Dapper
                 string name = Clean(param.Name);
                 var isCustomQueryParameter = val is SqlMapper.ICustomQueryParameter;
 
-                SqlMapper.ITypeHandler handler = null;
-                if (dbType == null && val != null && !isCustomQueryParameter)
+                SqlMapper.ITypeHandler? handler = null;
+                if (dbType is null && val is not null && !isCustomQueryParameter)
                 {
 #pragma warning disable 618
                     dbType = SqlMapper.LookupDbType(val.GetType(), name, true, out handler);
@@ -236,7 +240,7 @@ namespace Dapper
                 }
                 if (isCustomQueryParameter)
                 {
-                    ((SqlMapper.ICustomQueryParameter)val).AddParameter(command, name);
+                    ((SqlMapper.ICustomQueryParameter)val!).AddParameter(command, name);
                 }
                 else if (dbType == EnumerableMultiParameter)
                 {
@@ -259,30 +263,30 @@ namespace Dapper
                     }
 
                     p.Direction = param.ParameterDirection;
-                    if (handler == null)
+                    if (handler is null)
                     {
 #pragma warning disable 0618
                         p.Value = SqlMapper.SanitizeParameterValue(val);
 #pragma warning restore 0618
-                        if (dbType != null && p.DbType != dbType)
+                        if (ShouldSetDbType(dbType) && p.DbType != dbType.GetValueOrDefault())
                         {
-                            p.DbType = dbType.Value;
+                            p.DbType = dbType.GetValueOrDefault();
                         }
                         var s = val as string;
                         if (s?.Length <= DbString.DefaultLength)
                         {
                             p.Size = DbString.DefaultLength;
                         }
-                        if (param.Size != null) p.Size = param.Size.Value;
-                        if (param.Precision != null) p.Precision = param.Precision.Value;
-                        if (param.Scale != null) p.Scale = param.Scale.Value;
+                        if (param.Size is not null) p.Size = param.Size.Value;
+                        if (param.Precision is not null) p.Precision = param.Precision.Value;
+                        if (param.Scale is not null) p.Scale = param.Scale.Value;
                     }
                     else
                     {
-                        if (dbType != null) p.DbType = dbType.Value;
-                        if (param.Size != null) p.Size = param.Size.Value;
-                        if (param.Precision != null) p.Precision = param.Precision.Value;
-                        if (param.Scale != null) p.Scale = param.Scale.Value;
+                        if (ShouldSetDbType(dbType)) p.DbType = dbType.GetValueOrDefault();
+                        if (param.Size is not null) p.Size = param.Size.Value;
+                        if (param.Precision is not null) p.Precision = param.Precision.Value;
+                        if (param.Scale is not null) p.Scale = param.Scale.Value;
                         handler.SetValue(p, val ?? DBNull.Value);
                     }
 
@@ -294,7 +298,7 @@ namespace Dapper
                 }
             }
 
-            // note: most non-priveleged implementations would use: this.ReplaceLiterals(command);
+            // note: most non-privileged implementations would use: this.ReplaceLiterals(command);
             if (literals.Count != 0) SqlMapper.ReplaceLiterals(this, command, literals);
         }
 
@@ -313,16 +317,16 @@ namespace Dapper
         {
             var paramInfo = parameters[Clean(name)];
             var attachedParam = paramInfo.AttachedParam;
-            object val = attachedParam == null ? paramInfo.Value : attachedParam.Value;
+            object? val = attachedParam is null ? paramInfo.Value : attachedParam.Value;
             if (val == DBNull.Value)
             {
-                if (default(T) != null)
+                if (default(T) is not null)
                 {
                     throw new ApplicationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
                 }
-                return default(T);
+                return default!;
             }
-            return (T)val;
+            return (T)val!;
         }
 
         /// <summary>
@@ -335,37 +339,38 @@ namespace Dapper
         /// <param name="dbType"></param>
         /// <param name="size">The size to set on the parameter. Defaults to 0, or DbString.DefaultLength in case of strings.</param>
         /// <returns>The DynamicParameters instance</returns>
-        public DynamicParameters Output<T>(T target, Expression<Func<T, object>> expression, DbType? dbType = null, int? size = null)
+        public DynamicParameters Output<T>(T target, Expression<Func<T, object?>> expression, DbType? dbType = null, int? size = null)
         {
-            var failMessage = "Expression must be a property/field chain off of a(n) {0} instance";
-            failMessage = string.Format(failMessage, typeof(T).Name);
-            Action @throw = () => throw new InvalidOperationException(failMessage);
+            static void ThrowInvalidChain()
+                => throw new InvalidOperationException($"Expression must be a property/field chain off of a(n) {typeof(T).Name} instance");
 
             // Is it even a MemberExpression?
+#pragma warning disable IDE0019 // Use pattern matching - already complex enough
             var lastMemberAccess = expression.Body as MemberExpression;
+#pragma warning restore IDE0019 // Use pattern matching
 
-            if (lastMemberAccess == null
+            if (lastMemberAccess is null
                 || (!(lastMemberAccess.Member is PropertyInfo)
                     && !(lastMemberAccess.Member is FieldInfo)))
             {
                 if (expression.Body.NodeType == ExpressionType.Convert
                     && expression.Body.Type == typeof(object)
-                    && ((UnaryExpression)expression.Body).Operand is MemberExpression)
+                    && ((UnaryExpression)expression.Body).Operand is MemberExpression member)
                 {
                     // It's got to be unboxed
-                    lastMemberAccess = (MemberExpression)((UnaryExpression)expression.Body).Operand;
+                    lastMemberAccess = member;
                 }
                 else
                 {
-                    @throw();
+                    ThrowInvalidChain();
                 }
             }
 
             // Does the chain consist of MemberExpressions leading to a ParameterExpression of type T?
-            MemberExpression diving = lastMemberAccess;
+            MemberExpression? diving = lastMemberAccess;
             // Retain a list of member names and the member expressions so we can rebuild the chain.
-            List<string> names = new List<string>();
-            List<MemberExpression> chain = new List<MemberExpression>();
+            List<string?> names = new List<string?>();
+            List<MemberExpression?> chain = new List<MemberExpression?>();
 
             do
             {
@@ -374,21 +379,23 @@ namespace Dapper
                 names.Insert(0, diving?.Member.Name);
                 chain.Insert(0, diving);
 
+#pragma warning disable IDE0019 // use pattern matching; this is fine!
                 var constant = diving?.Expression as ParameterExpression;
                 diving = diving?.Expression as MemberExpression;
+#pragma warning restore IDE0019 // use pattern matching
 
-                if (constant != null && constant.Type == typeof(T))
+                if (constant is not null && constant.Type == typeof(T))
                 {
                     break;
                 }
-                else if (diving == null
+                else if (diving is null
                     || (!(diving.Member is PropertyInfo)
                         && !(diving.Member is FieldInfo)))
                 {
-                    @throw();
+                    ThrowInvalidChain();
                 }
             }
-            while (diving != null);
+            while (diving is not null);
 
             var dynamicParamName = string.Concat(names.ToArray());
 
@@ -396,8 +403,8 @@ namespace Dapper
             var lookup = string.Join("|", names.ToArray());
 
             var cache = CachedOutputSetters<T>.Cache;
-            var setter = (Action<object, DynamicParameters>)cache[lookup];
-            if (setter != null) goto MAKECALLBACK;
+            var setter = (Action<object, DynamicParameters>?)cache[lookup];
+            if (setter is not null) goto MAKECALLBACK;
 
             // Come on let's build a method, let's build it, let's build it now!
             var dm = new DynamicMethod("ExpressionParam" + Guid.NewGuid().ToString(), null, new[] { typeof(object), GetType() }, true);
@@ -409,20 +416,20 @@ namespace Dapper
             // Count - 1 to skip the last member access
             for (var i = 0; i < chain.Count - 1; i++)
             {
-                var member = chain[i].Member;
+                var member = chain[i]?.Member;
 
-                if (member is PropertyInfo)
+                if (member is PropertyInfo info)
                 {
-                    var get = ((PropertyInfo)member).GetGetMethod(true);
-                    il.Emit(OpCodes.Callvirt, get); // [Member{i}]
+                    var get = info.GetGetMethod(true);
+                    il.Emit(OpCodes.Callvirt, get!); // [Member{i}]
                 }
                 else // Else it must be a field!
                 {
-                    il.Emit(OpCodes.Ldfld, (FieldInfo)member); // [Member{i}]
+                    il.Emit(OpCodes.Ldfld, (FieldInfo)member!); // [Member{i}]
                 }
             }
 
-            var paramGetter = GetType().GetMethod("Get", new Type[] { typeof(string) }).MakeGenericMethod(lastMemberAccess.Type);
+            var paramGetter = GetType().GetMethod("Get", new Type[] { typeof(string) })!.MakeGenericMethod(lastMemberAccess!.Type);
 
             il.Emit(OpCodes.Ldarg_1); // [target] [DynamicParameters]
             il.Emit(OpCodes.Ldstr, dynamicParamName); // [target] [DynamicParameters] [ParamName]
@@ -430,10 +437,10 @@ namespace Dapper
 
             // GET READY
             var lastMember = lastMemberAccess.Member;
-            if (lastMember is PropertyInfo)
+            if (lastMember is PropertyInfo property)
             {
-                var set = ((PropertyInfo)lastMember).GetSetMethod(true);
-                il.Emit(OpCodes.Callvirt, set); // SET
+                var set = property.GetSetMethod(true);
+                il.Emit(OpCodes.Callvirt, set!); // SET
             }
             else
             {
@@ -448,15 +455,15 @@ namespace Dapper
                 cache[lookup] = setter;
             }
 
-            // Queue the preparation to be fired off when adding parameters to the DbCommand
-            MAKECALLBACK:
-            (outputCallbacks ?? (outputCallbacks = new List<Action>())).Add(() =>
+        // Queue the preparation to be fired off when adding parameters to the DbCommand
+        MAKECALLBACK:
+            (outputCallbacks ??= new List<Action>()).Add(() =>
             {
                 // Finally, prep the parameter and attach the callback to it
                 var targetMemberType = lastMemberAccess?.Type;
                 int sizeToSet = (!size.HasValue && targetMemberType == typeof(string)) ? DbString.DefaultLength : size ?? 0;
 
-                if (parameters.TryGetValue(dynamicParamName, out ParamInfo parameter))
+                if (parameters.TryGetValue(dynamicParamName, out ParamInfo? parameter))
                 {
                     parameter.ParameterDirection = parameter.AttachedParam.Direction = ParameterDirection.InputOutput;
 
@@ -467,26 +474,20 @@ namespace Dapper
                 }
                 else
                 {
-                    dbType = (!dbType.HasValue)
-#pragma warning disable 618
-                    ? SqlMapper.LookupDbType(targetMemberType, targetMemberType?.Name, true, out SqlMapper.ITypeHandler handler)
-#pragma warning restore 618
-                    : dbType;
-
                     // CameFromTemplate property would not apply here because this new param
                     // Still needs to be added to the command
-                    Add(dynamicParamName, expression.Compile().Invoke(target), null, ParameterDirection.InputOutput, sizeToSet);
+                    Add(dynamicParamName, expression.Compile().Invoke(target), dbType, ParameterDirection.InputOutput, sizeToSet);
                 }
 
                 parameter = parameters[dynamicParamName];
                 parameter.OutputCallback = setter;
-                parameter.OutputTarget = target;
+                parameter.OutputTarget = target!;
             });
 
             return this;
         }
 
-        private List<Action> outputCallbacks;
+        private List<Action>? outputCallbacks;
 
         void SqlMapper.IParameterCallbacks.OnCompleted()
         {

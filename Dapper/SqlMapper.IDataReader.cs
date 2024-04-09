@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 
 namespace Dapper
 {
@@ -13,23 +14,24 @@ namespace Dapper
         /// <param name="reader">The data reader to parse results from.</param>
         public static IEnumerable<T> Parse<T>(this IDataReader reader)
         {
-            if (reader.Read())
+            var dbReader = GetDbDataReader(reader);
+            if (dbReader.Read())
             {
                 var effectiveType = typeof(T);
-                var deser = GetDeserializer(effectiveType, reader, 0, -1, false);
+                var deser = GetDeserializer(effectiveType, dbReader, 0, -1, false);
                 var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 do
                 {
-                    object val = deser(reader);
-                    if (val == null || val is T)
+                    object val = deser(dbReader);
+                    if (val is null || val is T)
                     {
-                        yield return (T)val;
+                        yield return (T)val!;
                     }
                     else
                     {
                         yield return (T)Convert.ChangeType(val, convertToType, System.Globalization.CultureInfo.InvariantCulture);
                     }
-                } while (reader.Read());
+                } while (dbReader.Read());
             }
         }
 
@@ -40,13 +42,14 @@ namespace Dapper
         /// <param name="type">The type to parse from the <paramref name="reader"/>.</param>
         public static IEnumerable<object> Parse(this IDataReader reader, Type type)
         {
-            if (reader.Read())
+            var dbReader = GetDbDataReader(reader);
+            if (dbReader.Read())
             {
-                var deser = GetDeserializer(type, reader, 0, -1, false);
+                var deser = GetDeserializer(type, dbReader, 0, -1, false);
                 do
                 {
-                    yield return deser(reader);
-                } while (reader.Read());
+                    yield return deser(dbReader);
+                } while (dbReader.Read());
             }
         }
 
@@ -56,13 +59,14 @@ namespace Dapper
         /// <param name="reader">The data reader to parse results from.</param>
         public static IEnumerable<dynamic> Parse(this IDataReader reader)
         {
-            if (reader.Read())
+            var dbReader = GetDbDataReader(reader);
+            if (dbReader.Read())
             {
-                var deser = GetDapperRowDeserializer(reader, 0, -1, false);
+                var deser = GetDapperRowDeserializer(dbReader, 0, -1, false);
                 do
                 {
-                    yield return deser(reader);
-                } while (reader.Read());
+                    yield return deser(dbReader);
+                } while (dbReader.Read());
             }
         }
 
@@ -76,10 +80,47 @@ namespace Dapper
         /// <param name="length">The length of columns to read (default -1 = all fields following startIndex)</param>
         /// <param name="returnNullIfFirstMissing">Return null if we can't find the first column? (default false)</param>
         /// <returns>A parser for this specific object from this row.</returns>
+#if DEBUG // make sure we're not using this internally
+        [Obsolete(nameof(DbDataReader) + " API should be preferred")]
+#endif
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static Func<IDataReader, object> GetRowParser(this IDataReader reader, Type type,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
+            return WrapObjectReader(GetDeserializer(type, GetDbDataReader(reader), startIndex, length, returnNullIfFirstMissing));
+        }
+
+        /// <summary>
+        /// Gets the row parser for a specific row on a data reader. This allows for type switching every row based on, for example, a TypeId column.
+        /// You could return a collection of the base type but have each more specific.
+        /// </summary>
+        /// <param name="reader">The data reader to get the parser for the current row from</param>
+        /// <param name="type">The type to get the parser for</param>
+        /// <param name="startIndex">The start column index of the object (default 0)</param>
+        /// <param name="length">The length of columns to read (default -1 = all fields following startIndex)</param>
+        /// <param name="returnNullIfFirstMissing">Return null if we can't find the first column? (default false)</param>
+        /// <returns>A parser for this specific object from this row.</returns>
+        public static Func<DbDataReader, object> GetRowParser(this DbDataReader reader, Type type,
+            int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        {
             return GetDeserializer(type, reader, startIndex, length, returnNullIfFirstMissing);
+        }
+
+        /// <inheritdoc cref="GetRowParser{T}(DbDataReader, Type, int, int, bool)"/>
+#if DEBUG // make sure we're not using this internally
+        [Obsolete(nameof(DbDataReader) + " API should be preferred")]
+#endif
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
+        public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type? concreteType = null,
+            int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
+        {
+            concreteType ??= typeof(T);
+            var func = GetDeserializer(concreteType, GetDbDataReader(reader), startIndex, length, returnNullIfFirstMissing);
+            return Wrap(func);
+
+            // this is just to be very clear about what we're capturing
+            static Func<IDataReader, T> Wrap(Func<DbDataReader, object> func)
+                => reader => (T)func(GetDbDataReader(reader));
         }
 
         /// <summary>
@@ -135,10 +176,10 @@ namespace Dapper
         ///     public override int Type =&gt; 2;
         /// }
         /// </example>
-        public static Func<IDataReader, T> GetRowParser<T>(this IDataReader reader, Type concreteType = null,
+        public static Func<DbDataReader, T> GetRowParser<T>(this DbDataReader reader, Type? concreteType = null,
             int startIndex = 0, int length = -1, bool returnNullIfFirstMissing = false)
         {
-            concreteType = concreteType ?? typeof(T);
+            concreteType ??= typeof(T);
             var func = GetDeserializer(concreteType, reader, startIndex, length, returnNullIfFirstMissing);
             if (concreteType.IsValueType)
             {
@@ -146,7 +187,7 @@ namespace Dapper
             }
             else
             {
-                return (Func<IDataReader, T>)(Delegate)func;
+                return (Func<DbDataReader, T>)(Delegate)func;
             }
         }
     }

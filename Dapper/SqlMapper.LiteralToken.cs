@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Dapper
 {
@@ -7,7 +8,7 @@ namespace Dapper
         /// <summary>
         /// Represents a placeholder for a value that should be replaced as a literal value in the resulting sql
         /// </summary>
-        internal struct LiteralToken
+        internal readonly struct LiteralToken
         {
             /// <summary>
             /// The text in the original command that should be replaced
@@ -25,7 +26,7 @@ namespace Dapper
                 Member = member;
             }
 
-            internal static readonly IList<LiteralToken> None = new LiteralToken[0];
+            internal static IList<LiteralToken> None => Array.Empty<LiteralToken>();
         }
     }
 }
