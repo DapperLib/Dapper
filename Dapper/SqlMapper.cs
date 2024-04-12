@@ -3926,7 +3926,12 @@ namespace Dapper
                         }
                         else
                         {
-                            formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
+                            formattedValue = Convert.ToString(value) + " - " + Identify(value.GetType());
+                        }
+                        static string Identify(Type type)
+                        {
+                            var tc = Type.GetTypeCode(type);
+                            return tc == TypeCode.Object ? type.Name : tc.ToString();
                         }
                     }
                     catch (Exception valEx)
