@@ -10,4 +10,4 @@ From 2024, Dapper Plus is now a major sponsor of Dapper, helping to secure ongoi
 This sponsorship does not impact the ownership, license, or any other particulars of how Dapper operates. The core Dapper libraries continue
 to be freely available and fully open source.
 
-<a href="https://www.learndapper.com/"><img width="728" height="90" alt="Dapper Plus logo" src="https://dapperlib.github.io/Dapper/dapper-sponsor.png" width="50" align="middle"/></a>
+<a href="https://www.learndapper.com/"><img width="728" height="90" alt="Dapper Plus logo" src="https://dapperlib.github.io/Dapper/dapper-sponsor.png" /></a>
