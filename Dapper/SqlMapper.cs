@@ -193,9 +193,7 @@ namespace Dapper
             public static readonly TypeMapEntry
                 DoNotSet = new((DbType)(-2), TypeMapEntryFlags.None),
                 DoNotSetFieldValue = new((DbType)(-2), TypeMapEntryFlags.UseGetFieldValue),
-                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue),
-                StringFieldValue = new(DbType.String, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue),
-                BinaryFieldValue = new(DbType.Binary, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
+                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
 
             public static implicit operator TypeMapEntry(DbType dbType)
                 => new(dbType, TypeMapEntryFlags.SetType);
@@ -221,13 +219,13 @@ namespace Dapper
                 [typeof(double)] = DbType.Double,
                 [typeof(decimal)] = DbType.Decimal,
                 [typeof(bool)] = DbType.Boolean,
-                [typeof(string)] = TypeMapEntry.StringFieldValue,
+                [typeof(string)] = DbType.String,
                 [typeof(char)] = DbType.StringFixedLength,
                 [typeof(Guid)] = DbType.Guid,
                 [typeof(DateTime)] = TypeMapEntry.DoNotSet,
                 [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
                 [typeof(TimeSpan)] = TypeMapEntry.DoNotSet,
-                [typeof(byte[])] = TypeMapEntry.BinaryFieldValue,
+                [typeof(byte[])] = DbType.Binary,
                 [typeof(byte?)] = DbType.Byte,
                 [typeof(sbyte?)] = DbType.SByte,
                 [typeof(short?)] = DbType.Int16,
