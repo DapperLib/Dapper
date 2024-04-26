@@ -68,13 +68,14 @@ public abstract class ErrorTests<TProvider>(ITestOutputHelper Log) : TestBase<TP
                 int row = 0;
                 if (reader.Read())
                 {
+                    Log.WriteLine($"Read: {true}");
                     int width = reader.FieldCount;
                     do
                     {
                         for (int col = 0; col < width; col++)
                         {
                             var val = reader.GetValue(col);
-                            Console.WriteLine($"[{grid}, {row}, {col}] {val}");
+                            Log.WriteLine($"[{grid}, {row}, {col}] {val}");
                         }
                         row++;
                     }
@@ -82,7 +83,8 @@ public abstract class ErrorTests<TProvider>(ITestOutputHelper Log) : TestBase<TP
 
                     for (int i = 0; i < extraRowReads; i++)
                     {
-                        _ = reader.Read();
+                        Log.WriteLine($"Reading (extra, {i})...");
+                        Log.WriteLine($"...{reader.Read()}");
                     }
                 }
                 grid++;
