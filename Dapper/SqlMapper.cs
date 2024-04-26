@@ -202,7 +202,7 @@ namespace Dapper
         static SqlMapper()
         {
             typeMap = new Dictionary<Type, TypeMapEntry>(41
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER && DATEONLY
                 + 4 // {Date|Time}Only[?]
 #endif
                 )
@@ -248,7 +248,7 @@ namespace Dapper
                 [typeof(SqlDecimal?)] = TypeMapEntry.DecimalFieldValue,
                 [typeof(SqlMoney)] = TypeMapEntry.DecimalFieldValue,
                 [typeof(SqlMoney?)] = TypeMapEntry.DecimalFieldValue,
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER && DATEONLY
                 [typeof(DateOnly)] = TypeMapEntry.DoNotSetFieldValue,
                 [typeof(TimeOnly)] = TypeMapEntry.DoNotSetFieldValue,
                 [typeof(DateOnly?)] = TypeMapEntry.DoNotSetFieldValue,
