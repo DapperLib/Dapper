@@ -18,6 +18,8 @@ namespace Dapper.Tests
         public override DbProviderFactory Factory => Npgsql.NpgsqlFactory.Instance;
         public override string GetConnectionString() =>
             GetConnectionString("PostgesConnectionString", "Server=localhost;Port=5432;User Id=dappertest;Password=dapperpass;Database=dappertest");
+
+        public override Type ExceptionType => typeof(Npgsql.NpgsqlException);
     }
     public class PostgresqlTests : TestBase<PostgresProvider>
     {

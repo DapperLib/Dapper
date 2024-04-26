@@ -9,6 +9,7 @@ namespace Dapper.Tests
     {
         public override DbProviderFactory Factory => DuckDBClientFactory.Instance;
         public override string GetConnectionString() => "Data Source=:memory:";
+        public override Type ExceptionType => typeof(DuckDBException);
     }
 
     public abstract class DuckDBTypeTestBase : TestBase<DuckDBProvider>

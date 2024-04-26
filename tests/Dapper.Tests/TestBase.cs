@@ -15,6 +15,8 @@ namespace Dapper.Tests
     {
         public abstract DbProviderFactory Factory { get; }
 
+        public abstract Type ExceptionType { get; }
+
         public virtual void Dispose() { }
         public abstract string GetConnectionString();
 
@@ -75,11 +77,13 @@ namespace Dapper.Tests
     public sealed class SystemSqlClientProvider : SqlServerDatabaseProvider
     {
         public override DbProviderFactory Factory => System.Data.SqlClient.SqlClientFactory.Instance;
+        public override Type ExceptionType => typeof(System.Data.SqlClient.SqlException);
     }
 #if MSSQLCLIENT
     public sealed class MicrosoftSqlClientProvider : SqlServerDatabaseProvider
     {
         public override DbProviderFactory Factory => Microsoft.Data.SqlClient.SqlClientFactory.Instance;
+        public override Type ExceptionType => typeof(Microsoft.Data.SqlClient.SqlException);
     }
 #endif
 
@@ -120,6 +124,12 @@ namespace Dapper.Tests
                 Console.WriteLine("failed.");
                 Console.Error.WriteLine(ex.Message);
             }
+        }
+
+        public DbException AssertType(DbException exception)
+        {
+            Assert.IsAssignableFrom(Provider.ExceptionType, exception);
+            return exception;
         }
 
         public virtual void Dispose()

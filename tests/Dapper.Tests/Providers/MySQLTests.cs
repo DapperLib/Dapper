@@ -19,6 +19,8 @@ namespace Dapper.Tests
         public override string GetConnectionString() =>
             GetConnectionString("MySqlConnectionString", "Server=localhost;Database=tests;Uid=test;Pwd=pass;");
 
+        public override Type ExceptionType => typeof(MySqlConnector.MySqlException);
+
         public DbConnection GetMySqlConnection(bool open = true,
             bool convertZeroDatetime = false, bool allowZeroDatetime = false)
         {

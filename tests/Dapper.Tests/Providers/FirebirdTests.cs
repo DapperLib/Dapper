@@ -1,7 +1,7 @@
-﻿using FirebirdSql.Data.FirebirdClient;
-using System.Data;
+﻿using System;
 using System.Data.Common;
 using System.Linq;
+using FirebirdSql.Data.FirebirdClient;
 using Xunit;
 
 namespace Dapper.Tests.Providers
@@ -16,6 +16,8 @@ namespace Dapper.Tests.Providers
     {
         public override DbProviderFactory Factory => FirebirdClientFactory.Instance;
         public override string GetConnectionString() => "initial catalog=localhost:database;user id=SYSDBA;password=masterkey";
+
+        public override Type ExceptionType => typeof(DbException);
     }
     public class FirebirdTests : TestBase<FirebirdProvider>
     {

@@ -12,6 +12,7 @@ namespace Dapper.Tests
         public override DbProviderFactory Factory => OleDbFactory.Instance;
         public override string GetConnectionString() =>
             GetConnectionString("OLEDBConnectionString", "Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;Integrated Security=SSPI");
+        public override Type ExceptionType => typeof(OleDbException);
     }
 
     public class OLDEBTests : TestBase<OLEDBProvider>
