@@ -12,6 +12,12 @@ and in that last case: a cross-reference back to the origin would be nice.
 
 (for the pedants: "licence" and "license" to be used interchangeably here; language is fun)
 
+## It isn't "your code" any more
+
+Contributed code belongs to the Dapper project, not you the contributor. That means
+Dapper can use it, not use it, remove it, or
+edit it in any way - *even changing the spacing and variable names*. I know: shocking.
+
 ## No backsies
 
 Contributing code to Dapper is permanent; you can't later demand that we remove your code because... well, anything. Even if one
