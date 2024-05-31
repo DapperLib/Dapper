@@ -3,7 +3,7 @@
     <AssemblyName>Dapper</AssemblyName>
     <Title>Dapper</Title>
     <PackageTags>orm;sql;micro-orm</PackageTags>
-    <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc..</Description>
+    <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc. Major Sponsor: Dapper Plus from ZZZ Projects.</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0;net7.0</TargetFrameworks>
     <Nullable>enable</Nullable>

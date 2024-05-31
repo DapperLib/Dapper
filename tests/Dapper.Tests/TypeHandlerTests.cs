@@ -28,12 +28,18 @@ namespace Dapper.Tests
 
             SqlMapper.PurgeQueryCache();
 
-            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString, true); // Change Default String Handling to AnsiString
-            var result02 = connection.Query<string>(sql, param).FirstOrDefault();
-            Assert.Equal("varchar", result02);
+            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString, false); // Change Default String Handling to AnsiString
+            try
+            {
+                var result02 = connection.Query<string>(sql, param).FirstOrDefault();
+                Assert.Equal("varchar", result02);
 
-            SqlMapper.PurgeQueryCache();
-            SqlMapper.AddTypeMap(typeof(string), DbType.String, true);  // Restore Default to Unicode String
+                SqlMapper.PurgeQueryCache();
+            }
+            finally
+            {
+                SqlMapper.AddTypeMap(typeof(string), DbType.String, false); // Restore Default to Unicode String
+            }
         }
 
         [Fact]
@@ -46,13 +52,18 @@ namespace Dapper.Tests
             Assert.Equal("nvarchar", result01);
 
             SqlMapper.PurgeQueryCache();
+            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString, false); // Change Default String Handling to AnsiString
+            try
+            {
+                var result02 = connection.QueryFirstOrDefault<string>(sql, param);
+                Assert.Equal("varchar", result02);
 
-            SqlMapper.AddTypeMap(typeof(string), DbType.AnsiString, true); // Change Default String Handling to AnsiString
-            var result02 = connection.QueryFirstOrDefault<string>(sql, param);
-            Assert.Equal("varchar", result02);
-
-            SqlMapper.PurgeQueryCache();
-            SqlMapper.AddTypeMap(typeof(string), DbType.String, true);  // Restore Default to Unicode String
+                SqlMapper.PurgeQueryCache();
+            }
+            finally
+            {
+                SqlMapper.AddTypeMap(typeof(string), DbType.String, false); // Restore Default to Unicode String
+            }
         }
 
         [Fact]
@@ -643,7 +654,7 @@ namespace Dapper.Tests
         {
             Guid guid = Guid.Parse("cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e");
             var ex = Assert.ThrowsAny<Exception>(() => connection.Query<Issue149_Person>("select @guid as Id", new { guid }).First());
-            Assert.Equal("Error parsing column 0 (Id=n/a - Unable to cast object of type 'System.Guid' to type 'System.String'.)", ex.Message);
+            Assert.Equal("Error parsing column 0 (Id=cf0ef7ac-b6fe-4e24-aeda-a2b45bb5654e - Guid)", ex.Message);
         }
 
         public class Issue149_Person { public string? Id { get; set; } }

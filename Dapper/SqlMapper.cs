@@ -193,9 +193,7 @@ namespace Dapper
             public static readonly TypeMapEntry
                 DoNotSet = new((DbType)(-2), TypeMapEntryFlags.None),
                 DoNotSetFieldValue = new((DbType)(-2), TypeMapEntryFlags.UseGetFieldValue),
-                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue),
-                StringFieldValue = new(DbType.String, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue),
-                BinaryFieldValue = new(DbType.Binary, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
+                DecimalFieldValue = new(DbType.Decimal, TypeMapEntryFlags.SetType | TypeMapEntryFlags.UseGetFieldValue);
 
             public static implicit operator TypeMapEntry(DbType dbType)
                 => new(dbType, TypeMapEntryFlags.SetType);
@@ -204,7 +202,7 @@ namespace Dapper
         static SqlMapper()
         {
             typeMap = new Dictionary<Type, TypeMapEntry>(41
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER && DATEONLY
                 + 4 // {Date|Time}Only[?]
 #endif
                 )
@@ -221,13 +219,13 @@ namespace Dapper
                 [typeof(double)] = DbType.Double,
                 [typeof(decimal)] = DbType.Decimal,
                 [typeof(bool)] = DbType.Boolean,
-                [typeof(string)] = TypeMapEntry.StringFieldValue,
+                [typeof(string)] = DbType.String,
                 [typeof(char)] = DbType.StringFixedLength,
                 [typeof(Guid)] = DbType.Guid,
                 [typeof(DateTime)] = TypeMapEntry.DoNotSet,
                 [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
                 [typeof(TimeSpan)] = TypeMapEntry.DoNotSet,
-                [typeof(byte[])] = TypeMapEntry.BinaryFieldValue,
+                [typeof(byte[])] = DbType.Binary,
                 [typeof(byte?)] = DbType.Byte,
                 [typeof(sbyte?)] = DbType.SByte,
                 [typeof(short?)] = DbType.Int16,
@@ -250,7 +248,7 @@ namespace Dapper
                 [typeof(SqlDecimal?)] = TypeMapEntry.DecimalFieldValue,
                 [typeof(SqlMoney)] = TypeMapEntry.DecimalFieldValue,
                 [typeof(SqlMoney?)] = TypeMapEntry.DecimalFieldValue,
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER && DATEONLY
                 [typeof(DateOnly)] = TypeMapEntry.DoNotSetFieldValue,
                 [typeof(TimeOnly)] = TypeMapEntry.DoNotSetFieldValue,
                 [typeof(DateOnly?)] = TypeMapEntry.DoNotSetFieldValue,
@@ -3928,7 +3926,12 @@ namespace Dapper
                         }
                         else
                         {
-                            formattedValue = Convert.ToString(value) + " - " + Type.GetTypeCode(value.GetType());
+                            formattedValue = Convert.ToString(value) + " - " + Identify(value.GetType());
+                        }
+                        static string Identify(Type type)
+                        {
+                            var tc = Type.GetTypeCode(type);
+                            return tc == TypeCode.Object ? type.Name : tc.ToString();
                         }
                     }
                     catch (Exception valEx)

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal/2.0.24">
   <ItemGroup>
     <ProjectReference Include="benchmarks/**/*.csproj" />
-    <ProjectReference Include="*/*.csproj" />
+    <ProjectReference Include="Dapper*/*.csproj" />
     <ProjectReference Include="tests/**/*.csproj" />
   </ItemGroup>
 </Project>
