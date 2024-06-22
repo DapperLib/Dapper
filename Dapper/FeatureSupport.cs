@@ -6,9 +6,9 @@ namespace Dapper
     /// <summary>
     /// Handles variances in features per DBMS
     /// </summary>
-    internal class FeatureSupport
+    public class FeatureSupport
     {
-        private static readonly FeatureSupport
+        public static readonly FeatureSupport
             Default = new FeatureSupport(false),
             Postgres = new FeatureSupport(true),
             ClickHouse = new FeatureSupport(true);
@@ -33,6 +33,6 @@ namespace Dapper
         /// <summary>
         /// True if the db supports array columns e.g. Postgresql
         /// </summary>
-        public bool Arrays { get; }
+        public bool Arrays { get; set; }
     }
 }
