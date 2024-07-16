@@ -44,7 +44,7 @@ namespace Dapper
         /// EG: AddDynamicParams(new {A = 1, B = 2}) // will add property A and B to the dynamic
         /// </summary>
         /// <param name="param"></param>
-        public void AddDynamicParams(object? param)
+        public DynamicParameters AddDynamicParams(object? param)
         {
             var obj = param;
             if (obj is not null)
@@ -84,6 +84,8 @@ namespace Dapper
                     }
                 }
             }
+
+            return this;
         }
 
         /// <summary>
@@ -94,7 +96,8 @@ namespace Dapper
         /// <param name="dbType">The type of the parameter.</param>
         /// <param name="direction">The in or out direction of the parameter.</param>
         /// <param name="size">The size of the parameter.</param>
-        public void Add(string name, object? value, DbType? dbType, ParameterDirection? direction, int? size)
+        /// <returns>Returns this object for method chaining</returns>
+        public DynamicParameters Add(string name, object? value, DbType? dbType, ParameterDirection? direction, int? size)
         {
             parameters[Clean(name)] = new ParamInfo
             {
@@ -104,6 +107,16 @@ namespace Dapper
                 DbType = dbType,
                 Size = size
             };
+
+            return this;
+        }
+
+        public static DynamicParameters AddRange(params (string name, object value)[] parameters)
+        {
+            foreach (var (name, value) in parameterValues)
+                parameters.Add(name, value);
+            
+            return this;
         }
 
         /// <summary>
@@ -116,7 +129,8 @@ namespace Dapper
         /// <param name="size">The size of the parameter.</param>
         /// <param name="precision">The precision of the parameter.</param>
         /// <param name="scale">The scale of the parameter.</param>
-        public void Add(string name, object? value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
+        /// <returns>Returns this object for method chaining</returns>
+        public DynamicParameters Add(string name, object? value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
         {
             parameters[Clean(name)] = new ParamInfo
             {
@@ -128,6 +142,8 @@ namespace Dapper
                 Precision = precision,
                 Scale = scale
             };
+
+            return this;
         }
 
         private static string Clean(string name)
