@@ -255,22 +255,19 @@ namespace Dapper
                 [typeof(TimeOnly?)] = TypeMapEntry.DoNotSetFieldValue,
 #endif
             };
-            ResetTypeHandlers(false);
+            ResetTypeHandlers();
         }
 
         /// <summary>
         /// Clear the registered type handlers.
         /// </summary>
-        public static void ResetTypeHandlers() => ResetTypeHandlers(true);
-
         [MemberNotNull(nameof(typeHandlers))]
-        private static void ResetTypeHandlers(bool clone)
-        {
+        public static void ResetTypeHandlers() {
             typeHandlers = [];
-            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler(), clone);
-            AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler(), clone);
-            AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler(), clone);
-            AddTypeHandlerImpl(typeof(XElement), new XElementHandler(), clone);
+            AddTypeHandlerImpl(typeof(DataTable), new DataTableHandler());
+            AddTypeHandlerImpl(typeof(XmlDocument), new XmlDocumentHandler());
+            AddTypeHandlerImpl(typeof(XDocument), new XDocumentHandler());
+            AddTypeHandlerImpl(typeof(XElement), new XElementHandler());
         }
 
         /// <summary>
@@ -339,7 +336,7 @@ namespace Dapper
         /// </summary>
         /// <param name="type">The type to handle.</param>
         /// <param name="handler">The handler to process the <paramref name="type"/>.</param>
-        public static void AddTypeHandler(Type type, ITypeHandler handler) => AddTypeHandlerImpl(type, handler, true);
+        public static void AddTypeHandler(Type type, ITypeHandler handler) => AddTypeHandlerImpl(type, handler);
         /// <summary>
         /// Determine if the specified type will be processed by a custom handler.
         /// </summary>
@@ -353,7 +350,15 @@ namespace Dapper
         /// <param name="type">The type to handle.</param>
         /// <param name="handler">The handler to process the <paramref name="type"/>.</param>
         /// <param name="clone">Whether to clone the current type handler map.</param>
-        public static void AddTypeHandlerImpl(Type type, ITypeHandler? handler, bool clone)
+        [Obsolete("Please use overload of " + nameof(AddTypeHandlerImpl) + " without the clone parameter. This API may be removed at a later date.")]
+        public static void AddTypeHandlerImpl(Type type, ITypeHandler? handler, bool clone) => AddTypeHandlerImpl(type, handler);
+
+        /// <summary>
+        /// Configure the specified type to be processed by a custom handler.
+        /// </summary>
+        /// <param name="type">The type to handle.</param>
+        /// <param name="handler">The handler to process the <paramref name="type"/>.</param>
+        public static void AddTypeHandlerImpl(Type type, ITypeHandler? handler)
         {
             if (type is null) throw new ArgumentNullException(nameof(type));
 
@@ -373,10 +378,21 @@ namespace Dapper
                 }
             }
 
-            var snapshot = typeHandlers;
-            if (snapshot.TryGetValue(type, out var oldValue) && handler == oldValue) return; // nothing to do
-
-            var newCopy = clone ? new Dictionary<Type, ITypeHandler>(snapshot) : snapshot;
+            lock (typeHandlers)
+            {
+                if (typeHandlers.TryGetValue(type, out var oldValue) && handler == oldValue) return; // nothing to do
+             
+                if (handler is null)
+                {
+                    typeHandlers.Remove(type);
+                    if (secondary is not null) typeHandlers.Remove(secondary);
+                }
+                else
+                {
+                    typeHandlers[type] = handler;
+                    if (secondary is not null) typeHandlers[secondary] = handler;
+                }
+            }
 
 #pragma warning disable 618
             typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [handler]);
@@ -385,17 +401,6 @@ namespace Dapper
                 typeof(TypeHandlerCache<>).MakeGenericType(secondary).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [handler]);
             }
 #pragma warning restore 618
-            if (handler is null)
-            {
-                newCopy.Remove(type);
-                if (secondary is not null) newCopy.Remove(secondary);
-            }
-            else
-            {
-                newCopy[type] = handler;
-                if (secondary is not null) newCopy[secondary] = handler;
-            }
-            typeHandlers = newCopy;
         }
 
         /// <summary>
@@ -403,7 +408,7 @@ namespace Dapper
         /// </summary>
         /// <typeparam name="T">The type to handle.</typeparam>
         /// <param name="handler">The handler for the type <typeparamref name="T"/>.</param>
-        public static void AddTypeHandler<T>(TypeHandler<T> handler) => AddTypeHandlerImpl(typeof(T), handler, true);
+        public static void AddTypeHandler<T>(TypeHandler<T> handler) => AddTypeHandlerImpl(typeof(T), handler);
 
         private static Dictionary<Type, ITypeHandler> typeHandlers;
 
@@ -479,7 +484,7 @@ namespace Dapper
                         {
                             handler = (ITypeHandler)Activator.CreateInstance(
                                 typeof(SqlDataRecordHandler<>).MakeGenericType(argTypes))!;
-                            AddTypeHandlerImpl(type, handler, true);
+                            AddTypeHandlerImpl(type, handler);
                             return DbType.Object;
                         }
                         catch

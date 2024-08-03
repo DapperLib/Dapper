@@ -1,1 +1,2 @@
 ﻿#nullable enable
+static Dapper.SqlMapper.AddTypeHandlerImpl(System.Type! type, Dapper.SqlMapper.ITypeHandler? handler) -> void
