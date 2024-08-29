@@ -17,7 +17,7 @@ namespace Dapper.ProviderTools
         public static bool TryGetClientConnectionId(this DbConnection connection, out Guid clientConnectionId)
         {
             clientConnectionId = default;
-            return connection != null && ByTypeHelpers.Get(connection.GetType()).TryGetClientConnectionId(
+            return connection is not null && ByTypeHelpers.Get(connection.GetType()).TryGetClientConnectionId(
                 connection, out clientConnectionId);
         }
 
@@ -25,13 +25,13 @@ namespace Dapper.ProviderTools
         /// Clear all pools associated with the provided connection type
         /// </summary>
         public static bool TryClearAllPools(this DbConnection connection)
-            => connection != null && ByTypeHelpers.Get(connection.GetType()).TryClearAllPools();
+            => connection is not null && ByTypeHelpers.Get(connection.GetType()).TryClearAllPools();
 
         /// <summary>
         /// Clear the pools associated with the provided connection
         /// </summary>
         public static bool TryClearPool(this DbConnection connection)
-            => connection != null && ByTypeHelpers.Get(connection.GetType()).TryClearPool(connection);
+            => connection is not null && ByTypeHelpers.Get(connection.GetType()).TryClearPool(connection);
 
         private sealed class ByTypeHelpers
         {
@@ -44,7 +44,7 @@ namespace Dapper.ProviderTools
 
             public bool TryGetClientConnectionId(DbConnection connection, out Guid clientConnectionId)
             {
-                if (_getClientConnectionId == null)
+                if (_getClientConnectionId is null)
                 {
                     clientConnectionId = default;
                     return false;
@@ -55,14 +55,14 @@ namespace Dapper.ProviderTools
 
             public bool TryClearPool(DbConnection connection)
             {
-                if (_clearPool == null) return false;
+                if (_clearPool is null) return false;
                 _clearPool(connection);
                 return true;
             }
 
             public bool TryClearAllPools()
             {
-                if (_clearAllPools == null) return false;
+                if (_clearAllPools is null) return false;
                 _clearAllPools();
                 return true;
             }
@@ -84,7 +84,7 @@ namespace Dapper.ProviderTools
                 {
                     var clearAllPools = type.GetMethod("ClearAllPools", BindingFlags.Public | BindingFlags.Static,
                         null, Type.EmptyTypes, null);
-                    if (clearAllPools != null)
+                    if (clearAllPools is not null)
                     {
                         _clearAllPools = (Action)Delegate.CreateDelegate(typeof(Action), clearAllPools);
                     }
@@ -95,7 +95,7 @@ namespace Dapper.ProviderTools
                 {
                     var clearPool = type.GetMethod("ClearPool", BindingFlags.Public | BindingFlags.Static,
                         null, new[] { type }, null);
-                    if (clearPool != null)
+                    if (clearPool is not null)
                     {
                         var p = Expression.Parameter(typeof(DbConnection), "connection");
                         var body = Expression.Call(clearPool, Expression.Convert(p, type));
@@ -111,7 +111,7 @@ namespace Dapper.ProviderTools
                 try
                 {
                     var prop = type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-                    if (prop == null || !prop.CanRead) return null;
+                    if (prop is null || !prop.CanRead) return null;
                     if (prop.PropertyType != typeof(T)) return null;
 
                     var p = Expression.Parameter(typeof(DbConnection), "connection");

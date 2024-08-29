@@ -20,7 +20,7 @@ namespace Dapper
             /// </summary>
             /// <param name="value">The object to parse.</param>
             [Obsolete(ObsoleteInternalUsageOnly, true)]
-            public static T Parse(object value) => (T)handler.Parse(typeof(T), value);
+            public static T? Parse(object value) => (T?)handler.Parse(typeof(T), value);
 
             /// <summary>
             /// Not intended for direct usage.
@@ -32,12 +32,10 @@ namespace Dapper
 
             internal static void SetHandler(ITypeHandler handler)
             {
-#pragma warning disable 618
                 TypeHandlerCache<T>.handler = handler;
-#pragma warning restore 618
             }
 
-            private static ITypeHandler handler;
+            private static ITypeHandler handler = null!;
         }
     }
 }

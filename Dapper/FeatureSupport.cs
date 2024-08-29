@@ -17,9 +17,9 @@ namespace Dapper
         /// Gets the feature set based on the passed connection
         /// </summary>
         /// <param name="connection">The connection to get supported features for.</param>
-        public static FeatureSupport Get(IDbConnection connection)
+        public static FeatureSupport Get(IDbConnection? connection)
         {
-            string name = connection?.GetType().Name;
+            string? name = connection?.GetType().Name;
             if (string.Equals(name, "npgsqlconnection", StringComparison.OrdinalIgnoreCase)) return Postgres;
             if (string.Equals(name, "clickhouseconnection", StringComparison.OrdinalIgnoreCase)) return ClickHouse;
             return Default;

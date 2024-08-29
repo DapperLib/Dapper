@@ -24,14 +24,14 @@ namespace Dapper.Tests
 
             // test passing as int, reading as AnEnum
             var k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", new { v = (int)AnEnum.B, y = (int?)(int)AnEnum.B, z = (int?)null });
-            Assert.Equal(k, (int)AnEnum.B);
+            Assert.Equal((int)AnEnum.B, k);
 
             args = new DynamicParameters();
             args.Add("v", (int)AnEnum.B);
             args.Add("y", (int)AnEnum.B);
             args.Add("z", null);
             k = (int)connection.QuerySingle<AnEnum>("select @v, @y, @z", args);
-            Assert.Equal(k, (int)AnEnum.B);
+            Assert.Equal((int)AnEnum.B, k);
         }
 
         public static void TestDateTime(DbConnection connection)

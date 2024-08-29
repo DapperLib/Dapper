@@ -1,0 +1,6 @@
+﻿#nullable enable
+Dapper.SqlMapper.GridReader.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Dapper.SqlMapper.GridReader.ReadUnbufferedAsync() -> System.Collections.Generic.IAsyncEnumerable<dynamic!>!
+Dapper.SqlMapper.GridReader.ReadUnbufferedAsync<T>() -> System.Collections.Generic.IAsyncEnumerable<T>!
+static Dapper.SqlMapper.QueryUnbufferedAsync(this System.Data.Common.DbConnection! cnn, string! sql, object? param = null, System.Data.Common.DbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IAsyncEnumerable<dynamic!>!
+static Dapper.SqlMapper.QueryUnbufferedAsync<T>(this System.Data.Common.DbConnection! cnn, string! sql, object? param = null, System.Data.Common.DbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IAsyncEnumerable<T>!

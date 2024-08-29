@@ -86,7 +86,7 @@ namespace Dapper.Tests
             var count = connection.Query<int>("select count(1) from #literal1 where id={=foo}", new { foo = 123 }).Single();
             Assert.Equal(1, count);
             int sum = connection.Query<int>("select sum(id) + sum(foo) from #literal1").Single();
-            Assert.Equal(sum, 123 + 456 + 1 + 2 + 3 + 4);
+            Assert.Equal(123 + 456 + 1 + 2 + 3 + 4, sum);
         }
 
         [Fact]

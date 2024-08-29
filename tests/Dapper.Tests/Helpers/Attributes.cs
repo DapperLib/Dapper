@@ -41,7 +41,7 @@ namespace Dapper.Tests
 #endif
         }
 
-        public string Url { get; private set; }
+        public string? Url { get; private set; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
@@ -59,14 +59,12 @@ namespace Dapper.Tests
         public static readonly int DetectedLevel;
         static FactRequiredCompatibilityLevelAttribute()
         {
-            using (var conn = DatabaseProvider<SystemSqlClientProvider>.Instance.GetOpenConnection())
+            using var conn = DatabaseProvider<SystemSqlClientProvider>.Instance.GetOpenConnection();
+            try
             {
-                try
-                {
-                    DetectedLevel = conn.QuerySingle<int>("SELECT compatibility_level FROM sys.databases where name = DB_NAME()");
-                }
-                catch { /* don't care */ }
+                DetectedLevel = conn.QuerySingle<int>("SELECT compatibility_level FROM sys.databases where name = DB_NAME()");
             }
+            catch { /* don't care */ }
         }
     }
 
@@ -84,20 +82,18 @@ namespace Dapper.Tests
         public static readonly bool IsCaseSensitive;
         static FactUnlessCaseSensitiveDatabaseAttribute()
         {
-            using (var conn = DatabaseProvider<SystemSqlClientProvider>.Instance.GetOpenConnection())
+            using var conn = DatabaseProvider<SystemSqlClientProvider>.Instance.GetOpenConnection();
+            try
             {
-                try
-                {
-                    conn.Execute("declare @i int; set @I = 1;");
-                }
-                catch (Exception ex) when (ex.GetType().Name == "SqlException")
-                {
-                    int err = ((dynamic)ex).Number;
-                    if (err == 137)
-                        IsCaseSensitive = true;
-                    else
-                        throw;
-                }
+                conn.Execute("declare @i int; set @I = 1;");
+            }
+            catch (Exception ex) when (ex.GetType().Name == "SqlException")
+            {
+                int err = ((dynamic)ex).Number;
+                if (err == 137)
+                    IsCaseSensitive = true;
+                else
+                    throw;
             }
         }
     }

@@ -92,18 +92,17 @@ namespace Dapper.Tests
         [Fact]
         public void AdoNetEnumValue()
         {
-            using (var cmd = connection.CreateCommand())
-            {
-                cmd.CommandText = "select @foo";
-                var p = cmd.CreateParameter();
-                p.ParameterName = "@foo";
-                p.DbType = DbType.Int32; // it turns out that this is the key piece; setting the DbType
-                p.Value = AnEnum.B;
-                cmd.Parameters.Add(p);
-                object value = cmd.ExecuteScalar();
-                AnEnum val = (AnEnum)value;
-                Assert.Equal(AnEnum.B, val);
-            }
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "select @foo";
+            var p = cmd.CreateParameter();
+            p.ParameterName = "@foo";
+            p.DbType = DbType.Int32; // it turns out that this is the key piece; setting the DbType
+            p.Value = AnEnum.B;
+            cmd.Parameters.Add(p);
+            object? value = cmd.ExecuteScalar();
+            Assert.NotNull(value);
+            AnEnum val = (AnEnum)value;
+            Assert.Equal(AnEnum.B, val);
         }
 
         [Fact]
