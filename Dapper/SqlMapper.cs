@@ -1658,7 +1658,7 @@ namespace Dapper
                     var deserializers = GenerateDeserializers(identity, splitOn, reader);
                     deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
                     otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
-                    SetQueryCache(identity, cinfo);
+                    if (command.AddToCache) SetQueryCache(identity, cinfo);
                 }
 
                 Func<DbDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
