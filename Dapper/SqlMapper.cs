@@ -1148,7 +1148,7 @@ namespace Dapper
                     if (!reader.IsClosed)
                     {
                         try { cmd?.Cancel(); }
-                        catch { /* don't spoil the existing exception */ }
+                        catch { /* don't spoil any existing exception */ }
                     }
                     reader.Dispose();
                 }
@@ -1229,7 +1229,7 @@ namespace Dapper
                     if (!reader.IsClosed)
                     {
                         try { cmd?.Cancel(); }
-                        catch { /* don't spoil the existing exception */ }
+                        catch { /* don't spoil any existing exception */ }
                     }
                     reader.Dispose();
                 }
@@ -1321,7 +1321,7 @@ namespace Dapper
                     if (!reader.IsClosed)
                     {
                         try { cmd?.Cancel(); }
-                        catch { /* don't spoil the existing exception */ }
+                        catch { /* don't spoil any existing exception */ }
                     }
                     reader.Dispose();
                 }

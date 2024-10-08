@@ -1333,6 +1333,11 @@ namespace Dapper
                 {
                     if (reader is not null)
                     {
+                        if (!reader.IsClosed)
+                        {
+                            try { cmd?.Cancel(); }
+                            catch { /* don't spoil any existing exception */ }
+                        }
                         await reader.DisposeAsync();
                     }
                     if (wasClosed) cnn.Close();
