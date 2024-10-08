@@ -14,7 +14,7 @@
     <PackageReference Include="Belgrade.Sql.Client" />
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="DevExpress.Xpo" />
-    <PackageReference Include="EntityFramework" VersionOverride="6.4.4"/>
+    <PackageReference Include="EntityFramework" VersionOverride="6.5.1" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="linq2db.SqlServer" />
     <PackageReference Include="MySqlConnector" />
@@ -28,6 +28,16 @@
     <PackageReference Include="SqlMarshal" />
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="System.Data.SQLite" />
+    <PackageReference Include="System.Reflection.Metadata" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NU1903 warnings -->
+    <PackageReference Include="System.Text.RegularExpressions" />
+    <PackageReference Include="System.Private.Uri" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="System.Net.Http" />
+    <PackageReference Include="Azure.Identity" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NHibernate\*.xml" />
