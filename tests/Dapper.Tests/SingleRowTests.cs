@@ -44,8 +44,6 @@ public abstract class SingleRowTests<TProvider>(ITestOutputHelper log) : TestBas
     [Fact]
     public async Task QueryFirst_PerformanceAndCorrectness()
     {
-        Settings.SetDefaults();
-
         using var conn = GetOpenConnection();
         conn.Execute("create table #mydata(id int not null, name nvarchar(250) not null)");
 
