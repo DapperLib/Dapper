@@ -6,6 +6,7 @@
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
     <NoWarn>$(NoWarn);IDE0017;IDE0034;IDE0037;IDE0039;IDE0042;IDE0044;IDE0051;IDE0052;IDE0059;IDE0060;IDE0063;IDE1006;xUnit1004;CA1806;CA1816;CA1822;CA1825;CA2208;CA1861</NoWarn>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
@@ -16,6 +17,7 @@
     <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
     <PackageReference Include="DuckDB.NET.Data.Full" />
+    <PackageReference Include="FastMember" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
