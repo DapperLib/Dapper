@@ -81,7 +81,7 @@ namespace Dapper
                 var parameters = new System.Linq.Expressions.Expression[]
                                      {
                                          System.Linq.Expressions.Expression.Constant(binder.Name),
-                                         value.Expression,
+                                         System.Linq.Expressions.Expression.Convert(value.Expression, typeof(object)),
                                      };
 
                 var callMethod = CallMethod(setValueMethod, parameters);

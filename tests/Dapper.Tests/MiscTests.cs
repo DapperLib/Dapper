@@ -1358,5 +1358,41 @@ insert TPTable (Value) values (2), (568)");
 
             Assert.Single(results);
         }
+
+        [Fact]
+        public void SetDynamicProperty_WithReferenceType_Succeeds()
+        {
+            var obj = connection.QueryFirst("select 1 as ExistingProperty");
+
+            obj.ExistingProperty = "foo";
+            Assert.Equal("foo", (string)obj.ExistingProperty);
+
+            obj.NewProperty = new Uri("http://example.net/");
+            Assert.Equal(new Uri("http://example.net/"), (Uri)obj.NewProperty);
+        }
+
+        [Fact]
+        public void SetDynamicProperty_WithBoxedValueType_Succeeds()
+        {
+            var obj = connection.QueryFirst("select 'foo' as ExistingProperty");
+
+            obj.ExistingProperty = (object)1;
+            Assert.Equal(1, (int)obj.ExistingProperty);
+
+            obj.NewProperty = (object)true;
+            Assert.True(obj.NewProperty);
+        }
+
+        [Fact]
+        public void SetDynamicProperty_WithValueType_Succeeds()
+        {
+            var obj = connection.QueryFirst("select 'foo' as ExistingProperty");
+
+            obj.ExistingProperty = 1;
+            Assert.Equal(1, (int)obj.ExistingProperty);
+
+            obj.NewProperty = true;
+            Assert.True(obj.NewProperty);
+        }
     }
 }
