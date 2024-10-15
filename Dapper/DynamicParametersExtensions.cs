@@ -6,7 +6,7 @@ namespace Dapper
     /// An Extention Class to DynamicParameters
     /// </summary>
 
-    public static class DynamicParametersExtensions
+    internal static class DynamicParametersExtensions
     {
         /// <summary>
         /// Add Parameter if exists
@@ -14,21 +14,13 @@ namespace Dapper
         /// <param name="dp">Extending DynamicParameter</param>
         /// <param name="paramName">Parameter Name</param>
         /// <param name="param">Parameter with type of dynamic</param>
-        public static void AddIfExists(this DynamicParameters dp, string paramName, dynamic? param)
+        internal static void AddIfExists(this DynamicParameters dp, string paramName, dynamic? param)
         {
-            if (param is not null)
+            if (param is null)
             {
-                var pStr = param is string;
-                if (pStr)
-                {
-                    if (string.IsNullOrEmpty(param))
-                    {
-                        return;
-                    }
-                }
-
-                dp.Add(paramName, param);
+                return;
             }
+            dp.Add(paramName, param);
         }
 
         /// <summary>
