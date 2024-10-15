@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace Dapper
 {
@@ -43,13 +43,9 @@ namespace Dapper
             {
                 foreach (PropertyInfo prop in param.GetType().GetProperties())
                 {
-                    if (
-                        !prop.Name.ToLower().Contains("monitoringtype")
-                        && !prop.Name.ToLower().Contains("projecttype")
-                    )
-                    {
-                        AddIfExists(dp, paramName: prop.Name, param: prop.GetValue(param));
-                    }
+
+                    AddIfExists(dp, paramName: prop.Name, param: prop.GetValue(param));
+
                 }
             }
         }
