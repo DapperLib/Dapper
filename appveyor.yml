@@ -14,7 +14,7 @@ stack: postgresql 15
 environment:
   Appveyor: true
   # Postgres
-  POSTGRES_PATH: C:\Program Files\PostgreSQL\15.8
+  POSTGRES_PATH: C:\Program Files\PostgreSQL\15
   PGUSER: postgres
   PGPASSWORD: Password12!
   POSTGRES_ENV_POSTGRES_USER: postgres
