@@ -362,7 +362,7 @@ namespace Dapper
         {
             // this method was accidentally made public; we'll mark it as illegal, but
             // preserve existing usage in compiled code; sorry about this!
-            AddTypeHandlerCore(type, handler, clone);
+            AddTypeHandlerCore(type, handler, true); // do not allow suppress clone
         }
 
         private static void AddTypeHandlerCore(Type type, ITypeHandler? handler, bool clone)
