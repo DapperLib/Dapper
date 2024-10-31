@@ -390,10 +390,9 @@ namespace Dapper
             // the synchronize is just to prevent lost writes
             lock (typeHandlersSyncLock)
             {
-                var snapshot = typeHandlers;
-                if (snapshot.TryGetValue(type, out var oldValue) && handler == oldValue) return; // nothing to do
+                if (typeHandlers.TryGetValue(type, out var oldValue) && handler == oldValue) return; // nothing to do
 
-                var newCopy = clone ? new Dictionary<Type, ITypeHandler>(snapshot) : snapshot;
+                var newCopy = clone ? new Dictionary<Type, ITypeHandler>(typeHandlers) : typeHandlers;
 
 #pragma warning disable 618
                 typeof(TypeHandlerCache<>).MakeGenericType(type).GetMethod(nameof(TypeHandlerCache<int>.SetHandler), BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [handler]);
