@@ -32,7 +32,7 @@ environment:
 
 services:
   # - mysql
-  - postgresql
+  - postgresql96
 
 init:
   - git config --global core.autocrlf input
