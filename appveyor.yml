@@ -9,10 +9,12 @@ skip_commits:
 # install:
 #   - choco install dotnet-sdk --version 8.0.100
 
+stack: postgresql 15
+
 environment:
   Appveyor: true
   # Postgres
-  POSTGRES_PATH: C:\Program Files\PostgreSQL\13
+  POSTGRES_PATH: C:\Program Files\PostgreSQL\15
   PGUSER: postgres
   PGPASSWORD: Password12!
   POSTGRES_ENV_POSTGRES_USER: postgres
@@ -32,7 +34,7 @@ environment:
 
 services:
   # - mysql
-  - postgresql13
+  - postgresql15
 
 init:
   - git config --global core.autocrlf input
