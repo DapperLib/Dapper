@@ -493,7 +493,7 @@ namespace Dapper
                 T result = default!;
                 if (await reader.ReadAsync(cancel).ConfigureAwait(false) && reader.FieldCount != 0)
                 {
-                    result = ReadRow<T>(info, identity, ref command, effectiveType, reader);
+                    result = ReadRow<T>(info, identity, in command, effectiveType, reader);
 
                     if ((row & Row.Single) != 0 && await reader.ReadAsync(cancel).ConfigureAwait(false)) ThrowMultipleRows(row);
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false)) { /* ignore rows after the first */ }
@@ -1155,7 +1155,7 @@ namespace Dapper
 
         private static async Task<DbDataReader> ExecuteWrappedReaderImplAsync(IDbConnection cnn, CommandDefinition command, CommandBehavior commandBehavior)
         {
-            Action<IDbCommand, object?>? paramReader = GetParameterReader(cnn, ref command);
+            Action<IDbCommand, object?>? paramReader = GetParameterReader(cnn, in command);
 
             DbCommand? cmd = null;
             bool wasClosed = cnn.State == ConnectionState.Closed, disposeCommand = true;

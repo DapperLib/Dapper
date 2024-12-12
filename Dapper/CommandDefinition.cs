@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -111,6 +112,15 @@ namespace Dapper
             Parameters = parameters;
             Flags = flags;
             CommandText = "";
+        }
+
+        internal CommandDefinition(IDbCommand cmd, CommandFlags flags = CommandFlags.None)
+        {
+            CommandText = cmd.CommandText;
+            CommandTypeDirect = cmd.CommandType;
+            CommandTimeout = cmd.CommandTimeout;
+            Transaction = cmd.Transaction;
+            Flags = flags;
         }
 
         /// <summary>

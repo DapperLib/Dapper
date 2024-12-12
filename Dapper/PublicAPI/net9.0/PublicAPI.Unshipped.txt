@@ -1,0 +1,15 @@
+﻿#nullable enable
+Dapper.SqlMapper.SqlBuilder
+Dapper.SqlMapper.SqlBuilder.AppendFormatted(bool value, string! format = "", string! expression = "") -> void
+Dapper.SqlMapper.SqlBuilder.AppendFormatted<T>(T value, string! format = "", string! expression = "") -> void
+Dapper.SqlMapper.SqlBuilder.AppendLiteral(string! value) -> void
+Dapper.SqlMapper.SqlBuilder.Dispose() -> void
+Dapper.SqlMapper.SqlBuilder.GetCommandAndReset(System.Data.IDbTransaction? transaction, int? commandTimeout) -> System.Data.IDbCommand!
+Dapper.SqlMapper.SqlBuilder.SqlBuilder() -> void
+Dapper.SqlMapper.SqlBuilder.SqlBuilder(int literalLength, int formattedCount, System.Data.IDbConnection! connection) -> void
+static Dapper.SqlMapper.Execute(this System.Data.IDbConnection! connection, ref Dapper.SqlMapper.SqlBuilder sql, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null) -> int
+static Dapper.SqlMapper.ExecuteScalar(this System.Data.IDbConnection! connection, ref Dapper.SqlMapper.SqlBuilder sql, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null) -> object?
+static Dapper.SqlMapper.ExecuteScalar<T>(this System.Data.IDbConnection! connection, ref Dapper.SqlMapper.SqlBuilder sql, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null) -> T?
+static Dapper.SqlMapper.Query<T>(this System.Data.IDbConnection! connection, ref Dapper.SqlMapper.SqlBuilder sql, System.Data.IDbTransaction? transaction = null, bool buffered = false, int? commandTimeout = null) -> System.Collections.Generic.IEnumerable<T>!
+static Dapper.SqlMapper.QueryBuffered<T>(this System.Data.IDbConnection! connection, ref Dapper.SqlMapper.SqlBuilder sql, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null) -> System.Collections.Generic.List<T>!
+static Dapper.SqlMapper.QueryUnbuffered<T>(this System.Data.IDbConnection! connection, ref Dapper.SqlMapper.SqlBuilder sql, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null) -> System.Collections.Generic.IEnumerable<T>!
