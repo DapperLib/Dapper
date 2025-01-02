@@ -463,6 +463,10 @@ namespace Dapper
             handler = null;
             var nullUnderlyingType = Nullable.GetUnderlyingType(type);
             if (nullUnderlyingType is not null) type = nullUnderlyingType;
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (type.IsEnum && !typeMap.ContainsKey(type))
             {
                 type = Enum.GetUnderlyingType(type);
@@ -478,10 +482,6 @@ namespace Dapper
             if (type.FullName == LinqBinary)
             {
                 return DbType.Binary;
-            }
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
@@ -2749,7 +2749,7 @@ namespace Dapper
                     var nullType = Nullable.GetUnderlyingType(propType);
                     bool callSanitize = false;
 
-                    if ((nullType ?? propType).IsEnum)
+                    if ((nullType ?? propType).IsEnum && handler == null)
                     {
                         if (nullType is not null)
                         {
