@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Data;
 using System.Data.Common;
@@ -46,7 +46,10 @@ public class WrappedReaderTests(ITestOutputHelper testOutputHelper)
         public override int ExecuteNonQuery() => throw new NotSupportedException();
         public override object ExecuteScalar() => throw new NotSupportedException();
         public override void Prepare() => throw new NotSupportedException();
-        public override string CommandText { get; set; }
+
+#pragma warning disable CS8765 // nullability of value
+        public override string CommandText { get; set; } = "";
+#pragma warning restore CS8765 // nullability of value
         public override int CommandTimeout { get; set; }
         public override CommandType CommandType { get; set; }
         public override UpdateRowSource UpdatedRowSource { get; set; }

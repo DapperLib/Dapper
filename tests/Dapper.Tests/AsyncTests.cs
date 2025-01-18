@@ -995,5 +995,41 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
             Assert.Equal(123, c);
             Assert.Equal(456, d);
         }
+
+       [Fact]
+        public async Task AssertNoCacheWorksForMultiMap()
+        {
+            const int a = 123, b = 456;
+            var cmdDef = new CommandDefinition("select @a as a, @b as b;", new
+            {
+                a,
+                b
+            }, commandType: CommandType.Text, flags: CommandFlags.NoCache | CommandFlags.Buffered);
+
+            SqlMapper.PurgeQueryCache();
+            var before = SqlMapper.GetCachedSQLCount();
+            Assert.Equal(0, before);
+
+            await MarsConnection.QueryAsync<int, int, (int, int)>(cmdDef, splitOn: "b", map: (a, b) => (a, b));
+            Assert.Equal(0, SqlMapper.GetCachedSQLCount());
+        }
+
+        [Fact]
+        public async Task AssertNoCacheWorksForQueryAsync()
+        {
+            const int a = 123, b = 456;
+            var cmdDef = new CommandDefinition("select @a as a, @b as b;", new
+            {
+                a,
+                b
+            }, commandType: CommandType.Text, flags: CommandFlags.NoCache | CommandFlags.Buffered);
+
+            SqlMapper.PurgeQueryCache();
+            var before = SqlMapper.GetCachedSQLCount();
+            Assert.Equal(0, before);
+
+            await MarsConnection.QueryAsync<(int, int)>(cmdDef);
+            Assert.Equal(0, SqlMapper.GetCachedSQLCount());    
+        }
     }
 }

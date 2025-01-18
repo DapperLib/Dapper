@@ -449,7 +449,7 @@ using (var reader = connection.ExecuteReader("select * from Shapes"))
 }
 ```
 
-User Defined Variables in MySQL
+User Defined Variables in MySQL/MariaDB
 ---------------------
 In order to use Non-parameter SQL variables with MySql Connector, you have to add the following option to your connection string:
 
@@ -465,7 +465,7 @@ Dapper's simplicity means that many features that ORMs ship with are stripped ou
 
 Will Dapper work with my DB provider?
 ---------------------
-Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](https://www.sqlite.org/), SQL CE, Firebird, Oracle, MySQL, PostgreSQL and SQL Server.
+Dapper has no DB specific implementation details, it works across all .NET ADO providers including [SQLite](https://www.sqlite.org/), SQL CE, Firebird, Oracle, MariaDB, MySQL, PostgreSQL and SQL Server.
 
 Do you have a comprehensive list of examples?
 ---------------------

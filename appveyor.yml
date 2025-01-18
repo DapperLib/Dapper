@@ -12,7 +12,7 @@ skip_commits:
 environment:
   Appveyor: true
   # Postgres
-  POSTGRES_PATH: C:\Program Files\PostgreSQL\9.6
+  POSTGRES_PATH: C:\Program Files\PostgreSQL\16
   PGUSER: postgres
   PGPASSWORD: Password12!
   POSTGRES_ENV_POSTGRES_USER: postgres
@@ -30,14 +30,11 @@ environment:
   PostgesConnectionString: Server=localhost;Port=5432;User Id=postgres;Password=Password12!;Database=test
   SqlServerConnectionString: Server=(local)\SQL2019;Database=tempdb;User ID=sa;Password=Password12!
 
-services:
-  # - mysql
-  - postgresql
-
 init:
   - git config --global core.autocrlf input
   - SET PATH=%POSTGRES_PATH%\bin;%MYSQL_PATH%\bin;%PATH%
   - net start MSSQL$SQL2019
+  - net start postgresql-x64-16
   - ps: Start-Service MySQL80
     
 nuget:

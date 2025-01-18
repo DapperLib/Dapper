@@ -939,7 +939,7 @@ namespace Dapper
                 using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
                 if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
+                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), map, splitOn, reader, identity, true);
                 return command.Buffered ? results.ToList() : results;
             }
             finally
@@ -1333,6 +1333,11 @@ namespace Dapper
                 {
                     if (reader is not null)
                     {
+                        if (!reader.IsClosed)
+                        {
+                            try { cmd?.Cancel(); }
+                            catch { /* don't spoil any existing exception */ }
+                        }
                         await reader.DisposeAsync();
                     }
                     if (wasClosed) cnn.Close();
