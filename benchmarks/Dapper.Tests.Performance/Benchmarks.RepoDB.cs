@@ -20,11 +20,11 @@ namespace Dapper.Tests.Performance
             // We need this since benchmarks using System.Data.SqlClient
             var dbSetting = new SqlServerDbSetting();
             DbSettingMapper
-                .Add<System.Data.SqlClient.SqlConnection>(dbSetting, true);
+                .Add<Microsoft.Data.SqlClient.SqlConnection>(dbSetting, true);
             DbHelperMapper
-                .Add<System.Data.SqlClient.SqlConnection>(new SqlServerDbHelper(), true);
+                .Add<Microsoft.Data.SqlClient.SqlConnection>(new SqlServerDbHelper(), true);
             StatementBuilderMapper
-                .Add<System.Data.SqlClient.SqlConnection>(new SqlServerStatementBuilder(dbSetting), true);
+                .Add<Microsoft.Data.SqlClient.SqlConnection>(new SqlServerStatementBuilder(dbSetting), true);
 
             ClassMapper.Add<Post>("Posts");
         }
@@ -54,7 +54,7 @@ namespace Dapper.Tests.Performance
         public Post QueryField()
         {
             Step();
-            return _connection.Query<Post>(new QueryField[] { new(nameof(Post.Id), i) }).First();
+            return _connection.Query<Post>([new(nameof(Post.Id), i)]).First();
         }
 
         [Benchmark(Description = "ExecuteQuery<T>")]

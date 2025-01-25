@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System;
 using System.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Dapper.Tests.Performance
 {
