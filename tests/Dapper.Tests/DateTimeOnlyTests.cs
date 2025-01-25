@@ -17,7 +17,7 @@ public abstract class DateTimeOnlyTests<TProvider> : TestBase<TProvider> where T
 {
     public class HazDateTimeOnly
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = "";
         public DateOnly Date { get; set; }
         public TimeOnly Time { get; set; }
         public DateOnly? NDate { get; set; }

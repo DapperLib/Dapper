@@ -5,7 +5,7 @@
     <Title>Dapper Provider Tools</Title>
     <Description>Provider-agnostic ADO.NET helper utilities</Description>
     <Authors>Marc Gravell</Authors>
-    <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0;net8.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <Nullable>enable</Nullable>
   </PropertyGroup>
