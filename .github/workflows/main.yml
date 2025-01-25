@@ -40,6 +40,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v1
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
     - name: Dapper Tests
