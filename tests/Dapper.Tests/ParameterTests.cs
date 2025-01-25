@@ -17,6 +17,8 @@ using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 #endif
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)] // because it creates SQL types that compete between the two providers
