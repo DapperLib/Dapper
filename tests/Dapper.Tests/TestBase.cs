@@ -74,7 +74,9 @@ namespace Dapper.Tests
     }
     public sealed class SystemSqlClientProvider : SqlServerDatabaseProvider
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         public override DbProviderFactory Factory => System.Data.SqlClient.SqlClientFactory.Instance;
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 #if MSSQLCLIENT
     public sealed class MicrosoftSqlClientProvider : SqlServerDatabaseProvider

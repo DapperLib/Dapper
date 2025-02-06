@@ -6,8 +6,8 @@ skip_commits:
   files:
     - '**/*.md'
 
-# install:
-#   - choco install dotnet-sdk --version 8.0.100
+install:
+  - choco install dotnet-sdk --version 9.0.101
 
 environment:
   Appveyor: true

@@ -10,8 +10,10 @@ namespace Dapper.Tests
         [Fact]
         public void BulkCopy_SystemDataSqlClient()
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             using var conn = new System.Data.SqlClient.SqlConnection();
             Test<System.Data.SqlClient.SqlBulkCopy>(conn);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         [Fact]
