@@ -88,10 +88,13 @@ Limitations and caveats
 ### Combining the Where and OrWhere methods
 
 The OrWhere method currently groups all `and` and `or` clauses by type,
-which may result in possibly unexpected outcomes.
+then join the groups with `and` or `or` depending on the first call.
+This may result in possibly unexpected outcomes.
 See also [issue 647](https://github.com/DapperLib/Dapper/issues/647).
 
-For example, when providing the following clauses
+#### Example Where first
+
+When providing the following clauses
 ```csharp
 sql.Where("a = @a1");
 sql.OrWhere("b = @b1");
@@ -107,4 +110,19 @@ a = @a1 AND a = @a2 AND ( b = @b1 OR b = @b2 )
 and not say
 ```sql
 a = @a1 OR b = @b1 AND a = @a2 OR b = @b2
+```
+
+#### Example OrWhere first
+
+When providing the following clauses
+```csharp
+sql.OrWhere("b = @b1");
+sql.Where("a = @a1");
+sql.OrWhere("b = @b2");
+sql.Where("a = @a2");
+```
+
+SqlBuilder will generate sql
+```sql
+a = @a1 OR a = @a2 OR ( b = @b1 OR b = @b2 )
 ```
