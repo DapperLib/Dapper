@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Running;
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using static System.Console;
 

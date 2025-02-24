@@ -21,14 +21,20 @@
     <PackageReference Include="NHibernate" />
     <PackageReference Include="Iesi.Collections" />
     <PackageReference Include="Mighty" />
-    <PackageReference Include="Npgsql" />
     <PackageReference Include="PetaPoco" />
     <PackageReference Include="RepoDb.SqlServer" />
     <PackageReference Include="ServiceStack.OrmLite.SqlServer" />
     <PackageReference Include="SqlMarshal" />
-    <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="System.Data.SQLite" />
     <PackageReference Include="System.Reflection.Metadata" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Npgsql" VersionOverride="8.0.6"/>
   </ItemGroup>
 
   <ItemGroup>

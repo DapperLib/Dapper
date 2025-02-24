@@ -18,7 +18,9 @@ public sealed class SystemSqlClientSingleRowTests(ITestOutputHelper log) : Singl
 {
     protected override async Task InjectDataAsync(DbConnection conn, DbDataReader source)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         using var bcp = new System.Data.SqlClient.SqlBulkCopy((System.Data.SqlClient.SqlConnection)conn);
+#pragma warning restore CS0618 // Type or member is obsolete
         bcp.DestinationTableName = "#mydata";
         bcp.EnableStreaming = true;
         await bcp.WriteToServerAsync(source);
@@ -107,12 +109,10 @@ public abstract class SingleRowTests<TProvider>(ITestOutputHelper log) : TestBas
         watch.Stop();
         log.WriteLine($"sync unbuffered LINQ read first complete; row {row.Id} in {watch.ElapsedMilliseconds}ms");
 
-#if NET5_0_OR_GREATER
         watch = Stopwatch.StartNew();
         row = await conn.QueryUnbufferedAsync<MyRow>("select * from #mydata").FirstAsync();
         watch.Stop();
         log.WriteLine($"async unbuffered LINQ read first complete; row {row.Id} in {watch.ElapsedMilliseconds}ms");
-#endif
 
         static unsafe string CreateName(Random rand)
         {

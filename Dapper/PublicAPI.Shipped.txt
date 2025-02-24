@@ -69,6 +69,7 @@ Dapper.SqlMapper.GridReader.CancellationToken.get -> System.Threading.Cancellati
 Dapper.SqlMapper.GridReader.Command.get -> System.Data.IDbCommand!
 Dapper.SqlMapper.GridReader.Command.set -> void
 Dapper.SqlMapper.GridReader.Dispose() -> void
+Dapper.SqlMapper.GridReader.DisposeAsync() -> System.Threading.Tasks.ValueTask
 Dapper.SqlMapper.GridReader.GridReader(System.Data.IDbCommand! command, System.Data.Common.DbDataReader! reader, Dapper.SqlMapper.Identity? identity, System.Action<object?>? onCompleted = null, object? state = null, bool addToCache = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
 Dapper.SqlMapper.GridReader.IsConsumed.get -> bool
 Dapper.SqlMapper.GridReader.OnAfterGrid(int index) -> void
@@ -112,6 +113,8 @@ Dapper.SqlMapper.GridReader.ReadSingleOrDefault<T>() -> T?
 Dapper.SqlMapper.GridReader.ReadSingleOrDefaultAsync() -> System.Threading.Tasks.Task<dynamic?>!
 Dapper.SqlMapper.GridReader.ReadSingleOrDefaultAsync(System.Type! type) -> System.Threading.Tasks.Task<object?>!
 Dapper.SqlMapper.GridReader.ReadSingleOrDefaultAsync<T>() -> System.Threading.Tasks.Task<T?>!
+Dapper.SqlMapper.GridReader.ReadUnbufferedAsync() -> System.Collections.Generic.IAsyncEnumerable<dynamic!>!
+Dapper.SqlMapper.GridReader.ReadUnbufferedAsync<T>() -> System.Collections.Generic.IAsyncEnumerable<T>!
 Dapper.SqlMapper.GridReader.ResultIndex.get -> int
 Dapper.SqlMapper.ICustomQueryParameter
 Dapper.SqlMapper.ICustomQueryParameter.AddParameter(System.Data.IDbCommand! command, string! name) -> void
@@ -295,6 +298,8 @@ static Dapper.SqlMapper.QuerySingleOrDefaultAsync(this System.Data.IDbConnection
 static Dapper.SqlMapper.QuerySingleOrDefaultAsync(this System.Data.IDbConnection! cnn, System.Type! type, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<object?>!
 static Dapper.SqlMapper.QuerySingleOrDefaultAsync<T>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command) -> System.Threading.Tasks.Task<T?>!
 static Dapper.SqlMapper.QuerySingleOrDefaultAsync<T>(this System.Data.IDbConnection! cnn, string! sql, object? param = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Threading.Tasks.Task<T?>!
+static Dapper.SqlMapper.QueryUnbufferedAsync(this System.Data.Common.DbConnection! cnn, string! sql, object? param = null, System.Data.Common.DbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IAsyncEnumerable<dynamic!>!
+static Dapper.SqlMapper.QueryUnbufferedAsync<T>(this System.Data.Common.DbConnection! cnn, string! sql, object? param = null, System.Data.Common.DbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null) -> System.Collections.Generic.IAsyncEnumerable<T>!
 static Dapper.SqlMapper.ReadChar(object! value) -> char
 static Dapper.SqlMapper.ReadNullableChar(object! value) -> char?
 static Dapper.SqlMapper.RemoveTypeMap(System.Type! type) -> void

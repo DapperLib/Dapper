@@ -2,17 +2,17 @@
   <PropertyGroup>
     <AssemblyName>Dapper.Tests</AssemblyName>
     <Description>Dapper Core Test Suite</Description>
-    <TargetFrameworks>net472;net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net481;net8.0;net9.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);MSSQLCLIENT</DefineConstants>
     <NoWarn>$(NoWarn);IDE0017;IDE0034;IDE0037;IDE0039;IDE0042;IDE0044;IDE0051;IDE0052;IDE0059;IDE0060;IDE0063;IDE1006;xUnit1004;CA1806;CA1816;CA1822;CA1825;CA2208;CA1861</NoWarn>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net481'">
     <DefineConstants>$(DefineConstants);ENTITY_FRAMEWORK;LINQ2SQL;OLEDB</DefineConstants>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
@@ -22,16 +22,20 @@
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="MySqlConnector" />
-    <PackageReference Include="Npgsql" />
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <PackageReference Include="Npgsql" />
     <PackageReference Include="Snowflake.Data" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="Npgsql" VersionOverride="8.0.6"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>

@@ -5,7 +5,7 @@
     <PackageTags>orm;sql;micro-orm</PackageTags>
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc. Major Sponsor: Dapper Plus from ZZZ Projects.</Description>
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
-    <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0;net8.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -24,7 +24,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+  </ItemGroup>
+  
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" />
   </ItemGroup>
 </Project>

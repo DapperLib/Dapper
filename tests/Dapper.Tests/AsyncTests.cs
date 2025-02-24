@@ -46,7 +46,6 @@ namespace Dapper.Tests
             Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
-#if NET5_0_OR_GREATER
         [Fact]
         public async Task TestBasicStringUsageUnbufferedDynamicAsync()
         {
@@ -158,7 +157,6 @@ namespace Dapper.Tests
             var arr = results.ToArray();
             Assert.Equal(new[] { "abc", "def" }, arr); // don't expect the ghi because of cancellation
         }
-#endif
 
         [Fact]
         public async Task TestBasicStringUsageQueryFirstAsync()

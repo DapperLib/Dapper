@@ -17,6 +17,8 @@ using System.Data.Entity.Spatial;
 using Microsoft.SqlServer.Types;
 #endif
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace Dapper.Tests
 {
     [Collection(NonParallelDefinition.Name)] // because it creates SQL types that compete between the two providers
@@ -61,16 +63,22 @@ namespace Dapper.Tests
 
         private static IEnumerable<IDataRecord> CreateSqlDataRecordList(IDbCommand command, IEnumerable<int> numbers)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (command is System.Data.SqlClient.SqlCommand) return CreateSqlDataRecordList_SD(numbers);
+#pragma warning restore CS0618 // Type or member is obsolete
             if (command is Microsoft.Data.SqlClient.SqlCommand) return CreateSqlDataRecordList_MD(numbers);
             throw new ArgumentException(nameof(command));
         }
         private static IEnumerable<IDataRecord> CreateSqlDataRecordList(IDbConnection connection, IEnumerable<int> numbers)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (connection is System.Data.SqlClient.SqlConnection) return CreateSqlDataRecordList_SD(numbers);
+#pragma warning restore CS0618 // Type or member is obsolete
             if (connection is Microsoft.Data.SqlClient.SqlConnection) return CreateSqlDataRecordList_MD(numbers);
             throw new ArgumentException(nameof(connection));
         }
+
+#pragma warning disable CS0618 // Type or member is obsolete
         private static List<Microsoft.SqlServer.Server.SqlDataRecord> CreateSqlDataRecordList_SD(IEnumerable<int> numbers)
         {
             var number_list = new List<Microsoft.SqlServer.Server.SqlDataRecord>();
@@ -88,6 +96,7 @@ namespace Dapper.Tests
 
             return number_list;
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         private static List<Microsoft.Data.SqlClient.Server.SqlDataRecord> CreateSqlDataRecordList_MD(IEnumerable<int> numbers)
         {
@@ -147,6 +156,7 @@ namespace Dapper.Tests
 
         private static IDbDataParameter AddStructured(IDbCommand command, object value)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (command is System.Data.SqlClient.SqlCommand sdcmd)
             {
                 var p = sdcmd.Parameters.Add("integers", SqlDbType.Structured);
@@ -155,6 +165,7 @@ namespace Dapper.Tests
                 p.Value = value;
                 return p;
             }
+#pragma warning restore CS0618 // Type or member is obsolete
             else if (command is Microsoft.Data.SqlClient.SqlCommand mdcmd)
             {
                 var p = mdcmd.Parameters.Add("integers", SqlDbType.Structured);
@@ -497,11 +508,13 @@ namespace Dapper.Tests
 
                 // Variable type has to be IEnumerable<SqlDataRecord> for TypeHandler to kick in.
                 object args;
+#pragma warning disable CS0618 // Type or member is obsolete
                 if (connection is System.Data.SqlClient.SqlConnection)
                 {
                     IEnumerable<Microsoft.SqlServer.Server.SqlDataRecord> records = CreateSqlDataRecordList_SD(new int[] { 1, 2, 3 });
                     args = new { integers = records };
                 }
+#pragma warning restore CS0618 // Type or member is obsolete
                 else if (connection is Microsoft.Data.SqlClient.SqlConnection)
                 {
                     IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord> records = CreateSqlDataRecordList_MD(new int[] { 1, 2, 3 });
@@ -1655,10 +1668,12 @@ create table #Issue1907 (
                     {
                         recvValue = msReader.GetSqlDecimal(1);
                     }
+#pragma warning disable CS0618 // Type or member is obsolete
                     else if (reader is System.Data.SqlClient.SqlDataReader sdReader)
                     {
                         recvValue = sdReader.GetSqlDecimal(1);
                     }
+#pragma warning restore CS0618 // Type or member is obsolete
                     else
                     {
                         throw new InvalidOperationException($"unexpected reader type: {reader.GetType().FullName}");
