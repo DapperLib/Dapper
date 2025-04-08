@@ -668,6 +668,34 @@ select 42", p).ConfigureAwait(false)).Single();
         }
 
         [Fact]
+        public async Task TestSupportForDynamicParametersOutputExpressions_QueryFirst()
+        {
+            var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
+
+            var p = new DynamicParameters(bob);
+            p.Output(bob, b => b.PersonId);
+            p.Output(bob, b => b.Occupation);
+            p.Output(bob, b => b.NumberOfLegs);
+            p.Output(bob, b => b.Address!.Name);
+            p.Output(bob, b => b.Address!.PersonId);
+
+            var result = (await connection.QueryFirstAsync<int>(@"
+SET @Occupation = 'grillmaster' 
+SET @PersonId = @PersonId + 1 
+SET @NumberOfLegs = @NumberOfLegs - 1
+SET @AddressName = 'bobs burgers'
+SET @AddressPersonId = @PersonId
+select 42", p).ConfigureAwait(false));
+
+            Assert.Equal("grillmaster", bob.Occupation);
+            Assert.Equal(2, bob.PersonId);
+            Assert.Equal(1, bob.NumberOfLegs);
+            Assert.Equal("bobs burgers", bob.Address.Name);
+            Assert.Equal(2, bob.Address.PersonId);
+            Assert.Equal(42, result);
+        }
+
+        [Fact]
         public async Task TestSupportForDynamicParametersOutputExpressions_Query_BufferedAsync()
         {
             var bob = new Person { Name = "bob", PersonId = 1, Address = new Address { PersonId = 2 } };
