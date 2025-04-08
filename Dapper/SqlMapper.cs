@@ -469,6 +469,7 @@ namespace Dapper
             }
             if (typeMap.TryGetValue(type, out var mapEntry))
             {
+                typeHandlers.TryGetValue(type, out handler);
                 if ((mapEntry.Flags & TypeMapEntryFlags.SetType) == 0)
                 {
                     return null;
@@ -3095,6 +3096,14 @@ namespace Dapper
                 return r => Activator.CreateInstance(type, r.GetValue(index))!;
             }
 #pragma warning restore 618
+            if (typeHandlers.TryGetValue(type, out ITypeHandler handler))
+            {
+                return r =>
+                {
+                    var val = r.GetValue(index);
+                    return val is DBNull ? null : handler.Parse(type, val);
+                };
+            }
 
             if (effectiveType.IsEnum)
             {   // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
@@ -3108,14 +3117,7 @@ namespace Dapper
                     return val is DBNull ? null! : Enum.ToObject(effectiveType, val);
                 };
             }
-            if (typeHandlers.TryGetValue(type, out var handler))
-            {
-                return r =>
-                {
-                    var val = r.GetValue(index);
-                    return val is DBNull ? null! : handler.Parse(type, val)!;
-                };
-            }
+           
             return useGetFieldValue ? ReadViaGetFieldValueFactory(type, index) : ReadViaGetValue(index);
 
             static Func<DbDataReader, object> ReadViaGetValue(int index)
@@ -3736,29 +3738,44 @@ namespace Dapper
                 var nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
                 var unboxType = nullUnderlyingType?.IsEnum == true ? nullUnderlyingType : memberType;
 
+                TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
+                bool hasTypeHandler = typeHandlers.ContainsKey(unboxType);
+
                 if (unboxType.IsEnum)
                 {
-                    Type numericType = Enum.GetUnderlyingType(unboxType);
-                    if (colType == typeof(string))
+                    if (hasTypeHandler)
                     {
-                        stringEnumLocal ??= il.DeclareLocal(typeof(string));
-                        il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
-                        il.Emit(OpCodes.Stloc, stringEnumLocal); // stack is now [...]
-                        il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
-                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!, null);// stack is now [...][enum-type]
-                        il.Emit(OpCodes.Ldloc, stringEnumLocal); // stack is now [...][enum-type][string]
-                        il.Emit(OpCodes.Ldc_I4_1); // stack is now [...][enum-type][string][true]
-                        il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [...][enum-as-object]
-                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+#pragma warning disable 618
+                        il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse)), null); // stack is now [...][typed-value]
+#pragma warning restore 618
                     }
                     else
                     {
-                        FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
-                    }
+                        Type numericType = Enum.GetUnderlyingType(unboxType);
+                        if (colType == typeof(string))
+                        {
+                            if (stringEnumLocal == null)
+                            {
+                                stringEnumLocal = il.DeclareLocal(typeof(string));
+                            }
+                            il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
+                            il.Emit(OpCodes.Stloc, stringEnumLocal); // stack is now [...]
+                            il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
+                            il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)), null);// stack is now [...][enum-type]
+                            il.Emit(OpCodes.Ldloc, stringEnumLocal); // stack is now [...][enum-type][string]
+                            il.Emit(OpCodes.Ldc_I4_1); // stack is now [...][enum-type][string][true]
+                            il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [...][enum-as-object]
+                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+                        }
+                        else
+                        {
+                            FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
+                        }
 
-                    if (nullUnderlyingType is not null)
-                    {
-                        il.Emit(OpCodes.Newobj, memberType.GetConstructor([nullUnderlyingType])!); // stack is now [...][typed-value]
+                        if (nullUnderlyingType is not null)
+                        {
+                            il.Emit(OpCodes.Newobj, memberType.GetConstructor([nullUnderlyingType])!); // stack is now [...][typed-value]
+                        }
                     }
                 }
                 else if (memberType.FullName == LinqBinary)
@@ -3768,9 +3785,7 @@ namespace Dapper
                 }
                 else
                 {
-                    TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
-                    bool hasTypeHandler;
-                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                    if (hasTypeHandler || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
                     {
                         if (hasTypeHandler)
                         {
