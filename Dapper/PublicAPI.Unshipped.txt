@@ -1,1 +1,4 @@
 ﻿#nullable enable
+Dapper.DynamicParametersExtensions
+static Dapper.DynamicParametersExtensions.AddIfExists(this Dapper.DynamicParameters! dp, string! paramName, dynamic? param) -> void
+static Dapper.DynamicParametersExtensions.AddParametersIfExists<T>(this Dapper.DynamicParameters! dp, T param) -> void
