@@ -606,8 +606,7 @@ namespace Dapper
                         while (pending.Count != 0)
                         {
                             var pair = pending.Dequeue();
-                            using (pair.Command) { /* dispose commands */ }
-                            total += await pair.Task.ConfigureAwait(false);
+                            using (pair.Command) { total += await pair.Task.ConfigureAwait(false); }
                         }
                     }
                     finally
