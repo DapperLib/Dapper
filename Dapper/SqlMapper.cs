@@ -3249,6 +3249,23 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Try set custom mapping for type deserializers.
+        /// If type mapping has already been set, it is not set repeatedly.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="map"></param>
+        /// <returns>If type mapping has already been set, it will return false ,else return true.</returns>
+        public static bool TrySetTypeMap(Type type, ITypeMap map)
+        {
+            if (_typeMaps.ContainsKey(type))
+            {
+                return false;
+            }
+            SetTypeMap(type, map);
+            return true;
+        }
+
+        /// <summary>
         /// Internal use only
         /// </summary>
         /// <param name="type"></param>
