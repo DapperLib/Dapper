@@ -22,8 +22,8 @@ dotnet build ".\Build.csproj" -c Release /p:CI=true
 Write-Host "Done building." -ForegroundColor "Green"
 
 if ($RunTests) {
-    Write-Host "Running tests: Build.csproj traversal (all frameworks)" -ForegroundColor "Magenta"
-    dotnet test ".\Build.csproj" -c Release --no-build
+    Write-Host "Running tests: Build.csproj" -ForegroundColor "Magenta"
+    dotnet test ".\Build.csproj" -c Release --no-build -p:TestTfmsInParallel=false
     if ($LastExitCode -ne 0) {
         Write-Host "Error with tests, aborting build." -Foreground "Red"
         Exit 1
