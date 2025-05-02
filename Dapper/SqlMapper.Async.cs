@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -969,6 +968,22 @@ namespace Dapper
         public static Task<IEnumerable<TReturn>> QueryAsync<TReturn>(this IDbConnection cnn, string sql, Type[] types, Func<object[], TReturn> map, object? param = null, IDbTransaction? transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null)
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None, default);
+            return MultiMapAsync(cnn, command, types, map, splitOn);
+        }
+
+        /// <summary>
+        /// Perform an asynchronous multi-mapping query with an arbitrary number of input types.
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="cnn">The connection to query on.</param>
+        /// <param name="command">The command used to query on this connection.</param>
+        /// <param name="types">Array of types in the recordset.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public static Task<IEnumerable<TReturn>> QueryAsync<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn = "Id")
+        {
             return MultiMapAsync(cnn, command, types, map, splitOn);
         }
 
