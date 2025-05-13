@@ -1973,6 +1973,11 @@ namespace Dapper
                 }
                 return GetTypeDeserializer(type, reader, startBound, length, returnNullIfFirstMissing);
             }
+            //  Patch for nullable decimal issue
+            if (type == typeof(decimal?))
+            {
+                return r => r.IsDBNull(startBound) ? (object)0m : r.GetDecimal(startBound);
+            }
             return GetSimpleValueDeserializer(type, underlyingType ?? type, startBound, useGetFieldValue);
         }
 
