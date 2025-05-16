@@ -447,7 +447,7 @@ namespace Dapper
 
                 if (command.Buffered)
                 {
-                    var buffer = new List<T>();
+                    var buffer = new Collector<T>();
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
@@ -456,7 +456,7 @@ namespace Dapper
                     }
                     while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
                     command.OnCompleted();
-                    return buffer;
+                    return buffer.ToListAndClear();
                 }
                 else
                 {
@@ -543,6 +543,32 @@ namespace Dapper
             else
             {
                 return ExecuteImplAsync(cnn, command, param);
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously collect a sequence of data into a list.
+        /// </summary>
+        /// <typeparam name="T">The type of element in the list.</typeparam>
+        /// <param name="source">The enumerable to return as a list.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        public static Task<List<T>> AsListAsync<T>(this IAsyncEnumerable<T>? source, CancellationToken cancellationToken = default)
+        {
+            if (source is null) return null!; // GIGO
+
+            return EnumerateAsync(source, cancellationToken);
+
+            static async Task<List<T>> EnumerateAsync(IAsyncEnumerable<T> source, CancellationToken cancellationToken)
+            {
+                var buffer = new Collector<T>(); // amortizes intermediate buffers
+                await using (var iterator = source.GetAsyncEnumerator(cancellationToken))
+                {
+                    while (await iterator.MoveNextAsync().ConfigureAwait(false))
+                    {
+                        buffer.Add(iterator.Current);
+                    }
+                }
+                return buffer.ToListAndClear();
             }
         }
 
@@ -941,7 +967,7 @@ namespace Dapper
                 using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
                 if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
                 var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), map, splitOn, reader, identity, true);
-                return command.Buffered ? results.ToList() : results;
+                return command.Buffered ? results.AsList() : results;
             }
             finally
             {
@@ -989,7 +1015,7 @@ namespace Dapper
                 using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
                 var results = MultiMapImpl(null, default, types, map, splitOn, reader, identity, true);
-                return command.Buffered ? results.ToList() : results;
+                return command.Buffered ? results.AsList() : results;
             }
             finally
             {

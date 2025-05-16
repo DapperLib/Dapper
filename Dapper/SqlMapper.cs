@@ -31,6 +31,10 @@ namespace Dapper
     {
         private class PropertyInfoByNameComparer : IComparer<PropertyInfo>
         {
+            private PropertyInfoByNameComparer() { }
+            private static PropertyInfoByNameComparer? instance;
+            public static PropertyInfoByNameComparer Instance => instance ??= new();
+
             public int Compare(PropertyInfo? x, PropertyInfo? y) => string.CompareOrdinal(x?.Name, y?.Name);
         }
         private static int GetColumnHash(DbDataReader reader, int startBound = 0, int length = -1)
@@ -533,12 +537,29 @@ namespace Dapper
         /// </summary>
         /// <typeparam name="T">The type of element in the list.</typeparam>
         /// <param name="source">The enumerable to return as a list.</param>
-        public static List<T> AsList<T>(this IEnumerable<T>? source) => source switch
+        public static List<T> AsList<T>(this IEnumerable<T>? source)
         {
-            null => null!,
-            List<T> list => list,
-            _ => Enumerable.ToList(source),
-        };
+            return source switch
+            {
+                null => null!, // GIGO
+                List<T> list => list, // already a list
+                ICollection<T> col => new(col), // handled efficiently internally
+                _ => Enumerate(source), // use custom implementation
+            };
+
+            static List<T> Enumerate(IEnumerable<T> source)
+            {
+                var buffer = new Collector<T>(); // amortizes intermediate buffers
+                using (var iterator = source.GetEnumerator())
+                {
+                    while (iterator.MoveNext())
+                    {
+                        buffer.Add(iterator.Current);
+                    }
+                }
+                return buffer.ToListAndClear();
+            }
+        }
 
         /// <summary>
         /// Execute parameterized SQL.
@@ -841,7 +862,7 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var data = QueryImpl<T>(cnn, command, typeof(T));
-            return command.Buffered ? data.ToList() : data;
+            return command.Buffered ? data.AsList() : data;
         }
 
         /// <summary>
@@ -950,7 +971,7 @@ namespace Dapper
             if (type is null) throw new ArgumentNullException(nameof(type));
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var data = QueryImpl<object>(cnn, command, type);
-            return command.Buffered ? data.ToList() : data;
+            return command.Buffered ? data.AsList() : data;
         }
 
         /// <summary>
@@ -1058,7 +1079,7 @@ namespace Dapper
         public static IEnumerable<T> Query<T>(this IDbConnection cnn, CommandDefinition command)
         {
             var data = QueryImpl<T>(cnn, command, typeof(T));
-            return command.Buffered ? data.ToList() : data;
+            return command.Buffered ? data.AsList() : data;
         }
 
         /// <summary>
@@ -1566,7 +1587,7 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var results = MultiMapImpl(cnn, command, types, map, splitOn, null, null, true);
-            return buffered ? results.ToList() : results;
+            return buffered ? results.AsList() : results;
         }
 
         private static IEnumerable<TReturn> MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
@@ -1574,7 +1595,7 @@ namespace Dapper
         {
             var command = new CommandDefinition(sql, param, transaction, commandTimeout, commandType, buffered ? CommandFlags.Buffered : CommandFlags.None);
             var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, command, map, splitOn, null, null, true);
-            return buffered ? results.ToList() : results;
+            return buffered ? results.AsList() : results;
         }
 
         private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection? cnn, CommandDefinition command, Delegate map, string splitOn, DbDataReader? reader, Identity? identity, bool finalize)
@@ -1739,7 +1760,7 @@ namespace Dapper
 
         private static Func<DbDataReader, object>[] GenerateDeserializers(Identity identity, string splitOn, DbDataReader reader)
         {
-            var deserializers = new List<Func<DbDataReader, object>>();
+            var deserializers = new Collector<Func<DbDataReader, object>>();
             var splits = splitOn.Split(',').Select(s => s.Trim()).ToArray();
             bool isMultiSplit = splits.Length > 1;
 
@@ -1800,10 +1821,10 @@ namespace Dapper
                     currentPos = splitPoint;
                 }
 
-                deserializers.Reverse();
+                deserializers.Span.Reverse();
             }
 
-            return deserializers.ToArray();
+            return deserializers.ToArrayAndClear();
         }
 
         private static int GetNextSplitDynamic(int startIdx, string splitOn, DbDataReader reader)
@@ -2324,7 +2345,7 @@ namespace Dapper
         {
             if (list is not ICollection<T> typed)
             {
-                typed = list.ToList();
+                typed = list.AsList();
                 list = typed; // because we still need to be able to iterate it, even if we fail here
             }
             if (typed.Count < splitAt) return false;
@@ -2404,15 +2425,15 @@ namespace Dapper
             return value;
         }
 
-        private static IEnumerable<PropertyInfo> FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
+        private static PropertyInfo[] FilterParameters(IEnumerable<PropertyInfo> parameters, string sql)
         {
-            var list = new List<PropertyInfo>(16);
+            var list = new Collector<PropertyInfo>();
             foreach (var p in parameters)
             {
                 if (Regex.IsMatch(sql, @"[?@:$]" + p.Name + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
                     list.Add(p);
             }
-            return list;
+            return list.ToArrayAndClear();
         }
 
         /// <summary>
@@ -2524,7 +2545,7 @@ namespace Dapper
 
             var matches = CompiledRegex.LiteralTokens.Matches(sql);
             var found = new HashSet<string>(StringComparer.Ordinal);
-            var list = new List<LiteralToken>(matches.Count);
+            var list = new Collector<LiteralToken>(matches.Count);
             foreach (Match match in matches)
             {
                 string token = match.Value;
@@ -2533,7 +2554,15 @@ namespace Dapper
                     list.Add(new LiteralToken(token, match.Groups[1].Value));
                 }
             }
-            return list.Count == 0 ? LiteralToken.None : list;
+            if (list.Count == 0)
+            {
+                list.Clear();
+                return LiteralToken.None;
+            }
+            else
+            {
+                return list.ToListAndClear();
+            }
         }
 
         /// <summary>
@@ -2591,7 +2620,7 @@ namespace Dapper
             il.EmitCall(OpCodes.Callvirt, typeof(IDbCommand).GetProperty(nameof(IDbCommand.Parameters))!.GetGetMethod()!, null); // stack is now [parameters]
 
             var allTypeProps = type.GetProperties();
-            var propsList = new List<PropertyInfo>(allTypeProps.Length);
+            var propsList = new Collector<PropertyInfo>(allTypeProps.Length);
             for (int i = 0; i < allTypeProps.Length; ++i)
             {
                 var p = allTypeProps[i];
@@ -2601,7 +2630,7 @@ namespace Dapper
 
             var ctors = type.GetConstructors();
             ParameterInfo[] ctorParams;
-            IEnumerable<PropertyInfo>? props = null;
+            PropertyInfo[]? props = null;
             // try to detect tuple patterns, e.g. anon-types, and use that to choose the order
             // otherwise: alphabetical
             if (ctors.Length == 1 && propsList.Count == (ctorParams = ctors[0].GetParameters()).Length)
@@ -2619,7 +2648,7 @@ namespace Dapper
                 if (ok)
                 {
                     // pre-sorted; the reflection gods have smiled upon us
-                    props = propsList;
+                    props = propsList.Span.ToArray();
                 }
                 else
                 { // might still all be accounted for; check the hard way
@@ -2643,7 +2672,7 @@ namespace Dapper
                         }
                         if (ok)
                         {
-                            props = propsList.ToArray();
+                            props = propsList.Span.ToArray();
                             Array.Sort(positions, (PropertyInfo[])props);
                         }
                     }
@@ -2651,8 +2680,13 @@ namespace Dapper
             }
             if (props is null)
             {
-                propsList.Sort(new PropertyInfoByNameComparer());
-                props = propsList;
+#if NET5_0_OR_GREATER
+                propsList.Span.Sort(PropertyInfoByNameComparer.Instance);
+#else
+                var array = propsList.ArraySegment;
+                Array.Sort(array.Array, array.Offset, array.Count, PropertyInfoByNameComparer.Instance);
+#endif
+                props = propsList.Span.ToArray();
             }
             if (filterParams)
             {
@@ -2872,7 +2906,7 @@ namespace Dapper
             // stack is currently [parameters]
             il.Emit(OpCodes.Pop); // stack is now empty
 
-            if (literals.Count != 0 && propsList is not null)
+            if (literals.Count != 0 && propsList.Count != 0)
             {
                 il.Emit(OpCodes.Ldarg_0); // command
                 il.Emit(OpCodes.Ldarg_0); // command, command
@@ -2966,6 +3000,7 @@ namespace Dapper
             }
 
             il.Emit(OpCodes.Ret);
+            propsList.Clear();
             return (Action<IDbCommand, object?>)dm.CreateDelegate(typeof(Action<IDbCommand, object?>));
         }
 
@@ -3342,8 +3377,8 @@ namespace Dapper
             var nullableUnderlyingType = Nullable.GetUnderlyingType(valueTupleType);
             var currentValueTupleType = nullableUnderlyingType ?? valueTupleType;
 
-            var constructors = new List<ConstructorInfo>();
-            var languageTupleElementTypes = new List<Type>();
+            var constructors = new Collector<ConstructorInfo>();
+            var languageTupleElementTypes = new Collector<Type>();
 
             while (true)
             {
@@ -3437,6 +3472,9 @@ namespace Dapper
 
             il.Emit(OpCodes.Box, valueTupleType);
             il.Emit(OpCodes.Ret);
+
+            constructors.Clear();
+            languageTupleElementTypes.Clear();
         }
 
         private static void GenerateDeserializerFromMap(Type type, DbDataReader reader, int startBound, int length, bool returnNullIfFirstMissing, ILGenerator il)
@@ -3532,7 +3570,7 @@ namespace Dapper
 
             var members = (specializedConstructor is not null
                 ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList();
+                : names.Select(n => typeMap.GetMember(n))).AsList();
 
             // stack is now [target]
             bool first = true;

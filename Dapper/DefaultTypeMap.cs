@@ -51,12 +51,12 @@ namespace Dapper
             return t
                   .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                   .Where(p => GetPropertySetter(p, t) is not null)
-                  .ToList();
+                  .AsList();
         }
 
         internal static List<FieldInfo> GetSettableFields(Type t)
         {
-            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).AsList();
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace Dapper
         public ConstructorInfo? FindExplicitConstructor()
         {
             var constructors = _type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).ToList();
+            var withAttr = constructors.Where(c => c.GetCustomAttributes(typeof(ExplicitConstructorAttribute), true).Length > 0).AsList();
 
             if (withAttr.Count == 1)
             {
