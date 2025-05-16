@@ -177,6 +177,7 @@ static Dapper.SqlMapper.AddTypeHandlerImpl(System.Type! type, Dapper.SqlMapper.I
 static Dapper.SqlMapper.AddTypeMap(System.Type! type, System.Data.DbType dbType) -> void
 static Dapper.SqlMapper.AddTypeMap(System.Type! type, System.Data.DbType dbType, bool useGetFieldValue) -> void
 static Dapper.SqlMapper.AsList<T>(this System.Collections.Generic.IEnumerable<T>? source) -> System.Collections.Generic.List<T>!
+static Dapper.SqlMapper.AsListAsync<T>(this System.Collections.Generic.IAsyncEnumerable<T>? source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.List<T>!>!
 static Dapper.SqlMapper.AsTableValuedParameter(this System.Data.DataTable! table, string? typeName = null) -> Dapper.SqlMapper.ICustomQueryParameter!
 static Dapper.SqlMapper.AsTableValuedParameter<T>(this System.Collections.Generic.IEnumerable<T>! list, string? typeName = null) -> Dapper.SqlMapper.ICustomQueryParameter!
 static Dapper.SqlMapper.ConnectionStringComparer.get -> System.Collections.Generic.IEqualityComparer<string!>!
@@ -333,3 +334,19 @@ static Dapper.SqlMapper.ThrowNullCustomQueryParameter(string! name) -> void
 static Dapper.SqlMapper.TypeHandlerCache<T>.Parse(object! value) -> T?
 static Dapper.SqlMapper.TypeHandlerCache<T>.SetValue(System.Data.IDbDataParameter! parameter, object! value) -> void
 static Dapper.SqlMapper.TypeMapProvider -> System.Func<System.Type!, Dapper.SqlMapper.ITypeMap!>!
+
+Dapper.Collector<T>
+Dapper.Collector<T>.Collector() -> void
+Dapper.Collector<T>.Collector(int capacityHint) -> void
+Dapper.Collector<T>.Count.get -> int
+Dapper.Collector<T>.Span.get -> System.Span<T>
+Dapper.Collector<T>.ArraySegment.get -> System.ArraySegment<T>
+Dapper.Collector<T>.Clear() -> void
+Dapper.Collector<T>.Add(T value) -> void
+Dapper.Collector<T>.AddRange(System.ReadOnlySpan<T> values) -> void
+Dapper.Collector<T>.ToListAndClear() -> System.Collections.Generic.List<T>!
+Dapper.Collector<T>.ToArrayAndClear() -> T[]!
+Dapper.Collector<T>.this[int index].get -> T
+override Dapper.Collector<T>.ToString() -> string!
+override Dapper.Collector<T>.GetHashCode() -> int
+override Dapper.Collector<T>.Equals(object? obj) -> bool

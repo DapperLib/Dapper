@@ -202,7 +202,7 @@ namespace Dapper
                     cache.Deserializer = deserializer;
                 }
                 var result = ReadDeferred<T>(index, deserializer.Func, type);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             private T ReadRow<T>(Type type, Row row)
@@ -283,7 +283,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TFirst, TSecond, TReturn>(Func<TFirst, TSecond, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, DontMap, DontMap, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             /// <summary>
@@ -299,7 +299,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TReturn>(Func<TFirst, TSecond, TThird, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, DontMap, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             /// <summary>
@@ -316,7 +316,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, DontMap, DontMap, DontMap, TReturn>(func, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             /// <summary>
@@ -334,7 +334,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, DontMap, DontMap, TReturn>(func, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             /// <summary>
@@ -353,7 +353,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, DontMap, TReturn>(func, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             /// <summary>
@@ -373,7 +373,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> func, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(func, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             /// <summary>
@@ -387,7 +387,7 @@ namespace Dapper
             public IEnumerable<TReturn> Read<TReturn>(Type[] types, Func<object[], TReturn> map, string splitOn = "id", bool buffered = true)
             {
                 var result = MultiReadInternal(types, map, splitOn);
-                return buffered ? result.ToList() : result;
+                return buffered ? result.AsList() : result;
             }
 
             private IEnumerable<T> ReadDeferred<T>(int index, Func<DbDataReader, object> deserializer, Type effectiveType)

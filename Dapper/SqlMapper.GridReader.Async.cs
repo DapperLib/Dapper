@@ -229,12 +229,12 @@ namespace Dapper
             {
                 try
                 {
-                    var buffer = new List<T>();
+                    var buffer = new Collector<T>();
                     while (index == ResultIndex && await reader!.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         buffer.Add(ConvertTo<T>(deserializer(reader)));
                     }
-                    return buffer;
+                    return buffer.ToListAndClear();
                 }
                 finally // finally so that First etc progresses things even when multiple rows
                 {
