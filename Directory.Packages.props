@@ -35,7 +35,7 @@
     <PackageVersion Include="PetaPoco" Version="5.1.306" />
     <PackageVersion Include="RepoDb.SqlServer" Version="1.13.1" />
     <PackageVersion Include="ServiceStack.OrmLite.SqlServer" Version="8.5.2" />
-    <PackageVersion Include="Snowflake.Data" Version="4.3.0" />
+    <PackageVersion Include="Snowflake.Data" Version="4.5.0" />
     <PackageVersion Include="SqlMarshal" Version="0.5.0" />
     <PackageVersion Include="SubSonic" Version="3.0.0.4" />
     <PackageVersion Include="Susanoo.SqlServer" Version="1.2.4.2" />
