@@ -3770,7 +3770,7 @@ namespace Dapper
                 {
                     TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
                     bool hasTypeHandler;
-                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == (nullUnderlyingType != null ? Type.GetTypeCode(nullUnderlyingType) : unboxTypeCode))
                     {
                         if (hasTypeHandler)
                         {
