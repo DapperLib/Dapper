@@ -3617,6 +3617,26 @@ namespace Dapper
 
                     il.MarkLabel(finishLabel);
                 }
+                else
+                {
+                    if (first && returnNullIfFirstMissing)
+                    {
+                        Label finishLabel = il.DefineLabel();
+
+                        il.Emit(OpCodes.Ldarg_0); // stack is now [target][reader]
+                        EmitInt32(il, index); // stack is now [target][reader][index]
+                        il.Emit(OpCodes.Callvirt, isDbNull); // stack is now [target][bool]
+                        il.Emit(OpCodes.Brfalse_S, finishLabel);
+
+                        il.Emit(OpCodes.Pop);
+                        il.Emit(OpCodes.Ldnull); // stack is now [null]
+                        il.Emit(OpCodes.Stloc, returnValueLocal);
+                        il.Emit(OpCodes.Br, allDone);
+
+                        il.MarkLabel(finishLabel); // stack is now [target]
+                    }
+                }
+
                 first = false;
                 index++;
             }
