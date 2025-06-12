@@ -701,6 +701,109 @@ namespace Dapper.Tests
             Assert.Equal(Expected, parameterDoesNot.SomeBlargValue?.Value);
         }
 
+        [Theory]
+        [InlineData(1)] // FirstValue
+        [InlineData(2)] // SecondValue
+        public void CustomEnumHandler(int enumValue)
+        {
+            var expected = (TestEnum)enumValue;
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandler(typeof(TestEnum), new EnumHandler());
+
+            var result = connection.Query<TestEnum>($"SELECT '{expected}'").Single();
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData(1)] // FirstValue
+        [InlineData(2)] // SecondValue
+        public void CustomEnumHandlerForParameter(int enumValue)
+        {
+            var expected = (TestEnum)enumValue;
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandler(typeof(TestEnum), new EnumHandler());
+
+            var result = connection.Query<TestEnum>($"SELECT @param", new { param = expected }).Single();
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData(1)] // FirstValue
+        [InlineData(2)] // SecondValue
+        public void CustomEnumHandlerSetAndGet(int enumValue)
+        {
+            var expected = (AgeEnum)enumValue;
+
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandler(typeof(AgeEnum), new AgeEnumHandler());
+            SqlMapper.AddTypeMap(typeof(AgeEnum), DbType.String);
+
+            connection.Execute("CREATE TABLE TestEnum (Name VARCHAR(50) NOT NULL);");
+            try
+            {
+                connection.ExecuteScalar("INSERT INTO TestEnum (Name) VALUES (@Name)", new { Name = expected });
+                var result = connection.Query<AgeEnum>("SELECT Name from TestEnum").Single();
+                Assert.Equal(expected, result);
+            }
+            finally
+            {
+                connection.Execute("DROP TABLE TestEnum;");
+            }
+        }
+
+        public class EnumHandler : SqlMapper.TypeHandler<TestEnum>
+        {
+            public override TestEnum Parse(object value)
+            {
+                return (TestEnum)Enum.Parse(typeof(TestEnum), value.ToString());
+            }
+
+            public override void SetValue(IDbDataParameter parameter, TestEnum value)
+            {
+                parameter.DbType = DbType.String;
+                parameter.Value = value.ToString();
+            }
+        }
+
+        public class AgeEnumHandler : SqlMapper.ITypeHandler
+        {
+            public object Parse(Type destinationType, object value)
+            {
+                var str = (string)value;
+
+                switch (str)
+                {
+                    case "WaitTo21":
+                        return AgeEnum.Under21;
+                    case "ICanDrink":
+                        return AgeEnum.OverOr21;
+                }
+
+                return 0;
+            }
+
+            public void SetValue(IDbDataParameter parameter, object value)
+            {
+                parameter.DbType = DbType.String;
+                parameter.Value = (AgeEnum)Enum.Parse(typeof(AgeEnum), value.ToString()) == AgeEnum.Under21  ? "WaitTo21" : "ICanDrink";
+            }
+        }
+
+        public enum TestEnum 
+        { 
+            FirstValue = 1, 
+            SecondValue = 2
+        }
+
+        public enum AgeEnum
+        {
+            Under21 = 1,
+            OverOr21 = 2
+        }
+
+
         // I would usually expect this to be a struct; using a class
         // so that we can't pass unexpectedly due to forcing an unsafe cast - want
         // to see an InvalidCastException if it is wrong
