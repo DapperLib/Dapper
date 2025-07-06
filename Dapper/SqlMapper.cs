@@ -3498,7 +3498,7 @@ namespace Dapper
                     var ctor = typeMap.FindConstructor(names, types);
                     if (ctor is null)
                     {
-                        string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
+                        string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i])) + ")";
                         throw new InvalidOperationException($"A parameterless default constructor or one matching signature {proposedTypes} is required for {type.FullName} materialization");
                     }
 

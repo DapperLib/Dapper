@@ -48,10 +48,10 @@ namespace Dapper
                               .Union(new[]
                               {
                                   " ( " +
-                                  string.Join(" OR ", this.Where(a => a.IsInclusive).Select(c => c.Sql).ToArray()) +
+                                  string.Join(" OR ", this.Where(a => a.IsInclusive).Select(c => c.Sql)) +
                                   " ) "
-                              }).ToArray()) + _postfix
-                    : _prefix + string.Join(_joiner, this.Select(c => c.Sql).ToArray()) + _postfix;
+                              })) + _postfix
+                    : _prefix + string.Join(_joiner, this.Select(c => c.Sql)) + _postfix;
             }
         }
 
