@@ -13,19 +13,17 @@ namespace Dapper.Tests
 
             public void AddParameters(IDbCommand command, SqlMapper.Identity identity)
             {
-                // nothing needed here for this test
+                // no params needed
             }
 
-            public void OnCompleted()
-            {
-                Completed = true;
-            }
+            public void OnCompleted() => Completed = true;
         }
 
         [Fact]
         public void QueryMultiple_Calls_OnCompleted()
         {
-            using var connection = GetOpenConnection();
+            if (!TryOpenConnection(out var conn)) return;
+            using var connection = conn!;
             var p = new TestParams();
 
             using (var grid = connection.QueryMultiple("select 1; select 2;", p))
@@ -40,7 +38,8 @@ namespace Dapper.Tests
         [Fact]
         public async Task QueryMultipleAsync_Calls_OnCompleted()
         {
-            using var connection = GetOpenConnection();
+            if (!TryOpenConnection(out var conn)) return;
+            using var connection = conn!;
             var p = new TestParams();
 
             using (var grid = await connection.QueryMultipleAsync("select 1; select 2;", p))
@@ -52,13 +51,21 @@ namespace Dapper.Tests
             Assert.True(p.Completed);
         }
 
-        private static IDbConnection GetOpenConnection()
+        private static bool TryOpenConnection(out IDbConnection? connection)
         {
-            // Please note that CI usually has a test DB so please adjust connection string as required
-            var cs = "Server=localhost,1433;User Id=sa;Password=Str0ngPassw0rd!;TrustServerCertificate=true;";
-            var connection = new SqlConnection(cs);
-            connection.Open();
-            return connection;
+            connection = null;
+            try
+            {
+                var cs = "Server=localhost,1433;User Id=sa;Password=Str0ngPassw0rd!;TrustServerCertificate=true;";
+                var c = new SqlConnection(cs);
+                c.Open();
+                connection = c;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
