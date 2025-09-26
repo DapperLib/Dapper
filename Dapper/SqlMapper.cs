@@ -1151,7 +1151,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess);
 
-                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as IParameterCallbacks, command.AddToCache);
                 cmd = null; // now owned by result
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
