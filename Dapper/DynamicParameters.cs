@@ -305,7 +305,7 @@ namespace Dapper
         /// <summary>
         /// All the names of the param in the bag, use Get to yank them out
         /// </summary>
-        public IEnumerable<string> ParameterNames => parameters.Select(p => p.Key);
+        public IEnumerable<string> ParameterNames => GetParamNames();
 
         /// <summary>
         /// Get the value of a parameter
@@ -315,18 +315,41 @@ namespace Dapper
         /// <returns>The value, note DBNull.Value is not returned, instead the value is returned as null</returns>
         public T Get<T>(string name)
         {
-            var paramInfo = parameters[Clean(name)];
-            var attachedParam = paramInfo.AttachedParam;
-            object? val = attachedParam is null ? paramInfo.Value : attachedParam.Value;
-            if (val == DBNull.Value)
+            var cleanName = Clean(name);
+            if (parameters.TryGetValue(cleanName, out var paramInfo))
             {
-                if (default(T) is not null)
+                object? val = paramInfo!.AttachedParam is null ? paramInfo.Value : paramInfo.AttachedParam.Value;
+                if (val == DBNull.Value)
                 {
-                    throw new ApplicationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
+                    if (default(T) is not null)
+                    {
+                        throw new ApplicationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
+                    }
+                    return default!;
                 }
-                return default!;
+                return (T)val!;
             }
-            return (T)val!;
+            if (templates != null)
+            {
+                var foundValue = templates
+                    .Select(obj => obj?.GetType().GetProperty(cleanName)?.GetValue(obj))
+                    .FirstOrDefault(value => value != null);
+
+                if (foundValue != null)
+                {
+                    if (foundValue == DBNull.Value)
+                    {
+                        if (default(T) is not null)
+                        {
+                            throw new ApplicationException("Attempting to cast a DBNull to a non nullable type! Note that out/return parameters will not have updated values until the data stream completes (after the 'foreach' for Query(..., buffered: false), or after the GridReader has been disposed for QueryMultiple)");
+                        }
+                        return default!;
+                    }
+                    return (T)foundValue;
+                }
+            }
+
+            throw new KeyNotFoundException($"Key {name} could not be found in param list.");
         }
 
         /// <summary>
@@ -495,6 +518,19 @@ namespace Dapper
             {
                 param.OutputCallback?.Invoke(param.OutputTarget, this);
             }
+        }
+        private List<string> GetParamNames()
+        {
+            var paramBagItems = parameters.Select(p => p.Key);
+            var propNames = new List<string>();
+            if(templates != null)
+            {
+                var templateProps = templates.SelectMany(obj => obj.GetType().GetProperties());
+                propNames.AddRange(templateProps.Select(prop => prop.Name).Distinct());
+            }
+
+            propNames.AddRange(paramBagItems);
+            return propNames;
         }
     }
 }
