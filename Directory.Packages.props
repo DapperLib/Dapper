@@ -49,4 +49,7 @@
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1" />
   </ItemGroup>
+  <ItemGroup>
+    <GlobalPackageReference Include="ReferenceTrimmer" Version="3.4.5" />
+  </ItemGroup>
 </Project>
