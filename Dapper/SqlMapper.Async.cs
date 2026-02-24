@@ -474,7 +474,6 @@ namespace Dapper
             }
         }
         
-        private 
 
         private static async Task<T> QueryRowAsync<T>(this IDbConnection cnn, Row row, Type effectiveType, CommandDefinition command)
         {
