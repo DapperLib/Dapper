@@ -447,7 +447,7 @@ namespace Dapper
 
                 if (command.Buffered)
                 {
-                    var buffer = new List<T>();
+                    var buffer = command.Buffer as IList<T> ?? new List<T>();
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
@@ -473,6 +473,8 @@ namespace Dapper
                 if (wasClosed) cnn.Close();
             }
         }
+        
+        private 
 
         private static async Task<T> QueryRowAsync<T>(this IDbConnection cnn, Row row, Type effectiveType, CommandDefinition command)
         {

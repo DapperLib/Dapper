@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -20,6 +21,8 @@ namespace Dapper
         {
             (Parameters as SqlMapper.IParameterCallbacks)?.OnCompleted();
         }
+
+        public IList? Buffer { get; }
 
         /// <summary>
         /// The command (sql or a stored-procedure name) to execute
@@ -83,7 +86,7 @@ namespace Dapper
         /// <param name="cancellationToken">The cancellation token for this command.</param>
         public CommandDefinition(string commandText, object? parameters = null, IDbTransaction? transaction = null, int? commandTimeout = null,
                                  CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
-                                 , CancellationToken cancellationToken = default
+                                 , CancellationToken cancellationToken = default, IList? buffer = null
             )
         {
             CommandText = commandText;
@@ -93,6 +96,7 @@ namespace Dapper
             CommandTypeDirect = commandType ?? InferCommandType(commandText);
             Flags = flags;
             CancellationToken = cancellationToken;
+            Buffer = buffer;
         }
 
         internal static CommandType InferCommandType(string sql)
