@@ -6,6 +6,9 @@ skip_commits:
   files:
     - '**/*.md'
 
+install:
+  - choco install dotnet-sdk --version 10.0.102
+
 environment:
   Appveyor: true
   # Postgres
