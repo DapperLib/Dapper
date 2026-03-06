@@ -43,7 +43,7 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '10.0.x'
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
     - name: Dapper Tests
