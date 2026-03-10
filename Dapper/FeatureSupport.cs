@@ -6,7 +6,7 @@ namespace Dapper
     /// <summary>
     /// Handles variances in features per DBMS
     /// </summary>
-    internal class FeatureSupport
+    internal sealed class FeatureSupport
     {
         private static readonly FeatureSupport
             Default = new FeatureSupport(false),

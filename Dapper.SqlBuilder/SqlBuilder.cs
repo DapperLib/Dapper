@@ -10,7 +10,7 @@ namespace Dapper
         private readonly Dictionary<string, Clauses> _data = new Dictionary<string, Clauses>();
         private int _seq;
 
-        private class Clause
+        private sealed class Clause
         {
             public Clause(string sql, object? parameters, bool isInclusive)
             {
@@ -23,7 +23,7 @@ namespace Dapper
             public bool IsInclusive { get; }
         }
 
-        private class Clauses : List<Clause>
+        private sealed class Clauses : List<Clause>
         {
             private readonly string _joiner, _prefix, _postfix;
 
@@ -36,11 +36,9 @@ namespace Dapper
 
             public string ResolveClauses(DynamicParameters p)
             {
-                foreach (var item in this)
-                {
-                    p.AddDynamicParams(item.Parameters);
-                }
-                return this.Any(a => a.IsInclusive)
+                ForEach(item => p.AddDynamicParams(item.Parameters));
+
+                return Exists(a => a.IsInclusive)
                     ? _prefix +
                       string.Join(_joiner,
                           this.Where(a => !a.IsInclusive)

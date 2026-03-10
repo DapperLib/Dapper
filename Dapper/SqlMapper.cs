@@ -29,7 +29,7 @@ namespace Dapper
     /// </summary>
     public static partial class SqlMapper
     {
-        private class PropertyInfoByNameComparer : IComparer<PropertyInfo>
+        private sealed class PropertyInfoByNameComparer : IComparer<PropertyInfo>
         {
             public int Compare(PropertyInfo? x, PropertyInfo? y) => string.CompareOrdinal(x?.Name, y?.Name);
         }
@@ -3530,9 +3530,9 @@ namespace Dapper
                 il.Emit(OpCodes.Ldloc, returnValueLocal); // [target]
             }
 
-            var members = (specializedConstructor is not null
-                ? names.Select(n => typeMap.GetConstructorParameter(specializedConstructor, n))
-                : names.Select(n => typeMap.GetMember(n))).ToList();
+            var members = Array.ConvertAll<string, IMemberMap?>(names, specializedConstructor is not null
+                ? n => typeMap.GetConstructorParameter(specializedConstructor, n)
+                : n => typeMap.GetMember(n));
 
             // stack is now [target]
             bool first = true;
