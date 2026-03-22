@@ -1,6 +1,10 @@
 <Project>
   <ItemGroup>
     <!-- note: 6.2.0 has regressions; don't force the update -->
+    <PackageVersion Include="coverlet.collector" Version="8.0.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageVersion>
     <PackageVersion Include="EntityFramework" Version="6.1.3" />
     <PackageVersion Include="FastMember" Version="1.5.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
@@ -46,6 +50,7 @@
     <PackageVersion Include="System.Reflection.Metadata" Version="9.0.1" />
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageVersion Include="System.ValueTuple" Version="4.5.0" />
+    <PackageVersion Include="pengdows.crud.fakeDb" Version="2.0.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1" />
   </ItemGroup>

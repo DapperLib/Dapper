@@ -14,6 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
     <PackageReference Include="DuckDB.NET.Data.Full" />
@@ -27,12 +31,13 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <PackageReference Include="pengdows.crud.fakeDb" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Snowflake.Data" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="Npgsql" VersionOverride="8.0.6"/>
+    <PackageReference Include="Npgsql" VersionOverride="8.0.6" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
