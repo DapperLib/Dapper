@@ -61,6 +61,21 @@ namespace Dapper.Tests
             }
         }
 
+        public readonly struct DbCustomParamStruct : SqlMapper.ICustomQueryParameter
+        {
+            private readonly IDbDataParameter _sqlParameter;
+
+            public DbCustomParamStruct(IDbDataParameter sqlParameter)
+            {
+                _sqlParameter = sqlParameter;
+            }
+
+            public void AddParameter(IDbCommand command, string name)
+            {
+                command.Parameters.Add(_sqlParameter);
+            }
+        }
+
         private static IEnumerable<IDataRecord> CreateSqlDataRecordList(IDbCommand command, IEnumerable<int> numbers)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -885,8 +900,23 @@ namespace Dapper.Tests
             Assert.Equal(123, result2.Foo);
             Assert.Equal("abc", result2.Bar);
         }
-        
-        
+
+        [Fact]
+        public void TestCustomParameterValueType()
+        {
+            // Value type (struct) ICustomQueryParameter previously caused a segfault
+            // because the IL emitted Callvirt on an unboxed struct (see #2189)
+            var args = new {
+                foo = new DbCustomParamStruct(Provider.CreateRawParameter("foo", 123)),
+                bar = "abc"
+            };
+            var result = connection.Query("select Foo=@foo, Bar=@bar", args).Single();
+            int foo = result.Foo;
+            string bar = result.Bar;
+            Assert.Equal(123, foo);
+            Assert.Equal("abc", bar);
+        }
+
         [Fact]
         public void TestDynamicParamNullSupport()
         {
