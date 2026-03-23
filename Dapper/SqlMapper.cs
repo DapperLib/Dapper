@@ -2757,7 +2757,7 @@ namespace Dapper
                     {
                         if (handler is not null)
                         {
-                            // TypeHandler registered — box as the enum type, handler does conversion
+                            // TypeHandler registered - box as the enum type, handler does conversion
                             checkForNull = nullType is not null;
                         }
                         else if (nullType is not null)
@@ -3760,22 +3760,31 @@ namespace Dapper
 
                 if (unboxType.IsEnum)
                 {
-                    Type numericType = Enum.GetUnderlyingType(unboxType);
-                    if (colType == typeof(string))
+                    if (Settings.PreferTypeHandlersForEnums && typeHandlers.ContainsKey(unboxType))
                     {
-                        stringEnumLocal ??= il.DeclareLocal(typeof(string));
-                        il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
-                        il.Emit(OpCodes.Stloc, stringEnumLocal); // stack is now [...]
-                        il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
-                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!, null);// stack is now [...][enum-type]
-                        il.Emit(OpCodes.Ldloc, stringEnumLocal); // stack is now [...][enum-type][string]
-                        il.Emit(OpCodes.Ldc_I4_1); // stack is now [...][enum-type][string][true]
-                        il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [...][enum-as-object]
-                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+#pragma warning disable 618
+                        il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(unboxType).GetMethod(nameof(TypeHandlerCache<int>.Parse))!, null); // stack is now [...][typed-value]
+#pragma warning restore 618
                     }
                     else
                     {
-                        FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
+                        Type numericType = Enum.GetUnderlyingType(unboxType);
+                        if (colType == typeof(string))
+                        {
+                            stringEnumLocal ??= il.DeclareLocal(typeof(string));
+                            il.Emit(OpCodes.Castclass, typeof(string)); // stack is now [...][string]
+                            il.Emit(OpCodes.Stloc, stringEnumLocal); // stack is now [...]
+                            il.Emit(OpCodes.Ldtoken, unboxType); // stack is now [...][enum-type-token]
+                            il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!, null);// stack is now [...][enum-type]
+                            il.Emit(OpCodes.Ldloc, stringEnumLocal); // stack is now [...][enum-type][string]
+                            il.Emit(OpCodes.Ldc_I4_1); // stack is now [...][enum-type][string][true]
+                            il.EmitCall(OpCodes.Call, enumParse, null); // stack is now [...][enum-as-object]
+                            il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+                        }
+                        else
+                        {
+                            FlexibleConvertBoxedFromHeadOfStack(il, colType, unboxType, numericType);
+                        }
                     }
 
                     if (nullUnderlyingType is not null)

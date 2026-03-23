@@ -132,8 +132,7 @@ namespace Dapper
             /// <summary>
             /// When true, Dapper checks for a registered TypeHandler for enum types before
             /// falling back to the default behavior of sending enums as their underlying integer type.
-            /// This enables custom enum serialization (e.g. storing enums as strings).
-            /// Default: false (preserves existing behavior).
+            /// This enables custom enum serialization (e.g. storing enums as strings), while preserving existing behavior.
             /// </summary>
             public static bool PreferTypeHandlersForEnums { get; set; }
 
