@@ -465,6 +465,10 @@ namespace Dapper
             if (nullUnderlyingType is not null) type = nullUnderlyingType;
             if (type.IsEnum && !typeMap.ContainsKey(type))
             {
+                if (Settings.PreferTypeHandlersForEnums && typeHandlers.TryGetValue(type, out handler))
+                {
+                    return DbType.Object;
+                }
                 type = Enum.GetUnderlyingType(type);
             }
             if (typeMap.TryGetValue(type, out var mapEntry))
@@ -2751,7 +2755,12 @@ namespace Dapper
 
                     if ((nullType ?? propType).IsEnum)
                     {
-                        if (nullType is not null)
+                        if (handler is not null)
+                        {
+                            // TypeHandler registered — box as the enum type, handler does conversion
+                            checkForNull = nullType is not null;
+                        }
+                        else if (nullType is not null)
                         {
                             // Nullable<SomeEnum>; we want to box as the underlying type; that's just *hard*; for
                             // simplicity, box as Nullable<SomeEnum> and call SanitizeParameterValue
@@ -3097,7 +3106,16 @@ namespace Dapper
 #pragma warning restore 618
 
             if (effectiveType.IsEnum)
-            {   // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
+            {
+                if (Settings.PreferTypeHandlersForEnums && typeHandlers.TryGetValue(type, out var enumHandler))
+                {
+                    return r =>
+                    {
+                        var val = r.GetValue(index);
+                        return val is DBNull ? null! : enumHandler.Parse(type, val)!;
+                    };
+                }
+                // assume the value is returned as the correct type (int/byte/etc), but box back to the typed enum
                 return r =>
                 {
                     var val = r.GetValue(index);
@@ -3160,6 +3178,10 @@ namespace Dapper
             type = Nullable.GetUnderlyingType(type) ?? type;
             if (type.IsEnum)
             {
+                if (Settings.PreferTypeHandlersForEnums && typeHandlers.TryGetValue(type, out ITypeHandler? enumHandler))
+                {
+                    return (T)enumHandler.Parse(type, value)!;
+                }
                 if (value is float || value is double || value is decimal)
                 {
                     value = Convert.ChangeType(value, Enum.GetUnderlyingType(type), CultureInfo.InvariantCulture);

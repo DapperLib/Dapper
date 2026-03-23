@@ -65,7 +65,7 @@ namespace Dapper
             public static void SetDefaults()
             {
                 CommandTimeout = null;
-                ApplyNullValues = PadListExpansions = UseIncrementalPseudoPositionalParameterNames = false;
+                ApplyNullValues = PadListExpansions = UseIncrementalPseudoPositionalParameterNames = PreferTypeHandlersForEnums = false;
                 AllowedCommandBehaviors = DefaultAllowedCommandBehaviors;
                 FetchSize = InListStringSplitCount = -1;
             }
@@ -128,6 +128,14 @@ namespace Dapper
             /// where possible, prefer named parameters (<c>@yourParam</c> etc) or Dapper's "pseudo-positional" parameters (<c>?yourParam? etc</c>).
             /// </summary>
             public static bool SupportLegacyParameterTokens { get; set; } = true;
+
+            /// <summary>
+            /// When true, Dapper checks for a registered TypeHandler for enum types before
+            /// falling back to the default behavior of sending enums as their underlying integer type.
+            /// This enables custom enum serialization (e.g. storing enums as strings).
+            /// Default: false (preserves existing behavior).
+            /// </summary>
+            public static bool PreferTypeHandlersForEnums { get; set; }
 
             private static long s_FetchSize = -1;
         }

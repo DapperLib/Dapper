@@ -1,1 +1,3 @@
 ﻿#nullable enable
+static Dapper.SqlMapper.Settings.PreferTypeHandlersForEnums.get -> bool
+static Dapper.SqlMapper.Settings.PreferTypeHandlersForEnums.set -> void
