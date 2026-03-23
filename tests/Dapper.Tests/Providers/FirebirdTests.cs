@@ -33,7 +33,7 @@ namespace Dapper.Tests.Providers
             connection.Execute("insert into Issue178(id) values(42)");
             // raw ADO.net
             using (var sqlCmd = new FbCommand(sql, connection))
-            using (IDataReader reader1 = sqlCmd.ExecuteReader())
+            using (var reader1 = sqlCmd.ExecuteReader())
             {
                 Assert.True(reader1.Read());
                 Assert.Equal(1, reader1.GetInt32(0));

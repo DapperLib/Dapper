@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 
@@ -128,6 +128,7 @@ namespace Dapper.Tests.Performance
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1806:Do not ignore method results", Justification = "Intentional - just make sure we have something")]
         public async Task RunAsync(int iterations)
         {
             using (var connection = GetOpenConnection())

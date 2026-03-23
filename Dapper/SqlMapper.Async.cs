@@ -503,6 +503,7 @@ namespace Dapper
                     ThrowZeroRows(row);
                 }
                 while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore result sets after the first */ }
+                command.OnCompleted();
                 return result;
             }
             finally
@@ -939,7 +940,7 @@ namespace Dapper
                 using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
                 if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters), map, splitOn, reader, identity, true);
+                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), map, splitOn, reader, identity, true);
                 return command.Buffered ? results.ToList() : results;
             }
             finally
@@ -1249,7 +1250,6 @@ namespace Dapper
             return Parse<T>(result);
         }
 
-#if NET5_0_OR_GREATER
         /// <summary>
         /// Execute a query asynchronously using <see cref="IAsyncEnumerable{dynamic}"/>.
         /// </summary>
@@ -1333,12 +1333,20 @@ namespace Dapper
                 {
                     if (reader is not null)
                     {
+                        if (!reader.IsClosed)
+                        {
+                            try { cmd?.Cancel(); }
+                            catch { /* don't spoil any existing exception */ }
+                        }
+#if NET5_0_OR_GREATER
                         await reader.DisposeAsync();
+#else
+                        reader.Dispose();
+#endif
                     }
                     if (wasClosed) cnn.Close();
                 }
             }
         }
-#endif
     }
 }

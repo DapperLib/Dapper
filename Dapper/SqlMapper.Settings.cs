@@ -11,9 +11,10 @@ namespace Dapper
         /// </summary>
         public static class Settings
         {
-            // disable single result by default; prevents errors AFTER the select being detected properly
-            private const CommandBehavior DefaultAllowedCommandBehaviors = ~CommandBehavior.SingleResult;
+            // disable single row/result by default; prevents errors AFTER the select being detected properly
+            private const CommandBehavior DefaultAllowedCommandBehaviors = ~(CommandBehavior.SingleResult | CommandBehavior.SingleRow);
             internal static CommandBehavior AllowedCommandBehaviors { get; private set; } = DefaultAllowedCommandBehaviors;
+
             private static void SetAllowedCommandBehaviors(CommandBehavior behavior, bool enabled)
             {
                 if (enabled) AllowedCommandBehaviors |= behavior;

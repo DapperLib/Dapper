@@ -10,9 +10,7 @@ namespace Dapper
     public static partial class SqlMapper
     {
         public partial class GridReader
-#if NET5_0_OR_GREATER
             : IAsyncDisposable
-#endif
         {
             /// <summary>
             /// Read the next grid of results, returned as a dynamic object
@@ -161,11 +159,8 @@ namespace Dapper
 #endif
                     reader = null!;
                     onCompleted?.Invoke(state);
-#if NET5_0_OR_GREATER
+
                     await DisposeAsync();
-#else
-                    Dispose();
-#endif
                 }
             }
 
@@ -247,7 +242,6 @@ namespace Dapper
                 }
             }
 
-#if NET5_0_OR_GREATER
             /// <summary>
             /// Read the next grid of results.
             /// </summary>
@@ -283,19 +277,29 @@ namespace Dapper
             /// <summary>
             /// Dispose the grid, closing and disposing both the underlying reader and command.
             /// </summary>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously - for netfx version
             public async ValueTask DisposeAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
             {
                 if (reader is not null)
                 {
                     if (!reader.IsClosed) Command?.Cancel();
+#if NET5_0_OR_GREATER
                     await reader.DisposeAsync();
+#else
+                    reader.Dispose();
+#endif
                     reader = null!;
                 }
                 if (Command is not null)
                 {
                     if (Command is DbCommand typed)
                     {
+#if NET5_0_OR_GREATER
                         await typed.DisposeAsync();
+#else
+                        typed.Dispose();
+#endif
                     }
                     else
                     {
@@ -305,7 +309,6 @@ namespace Dapper
                 }
                 GC.SuppressFinalize(this);
             }
-#endif
         }
     }
 }

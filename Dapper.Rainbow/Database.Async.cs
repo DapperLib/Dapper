@@ -88,7 +88,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <returns>The number of rows affected.</returns>
         public Task<int> ExecuteAsync(string sql, dynamic param = null) =>
-            _connection.ExecuteAsync(sql, param as object, _transaction, _commandTimeout);
+            _connection.ExecuteAsync(sql, param as object, Transaction, _commandTimeout);
 
         /// <summary>
         /// Asynchronously queries the current database.
@@ -98,7 +98,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
         public Task<IEnumerable<T>> QueryAsync<T>(string sql, dynamic param = null) =>
-            _connection.QueryAsync<T>(sql, param as object, _transaction, _commandTimeout);
+            _connection.QueryAsync<T>(sql, param as object, Transaction, _commandTimeout);
 
         /// <summary>
         /// Asynchronously queries the current database for a single record.
@@ -108,7 +108,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
         public Task<T> QueryFirstOrDefaultAsync<T>(string sql, dynamic param = null) =>
-            _connection.QueryFirstOrDefaultAsync<T>(sql, param as object, _transaction, _commandTimeout);
+            _connection.QueryFirstOrDefaultAsync<T>(sql, param as object, Transaction, _commandTimeout);
 
         /// <summary>
         /// Perform an asynchronous multi-mapping query with 2 input types. 
@@ -195,7 +195,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public Task<IEnumerable<dynamic>> QueryAsync(string sql, dynamic param = null) =>
-            _connection.QueryAsync(sql, param as object, _transaction);
+            _connection.QueryAsync(sql, param as object, Transaction);
 
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn.

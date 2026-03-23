@@ -1,4 +1,4 @@
-﻿#if !NET462 // platform not supported exception
+﻿#if !NETFRAMEWORK // platform not supported exception
 using System;
 using System.Collections.Generic;
 using System.IO;

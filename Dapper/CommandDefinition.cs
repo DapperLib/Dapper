@@ -11,16 +11,9 @@ namespace Dapper
     /// </summary>
     public readonly struct CommandDefinition
     {
-        internal static CommandDefinition ForCallback(object? parameters)
+        internal static CommandDefinition ForCallback(object? parameters, CommandFlags flags)
         {
-            if (parameters is DynamicParameters)
-            {
-                return new CommandDefinition(parameters);
-            }
-            else
-            {
-                return default;
-            }
+            return new CommandDefinition(parameters is DynamicParameters ? parameters : null, flags);
         }
 
         internal void OnCompleted()
@@ -113,9 +106,10 @@ namespace Dapper
             return System.Data.CommandType.StoredProcedure;
         }
 
-        private CommandDefinition(object? parameters) : this()
+        private CommandDefinition(object? parameters, CommandFlags flags) : this()
         {
             Parameters = parameters;
+            Flags = flags;
             CommandText = "";
         }
 

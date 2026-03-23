@@ -333,6 +333,7 @@ namespace Dapper.Tests
         [InlineData("VACUUM;", CommandType.Text)]
         [InlineData("cOmmiT", CommandType.Text)]
         [InlineData("rOllbAck", CommandType.Text)]
+        [InlineData("reVErt", CommandType.Text)]
 
         // comments imply text
         [InlineData("foo--bar", CommandType.Text)]

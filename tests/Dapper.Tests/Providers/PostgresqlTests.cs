@@ -49,7 +49,7 @@ namespace Dapper.Tests
         {
             using var conn = GetOpenNpgsqlConnection();
 
-            IDbTransaction transaction = conn.BeginTransaction();
+            var transaction = conn.BeginTransaction();
             conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
             conn.Execute("insert into tcat(breed, name) values(:Breed, :Name) ", Cats);
 
@@ -66,7 +66,7 @@ namespace Dapper.Tests
         {
             using var conn = GetOpenNpgsqlConnection();
 
-            IDbTransaction transaction = conn.BeginTransaction();
+            var transaction = conn.BeginTransaction();
             conn.Execute("create table tcat ( id serial not null, breed character varying(20) not null, name character varying (20) not null);");
             conn.Execute("insert into tcat(breed, name) values(:Breed, :Name) ", new List<Cat>(Cats));
 

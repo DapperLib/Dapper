@@ -2,6 +2,9 @@
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 using RepoDb;
+using RepoDb.DbHelpers;
+using RepoDb.DbSettings;
+using RepoDb.StatementBuilders;
 
 namespace Dapper.Tests.Performance
 {
@@ -13,6 +16,16 @@ namespace Dapper.Tests.Performance
         {
             BaseSetup();
             GlobalConfiguration.Setup().UseSqlServer();
+
+            // We need this since benchmarks using System.Data.SqlClient
+            var dbSetting = new SqlServerDbSetting();
+            DbSettingMapper
+                .Add<Microsoft.Data.SqlClient.SqlConnection>(dbSetting, true);
+            DbHelperMapper
+                .Add<Microsoft.Data.SqlClient.SqlConnection>(new SqlServerDbHelper(), true);
+            StatementBuilderMapper
+                .Add<Microsoft.Data.SqlClient.SqlConnection>(new SqlServerStatementBuilder(dbSetting), true);
+
             ClassMapper.Add<Post>("Posts");
         }
 
@@ -41,7 +54,7 @@ namespace Dapper.Tests.Performance
         public Post QueryField()
         {
             Step();
-            return _connection.Query<Post>(new QueryField[] { new(nameof(Post.Id), i) }).First();
+            return _connection.Query<Post>([new(nameof(Post.Id), i)]).First();
         }
 
         [Benchmark(Description = "ExecuteQuery<T>")]

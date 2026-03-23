@@ -129,7 +129,6 @@ namespace Dapper
         {
             if (disposing)
             {
-                _reader.Close();
                 _reader.Dispose();
                 _reader = DisposedReader.Instance; // all future ops are no-ops
                 _cmd?.Dispose();
@@ -245,7 +244,6 @@ namespace Dapper
         {
             if (disposing)
             {
-                _reader.Close();
                 _reader.Dispose();
                 _reader = DisposedReader.Instance; // all future ops are no-ops
             }

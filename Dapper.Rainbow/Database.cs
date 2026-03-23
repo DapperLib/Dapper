@@ -175,7 +175,11 @@ namespace Dapper
 
         private DbConnection _connection;
         private int _commandTimeout;
-        private DbTransaction _transaction;
+
+        /// <summary>
+        /// Get access to the underlying transaction
+        /// </summary>
+        public DbTransaction Transaction { get; private set; }
 
         /// <summary>
         /// Get underlying database connection.
@@ -215,9 +219,11 @@ namespace Dapper
         /// Begins a transaction in this database.
         /// </summary>
         /// <param name="isolation">The isolation level to use.</param>
-        public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
+        /// <returns>The transaction created</returns>
+        public DbTransaction BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
         {
-            _transaction = _connection.BeginTransaction(isolation);
+            Transaction = _connection.BeginTransaction(isolation);
+            return Transaction;
         }
 
         /// <summary>
@@ -225,8 +231,8 @@ namespace Dapper
         /// </summary>
         public void CommitTransaction()
         {
-            _transaction.Commit();
-            _transaction = null;
+            Transaction.Commit();
+            Transaction = null;
         }
 
         /// <summary>
@@ -234,8 +240,8 @@ namespace Dapper
         /// </summary>
         public void RollbackTransaction()
         {
-            _transaction.Rollback();
-            _transaction = null;
+            Transaction.Rollback();
+            Transaction = null;
         }
 
         /// <summary>
@@ -336,7 +342,7 @@ namespace Dapper
             if (!string.IsNullOrEmpty(schemaName)) builder.Append("TABLE_SCHEMA = @schemaName AND ");
             builder.Append("TABLE_NAME = @name");
 
-            return _connection.Query(builder.ToString(), new { schemaName, name }, _transaction).Count() == 1;
+            return _connection.Query(builder.ToString(), new { schemaName, name }, Transaction).Count() == 1;
         }
 
         /// <summary>
@@ -346,7 +352,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <returns>The number of rows affected.</returns>
         public int Execute(string sql, dynamic param = null) =>
-            _connection.Execute(sql, param as object, _transaction, _commandTimeout);
+            _connection.Execute(sql, param as object, Transaction, _commandTimeout);
 
         /// <summary>
         /// Queries the current database.
@@ -357,7 +363,7 @@ namespace Dapper
         /// <param name="buffered">Whether to buffer the results.</param>
         /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
         public IEnumerable<T> Query<T>(string sql, dynamic param = null, bool buffered = true) =>
-            _connection.Query<T>(sql, param as object, _transaction, buffered, _commandTimeout);
+            _connection.Query<T>(sql, param as object, Transaction, buffered, _commandTimeout);
 
         /// <summary>
         /// Queries the current database for a single record.
@@ -367,7 +373,7 @@ namespace Dapper
         /// <param name="param">The parameters to use.</param>
         /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
         public T QueryFirstOrDefault<T>(string sql, dynamic param = null) =>
-            _connection.QueryFirstOrDefault<T>(sql, param as object, _transaction, _commandTimeout);
+            _connection.QueryFirstOrDefault<T>(sql, param as object, Transaction, _commandTimeout);
 
         /// <summary>
         /// Perform a multi-mapping query with 2 input types. 
@@ -455,7 +461,7 @@ namespace Dapper
         /// <param name="buffered">Whether the results should be buffered in memory.</param>
         /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
         public IEnumerable<dynamic> Query(string sql, dynamic param = null, bool buffered = true) =>
-            _connection.Query(sql, param as object, _transaction, buffered);
+            _connection.Query(sql, param as object, Transaction, buffered);
 
         /// <summary>
         /// Execute a command that returns multiple result sets, and access each in turn.
@@ -477,7 +483,7 @@ namespace Dapper
             if (connection.State != ConnectionState.Closed)
             {
                 _connection = null;
-                _transaction = null;
+                Transaction = null;
                 connection?.Close();
             }
             GC.SuppressFinalize(this);

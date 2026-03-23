@@ -265,7 +265,7 @@ namespace Dapper.Tests
             await TestExceptionsAsync<int>(
                 connection,
                 "Select null as Foo",
-                "Error parsing column 0 (Foo=<null>)");
+                "Error parsing column 0 (Foo=n/a - Null object cannot be converted to a value type.)");
             // Incompatible value throws (testing unnamed column bits here too)
             await TestExceptionsAsync<int>(
                 connection,
@@ -1309,6 +1309,90 @@ insert TPTable (Value) values (2), (568)");
                 IdProperty = idProperty;
                 NameProperty = nameProperty;
             }
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForByte()
+        {
+            const string sql = "select cast(200 as smallint) as [value]"; // 200 more than sbyte.MaxValue but less than byte.MaxValue 
+            Issue1164Object<byte> obj = connection.QuerySingle<Issue1164Object<byte>>(sql);
+            Assert.StrictEqual(200, obj.Value);
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForUInt16()
+        {
+            const string sql = "select cast(40000 as bigint) as [value]"; // 40000 more than short.MaxValue but less than ushort.MaxValue 
+            Issue1164Object<ushort> obj = connection.QuerySingle<Issue1164Object<ushort>>(sql);
+            Assert.StrictEqual(40000, obj.Value);
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForUInt32()
+        {
+            const string sql = "select cast(4000000000 as bigint) as [value]"; // 4000000000 more than int.MaxValue but less than uint.MaxValue 
+            Issue1164Object<uint> obj = connection.QuerySingle<Issue1164Object<uint>>(sql);
+            Assert.StrictEqual(4000000000, obj.Value);
+        }
+
+        [Fact]
+        public void Issue1164_OverflowExceptionForUInt64()
+        {
+            const string sql = "select cast(10000000000000000000.0 as float) as [value]"; // 10000000000000000000 more than long.MaxValue but less than ulong.MaxValue 
+            Issue1164Object<ulong> obj = connection.QuerySingle<Issue1164Object<ulong>>(sql);
+            Assert.StrictEqual(10000000000000000000, obj.Value);
+        }
+
+        private class Issue1164Object<T>
+        {
+            public T Value = default!;
+        }
+
+        internal record struct One(int OID);
+        internal record struct Two(int OID, string Name);
+
+        [Fact]
+        public async Task QuerySplitStruct() // https://github.com/DapperLib/Dapper/issues/2005
+        {
+            var results = await connection.QueryAsync<One, Two, (One,Two)>(@"SELECT 1 AS OID, 2 AS OID, 'Name' AS Name", (x,y) => (x,y), splitOn: "OID");
+
+            Assert.Single(results);
+        }
+
+        [Fact]
+        public void SetDynamicProperty_WithReferenceType_Succeeds()
+        {
+            var obj = connection.QueryFirst("select 1 as ExistingProperty");
+
+            obj.ExistingProperty = "foo";
+            Assert.Equal("foo", (string)obj.ExistingProperty);
+
+            obj.NewProperty = new Uri("http://example.net/");
+            Assert.Equal(new Uri("http://example.net/"), (Uri)obj.NewProperty);
+        }
+
+        [Fact]
+        public void SetDynamicProperty_WithBoxedValueType_Succeeds()
+        {
+            var obj = connection.QueryFirst("select 'foo' as ExistingProperty");
+
+            obj.ExistingProperty = (object)1;
+            Assert.Equal(1, (int)obj.ExistingProperty);
+
+            obj.NewProperty = (object)true;
+            Assert.True(obj.NewProperty);
+        }
+
+        [Fact]
+        public void SetDynamicProperty_WithValueType_Succeeds()
+        {
+            var obj = connection.QueryFirst("select 'foo' as ExistingProperty");
+
+            obj.ExistingProperty = 1;
+            Assert.Equal(1, (int)obj.ExistingProperty);
+
+            obj.NewProperty = true;
+            Assert.True(obj.NewProperty);
         }
     }
 }
