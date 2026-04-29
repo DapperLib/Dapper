@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.CSharp.RuntimeBinder;
 using Xunit;
 
-#if NETCOREAPP3_1 || NET462 || NET472
+#if NETCOREAPP3_1 || NET472
 namespace System.Runtime.CompilerServices
 {
     [EditorBrowsable(EditorBrowsableState.Never)]

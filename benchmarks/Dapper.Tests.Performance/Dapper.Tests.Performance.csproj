@@ -3,7 +3,7 @@
     <AssemblyName>Dapper.Tests.Performance</AssemblyName>
     <Description>Dapper Core Performance Suite</Description>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net8.0</TargetFrameworks>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <NoWarn>$(NoWarn);IDE0063;IDE0034;IDE0059;IDE0060</NoWarn>
   </PropertyGroup>
@@ -29,12 +29,12 @@
     <PackageReference Include="System.Reflection.Metadata" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
     <PackageReference Include="Npgsql" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="Npgsql" VersionOverride="8.0.6"/>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="Npgsql" VersionOverride="8.0.9"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -50,10 +50,10 @@
     <Compile Update="Benchmarks.*.cs" DependentUpon="Benchmarks.cs" />
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
     <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="SubSonic" />
@@ -63,7 +63,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Norm.net" />
   </ItemGroup>

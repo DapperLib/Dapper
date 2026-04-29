@@ -25,6 +25,10 @@
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="log4net" />
+    <PackageReference Update="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
@@ -33,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="Npgsql" VersionOverride="8.0.6"/>
+    <PackageReference Include="Npgsql" VersionOverride="8.0.9"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
