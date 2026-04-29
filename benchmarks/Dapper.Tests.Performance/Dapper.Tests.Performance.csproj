@@ -58,7 +58,7 @@
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="SubSonic" />
     <PackageReference Include="Susanoo.SqlServer" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="[3.1.10]" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="[3.1.32]" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.Linq" />

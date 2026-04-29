@@ -10,6 +10,8 @@
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.9.50" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" />
+    <PackageVersion Include="Snowflake.Data" Version="5.5.0" />
+    <PackageVersion Include="Snowflake.Data" Version="5.5.0" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
     <!-- tests -->
@@ -27,7 +29,7 @@
     <PackageVersion Include="log4net" Version="3.3.1" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.7" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageVersion Include="Mighty" Version="3.3.0" />
     <PackageVersion Include="MySqlConnector" Version="2.5.0" />
@@ -36,13 +38,13 @@
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="PetaPoco" Version="5.1.306" />
     <PackageVersion Include="RepoDb.SqlServer" Version="1.13.1" />
-    <PackageVersion Include="ServiceStack.OrmLite.SqlServer" Version="8.5.2" />
+    <PackageVersion Include="ServiceStack.OrmLite.SqlServer" Version="10.0.6" />
     <PackageVersion Include="Snowflake.Data" Version="4.5.0" />
     <PackageVersion Include="SqlMarshal" Version="0.5.0" />
     <PackageVersion Include="SubSonic" Version="3.0.0.4" />
     <PackageVersion Include="Susanoo.SqlServer" Version="1.2.4.2" />
-    <PackageVersion Include="System.Data.SqlClient" Version="4.9.0" />
-    <PackageVersion Include="System.Data.SQLite" Version="1.0.119" />
+    <PackageVersion Include="System.Data.SqlClient" Version="4.9.1" />
+    <PackageVersion Include="System.Data.SQLite" Version="2.0.3" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
     <PackageVersion Include="System.Reflection.Metadata" Version="10.0.7" />
