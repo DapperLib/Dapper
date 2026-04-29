@@ -24,6 +24,7 @@
     <PackageReference Include="MySqlConnector" />
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="System.ValueTuple" />
+    <PackageReference Include="log4net" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
