@@ -12,7 +12,7 @@ namespace Dapper
         /// </summary>
         /// <typeparam name="TKey">The type to cache.</typeparam>
         /// <typeparam name="TValue">The value type of the cache.</typeparam>
-        internal class Link<TKey, TValue> where TKey : class
+        internal sealed class Link<TKey, TValue> where TKey : class
         {
             public static void Clear(ref Link<TKey, TValue>? head) => Interlocked.Exchange(ref head, null);
             public static bool TryGet(Link<TKey, TValue>? link, TKey key, [NotNullWhen(true)] out TValue? value)

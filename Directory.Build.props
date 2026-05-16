@@ -14,7 +14,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/DapperLib/Dapper</RepositoryUrl>
     <Deterministic>false</Deterministic>
-    <NoWarn>$(NOWARN);IDE0056;IDE0057;IDE0079</NoWarn>
+    <NoWarn>$(NOWARN);IDE0056;IDE0057;IDE0079;DX1001</NoWarn>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
     <DefaultLanguage>en-US</DefaultLanguage>

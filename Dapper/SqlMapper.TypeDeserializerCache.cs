@@ -8,7 +8,7 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
-        private class TypeDeserializerCache
+        private sealed class TypeDeserializerCache
         {
             private TypeDeserializerCache(Type type)
             {
