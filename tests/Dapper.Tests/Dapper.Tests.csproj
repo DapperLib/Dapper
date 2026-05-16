@@ -12,7 +12,12 @@
   <PropertyGroup Condition="'$(TargetFramework)' == 'net481'">
     <DefineConstants>$(DefineConstants);ENTITY_FRAMEWORK;LINQ2SQL;OLEDB</DefineConstants>
   </PropertyGroup>
-
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="DuckDB.NET.Data.Full" VersionOverride="1.4.4"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <PackageReference Include="DuckDB.NET.Data.Full" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="coverlet.collector">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -20,7 +25,6 @@
     </PackageReference>
     <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
-    <PackageReference Include="DuckDB.NET.Data.Full" />
     <PackageReference Include="FastMember" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
@@ -28,6 +32,7 @@
     <PackageReference Include="MySqlConnector" />
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="System.ValueTuple" />
+    <PackageReference Include="log4net" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
@@ -38,6 +43,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <PackageReference Include="Npgsql" VersionOverride="8.0.6" />
+    <PackageReference Include="Npgsql" VersionOverride="8.0.9"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">

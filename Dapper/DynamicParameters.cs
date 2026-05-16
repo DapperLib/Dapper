@@ -62,10 +62,7 @@ namespace Dapper
                     if (subDynamic.templates is not null)
                     {
                         templates ??= new List<object>();
-                        foreach (var t in subDynamic.templates)
-                        {
-                            templates.Add(t);
-                        }
+                        templates.AddRange(subDynamic.templates);
                     }
                 }
                 else
@@ -212,14 +209,7 @@ namespace Dapper
                 }
 
                 // Now that the parameters are added to the command, let's place our output callbacks
-                var tmp = outputCallbacks;
-                if (tmp is not null)
-                {
-                    foreach (var generator in tmp)
-                    {
-                        generator();
-                    }
-                }
+                outputCallbacks?.ForEach(generator => generator());
             }
 
             foreach (var param in parameters.Values)

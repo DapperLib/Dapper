@@ -1020,10 +1020,9 @@ namespace PetaPoco
         {
             get
             {
-                var sb = new StringBuilder();
                 if (_lastSql == null)
                     return "";
-                sb.Append(_lastSql);
+                var sb = new StringBuilder(_lastSql);
                 if (_lastArgs != null)
                 {
                     sb.Append("\r\n\r\n");
@@ -1038,14 +1037,14 @@ namespace PetaPoco
 
         public static IMapper Mapper { get; set; }
 
-        internal class PocoColumn
+        internal sealed class PocoColumn
         {
             public string ColumnName;
             public PropertyInfo PropertyInfo;
             public bool ResultColumn;
         }
 
-        internal class PocoData
+        internal sealed class PocoData
         {
             public static PocoData ForType(Type t)
             {
@@ -1272,7 +1271,7 @@ namespace PetaPoco
         // ShareableConnection represents either a shared connection used by a transaction,
         // or a one-off connection if not in a transaction.
         // Non-shared connections are disposed 
-        private class ShareableConnection : IDisposable
+        private sealed class ShareableConnection : IDisposable
         {
             public ShareableConnection(Database db)
             {

@@ -10,7 +10,7 @@ namespace Dapper
     /// </summary>
     public sealed class DefaultTypeMap : SqlMapper.ITypeMap
     {
-        private readonly List<FieldInfo> _fields;
+        private readonly FieldInfo[] _fields;
         private readonly Type _type;
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Dapper
                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                    Type.DefaultBinder,
                    propertyInfo.PropertyType,
-                   propertyInfo.GetIndexParameters().Select(p => p.ParameterType).ToArray(),
+                   Array.ConvertAll(propertyInfo.GetIndexParameters(), p => p.ParameterType),
                    null)!.GetSetMethod(true);
         }
 
@@ -54,9 +54,9 @@ namespace Dapper
                   .ToList();
         }
 
-        internal static List<FieldInfo> GetSettableFields(Type t)
+        private static FieldInfo[] GetSettableFields(Type t)
         {
-            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+            return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         /// <summary>
@@ -156,20 +156,20 @@ namespace Dapper
 
             // preference order is:
             // exact match over underscore match, exact case over wrong case, backing fields over regular fields, match-inc-underscores over match-exc-underscores
-            var field = _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
-                ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
-                ?? _fields.Find(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
-                ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
+            var field = Array.Find(_fields, p => string.Equals(p.Name, columnName, StringComparison.Ordinal))
+                ?? Array.Find(_fields, p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
+                ?? Array.Find(_fields, p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase))
+                ?? Array.Find(_fields, p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
 
             if (field is null && MatchNamesWithUnderscores)
             {
                 var effectiveColumnName = columnName.Replace("_", "");
                 backingFieldName = "<" + effectiveColumnName + ">k__BackingField";
 
-                field = _fields.Find(p => string.Equals(p.Name, effectiveColumnName, StringComparison.Ordinal))
-                    ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
-                    ?? _fields.Find(p => string.Equals(p.Name, effectiveColumnName, StringComparison.OrdinalIgnoreCase))
-                    ?? _fields.Find(p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
+                field = Array.Find(_fields, p => string.Equals(p.Name, effectiveColumnName, StringComparison.Ordinal))
+                    ?? Array.Find(_fields, p => string.Equals(p.Name, backingFieldName, StringComparison.Ordinal))
+                    ?? Array.Find(_fields, p => string.Equals(p.Name, effectiveColumnName, StringComparison.OrdinalIgnoreCase))
+                    ?? Array.Find(_fields, p => string.Equals(p.Name, backingFieldName, StringComparison.OrdinalIgnoreCase));
             }
 
             if (field is not null)

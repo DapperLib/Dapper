@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/docs/">
+    <Project Path="docs/docs.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/main.yml" />
+    <File Path="appveyor.yml" />
+    <File Path="Build.csproj" />
+    <File Path="build.ps1" />
+    <File Path="Dapper.png" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="docs/index.md" />
+    <File Path="global.json" />
+    <File Path="License.txt" />
+    <File Path="NonCLA.md" />
+    <File Path="nuget.config" />
+    <File Path="Readme.md" />
+    <File Path="version.json" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="Dapper.EntityFramework.StrongName/Dapper.EntityFramework.StrongName.csproj" />
+    <Project Path="Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
+    <Project Path="Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
+    <Project Path="Dapper.Rainbow/Dapper.Rainbow.csproj" />
+    <Project Path="Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
+    <Project Path="Dapper.StrongName/Dapper.StrongName.csproj" />
+    <Project Path="Dapper/Dapper.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <File Path="tests/Directory.Build.targets" />
+    <File Path="tests/docker-compose.yml" />
+    <Project Path="benchmarks/Dapper.Tests.Performance/Dapper.Tests.Performance.csproj" />
+    <Project Path="tests/Dapper.Tests/Dapper.Tests.csproj" />
+  </Folder>
+</Solution>
