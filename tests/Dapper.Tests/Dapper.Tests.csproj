@@ -11,12 +11,14 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net481'">
     <DefineConstants>$(DefineConstants);ENTITY_FRAMEWORK;LINQ2SQL;OLEDB</DefineConstants>
+    <PackageReference Include="DuckDB.NET.Data.Full" VersionOverride="1.4.4"/>
   </PropertyGroup>
-
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net481'">
+    <PackageReference Include="DuckDB.NET.Data.Full" />
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
     <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
-    <PackageReference Include="DuckDB.NET.Data.Full" />
     <PackageReference Include="FastMember" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="Microsoft.Data.SqlClient" />

@@ -14,7 +14,7 @@
     <PackageReference Include="Belgrade.Sql.Client" />
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="DevExpress.Xpo" />
-    <PackageReference Include="EntityFramework" VersionOverride="6.5.1" />
+    <PackageReference Include="EntityFramework" VersionOverride="6.5.2" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="linq2db.SqlServer" />
     <PackageReference Include="MySqlConnector" />
