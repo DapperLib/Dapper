@@ -491,6 +491,52 @@ Order by p.Id";
         }
 
         [Fact]
+        public void TestMultiMapArbitraryMapsCommandDefinition()
+        {
+            const string createSql = @"
+                create table #ReviewBoards (Id int, Name varchar(20), User1Id int, User2Id int, User3Id int, User4Id int, User5Id int, User6Id int, User7Id int, User8Id int, User9Id int)
+                create table #Users (Id int, Name varchar(20))
+
+                insert #Users values(9, 'User 9')
+                insert #ReviewBoards values(1, 'Review Board 1', 9, 9, 9, 9, 9, 9, 9, 9, 9)
+";
+            connection.Execute(createSql);
+            try
+            {
+                const string sql = @"
+                    select rb.Id, rb.Name, u1.*, u2.*, u3.*, u4.*, u5.*, u6.*, u7.*, u8.*, u9.*
+                    from #ReviewBoards rb
+                        inner join #Users u1 on u1.Id = rb.User1Id
+                        inner join #Users u2 on u2.Id = rb.User2Id
+                        inner join #Users u3 on u3.Id = rb.User3Id
+                        inner join #Users u4 on u4.Id = rb.User4Id
+                        inner join #Users u5 on u5.Id = rb.User5Id
+                        inner join #Users u6 on u6.Id = rb.User6Id
+                        inner join #Users u7 on u7.Id = rb.User7Id
+                        inner join #Users u8 on u8.Id = rb.User8Id
+                        inner join #Users u9 on u9.Id = rb.User9Id";
+
+                var types = new[] { typeof(ReviewBoard), typeof(User), typeof(User), typeof(User), typeof(User), typeof(User), typeof(User), typeof(User), typeof(User), typeof(User) };
+                Func<object[], ReviewBoard> mapper = objects =>
+                {
+                    var board = (ReviewBoard)objects[0];
+                    board.User9 = (User)objects[9];
+                    return board;
+                };
+
+                var command = new CommandDefinition(sql);
+                var data = connection.Query<ReviewBoard>(command, types, mapper).ToList();
+
+                Assert.Equal(1, data.Count);
+                Assert.Equal("User 9", data[0].User9!.Name);
+            }
+            finally
+            {
+                connection.Execute("drop table #Users drop table #ReviewBoards");
+            }
+        }
+
+        [Fact]
         public void TestMultiMapGridReader()
         {
             const string createSql = @"

@@ -1230,7 +1230,6 @@ namespace Dapper
                 }
 
                 var func = tuple.Func;
-                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 while (reader.Read())
                 {
                     object? val = func(reader);
@@ -1548,6 +1547,23 @@ namespace Dapper
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Grandfathered")]
         public static IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map, object? param = null, IDbTransaction? transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null, CommandType? commandType = null) =>
             MultiMap<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
+
+        /// <summary>
+        /// Perform a multi-mapping query with an arbitrary number of input types.
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="cnn">The connection to query on.</param>
+        /// <param name="command">The command used to execute the query.</param>
+        /// <param name="types">Array of types in the recordset.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public static IEnumerable<TReturn> Query<TReturn>(this IDbConnection cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn = "Id")
+        {
+            var results = MultiMapImpl(cnn, command, types, map, splitOn, null, null, true);
+            return command.Buffered ? results.ToList() : results;
+        }
 
         /// <summary>
         /// Perform a multi-mapping query with an arbitrary number of input types.
