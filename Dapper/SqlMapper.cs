@@ -1230,7 +1230,6 @@ namespace Dapper
                 }
 
                 var func = tuple.Func;
-                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 while (reader.Read())
                 {
                     object? val = func(reader);
