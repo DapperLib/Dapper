@@ -1,3 +1,4 @@
 ﻿#nullable enable
 static Dapper.SqlMapper.Settings.PreferTypeHandlersForEnums.get -> bool
 static Dapper.SqlMapper.Settings.PreferTypeHandlersForEnums.set -> void
+static Dapper.SqlMapper.QueryAsync<TReturn>(this System.Data.IDbConnection! cnn, Dapper.CommandDefinition command, System.Type![]! types, System.Func<object![]!, TReturn>! map, string! splitOn = "Id") -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<TReturn>!>!
