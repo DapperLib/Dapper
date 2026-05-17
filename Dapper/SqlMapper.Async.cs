@@ -448,7 +448,6 @@ namespace Dapper
                 if (command.Buffered)
                 {
                     var buffer = new List<T>();
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         object val = func(reader);
@@ -1301,6 +1300,7 @@ namespace Dapper
                 bool wasClosed = cnn.State == ConnectionState.Closed;
                 using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 DbDataReader? reader = null;
+                bool readerDrained = false;
                 try
                 {
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
@@ -1312,6 +1312,7 @@ namespace Dapper
                     {
                         if (reader.FieldCount == 0)
                         {
+                            readerDrained = true;
                             yield break;
                         }
                         tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
@@ -1320,20 +1321,20 @@ namespace Dapper
 
                     var func = tuple.Func;
 
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         object val = func(reader);
                         yield return GetValue<T>(reader, effectiveType, val);
                     }
                     while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+                    readerDrained = true;
                     command.OnCompleted();
                 }
                 finally
                 {
                     if (reader is not null)
                     {
-                        if (!reader.IsClosed)
+                        if (!readerDrained && !reader.IsClosed)
                         {
                             try { cmd?.Cancel(); }
                             catch { /* don't spoil any existing exception */ }
