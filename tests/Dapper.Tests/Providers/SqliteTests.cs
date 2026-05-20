@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -81,6 +82,47 @@ namespace Dapper.Tests
             Assert.Equal(42, row.Id);
             row = await connection.QueryFirstAsync<HazNameId>("select 42 as Id").ConfigureAwait(false);
             Assert.Equal(42, row.Id);
+        }
+
+        [FactSqlite]
+        public void TypeHandlerFactory_CanParse_Sqlite()
+        {
+            using var connection = GetSQLiteConnection();
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandlerFactory(new ListHandlerFactory());
+            try
+            {
+                Assert.True(SqlMapper.HasTypeHandler(typeof(List<int>)));
+                Assert.True(SqlMapper.HasTypeHandler(typeof(List<string>)));
+
+                var row = connection.QuerySingle<ResultWithLists>(
+                    "SELECT '1|2|3' AS Ids, 'a|b|c' AS Names");
+
+                Assert.Equal([1, 2, 3], row.Ids);
+                Assert.Equal(["a", "b", "c"], row.Names);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        [FactSqlite]
+        public void TypeHandlerFactory_CanSetValue_Sqlite()
+        {
+            using var connection = GetSQLiteConnection();
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandlerFactory(new ListHandlerFactory());
+            try
+            {
+                var ids = new List<int> { 10, 20, 30 };
+                var result = connection.ExecuteScalar<string>("SELECT @Ids", new { Ids = ids });
+                Assert.Equal("10|20|30", result);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
         }
     }
 

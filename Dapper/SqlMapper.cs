@@ -269,6 +269,7 @@ namespace Dapper
             lock (typeHandlersSyncLock)
             {
                 typeHandlers = [];
+                typeHandlerFactories = [];
                 AddTypeHandlerCore(typeof(DataTable), new DataTableHandler(), clone);
                 AddTypeHandlerCore(typeof(XmlDocument), new XmlDocumentHandler(), clone);
                 AddTypeHandlerCore(typeof(XDocument), new XDocumentHandler(), clone);
@@ -338,6 +339,26 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Register a <see cref="TypeHandlerFactory"/> that can create handlers on demand for types it claims
+        /// via <see cref="TypeHandlerFactory.CanHandle"/>. Factories are queried in registration order when
+        /// no direct handler is found for a type.
+        /// </summary>
+        /// <param name="factory">The factory to register.</param>
+        public static void AddTypeHandlerFactory(TypeHandlerFactory factory)
+        {
+            if (factory is null) throw new ArgumentNullException(nameof(factory));
+            lock (typeHandlersSyncLock)
+            {
+                // Snapshot/mutate/swap keeps reads outside the lock lock-free.
+                var prev = typeHandlerFactories;
+                var next = new TypeHandlerFactory[prev.Length + 1];
+                prev.CopyTo(next, 0);
+                next[prev.Length] = factory;
+                typeHandlerFactories = next;
+            }
+        }
+
+        /// <summary>
         /// Configure the specified type to be processed by a custom handler.
         /// </summary>
         /// <param name="type">The type to handle.</param>
@@ -348,7 +369,17 @@ namespace Dapper
         /// </summary>
         /// <param name="type">The type to handle.</param>
         /// <returns>Boolean value specifying whether the type will be processed by a custom handler.</returns>
-        public static bool HasTypeHandler(Type type) => typeHandlers.ContainsKey(type);
+        public static bool HasTypeHandler(Type type)
+        {
+            if (typeHandlers.ContainsKey(type)) return true;
+            // Also check registered factories; a type has a handler if any factory claims it.
+            var factories = typeHandlerFactories; // snapshot for thread safety
+            foreach (var factory in factories)
+            {
+                if (factory.CanHandle(type)) return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Configure the specified type to be processed by a custom handler.
@@ -423,7 +454,36 @@ namespace Dapper
         public static void AddTypeHandler<T>(TypeHandler<T> handler) => AddTypeHandlerCore(typeof(T), handler, true);
 
         private static Dictionary<Type, ITypeHandler> typeHandlers;
+        // Registered factories are queried (in order) when no direct entry is found in typeHandlers.
+        // Uses a plain array with snapshot/swap so readers outside the lock never block.
+        private static TypeHandlerFactory[] typeHandlerFactories = [];
         private static readonly object typeHandlersSyncLock = new();
+
+        /// <summary>
+        /// Looks up a registered type handler, falling back to registered <see cref="TypeHandlerFactory"/>
+        /// instances when no direct entry is found. On a factory hit the concrete handler is instantiated,
+        /// registered in <see cref="typeHandlers"/> and in <see cref="TypeHandlerCache{T}"/> (used by
+        /// IL-emitted code), so subsequent lookups for the same type are O(1) dictionary reads.
+        /// </summary>
+        private static bool TryGetTypeHandler(Type type, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ITypeHandler? handler)
+        {
+            if (typeHandlers.TryGetValue(type, out handler)) return true;
+
+            var factories = typeHandlerFactories; // snapshot for thread safety
+            foreach (var factory in factories)
+            {
+                if (factory.CanHandle(type))
+                {
+                    handler = factory.Create(type);
+                    // Cache so TypeHandlerCache<T> (used by IL-emitted code paths) is populated
+                    // and future lookups bypass factory iteration entirely.
+                    AddTypeHandlerCore(type, handler, true);
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         internal const string LinqBinary = "System.Data.Linq.Binary";
 
@@ -483,7 +543,7 @@ namespace Dapper
             {
                 return DbType.Binary;
             }
-            if (typeHandlers.TryGetValue(type, out handler))
+            if (TryGetTypeHandler(type, out handler))
             {
                 return DbType.Object;
             }
@@ -1971,7 +2031,7 @@ namespace Dapper
             else if (!(type.IsEnum || type.IsArray || type.FullName == LinqBinary
                 || (type.IsValueType && (underlyingType = Nullable.GetUnderlyingType(type)) is not null && underlyingType.IsEnum)))
             {
-                if (typeHandlers.TryGetValue(type, out ITypeHandler? handler))
+                if (TryGetTypeHandler(type, out ITypeHandler? handler))
                 {
                     return GetHandlerDeserializer(handler, type, startBound);
                 }
@@ -3130,7 +3190,7 @@ namespace Dapper
                     return val is DBNull ? null! : Enum.ToObject(effectiveType, val);
                 };
             }
-            if (typeHandlers.TryGetValue(type, out var handler))
+            if (TryGetTypeHandler(type, out var handler))
             {
                 return r =>
                 {
@@ -3192,7 +3252,7 @@ namespace Dapper
                 }
                 return (T)Enum.ToObject(type, value);
             }
-            if (typeHandlers.TryGetValue(type, out ITypeHandler? handler))
+            if (TryGetTypeHandler(type, out ITypeHandler? handler))
             {
                 return (T)handler.Parse(type, value)!;
             }
@@ -3805,7 +3865,7 @@ namespace Dapper
                 {
                     TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
                     bool hasTypeHandler;
-                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                    if ((hasTypeHandler = TryGetTypeHandler(unboxType, out _)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
                     {
                         if (hasTypeHandler)
                         {
