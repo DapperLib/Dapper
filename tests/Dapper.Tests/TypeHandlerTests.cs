@@ -875,5 +875,141 @@ namespace Dapper.Tests
                 => other.Value == Value;
             public override string ToString() => Value.ToString();
         }
+
+        
+
+        [Fact]
+        public void TypeHandlerFactory_CanParse()
+        {
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandlerFactory(new ListHandlerFactory());
+            try
+            {
+                // Verify the factory registration is reflected by HasTypeHandler for matching types.
+                Assert.True(SqlMapper.HasTypeHandler(typeof(List<int>)));
+                Assert.True(SqlMapper.HasTypeHandler(typeof(List<string>)));
+                // Non-matching types should not be claimed.
+                Assert.False(SqlMapper.HasTypeHandler(typeof(HashSet<int>)));
+
+                // Verify that Dapper can deserialize query results into List<int> and List<string>
+                // using the handler created by the factory.
+                var row = connection.QuerySingle<ResultWithLists>(
+                    "SELECT '1|2|3' AS Ids, 'a|b|c' AS Names");
+
+                Assert.Equal([1, 2, 3], row.Ids);
+                Assert.Equal(["a", "b", "c"], row.Names);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        [Fact]
+        public void TypeHandlerFactory_CanSetValue()
+        {
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandlerFactory(new ListHandlerFactory());
+            try
+            {
+                // Verify that Dapper serializes a List<int> parameter via the factory-created handler.
+                var ids = new List<int> { 10, 20, 30 };
+                var result = connection.ExecuteScalar<string>(
+                    "SELECT @Ids", new { Ids = ids });
+
+                Assert.Equal("10|20|30", result);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        [Fact]
+        public void TypeHandlerFactory_ResetClearsRegistration()
+        {
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandlerFactory(new ListHandlerFactory());
+            Assert.True(SqlMapper.HasTypeHandler(typeof(List<int>)));
+
+            SqlMapper.ResetTypeHandlers();
+
+            // After a reset the factory registration should be gone and the
+            // handler should no longer be resolved.
+            Assert.False(SqlMapper.HasTypeHandler(typeof(List<int>)));
+        }
+
+        [Fact]
+        public void TypeHandlerFactory_NullThrows()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                SqlMapper.AddTypeHandlerFactory(null!));
+        }
+
+        [Fact]
+        public void TypeHandlerFactory_FirstRegisteredWins()
+        {
+            SqlMapper.ResetTypeHandlers();
+            // Register two factories that both claim List<int>; the first one registered should win.
+            var factory1 = new ListHandlerFactory();
+            var factory2 = new ListHandlerFactory();
+            SqlMapper.AddTypeHandlerFactory(factory1);
+            SqlMapper.AddTypeHandlerFactory(factory2);
+
+            try
+            {
+                Assert.True(SqlMapper.HasTypeHandler(typeof(List<int>)));
+                Assert.True(factory1.CanHandleCalls.Contains(typeof(List<int>)));
+                Assert.False(factory2.CanHandleCalls.Contains(typeof(List<int>)));
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+    }
+
+    // A TypeHandlerFactory that creates ListHandler<T> for any List<T> type
+    public class ListHandlerFactory : SqlMapper.TypeHandlerFactory
+    {
+        public HashSet<Type> CanHandleCalls { get; } = new();
+
+        public override bool CanHandle(Type type)
+        {
+            CanHandleCalls.Add(type);
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
+        }
+
+        public override SqlMapper.ITypeHandler Create(Type type)
+        {
+            var elementType = type.GetGenericArguments()[0];
+            var handlerType = typeof(ListHandler<>).MakeGenericType(elementType);
+            return (SqlMapper.ITypeHandler)Activator.CreateInstance(handlerType)!;
+        }
+        
+        public class ListHandler<T> : SqlMapper.TypeHandler<List<T>>
+        {
+            public override void SetValue(IDbDataParameter parameter, List<T>? value)
+            {
+                parameter.Value = value is null
+                    ? (object)DBNull.Value
+                    : string.Join("|", value.Select(v => Convert.ToString(v)));
+            }
+
+            public override List<T> Parse(object? value)
+            {
+                if (value is null || value is DBNull) return [];
+                return ((string)value).Split('|')
+                    .Select(s => (T)Convert.ChangeType(s, typeof(T))!)
+                    .ToList();
+            }
+        }
+    }
+
+    // Result type for TypeHandlerFactory tests, shared across SQL Server and SQLite test classes.
+    public class ResultWithLists
+    {
+        public List<int>? Ids { get; set; }
+        public List<string>? Names { get; set; }
     }
 }

@@ -1,3 +1,8 @@
 ﻿#nullable enable
 static Dapper.SqlMapper.Settings.PreferTypeHandlersForEnums.get -> bool
 static Dapper.SqlMapper.Settings.PreferTypeHandlersForEnums.set -> void
+static Dapper.SqlMapper.AddTypeHandlerFactory(Dapper.SqlMapper.TypeHandlerFactory! factory) -> void
+abstract Dapper.SqlMapper.TypeHandlerFactory.CanHandle(System.Type! type) -> bool
+abstract Dapper.SqlMapper.TypeHandlerFactory.Create(System.Type! type) -> Dapper.SqlMapper.ITypeHandler!
+Dapper.SqlMapper.TypeHandlerFactory
+Dapper.SqlMapper.TypeHandlerFactory.TypeHandlerFactory() -> void
