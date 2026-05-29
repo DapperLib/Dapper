@@ -387,10 +387,11 @@ namespace Dapper
             }
             while (diving is not null);
 
-            var dynamicParamName = string.Concat(names.ToArray());
+            var namesArray = names.ToArray();
+            var dynamicParamName = string.Concat(namesArray);
 
             // Before we get all emitty...
-            var lookup = string.Join("|", names.ToArray());
+            var lookup = string.Join("|", namesArray);
 
             var cache = CachedOutputSetters<T>.Cache;
             var setter = (Action<object, DynamicParameters>?)cache[lookup];
