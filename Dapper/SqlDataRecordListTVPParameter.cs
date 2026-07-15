@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -37,7 +36,15 @@ namespace Dapper
 
         internal static void Set(IDbDataParameter parameter, IEnumerable<T>? data, string? typeName)
         {
-            parameter.Value = data is not null && data.Any() ? data : null;
+            // don't enumerate "data" here - it may be a single-pass source (an open reader, a
+            // streaming iterator, etc); only short-circuit to null when we can tell for free
+            // that it is empty, since providers reject an empty TVP enumerable
+            parameter.Value = data switch
+            {
+                null => null,
+                IReadOnlyCollection<T> { Count: 0 } => null,
+                _ => data,
+            };
             StructuredHelper.ConfigureTVP(parameter, typeName);
         }
     }

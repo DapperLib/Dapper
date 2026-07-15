@@ -131,6 +131,25 @@ namespace Dapper.Tests
             return number_list;
         }
 
+        // wraps a sequence to prove it is only ever enumerated once, guarding against
+        // https://github.com/DapperLib/Dapper/issues/2064
+        private class SingleEnumerationEnumerable<T> : IEnumerable<T>
+        {
+            private readonly IEnumerable<T> data;
+
+            public SingleEnumerationEnumerable(IEnumerable<T> data) => this.data = data;
+
+            public bool WasEnumerated { get; private set; }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                Assert.False(WasEnumerated, "Source was enumerated more than once.");
+                WasEnumerated = true;
+                return data.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
 
         private class IntDynamicParam : SqlMapper.IDynamicParameters
         {
@@ -484,6 +503,54 @@ namespace Dapper.Tests
                     connection.Execute("DROP TYPE int_list_type");
                 }
             }
+        }
+
+        [Fact]
+        public void TestSqlDataRecordListParametersWithAsTableValuedParameterSinglePassSource()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+                var records = new SingleEnumerationEnumerable<IDataRecord>(CreateSqlDataRecordList(connection, new int[] { 1, 2, 3 }));
+
+                var nums = connection.Query<int>("get_ints", new { integers = records.AsTableValuedParameter() }, commandType: CommandType.StoredProcedure).ToList();
+                Assert.Equal(new int[] { 1, 2, 3 }, nums);
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
+        [Fact]
+        public void AsTableValuedParameterDoesNotEnumerateNonCollectionSource()
+        {
+            var records = new SingleEnumerationEnumerable<IDataRecord>(Enumerable.Empty<IDataRecord>());
+            var parameter = new Microsoft.Data.SqlClient.SqlParameter();
+
+            SqlDataRecordListTVPParameter<IDataRecord>.Set(parameter, records, "int_list_type");
+
+            Assert.False(records.WasEnumerated);
+            Assert.Same(records, parameter.Value);
+        }
+
+        [Fact]
+        public void AsTableValuedParameterNullsOutEmptyCollectionSource()
+        {
+            var parameter = new Microsoft.Data.SqlClient.SqlParameter();
+
+            SqlDataRecordListTVPParameter<IDataRecord>.Set(parameter, Array.Empty<IDataRecord>(), "int_list_type");
+
+            Assert.Null(parameter.Value);
         }
 
         [Fact]
