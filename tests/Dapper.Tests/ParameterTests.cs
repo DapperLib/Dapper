@@ -535,7 +535,7 @@ namespace Dapper.Tests
         public void AsTableValuedParameterDoesNotEnumerateNonCollectionSource()
         {
             var records = new SingleEnumerationEnumerable<IDataRecord>(Enumerable.Empty<IDataRecord>());
-            var parameter = new Microsoft.Data.SqlClient.SqlParameter();
+            var parameter = Provider.CreateRawParameter("integers", DBNull.Value);
 
             SqlDataRecordListTVPParameter<IDataRecord>.Set(parameter, records, "int_list_type");
 
@@ -546,7 +546,7 @@ namespace Dapper.Tests
         [Fact]
         public void AsTableValuedParameterNullsOutEmptyCollectionSource()
         {
-            var parameter = new Microsoft.Data.SqlClient.SqlParameter();
+            var parameter = Provider.CreateRawParameter("integers", DBNull.Value);
 
             SqlDataRecordListTVPParameter<IDataRecord>.Set(parameter, Array.Empty<IDataRecord>(), "int_list_type");
 
