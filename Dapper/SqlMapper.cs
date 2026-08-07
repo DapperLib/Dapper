@@ -1600,19 +1600,17 @@ namespace Dapper
                     ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
                     reader = ownedReader;
                 }
-                DeserializerState? deserializer;
-                Func<DbDataReader, object>[]? otherDeserializers;
+                var deserializer = cinfo.Deserializer;
 
                 int hash = GetColumnHash(reader);
-                if ((deserializer = cinfo.Deserializer) is null || (otherDeserializers = cinfo.OtherDeserializers) is null || hash != deserializer.Hash)
+                if (deserializer?.OtherDeserializers is null || hash != deserializer.Hash)
                 {
                     var deserializers = GenerateDeserializers(identity, splitOn, reader);
-                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
-                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0], deserializers.Skip(1).ToArray());
                     if (command.AddToCache) SetQueryCache(identity, cinfo);
                 }
 
-                Func<DbDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, otherDeserializers, map);
+                Func<DbDataReader, TReturn> mapIt = GenerateMapper<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(deserializer.Func, deserializer.OtherDeserializers!, map);
 
                 if (mapIt is not null)
                 {
@@ -1671,19 +1669,17 @@ namespace Dapper
                     ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
                     reader = ownedReader;
                 }
-                DeserializerState? deserializer;
-                Func<DbDataReader, object>[]? otherDeserializers;
+                var deserializer = cinfo.Deserializer;
 
                 int hash = GetColumnHash(reader);
-                if ((deserializer = cinfo.Deserializer) is null || (otherDeserializers = cinfo.OtherDeserializers) is null || hash != deserializer.Hash)
+                if (deserializer?.OtherDeserializers is null || hash != deserializer.Hash)
                 {
                     var deserializers = GenerateDeserializers(identity, splitOn, reader);
-                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
-                    otherDeserializers = cinfo.OtherDeserializers = deserializers.Skip(1).ToArray();
+                    deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0], deserializers.Skip(1).ToArray());
                     if (command.AddToCache) SetQueryCache(identity, cinfo);
                 }
 
-                Func<DbDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, otherDeserializers, map);
+                Func<DbDataReader, TReturn> mapIt = GenerateMapper(types.Length, deserializer.Func, deserializer.OtherDeserializers!, map);
 
                 if (mapIt is not null)
                 {
