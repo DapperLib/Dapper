@@ -433,17 +433,17 @@ namespace Dapper
                 if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
-                var tuple = info.Deserializer;
+                var deserializer = info.Deserializer;
                 int hash = GetColumnHash(reader);
-                if (tuple is null || tuple.Hash != hash)
+                if (deserializer is null || deserializer.Hash != hash)
                 {
                     if (reader.FieldCount == 0)
                         return Enumerable.Empty<T>();
-                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                    deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
 
-                var func = tuple.Func;
+                var func = deserializer.Func;
 
                 if (command.Buffered)
                 {
@@ -1306,19 +1306,19 @@ namespace Dapper
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
-                    var tuple = info.Deserializer;
+                    var deserializer = info.Deserializer;
                     int hash = GetColumnHash(reader);
-                    if (tuple is null || tuple.Hash != hash)
+                    if (deserializer is null || deserializer.Hash != hash)
                     {
                         if (reader.FieldCount == 0)
                         {
                             yield break;
                         }
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                         if (command.AddToCache) SetQueryCache(identity, info);
                     }
 
-                    var func = tuple.Func;
+                    var func = deserializer.Func;
 
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))

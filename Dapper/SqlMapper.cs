@@ -1219,17 +1219,17 @@ namespace Dapper
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
                 // in the connection closing itself
-                var tuple = info.Deserializer;
+                var deserializer = info.Deserializer;
                 int hash = GetColumnHash(reader);
-                if (tuple is null || tuple.Hash != hash)
+                if (deserializer is null || deserializer.Hash != hash)
                 {
                     if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
                         yield break;
-                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                    deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
 
-                var func = tuple.Func;
+                var func = deserializer.Func;
                 var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 while (reader.Read())
                 {
@@ -1359,15 +1359,15 @@ namespace Dapper
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static T ReadRow<T>(CacheInfo info, Identity identity, ref CommandDefinition command, Type effectiveType, DbDataReader reader)
         {
-            var tuple = info.Deserializer;
+            var deserializer = info.Deserializer;
             int hash = GetColumnHash(reader);
-            if (tuple is null || tuple.Hash != hash)
+            if (deserializer is null || deserializer.Hash != hash)
             {
-                tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                 if (command.AddToCache) SetQueryCache(identity, info);
             }
 
-            var func = tuple.Func;
+            var func = deserializer.Func;
             object? val = func(reader);
             return GetValue<T>(reader, effectiveType, val);
         }
