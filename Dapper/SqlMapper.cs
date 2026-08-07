@@ -1221,7 +1221,7 @@ namespace Dapper
                 // in the connection closing itself
                 var tuple = info.Deserializer;
                 int hash = GetColumnHash(reader);
-                if (tuple.Func is null || tuple.Hash != hash)
+                if (tuple is null || tuple.Hash != hash)
                 {
                     if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
                         yield break;
@@ -1361,7 +1361,7 @@ namespace Dapper
         {
             var tuple = info.Deserializer;
             int hash = GetColumnHash(reader);
-            if (tuple.Func is null || tuple.Hash != hash)
+            if (tuple is null || tuple.Hash != hash)
             {
                 tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                 if (command.AddToCache) SetQueryCache(identity, info);
@@ -1600,11 +1600,11 @@ namespace Dapper
                     ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
                     reader = ownedReader;
                 }
-                var deserializer = default(DeserializerState);
+                DeserializerState? deserializer;
                 Func<DbDataReader, object>[]? otherDeserializers;
 
                 int hash = GetColumnHash(reader);
-                if ((deserializer = cinfo.Deserializer).Func is null || (otherDeserializers = cinfo.OtherDeserializers) is null || hash != deserializer.Hash)
+                if ((deserializer = cinfo.Deserializer) is null || (otherDeserializers = cinfo.OtherDeserializers) is null || hash != deserializer.Hash)
                 {
                     var deserializers = GenerateDeserializers(identity, splitOn, reader);
                     deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);
@@ -1671,11 +1671,11 @@ namespace Dapper
                     ownedReader = ExecuteReaderWithFlagsFallback(ownedCommand, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
                     reader = ownedReader;
                 }
-                DeserializerState deserializer;
+                DeserializerState? deserializer;
                 Func<DbDataReader, object>[]? otherDeserializers;
 
                 int hash = GetColumnHash(reader);
-                if ((deserializer = cinfo.Deserializer).Func is null || (otherDeserializers = cinfo.OtherDeserializers) is null || hash != deserializer.Hash)
+                if ((deserializer = cinfo.Deserializer) is null || (otherDeserializers = cinfo.OtherDeserializers) is null || hash != deserializer.Hash)
                 {
                     var deserializers = GenerateDeserializers(identity, splitOn, reader);
                     deserializer = cinfo.Deserializer = new DeserializerState(hash, deserializers[0]);

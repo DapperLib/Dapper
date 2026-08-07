@@ -6,7 +6,10 @@ namespace Dapper
 {
     public static partial class SqlMapper
     {
-        private readonly struct DeserializerState
+        // Reference type on purpose: this is published into CacheInfo by a plain field write,
+        // so it must be a single atomic reference store. A multi-field struct tears, pairing a
+        // Hash with the Func compiled for a different result shape.
+        private sealed class DeserializerState
         {
             public readonly int Hash;
             public readonly Func<DbDataReader, object> Func;

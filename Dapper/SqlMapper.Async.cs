@@ -435,7 +435,7 @@ namespace Dapper
 
                 var tuple = info.Deserializer;
                 int hash = GetColumnHash(reader);
-                if (tuple.Func is null || tuple.Hash != hash)
+                if (tuple is null || tuple.Hash != hash)
                 {
                     if (reader.FieldCount == 0)
                         return Enumerable.Empty<T>();
@@ -1308,7 +1308,7 @@ namespace Dapper
 
                     var tuple = info.Deserializer;
                     int hash = GetColumnHash(reader);
-                    if (tuple.Func is null || tuple.Hash != hash)
+                    if (tuple is null || tuple.Hash != hash)
                     {
                         if (reader.FieldCount == 0)
                         {
