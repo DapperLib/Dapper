@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -63,6 +64,46 @@ namespace Dapper.Tests
             Assert.Equal(42, row.Id);
             row = connection.QueryFirst<HazNameId>("select 42 as Id");
             Assert.Equal(42, row.Id);
+        }
+
+        [FactSqlite]
+        public void TypeHandlerSetValue_StringParameterSizeIsNotOverwritten_Issue2141()
+        {
+            using var connection = GetSQLiteConnection();
+
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.RemoveTypeMap(typeof(string));
+            var handler = new SizedStringTypeHandler();
+            SqlMapper.AddTypeHandler(handler);
+            try
+            {
+                // anonymous object parameters take the IL generator path, where the
+                // generated code used to overwrite the Size set by the handler
+                connection.Execute("select @p", new { p = "abc" });
+
+                Assert.NotNull(handler.LastParameter);
+                Assert.Equal(SizedStringTypeHandler.ExpectedSize, handler.LastParameter.Size);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+                SqlMapper.AddTypeMap(typeof(string), DbType.String);
+            }
+        }
+
+        private sealed class SizedStringTypeHandler : SqlMapper.TypeHandler<string>
+        {
+            public const int ExpectedSize = 12345;
+            public IDbDataParameter? LastParameter { get; private set; }
+
+            public override void SetValue(IDbDataParameter parameter, string? value)
+            {
+                parameter.Value = value;
+                parameter.Size = ExpectedSize;
+                LastParameter = parameter;
+            }
+
+            public override string Parse(object value) => (string)value;
         }
 
         [FactSqlite]
