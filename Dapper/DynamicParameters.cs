@@ -148,6 +148,20 @@ namespace Dapper
         }
 
         /// <summary>
+        /// Add all the parameters needed to the command just before it executes, using the
+        /// command's own text and type for any query-specific handling (literal tokens, etc);
+        /// this allows external tooling (for example build-time code generators) to apply a
+        /// parameter bag without constructing an <see cref="SqlMapper.Identity"/>
+        /// </summary>
+        /// <param name="command">The raw command prior to execution</param>
+        public void AddParameters(IDbCommand command)
+        {
+            if (command is null) throw new ArgumentNullException(nameof(command));
+            AddParameters(command, new SqlMapper.Identity(command.CommandText, command.CommandType,
+                command.Connection!, null, GetType()));
+        }
+
+        /// <summary>
         /// If true, the command-text is inspected and only values that are clearly used are included on the connection
         /// </summary>
         public bool RemoveUnused { get; set; }

@@ -929,6 +929,29 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void AddParameters_Command_AppliesBagAndLiterals()
+        {
+            // the identity-free overload: external tooling (e.g. build-time code generators)
+            // can apply a bag using the command's own text for query-specific handling
+            using var connection = GetClosedConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = "select @a + {=b}";
+
+            var args = new DynamicParameters();
+            args.Add("a", 1);
+            args.Add("b", 2);
+            args.AddParameters(command);
+
+            Assert.Equal("select @a + 2", command.CommandText); // literal replaced
+            // (note the literal member is still attached as a parameter too - unused, but
+            // that matches what the bag does under vanilla execution)
+            var p = Assert.IsAssignableFrom<IDbDataParameter>(command.Parameters[0]);
+            Assert.Equal("a", p.ParameterName);
+            Assert.Equal(1, p.Value);
+            Assert.Equal(2, command.Parameters.Count);
+        }
+
+        [Fact]
         public void TestAppendingAnonClasses()
         {
             var p = new DynamicParameters();
