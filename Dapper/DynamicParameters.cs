@@ -157,8 +157,10 @@ namespace Dapper
         public void AddParameters(IDbCommand command)
         {
             if (command is null) throw new ArgumentNullException(nameof(command));
-            AddParameters(command, new SqlMapper.Identity(command.CommandText, command.CommandType,
-                command.Connection!, null, GetType()));
+            // dispatch via the interface so that a subclass which hides AddParameters and
+            // re-implements IDynamicParameters (an established extension pattern) still runs
+            ((SqlMapper.IDynamicParameters)this).AddParameters(command, new SqlMapper.Identity(
+                command.CommandText, command.CommandType, command.Connection!, null, GetType()));
         }
 
         /// <summary>

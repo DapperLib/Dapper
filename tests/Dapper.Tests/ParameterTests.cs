@@ -952,6 +952,32 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public void AddParameters_Command_DispatchesViaInterface()
+        {
+            // a subclass that hides AddParameters and re-implements IDynamicParameters
+            // (the DynamicParameterWithIntTVP pattern) must still get its version called
+            using var connection = GetClosedConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = "select @a";
+
+            var args = new HidingBag();
+            args.Add("a", 1);
+            args.AddParameters(command);
+
+            Assert.True(args.CustomRan);
+        }
+
+        private class HidingBag : DynamicParameters, SqlMapper.IDynamicParameters
+        {
+            public bool CustomRan { get; private set; }
+            public new void AddParameters(IDbCommand command, SqlMapper.Identity identity)
+            {
+                base.AddParameters(command, identity);
+                CustomRan = true;
+            }
+        }
+
+        [Fact]
         public void TestAppendingAnonClasses()
         {
             var p = new DynamicParameters();
