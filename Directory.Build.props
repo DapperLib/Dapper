@@ -7,7 +7,7 @@
     <AssemblyOriginatorKeyFile>../Dapper.snk</AssemblyOriginatorKeyFile>
 
     <PackageId>$(AssemblyName)</PackageId>
-    <PackageReleaseNotes>https://dapperlib.dev/</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/DapperLib/Dapper/releases</PackageReleaseNotes>
     <PackageProjectUrl>https://dapperlib.dev/</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>Dapper.png</PackageIcon>
