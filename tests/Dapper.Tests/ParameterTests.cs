@@ -391,6 +391,68 @@ namespace Dapper.Tests
                 }
             }
         }
+        [Fact]
+        public void TestGetSqlBuilderParamNames()
+        {
+            var sqlBuilder = new SqlBuilder();
+
+            var templateA = sqlBuilder.AddTemplate("SELECT @a", new
+            {
+                a = 1
+            });
+            var templateB = sqlBuilder.AddTemplate("SELECT @b", new
+            {
+                b = 2
+            });
+            sqlBuilder.AddParameters(new
+            {
+                c = 3
+            });
+
+            var aParameters = new DynamicParameters(templateA.Parameters);
+            var aParamNames = aParameters.ParameterNames;
+
+            var bParameters = new DynamicParameters(templateB.Parameters);
+            var bParamNames = bParameters.ParameterNames;
+
+            Assert.Contains("a", aParamNames);
+            Assert.DoesNotContain("b", aParamNames);
+            Assert.Contains("c", aParamNames);
+            Assert.DoesNotContain("a", bParamNames);
+            Assert.Contains("b", bParamNames);
+            Assert.Contains("c", bParamNames);
+        }
+        [Fact]
+        public void TestGetSqlBuilderParams()
+        {
+            var sqlBuilder = new SqlBuilder();
+
+            var templateA = sqlBuilder.AddTemplate("SELECT @a", new
+            {
+                a = 1
+            });
+            var templateB = sqlBuilder.AddTemplate("SELECT @b", new
+            {
+                b = 2
+            });
+            sqlBuilder.AddParameters(new
+            {
+                c = 3
+            });
+
+            var aParameters = new DynamicParameters(templateA.Parameters);
+            var bParameters = new DynamicParameters(templateB.Parameters);
+
+            var aParamValue = aParameters.Get<int>("a");
+            var bParamValue = bParameters.Get<int>("b");
+            var cParamValueA = aParameters.Get<int>("c");
+            var cParamValueB = bParameters.Get<int>("c");
+
+            Assert.Equal(1, aParamValue);
+            Assert.Equal(2, bParamValue);
+            Assert.Equal(3, cParamValueA);
+            Assert.Equal(3, cParamValueB);
+        }
 
         private class DynamicParameterWithIntTVP : DynamicParameters, SqlMapper.IDynamicParameters
         {
