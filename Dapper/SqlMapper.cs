@@ -1230,7 +1230,6 @@ namespace Dapper
                 }
 
                 var func = tuple.Func;
-                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                 while (reader.Read())
                 {
                     object? val = func(reader);
@@ -1744,7 +1743,10 @@ namespace Dapper
         private static Func<DbDataReader, object>[] GenerateDeserializers(Identity identity, string splitOn, DbDataReader reader)
         {
             var deserializers = new List<Func<DbDataReader, object>>();
-            var splits = splitOn.Split(',').Select(s => s.Trim()).ToArray();
+            var splits = splitOn.Split(',');
+            for (var i = 0; i < splits.Length; i++)
+                splits[i] = splits[i].Trim();
+
             bool isMultiSplit = splits.Length > 1;
 
             int typeCount = identity.TypeCount;
@@ -2647,8 +2649,11 @@ namespace Dapper
                         }
                         if (ok)
                         {
-                            props = propsList.ToArray();
-                            Array.Sort(positions, (PropertyInfo[])props);
+                            var propsArray = new PropertyInfo[positions.Length];
+                            for (var index = 0; index < positions.Length; index++)
+                                propsArray[index] = propsList[positions[index]];
+
+                            props = propsArray;
                         }
                     }
                 }
@@ -2986,7 +2991,7 @@ namespace Dapper
         {
             typeof(bool), typeof(sbyte), typeof(byte), typeof(ushort), typeof(short),
             typeof(uint), typeof(int), typeof(ulong), typeof(long), typeof(float), typeof(double), typeof(decimal)
-        }.ToDictionary(x => Type.GetTypeCode(x), x => x.GetPublicInstanceMethod(nameof(object.ToString), [typeof(IFormatProvider)])!);
+        }.ToDictionary(Type.GetTypeCode, x => x.GetPublicInstanceMethod(nameof(object.ToString), [typeof(IFormatProvider)])!);
 
         private static MethodInfo? GetToString(TypeCode typeCode)
         {
@@ -3472,7 +3477,7 @@ namespace Dapper
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
 
-            var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
+            var names = Enumerable.Range(startBound, length).Select(reader.GetName).ToArray();
 
             ITypeMap typeMap = GetTypeMap(type);
 
@@ -3558,7 +3563,7 @@ namespace Dapper
 
             var members = Array.ConvertAll<string, IMemberMap?>(names, specializedConstructor is not null
                 ? n => typeMap.GetConstructorParameter(specializedConstructor, n)
-                : n => typeMap.GetMember(n));
+                : typeMap.GetMember);
 
             // stack is now [target]
             bool first = true;
