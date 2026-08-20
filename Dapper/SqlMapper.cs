@@ -1863,11 +1863,13 @@ namespace Dapper
                 if (identity.ParametersType is not null)
                 {
                     Action<IDbCommand, object?> reader;
-                    if (exampleParameters is IDynamicParameters)
+                    if (exampleParameters is IDynamicParameters
+                        || (exampleParameters is null && typeof(IDynamicParameters).IsAssignableFrom(identity.ParametersType)))
                     {
                         reader = (cmd, obj) => ((IDynamicParameters)obj!).AddParameters(cmd, identity);
                     }
-                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>>)
+                    else if (exampleParameters is IEnumerable<KeyValuePair<string, object>>
+                        || (exampleParameters is null && typeof(IEnumerable<KeyValuePair<string, object>>).IsAssignableFrom(identity.ParametersType)))
                     {
                         reader = (cmd, obj) =>
                         {
