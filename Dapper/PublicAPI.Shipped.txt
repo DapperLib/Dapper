@@ -9,6 +9,7 @@ Dapper.CommandDefinition.Buffered.get -> bool
 Dapper.CommandDefinition.CancellationToken.get -> System.Threading.CancellationToken
 Dapper.CommandDefinition.CommandDefinition() -> void
 Dapper.CommandDefinition.CommandDefinition(string! commandText, object? parameters = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null, Dapper.CommandFlags flags = Dapper.CommandFlags.Buffered, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+Dapper.CommandDefinition.CommandDefinition(string! commandText, System.Func<System.Data.IDbConnection!, System.Data.IDbCommand!>! createCommand, object? parameters = null, System.Data.IDbTransaction? transaction = null, int? commandTimeout = null, System.Data.CommandType? commandType = null, Dapper.CommandFlags flags = Dapper.CommandFlags.Buffered, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
 Dapper.CommandDefinition.CommandText.get -> string!
 Dapper.CommandDefinition.CommandTimeout.get -> int?
 Dapper.CommandDefinition.CommandType.get -> System.Data.CommandType?

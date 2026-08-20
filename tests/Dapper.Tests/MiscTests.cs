@@ -1394,5 +1394,22 @@ insert TPTable (Value) values (2), (568)");
             obj.NewProperty = true;
             Assert.True(obj.NewProperty);
         }
+
+        [Fact]
+        public void TestCreateCommandCalled()
+        {
+            var customCreateCommandCalled = false;
+            var createCommand = new Func<IDbConnection, IDbCommand>(conn =>
+            {
+                customCreateCommandCalled = true;
+                return conn.CreateCommand();
+            });
+
+            var definition = new CommandDefinition("select 1", createCommand);
+
+            connection.Query<int>(definition);
+
+            Assert.True(customCreateCommandCalled);
+        }
     }
 }
