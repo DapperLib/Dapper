@@ -13,7 +13,7 @@ namespace Dapper.Tests
     /// docker run -d -p 3306:3306 --name Dapper.Tests.MySQL -e MYSQL_DATABASE=tests -e MYSQL_USER=test -e MYSQL_PASSWORD=pass -e MYSQL_ROOT_PASSWORD=pass mysql
     /// </code>
     /// </summary>
-    public sealed class MySqlProvider : DatabaseProvider
+    public class MySqlProvider : DatabaseProvider
     {
         public override DbProviderFactory Factory => MySqlConnector.MySqlConnectorFactory.Instance;
         public override string GetConnectionString() =>
