@@ -44,6 +44,32 @@ namespace Dapper.Tests
             new Cat() { Breed = "Persian", Name="MAGNA"}
         };
 
+#if NET6_0_OR_GREATER
+        [FactPostgresql] // #2226: Npgsql 10 boxes DateOnly/TimeOnly for date/time columns;
+        // both spellings of a date read must work regardless of which box arrives
+        public void DateOnlyDateTimeInterchange()
+        {
+            using var conn = GetOpenNpgsqlConnection();
+            Assert.Equal(new DateTime(2021, 1, 1), conn.QuerySingle<DateTime>("select '2021-01-01'::date"));
+            Assert.Equal(new DateTime(2021, 1, 1), conn.QuerySingle<DateTime?>("select '2021-01-01'::date"));
+            Assert.Equal(new DateOnly(2021, 1, 1), conn.QuerySingle<DateOnly>("select '2021-01-01'::date"));
+            Assert.Equal(new TimeOnly(3, 3, 3), conn.QuerySingle<TimeOnly>("select '03:03:03'::time"));
+
+            var row = conn.QuerySingle<DateReadings>(
+                "select '2021-01-01'::date as \"AsDateTime\", '2021-01-01'::date as \"AsDateOnly\", '2021-01-01'::date as \"AsNullableDateTime\"");
+            Assert.Equal(new DateTime(2021, 1, 1), row.AsDateTime);
+            Assert.Equal(new DateOnly(2021, 1, 1), row.AsDateOnly);
+            Assert.Equal(new DateTime(2021, 1, 1), row.AsNullableDateTime);
+        }
+
+        private class DateReadings
+        {
+            public DateTime AsDateTime { get; set; }
+            public DateOnly AsDateOnly { get; set; }
+            public DateTime? AsNullableDateTime { get; set; }
+        }
+#endif
+
         [FactPostgresql]
         public void TestPostgresqlArrayParameters()
         {

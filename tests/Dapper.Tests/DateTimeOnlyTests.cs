@@ -9,7 +9,7 @@ namespace Dapper.Tests;
 [Collection("DateTimeOnlyTests")]
 public sealed class SystemSqlClientDateTimeOnlyTests : DateTimeOnlyTests<SystemSqlClientProvider> { }
 */
-#if MSSQLCLIENT && DATEONLY
+#if MSSQLCLIENT
 [Collection("DateTimeOnlyTests")]
 public sealed class MicrosoftSqlClientDateTimeOnlyTests : DateTimeOnlyTests<MicrosoftSqlClientProvider> { }
 #endif
@@ -80,6 +80,38 @@ public abstract class DateTimeOnlyTests<TProvider> : TestBase<TProvider> where T
         // untyped, observation is that these come back as DateTime and TimeSpan
         Assert.Equal(date, DateOnly.FromDateTime((DateTime)row.Date));
         Assert.Equal(time, TimeOnly.FromTimeSpan((TimeSpan)row.Time));
+    }
+
+    [Fact] // #2072: a datetime column into a DateOnly member - the provider boxes DateTime,
+    // so this must convert rather than demand GetFieldValue<DateOnly> of a datetime column
+    public void MembersFromDateTimeAndTimeSpanColumns()
+    {
+        var row = connection.QuerySingle<HazDateTimeOnly>(
+            "select 'x' as [Name], cast('2019-10-01' as datetime) as [Date], cast('03:03:03' as time) as [Time], cast('2019-10-02' as datetime) as [NDate], cast('04:04:04' as time) as [NTime]");
+        Assert.Equal(new DateOnly(2019, 10, 1), row.Date);
+        Assert.Equal(new TimeOnly(3, 3, 3), row.Time);
+        Assert.Equal(new DateOnly(2019, 10, 2), row.NDate);
+        Assert.Equal(new TimeOnly(4, 4, 4), row.NTime);
+    }
+
+    [Fact] // #2227: the scalar form must not silently yield default(T)
+    public void ScalarDateOnlyAndTimeOnly()
+    {
+        Assert.Equal(new DateOnly(2021, 1, 1), connection.QuerySingle<DateOnly>("select cast('2021-01-01' as date)"));
+        Assert.Equal(new TimeOnly(3, 3, 3), connection.QuerySingle<TimeOnly>("select cast('03:03:03' as time)"));
+        Assert.Equal(new DateOnly(2021, 1, 1), connection.QuerySingle<DateOnly?>("select cast('2021-01-01' as date)"));
+    }
+
+    [Fact] // the pre-DateOnly reading of a date column must keep working
+    public void DateColumnAsDateTime()
+    {
+        Assert.Equal(new DateTime(2021, 1, 1), connection.QuerySingle<DateTime>("select cast('2021-01-01' as date)"));
+        Assert.Equal(new DateTime(2021, 1, 1), connection.QuerySingle<HazDateTime>("select cast('2021-01-01' as date) as [When]").When);
+    }
+
+    public class HazDateTime
+    {
+        public DateTime When { get; set; }
     }
 }
 #endif
