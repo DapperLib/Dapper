@@ -1,1 +1,27 @@
+# Jekyll config for the published docs site (https://dapperlib.dev).
+# Pinned here rather than left to GitHub's defaults, which take the site title and
+# description from the repo's name and description fields.
+
+title: Dapper
+description: A simple object mapper for .NET
+url: https://dapperlib.dev
+
 theme: jekyll-theme-cayman
+
+# Cayman renders "Download .zip/.tar.gz" buttons in its header when this is on, and
+# GitHub's default config turns it on; these ship as NuGet packages, not tarballs.
+show_downloads: false
+
+# Cayman renders the page title in its header banner, and the title comes from each page's
+# first heading - so without this the heading reads twice, banner then body.
+titles_from_headings:
+  strip_title: true
+
+# Not in the always-on GitHub Pages plugin set, so it has to be asked for; generates
+# sitemap.xml and robots.txt.
+plugins:
+  - jekyll-sitemap
+
+# Present only so the docs show up in the solution; not site content.
+exclude:
+  - docs.csproj

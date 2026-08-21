@@ -19,7 +19,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.CSharp" />
+    <!-- Required for dynamic support; RT0003 false positive due to GenerateDocumentationFile=false -->
+    <PackageReference Include="Microsoft.CSharp" NoWarn="RT0003" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
     <Reference Include="Microsoft.CSharp" />

@@ -202,7 +202,7 @@ namespace Dapper
         static SqlMapper()
         {
             typeMap = new Dictionary<Type, TypeMapEntry>(41
-#if NET6_0_OR_GREATER && DATEONLY
+#if NET6_0_OR_GREATER
                 + 4 // {Date|Time}Only[?]
 #endif
                 )
@@ -248,7 +248,7 @@ namespace Dapper
                 [typeof(SqlDecimal?)] = TypeMapEntry.DecimalFieldValue,
                 [typeof(SqlMoney)] = TypeMapEntry.DecimalFieldValue,
                 [typeof(SqlMoney?)] = TypeMapEntry.DecimalFieldValue,
-#if NET6_0_OR_GREATER && DATEONLY
+#if NET6_0_OR_GREATER
                 [typeof(DateOnly)] = TypeMapEntry.DoNotSetFieldValue,
                 [typeof(TimeOnly)] = TypeMapEntry.DoNotSetFieldValue,
                 [typeof(DateOnly?)] = TypeMapEntry.DoNotSetFieldValue,
@@ -1396,6 +1396,7 @@ namespace Dapper
                 try
                 {
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
+                    if (TryConvertDateTimeFamily(val, convertToType, out var converted)) return (T)converted;
                     return (T)Convert.ChangeType(val, convertToType, CultureInfo.InvariantCulture)!;
                 }
                 catch (Exception ex)
@@ -3179,7 +3180,9 @@ namespace Dapper
         static readonly Hashtable s_ReadViaGetFieldValueCache = [];
 
         static Func<DbDataReader, object> UnderlyingReadViaGetFieldValueFactory<T>(int index)
-            => reader => reader.IsDBNull(index) ? null! : reader.GetFieldValue<T>(index)!;
+            => reader => reader.IsDBNull(index) ? null!
+                : IsDateTimeFamilyConversion(reader.GetFieldType(index), typeof(T)) ? (object)Parse<T>(reader.GetValue(index))!
+                : reader.GetFieldValue<T>(index)!;
 
         static bool UseGetFieldValue(Type type) => typeMap.TryGetValue(type, out var mapEntry)
             && (mapEntry.Flags & TypeMapEntryFlags.UseGetFieldValue) != 0;
@@ -3206,7 +3209,46 @@ namespace Dapper
             {
                 return (T)handler.Parse(type, value)!;
             }
+            if (TryConvertDateTimeFamily(value, type, out var converted)) return (T)converted;
             return (T)Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
+        }
+
+        // the date/time family has no IConvertible bridge; which box a "date" or "time"
+        // column yields is a provider/version decision (Npgsql 10: DateOnly/TimeOnly;
+        // SqlClient and Npgsql 9: DateTime/TimeSpan), so accept either shape
+        internal static bool IsDateTimeFamilyConversion(Type from, Type to)
+#if NET6_0_OR_GREATER
+            => (from == typeof(DateTime) && (to == typeof(DateOnly) || to == typeof(TimeOnly)))
+            || (from == typeof(DateOnly) && to == typeof(DateTime))
+            || (from == typeof(TimeSpan) && to == typeof(TimeOnly))
+            || (from == typeof(TimeOnly) && to == typeof(TimeSpan));
+#else
+            => false;
+#endif
+
+        internal static bool TryConvertDateTimeFamily(object? value, Type to, [NotNullWhen(true)] out object? converted)
+        {
+#if NET6_0_OR_GREATER
+            if (to == typeof(DateOnly))
+            {
+                if (value is DateTime dateTime) { converted = DateOnly.FromDateTime(dateTime); return true; }
+            }
+            else if (to == typeof(TimeOnly))
+            {
+                if (value is TimeSpan timeSpan) { converted = TimeOnly.FromTimeSpan(timeSpan); return true; }
+                if (value is DateTime dateTime) { converted = TimeOnly.FromDateTime(dateTime); return true; }
+            }
+            else if (to == typeof(DateTime))
+            {
+                if (value is DateOnly dateOnly) { converted = dateOnly.ToDateTime(default); return true; }
+            }
+            else if (to == typeof(TimeSpan))
+            {
+                if (value is TimeOnly timeOnly) { converted = timeOnly.ToTimeSpan(); return true; }
+            }
+#endif
+            converted = null;
+            return false;
         }
 
         private static readonly MethodInfo
@@ -3738,7 +3780,7 @@ namespace Dapper
         private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder? stringEnumLocal, LocalBuilder? valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel, out bool popWhenNull)
         {
             isDbNullLabel = il.DefineLabel();
-            if (UseGetFieldValue(memberType))
+            if (UseGetFieldValue(memberType) && !IsDateTimeFamilyConversion(colType, Nullable.GetUnderlyingType(memberType) ?? memberType))
             {
                 LoadReaderValueViaGetFieldValue(il, index, memberType, valueCopyLocal, isDbNullLabel, out popWhenNull);
                 return;
@@ -3815,7 +3857,16 @@ namespace Dapper
                 {
                     TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
                     bool hasTypeHandler;
-                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType || dataTypeCode == unboxTypeCode || dataTypeCode == Type.GetTypeCode(nullUnderlyingType))
+                    // note the TypeCode tests are only meaningful for distinct codes: TypeCode.Object
+                    // matching TypeCode.Object says nothing (TimeSpan vs TimeOnly?, say), and a direct
+                    // unbox there throws; such pairs belong to the flexible-convert path below. A column
+                    // reported as plain *object* (sql_variant etc) keeps the direct unbox: the runtime
+                    // box is the only truth available there
+                    if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType
+                        || colType == typeof(object) || unboxType == typeof(object)
+                        || (dataTypeCode == unboxTypeCode && dataTypeCode != TypeCode.Object)
+                        || (dataTypeCode == Type.GetTypeCode(nullUnderlyingType) && dataTypeCode != TypeCode.Object)
+                        || colType == nullUnderlyingType)
                     {
                         if (hasTypeHandler)
                         {
@@ -3841,6 +3892,36 @@ namespace Dapper
             }
         }
 
+#if NET6_0_OR_GREATER
+        private static MethodInfo? GetDateTimeFamilyConversion(Type from, Type to)
+        {
+            string? name = null;
+            if (from == typeof(DateTime))
+            {
+                if (to == typeof(DateOnly)) name = nameof(DateTimeToDateOnly);
+                else if (to == typeof(TimeOnly)) name = nameof(DateTimeToTimeOnly);
+            }
+            else if (from == typeof(DateOnly))
+            {
+                if (to == typeof(DateTime)) name = nameof(DateOnlyToDateTime);
+            }
+            else if (from == typeof(TimeSpan))
+            {
+                if (to == typeof(TimeOnly)) name = nameof(TimeSpanToTimeOnly);
+            }
+            else if (from == typeof(TimeOnly))
+            {
+                if (to == typeof(TimeSpan)) name = nameof(TimeOnlyToTimeSpan);
+            }
+            return name is null ? null : typeof(SqlMapper).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic);
+        }
+        private static DateOnly DateTimeToDateOnly(DateTime value) => DateOnly.FromDateTime(value);
+        private static TimeOnly DateTimeToTimeOnly(DateTime value) => TimeOnly.FromDateTime(value);
+        private static DateTime DateOnlyToDateTime(DateOnly value) => value.ToDateTime(default);
+        private static TimeOnly TimeSpanToTimeOnly(TimeSpan value) => TimeOnly.FromTimeSpan(value);
+        private static TimeSpan TimeOnlyToTimeSpan(TimeOnly value) => value.ToTimeSpan();
+#endif
+
         private static void FlexibleConvertBoxedFromHeadOfStack(ILGenerator il, Type from, Type to, Type? via)
         {
             MethodInfo? op;
@@ -3854,6 +3935,14 @@ namespace Dapper
                 il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][data-typed-value]
                 il.Emit(OpCodes.Call, op); // stack is now [target][target][typed-value]
             }
+#if NET6_0_OR_GREATER
+            else if (GetDateTimeFamilyConversion(from, via ?? to) is { } conversion)
+            {
+                // no IConvertible bridge exists inside the date/time family (see Parse<T>)
+                il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][data-typed-value]
+                il.Emit(OpCodes.Call, conversion); // stack is now [target][target][typed-value]
+            }
+#endif
             else
             {
                 bool handled = false;

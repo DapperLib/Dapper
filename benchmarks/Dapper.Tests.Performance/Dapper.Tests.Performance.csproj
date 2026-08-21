@@ -15,7 +15,6 @@
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="DevExpress.Xpo" />
     <PackageReference Include="EntityFramework" VersionOverride="6.5.2" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <PackageReference Include="linq2db.SqlServer" />
     <PackageReference Include="MySqlConnector" />
     <PackageReference Include="NHibernate" />
@@ -40,11 +39,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- NU1903 warnings -->
-    <PackageReference Include="System.Text.RegularExpressions" />
-    <PackageReference Include="System.Private.Uri" />
+    <!-- NU1903 warnings - pinned for security advisories, not directly used -->
+    <PackageReference Include="System.Text.RegularExpressions" NoWarn="RT0003" />
+    <PackageReference Include="System.Private.Uri" NoWarn="RT0003" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="System.Net.Http" />
+    <PackageReference Include="System.Net.Http" NoWarn="RT0003" />
     <PackageReference Include="Azure.Identity" />
   </ItemGroup>
   <ItemGroup>
@@ -58,7 +57,6 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="SubSonic" />
     <PackageReference Include="Susanoo.SqlServer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="[3.1.32]" />
     <Reference Include="Microsoft.CSharp" />
