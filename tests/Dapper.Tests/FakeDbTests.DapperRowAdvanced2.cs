@@ -150,7 +150,7 @@ namespace Dapper.Tests
             IDictionary<string, object?> dict = row;
             dict.Remove("Name");
             IReadOnlyCollection<KeyValuePair<string, object?>> roc = (IReadOnlyCollection<KeyValuePair<string, object?>>)dict;
-            Assert.Equal(1, roc.Count); // only Id remains
+            Assert.Single(roc); // only Id remains
         }
     }
 }

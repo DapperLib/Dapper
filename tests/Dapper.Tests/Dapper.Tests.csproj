@@ -42,7 +42,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="Npgsql" VersionOverride="8.0.6" />
     <PackageReference Include="Npgsql" VersionOverride="8.0.9"/>
   </ItemGroup>
 
@@ -59,4 +58,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS8764;CS8765;CS8766;CS8767;CS8603;CS8625;CS0649;SYSLIB0010;RT0000</NoWarn>
+  </PropertyGroup>
 </Project>

@@ -65,7 +65,7 @@ namespace Dapper.Tests
             var map = new DefaultTypeMap(typeof(NoDefaultCtor));
             var ctor = map.FindConstructor(new[] { "id" }, new[] { typeof(int) });
             Assert.NotNull(ctor);
-            Assert.Equal(1, ctor!.GetParameters().Length);
+            Assert.Single(ctor!.GetParameters());
         }
 
         [Fact]
@@ -175,7 +175,7 @@ namespace Dapper.Tests
             var map = new DefaultTypeMap(typeof(WithExplicitCtor));
             var ctor = map.FindExplicitConstructor();
             Assert.NotNull(ctor);
-            Assert.Equal(1, ctor!.GetParameters().Length);
+            Assert.Single(ctor!.GetParameters());
         }
 
         // ── GetPropertySetter throw ────────────────────────────────────

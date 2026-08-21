@@ -129,7 +129,7 @@ namespace Dapper.Tests
                 // "user_id" → EqualsCIU("userId", "user_id") → strips underscores → "userid" == "userid" → true
                 var ctor = map.FindConstructor(new[] { "user_id" }, new[] { typeof(int) });
                 Assert.NotNull(ctor);
-                Assert.Equal(1, ctor!.GetParameters().Length);
+                Assert.Single(ctor!.GetParameters());
             }
             finally
             {

@@ -161,7 +161,7 @@ namespace Dapper.Tests
             var after = SqlMapper.GetCachedSQL();
 
             // After purge, cache should be empty
-            Assert.Equal(0, after.Count());
+            Assert.Empty(after);
         }
 
         // ── Settings.ApplyNullValues behavior ─────────────────────────

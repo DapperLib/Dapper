@@ -247,8 +247,8 @@ namespace Dapper.Tests
         [Fact]
         public void CompiledRegex_PseudoPositional_Matches()
         {
-            Assert.True(CompiledRegex.PseudoPositional.IsMatch("?param?"));
-            Assert.False(CompiledRegex.PseudoPositional.IsMatch("@param"));
+            Assert.Matches(CompiledRegex.PseudoPositional, "?param?");
+            Assert.DoesNotMatch(CompiledRegex.PseudoPositional, "@param");
         }
 
         // ── ExecuteScalar(string) overload ────────────────────────────

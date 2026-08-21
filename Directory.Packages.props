@@ -50,7 +50,6 @@
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
     <PackageVersion Include="System.Reflection.Metadata" Version="10.0.8" />
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.8" />
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
     <PackageVersion Include="pengdows.crud.fakeDb" Version="2.0.5" />
