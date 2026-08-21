@@ -54,7 +54,7 @@ namespace Dapper
                   .ToList();
         }
 
-        private static FieldInfo[] GetSettableFields(Type t)
+        internal static FieldInfo[] GetSettableFields(Type t)
         {
             return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         }

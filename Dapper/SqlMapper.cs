@@ -2181,6 +2181,7 @@ namespace Dapper
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
                 DbType? dbType = null;
+                ITypeHandler? handler = null;
 
                 int splitAt = SqlMapper.Settings.InListStringSplitCount;
                 bool viaSplit = splitAt >= 0
@@ -2199,7 +2200,7 @@ namespace Dapper
                             }
                             if (!isDbString)
                             {
-                                dbType = LookupDbType(item.GetType(), "", true, out var handler);
+                                dbType = LookupDbType(item.GetType(), "", true, out handler);
                             }
                         }
                         var nextName = namePrefix + count.ToString();
@@ -2220,7 +2221,16 @@ namespace Dapper
                                 }
                             }
 
-                            var tmp = listParam.Value = SanitizeParameterValue(item);
+                            object? tmp;
+                            if (handler is null || item is null)
+                            {
+                                tmp = listParam.Value = SanitizeParameterValue(item);
+                            }
+                            else
+                            {
+                                handler.SetValue(listParam, item);
+                                tmp = listParam.Value;
+                            }
                             if (tmp is not null && tmp is not DBNull)
                                 lastValue = tmp; // only interested in non-trivial values for padding
 
