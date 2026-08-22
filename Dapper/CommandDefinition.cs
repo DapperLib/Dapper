@@ -16,6 +16,17 @@ namespace Dapper
             return new CommandDefinition(parameters is DynamicParameters ? parameters : null, flags);
         }
 
+        /// <summary>
+        /// Register a global callback to configure commands after Dapper has performed its own setup.
+        /// Useful for setting provider-specific properties like SqlCommand.RetryLogicProvider.
+        /// Pass null to remove any previously registered callback.
+        /// </summary>
+        /// <param name="setup">The callback to invoke after command setup, or null to clear.</param>
+        public static void SetCommandSetup(Action<IDbCommand>? setup)
+        {
+            commandSetup = setup;
+        }
+
         internal void OnCompleted()
         {
             (Parameters as SqlMapper.IParameterCallbacks)?.OnCompleted();
@@ -136,10 +147,13 @@ namespace Dapper
             }
             cmd.CommandType = CommandTypeDirect;
             paramReader?.Invoke(cmd, Parameters);
+            commandSetup?.Invoke(cmd);
             return cmd;
         }
 
         private static SqlMapper.Link<Type, Action<IDbCommand>>? commandInitCache;
+
+        private static Action<IDbCommand>? commandSetup;
 
         internal static void ResetCommandInitCache()
             => SqlMapper.Link<Type, Action<IDbCommand>>.Clear(ref commandInitCache);
