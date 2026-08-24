@@ -892,38 +892,46 @@ SET @AddressPersonId = @PersonId", p).ConfigureAwait(false))
                     return board;
                 };
 
+                Action<ReviewBoard?> assertResult = p =>
+                {
+					Assert.Equal(1, p.Id);
+					Assert.Equal("Review Board 1", p.Name);
+					Assert.NotNull(p.User1);
+					Assert.NotNull(p.User2);
+					Assert.NotNull(p.User3);
+					Assert.NotNull(p.User4);
+					Assert.NotNull(p.User5);
+					Assert.NotNull(p.User6);
+					Assert.NotNull(p.User7);
+					Assert.NotNull(p.User8);
+					Assert.NotNull(p.User9);
+					Assert.Equal(1, p.User1.Id);
+					Assert.Equal(2, p.User2.Id);
+					Assert.Equal(3, p.User3.Id);
+					Assert.Equal(4, p.User4.Id);
+					Assert.Equal(5, p.User5.Id);
+					Assert.Equal(6, p.User6.Id);
+					Assert.Equal(7, p.User7.Id);
+					Assert.Equal(8, p.User8.Id);
+					Assert.Equal(9, p.User9.Id);
+					Assert.Equal("User 1", p.User1.Name);
+					Assert.Equal("User 2", p.User2.Name);
+					Assert.Equal("User 3", p.User3.Name);
+					Assert.Equal("User 4", p.User4.Name);
+					Assert.Equal("User 5", p.User5.Name);
+					Assert.Equal("User 6", p.User6.Name);
+					Assert.Equal("User 7", p.User7.Name);
+					Assert.Equal("User 8", p.User8.Name);
+					Assert.Equal("User 9", p.User9.Name);
+                };
+
                 var data = (await connection.QueryAsync<ReviewBoard>(sql, types, mapper).ConfigureAwait(false)).ToList();
 
-                var p = data[0];
-                Assert.Equal(1, p.Id);
-                Assert.Equal("Review Board 1", p.Name);
-                Assert.NotNull(p.User1);
-                Assert.NotNull(p.User2);
-                Assert.NotNull(p.User3);
-                Assert.NotNull(p.User4);
-                Assert.NotNull(p.User5);
-                Assert.NotNull(p.User6);
-                Assert.NotNull(p.User7);
-                Assert.NotNull(p.User8);
-                Assert.NotNull(p.User9);
-                Assert.Equal(1, p.User1.Id);
-                Assert.Equal(2, p.User2.Id);
-                Assert.Equal(3, p.User3.Id);
-                Assert.Equal(4, p.User4.Id);
-                Assert.Equal(5, p.User5.Id);
-                Assert.Equal(6, p.User6.Id);
-                Assert.Equal(7, p.User7.Id);
-                Assert.Equal(8, p.User8.Id);
-                Assert.Equal(9, p.User9.Id);
-                Assert.Equal("User 1", p.User1.Name);
-                Assert.Equal("User 2", p.User2.Name);
-                Assert.Equal("User 3", p.User3.Name);
-                Assert.Equal("User 4", p.User4.Name);
-                Assert.Equal("User 5", p.User5.Name);
-                Assert.Equal("User 6", p.User6.Name);
-                Assert.Equal("User 7", p.User7.Name);
-                Assert.Equal("User 8", p.User8.Name);
-                Assert.Equal("User 9", p.User9.Name);
+                assertResult( data[0] );
+
+                data = (await connection.QueryAsync<ReviewBoard>(new CommandDefinition(sql, flags: CommandFlags.None), types, mapper).ConfigureAwait(false)).ToList();
+
+                assertResult( data[0] );
             }
             finally
             {
