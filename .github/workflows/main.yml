@@ -112,14 +112,24 @@ jobs:
       with:
         dotnet-version: '11.0.x'
         dotnet-quality: 'preview'
+    # 2019 to match the image the Ubuntu job's service container uses, and the version AppVeyor
+    # ran these tests against - the point of this job is to preserve existing cover, not to also
+    # move the engine underneath it
     - name: Install SQL Server
       uses: ankane/setup-sqlserver@v1
       with:
         accept-eula: true
+        sqlserver-version: '2019'
+    # the install leaves TCP/IP disabled, as a Windows SQL Server install does by default, so
+    # nothing is listening on 1433; these connect to the local default instance over shared
+    # memory instead. Fails fast and legibly here rather than as several hundred identical
+    # "connection refused" test failures
+    - name: Verify SQL Server is reachable
+      run: sqlcmd -S . -U sa -P 'YourStrong!Passw0rd' -Q "select @@version"
     - name: .NET Build
       run: dotnet build Build.csproj -c Release /p:CI=true
     - name: Dapper Tests (net481)
       run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release -f net481 --no-build --logger GitHubActions -p:CI=true
       env:
-        OLEDBConnectionString: Provider=SQLOLEDB;Data Source=tcp:localhost,1433;Initial Catalog=tempdb;User Id=sa;Password=YourStrong!Passw0rd;
-        SqlServerConnectionString: Server=tcp:localhost,1433;Database=tempdb;User Id=sa;Password=YourStrong!Passw0rd;
+        OLEDBConnectionString: Provider=SQLOLEDB;Data Source=.;Initial Catalog=tempdb;User Id=sa;Password=YourStrong!Passw0rd;
+        SqlServerConnectionString: Server=.;Database=tempdb;User Id=sa;Password=YourStrong!Passw0rd;
