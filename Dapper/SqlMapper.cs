@@ -1340,11 +1340,8 @@ namespace Dapper
             {
                 if (reader is not null)
                 {
-                    if (!reader.IsClosed)
-                    {
-                        try { cmd?.Cancel(); }
-                        catch { /* don't spoil any existing exception */ }
-                    }
+                    // Let the provider perform its own cleanup; explicit cancellation can surface
+                    // provider-specific errors.
                     reader.Dispose();
                 }
                 if (wasClosed) cnn.Close();
