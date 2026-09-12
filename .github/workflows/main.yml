@@ -112,14 +112,15 @@ jobs:
       with:
         dotnet-version: '11.0.x'
         dotnet-quality: 'preview'
-    # 2019 to match the image the Ubuntu job's service container uses, and the version AppVeyor
-    # ran these tests against - the point of this job is to preserve existing cover, not to also
-    # move the engine underneath it
+    # deliberately unpinned. Pinning sqlserver-version: '2019' - to match AppVeyor and the Ubuntu
+    # job's container - hung this step for 28 minutes before the run was cancelled, where the
+    # action's default installs in under three: SQL Server 2019 predates the Windows Server 2025
+    # runner image. So the net481 leg runs against a newer engine than AppVeyor used; the OLEDB
+    # tests are the ones to watch, since they go through the legacy SQLOLEDB provider.
     - name: Install SQL Server
       uses: ankane/setup-sqlserver@v1
       with:
         accept-eula: true
-        sqlserver-version: '2019'
     # the install leaves TCP/IP disabled, as a Windows SQL Server install does by default, so
     # nothing is listening on 1433; these connect to the local default instance over shared
     # memory instead. Fails fast and legibly here rather than as several hundred identical
