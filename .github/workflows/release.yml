@@ -1,0 +1,115 @@
+# Publishes the Dapper packages to nuget.org when a GitHub Release is published.
+#
+# Auth is NuGet Trusted Publishing (OIDC): no long-lived API key is stored anywhere. This
+# replaces the AppVeyor MyGet deploy, which was the only automated push this repo had.
+#
+# One-time setup on nuget.org, for *each* package below: username menu -> Trusted Publishing ->
+# add a policy with
+#   Repository Owner: DapperLib / Repository: Dapper / Workflow File: release.yml
+#   Environment: release
+# plus a NUGET_USER repository secret holding the nuget.org profile name to publish as, and a
+# GitHub environment named "release". The packages are:
+#   Dapper, Dapper.StrongName, Dapper.EntityFramework, Dapper.EntityFramework.StrongName,
+#   Dapper.Rainbow, Dapper.SqlBuilder
+# A package with no matching policy fails its push, so all six need one before the first release.
+#
+# Versioning note: Nerdbank.GitVersioning computes the version from version.json plus commit
+# height - the tag name does not set it. Read the version to tag off a green main run's step
+# summary ("Report computed version" in main.yml) and create the release with exactly that tag;
+# the guard step below fails the run on any mismatch rather than publishing a package that
+# disagrees with its release. A leading "v" is accepted and stripped, matching
+# publicReleaseRefSpec in version.json.
+#
+# Deliberately does not run tests: the commit being released already passed CI, and this job's
+# only job is to reproduce that build and push it. Runs on Ubuntu to match main.yml's build leg,
+# which is the configuration CI actually proves.
+
+name: Release
+
+on:
+  release:
+    types: [published]
+  # dry run: everything except the tag check and the push, so the pipeline can be proven
+  # (and the packages inspected, via the run artifact) without cutting a release
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write # for the OIDC exchange with nuget.org
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # depth is needed for nbgv
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+    # same pair as main.yml, so the release build uses the same toolchain CI proved; global.json
+    # (rollForward:latestMajor) is the single lever that decides which one of them is used
+    - name: Setup dotnet (SDK 11 preview)
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '11.0.x'
+        dotnet-quality: 'preview'
+
+    - uses: dotnet/nbgv@master
+      with:
+        setAllVars: true
+
+    - name: Verify tag matches computed version
+      if: github.event_name == 'release'
+      run: |
+        computed=$(nbgv get-version --variable NuGetPackageVersion)
+        tag="${TAG_NAME#v}"
+        if [ "$computed" != "$tag" ]; then
+          echo "::error::Tag '$tag' does not match the computed version '$computed'; retag the release commit so the two agree."
+          exit 1
+        fi
+        echo "### Publishing: \`$computed\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "Publishing $computed"
+      env:
+        TAG_NAME: ${{ github.event.release.tag_name }}
+
+    - name: .NET Build
+      run: dotnet build Build.csproj -c Release /p:CI=true
+
+    # not ".nupkgs": actions/upload-artifact excludes hidden files by default, so a dot-directory
+    # uploads as an empty artifact (with only a warning)
+    - name: .NET Lib Pack
+      run: dotnet pack Build.csproj --no-build -c Release -p:PackageOutputPath="$GITHUB_WORKSPACE/nupkgs" -p:CI=true
+
+    - name: List packages
+      run: ls -l nupkgs/
+
+    # the packages survive as a run artifact even if the push fails
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: nupkgs/*.nupkg
+
+    - name: NuGet login (OIDC to temp API key)
+      if: github.event_name == 'release'
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
+    # --skip-duplicate so a partially-completed push is safely re-runnable
+    - name: Push to nuget.org
+      if: github.event_name == 'release'
+      run: |
+        shopt -s nullglob
+        packages=(nupkgs/*.nupkg)
+        if [ ${#packages[@]} -eq 0 ]; then echo "::error::no packages to push"; exit 1; fi
+        for p in "${packages[@]}"; do
+          echo "Pushing $p"
+          dotnet nuget push "$p" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        done
