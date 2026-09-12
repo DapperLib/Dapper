@@ -7,6 +7,11 @@
     <Authors>Marc Gravell</Authors>
     <TargetFrameworks>net461;netstandard2.0;net8.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
+    <!-- not shipped: last release was 2.0.90 (April 2021) and it has had no work since.
+         Packing it would push a 2.1.x of a dormant package on the next release, and would
+         need a nuget.org trusted-publishing policy kept alive for it. Un-set this to
+         resume shipping it. -->
+    <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
