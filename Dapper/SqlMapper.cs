@@ -2853,21 +2853,21 @@ namespace Dapper
                 else
                 {
                     il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.Value))!.GetSetMethod()!, null);// stack is now [parameters] [[parameters]] [parameter]
-                }
 
-                if (prop.PropertyType == typeof(string))
-                {
-                    var endOfSize = il.DefineLabel();
-                    var sizeLocal = GetSizeLocal();
-                    // don't set if 0
-                    il.Emit(OpCodes.Ldloc, sizeLocal); // [parameters] [[parameters]] [parameter] [size]
-                    il.Emit(OpCodes.Brfalse_S, endOfSize); // [parameters] [[parameters]] [parameter]
+                    if (prop.PropertyType == typeof(string))
+                    {
+                        var endOfSize = il.DefineLabel();
+                        var sizeLocal = GetSizeLocal();
+                        // don't set if 0
+                        il.Emit(OpCodes.Ldloc, sizeLocal); // [parameters] [[parameters]] [parameter] [size]
+                        il.Emit(OpCodes.Brfalse_S, endOfSize); // [parameters] [[parameters]] [parameter]
 
-                    il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
-                    il.Emit(OpCodes.Ldloc, sizeLocal); // stack is now [parameters] [[parameters]] [parameter] [parameter] [size]
-                    il.EmitCall(OpCodes.Callvirt, typeof(IDbDataParameter).GetProperty(nameof(IDbDataParameter.Size))!.GetSetMethod()!, null); // stack is now [parameters] [[parameters]] [parameter]
+                        il.Emit(OpCodes.Dup);// stack is now [parameters] [[parameters]] [parameter] [parameter]
+                        il.Emit(OpCodes.Ldloc, sizeLocal); // stack is now [parameters] [[parameters]] [parameter] [parameter] [size]
+                        il.EmitCall(OpCodes.Callvirt, typeof(IDbDataParameter).GetProperty(nameof(IDbDataParameter.Size))!.GetSetMethod()!, null); // stack is now [parameters] [[parameters]] [parameter]
 
-                    il.MarkLabel(endOfSize);
+                        il.MarkLabel(endOfSize);
+                    }
                 }
                 if (checkForDuplicates)
                 {
