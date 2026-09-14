@@ -131,6 +131,25 @@ namespace Dapper.Tests
             return number_list;
         }
 
+        // wraps a sequence to prove it is only ever enumerated once, guarding against
+        // https://github.com/DapperLib/Dapper/issues/2064
+        private class SingleEnumerationEnumerable<T> : IEnumerable<T>
+        {
+            private readonly IEnumerable<T> data;
+
+            public SingleEnumerationEnumerable(IEnumerable<T> data) => this.data = data;
+
+            public bool WasEnumerated { get; private set; }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                Assert.False(WasEnumerated, "Source was enumerated more than once.");
+                WasEnumerated = true;
+                return data.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
 
         private class IntDynamicParam : SqlMapper.IDynamicParameters
         {
@@ -484,6 +503,80 @@ namespace Dapper.Tests
                     connection.Execute("DROP TYPE int_list_type");
                 }
             }
+        }
+
+        [Fact]
+        public void TestSqlDataRecordListParametersWithAsTableValuedParameterSinglePassSource()
+        {
+            try
+            {
+                connection.Execute("CREATE TYPE int_list_type AS TABLE (n int NOT NULL PRIMARY KEY)");
+                connection.Execute("CREATE PROC get_ints @integers int_list_type READONLY AS select * from @integers");
+
+                // SingleEnumerationEnumerable<T> has to be instantiated against the provider's
+                // concrete SqlDataRecord type here, not the shared IDataRecord interface. SqlClient
+                // recognizes a structured/TVP parameter value via a hard "value is
+                // IEnumerable<SqlDataRecord>" check (see SqlParameter.CoerceValue); that check
+                // inspects the object's actual runtime interface implementations, and generic
+                // interface implementations aren't covariant the way assignments are, so a wrapper
+                // built as IEnumerable<IDataRecord> never satisfies it, even though every element it
+                // yields really is a SqlDataRecord. Wrapping the provider-specific list directly
+                // (matching the pattern already used in TestSqlDataRecordListParametersWithTypeHandlers
+                // below) keeps that concrete typing intact while still proving single enumeration.
+                SqlMapper.ICustomQueryParameter tvp;
+#pragma warning disable CS0618 // Type or member is obsolete
+                if (connection is System.Data.SqlClient.SqlConnection)
+                {
+                    var records = new SingleEnumerationEnumerable<Microsoft.SqlServer.Server.SqlDataRecord>(CreateSqlDataRecordList_SD(new int[] { 1, 2, 3 }));
+                    tvp = records.AsTableValuedParameter();
+                }
+#pragma warning restore CS0618 // Type or member is obsolete
+                else if (connection is Microsoft.Data.SqlClient.SqlConnection)
+                {
+                    var records = new SingleEnumerationEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>(CreateSqlDataRecordList_MD(new int[] { 1, 2, 3 }));
+                    tvp = records.AsTableValuedParameter();
+                }
+                else
+                {
+                    throw new ArgumentException(nameof(connection));
+                }
+
+                var nums = connection.Query<int>("get_ints", new { integers = tvp }, commandType: CommandType.StoredProcedure).ToList();
+                Assert.Equal(new int[] { 1, 2, 3 }, nums);
+            }
+            finally
+            {
+                try
+                {
+                    connection.Execute("DROP PROC get_ints");
+                }
+                finally
+                {
+                    connection.Execute("DROP TYPE int_list_type");
+                }
+            }
+        }
+
+        [Fact]
+        public void AsTableValuedParameterDoesNotEnumerateNonCollectionSource()
+        {
+            var records = new SingleEnumerationEnumerable<IDataRecord>(Enumerable.Empty<IDataRecord>());
+            var parameter = Provider.CreateRawParameter("integers", DBNull.Value);
+
+            SqlDataRecordListTVPParameter<IDataRecord>.Set(parameter, records, "int_list_type");
+
+            Assert.False(records.WasEnumerated);
+            Assert.Same(records, parameter.Value);
+        }
+
+        [Fact]
+        public void AsTableValuedParameterNullsOutEmptyCollectionSource()
+        {
+            var parameter = Provider.CreateRawParameter("integers", DBNull.Value);
+
+            SqlDataRecordListTVPParameter<IDataRecord>.Set(parameter, Array.Empty<IDataRecord>(), "int_list_type");
+
+            Assert.Null(parameter.Value);
         }
 
         [Fact]
