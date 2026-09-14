@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -33,6 +34,7 @@ namespace Dapper
 
             static MethodInfo Throw(PropertyInfo propertyInfo) => throw new InvalidOperationException("Property setting not found for: " + propertyInfo?.Name);
         }
+        [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "The property was obtained from the mapped type and its setter must be preserved whenever the property is preserved.")]
         internal static MethodInfo? GetPropertySetter(PropertyInfo propertyInfo, Type type)
         {
             if (propertyInfo.DeclaringType == type) return propertyInfo.GetSetMethod(true);
@@ -46,6 +48,7 @@ namespace Dapper
                    null)!.GetSetMethod(true);
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Dapper's runtime mapping contract requires the mapped type's properties to be preserved.")]
         internal static List<PropertyInfo> GetSettableProps(Type t)
         {
             return t
@@ -54,6 +57,7 @@ namespace Dapper
                   .ToList();
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Dapper's runtime mapping contract requires the mapped type's fields to be preserved.")]
         private static FieldInfo[] GetSettableFields(Type t)
         {
             return t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
