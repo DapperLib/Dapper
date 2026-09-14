@@ -67,6 +67,11 @@ namespace Dapper
         public CommandFlags Flags { get; }
 
         /// <summary>
+        /// The create Func that will be used to create the IDbCommand.  When null the connection.CreateCommand() will be used.
+        /// </summary>
+        internal Func<IDbConnection, IDbCommand>? CreateCommand { get; }
+
+        /// <summary>
         /// Can async queries be pipelined?
         /// </summary>
         public bool Pipelined => (Flags & CommandFlags.Pipelined) != 0;
@@ -95,6 +100,26 @@ namespace Dapper
             CancellationToken = cancellationToken;
         }
 
+        /// <summary>
+        /// Initialize the command definition
+        /// </summary>
+        /// <param name="commandText">The text for this command.</param>
+        /// <param name="createCommand">The a custom way to create a IDbCommand object.  This is to override the default connection.CreateCommand() behavior.</param>
+        /// <param name="parameters">The parameters for this command.</param>
+        /// <param name="transaction">The transaction for this command to participate in.</param>
+        /// <param name="commandTimeout">The timeout (in seconds) for this command.</param>
+        /// <param name="commandType">The <see cref="CommandType"/> for this command.</param>
+        /// <param name="flags">The behavior flags for this command.</param>
+        /// <param name="cancellationToken">The cancellation token for this command.</param>
+        public CommandDefinition(string commandText, Func<IDbConnection, IDbCommand> createCommand, object? parameters = null, IDbTransaction? transaction = null,
+                                int? commandTimeout = null, CommandType? commandType = null, CommandFlags flags = CommandFlags.Buffered
+                                 , CancellationToken cancellationToken = default
+            )
+                : this(commandText, parameters, transaction, commandTimeout, commandType, flags, cancellationToken)
+        {
+            CreateCommand = createCommand;
+        }
+
         internal static CommandType InferCommandType(string sql)
         {
             // if the sql contains any whitespace character (space/tab/cr/lf/etc - via unicode),
@@ -120,7 +145,12 @@ namespace Dapper
 
         internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object?>? paramReader)
         {
-            var cmd = cnn.CreateCommand();
+            IDbCommand cmd;
+            if (CreateCommand == null)
+                cmd = cnn.CreateCommand();
+            else
+                cmd = CreateCommand(cnn);
+
             var init = GetInit(cmd.GetType());
             init?.Invoke(cmd);
             if (Transaction is not null)
