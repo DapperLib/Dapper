@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -64,6 +65,8 @@ namespace Dapper
             }
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "The provider parameter type is only known at runtime and must preserve its public properties.")]
+        [UnconditionalSuppressMessage("Aot", "IL3050", Justification = "This fallback is only used for provider-specific structured parameters and is not supported by Dapper's AOT interceptors.")]
         static Action<IDbDataParameter, string?> CreateFor(Type type, string nameProperty, int sqlDbType)
         {
             var name = type.GetProperty(nameProperty, BindingFlags.Public | BindingFlags.Instance);
