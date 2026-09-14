@@ -338,9 +338,18 @@ namespace Dapper
                 }
             }
 
-            var builder = new StringBuilder("select 1 from INFORMATION_SCHEMA.TABLES where ");
-            if (!string.IsNullOrEmpty(schemaName)) builder.Append("TABLE_SCHEMA = @schemaName AND ");
-            builder.Append("TABLE_NAME = @name");
+            bool isSqliteConnection = _connection.GetType().Name.ToLower().Equals("sqliteconnection");
+            var builder = new StringBuilder("select 1 from ");
+            if (isSqliteConnection)
+            {
+                builder.Append("SQLITE_MASTER where NAME = @name");
+            }
+            else
+            {
+                builder.Append("INFORMATION_SCHEMA.TABLES where ");
+                if (!string.IsNullOrEmpty(schemaName)) builder.Append("TABLE_SCHEMA = @schemaName AND ");
+                builder.Append("TABLE_NAME = @name");
+            }
 
             return _connection.Query(builder.ToString(), new { schemaName, name }, Transaction).Count() == 1;
         }
