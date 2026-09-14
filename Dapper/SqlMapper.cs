@@ -2189,6 +2189,7 @@ namespace Dapper
                 if (list is not null && !viaSplit)
                 {
                     object? lastValue = null;
+                    SqlMapper.ITypeHandler? handler = null;
                     foreach (var item in list)
                     {
                         if (++count == 1) // first item: fetch some type info
@@ -2199,7 +2200,7 @@ namespace Dapper
                             }
                             if (!isDbString)
                             {
-                                dbType = LookupDbType(item.GetType(), "", true, out var handler);
+                                dbType = LookupDbType(item.GetType(), "", true, out handler);
                             }
                         }
                         var nextName = namePrefix + count.ToString();
@@ -2220,14 +2221,23 @@ namespace Dapper
                                 }
                             }
 
-                            var tmp = listParam.Value = SanitizeParameterValue(item);
-                            if (tmp is not null && tmp is not DBNull)
-                                lastValue = tmp; // only interested in non-trivial values for padding
-
-                            if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
+                            if (handler is null)
                             {
-                                listParam.DbType = dbType.GetValueOrDefault();
+                                var tmp = listParam.Value = SanitizeParameterValue(item);
+                                if (tmp is not null && tmp is not DBNull)
+                                    lastValue = tmp; // only interested in non-trivial values for padding
+
+                                if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
+                                {
+                                    listParam.DbType = dbType.GetValueOrDefault();
+                                }
                             }
+                            else
+                            {
+                                if (DynamicParameters.ShouldSetDbType(dbType)) listParam.DbType = dbType.GetValueOrDefault();
+                                handler.SetValue(listParam, item ?? DBNull.Value);
+                            }
+
                             command.Parameters.Add(listParam);
                         }
                     }
