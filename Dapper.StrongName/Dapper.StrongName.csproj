@@ -7,7 +7,6 @@
     <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461;netstandard2.0;net8.0;net10.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);STRONG_NAME</DefineConstants>
