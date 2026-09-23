@@ -365,6 +365,7 @@ namespace Dapper
             AddTypeHandlerCore(type, handler, true); // do not allow suppress clone
         }
 
+        [UnconditionalSuppressMessage("Aot", "IL3050", Justification = "Runtime type-handler registration requires the caller to statically root the corresponding TypeHandlerCache<T> instantiation.")]
         private static void AddTypeHandlerCore(Type type, ITypeHandler? handler, bool clone)
         {
             if (type is null) throw new ArgumentNullException(nameof(type));
@@ -458,6 +459,7 @@ namespace Dapper
         [Obsolete(ObsoleteInternalUsageOnly, false)]
         [Browsable(false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
+        [UnconditionalSuppressMessage("Aot", "IL3050", Justification = "Runtime generic construction is limited to the optional SQL data-record handler path, which is not supported by Dapper's AOT interceptors.")]
         public static DbType? LookupDbType(Type type, string name, bool demand, out ITypeHandler? handler)
         {
             handler = null;
@@ -2554,6 +2556,8 @@ namespace Dapper
                                                        && type.FullName?.StartsWith("System.ValueTuple`", StringComparison.Ordinal) == true)
                                                        || (type is not null && IsValueTuple(Nullable.GetUnderlyingType(type)));
 
+        [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "The runtime parameter generator requires the parameter object's public properties and constructors to be preserved.")]
+        [UnconditionalSuppressMessage("Aot", "IL3050", Justification = "This runtime parameter generator is a fallback for non-intercepted calls and is not used by generated AOT code.")]
         internal static Action<IDbCommand, object?> CreateParamInfoGenerator(Identity identity, bool checkForDuplicates, bool removeUnused, IList<LiteralToken> literals)
         {
             Type type = identity.ParametersType!;
