@@ -6,9 +6,11 @@ on:
   push:
     branches:
     - main
-    paths:
-    - '*'
-    - '!/docs/*' # Don't run workflow when files are only in the /docs directory
+    # paths-ignore, not paths: a `paths` list of '*' matches only root-level files, because
+    # GitHub's `*` does not cross a '/'. That silently skipped main builds for every push that
+    # touched only Dapper/, tests/ and so on - which is most of them
+    paths-ignore:
+    - 'docs/**' # don't run when only the docs site changed
 
 jobs:
   vm-job:
