@@ -2574,7 +2574,7 @@ namespace Dapper
                 filterParams = !CompiledRegex.LegacyParameter.IsMatch(identity.Sql);
             }
             
-            var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, [typeof(IDbCommand), typeof(object)], type, true);
+            var dm = new DynamicMethod($"ParamInfo{Guid.NewGuid()}", null, [typeof(IDbCommand), typeof(object)], type, true);
 
             var il = dm.GetILGenerator();
 
@@ -3393,7 +3393,7 @@ namespace Dapper
             }
 
             var returnType = type.IsValueType ? typeof(object) : type;
-            var dm = new DynamicMethod("Deserialize" + Guid.NewGuid().ToString(), returnType, [typeof(DbDataReader)], type, true);
+            var dm = new DynamicMethod($"Deserialize{Guid.NewGuid()}", returnType, [typeof(DbDataReader)], type, true);
             var il = dm.GetILGenerator();
 
             if (IsValueTuple(type))
