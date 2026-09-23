@@ -12,10 +12,10 @@ namespace Dapper
             private static readonly int s_typeHash;
             private static readonly int s_typeCount = CountNonTrivial(out s_typeHash);
 
-            internal Identity(string sql, CommandType? commandType, string connectionString, Type type, Type? parametersType, int gridIndex = 0)
+            internal Identity(string sql, CommandType commandType, string connectionString, Type type, Type? parametersType, int gridIndex = 0)
                 : base(sql, commandType, connectionString, type, parametersType, s_typeHash, gridIndex)
             {}
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type type, Type? parametersType, int gridIndex = 0)
+            internal Identity(string sql, CommandType commandType, IDbConnection connection, Type type, Type? parametersType, int gridIndex = 0)
                 : base(sql, commandType, connection.ConnectionString, type, parametersType, s_typeHash, gridIndex)
             { }
 
@@ -56,12 +56,12 @@ namespace Dapper
             private readonly Type[] _types;
 
             internal IdentityWithTypes(string sql, CommandType? commandType, string connectionString, Type type, Type? parametersType, Type[] otherTypes, int gridIndex = 0)
-                : base(sql, commandType, connectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
+                : base(sql, commandType.GetValueOrDefault(), connectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
             {
                 _types = otherTypes ?? Type.EmptyTypes;
             }
             internal IdentityWithTypes(string sql, CommandType? commandType, IDbConnection connection, Type type, Type? parametersType, Type[] otherTypes, int gridIndex = 0)
-                : base(sql, commandType, connection.ConnectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
+                : base(sql, commandType.GetValueOrDefault(), connection.ConnectionString, type, parametersType, HashTypes(otherTypes), gridIndex)
             {
                 _types = otherTypes ?? Type.EmptyTypes;
             }
@@ -95,14 +95,14 @@ namespace Dapper
 
 #pragma warning disable CS0618 // Type or member is obsolete
             internal Identity ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(Type primaryType, int gridIndex) =>
-                new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(sql, commandType, connectionString, primaryType, parametersType, gridIndex);
+                new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(sql, commandType.GetValueOrDefault(), connectionString, primaryType, parametersType, gridIndex);
 
             internal Identity ForGrid(Type primaryType, int gridIndex) =>
-                new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex);
+                new Identity(sql, commandType.GetValueOrDefault(), connectionString, primaryType, parametersType, 0, gridIndex);
 
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex) =>
                 (otherTypes is null || otherTypes.Length == 0)
-                ? new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex)
+                ? new Identity(sql, commandType.GetValueOrDefault(), connectionString, primaryType, parametersType, 0, gridIndex)
                 : new IdentityWithTypes(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
 
             /// <summary>
@@ -111,13 +111,17 @@ namespace Dapper
             /// <param name="type">The parameters type to create an <see cref="Identity"/> for.</param>
             /// <returns></returns>
             public Identity ForDynamicParameters(Type type) =>
-                new Identity(sql, commandType, connectionString, this.type, type, 0, -1);
+                new Identity(sql, commandType.GetValueOrDefault(), connectionString, this.type, type, 0, -1);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            internal Identity(string sql, CommandType? commandType, IDbConnection connection, Type? type, Type? parametersType)
+            /// <summary>
+            /// Create a new <see cref="Identity"/> instance.
+            /// </summary>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)] // discourage usage
+            public Identity(string sql, CommandType commandType, IDbConnection connection, Type? type, Type? parametersType)
                 : this(sql, commandType, connection.ConnectionString, type, parametersType, 0, 0) { /* base call */ }
 
-            private protected Identity(string sql, CommandType? commandType, string connectionString, Type? type, Type? parametersType, int otherTypesHash, int gridIndex)
+            private protected Identity(string sql, CommandType commandType, string connectionString, Type? type, Type? parametersType, int otherTypesHash, int gridIndex)
             {
 #pragma warning disable CS0618 // Type or member is obsolete
                 this.sql = sql;
@@ -165,7 +169,7 @@ namespace Dapper
             /// </summary>
             [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
             [Obsolete("Please use " + nameof(CommandType) + ". This API may be removed at a later date.")]
-            public readonly CommandType? commandType;
+            public readonly CommandType? commandType; // in addition to field hell, this should now be non-nullable
 
             /// <summary>
             /// The SQL command type.
