@@ -1042,7 +1042,7 @@ namespace Dapper
                 cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
-                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as IParameterCallbacks, command.AddToCache, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
