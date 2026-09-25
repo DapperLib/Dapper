@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Linq;
 using Xunit;
@@ -67,6 +66,30 @@ namespace Dapper.Tests
             public DateTime AsDateTime { get; set; }
             public DateOnly AsDateOnly { get; set; }
             public DateTime? AsNullableDateTime { get; set; }
+        }
+        
+        private sealed record NumericArraysTable
+        {
+            public IReadOnlyCollection<long> Longs { get; set; } = [];
+            public IReadOnlyCollection<int> Ints { get; set; } = [];
+            public IReadOnlyCollection<short> Shorts { get; set; } = [];
+        }
+
+        [FactPostgresql]
+        public void TestPostgresqlBigintArrayMapsToReadOnlyCollection()
+        {
+            using var conn = GetOpenNpgsqlConnection();
+
+            var row = conn.QuerySingle<NumericArraysTable>(
+                @"SELECT
+                        ARRAY[1001, 1002, 1003]::bigint[]   AS ""Longs""
+                      , ARRAY[2001, 2002, 2003]::int[]      AS ""Ints""
+                      , ARRAY[3001, 3002, 3003]::smallint[] AS ""Shorts""
+                    ;");
+
+            Assert.Equal(new [] { 1001L, 1002L, 1003L }, row.Longs.ToArray());
+            Assert.Equal(new [] { 2001, 2002, 2003 }, row.Ints.ToArray());
+            Assert.Equal(new short[] { 3001, 3002, 3003 }, row.Shorts.ToArray());
         }
 #endif
 
