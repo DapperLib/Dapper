@@ -448,7 +448,6 @@ namespace Dapper
                 if (command.Buffered)
                 {
                     var buffer = new List<T>();
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         object val = func(reader);
@@ -1320,7 +1319,6 @@ namespace Dapper
 
                     var func = tuple.Func;
 
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
                         object val = func(reader);
