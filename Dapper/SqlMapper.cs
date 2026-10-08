@@ -3855,9 +3855,12 @@ namespace Dapper
                     // matching TypeCode.Object says nothing (TimeSpan vs TimeOnly?, say), and a direct
                     // unbox there throws; such pairs belong to the flexible-convert path below. A column
                     // reported as plain *object* (sql_variant etc) keeps the direct unbox: the runtime
-                    // box is the only truth available there
+                    // box is the only truth available there; an interface/base type implemented
+                    // by the column type (e.g. short[] -> IReadOnlyList<short>) is also
+                    // safe to unbox directly (see #2231)
                     if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType
                         || colType == typeof(object) || unboxType == typeof(object)
+                        || unboxType.IsAssignableFrom(colType)
                         || (dataTypeCode == unboxTypeCode && dataTypeCode != TypeCode.Object)
                         || (dataTypeCode == Type.GetTypeCode(nullUnderlyingType) && dataTypeCode != TypeCode.Object)
                         || colType == nullUnderlyingType)
