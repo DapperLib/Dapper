@@ -301,6 +301,26 @@ namespace Dapper.Tests
         }
 
         [Fact]
+        public async Task TestMultiMapWithSplitUnbufferedAsync()
+        {
+            const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+            var productQuery = await connection.QueryAsync<Product, Category, Product>(sql, (prod, cat) =>
+            {
+                prod.Category = cat;
+                return prod;
+            }, buffered: false).ConfigureAwait(false);
+
+            // the reader must still be alive when we start enumerating, even though
+            // the QueryAsync call above has already completed
+            var product = productQuery.First();
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
+        }
+
+        [Fact]
         public async Task TestMultiMapArbitraryWithSplitAsync()
         {
             const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
@@ -313,6 +333,27 @@ namespace Dapper.Tests
 
             var product = productQuery.First();
             // assertions
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.NotNull(product.Category);
+            Assert.Equal(2, product.Category.Id);
+            Assert.Equal("def", product.Category.Name);
+        }
+
+        [Fact]
+        public async Task TestMultiMapArbitraryWithSplitUnbufferedAsync()
+        {
+            const string sql = "select 1 as id, 'abc' as name, 2 as id, 'def' as name";
+            var productQuery = await connection.QueryAsync<Product>(sql, new[] { typeof(Product), typeof(Category) }, (objects) =>
+            {
+                var prod = (Product)objects[0];
+                prod.Category = (Category)objects[1];
+                return prod;
+            }, buffered: false).ConfigureAwait(false);
+
+            // the reader must still be alive when we start enumerating, even though
+            // the QueryAsync call above has already completed
+            var product = productQuery.First();
             Assert.Equal(1, product.Id);
             Assert.Equal("abc", product.Name);
             Assert.NotNull(product.Category);

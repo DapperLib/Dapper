@@ -934,17 +934,25 @@ namespace Dapper
             var identity = new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandTypeDirect, cnn, typeof(TFirst), param?.GetType());
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
+            using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+            DbDataReader? reader = null;
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
-                if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
                 var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), map, splitOn, reader, identity, true);
-                return command.Buffered ? results.ToList() : results;
+                if (command.Buffered)
+                {
+                    return results.ToList();
+                }
+                wasClosed = false; // handing back open reader; rely on command-behavior
+                var deferred = ExecuteReaderSync(reader, results);
+                reader = null; // to prevent it being disposed before the caller gets to see it
+                return deferred;
             }
             finally
             {
+                using (reader) { /* dispose if non-null */ }
                 if (wasClosed) cnn.Close();
             }
         }
@@ -983,16 +991,25 @@ namespace Dapper
             var identity = new IdentityWithTypes(command.CommandText, command.CommandTypeDirect, cnn, types[0], param?.GetType(), types);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
+            using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+            DbDataReader? reader = null;
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
                 var results = MultiMapImpl(null, default, types, map, splitOn, reader, identity, true);
-                return command.Buffered ? results.ToList() : results;
+                if (command.Buffered)
+                {
+                    return results.ToList();
+                }
+                wasClosed = false; // handing back open reader; rely on command-behavior
+                var deferred = ExecuteReaderSync(reader, results);
+                reader = null; // to prevent it being disposed before the caller gets to see it
+                return deferred;
             }
             finally
             {
+                using (reader) { /* dispose if non-null */ }
                 if (wasClosed) cnn.Close();
             }
         }
@@ -1007,6 +1024,21 @@ namespace Dapper
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 (parameters as IParameterCallbacks)?.OnCompleted();
+            }
+        }
+
+        // wraps an already-materialized (but not yet enumerated) multi-map sequence so that the reader
+        // it depends on stays open until the caller actually finishes enumerating it; needed because the
+        // multi-map sequence is produced by a lazy (yield-based) iterator that doesn't run until enumerated,
+        // which happens *after* this async method has already returned control to the caller.
+        private static IEnumerable<TReturn> ExecuteReaderSync<TReturn>(DbDataReader reader, IEnumerable<TReturn> results)
+        {
+            using (reader)
+            {
+                foreach (var item in results)
+                {
+                    yield return item;
+                }
             }
         }
 
