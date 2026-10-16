@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using Xunit;
@@ -91,6 +93,42 @@ namespace Dapper.Tests
                 Assert.True(SqlMapper.Parse<bool>(reader).Single());
             using (var reader = connection.ExecuteReader("select 1"))
                 Assert.True(SqlMapper.Parse<bool>(reader).Single());
+        }
+
+        [Fact]
+        public void ObjectTypedColumnsConvertToMemberType()
+        {
+            // a provider that reports a column as plain object (sql_variant, say) hands back whatever it boxed
+            var guid = new Guid("5a6ab3c0-7a1e-4f3e-9d34-2d6a1b7e4c11");
+            var table = new DataTable();
+            table.Columns.Add("Flag", typeof(object));
+            table.Columns.Add("NullableFlag", typeof(object));
+            table.Columns.Add("Count", typeof(object));
+            table.Columns.Add("Id", typeof(object));
+            table.Columns.Add("NullableId", typeof(object));
+            table.Rows.Add(1, 0, 42, guid, guid);
+
+            var row = table.CreateDataReader().Parse<HazObjectColumns>().Single();
+            Assert.True(row.Flag);
+            Assert.False(row.NullableFlag);
+            Assert.Equal(42L, row.Count);
+            Assert.Equal(guid, row.Id);
+            Assert.Equal(guid, row.NullableId);
+        }
+
+        [Fact] // #2234
+        public void SqlVariantIntToBool()
+        {
+            Assert.True(connection.QuerySingle<HazObjectColumns>("select cast(cast(1 as int) as sql_variant) as Flag").Flag);
+        }
+
+        private class HazObjectColumns
+        {
+            public bool Flag { get; set; }
+            public bool? NullableFlag { get; set; }
+            public long Count { get; set; }
+            public Guid Id { get; set; }
+            public Guid? NullableId { get; set; }
         }
 
         [Fact]

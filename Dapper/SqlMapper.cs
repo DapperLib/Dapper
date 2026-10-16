@@ -3854,10 +3854,12 @@ namespace Dapper
                     // note the TypeCode tests are only meaningful for distinct codes: TypeCode.Object
                     // matching TypeCode.Object says nothing (TimeSpan vs TimeOnly?, say), and a direct
                     // unbox there throws; such pairs belong to the flexible-convert path below. A column
-                    // reported as plain *object* (sql_variant etc) keeps the direct unbox: the runtime
-                    // box is the only truth available there
+                    // reported as plain *object* (sql_variant etc) keeps the direct unbox for targets that
+                    // are themselves TypeCode.Object: the runtime box is the only truth available there,
+                    // and a primitive target still needs the conversion (an int box for a bool member)
                     if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType
-                        || colType == typeof(object) || unboxType == typeof(object)
+                        || (colType == typeof(object) && Type.GetTypeCode(nullUnderlyingType ?? unboxType) == TypeCode.Object)
+                        || unboxType == typeof(object)
                         || (dataTypeCode == unboxTypeCode && dataTypeCode != TypeCode.Object)
                         || (dataTypeCode == Type.GetTypeCode(nullUnderlyingType) && dataTypeCode != TypeCode.Object)
                         || colType == nullUnderlyingType)
