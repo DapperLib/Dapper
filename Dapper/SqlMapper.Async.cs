@@ -1312,6 +1312,14 @@ namespace Dapper
                     {
                         if (reader.FieldCount == 0)
                         {
+                            // no result set; close the reader cleanly - no
+                            // need for "Cancel" etc
+#if NET5_0_OR_GREATER
+                            await reader.DisposeAsync();
+#else
+                            reader.Dispose();
+#endif
+                            reader = null;
                             yield break;
                         }
                         tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
@@ -1327,6 +1335,15 @@ namespace Dapper
                         yield return GetValue<T>(reader, effectiveType, val);
                     }
                     while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+                    // happy path; close the reader cleanly - no
+                    // need for "Cancel" etc
+#if NET5_0_OR_GREATER
+                    await reader.DisposeAsync();
+#else
+                    reader.Dispose();
+#endif
+                    reader = null;
+
                     command.OnCompleted();
                 }
                 finally

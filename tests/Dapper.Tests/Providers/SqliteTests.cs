@@ -1,5 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -157,6 +159,94 @@ namespace Dapper.Tests
         {
             public int Id { get; set; }
             public DateTime DoB { get; set; }
+        }
+
+        [FactSqlite]
+        public async Task QueryUnbufferedAsync_ReadToEnd_DoesNotCancel()
+        {
+            using var connection = new CancelCountingConnection(GetSQLiteConnection());
+            var results = new List<int>();
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("select 1 union all select 2"))
+            {
+                results.Add(value);
+            }
+            Assert.Equal(new[] { 1, 2 }, results);
+            Assert.Equal(0, connection.Cancels);
+        }
+
+        [FactSqlite]
+        public async Task QueryUnbufferedAsync_StopEarly_Cancels()
+        {
+            using var connection = new CancelCountingConnection(GetSQLiteConnection());
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("select 1 union all select 2"))
+            {
+                Assert.Equal(1, value);
+                break;
+            }
+            Assert.Equal(1, connection.Cancels);
+        }
+
+        [FactSqlite]
+        public async Task QueryUnbufferedAsync_NoColumns_DoesNotCancel()
+        {
+            using var connection = new CancelCountingConnection(GetSQLiteConnection());
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("create temp table UnbufferedNoColumns (Id int)"))
+            {
+                Assert.Fail("no rows expected");
+            }
+            Assert.Equal(0, connection.Cancels);
+        }
+
+        // counts DbCommand.Cancel calls; everything else is passed through
+        private sealed class CancelCountingConnection(DbConnection inner) : DbConnection
+        {
+            public int Cancels;
+#pragma warning disable CS8765 // nullability differs between target frameworks
+            public override string ConnectionString { get => inner.ConnectionString; set => inner.ConnectionString = value; }
+#pragma warning restore CS8765
+            public override string Database => inner.Database;
+            public override string DataSource => inner.DataSource;
+            public override string ServerVersion => inner.ServerVersion;
+            public override ConnectionState State => inner.State;
+            public override void ChangeDatabase(string databaseName) => inner.ChangeDatabase(databaseName);
+            public override void Close() => inner.Close();
+            public override void Open() => inner.Open();
+            protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => inner.BeginTransaction(isolationLevel);
+            protected override DbCommand CreateDbCommand() => new CountingCommand(this, inner.CreateCommand());
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing) inner.Dispose();
+                base.Dispose(disposing);
+            }
+
+            private sealed class CountingCommand(CancelCountingConnection owner, DbCommand inner) : DbCommand
+            {
+#pragma warning disable CS8765 // nullability differs between target frameworks
+                public override string CommandText { get => inner.CommandText; set => inner.CommandText = value; }
+#pragma warning restore CS8765
+                public override int CommandTimeout { get => inner.CommandTimeout; set => inner.CommandTimeout = value; }
+                public override CommandType CommandType { get => inner.CommandType; set => inner.CommandType = value; }
+                public override bool DesignTimeVisible { get => inner.DesignTimeVisible; set => inner.DesignTimeVisible = value; }
+                public override UpdateRowSource UpdatedRowSource { get => inner.UpdatedRowSource; set => inner.UpdatedRowSource = value; }
+                protected override DbConnection? DbConnection { get => owner; set { } }
+                protected override DbParameterCollection DbParameterCollection => inner.Parameters;
+                protected override DbTransaction? DbTransaction { get => inner.Transaction; set => inner.Transaction = value; }
+                public override void Cancel()
+                {
+                    owner.Cancels++;
+                    inner.Cancel();
+                }
+                public override int ExecuteNonQuery() => inner.ExecuteNonQuery();
+                public override object? ExecuteScalar() => inner.ExecuteScalar();
+                public override void Prepare() => inner.Prepare();
+                protected override DbParameter CreateDbParameter() => inner.CreateParameter();
+                protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => inner.ExecuteReader(behavior);
+                protected override void Dispose(bool disposing)
+                {
+                    if (disposing) inner.Dispose();
+                    base.Dispose(disposing);
+                }
+            }
         }
     }
 }
