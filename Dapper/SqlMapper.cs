@@ -168,7 +168,9 @@ namespace Dapper
                    select Tuple.Create(pair.Key, pair.Value);
         }
 
-        private static Dictionary<Type, TypeMapEntry> typeMap;
+        // replaced wholesale (never mutated) under typeMapSyncLock; volatile so readers always observe the latest published snapshot
+        private static volatile Dictionary<Type, TypeMapEntry> typeMap;
+        private static readonly object typeMapSyncLock = new();
 
         [Flags]
         internal enum TypeMapEntryFlags
@@ -292,21 +294,24 @@ namespace Dapper
         /// <param name="useGetFieldValue">Whether to prefer <see cref="DbDataReader.GetFieldValue{T}(int)"/> over <see cref="DbDataReader.GetValue(int)"/>.</param>
         public static void AddTypeMap(Type type, DbType dbType, bool useGetFieldValue)
         {
-            // use clone, mutate, replace to avoid threading issues
-            var snapshot = typeMap;
-            var flags = TypeMapEntryFlags.None;
-            if (dbType >= 0)
+            lock (typeMapSyncLock)
             {
-                flags |= TypeMapEntryFlags.SetType;
-            }
-            if (useGetFieldValue)
-            {
-                flags |= TypeMapEntryFlags.UseGetFieldValue;
-            }
-            var value = new TypeMapEntry(dbType, flags);
-            if (snapshot.TryGetValue(type, out var oldValue) && oldValue.Equals(value)) return; // nothing to do
+                // use clone, mutate, replace to avoid threading issues
+                var snapshot = typeMap;
+                var flags = TypeMapEntryFlags.None;
+                if (dbType >= 0)
+                {
+                    flags |= TypeMapEntryFlags.SetType;
+                }
+                if (useGetFieldValue)
+                {
+                    flags |= TypeMapEntryFlags.UseGetFieldValue;
+                }
+                var value = new TypeMapEntry(dbType, flags);
+                if (snapshot.TryGetValue(type, out var oldValue) && oldValue.Equals(value)) return; // nothing to do
 
-            SetTypeMap(new Dictionary<Type, TypeMapEntry>(snapshot) { [type] = value });
+                SetTypeMap(new Dictionary<Type, TypeMapEntry>(snapshot) { [type] = value });
+            }
         }
 
         private static void SetTypeMap(Dictionary<Type, TypeMapEntry> value)
@@ -326,15 +331,18 @@ namespace Dapper
         /// <param name="type">The type to remove from the current map.</param>
         public static void RemoveTypeMap(Type type)
         {
-            // use clone, mutate, replace to avoid threading issues
-            var snapshot = typeMap;
+            lock (typeMapSyncLock)
+            {
+                // use clone, mutate, replace to avoid threading issues
+                var snapshot = typeMap;
 
-            if (!snapshot.ContainsKey(type)) return; // nothing to do
+                if (!snapshot.ContainsKey(type)) return; // nothing to do
 
-            var newCopy = new Dictionary<Type, TypeMapEntry>(snapshot);
-            newCopy.Remove(type);
+                var newCopy = new Dictionary<Type, TypeMapEntry>(snapshot);
+                newCopy.Remove(type);
 
-            SetTypeMap(newCopy);
+                SetTypeMap(newCopy);
+            }
         }
 
         /// <summary>
