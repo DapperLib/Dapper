@@ -2313,6 +2313,57 @@ namespace Dapper
             }
         }
 
+        /// <summary>
+        /// List expansion rewrites the command text one list parameter at a time, replacing <c>@name</c> with
+        /// <c>(@name1,@name2,...)</c>. If list <c>values1</c> is expanded before list <c>values11</c>, the generated
+        /// <c>@values11</c> is indistinguishable from the original <c>@values11</c> placeholder, so the later
+        /// expansion rewrites the wrong token. Token matching cannot tell them apart; only expansion order can.
+        /// A generated name is always longer than its list name and extends it with digits, so expanding longer
+        /// names first can never produce a token that a later (shorter) list name matches. Lists are only
+        /// reordered (among themselves, leaving other parameters in place) when such a collision is possible.
+        /// </summary>
+        internal static IList<T> OrderForListExpansion<T>(IList<T> items, Func<T, string> getName, Func<T, bool> isList)
+        {
+            List<int>? slots = null;
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (isList(items[i])) (slots ??= new List<int>()).Add(i);
+            }
+            if (slots is null || slots.Count < 2) return items;
+
+            bool collides = false;
+            for (int a = 0; a < slots.Count && !collides; a++)
+            {
+                var shorter = getName(items[slots[a]]);
+                for (int b = 0; b < slots.Count; b++)
+                {
+                    var longer = getName(items[slots[b]]);
+                    if (longer.Length > shorter.Length
+                        && longer.StartsWith(shorter, StringComparison.OrdinalIgnoreCase)
+                        && AllDigits(longer, shorter.Length))
+                    {
+                        collides = true;
+                        break;
+                    }
+                }
+            }
+            if (!collides) return items;
+
+            var sorted = slots.Select(i => items[i]).OrderByDescending(x => getName(x).Length).ToList();
+            var result = new List<T>(items);
+            for (int i = 0; i < slots.Count; i++) result[slots[i]] = sorted[i];
+            return result;
+
+            static bool AllDigits(string s, int from)
+            {
+                for (int i = from; i < s.Length; i++)
+                {
+                    if (s[i] < '0' || s[i] > '9') return false;
+                }
+                return true;
+            }
+        }
+
         private static bool TryStringSplit(ref IEnumerable? list, int splitAt, string namePrefix, IDbCommand command, bool byPosition)
         {
             if (list is null || splitAt < 0) return false;
@@ -2667,6 +2718,10 @@ namespace Dapper
             {
                 props = FilterParameters(props, identity.Sql);
             }
+
+#pragma warning disable 618
+            props = OrderForListExpansion<PropertyInfo>(props.ToList(), p => p.Name, p => LookupDbType(p.PropertyType, p.Name, true, out _) == DynamicParameters.EnumerableMultiParameter);
+#pragma warning restore 618
 
             var callOpCode = isStruct ? OpCodes.Call : OpCodes.Callvirt;
             foreach (var prop in props)

@@ -127,6 +127,19 @@ namespace Dapper
             };
         }
 
+        private static bool IsListParameter(ParamInfo param)
+        {
+            if (param.CameFromTemplate || param.Value is null || param.Value is SqlMapper.ICustomQueryParameter) return false;
+            var dbType = param.DbType;
+            if (dbType is null)
+            {
+#pragma warning disable 618
+                dbType = SqlMapper.LookupDbType(param.Value.GetType(), Clean(param.Name), true, out _);
+#pragma warning restore 618
+            }
+            return dbType == EnumerableMultiParameter;
+        }
+
         private static string Clean(string name)
         {
             if (!string.IsNullOrEmpty(name))
@@ -228,7 +241,9 @@ namespace Dapper
                 outputCallbacks?.ForEach(generator => generator());
             }
 
-            foreach (var param in parameters.Values)
+            // lists whose names could collide with another list's generated names must expand longest-name first
+            var ordered = SqlMapper.OrderForListExpansion(parameters.Values.ToList(), p => Clean(p.Name), IsListParameter);
+            foreach (var param in ordered)
             {
                 if (param.CameFromTemplate) continue;
 
