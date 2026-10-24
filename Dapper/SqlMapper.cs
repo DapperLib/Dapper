@@ -2859,7 +2859,7 @@ namespace Dapper
                     il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.Value))!.GetSetMethod()!, null);// stack is now [parameters] [[parameters]] [parameter]
                 }
 
-                if (prop.PropertyType == typeof(string))
+                if (prop.PropertyType == typeof(string) && handler is null)
                 {
                     var endOfSize = il.DefineLabel();
                     var sizeLocal = GetSizeLocal();
