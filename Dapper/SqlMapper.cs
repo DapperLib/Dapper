@@ -1965,6 +1965,11 @@ namespace Dapper
                 return GetDapperRowDeserializer(reader, startBound, length, returnNullIfFirstMissing);
             }
 
+            if (type.IsValueType && Nullable.GetUnderlyingType(type) is Type nullableType && !nullableType.IsEnum)
+            {
+                return GetDeserializer(nullableType, reader, startBound, length, returnNullIfFirstMissing);
+            }
+
             Type? underlyingType = null;
             bool useGetFieldValue = false;
             if (typeMap.TryGetValue(type, out var mapEntry))
