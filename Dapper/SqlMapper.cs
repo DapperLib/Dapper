@@ -473,6 +473,10 @@ namespace Dapper
                 }
                 type = Enum.GetUnderlyingType(type);
             }
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeMap.TryGetValue(type, out var mapEntry))
             {
                 if ((mapEntry.Flags & TypeMapEntryFlags.SetType) == 0)
@@ -484,10 +488,6 @@ namespace Dapper
             if (type.FullName == LinqBinary)
             {
                 return DbType.Binary;
-            }
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
