@@ -97,7 +97,7 @@ namespace Dapper
                     if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;
                     var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
-                    if ((unboxedType != types[i] && !SqlMapper.HasTypeHandler(unboxedType))
+                    if ((unboxedType != types[i] && !SqlMapper.HasTypeHandler(unboxedType) && !SqlMapper.IsNumericConversion(types[i], unboxedType))
                         && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i])
                         && !(unboxedType == typeof(char) && types[i] == typeof(string))
                         && !(unboxedType.IsEnum && types[i] == typeof(string)))

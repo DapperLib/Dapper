@@ -3220,6 +3220,22 @@ namespace Dapper
             => false;
 #endif
 
+        internal static bool IsNumericConversion(Type from, Type to)
+        {
+            static bool IsNumericOrBoolean(Type type)
+            {
+                return Type.GetTypeCode(type) switch
+                {
+                    TypeCode.Boolean or TypeCode.Byte or TypeCode.SByte or TypeCode.Int16 or TypeCode.UInt16
+                        or TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64
+                        or TypeCode.Single or TypeCode.Double => true,
+                    _ => false,
+                };
+            }
+
+            return IsNumericOrBoolean(from) && IsNumericOrBoolean(to);
+        }
+
         internal static bool TryConvertDateTimeFamily(object? value, Type to, [NotNullWhen(true)] out object? converted)
         {
 #if NET6_0_OR_GREATER
