@@ -1584,11 +1584,11 @@ namespace Dapper
             return buffered ? results.ToList() : results;
         }
 
-        private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection? cnn, CommandDefinition command, Delegate map, string splitOn, DbDataReader? reader, Identity? identity, bool finalize)
+        private static IEnumerable<TReturn> MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(this IDbConnection? cnn, CommandDefinition command, Delegate map, string splitOn, DbDataReader? reader, Identity? identity, bool finalize, CacheInfo? cacheInfo = null)
         {
             object? param = command.Parameters;
             identity ??= new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandTypeDirect, cnn!, typeof(TFirst), param?.GetType());
-            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
+            CacheInfo cinfo = cacheInfo ?? GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? ownedCommand = null;
             DbDataReader? ownedReader = null;
@@ -1650,7 +1650,7 @@ namespace Dapper
             return (close ? (@default | CommandBehavior.CloseConnection) : @default) & Settings.AllowedCommandBehaviors;
         }
 
-        private static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection? cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, DbDataReader? reader, Identity? identity, bool finalize)
+        private static IEnumerable<TReturn> MultiMapImpl<TReturn>(this IDbConnection? cnn, CommandDefinition command, Type[] types, Func<object[], TReturn> map, string splitOn, DbDataReader? reader, Identity? identity, bool finalize, CacheInfo? cacheInfo = null)
         {
             if (types.Length < 1)
             {
@@ -1659,7 +1659,7 @@ namespace Dapper
 
             object? param = command.Parameters;
             identity ??= new IdentityWithTypes(command.CommandText, command.CommandTypeDirect, cnn!, types[0], param?.GetType(), types);
-            CacheInfo cinfo = GetCacheInfo(identity, param, command.AddToCache);
+            CacheInfo cinfo = cacheInfo ?? GetCacheInfo(identity, param, command.AddToCache);
 
             IDbCommand? ownedCommand = null;
             DbDataReader? ownedReader = null;
