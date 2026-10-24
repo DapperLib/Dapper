@@ -2604,7 +2604,7 @@ namespace Dapper
             for (int i = 0; i < allTypeProps.Length; ++i)
             {
                 var p = allTypeProps[i];
-                if (p.GetIndexParameters().Length == 0)
+                if (p.GetIndexParameters().Length == 0 && p.GetMethod?.IsStatic != true)
                     propsList.Add(p);
             }
 
