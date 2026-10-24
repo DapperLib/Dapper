@@ -417,7 +417,35 @@ namespace Dapper
             /// Has the underlying reader been consumed?
             /// </summary>
             /// <remarks>This also reports <c>true</c> if the current grid is actively being consumed</remarks>
-            public bool IsConsumed => (_resultIndexAndConsumedFlag & CONSUMED_FLAG) != 0;
+            public bool IsConsumed
+            {
+                get
+                {
+                    SkipLeadingEmptyResults();
+                    return (_resultIndexAndConsumedFlag & CONSUMED_FLAG) != 0;
+                }
+            }
+
+            private bool _checkedLeadingResults;
+
+            // A reader positioned on a result without columns (for example a procedure that
+            // selects in a loop which never iterated) has nothing to read. Skip such results; only
+            // when no further result exists is the grid consumed. A zero-column result followed by a
+            // real result set must not be reported as consumed.
+            private void SkipLeadingEmptyResults()
+            {
+                if (_checkedLeadingResults) return;
+                _checkedLeadingResults = true;
+                if (reader is null || reader.IsClosed || _resultIndexAndConsumedFlag != 0) return;
+                while (reader.FieldCount == 0)
+                {
+                    if (!reader.NextResult())
+                    {
+                        _resultIndexAndConsumedFlag |= CONSUMED_FLAG;
+                        return;
+                    }
+                }
+            }
 
             /// <summary>
             /// The command associated with the reader
