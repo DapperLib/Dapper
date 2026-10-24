@@ -2817,7 +2817,14 @@ namespace Dapper
                     il.Emit(OpCodes.Brtrue_S, notNull);
                     // relative stack [boxed value = null]
                     il.Emit(OpCodes.Pop); // relative stack empty
-                    il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField(nameof(DBNull.Value))!); // relative stack [DBNull]
+                    if (handler is null)
+                    {
+                        il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField(nameof(DBNull.Value))!); // relative stack [DBNull]
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldnull); // relative stack [null for the type handler]
+                    }
                     if (dbType == DbType.String || dbType == DbType.AnsiString)
                     {
                         EmitInt32(il, 0);
