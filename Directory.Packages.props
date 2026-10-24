@@ -35,6 +35,7 @@
     <PackageVersion Include="Norm.net" Version="5.4.0" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="PetaPoco" Version="5.1.306" />
+    <PackageVersion Include="pengdows.crud.fakeDb" Version="2.0.5" />
     <PackageVersion Include="RepoDb.SqlServer" Version="1.13.1" />
     <PackageVersion Include="ServiceStack.OrmLite.SqlServer" Version="10.0.6" />
     <PackageVersion Include="Snowflake.Data" Version="5.5.0" />
