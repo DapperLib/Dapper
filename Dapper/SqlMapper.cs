@@ -3853,11 +3853,10 @@ namespace Dapper
                     bool hasTypeHandler;
                     // note the TypeCode tests are only meaningful for distinct codes: TypeCode.Object
                     // matching TypeCode.Object says nothing (TimeSpan vs TimeOnly?, say), and a direct
-                    // unbox there throws; such pairs belong to the flexible-convert path below. A column
-                    // reported as plain *object* (sql_variant etc) keeps the direct unbox: the runtime
-                    // box is the only truth available there
+                    // unbox there throws; such pairs belong to the flexible-convert path below
                     if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType
-                        || colType == typeof(object) || unboxType == typeof(object)
+                        || unboxType == typeof(object)
+                        || (colType == typeof(object) && !unboxType.IsValueType)
                         || (dataTypeCode == unboxTypeCode && dataTypeCode != TypeCode.Object)
                         || (dataTypeCode == Type.GetTypeCode(nullUnderlyingType) && dataTypeCode != TypeCode.Object)
                         || colType == nullUnderlyingType)
@@ -3872,6 +3871,28 @@ namespace Dapper
                         {
                             il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
                         }
+                    }
+                    else if (colType == typeof(object))
+                    {
+                        // the column is reported as plain *object* (sql_variant etc), so the declared
+                        // type says nothing about the runtime box: a blind unbox is only correct when
+                        // the box is exactly the member type (an Int32 box for an Int32 member, say);
+                        // anything else (an Int32 box for a bool member, #2234) must convert at runtime
+                        Label exactBoxLabel = il.DefineLabel(), convertedLabel = il.DefineLabel();
+                        il.Emit(OpCodes.Dup); // stack is now [...][value][value]
+                        il.EmitCall(OpCodes.Callvirt, typeof(object).GetMethod(nameof(object.GetType))!, null); // stack is now [...][value][box-type]
+                        il.Emit(OpCodes.Ldtoken, nullUnderlyingType ?? unboxType); // stack is now [...][value][box-type][member-type-token]
+                        il.EmitCall(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!, null); // stack is now [...][value][box-type][member-type]
+                        il.Emit(OpCodes.Beq, exactBoxLabel); // stack is now [...][value]
+                        FlexibleConvertBoxedFromHeadOfStack(il, colType, nullUnderlyingType ?? unboxType, null); // stack is now [...][typed-value]
+                        if (nullUnderlyingType is not null)
+                        {
+                            il.Emit(OpCodes.Newobj, unboxType.GetConstructor([nullUnderlyingType])!); // stack is now [...][typed-value]
+                        }
+                        il.Emit(OpCodes.Br, convertedLabel);
+                        il.MarkLabel(exactBoxLabel);
+                        il.Emit(OpCodes.Unbox_Any, unboxType); // stack is now [...][typed-value]
+                        il.MarkLabel(convertedLabel);
                     }
                     else
                     {
