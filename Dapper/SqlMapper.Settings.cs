@@ -78,6 +78,15 @@ namespace Dapper
             /// <summary>
             /// Indicates whether nulls in data are silently ignored (default) vs actively applied and assigned to members
             /// </summary>
+            /// <remarks>
+            /// Null-handling contract for custom type handlers when reading: by default a database null never reaches
+            /// <see cref="ITypeHandler.Parse"/>; the member keeps its default value (this also applies to scalar results,
+            /// e.g. <c>QuerySingle&lt;T?&gt;</c>). When this setting is <c>true</c>, a null column assigned to a member whose
+            /// type has a registered handler is passed to the handler as <see cref="DBNull.Value"/>, so the handler can
+            /// decide what null means (for example an "assigned, but null" wrapper). Handlers must therefore tolerate
+            /// <see cref="DBNull"/> when this setting is enabled. When writing, a null parameter value is passed to
+            /// <see cref="ITypeHandler.SetValue"/> as <c>null</c> regardless of this setting.
+            /// </remarks>
             public static bool ApplyNullValues { get; set; }
 
             /// <summary>

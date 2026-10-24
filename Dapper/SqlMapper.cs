@@ -3648,6 +3648,21 @@ namespace Dapper
                     {
                         LoadDefaultValue(il, item.MemberType);
                     }
+                    else if (applyNullSetting && typeHandlers.ContainsKey(memberType))
+                    {
+                        il.Emit(OpCodes.Ldsfld, typeof(DBNull).GetField(nameof(DBNull.Value))!);
+#pragma warning disable 618
+                        il.EmitCall(OpCodes.Call, typeof(TypeHandlerCache<>).MakeGenericType(memberType).GetMethod(nameof(TypeHandlerCache<int>.Parse))!, null);
+#pragma warning restore 618
+                        if (item.Property is not null)
+                        {
+                            il.Emit(type.IsValueType ? OpCodes.Call : OpCodes.Callvirt, DefaultTypeMap.GetPropertySetterOrThrow(item.Property, type));
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Stfld, item.Field!);
+                        }
+                    }
                     else if (applyNullSetting && (!memberType.IsValueType || Nullable.GetUnderlyingType(memberType) is not null))
                     {
                         // can load a null with this value
