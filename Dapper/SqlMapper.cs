@@ -1985,7 +1985,7 @@ namespace Dapper
 
         private static Func<DbDataReader, object> GetHandlerDeserializer(ITypeHandler handler, Type type, int startBound)
         {
-            return reader => handler.Parse(type, reader.GetValue(startBound))!;
+            return reader => reader.IsDBNull(startBound) ? null! : handler.Parse(type, reader.GetValue(startBound))!;
         }
 
         private static Exception MultiMapException(IDataRecord reader, string? splitOn = null)
