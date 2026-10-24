@@ -413,6 +413,10 @@ namespace Dapper
                     if (secondary is not null) newCopy[secondary] = handler;
                 }
                 typeHandlers = newCopy;
+
+                // A handler can be used by a member of any deserialized type;
+                // invalidate all cached deserializers when the handler changes.
+                PurgeQueryCache();
             }
         }
 
