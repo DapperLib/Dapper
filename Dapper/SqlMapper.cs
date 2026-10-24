@@ -2416,11 +2416,14 @@ namespace Dapper
             var list = new List<PropertyInfo>(16);
             foreach (var p in parameters)
             {
-                if (Regex.IsMatch(sql, @"[?@:$]" + p.Name + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
+                if (IsParameterUsed(sql, p.Name))
                     list.Add(p);
             }
             return list;
         }
+
+        internal static bool IsParameterUsed(string sql, string name)
+            => Regex.IsMatch(sql, @"[?@:$]" + Regex.Escape(name) + @"([^\p{L}\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
 
         /// <summary>
         /// Replace all literal tokens with their text form.

@@ -235,6 +235,12 @@ namespace Dapper
                 var dbType = param.DbType;
                 var val = param.Value;
                 string name = Clean(param.Name);
+                if (RemoveUnused && identity.CommandType.GetValueOrDefault(CommandType.Text) == CommandType.Text
+                    && (!SqlMapper.Settings.SupportLegacyParameterTokens || !CompiledRegex.LegacyParameter.IsMatch(command.CommandText))
+                    && !SqlMapper.IsParameterUsed(command.CommandText, name))
+                {
+                    continue;
+                }
                 var isCustomQueryParameter = val is SqlMapper.ICustomQueryParameter;
 
                 SqlMapper.ITypeHandler? handler = null;
