@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using Xunit;
@@ -281,6 +283,72 @@ select 'def' as Name, 2 as Type, 4.0 as Value, 2 as Id, 'qwe' as Name")))
             Assert.NotNull(bar.HazNameIdObject);
             Assert.Equal(2, bar.HazNameIdObject.Id);
             Assert.Equal("qwe", bar.HazNameIdObject.Name);
+        }
+
+        [Fact]
+        public void GetFieldValue_ErrorMessageShowsTheValue()
+        {
+            // the message names the value that was read whichever reader method read it; on the
+            // GetFieldValue<T> path the value is kept unboxed and boxed only when its column fails
+            SqlMapper.AddTypeMap(typeof(long), DbType.Int64, useGetFieldValue: true);
+            SqlMapper.AddTypeMap(typeof(int), DbType.Int32, useGetFieldValue: true);
+            try
+            {
+                var ex = Assert.Throws<DataException>(() => connection.Query<HazThrowingSetter>("select cast(7 as bigint) as Id, 42 as Value -- GetFieldValue"));
+                Assert.Equal("Error parsing column 1 (Value=42 - Int32)", ex.Message);
+                Assert.IsType<InvalidOperationException>(ex.InnerException);
+
+                ex = Assert.Throws<DataException>(() => connection.Query<HazThrowingNullableSetter>("select cast(7 as bigint) as Id, 42 as Value -- GetFieldValue"));
+                Assert.Equal("Error parsing column 1 (Value=42 - Int32)", ex.Message);
+                Assert.IsType<InvalidOperationException>(ex.InnerException);
+            }
+            finally
+            {
+                SqlMapper.AddTypeMap(typeof(long), DbType.Int64, useGetFieldValue: false);
+                SqlMapper.AddTypeMap(typeof(int), DbType.Int32, useGetFieldValue: false);
+            }
+
+            // the same message as the GetValue path gives; a separate type, because deserializers are cached
+            // per type and column shape, so the same type would reuse the deserializer compiled above
+            var viaGetValue = Assert.Throws<DataException>(() => connection.Query<HazThrowingSetterViaGetValue>("select cast(7 as bigint) as Id, 42 as Value -- GetValue"));
+            Assert.Equal("Error parsing column 1 (Value=42 - Int32)", viaGetValue.Message);
+        }
+
+        [Fact]
+        public void GetFieldValue_ErrorMessageWhenTheReadItselfFails()
+        {
+            // when GetFieldValue<T> throws there is no value to show, and the message must not show the previous column's
+            SqlMapper.AddTypeMap(typeof(long), DbType.Int64, useGetFieldValue: true);
+            SqlMapper.AddTypeMap(typeof(int), DbType.Int32, useGetFieldValue: true);
+            try
+            {
+                var ex = Assert.Throws<DataException>(() => connection.Query<HazThrowingSetter>("select cast(7 as bigint) as Id, 'abc' as Value -- GetFieldValue"));
+                Assert.StartsWith("Error parsing column 1 (Value=n/a - ", ex.Message);
+                Assert.NotNull(ex.InnerException);
+            }
+            finally
+            {
+                SqlMapper.AddTypeMap(typeof(long), DbType.Int64, useGetFieldValue: false);
+                SqlMapper.AddTypeMap(typeof(int), DbType.Int32, useGetFieldValue: false);
+            }
+        }
+
+        private class HazThrowingSetter
+        {
+            public long Id { get; set; }
+            public int Value { get => 0; set => throw new InvalidOperationException("Value cannot be set"); }
+        }
+
+        private class HazThrowingNullableSetter
+        {
+            public long Id { get; set; }
+            public int? Value { get => null; set => throw new InvalidOperationException("Value cannot be set"); }
+        }
+
+        private class HazThrowingSetterViaGetValue
+        {
+            public long Id { get; set; }
+            public int Value { get => 0; set => throw new InvalidOperationException("Value cannot be set"); }
         }
 
         private abstract class Discriminated_BaseType

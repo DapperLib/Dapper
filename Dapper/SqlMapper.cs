@@ -3472,7 +3472,7 @@ namespace Dapper
                         il,
                         startBound + i,
                         ref stringEnumLocal,
-                        valueCopyLocal: null,
+                        valueCopyLocals: null,
                         reader.GetFieldType(startBound + i),
                         targetType,
                         out var isDbNullLabel, out bool popWhenNull);
@@ -3517,6 +3517,7 @@ namespace Dapper
             var returnValueLocal = il.DeclareLocal(type);
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
+            var valueCopyDiagnosticLocals = new ValueCopyDiagnosticLocals(il);
 
             var names = Enumerable.Range(startBound, length).Select(i => reader.GetName(i)).ToArray();
 
@@ -3610,7 +3611,6 @@ namespace Dapper
             bool first = true;
             var allDone = il.DefineLabel();
             var stringEnumLocal = (LocalBuilder?)null;
-            var valueCopyDiagnosticLocal = il.DeclareLocal(typeof(object));
             bool applyNullSetting = Settings.ApplyNullValues;
             foreach (var item in members)
             {
@@ -3625,7 +3625,7 @@ namespace Dapper
                     EmitInt32(il, index);
                     il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
 
-                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocal, reader.GetFieldType(index), memberType, out var isDbNullLabel, out bool popWhenNull);
+                    LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocals, reader.GetFieldType(index), memberType, out var isDbNullLabel, out bool popWhenNull);
 
                     if (specializedConstructor is null)
                     {
@@ -3711,9 +3711,10 @@ namespace Dapper
             }
             il.MarkLabel(allDone);
             il.BeginCatchBlock(typeof(Exception)); // stack is Exception
+            valueCopyDiagnosticLocals.EmitBoxTypedValueOfCurrentColumn(il, currentIndexDiagnosticLocal); // stack is Exception
             il.Emit(OpCodes.Ldloc, currentIndexDiagnosticLocal); // stack is Exception, index
             il.Emit(OpCodes.Ldarg_0); // stack is Exception, index, reader
-            il.Emit(OpCodes.Ldloc, valueCopyDiagnosticLocal); // stack is Exception, index, reader, value
+            il.Emit(OpCodes.Ldloc, valueCopyDiagnosticLocals.ObjectLocal); // stack is Exception, index, reader, value
             il.EmitCall(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(SqlMapper.ThrowDataException))!, null);
             il.EndExceptionBlock();
 
@@ -3740,7 +3741,75 @@ namespace Dapper
             }
         }
 
-        private static void LoadReaderValueViaGetFieldValue(ILGenerator il, int index, Type memberType, LocalBuilder? valueCopyLocal, Label isDbNullLabel, out bool popWhenNull)
+        /// <summary>
+        /// The locals that keep the value of the column being read, so that <see cref="ThrowDataException"/> can show it
+        /// when a column fails. A value read via <see cref="DbDataReader.GetValue(int)"/> is already an object and goes into
+        /// <see cref="ObjectLocal"/>. A value read via <see cref="DbDataReader.GetFieldValue{T}(int)"/> stays unboxed in a
+        /// local of its own type and is boxed in the catch block, only if its column is the one that failed, so that the
+        /// GetFieldValue path does not allocate per value.
+        /// </summary>
+        private sealed class ValueCopyDiagnosticLocals
+        {
+            public LocalBuilder ObjectLocal { get; }
+            private readonly LocalBuilder typedValueIndexLocal; // the column whose value is in a typed local, or -1
+            private readonly Dictionary<Type, LocalBuilder> typedLocals = [];
+            private readonly List<KeyValuePair<int, Type>> typedColumns = [];
+
+            public ValueCopyDiagnosticLocals(ILGenerator il)
+            {
+                ObjectLocal = il.DeclareLocal(typeof(object));
+                typedValueIndexLocal = il.DeclareLocal(typeof(int));
+                EmitInt32(il, -1);
+                il.Emit(OpCodes.Stloc, typedValueIndexLocal);
+            }
+
+            /// <summary>
+            /// Stores the value on top of the stack in the typed local for <paramref name="type"/>, leaving it on the stack.
+            /// </summary>
+            public void EmitStoreTypedValue(ILGenerator il, int index, Type type)
+            {
+                if (!typedLocals.TryGetValue(type, out var local))
+                {
+                    local = il.DeclareLocal(type);
+                    typedLocals.Add(type, local);
+                }
+                il.Emit(OpCodes.Dup); // stack is now [...][T][T]
+                il.Emit(OpCodes.Stloc, local); // stack is now [...][T]
+                EmitInt32(il, index);
+                il.Emit(OpCodes.Stloc, typedValueIndexLocal);
+                typedColumns.Add(new KeyValuePair<int, Type>(index, type));
+            }
+
+            /// <summary>
+            /// For the catch block: if the value of the failing column is in a typed local, boxes it into
+            /// <see cref="ObjectLocal"/>. Leaves the stack as it was.
+            /// </summary>
+            public void EmitBoxTypedValueOfCurrentColumn(ILGenerator il, LocalBuilder currentIndexLocal)
+            {
+                if (typedColumns.Count == 0) return;
+
+                var done = il.DefineLabel();
+                // a typed value belongs to the failing column only if it was stored while reading that column
+                il.Emit(OpCodes.Ldloc, typedValueIndexLocal);
+                il.Emit(OpCodes.Ldloc, currentIndexLocal);
+                il.Emit(OpCodes.Bne_Un, done);
+                foreach (var column in typedColumns)
+                {
+                    var next = il.DefineLabel();
+                    il.Emit(OpCodes.Ldloc, typedValueIndexLocal);
+                    EmitInt32(il, column.Key);
+                    il.Emit(OpCodes.Bne_Un, next);
+                    il.Emit(OpCodes.Ldloc, typedLocals[column.Value]);
+                    il.Emit(OpCodes.Box, column.Value);
+                    il.Emit(OpCodes.Stloc, ObjectLocal);
+                    il.Emit(OpCodes.Br, done);
+                    il.MarkLabel(next);
+                }
+                il.MarkLabel(done);
+            }
+        }
+
+        private static void LoadReaderValueViaGetFieldValue(ILGenerator il, int index, Type memberType, ValueCopyDiagnosticLocals? valueCopyLocals, Label isDbNullLabel, out bool popWhenNull)
         {
             popWhenNull = false;
             var underlyingType = Nullable.GetUnderlyingType(memberType) ?? memberType;
@@ -3755,14 +3824,18 @@ namespace Dapper
             il.Emit(OpCodes.Ldarg_0); // stack is now [...][reader]
             EmitInt32(il, index); // stack is now [...][reader][index]
             il.Emit(OpCodes.Callvirt, getFieldValueT.MakeGenericMethod(underlyingType)); // stack is now [...][T]
-            if (valueCopyLocal is not null)
+            if (valueCopyLocals is not null)
             {
-                il.Emit(OpCodes.Dup); // stack is now [...][T][T]
                 if (underlyingType.IsValueType)
                 {
-                    il.Emit(OpCodes.Box, underlyingType); // stack is now [...][T][value-as-object]
+                    // keep the value unboxed; the catch block boxes it only if this column fails
+                    valueCopyLocals.EmitStoreTypedValue(il, index, underlyingType); // stack is now [...][T]
                 }
-                il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][T]
+                else
+                {
+                    il.Emit(OpCodes.Dup); // stack is now [...][T][T]
+                    il.Emit(OpCodes.Stloc, valueCopyLocals.ObjectLocal); // stack is now [...][T]
+                }
             }
             if (underlyingType != memberType)
             {
@@ -3771,12 +3844,12 @@ namespace Dapper
             }
         }
 
-        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder? stringEnumLocal, LocalBuilder? valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel, out bool popWhenNull)
+        private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder? stringEnumLocal, ValueCopyDiagnosticLocals? valueCopyLocals, Type colType, Type memberType, out Label isDbNullLabel, out bool popWhenNull)
         {
             isDbNullLabel = il.DefineLabel();
             if (UseGetFieldValue(memberType) && !IsDateTimeFamilyConversion(colType, Nullable.GetUnderlyingType(memberType) ?? memberType))
             {
-                LoadReaderValueViaGetFieldValue(il, index, memberType, valueCopyLocal, isDbNullLabel, out popWhenNull);
+                LoadReaderValueViaGetFieldValue(il, index, memberType, valueCopyLocals, isDbNullLabel, out popWhenNull);
                 return;
             }
 
@@ -3786,10 +3859,10 @@ namespace Dapper
             // default impl: use GetValue
             il.Emit(OpCodes.Callvirt, getItem); // stack is now [...][value-as-object]
 
-            if (valueCopyLocal is not null)
+            if (valueCopyLocals is not null)
             {
                 il.Emit(OpCodes.Dup); // stack is now [...][value-as-object][value-as-object]
-                il.Emit(OpCodes.Stloc, valueCopyLocal); // stack is now [...][value-as-object]
+                il.Emit(OpCodes.Stloc, valueCopyLocals.ObjectLocal); // stack is now [...][value-as-object]
             }
 
             if (memberType == typeof(char) || memberType == typeof(char?))
