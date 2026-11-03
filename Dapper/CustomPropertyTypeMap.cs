@@ -9,14 +9,14 @@ namespace Dapper
     public sealed class CustomPropertyTypeMap : SqlMapper.ITypeMap
     {
         private readonly Type _type;
-        private readonly Func<Type, string, PropertyInfo> _propertySelector;
+        private readonly Func<Type, string, PropertyInfo?> _propertySelector;
 
         /// <summary>
         /// Creates custom property mapping
         /// </summary>
         /// <param name="type">Target entity type</param>
         /// <param name="propertySelector">Property selector based on target type and DataReader column name</param>
-        public CustomPropertyTypeMap(Type type, Func<Type, string, PropertyInfo> propertySelector)
+        public CustomPropertyTypeMap(Type type, Func<Type, string, PropertyInfo?> propertySelector)
         {
             _type = type ?? throw new ArgumentNullException(nameof(type));
             _propertySelector = propertySelector ?? throw new ArgumentNullException(nameof(propertySelector));
