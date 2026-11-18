@@ -2183,6 +2183,7 @@ namespace Dapper
                 bool isString = value is IEnumerable<string>;
                 bool isDbString = value is IEnumerable<DbString>;
                 DbType? dbType = null;
+                ITypeHandler? handler = null;
 
                 int splitAt = SqlMapper.Settings.InListStringSplitCount;
                 bool viaSplit = splitAt >= 0
@@ -2201,7 +2202,7 @@ namespace Dapper
                             }
                             if (!isDbString)
                             {
-                                dbType = LookupDbType(item.GetType(), "", true, out var handler);
+                                dbType = LookupDbType(item.GetType(), "", true, out handler);
                             }
                         }
                         var nextName = namePrefix + count.ToString();
@@ -2226,7 +2227,12 @@ namespace Dapper
                             if (tmp is not null && tmp is not DBNull)
                                 lastValue = tmp; // only interested in non-trivial values for padding
 
-                            if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
+                            if (handler is not null)
+                            {
+                                // same as a scalar parameter: let the registered type handler configure the parameter
+                                handler.SetValue(listParam, tmp ?? DBNull.Value);
+                            }
+                            else if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
                             {
                                 listParam.DbType = dbType.GetValueOrDefault();
                             }
@@ -2242,11 +2248,15 @@ namespace Dapper
                             var padParam = command.CreateParameter();
                             padParam.ParameterName = namePrefix + count.ToString();
                             if (isString) padParam.Size = DbString.DefaultLength;
-                            if (DynamicParameters.ShouldSetDbType(dbType))
+                            padParam.Value = lastValue;
+                            if (handler is not null)
+                            {
+                                handler.SetValue(padParam, lastValue);
+                            }
+                            else if (DynamicParameters.ShouldSetDbType(dbType))
                             {
                                 padParam.DbType = dbType.GetValueOrDefault();
                             }
-                            padParam.Value = lastValue;
                             command.Parameters.Add(padParam);
                         }
                     }
