@@ -473,6 +473,10 @@ namespace Dapper
                 }
                 type = Enum.GetUnderlyingType(type);
             }
+            if (!type.IsEnum && typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeMap.TryGetValue(type, out var mapEntry))
             {
                 if ((mapEntry.Flags & TypeMapEntryFlags.SetType) == 0)
@@ -484,10 +488,6 @@ namespace Dapper
             if (type.FullName == LinqBinary)
             {
                 return DbType.Binary;
-            }
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
@@ -1258,7 +1258,7 @@ namespace Dapper
                     reader.Dispose();
                 }
                 if (wasClosed) cnn.Close();
-                
+
                 cmd?.Parameters.Clear();
                 cmd?.Dispose();
             }
@@ -1998,7 +1998,7 @@ namespace Dapper
                 return new ArgumentException(
                     string.IsNullOrEmpty(splitOn)
                     ? "When using the multi-mapping APIs ensure you set the splitOn param if you have keys other than Id"
-                    : $"Multi-map error: splitOn column '{splitOn}' was not found - please ensure your splitOn parameter is set and in the correct order", 
+                    : $"Multi-map error: splitOn column '{splitOn}' was not found - please ensure your splitOn parameter is set and in the correct order",
                     nameof(splitOn));
             }
             else
@@ -2568,12 +2568,12 @@ namespace Dapper
             }
 
             bool filterParams = removeUnused && identity.CommandType.GetValueOrDefault(CommandType.Text) == CommandType.Text;
-            
+
             if (filterParams && Settings.SupportLegacyParameterTokens)
             {
                 filterParams = !CompiledRegex.LegacyParameter.IsMatch(identity.Sql);
             }
-            
+
             var dm = new DynamicMethod("ParamInfo" + Guid.NewGuid().ToString(), null, [typeof(IDbCommand), typeof(object)], type, true);
 
             var il = dm.GetILGenerator();
@@ -3774,7 +3774,10 @@ namespace Dapper
         private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder? stringEnumLocal, LocalBuilder? valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel, out bool popWhenNull)
         {
             isDbNullLabel = il.DefineLabel();
-            if (UseGetFieldValue(memberType) && !IsDateTimeFamilyConversion(colType, Nullable.GetUnderlyingType(memberType) ?? memberType))
+            bool useTypeHandler = typeHandlers.ContainsKey(memberType)
+                && (Settings.PreferTypeHandlersForEnums || !(Nullable.GetUnderlyingType(memberType) ?? memberType).IsEnum);
+            if (!useTypeHandler && UseGetFieldValue(memberType)
+                && !IsDateTimeFamilyConversion(colType, Nullable.GetUnderlyingType(memberType) ?? memberType))
             {
                 LoadReaderValueViaGetFieldValue(il, index, memberType, valueCopyLocal, isDbNullLabel, out popWhenNull);
                 return;

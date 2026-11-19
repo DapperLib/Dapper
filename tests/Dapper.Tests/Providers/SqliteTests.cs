@@ -1,6 +1,8 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,6 +49,57 @@ namespace Dapper.Tests
     [Collection(NonParallelDefinition.Name)]
     public class SqliteTypeHandlerTests : SqliteTypeTestBase
     {
+#if NET6_0_OR_GREATER
+        private sealed class Issue2266DateOnlyHandler : SqlMapper.TypeHandler<DateOnly>
+        {
+            public int ParseCalls { get; private set; }
+            public int SetValueCalls { get; private set; }
+
+            public override DateOnly Parse(object value)
+            {
+                ParseCalls++;
+                return DateOnly.Parse((string)value, CultureInfo.InvariantCulture);
+            }
+
+            public override void SetValue(IDbDataParameter parameter, DateOnly value)
+            {
+                SetValueCalls++;
+                parameter.DbType = DbType.String;
+                parameter.Value = value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            }
+        }
+
+        private sealed class Issue2266DateOnlyResult
+        {
+            public DateOnly Date { get; set; }
+            public DateOnly? NullableDate { get; set; }
+        }
+
+        [FactSqlite]
+        public void Issue2266_TypeHandlerOverridesBuiltInDateOnlyMapping()
+        {
+            using var connection = GetSQLiteConnection();
+            var handler = new Issue2266DateOnlyHandler();
+            SqlMapper.AddTypeHandler(handler);
+            try
+            {
+                var expected = new DateOnly(2024, 10, 31);
+                var result = connection.QuerySingle<Issue2266DateOnlyResult>(
+                    "select @date as Date, @nullableDate as NullableDate",
+                    new { date = expected, nullableDate = (DateOnly?)expected });
+
+                Assert.Equal(expected, result.Date);
+                Assert.Equal(expected, result.NullableDate);
+                Assert.Equal(2, handler.SetValueCalls);
+                Assert.Equal(2, handler.ParseCalls);
+            }
+            finally
+            {
+                SqlMapper.AddTypeHandler(typeof(DateOnly), null!);
+            }
+        }
+#endif
+
         [FactSqlite]
         public void Issue466_SqliteHatesOptimizations()
         {
