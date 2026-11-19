@@ -3175,7 +3175,9 @@ namespace Dapper
 
         static Func<DbDataReader, object> UnderlyingReadViaGetFieldValueFactory<T>(int index)
             => reader => reader.IsDBNull(index) ? null!
-                : IsDateTimeFamilyConversion(reader.GetFieldType(index), typeof(T)) ? (object)Parse<T>(reader.GetValue(index))!
+                : (IsDateTimeFamilyConversion(reader.GetFieldType(index), typeof(T))
+                    || IsStringToDateOnlyConversion(reader.GetFieldType(index), typeof(T)))
+                    ? (object)Parse<T>(reader.GetValue(index))!
                 : reader.GetFieldValue<T>(index)!;
 
         static bool UseGetFieldValue(Type type) => typeMap.TryGetValue(type, out var mapEntry)
@@ -3204,6 +3206,12 @@ namespace Dapper
                 return (T)handler.Parse(type, value)!;
             }
             if (TryConvertDateTimeFamily(value, type, out var converted)) return (T)converted;
+#if NET6_0_OR_GREATER
+            if (type == typeof(DateOnly) && value is string dateOnlyString)
+            {
+                return (T)(object)ParseDateOnly(dateOnlyString);
+            }
+#endif
             return (T)Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
         }
 
@@ -3216,6 +3224,13 @@ namespace Dapper
             || (from == typeof(DateOnly) && to == typeof(DateTime))
             || (from == typeof(TimeSpan) && to == typeof(TimeOnly))
             || (from == typeof(TimeOnly) && to == typeof(TimeSpan));
+#else
+            => false;
+#endif
+
+        private static bool IsStringToDateOnlyConversion(Type from, Type to)
+#if NET6_0_OR_GREATER
+            => from == typeof(string) && to == typeof(DateOnly);
 #else
             => false;
 #endif
@@ -3774,7 +3789,10 @@ namespace Dapper
         private static void LoadReaderValueOrBranchToDBNullLabel(ILGenerator il, int index, ref LocalBuilder? stringEnumLocal, LocalBuilder? valueCopyLocal, Type colType, Type memberType, out Label isDbNullLabel, out bool popWhenNull)
         {
             isDbNullLabel = il.DefineLabel();
-            if (UseGetFieldValue(memberType) && !IsDateTimeFamilyConversion(colType, Nullable.GetUnderlyingType(memberType) ?? memberType))
+            var underlyingMemberType = Nullable.GetUnderlyingType(memberType) ?? memberType;
+            if (UseGetFieldValue(memberType)
+                && !IsDateTimeFamilyConversion(colType, underlyingMemberType)
+                && !IsStringToDateOnlyConversion(colType, underlyingMemberType))
             {
                 LoadReaderValueViaGetFieldValue(il, index, memberType, valueCopyLocal, isDbNullLabel, out popWhenNull);
                 return;
@@ -3910,6 +3928,7 @@ namespace Dapper
             return name is null ? null : typeof(SqlMapper).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic);
         }
         private static DateOnly DateTimeToDateOnly(DateTime value) => DateOnly.FromDateTime(value);
+        private static DateOnly ParseDateOnly(string value) => DateOnly.Parse(value, CultureInfo.InvariantCulture);
         private static TimeOnly DateTimeToTimeOnly(DateTime value) => TimeOnly.FromDateTime(value);
         private static DateTime DateOnlyToDateTime(DateOnly value) => value.ToDateTime(default);
         private static TimeOnly TimeSpanToTimeOnly(TimeSpan value) => TimeOnly.FromTimeSpan(value);
@@ -3935,6 +3954,11 @@ namespace Dapper
                 // no IConvertible bridge exists inside the date/time family (see Parse<T>)
                 il.Emit(OpCodes.Unbox_Any, from); // stack is now [target][target][data-typed-value]
                 il.Emit(OpCodes.Call, conversion); // stack is now [target][target][typed-value]
+            }
+            else if (IsStringToDateOnlyConversion(from, via ?? to))
+            {
+                il.Emit(OpCodes.Castclass, typeof(string));
+                il.Emit(OpCodes.Call, typeof(SqlMapper).GetMethod(nameof(ParseDateOnly), BindingFlags.Static | BindingFlags.NonPublic)!);
             }
 #endif
             else

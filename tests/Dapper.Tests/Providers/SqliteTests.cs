@@ -47,6 +47,41 @@ namespace Dapper.Tests
     [Collection(NonParallelDefinition.Name)]
     public class SqliteTypeHandlerTests : SqliteTypeTestBase
     {
+#if NET6_0_OR_GREATER
+        private sealed class StringDateOnlyResult
+        {
+            public DateOnly Date { get; set; }
+            public DateOnly? NullableDate { get; set; }
+        }
+
+        [FactSqlite]
+        public void StringDateOnlyColumnsAreParsedWithoutTypeHandler()
+        {
+            using var connection = GetSQLiteConnection();
+            Assert.False(SqlMapper.HasTypeHandler(typeof(DateOnly)));
+
+            var result = connection.QuerySingle<StringDateOnlyResult>(
+                "select '2024-10-31' as Date, '2024-11-01' as NullableDate");
+
+            Assert.Equal(new DateOnly(2024, 10, 31), result.Date);
+            Assert.Equal(new DateOnly(2024, 11, 1), result.NullableDate);
+            Assert.Equal(new DateOnly(2024, 10, 31), connection.QuerySingle<DateOnly>("select '2024-10-31'"));
+            Assert.Equal(new DateOnly(2024, 10, 31), connection.QuerySingle<DateOnly?>("select '2024-10-31'"));
+        }
+
+        [FactSqlite]
+        public void InvalidStringDateOnlyColumnThrows()
+        {
+            using var connection = GetSQLiteConnection();
+
+            var exception = Assert.Throws<DataException>(() => connection.QuerySingle<StringDateOnlyResult>(
+                "select 'not a date' as Date, '2024-11-01' as NullableDate"));
+
+            Assert.IsType<FormatException>(exception.InnerException);
+            Assert.Contains("Date", exception.Message);
+        }
+#endif
+
         [FactSqlite]
         public void Issue466_SqliteHatesOptimizations()
         {
@@ -85,7 +120,7 @@ namespace Dapper.Tests
     }
 
     public class SqliteTests : SqliteTypeTestBase
-    { 
+    {
         [FactSqlite]
         public void DapperEnumValue_Sqlite()
         {
@@ -93,7 +128,7 @@ namespace Dapper.Tests
             Common.DapperEnumValue(connection);
         }
 
-        
+
 
         [FactSqlite]
         public void Isse467_SqliteLikesParametersWithPrefix()
@@ -132,7 +167,7 @@ namespace Dapper.Tests
             {
                 connection.Execute("INSERT INTO [PersonWithDob] ([DoB]) VALUES (@DoB)", new PersonWithDob { DoB = localMorning });
 
-                // Before we read the column, use Farsi this is a way to ensure the 
+                // Before we read the column, use Farsi this is a way to ensure the
                 // InvariantCulture is used as otherwise it would fail because Farsi
                 // is not able to parse a DateTime that is formatted with Invariant
 
