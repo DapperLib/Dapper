@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Data;
 using System.Data.Common;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Dapper.Tests;
@@ -21,6 +22,29 @@ public class WrappedReaderTests(ITestOutputHelper testOutputHelper)
     {
         var reader = new DbWrappedReader(new DummyDbCommand(), new ThrowOnCloseDbDataReader(testOutputHelper));
         await reader.DisposeAsync();
+    }
+#endif
+
+    [Fact]
+    public void DbWrappedReader_Dispose_DisposesCommand()
+    {
+        var cmd = new TrackingDbCommand();
+        var reader = new DbWrappedReader(cmd, new ThrowOnCloseDbDataReader(testOutputHelper));
+        reader.Dispose();
+        Assert.Equal(1, cmd.DisposeCount);
+    }
+
+#if !NETFRAMEWORK
+    [Fact] // the wrapped command must be disposed on the async path too, mirroring Dispose
+    public async System.Threading.Tasks.Task DbWrappedReader_DisposeAsync_DisposesCommand()
+    {
+        var cmd = new TrackingDbCommand();
+        var reader = new DbWrappedReader(cmd, new ThrowOnCloseDbDataReader(testOutputHelper));
+        await reader.DisposeAsync();
+        Assert.Equal(1, cmd.DisposeCount);
+
+        await reader.DisposeAsync(); // and double-dispose must stay a no-op
+        Assert.Equal(1, cmd.DisposeCount);
     }
 #endif
 
@@ -59,6 +83,16 @@ public class WrappedReaderTests(ITestOutputHelper testOutputHelper)
         public override bool DesignTimeVisible { get; set; }
         protected override DbParameter CreateDbParameter() => throw new NotSupportedException();
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => throw new NotSupportedException();
+    }
+
+    private class TrackingDbCommand : DummyDbCommand
+    {
+        public int DisposeCount;
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) DisposeCount++;
+            base.Dispose(disposing);
+        }
     }
 
     private class DummyDbException(string message) : DbException(message);

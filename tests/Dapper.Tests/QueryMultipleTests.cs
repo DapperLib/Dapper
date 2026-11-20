@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Dapper.Tests
@@ -14,6 +15,38 @@ namespace Dapper.Tests
 #endif
     public abstract class QueryMultipleTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
+        private class NotifyingParameters : SqlMapper.IDynamicParameters, SqlMapper.IParameterCallbacks
+        {
+            public int CompletedCount;
+            void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command, SqlMapper.Identity identity) { }
+            void SqlMapper.IParameterCallbacks.OnCompleted() => CompletedCount++;
+        }
+
+        [Fact] // #2179: custom IParameterCallbacks implementations (not just DynamicParameters)
+        // must get OnCompleted after QueryMultiple
+        public void QueryMultiple_CustomParameterCallbacks_GetOnCompleted()
+        {
+            var args = new NotifyingParameters();
+            using (var grid = connection.QueryMultiple("select 1; select 2", args))
+            {
+                Assert.Equal(1, grid.Read<int>().Single());
+                Assert.Equal(2, grid.Read<int>().Single());
+            }
+            Assert.Equal(1, args.CompletedCount);
+        }
+
+        [Fact]
+        public async Task QueryMultipleAsync_CustomParameterCallbacks_GetOnCompleted()
+        {
+            var args = new NotifyingParameters();
+            using (var grid = await connection.QueryMultipleAsync("select 1; select 2", args))
+            {
+                Assert.Equal(1, (await grid.ReadAsync<int>()).Single());
+                Assert.Equal(2, (await grid.ReadAsync<int>()).Single());
+            }
+            Assert.Equal(1, args.CompletedCount);
+        }
+
         [Fact]
         public void TestQueryMultipleBuffered()
         {

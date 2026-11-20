@@ -14,7 +14,7 @@ namespace Dapper.Tests;
 /// </summary>
 public class TypeMappingRegressionTests
 {
-    private sealed class SingleRowDataReader : DbDataReader
+    internal sealed class SingleRowDataReader : DbDataReader
     {
         private readonly string[] _names;
         private readonly Type[] _types;
