@@ -271,7 +271,7 @@ Order by p.Id";
         }
 
         [Fact]
-        public void TestMultiMapWithSplitWithNullValueAndSpoofColumn() // https://stackoverflow.com/q/10744728/449906
+        public void TestMultiMapWithSplitWithNotNullValueInSpoofColumn() // https://stackoverflow.com/q/10744728/449906
         {
             const string sql = "select 1 as id, 'abc' as name, 1 as spoof, NULL as description, 'def' as name";
             var product = connection.Query<Product, Category, Product>(sql, (prod, cat) =>
@@ -286,6 +286,21 @@ Order by p.Id";
             Assert.Equal(0, product.Category.Id);
             Assert.Equal("def", product.Category.Name);
             Assert.Null(product.Category.Description);
+        }
+
+        [Fact]
+        public void TestMultiMapWithSplitWithNullValueInSpoofColumn()
+        {
+            const string sql = "select 1 as id, 'abc' as name, NULL as spoof, NULL as description, 'def' as name";
+            var product = connection.Query<Product, Category, Product>(sql, (prod, cat) =>
+            {
+                prod.Category = cat;
+                return prod;
+            }, splitOn: "spoof").First();
+            // assertions
+            Assert.Equal(1, product.Id);
+            Assert.Equal("abc", product.Name);
+            Assert.Null(product.Category);
         }
 
         [Fact]
