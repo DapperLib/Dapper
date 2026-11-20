@@ -158,5 +158,51 @@ namespace Dapper.Tests
             public int Id { get; set; }
             public DateTime DoB { get; set; }
         }
+
+        [FactSqlite]
+        public async Task Issue2240_MultiMapAsync_CacheHitAccounting()
+        {
+            using var connection = GetSQLiteConnection();
+            SqlMapper.PurgeQueryCache();
+
+            var sqlGeneric = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS ExtraId, 'Bob' AS ExtraName WHERE 0 /* issue2240_generic */";
+            await connection.QueryAsync<HazNameId, HazNameId, int>(
+                sqlGeneric,
+                (a, b) => a.Id + b.Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            var genericHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlGeneric).Item3;
+            Assert.Equal(0, genericHits);
+
+            // Second execution of the same query should count as reuse (hit count 1)
+            await connection.QueryAsync<HazNameId, HazNameId, int>(
+                sqlGeneric,
+                (a, b) => a.Id + b.Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            genericHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlGeneric).Item3;
+            Assert.Equal(1, genericHits);
+
+            var sqlTypes = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS ExtraId, 'Bob' AS ExtraName WHERE 0 /* issue2240_types */";
+            await connection.QueryAsync<int>(
+                sqlTypes,
+                new[] { typeof(HazNameId), typeof(HazNameId) },
+                objs => ((HazNameId)objs[0]).Id + ((HazNameId)objs[1]).Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            var typesHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlTypes).Item3;
+            Assert.Equal(0, typesHits);
+
+            // Second execution of the same query should count as reuse (hit count 1)
+            await connection.QueryAsync<int>(
+                sqlTypes,
+                new[] { typeof(HazNameId), typeof(HazNameId) },
+                objs => ((HazNameId)objs[0]).Id + ((HazNameId)objs[1]).Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            typesHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlTypes).Item3;
+            Assert.Equal(1, typesHits);
+        }
     }
 }
+
