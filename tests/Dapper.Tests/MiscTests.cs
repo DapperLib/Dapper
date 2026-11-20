@@ -1270,6 +1270,67 @@ insert TPTable (Value) values (2), (568)");
             Assert.Equal(568, row.Value);
         }
 
+        [Fact]
+        public void TestDbDecimal()
+        {
+            var obj = connection.Query("select sql_variant_property(@a, 'precision') as a_precision, sql_variant_property(@a, 'scale') as a_scale, " +
+                                              "sql_variant_property(@b, 'precision') as b_precision, sql_variant_property(@b, 'scale') as b_scale, " +
+                                              "sql_variant_property(@c, 'precision') as c_precision, sql_variant_property(@c, 'scale') as c_scale, " +
+                                              "sql_variant_property(@d, 'precision') as d_precision, sql_variant_property(@d, 'scale') as d_scale, " +
+                                              "sql_variant_property(@e, 'precision') as e_precision, sql_variant_property(@e, 'scale') as e_scale",
+                new
+                {
+                    a = new DbDecimal { Value = 123456.78M, Precision = 9, Scale = 3 },
+                    b = new DbDecimal { Value = 123456.78M, Precision = 18, Scale = 3 },
+                    c = new DbDecimal { Value = 123456.78M, Precision = 27, Scale = 3 },
+                    d = new DbDecimal { Value = 123456.78M, Precision = 36, Scale = 3 },
+                    e = new DbDecimal { Value = 123456.78M },
+                }).First();
+
+            Assert.Equal(3, (int)obj.a_scale);
+            Assert.Equal(9, (int)obj.a_precision);
+
+            Assert.Equal(3, (int)obj.b_scale);
+            Assert.Equal(18, (int)obj.b_precision);
+
+            Assert.Equal(3, (int)obj.c_scale);
+            Assert.Equal(27, (int)obj.c_precision);
+
+            Assert.Equal(3, (int)obj.d_scale);
+            Assert.Equal(36, (int)obj.d_precision);
+
+            Assert.Equal(8, (int)obj.e_scale);
+            Assert.Equal(38, (int)obj.e_precision);
+        }
+
+        [Fact]
+        public void TestDbDecimalUsingParameterizedConstructor()
+        {
+            var obj = connection.Query("select sql_variant_property(@a, 'precision') as a_precision, sql_variant_property(@a, 'scale') as a_scale, " +
+                                              "sql_variant_property(@b, 'precision') as b_precision, sql_variant_property(@b, 'scale') as b_scale, " +
+                                              "sql_variant_property(@c, 'precision') as c_precision, sql_variant_property(@c, 'scale') as c_scale, " +
+                                              "sql_variant_property(@d, 'precision') as d_precision, sql_variant_property(@d, 'scale') as d_scale",
+                new
+                {
+                    a = new DbDecimal(123456.78M, 9, 3),
+                    b = new DbDecimal(123456.78M, 18, 3),
+                    c = new DbDecimal(123456.78M, 27, 3),
+                    d = new DbDecimal(123456.78M, 36, 3),
+                }).First();
+
+            Assert.Equal(3, (int)obj.a_scale);
+            Assert.Equal(9, (int)obj.a_precision);
+
+            Assert.Equal(3, (int)obj.b_scale);
+            Assert.Equal(18, (int)obj.b_precision);
+
+            Assert.Equal(3, (int)obj.c_scale);
+            Assert.Equal(27, (int)obj.c_precision);
+
+            Assert.Equal(3, (int)obj.d_scale);
+            Assert.Equal(36, (int)obj.d_precision);
+        }
+
         public class TPTable
         {
             public int Pid { get; set; }
