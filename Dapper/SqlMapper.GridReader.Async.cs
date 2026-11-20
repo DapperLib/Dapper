@@ -186,7 +186,7 @@ namespace Dapper
                 var deserializer = cache.Deserializer;
 
                 int hash = GetColumnHash(reader);
-                if (deserializer.Func is null || deserializer.Hash != hash)
+                if (deserializer is null || deserializer.Hash != hash)
                 {
                     deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                     cache.Deserializer = deserializer;
@@ -206,7 +206,7 @@ namespace Dapper
                     var deserializer = cache.Deserializer;
 
                     int hash = GetColumnHash(reader);
-                    if (deserializer.Func is null || deserializer.Hash != hash)
+                    if (deserializer is null || deserializer.Hash != hash)
                     {
                         deserializer = new DeserializerState(hash, GetDeserializer(type, reader, 0, -1, false));
                         cache.Deserializer = deserializer;

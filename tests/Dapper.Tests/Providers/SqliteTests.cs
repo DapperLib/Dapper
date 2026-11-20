@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -119,6 +120,46 @@ namespace Dapper.Tests
         }
 
         [FactSqlite]
+        public void TypeHandlerSetValue_StringParameterSizeIsNotOverwritten_Issue2141()
+        {
+            using var connection = GetSQLiteConnection();
+
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.RemoveTypeMap(typeof(string));
+            var handler = new SizedStringTypeHandler();
+            SqlMapper.AddTypeHandler(handler);
+            try
+            {
+                // anonymous object parameters take the IL generator path, where the
+                // generated code used to overwrite the Size set by the handler
+                connection.Execute("select @p", new { p = "abc" });
+
+                Assert.NotNull(handler.LastParameter);
+                Assert.Equal(SizedStringTypeHandler.ExpectedSize, handler.LastParameter.Size);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+                SqlMapper.AddTypeMap(typeof(string), DbType.String);
+            }
+        }
+
+        private sealed class SizedStringTypeHandler : SqlMapper.TypeHandler<string>
+        {
+            public const int ExpectedSize = 12345;
+            public IDbDataParameter? LastParameter { get; private set; }
+
+            public override void SetValue(IDbDataParameter parameter, string? value)
+            {
+                parameter.Value = value;
+                parameter.Size = ExpectedSize;
+                LastParameter = parameter;
+            }
+
+            public override string Parse(object value) => (string)value;
+        }
+
+        [FactSqlite]
         public async Task Issue466_SqliteHatesOptimizations_Async()
         {
             using var connection = GetSQLiteConnection();
@@ -211,5 +252,139 @@ namespace Dapper.Tests
             public int Id { get; set; }
             public DateTime DoB { get; set; }
         }
+
+        [FactSqlite]
+        public async Task Issue2240_MultiMapAsync_CacheHitAccounting()
+        {
+            using var connection = GetSQLiteConnection();
+            SqlMapper.PurgeQueryCache();
+
+            var sqlGeneric = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS ExtraId, 'Bob' AS ExtraName WHERE 0 /* issue2240_generic */";
+            await connection.QueryAsync<HazNameId, HazNameId, int>(
+                sqlGeneric,
+                (a, b) => a.Id + b.Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            var genericHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlGeneric).Item3;
+            Assert.Equal(0, genericHits);
+
+            // Second execution of the same query should count as reuse (hit count 1)
+            await connection.QueryAsync<HazNameId, HazNameId, int>(
+                sqlGeneric,
+                (a, b) => a.Id + b.Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            genericHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlGeneric).Item3;
+            Assert.Equal(1, genericHits);
+
+            var sqlTypes = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS ExtraId, 'Bob' AS ExtraName WHERE 0 /* issue2240_types */";
+            await connection.QueryAsync<int>(
+                sqlTypes,
+                new[] { typeof(HazNameId), typeof(HazNameId) },
+                objs => ((HazNameId)objs[0]).Id + ((HazNameId)objs[1]).Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            var typesHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlTypes).Item3;
+            Assert.Equal(0, typesHits);
+
+            // Second execution of the same query should count as reuse (hit count 1)
+            await connection.QueryAsync<int>(
+                sqlTypes,
+                new[] { typeof(HazNameId), typeof(HazNameId) },
+                objs => ((HazNameId)objs[0]).Id + ((HazNameId)objs[1]).Id,
+                splitOn: "ExtraId").ConfigureAwait(false);
+
+            typesHits = SqlMapper.GetCachedSQL().Single(x => x.Item2 == sqlTypes).Item3;
+            Assert.Equal(1, typesHits);
+        }
+
+        [FactSqlite]
+        public async Task QueryUnbufferedAsync_ReadToEnd_DoesNotCancel()
+        {
+            using var connection = new CancelCountingConnection(GetSQLiteConnection());
+            var results = new List<int>();
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("select 1 union all select 2"))
+            {
+                results.Add(value);
+            }
+            Assert.Equal(new[] { 1, 2 }, results);
+            Assert.Equal(0, connection.Cancels);
+        }
+
+        [FactSqlite]
+        public async Task QueryUnbufferedAsync_StopEarly_Cancels()
+        {
+            using var connection = new CancelCountingConnection(GetSQLiteConnection());
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("select 1 union all select 2"))
+            {
+                Assert.Equal(1, value);
+                break;
+            }
+            Assert.Equal(1, connection.Cancels);
+        }
+
+        [FactSqlite]
+        public async Task QueryUnbufferedAsync_NoColumns_DoesNotCancel()
+        {
+            using var connection = new CancelCountingConnection(GetSQLiteConnection());
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("create temp table UnbufferedNoColumns (Id int)"))
+            {
+                Assert.Fail("no rows expected");
+            }
+            Assert.Equal(0, connection.Cancels);
+        }
+
+        // counts DbCommand.Cancel calls; everything else is passed through
+        private sealed class CancelCountingConnection(DbConnection inner) : DbConnection
+        {
+            public int Cancels;
+#pragma warning disable CS8765 // nullability differs between target frameworks
+            public override string ConnectionString { get => inner.ConnectionString; set => inner.ConnectionString = value; }
+#pragma warning restore CS8765
+            public override string Database => inner.Database;
+            public override string DataSource => inner.DataSource;
+            public override string ServerVersion => inner.ServerVersion;
+            public override ConnectionState State => inner.State;
+            public override void ChangeDatabase(string databaseName) => inner.ChangeDatabase(databaseName);
+            public override void Close() => inner.Close();
+            public override void Open() => inner.Open();
+            protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => inner.BeginTransaction(isolationLevel);
+            protected override DbCommand CreateDbCommand() => new CountingCommand(this, inner.CreateCommand());
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing) inner.Dispose();
+                base.Dispose(disposing);
+            }
+
+            private sealed class CountingCommand(CancelCountingConnection owner, DbCommand inner) : DbCommand
+            {
+#pragma warning disable CS8765 // nullability differs between target frameworks
+                public override string CommandText { get => inner.CommandText; set => inner.CommandText = value; }
+#pragma warning restore CS8765
+                public override int CommandTimeout { get => inner.CommandTimeout; set => inner.CommandTimeout = value; }
+                public override CommandType CommandType { get => inner.CommandType; set => inner.CommandType = value; }
+                public override bool DesignTimeVisible { get => inner.DesignTimeVisible; set => inner.DesignTimeVisible = value; }
+                public override UpdateRowSource UpdatedRowSource { get => inner.UpdatedRowSource; set => inner.UpdatedRowSource = value; }
+                protected override DbConnection? DbConnection { get => owner; set { } }
+                protected override DbParameterCollection DbParameterCollection => inner.Parameters;
+                protected override DbTransaction? DbTransaction { get => inner.Transaction; set => inner.Transaction = value; }
+                public override void Cancel()
+                {
+                    owner.Cancels++;
+                    inner.Cancel();
+                }
+                public override int ExecuteNonQuery() => inner.ExecuteNonQuery();
+                public override object? ExecuteScalar() => inner.ExecuteScalar();
+                public override void Prepare() => inner.Prepare();
+                protected override DbParameter CreateDbParameter() => inner.CreateParameter();
+                protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => inner.ExecuteReader(behavior);
+                protected override void Dispose(bool disposing)
+                {
+                    if (disposing) inner.Dispose();
+                    base.Dispose(disposing);
+                }
+            }
+        }
     }
 }
+

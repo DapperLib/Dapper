@@ -139,9 +139,9 @@ Another example usage when you _already_ have an existing collection:
 ```csharp
 var foos = new List<Foo>
 {
-    { new Foo { A = 1, B = 1 } }
-    { new Foo { A = 2, B = 2 } }
-    { new Foo { A = 3, B = 3 } }
+    new Foo { A = 1, B = 1 },
+    new Foo { A = 2, B = 2 },
+    new Foo { A = 3, B = 3 }
 };
 
 var count = connection.Execute(@"insert MyTable(colA, colB) values (@a, @b)", foos);

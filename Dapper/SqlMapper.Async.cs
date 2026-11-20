@@ -433,17 +433,17 @@ namespace Dapper
                 if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
-                var tuple = info.Deserializer;
+                var deserializer = info.Deserializer;
                 int hash = GetColumnHash(reader);
-                if (tuple.Func is null || tuple.Hash != hash)
+                if (deserializer is null || deserializer.Hash != hash)
                 {
                     if (reader.FieldCount == 0)
                         return Enumerable.Empty<T>();
-                    tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                    deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
 
-                var func = tuple.Func;
+                var func = deserializer.Func;
 
                 if (command.Buffered)
                 {
@@ -934,17 +934,25 @@ namespace Dapper
             var identity = new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(command.CommandText, command.CommandTypeDirect, cnn, typeof(TFirst), param?.GetType());
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
+            using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+            DbDataReader? reader = null;
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
-                if (!command.Buffered) wasClosed = false; // handing back open reader; rely on command-behavior
-                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), map, splitOn, reader, identity, true);
-                return command.Buffered ? results.ToList() : results;
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
+                var results = MultiMapImpl<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), map, splitOn, reader, identity, true, info);
+                if (command.Buffered)
+                {
+                    return results.ToList();
+                }
+                wasClosed = false; // handing back open reader; rely on command-behavior
+                var deferred = ExecuteReaderSync(reader, results);
+                reader = null; // to prevent it being disposed before the caller gets to see it
+                return deferred;
             }
             finally
             {
+                using (reader) { /* dispose if non-null */ }
                 if (wasClosed) cnn.Close();
             }
         }
@@ -983,16 +991,25 @@ namespace Dapper
             var identity = new IdentityWithTypes(command.CommandText, command.CommandTypeDirect, cnn, types[0], param?.GetType(), types);
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
+            using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+            DbDataReader? reader = null;
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(command.CancellationToken).ConfigureAwait(false);
-                using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
-                using var reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
-                var results = MultiMapImpl(null, default, types, map, splitOn, reader, identity, true);
-                return command.Buffered ? results.ToList() : results;
+                reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, command.CancellationToken).ConfigureAwait(false);
+                var results = MultiMapImpl(null, CommandDefinition.ForCallback(command.Parameters, command.Flags), types, map, splitOn, reader, identity, true, info);
+                if (command.Buffered)
+                {
+                    return results.ToList();
+                }
+                wasClosed = false; // handing back open reader; rely on command-behavior
+                var deferred = ExecuteReaderSync(reader, results);
+                reader = null; // to prevent it being disposed before the caller gets to see it
+                return deferred;
             }
             finally
             {
+                using (reader) { /* dispose if non-null */ }
                 if (wasClosed) cnn.Close();
             }
         }
@@ -1007,6 +1024,21 @@ namespace Dapper
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 (parameters as IParameterCallbacks)?.OnCompleted();
+            }
+        }
+
+        // wraps an already-materialized (but not yet enumerated) multi-map sequence so that the reader
+        // it depends on stays open until the caller actually finishes enumerating it; needed because the
+        // multi-map sequence is produced by a lazy (yield-based) iterator that doesn't run until enumerated,
+        // which happens *after* this async method has already returned control to the caller.
+        private static IEnumerable<TReturn> ExecuteReaderSync<TReturn>(DbDataReader reader, IEnumerable<TReturn> results)
+        {
+            using (reader)
+            {
+                foreach (var item in results)
+                {
+                    yield return item;
+                }
             }
         }
 
@@ -1042,7 +1074,7 @@ namespace Dapper
                 cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess, command.CancellationToken).ConfigureAwait(false);
 
-                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache, command.CancellationToken);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as IParameterCallbacks, command.AddToCache, command.CancellationToken);
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
@@ -1306,19 +1338,27 @@ namespace Dapper
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
-                    var tuple = info.Deserializer;
+                    var deserializer = info.Deserializer;
                     int hash = GetColumnHash(reader);
-                    if (tuple.Func is null || tuple.Hash != hash)
+                    if (deserializer is null || deserializer.Hash != hash)
                     {
                         if (reader.FieldCount == 0)
                         {
+                            // no result set; close the reader cleanly - no
+                            // need for "Cancel" etc
+#if NET5_0_OR_GREATER
+                            await reader.DisposeAsync();
+#else
+                            reader.Dispose();
+#endif
+                            reader = null;
                             yield break;
                         }
-                        tuple = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                         if (command.AddToCache) SetQueryCache(identity, info);
                     }
 
-                    var func = tuple.Func;
+                    var func = deserializer.Func;
 
                     var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
                     while (await reader.ReadAsync(cancel).ConfigureAwait(false))
@@ -1327,6 +1367,15 @@ namespace Dapper
                         yield return GetValue<T>(reader, effectiveType, val);
                     }
                     while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+                    // happy path; close the reader cleanly - no
+                    // need for "Cancel" etc
+#if NET5_0_OR_GREATER
+                    await reader.DisposeAsync();
+#else
+                    reader.Dispose();
+#endif
+                    reader = null;
+
                     command.OnCompleted();
                 }
                 finally

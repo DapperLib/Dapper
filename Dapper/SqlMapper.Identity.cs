@@ -94,16 +94,20 @@ namespace Dapper
             internal virtual Type GetType(int index) => throw new IndexOutOfRangeException(nameof(index));
 
 #pragma warning disable CS0618 // Type or member is obsolete
+            // Grid (multi-result) reads only build a deserializer and never bind parameters
+            // (parameters are bound once, against the command-level identity). Carrying parametersType
+            // here makes a grid-0 read of type T collide with a QueryAsync<T> identity and overwrite its
+            // ParamReader with a property-based reader (wrong for IDynamicParameters).
             internal Identity ForGrid<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(Type primaryType, int gridIndex) =>
-                new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(sql, commandType, connectionString, primaryType, parametersType, gridIndex);
+                new Identity<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh>(sql, commandType, connectionString, primaryType, null, gridIndex);
 
             internal Identity ForGrid(Type primaryType, int gridIndex) =>
-                new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex);
+                new Identity(sql, commandType, connectionString, primaryType, null, 0, gridIndex);
 
             internal Identity ForGrid(Type primaryType, Type[] otherTypes, int gridIndex) =>
                 (otherTypes is null || otherTypes.Length == 0)
-                ? new Identity(sql, commandType, connectionString, primaryType, parametersType, 0, gridIndex)
-                : new IdentityWithTypes(sql, commandType, connectionString, primaryType, parametersType, otherTypes, gridIndex);
+                ? new Identity(sql, commandType, connectionString, primaryType, null, 0, gridIndex)
+                : new IdentityWithTypes(sql, commandType, connectionString, primaryType, null, otherTypes, gridIndex);
 
             /// <summary>
             /// Create an identity for use with DynamicParameters, internal use only.

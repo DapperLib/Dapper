@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Dapper.Tests
@@ -14,6 +15,38 @@ namespace Dapper.Tests
 #endif
     public abstract class QueryMultipleTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
+        private class NotifyingParameters : SqlMapper.IDynamicParameters, SqlMapper.IParameterCallbacks
+        {
+            public int CompletedCount;
+            void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command, SqlMapper.Identity identity) { }
+            void SqlMapper.IParameterCallbacks.OnCompleted() => CompletedCount++;
+        }
+
+        [Fact] // #2179: custom IParameterCallbacks implementations (not just DynamicParameters)
+        // must get OnCompleted after QueryMultiple
+        public void QueryMultiple_CustomParameterCallbacks_GetOnCompleted()
+        {
+            var args = new NotifyingParameters();
+            using (var grid = connection.QueryMultiple("select 1; select 2", args))
+            {
+                Assert.Equal(1, grid.Read<int>().Single());
+                Assert.Equal(2, grid.Read<int>().Single());
+            }
+            Assert.Equal(1, args.CompletedCount);
+        }
+
+        [Fact]
+        public async Task QueryMultipleAsync_CustomParameterCallbacks_GetOnCompleted()
+        {
+            var args = new NotifyingParameters();
+            using (var grid = await connection.QueryMultipleAsync("select 1; select 2", args))
+            {
+                Assert.Equal(1, (await grid.ReadAsync<int>()).Single());
+                Assert.Equal(2, (await grid.ReadAsync<int>()).Single());
+            }
+            Assert.Equal(1, args.CompletedCount);
+        }
+
         [Fact]
         public void TestQueryMultipleBuffered()
         {
@@ -28,6 +61,73 @@ namespace Dapper.Tests
             Assert.Equal(2, b.Single());
             Assert.Equal(3, c.Single());
             Assert.Equal(4, d.Single());
+        }
+
+        // Regression for DapperLib/Dapper#243 and DapperLib/Dapper#2091:
+        // A QueryMultiple grid-read calls GetCacheInfo(identity, null), so for an IDynamicParameters
+        // parameter type it builds a property-based ParamReader (via CreateParamInfoGenerator) and
+        // caches it under an identity for grid 0 of type T which collides with the Query<T> identity.
+        // A subsequent Query<T> with DynamicParameters reuses that reader and sends no
+        // real parameters (manifesting as "must declare the scalar variable @x" /
+        // "@ParameterNames1 is not a parameter").
+        [Fact]
+        public void QueryMultipleThenQueryWithDynamicParameters_DoesNotDropParameters()
+        {
+            // two grids, same parameter
+            const string sql = "select @x as X; select @x as Y;"; 
+
+            var first = new DynamicParameters();
+            first.Add("x", 1);
+            using (var grid = connection.QueryMultiple(sql, first))
+            {
+                Assert.Equal(1, grid.Read<int>().Single());
+                Assert.Equal(1, grid.Read<int>().Single());
+            }
+
+            // Same sql + result type + DynamicParameters as grid 0 above; @x must still be supplied.
+            var second = new DynamicParameters();
+            second.Add("x", 42);
+            Assert.Equal(42, connection.Query<int>(sql, second).Single());
+        }
+
+        // Regression for DapperLib/Dapper#243 and DapperLib/Dapper#2091:
+        // The reverse order has always worked (Query<T> then QueryMultiple)
+        [Fact]
+        public void QueryThenQueryMultipleWithDynamicParameters_DoesNotDropParameters()
+        {
+            // distinct sql -> own cache entry (independent of the test above)
+            const string sql = "select @x as P; select @x as Q;";
+
+            var first = new DynamicParameters();
+            first.Add("x", 7);
+            Assert.Equal(7, connection.Query<int>(sql, first).Single());
+
+            var second = new DynamicParameters();
+            second.Add("x", 99);
+            using var grid = connection.QueryMultiple(sql, second);
+            Assert.Equal(99, grid.Read<int>().Single());
+            Assert.Equal(99, grid.Read<int>().Single());
+        }
+
+        // Stored-proc form of the same bug (#2091).        
+        [Fact]
+        public void QueryMultipleThenQueryStoredProc_DoesNotEmitDynamicParametersProperties()
+        {
+            connection.Execute("create proc #Repro2091 (@x int = 0, @z int = 0) as begin set nocount on; select @x as X; select @x as Y; end");
+
+            var first = new DynamicParameters();
+            first.Add("x", 1);
+            using (var grid = connection.QueryMultiple("#Repro2091", first, commandType: CommandType.StoredProcedure))
+            {
+                // grid 0 of <int> seeds the shared identity
+                Assert.Equal(1, grid.Read<int>().Single());
+                Assert.Equal(1, grid.Read<int>().Single());
+            }
+
+            var second = new DynamicParameters();
+            second.Add("x", 42);
+            // Without fix expect SqlException "@ParameterNames1 is not a parameter for procedure #Repro2091."
+            Assert.Equal(42, connection.Query<int>("#Repro2091", second, commandType: CommandType.StoredProcedure).Single());
         }
 
         [Fact]
