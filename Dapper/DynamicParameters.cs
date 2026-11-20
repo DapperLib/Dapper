@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -228,6 +229,9 @@ namespace Dapper
                 outputCallbacks?.ForEach(generator => generator());
             }
 
+            HashSet<string> addedParameters = new HashSet<string>(command.Parameters.Cast<IDbDataParameter>()
+                .Select(x => x.ParameterName), comparer: StringComparer.CurrentCultureIgnoreCase);
+
             foreach (var param in parameters.Values)
             {
                 if (param.CameFromTemplate) continue;
@@ -256,7 +260,7 @@ namespace Dapper
                 }
                 else
                 {
-                    bool add = !command.Parameters.Contains(name);
+                    bool add = !addedParameters.Contains(name);
                     IDbDataParameter p;
                     if (add)
                     {
@@ -302,6 +306,8 @@ namespace Dapper
                     }
                     param.AttachedParam = p;
                 }
+
+                addedParameters.Add(name);
             }
 
             // note: most non-privileged implementations would use: this.ReplaceLiterals(command);
