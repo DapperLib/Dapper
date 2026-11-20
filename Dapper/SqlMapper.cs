@@ -168,7 +168,11 @@ namespace Dapper
                    select Tuple.Create(pair.Key, pair.Value);
         }
 
-        private static Dictionary<Type, TypeMapEntry> typeMap;
+        // replaced wholesale (never mutated in place); writers clone-and-swap under typeMapSyncLock
+        // so concurrent registrations cannot lose each other's updates, volatile so readers always
+        // observe the latest published snapshot
+        private static volatile Dictionary<Type, TypeMapEntry> typeMap;
+        private static readonly object typeMapSyncLock = new();
 
         [Flags]
         internal enum TypeMapEntryFlags
@@ -292,21 +296,24 @@ namespace Dapper
         /// <param name="useGetFieldValue">Whether to prefer <see cref="DbDataReader.GetFieldValue{T}(int)"/> over <see cref="DbDataReader.GetValue(int)"/>.</param>
         public static void AddTypeMap(Type type, DbType dbType, bool useGetFieldValue)
         {
-            // use clone, mutate, replace to avoid threading issues
-            var snapshot = typeMap;
-            var flags = TypeMapEntryFlags.None;
-            if (dbType >= 0)
+            lock (typeMapSyncLock)
             {
-                flags |= TypeMapEntryFlags.SetType;
-            }
-            if (useGetFieldValue)
-            {
-                flags |= TypeMapEntryFlags.UseGetFieldValue;
-            }
-            var value = new TypeMapEntry(dbType, flags);
-            if (snapshot.TryGetValue(type, out var oldValue) && oldValue.Equals(value)) return; // nothing to do
+                // use clone, mutate, replace to avoid threading issues
+                var snapshot = typeMap;
+                var flags = TypeMapEntryFlags.None;
+                if (dbType >= 0)
+                {
+                    flags |= TypeMapEntryFlags.SetType;
+                }
+                if (useGetFieldValue)
+                {
+                    flags |= TypeMapEntryFlags.UseGetFieldValue;
+                }
+                var value = new TypeMapEntry(dbType, flags);
+                if (snapshot.TryGetValue(type, out var oldValue) && oldValue.Equals(value)) return; // nothing to do
 
-            SetTypeMap(new Dictionary<Type, TypeMapEntry>(snapshot) { [type] = value });
+                SetTypeMap(new Dictionary<Type, TypeMapEntry>(snapshot) { [type] = value });
+            }
         }
 
         private static void SetTypeMap(Dictionary<Type, TypeMapEntry> value)
@@ -326,15 +333,18 @@ namespace Dapper
         /// <param name="type">The type to remove from the current map.</param>
         public static void RemoveTypeMap(Type type)
         {
-            // use clone, mutate, replace to avoid threading issues
-            var snapshot = typeMap;
+            lock (typeMapSyncLock)
+            {
+                // use clone, mutate, replace to avoid threading issues
+                var snapshot = typeMap;
 
-            if (!snapshot.ContainsKey(type)) return; // nothing to do
+                if (!snapshot.ContainsKey(type)) return; // nothing to do
 
-            var newCopy = new Dictionary<Type, TypeMapEntry>(snapshot);
-            newCopy.Remove(type);
+                var newCopy = new Dictionary<Type, TypeMapEntry>(snapshot);
+                newCopy.Remove(type);
 
-            SetTypeMap(newCopy);
+                SetTypeMap(newCopy);
+            }
         }
 
         /// <summary>
@@ -413,6 +423,15 @@ namespace Dapper
                     if (secondary is not null) newCopy[secondary] = handler;
                 }
                 typeHandlers = newCopy;
+
+                if (clone)
+                {
+                    // a handler changes the shape of the emitted IL, and the handled type can be a
+                    // member of any materialized type, so every compiled deserializer is suspect the
+                    // moment the handler set changes; clone is false only during static init, when
+                    // the caches are necessarily empty
+                    PurgeQueryCache();
+                }
             }
         }
 
@@ -1157,7 +1176,7 @@ namespace Dapper
                 cmd = command.SetupCommand(cnn, info.ParamReader);
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SequentialAccess);
 
-                var result = new GridReader(cmd, reader, identity, command.Parameters as DynamicParameters, command.AddToCache);
+                var result = new GridReader(cmd, reader, identity, command.Parameters as IParameterCallbacks, command.AddToCache);
                 cmd = null; // now owned by result
                 wasClosed = false; // *if* the connection was closed and we got this far, then we now have a reader
                 // with the CloseConnection flag, so the reader will deal with the connection; we
@@ -2604,7 +2623,9 @@ namespace Dapper
             for (int i = 0; i < allTypeProps.Length; ++i)
             {
                 var p = allTypeProps[i];
-                if (p.GetIndexParameters().Length == 0)
+                // statics are excluded: the emitted IL loads the parameter instance before every
+                // getter call, which is an invalid program for a static getter
+                if (p.GetIndexParameters().Length == 0 && p.GetMethod?.IsStatic != true)
                     propsList.Add(p);
             }
 

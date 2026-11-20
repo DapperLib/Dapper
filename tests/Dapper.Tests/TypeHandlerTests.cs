@@ -876,4 +876,55 @@ namespace Dapper.Tests
             public override string ToString() => Value.ToString();
         }
     }
+
+    [Collection(NonParallelDefinition.Name)]
+    public class TypeHandlerLateRegistrationTests
+    {
+        public class LateHandled
+        {
+            public string? Value { get; set; }
+        }
+
+        private class LateHandledRow
+        {
+            public LateHandled? X { get; set; }
+        }
+
+        private class LateHandledHandler : SqlMapper.TypeHandler<LateHandled>
+        {
+            public override LateHandled Parse(object value) => new LateHandled { Value = (string)value };
+            public override void SetValue(IDbDataParameter parameter, LateHandled? value) => parameter.Value = value?.Value;
+        }
+
+        [Fact] // a handler registered after a deserializer has been compiled (and cached) for the
+        // containing type must still be honored: registration purges the compiled caches
+        public void AddTypeHandler_AfterDeserializerCompiled_IsHonored()
+        {
+            try
+            {
+                using (var r1 = new TypeMappingRegressionTests.SingleRowDataReader(
+                    ["X"], [typeof(string)], [DBNull.Value]))
+                {
+                    var parser = r1.GetRowParser<LateHandledRow>();
+                    r1.Read();
+                    // compiles and caches a deserializer while no handler is registered
+                    Assert.Null(parser(r1).X);
+                }
+
+                SqlMapper.AddTypeHandler(new LateHandledHandler());
+
+                using (var r2 = new TypeMappingRegressionTests.SingleRowDataReader(
+                    ["X"], [typeof(string)], ["abc"]))
+                {
+                    var parser = r2.GetRowParser<LateHandledRow>();
+                    r2.Read();
+                    Assert.Equal("abc", parser(r2).X?.Value);
+                }
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+    }
 }

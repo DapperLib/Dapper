@@ -203,7 +203,27 @@ namespace Dapper
 #if NET5_0_OR_GREATER
         public override Task CloseAsync() => _reader.CloseAsync();
 
-        public override ValueTask DisposeAsync() => _reader.DisposeAsync();
+        public override async ValueTask DisposeAsync()
+        {
+            var cmd = _cmd;
+            try
+            {
+                await _reader.DisposeAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _reader = DisposedReader.Instance; // all future ops are no-ops
+                _cmd = null!;
+                if (cmd is DbCommand dbCmd)
+                {
+                    await dbCmd.DisposeAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    cmd?.Dispose();
+                }
+            }
+        }
 
         public override Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default) => _reader.GetColumnSchemaAsync(cancellationToken);
 

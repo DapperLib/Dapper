@@ -14,6 +14,23 @@ namespace Dapper.Tests
 #endif
     public abstract class ProcedureTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
+        private class ParamsWithStaticProperty
+        {
+            public static string Marker => "should be ignored";
+            public int Id { get; set; }
+        }
+
+        [Fact] // a public static property on a parameter object must be ignored: the emitted
+        // parameter IL loads the instance before each getter call, which is an invalid program
+        // for a static getter (and stored procedures do no SQL-based parameter filtering)
+        public void StaticPropertyOnParameterObject_IsIgnored()
+        {
+            connection.Execute("create proc #TestProcStaticProp @Id int as select @Id");
+            var result = connection.QuerySingle<int>("#TestProcStaticProp",
+                new ParamsWithStaticProperty { Id = 42 }, commandType: CommandType.StoredProcedure);
+            Assert.Equal(42, result);
+        }
+
         [Fact]
         public void TestProcWithOutParameter()
         {
