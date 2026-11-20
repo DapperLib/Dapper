@@ -3852,12 +3852,21 @@ namespace Dapper
                     TypeCode dataTypeCode = Type.GetTypeCode(colType), unboxTypeCode = Type.GetTypeCode(unboxType);
                     bool hasTypeHandler;
                     // note the TypeCode tests are only meaningful for distinct codes: TypeCode.Object
-                    // matching TypeCode.Object says nothing (TimeSpan vs TimeOnly?, say), and a direct
-                    // unbox there throws; such pairs belong to the flexible-convert path below. A column
-                    // reported as plain *object* (sql_variant etc) keeps the direct unbox: the runtime
-                    // box is the only truth available there
+                    // matching TypeCode.Object says nothing for *value-type* targets (TimeSpan vs
+                    // TimeOnly?, say), and a direct unbox there throws; such pairs belong to the
+                    // flexible-convert path below. A *reference-type* target under that pairing gets
+                    // the direct unbox, which for reference types is a runtime-checked castclass: the
+                    // declared column type may be too weak to prove the match statically (Npgsql 7/8/10
+                    // report array columns as typeof(Array), which does not implement IReadOnlyList<T>)
+                    // while the runtime value satisfies it. A column reported as plain *object*
+                    // (sql_variant etc) direct-unboxes only into TypeCode.Object targets (Guid etc),
+                    // where the runtime box is the only truth available; for primitive targets the
+                    // flexible-convert path coerces the boxed value (variant int -> bool, say) as a
+                    // blind unbox would throw
                     if ((hasTypeHandler = typeHandlers.ContainsKey(unboxType)) || colType == unboxType
-                        || colType == typeof(object) || unboxType == typeof(object)
+                        || (colType == typeof(object) && Type.GetTypeCode(nullUnderlyingType ?? unboxType) == TypeCode.Object)
+                        || unboxType == typeof(object)
+                        || (dataTypeCode == TypeCode.Object && unboxTypeCode == TypeCode.Object && colType != typeof(object) && !unboxType.IsValueType)
                         || (dataTypeCode == unboxTypeCode && dataTypeCode != TypeCode.Object)
                         || (dataTypeCode == Type.GetTypeCode(nullUnderlyingType) && dataTypeCode != TypeCode.Object)
                         || colType == nullUnderlyingType)

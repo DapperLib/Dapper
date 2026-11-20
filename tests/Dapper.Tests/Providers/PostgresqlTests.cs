@@ -135,6 +135,26 @@ namespace Dapper.Tests
             Assert.Equal(new[] { 1, 2, 3 }, r.Single());
         }
 
+        private class ArrayColumnRow
+        {
+            public IReadOnlyList<short>? Shorts { get; set; }
+            public IEnumerable<int>? Ints { get; set; }
+            public int[]? Raw { get; set; }
+        }
+
+        [FactPostgresql] // #2231: Npgsql 7, 8 and 10 report array columns via GetFieldType as
+        // typeof(Array), not the concrete array type; both member shapes must still bind
+        public void TestPostgresqlArrayColumnToInterfaceMembers()
+        {
+            using var conn = GetOpenNpgsqlConnection();
+
+            var row = conn.QuerySingle<ArrayColumnRow>(
+                "select array[1,2,3]::smallint[] as \"Shorts\", array[10,20,30]::int[] as \"Ints\", array[7,8]::int[] as \"Raw\"");
+            Assert.Equal(new short[] { 1, 2, 3 }, row.Shorts);
+            Assert.Equal(new[] { 10, 20, 30 }, row.Ints);
+            Assert.Equal(new[] { 7, 8 }, row.Raw);
+        }
+
         [FactPostgresql]
         public void TestPostgresqlDateTimeUsage()
         {
