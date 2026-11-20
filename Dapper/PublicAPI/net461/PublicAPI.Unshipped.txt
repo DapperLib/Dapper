@@ -1,1 +1,2 @@
 ﻿#nullable enable
+static Dapper.CommandDefinition.SetCommandSetup(System.Action<System.Data.IDbCommand>? setup) -> void
