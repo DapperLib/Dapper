@@ -108,6 +108,149 @@ namespace Dapper.Tests
         }
 
         [FactSqlite]
+        public void TypeHandlerSetValue_StringParameter_HonoredWithoutRemoveTypeMap()
+        {
+            using var connection = GetSQLiteConnection();
+
+            SqlMapper.ResetTypeHandlers();
+            var handler = new SizedStringTypeHandler();
+            SqlMapper.AddTypeHandler(handler);
+            try
+            {
+                connection.Execute("select @p", new { p = "abc" });
+
+                Assert.NotNull(handler.LastParameter);
+                Assert.Equal(SizedStringTypeHandler.ExpectedSize, handler.LastParameter.Size);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        [FactSqlite]
+        public void TypeHandlerSetValue_KnownType_Guid_Honored()
+        {
+            using var connection = GetSQLiteConnection();
+
+            SqlMapper.ResetTypeHandlers();
+            var handler = new CustomGuidHandler();
+            SqlMapper.AddTypeHandler(handler);
+            try
+            {
+                var guid = Guid.NewGuid();
+                // Anonymous object parameter (IL generator path)
+                connection.Execute("select @p", new { p = guid });
+                Assert.Equal(1, handler.SetValueCalls);
+                Assert.Equal(guid.ToString("N"), handler.LastParameter?.Value);
+
+                // DynamicParameters path
+                var dyn = new DynamicParameters();
+                dyn.Add("p", guid);
+                connection.Execute("select @p", dyn);
+                Assert.Equal(2, handler.SetValueCalls);
+                Assert.Equal(guid.ToString("N"), handler.LastParameter?.Value);
+
+                // List expansion path
+                connection.Execute("select @p where 1 in @list", new { p = "x", list = new[] { guid } });
+                Assert.Equal(3, handler.SetValueCalls);
+
+                // Parse path
+                var parsed = connection.QuerySingle<Guid>($"select '{guid:N}'");
+                Assert.Equal(guid, parsed);
+                Assert.True(handler.ParseCalls > 0);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        private sealed class CustomGuidHandler : SqlMapper.TypeHandler<Guid>
+        {
+            public int SetValueCalls { get; private set; }
+            public int ParseCalls { get; private set; }
+            public IDbDataParameter? LastParameter { get; private set; }
+
+            public override void SetValue(IDbDataParameter parameter, Guid value)
+            {
+                SetValueCalls++;
+                parameter.Value = value.ToString("N");
+                LastParameter = parameter;
+            }
+
+            public override Guid Parse(object value)
+            {
+                ParseCalls++;
+                return Guid.Parse((string)value);
+            }
+        }
+
+#if NET6_0_OR_GREATER
+        [FactSqlite]
+        public void TypeHandlerSetValue_KnownType_DateOnly_Honored_Issue2266()
+        {
+            using var connection = GetSQLiteConnection();
+
+            SqlMapper.ResetTypeHandlers();
+            var handler = new CustomDateOnlyHandler();
+            SqlMapper.AddTypeHandler(handler);
+            try
+            {
+                // Anonymous object parameter (IL generator path)
+                connection.Execute("select @p", new { p = new DateOnly(2023, 5, 20) });
+                Assert.Equal(1, handler.SetValueCalls);
+                Assert.Equal("2023-05-20", handler.LastParameter?.Value);
+
+                // Nullable parameter
+                connection.Execute("select @p", new { p = (DateOnly?)new DateOnly(2023, 5, 21) });
+                Assert.Equal(2, handler.SetValueCalls);
+                Assert.Equal("2023-05-21", handler.LastParameter?.Value);
+
+                // DynamicParameters path
+                var dyn = new DynamicParameters();
+                dyn.Add("p", new DateOnly(2023, 5, 22));
+                connection.Execute("select @p", dyn);
+                Assert.Equal(3, handler.SetValueCalls);
+                Assert.Equal("2023-05-22", handler.LastParameter?.Value);
+
+                // List expansion path
+                connection.Execute("select @p where 1 in @list", new { p = "x", list = new[] { new DateOnly(2023, 5, 23), new DateOnly(2023, 5, 24) } });
+                Assert.Equal(5, handler.SetValueCalls);
+
+                // Parse path
+                var parsed = connection.QuerySingle<DateOnly>("select '2023-05-25'");
+                Assert.Equal(new DateOnly(2023, 5, 25), parsed);
+                Assert.True(handler.ParseCalls > 0);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        private sealed class CustomDateOnlyHandler : SqlMapper.TypeHandler<DateOnly>
+        {
+            public int SetValueCalls { get; private set; }
+            public int ParseCalls { get; private set; }
+            public IDbDataParameter? LastParameter { get; private set; }
+
+            public override void SetValue(IDbDataParameter parameter, DateOnly value)
+            {
+                SetValueCalls++;
+                parameter.Value = value.ToString("yyyy-MM-dd");
+                LastParameter = parameter;
+            }
+
+            public override DateOnly Parse(object value)
+            {
+                ParseCalls++;
+                return DateOnly.Parse((string)value);
+            }
+        }
+#endif
+
+        [FactSqlite]
         public async Task Issue466_SqliteHatesOptimizations_Async()
         {
             using var connection = GetSQLiteConnection();
