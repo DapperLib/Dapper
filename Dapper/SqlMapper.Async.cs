@@ -462,7 +462,7 @@ namespace Dapper
                 {
                     // can't use ReadAsync / cancellation; but this will have to do
                     wasClosed = false; // don't close if handing back an open reader; rely on the command-behavior
-                    var deferred = ExecuteReaderSync<T>(reader, func, command.Parameters);
+                    var deferred = ExecuteReaderSync<T>(reader, effectiveType, func, command.Parameters);
                     reader = null; // to prevent it being disposed before the caller gets to see it
                     return deferred;
                 }
@@ -1014,13 +1014,13 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReaderSync<T>(DbDataReader reader, Func<DbDataReader, object> func, object? parameters)
+        private static IEnumerable<T> ExecuteReaderSync<T>(DbDataReader reader, Type effectiveType, Func<DbDataReader, object> func, object? parameters)
         {
             using (reader)
             {
                 while (reader.Read())
                 {
-                    yield return (T)func(reader);
+                    yield return GetValue<T>(reader, effectiveType, func(reader));
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 (parameters as IParameterCallbacks)?.OnCompleted();
