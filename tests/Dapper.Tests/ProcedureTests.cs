@@ -53,6 +53,81 @@ namespace Dapper.Tests
             Assert.Equal(7, args.Get<int>("ID"));
         }
 
+        [Theory]
+        [InlineData(false, 0)]
+        [InlineData(true, 0)]
+        [InlineData(false, 1)]
+        [InlineData(true, 1)]
+        [InlineData(false, 2)]
+        [InlineData(true, 2)]
+        public void Query_CompletesOutputParameters_Issue1244(bool buffered, int resultSet)
+        {
+            var (target, args) = CreateOutputProcedure(resultSet);
+            var rows = connection.Query<int>("#Issue1244", args, buffered: buffered, commandType: CommandType.StoredProcedure).ToArray();
+            Assert.Equal(resultSet == 2 ? 1 : 0, rows.Length);
+            Assert.Equal(43, args.Get<int>("Direct"));
+            Assert.Equal(42, target.Value);
+        }
+
+        [Theory]
+        [InlineData(false, 0)]
+        [InlineData(true, 0)]
+        [InlineData(false, 1)]
+        [InlineData(true, 1)]
+        [InlineData(false, 2)]
+        [InlineData(true, 2)]
+        public async Task QueryAsync_CompletesOutputParameters_Issue1244(bool buffered, int resultSet)
+        {
+            var (target, args) = CreateOutputProcedure(resultSet);
+            var command = new CommandDefinition("#Issue1244", args, commandType: CommandType.StoredProcedure,
+                flags: buffered ? CommandFlags.Buffered : CommandFlags.None);
+            var rows = (await connection.QueryAsync<int>(command)).ToArray();
+            Assert.Equal(resultSet == 2 ? 1 : 0, rows.Length);
+            Assert.Equal(43, args.Get<int>("Direct"));
+            Assert.Equal(42, target.Value);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public async Task QueryUnbufferedAsync_CompletesOutputParameters_Issue1244(int resultSet)
+        {
+            var (target, args) = CreateOutputProcedure(resultSet);
+            int count = 0;
+            await foreach (var value in connection.QueryUnbufferedAsync<int>("#Issue1244", args, commandType: CommandType.StoredProcedure))
+            {
+                Assert.Equal(1, value);
+                count++;
+            }
+            Assert.Equal(resultSet == 2 ? 1 : 0, count);
+            Assert.Equal(43, args.Get<int>("Direct"));
+            Assert.Equal(42, target.Value);
+        }
+
+        private (OutputTarget Target, DynamicParameters Args) CreateOutputProcedure(int resultSet)
+        {
+            connection.Execute(@"create procedure #Issue1244 @Value int output, @Direct int output, @ResultSet int as
+begin
+    set nocount on;
+    set @Value = 42;
+    set @Direct = 43;
+    if @ResultSet = 1 select 1 as Value where 1 = 0;
+    if @ResultSet = 2 select 1 as Value;
+end");
+            var target = new OutputTarget { Value = -1 };
+            var args = new DynamicParameters(target);
+            args.Output(target, x => x.Value);
+            args.Add("Direct", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            args.Add("ResultSet", resultSet);
+            return (target, args);
+        }
+
+        private class OutputTarget
+        {
+            public int Value { get; set; }
+        }
+
         [Fact]
         public void TestProcWithOutAndReturnParameter()
         {

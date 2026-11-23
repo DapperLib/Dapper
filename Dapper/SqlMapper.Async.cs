@@ -438,7 +438,12 @@ namespace Dapper
                 if (deserializer is null || deserializer.Hash != hash)
                 {
                     if (reader.FieldCount == 0)
+                    {
+                        reader.Dispose();
+                        reader = null;
+                        command.OnCompleted();
                         return Enumerable.Empty<T>();
+                    }
                     deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
@@ -1352,6 +1357,7 @@ namespace Dapper
                             reader.Dispose();
 #endif
                             reader = null;
+                            command.OnCompleted();
                             yield break;
                         }
                         deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
