@@ -674,19 +674,25 @@ namespace Dapper
                     using (var cmd = command.SetupCommand(cnn, null))
                     {
                         string? masterSql = null;
+                        Type? paramType = null;
                         foreach (var obj in multiExec)
                         {
                             if (isFirst)
                             {
                                 masterSql = cmd.CommandText;
                                 isFirst = false;
-                                identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType());
-                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             else
                             {
                                 cmd.CommandText = masterSql; // because we do magic replacements on "in" etc
                                 cmd.Parameters.Clear(); // current code is Add-tastic
+                            }
+                            var type = obj.GetType();
+                            if (type != paramType)
+                            {
+                                paramType = type;
+                                identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, type);
+                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             info!.ParamReader!(cmd, obj);
                             total += cmd.ExecuteNonQuery();

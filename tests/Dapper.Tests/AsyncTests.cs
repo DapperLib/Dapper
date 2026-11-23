@@ -38,6 +38,54 @@ namespace Dapper.Tests
 
         private DbConnection MarsConnection => _marsConnection ??= Provider.GetOpenConnection(true);
 
+        [Theory]
+        [InlineData(false, false, 0)]
+        [InlineData(false, false, 1)]
+        [InlineData(false, false, 2)]
+        [InlineData(false, false, 3)]
+        [InlineData(true, false, 0)]
+        [InlineData(true, false, 1)]
+        [InlineData(true, false, 2)]
+        [InlineData(true, false, 3)]
+        [InlineData(false, true, 0)]
+        [InlineData(false, true, 1)]
+        [InlineData(false, true, 2)]
+        [InlineData(false, true, 3)]
+        [InlineData(true, true, 0)]
+        [InlineData(true, true, 1)]
+        [InlineData(true, true, 2)]
+        [InlineData(true, true, 3)]
+        public async Task Execute_MixedParameterTypes_Issue1708(bool useAsync, bool pipelined, int pattern)
+        {
+            if (pipelined)
+                Skip.If<Microsoft.Data.SqlClient.SqlClientFactory>(Provider.Factory, "Pipelined Microsoft.Data.SqlClient execution is tracked in #2028.");
+            using var conn = Provider.GetOpenConnection(pipelined);
+            conn.Execute("create table #Issue1708 (Id int not null)");
+            int count = pipelined ? 105 : 3;
+            BatchRow[] rows = Enumerable.Range(1, count).Select(i =>
+            {
+                BatchRow row = pattern switch
+                {
+                    0 => i % 2 == 1 ? new DerivedBatchRow() : new BatchRow(),
+                    1 => i % 2 == 1 ? new BatchRow() : new DerivedBatchRow(),
+                    2 => i % 2 == 1 ? new DerivedBatchRow() : new OtherBatchRow(),
+                    _ => new DerivedBatchRow(),
+                };
+                row.Id = i;
+                return row;
+            }).ToArray();
+            var command = new CommandDefinition("insert #Issue1708 (Id) values (@Id)", rows,
+                flags: pipelined ? CommandFlags.Pipelined : CommandFlags.None);
+            int affected = useAsync ? await conn.ExecuteAsync(command) : conn.Execute(command);
+
+            Assert.Equal(count, affected);
+            Assert.Equal(Enumerable.Range(1, count), conn.Query<int>("select Id from #Issue1708 order by Id"));
+        }
+
+        private class BatchRow { public int Id { get; set; } }
+        private class DerivedBatchRow : BatchRow { }
+        private class OtherBatchRow : BatchRow { }
+
         [Fact]
         public async Task TestBasicStringUsageAsync()
         {
