@@ -3644,6 +3644,9 @@ namespace Dapper
                     EmitInt32(il, index);
                     il.Emit(OpCodes.Stloc, currentIndexDiagnosticLocal);
 
+                    // A provider can throw before supplying a value for this column.
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Stloc, valueCopyDiagnosticLocals.ObjectLocal);
                     LoadReaderValueOrBranchToDBNullLabel(il, index, ref stringEnumLocal, valueCopyDiagnosticLocals, reader.GetFieldType(index), memberType, out var isDbNullLabel, out bool popWhenNull);
 
                     if (specializedConstructor is null)
