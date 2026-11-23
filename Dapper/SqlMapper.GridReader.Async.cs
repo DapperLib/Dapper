@@ -261,16 +261,35 @@ namespace Dapper
 
             private async IAsyncEnumerable<T> ReadUnbufferedAsync<T>(int index, Func<DbDataReader, object> deserializer, [EnumeratorCancellation] CancellationToken cancel)
             {
+                bool faulted = false;
                 try
                 {
-                    while (index == ResultIndex && await reader!.ReadAsync(cancel).ConfigureAwait(false))
+                    while (index == ResultIndex)
                     {
-                        yield return ConvertTo<T>(deserializer(reader));
+                        T value;
+                        try
+                        {
+                            if (!await reader!.ReadAsync(cancel).ConfigureAwait(false)) break;
+                            value = ConvertTo<T>(deserializer(reader));
+                        }
+                        catch
+                        {
+                            faulted = true;
+                            throw;
+                        }
+                        yield return value;
                     }
                 }
                 finally // finally so that First etc progresses things even when multiple rows
                 {
-                    await OnAfterGridAsync(index).ConfigureAwait(false);
+                    try
+                    {
+                        await OnAfterGridAsync(index).ConfigureAwait(false);
+                    }
+                    catch when (faulted)
+                    {
+                        // Preserve the read or conversion error if advancing the grid also fails.
+                    }
                 }
             }
 
