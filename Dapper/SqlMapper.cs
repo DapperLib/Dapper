@@ -2638,6 +2638,20 @@ namespace Dapper
                     propsList.Add(p);
             }
 
+            if (!isStruct && type.BaseType is not null && type.BaseType != typeof(object))
+            {
+                var declaringTypes = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+                foreach (var p in propsList)
+                {
+                    if (!declaringTypes.TryGetValue(p.Name, out var declaringType) || declaringType.IsAssignableFrom(p.DeclaringType!))
+                    {
+                        declaringTypes[p.Name] = p.DeclaringType!;
+                    }
+                }
+                // Keep case-distinct members at the same level; only discard hidden base members.
+                propsList.RemoveAll(p => p.DeclaringType != declaringTypes[p.Name]);
+            }
+
             var ctors = type.GetConstructors();
             ParameterInfo[] ctorParams;
             IEnumerable<PropertyInfo>? props = null;
