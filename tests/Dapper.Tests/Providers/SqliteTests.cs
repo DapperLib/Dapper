@@ -247,6 +247,52 @@ namespace Dapper.Tests
         }
 
         [FactSqlite]
+        public async Task Issue2193_QueryAsync_CommandDefinition_WithTypesArray()
+        {
+            using var connection = GetSQLiteConnection();
+
+            var sql = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS Id, 'Bob' AS Name";
+            var cmd = new CommandDefinition(sql);
+            var types = new[] { typeof(HazNameId), typeof(HazNameId) };
+            var result = (await connection.QueryAsync(cmd, types, objs => ((HazNameId)objs[0]).Name + " & " + ((HazNameId)objs[1]).Name, splitOn: "Id").ConfigureAwait(false)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("Alice & Bob", result[0]);
+        }
+
+        [FactSqlite]
+        public void Issue2193_Query_CommandDefinition_WithTypesArray()
+        {
+            using var connection = GetSQLiteConnection();
+
+            var sql = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS Id, 'Bob' AS Name";
+            var cmd = new CommandDefinition(sql);
+            var types = new[] { typeof(HazNameId), typeof(HazNameId) };
+            var result = connection.Query(cmd, types, objs => ((HazNameId)objs[0]).Name + " & " + ((HazNameId)objs[1]).Name, splitOn: "Id").ToList();
+
+            Assert.Single(result);
+            Assert.Equal("Alice & Bob", result[0]);
+        }
+
+        [FactSqlite]
+        public async Task Issue2193_QueryAsync_CommandDefinition_Cancellation()
+        {
+            using var connection = GetSQLiteConnection();
+
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            var sql = "SELECT 1 AS Id, 'Alice' AS Name, 2 AS ExtraId, 'Bob' AS ExtraName";
+            var cmd = new CommandDefinition(sql, cancellationToken: cts.Token);
+            var types = new[] { typeof(HazNameId), typeof(HazNameId) };
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            {
+                await connection.QueryAsync(cmd, types, objs => ((HazNameId)objs[0]).Name, splitOn: "ExtraId").ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
+
+        [FactSqlite]
         public async Task QueryUnbufferedAsync_ReadToEnd_DoesNotCancel()
         {
             using var connection = new CancelCountingConnection(GetSQLiteConnection());
