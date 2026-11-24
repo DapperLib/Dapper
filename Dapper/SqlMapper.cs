@@ -1245,7 +1245,12 @@ namespace Dapper
                 if (deserializer is null || deserializer.Hash != hash)
                 {
                     if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
+                    {
+                        reader.Dispose();
+                        reader = null;
+                        command.OnCompleted();
                         yield break;
+                    }
                     deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
