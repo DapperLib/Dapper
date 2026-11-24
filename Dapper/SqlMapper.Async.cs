@@ -573,6 +573,7 @@ namespace Dapper
 
                 CacheInfo? info = null;
                 string? masterSql = null;
+                Type? paramType = null;
                 if ((command.Flags & CommandFlags.Pipelined) != 0)
                 {
                     const int MAX_PENDING = 100;
@@ -587,8 +588,6 @@ namespace Dapper
                                 isFirst = false;
                                 cmd = command.TrySetupAsyncCommand(cnn, null);
                                 masterSql = cmd.CommandText;
-                                var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType());
-                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             else if (pending.Count >= MAX_PENDING)
                             {
@@ -601,6 +600,13 @@ namespace Dapper
                             else
                             {
                                 cmd = command.TrySetupAsyncCommand(cnn, null);
+                            }
+                            var type = obj.GetType();
+                            if (type != paramType)
+                            {
+                                paramType = type;
+                                var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, type);
+                                info = GetCacheInfo(identity, obj, command.AddToCache);
                             }
                             info!.ParamReader!(cmd, obj);
 
@@ -634,13 +640,18 @@ namespace Dapper
                         {
                             masterSql = cmd.CommandText;
                             isFirst = false;
-                            var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, obj.GetType());
-                            info = GetCacheInfo(identity, obj, command.AddToCache);
                         }
                         else
                         {
                             cmd.CommandText = masterSql; // because we do magic replaces on "in" etc
                             cmd.Parameters.Clear(); // current code is Add-tastic
+                        }
+                        var type = obj.GetType();
+                        if (type != paramType)
+                        {
+                            paramType = type;
+                            var identity = new Identity(command.CommandText, cmd.CommandType, cnn, null, type);
+                            info = GetCacheInfo(identity, obj, command.AddToCache);
                         }
                         info!.ParamReader!(cmd, obj);
                         total += await cmd.ExecuteNonQueryAsync(command.CancellationToken).ConfigureAwait(false);
