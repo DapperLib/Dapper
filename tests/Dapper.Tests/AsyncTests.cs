@@ -94,6 +94,50 @@ namespace Dapper.Tests
             Assert.Equal(new[] { "abc", "def" }, arr);
         }
 
+        [Theory]
+        [InlineData(CommandFlags.None)]
+        [InlineData(CommandFlags.Buffered)]
+        public async Task QueryAsync_ConvertsIntegerToBoolean_Issue1901(CommandFlags flags)
+        {
+            var rows = await connection.QueryAsync<bool>(new CommandDefinition(
+                "select 0 union all select 1", flags: flags));
+            Assert.Equal(new[] { false, true }, rows.ToArray());
+        }
+
+        [Theory]
+        [InlineData(CommandFlags.None)]
+        [InlineData(CommandFlags.Buffered)]
+        public async Task QueryAsync_ConvertsNullableBoolean_Issue1901(CommandFlags flags)
+        {
+            var rows = await connection.QueryAsync<bool?>(new CommandDefinition(
+                "select cast(null as int) union all select 1", flags: flags));
+            Assert.Equal(new bool?[] { null, true }, rows.ToArray());
+        }
+
+        [Theory]
+        [InlineData(CommandFlags.None)]
+        [InlineData(CommandFlags.Buffered)]
+        public async Task QueryAsync_ConvertsIntegerToInt64_Issue1901(CommandFlags flags)
+        {
+            var rows = await connection.QueryAsync<long>(new CommandDefinition("select 42", flags: flags));
+            Assert.Equal(42L, rows.Single());
+        }
+
+        [Theory]
+        [InlineData(CommandFlags.None)]
+        [InlineData(CommandFlags.Buffered)]
+        public async Task QueryAsync_ReportsConversionError_Issue1901(CommandFlags flags)
+        {
+            var error = await Assert.ThrowsAsync<DataException>(async () =>
+            {
+                var rows = await connection.QueryAsync<int>(new CommandDefinition(
+                    "select 'not an integer' as Value", flags: flags));
+                rows.ToArray();
+            });
+            Assert.Contains("Error parsing column 0", error.Message);
+            Assert.IsType<FormatException>(error.InnerException);
+        }
+
         [Fact]
         public async Task TestBasicStringUsageUnbufferedDynamicAsync()
         {
