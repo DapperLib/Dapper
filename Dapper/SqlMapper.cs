@@ -3214,9 +3214,13 @@ namespace Dapper
         private static T Parse<T>(object? value)
         {
             if (value is null || value is DBNull) return default!;
-            if (value is T t) return t;
             var type = typeof(T);
             type = Nullable.GetUnderlyingType(type) ?? type;
+            if (!type.IsEnum && typeHandlers.TryGetValue(type, out ITypeHandler? handler))
+            {
+                return (T)handler.Parse(type, value)!;
+            }
+            if (value is T t) return t;
             if (type.IsEnum)
             {
                 if (Settings.PreferTypeHandlersForEnums && typeHandlers.TryGetValue(type, out ITypeHandler? enumHandler))
@@ -3228,10 +3232,6 @@ namespace Dapper
                     value = Convert.ChangeType(value, Enum.GetUnderlyingType(type), CultureInfo.InvariantCulture);
                 }
                 return (T)Enum.ToObject(type, value);
-            }
-            if (typeHandlers.TryGetValue(type, out ITypeHandler? handler))
-            {
-                return (T)handler.Parse(type, value)!;
             }
             if (TryConvertDateTimeFamily(value, type, out var converted)) return (T)converted;
             return (T)Convert.ChangeType(value, type, CultureInfo.InvariantCulture);

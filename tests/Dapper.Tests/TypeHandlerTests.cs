@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Dapper.Tests
@@ -17,6 +18,108 @@ namespace Dapper.Tests
 
     public abstract class TypeHandlerTests<TProvider> : TestBase<TProvider> where TProvider : DatabaseProvider
     {
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task ExecuteScalar_UsesHandlerForMatchingType_Issue1218(bool useAsync, bool nullable)
+        {
+            var handler = new UtcScalarHandler();
+            SqlMapper.ResetTypeHandlers();
+            try
+            {
+                SqlMapper.AddTypeHandler(handler);
+                const string sql = "select cast('2026-01-02T03:04:05' as datetime) as Value";
+                var control = connection.QuerySingle<ScalarDateTimeRow>(sql);
+                Assert.Equal(DateTimeKind.Utc, control.Value.Kind);
+                Assert.Equal(1, handler.Calls);
+                handler.Calls = 0;
+
+                DateTime? value;
+                if (nullable)
+                    value = useAsync ? await connection.ExecuteScalarAsync<DateTime?>(sql) : connection.ExecuteScalar<DateTime?>(sql);
+                else
+                    value = useAsync ? await connection.ExecuteScalarAsync<DateTime>(sql) : connection.ExecuteScalar<DateTime>(sql);
+
+                Assert.Equal(DateTimeKind.Utc, value!.Value.Kind);
+                Assert.Equal(1, handler.Calls);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task ExecuteScalar_NoValueDoesNotInvokeHandler_Issue1218(bool useAsync, bool noRows)
+        {
+            var handler = new UtcScalarHandler();
+            SqlMapper.ResetTypeHandlers();
+            try
+            {
+                SqlMapper.AddTypeHandler(handler);
+                string sql = noRows ? "select cast(null as datetime) where 1 = 0" : "select cast(null as datetime)";
+                var value = useAsync ? await connection.ExecuteScalarAsync<DateTime?>(sql) : connection.ExecuteScalar<DateTime?>(sql);
+                Assert.Null(value);
+                Assert.Equal(0, handler.Calls);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task ExecuteScalar_PreservesEnumHandlerOptIn_Issue1218(bool useAsync, bool preferHandler)
+        {
+            var handler = new ScalarEnumHandler();
+            bool oldSetting = SqlMapper.Settings.PreferTypeHandlersForEnums;
+            SqlMapper.ResetTypeHandlers();
+            try
+            {
+                SqlMapper.AddTypeHandler(handler);
+                SqlMapper.Settings.PreferTypeHandlersForEnums = preferHandler;
+                var value = useAsync ? await connection.ExecuteScalarAsync<ScalarEnum>("select 1") : connection.ExecuteScalar<ScalarEnum>("select 1");
+                Assert.Equal(preferHandler ? ScalarEnum.Second : ScalarEnum.First, value);
+                Assert.Equal(preferHandler ? 1 : 0, handler.Calls);
+            }
+            finally
+            {
+                SqlMapper.Settings.PreferTypeHandlersForEnums = oldSetting;
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
+        private class ScalarDateTimeRow { public DateTime Value { get; set; } }
+        private enum ScalarEnum { First = 1, Second = 2 }
+
+        private class UtcScalarHandler : SqlMapper.TypeHandler<DateTime>
+        {
+            public int Calls;
+            public override DateTime Parse(object value)
+            {
+                Calls++;
+                return DateTime.SpecifyKind((DateTime)value, DateTimeKind.Utc);
+            }
+            public override void SetValue(IDbDataParameter parameter, DateTime value) => parameter.Value = value;
+        }
+
+        private class ScalarEnumHandler : SqlMapper.TypeHandler<ScalarEnum>
+        {
+            public int Calls;
+            public override ScalarEnum Parse(object value) { Calls++; return ScalarEnum.Second; }
+            public override void SetValue(IDbDataParameter parameter, ScalarEnum value) => parameter.Value = (int)value;
+        }
+
         [Fact]
         public void TestChangingDefaultStringTypeMappingToAnsiString()
         {
