@@ -445,8 +445,9 @@ namespace Dapper
             var lastMember = lastMemberAccess.Member;
             if (lastMember is PropertyInfo property)
             {
-                var set = property.GetSetMethod(true);
-                il.Emit(OpCodes.Callvirt, set!); // SET
+                var set = property.GetSetMethod(true)
+                    ?? throw new InvalidOperationException($"Property '{property.Name}' must have a setter to be used as an output parameter.");
+                il.Emit(OpCodes.Callvirt, set); // SET
             }
             else
             {
