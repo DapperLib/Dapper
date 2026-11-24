@@ -2555,9 +2555,15 @@ namespace Dapper
         internal static IList<LiteralToken> GetLiteralTokens(string sql)
         {
             if (string.IsNullOrEmpty(sql)) return LiteralToken.None;
+#if NETFRAMEWORK
+            // IndexOf is cheaper than the .NET Framework regex's initial scan.
+            int startIndex = sql.IndexOf('{');
+            if (startIndex < 0 || !CompiledRegex.LiteralTokens.IsMatch(sql, startIndex)) return LiteralToken.None;
+            var matches = CompiledRegex.LiteralTokens.Matches(sql, startIndex);
+#else
             if (!CompiledRegex.LiteralTokens.IsMatch(sql)) return LiteralToken.None;
-
             var matches = CompiledRegex.LiteralTokens.Matches(sql);
+#endif
             var found = new HashSet<string>(StringComparer.Ordinal);
             var list = new List<LiteralToken>(matches.Count);
             foreach (Match match in matches)
