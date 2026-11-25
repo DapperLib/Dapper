@@ -533,6 +533,58 @@ namespace Dapper.Tests
             }
         }
 
+        public class AnsiStringHandler : SqlMapper.TypeHandler<string>
+        {
+            public override void SetValue(IDbDataParameter parameter, string? value)
+            {
+                parameter.DbType = DbType.AnsiString;
+                parameter.Value = value;
+            }
+
+            public override string Parse(object? value) => (string)value!;
+        }
+
+        [Fact]
+        public void TestListExpansionUsesStringTypeHandler()
+        {
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.RemoveTypeMap(typeof(string));
+            SqlMapper.AddTypeHandler(new AnsiStringHandler());
+            SqlMapper.PurgeQueryCache();
+            try
+            {
+                var baseTypes = connection.Query<string>(
+                    "select SQL_VARIANT_PROPERTY(CONVERT(sql_variant, @values1), 'BaseType') where 'a' in @values",
+                    new { values = new[] { "a", "b" } }).ToList();
+                Assert.Equal(new[] { "varchar" }, baseTypes);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+                SqlMapper.AddTypeMap(typeof(string), DbType.String);
+                SqlMapper.PurgeQueryCache();
+            }
+        }
+
+        [Fact]
+        public void TestListExpansionUsesValueTypeHandler()
+        {
+            SqlMapper.ResetTypeHandlers();
+            SqlMapper.AddTypeHandler(RatingValueHandler.Default);
+            try
+            {
+                var values = new[] { new RatingValue { Value = 1 }, new RatingValue { Value = 3 } };
+                var found = connection.Query<int>(
+                    "select n from (values (1), (2), (3)) x(n) where n in @values order by n",
+                    new { values }).ToList();
+                Assert.Equal(new[] { 1, 3 }, found);
+            }
+            finally
+            {
+                SqlMapper.ResetTypeHandlers();
+            }
+        }
+
         [Fact]
         public void TestReaderWhenResultsChange()
         {
