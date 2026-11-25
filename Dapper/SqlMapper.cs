@@ -1246,27 +1246,29 @@ namespace Dapper
                 // with the CloseConnection flag, so the reader will deal with the connection; we
                 // still need something in the "finally" to ensure that broken SQL still results
                 // in the connection closing itself
-                var deserializer = info.Deserializer;
-                int hash = GetColumnHash(reader);
-                if (deserializer is null || deserializer.Hash != hash)
+                if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
                 {
-                    if (reader.FieldCount == 0) //https://code.google.com/p/dapper-dot-net/issues/detail?id=57
-                    {
-                        reader.Dispose();
-                        reader = null;
-                        command.OnCompleted();
-                        yield break;
-                    }
-                    deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                    if (command.AddToCache) SetQueryCache(identity, info);
+                    reader.Dispose();
+                    reader = null;
+                    command.OnCompleted();
+                    yield break;
                 }
-
-                var func = deserializer.Func;
-                var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                while (reader.Read())
+                if (reader.Read())
                 {
-                    object? val = func(reader);
-                    yield return GetValue<T>(reader, effectiveType, val);
+                    var deserializer = info.Deserializer;
+                    int hash = GetColumnHash(reader);
+                    if (deserializer is null || deserializer.Hash != hash)
+                    {
+                        deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        if (command.AddToCache) SetQueryCache(identity, info);
+                    }
+
+                    var func = deserializer.Func;
+                    do
+                    {
+                        object? val = func(reader);
+                        yield return GetValue<T>(reader, effectiveType, val);
+                    } while (reader.Read());
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 // happy path; close the reader cleanly - no
