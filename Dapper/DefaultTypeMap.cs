@@ -94,13 +94,14 @@ namespace Dapper
                         break;
                     }
 
-                    if (types[i] == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
+                    var columnType = Nullable.GetUnderlyingType(types[i]) ?? types[i];
+                    if (columnType == typeof(byte[]) && ctorParameters[i].ParameterType.FullName == SqlMapper.LinqBinary)
                         continue;
                     var unboxedType = Nullable.GetUnderlyingType(ctorParameters[i].ParameterType) ?? ctorParameters[i].ParameterType;
-                    if ((unboxedType != types[i] && !SqlMapper.HasTypeHandler(unboxedType))
-                        && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == types[i])
-                        && !(unboxedType == typeof(char) && types[i] == typeof(string))
-                        && !(unboxedType.IsEnum && types[i] == typeof(string)))
+                    if ((unboxedType != columnType && !SqlMapper.HasTypeHandler(unboxedType))
+                        && !(unboxedType.IsEnum && Enum.GetUnderlyingType(unboxedType) == columnType)
+                        && !(unboxedType == typeof(char) && columnType == typeof(string))
+                        && !(unboxedType.IsEnum && columnType == typeof(string)))
                     {
                         break;
                     }
