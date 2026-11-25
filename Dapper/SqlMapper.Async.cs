@@ -426,56 +426,65 @@ namespace Dapper
             var info = GetCacheInfo(identity, param, command.AddToCache);
             bool wasClosed = cnn.State == ConnectionState.Closed;
             var cancel = command.CancellationToken;
-            using var cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
+            DbCommand? cmd = command.TrySetupAsyncCommand(cnn, info.ParamReader);
             DbDataReader? reader = null;
             try
             {
                 if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                 reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
+                if (reader.FieldCount == 0)
+                {
+                    reader.Dispose();
+                    reader = null;
+                    command.OnCompleted();
+                    return Enumerable.Empty<T>();
+                }
+                if (!command.Buffered)
+                {
+                    // The reader and its command must outlive this async call.
+                    wasClosed = false;
+                    var deferred = ExecuteReaderSync<T>(reader, cmd, effectiveType, info, identity, command.AddToCache, command.Parameters);
+                    reader = null;
+                    cmd = null;
+                    return deferred;
+                }
+                if (!await reader.ReadAsync(cancel).ConfigureAwait(false))
+                {
+                    while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+                    reader.Dispose();
+                    reader = null;
+                    command.OnCompleted();
+                    return Enumerable.Empty<T>();
+                }
+
                 var deserializer = info.Deserializer;
                 int hash = GetColumnHash(reader);
                 if (deserializer is null || deserializer.Hash != hash)
                 {
-                    if (reader.FieldCount == 0)
-                    {
-                        reader.Dispose();
-                        reader = null;
-                        command.OnCompleted();
-                        return Enumerable.Empty<T>();
-                    }
                     deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
                     if (command.AddToCache) SetQueryCache(identity, info);
                 }
 
                 var func = deserializer.Func;
 
-                if (command.Buffered)
+                var buffer = new List<T>();
+                do
                 {
-                    var buffer = new List<T>();
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                    while (await reader.ReadAsync(cancel).ConfigureAwait(false))
-                    {
-                        object val = func(reader);
-                        buffer.Add(GetValue<T>(reader, effectiveType, val));
-                    }
-                    while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
-                    command.OnCompleted();
-                    return buffer;
-                }
-                else
-                {
-                    // can't use ReadAsync / cancellation; but this will have to do
-                    wasClosed = false; // don't close if handing back an open reader; rely on the command-behavior
-                    var deferred = ExecuteReaderSync<T>(reader, effectiveType, func, command.Parameters);
-                    reader = null; // to prevent it being disposed before the caller gets to see it
-                    return deferred;
-                }
+                    object val = func(reader);
+                    buffer.Add(GetValue<T>(reader, effectiveType, val));
+                } while (await reader.ReadAsync(cancel).ConfigureAwait(false));
+                while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
+                command.OnCompleted();
+                return buffer;
             }
             finally
             {
-                using (reader) { /* dispose if non-null */ }
-                if (wasClosed) cnn.Close();
+                using (cmd)
+                {
+                    using (reader) { /* dispose if non-null */ }
+                    if (wasClosed) cnn.Close();
+                }
             }
         }
 
@@ -1030,13 +1039,25 @@ namespace Dapper
             }
         }
 
-        private static IEnumerable<T> ExecuteReaderSync<T>(DbDataReader reader, Type effectiveType, Func<DbDataReader, object> func, object? parameters)
+        private static IEnumerable<T> ExecuteReaderSync<T>(DbDataReader reader, DbCommand command, Type effectiveType, CacheInfo info, Identity identity, bool addToCache, object? parameters)
         {
+            using (command)
             using (reader)
             {
-                while (reader.Read())
+                if (reader.Read())
                 {
-                    yield return GetValue<T>(reader, effectiveType, func(reader));
+                    var deserializer = info.Deserializer;
+                    int hash = GetColumnHash(reader);
+                    if (deserializer is null || deserializer.Hash != hash)
+                    {
+                        deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                        if (addToCache) SetQueryCache(identity, info);
+                    }
+                    var func = deserializer.Func;
+                    do
+                    {
+                        yield return GetValue<T>(reader, effectiveType, func(reader));
+                    } while (reader.Read());
                 }
                 while (reader.NextResult()) { /* ignore subsequent result sets */ }
                 (parameters as IParameterCallbacks)?.OnCompleted();
@@ -1354,34 +1375,33 @@ namespace Dapper
                     if (wasClosed) await cnn.TryOpenAsync(cancel).ConfigureAwait(false);
                     reader = await ExecuteReaderWithFlagsFallbackAsync(cmd, wasClosed, CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancel).ConfigureAwait(false);
 
-                    var deserializer = info.Deserializer;
-                    int hash = GetColumnHash(reader);
-                    if (deserializer is null || deserializer.Hash != hash)
+                    if (reader.FieldCount == 0)
                     {
-                        if (reader.FieldCount == 0)
-                        {
-                            // no result set; close the reader cleanly - no
-                            // need for "Cancel" etc
 #if NET5_0_OR_GREATER
-                            await reader.DisposeAsync();
+                        await reader.DisposeAsync();
 #else
-                            reader.Dispose();
+                        reader.Dispose();
 #endif
-                            reader = null;
-                            command.OnCompleted();
-                            yield break;
-                        }
-                        deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
-                        if (command.AddToCache) SetQueryCache(identity, info);
+                        reader = null;
+                        command.OnCompleted();
+                        yield break;
                     }
-
-                    var func = deserializer.Func;
-
-                    var convertToType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-                    while (await reader.ReadAsync(cancel).ConfigureAwait(false))
+                    if (await reader.ReadAsync(cancel).ConfigureAwait(false))
                     {
-                        object val = func(reader);
-                        yield return GetValue<T>(reader, effectiveType, val);
+                        var deserializer = info.Deserializer;
+                        int hash = GetColumnHash(reader);
+                        if (deserializer is null || deserializer.Hash != hash)
+                        {
+                            deserializer = info.Deserializer = new DeserializerState(hash, GetDeserializer(effectiveType, reader, 0, -1, false));
+                            if (command.AddToCache) SetQueryCache(identity, info);
+                        }
+
+                        var func = deserializer.Func;
+                        do
+                        {
+                            object val = func(reader);
+                            yield return GetValue<T>(reader, effectiveType, val);
+                        } while (await reader.ReadAsync(cancel).ConfigureAwait(false));
                     }
                     while (await reader.NextResultAsync(cancel).ConfigureAwait(false)) { /* ignore subsequent result sets */ }
                     // happy path; close the reader cleanly - no
