@@ -492,6 +492,10 @@ namespace Dapper
                 }
                 type = Enum.GetUnderlyingType(type);
             }
+            if (typeHandlers.TryGetValue(type, out handler))
+            {
+                return DbType.Object;
+            }
             if (typeMap.TryGetValue(type, out var mapEntry))
             {
                 if ((mapEntry.Flags & TypeMapEntryFlags.SetType) == 0)
@@ -503,10 +507,6 @@ namespace Dapper
             if (type.FullName == LinqBinary)
             {
                 return DbType.Binary;
-            }
-            if (typeHandlers.TryGetValue(type, out handler))
-            {
-                return DbType.Object;
             }
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
@@ -2219,6 +2219,7 @@ namespace Dapper
                 if (list is not null && !viaSplit)
                 {
                     object? lastValue = null;
+                    ITypeHandler? handler = null;
                     foreach (var item in list)
                     {
                         if (++count == 1) // first item: fetch some type info
@@ -2229,7 +2230,7 @@ namespace Dapper
                             }
                             if (!isDbString)
                             {
-                                dbType = LookupDbType(item.GetType(), "", true, out var handler);
+                                dbType = LookupDbType(item.GetType(), "", true, out handler);
                             }
                         }
                         var nextName = namePrefix + count.ToString();
@@ -2250,13 +2251,25 @@ namespace Dapper
                                 }
                             }
 
-                            var tmp = listParam.Value = SanitizeParameterValue(item);
-                            if (tmp is not null && tmp is not DBNull)
-                                lastValue = tmp; // only interested in non-trivial values for padding
-
-                            if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
+                            if (handler is not null)
                             {
-                                listParam.DbType = dbType.GetValueOrDefault();
+                                if (DynamicParameters.ShouldSetDbType(dbType))
+                                {
+                                    listParam.DbType = dbType.GetValueOrDefault();
+                                }
+                                handler.SetValue(listParam, item ?? DBNull.Value);
+                                lastValue = listParam.Value;
+                            }
+                            else
+                            {
+                                var tmp = listParam.Value = SanitizeParameterValue(item);
+                                if (tmp is not null && tmp is not DBNull)
+                                    lastValue = tmp; // only interested in non-trivial values for padding
+
+                                if (DynamicParameters.ShouldSetDbType(dbType) && listParam.DbType != dbType.GetValueOrDefault())
+                                {
+                                    listParam.DbType = dbType.GetValueOrDefault();
+                                }
                             }
                             command.Parameters.Add(listParam);
                         }
