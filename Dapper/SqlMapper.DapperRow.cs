@@ -44,13 +44,12 @@ namespace Dapper
 
             internal bool TryGetValue(int index, out object? value)
             {
-                if (index < 0)
+                if (index < 0 || index >= values.Length)
                 { // doesn't exist
                     value = null;
                     return false;
                 }
-                // exists, **even if** we don't have a value; consider table rows heterogeneous
-                value = index < values.Length ? values[index] : null;
+                value = values[index];
                 if (value is DeadValue)
                 { // pretend it isn't here
                     value = null;
@@ -82,9 +81,10 @@ namespace Dapper
             public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
             {
                 var names = table.FieldNames;
-                for (var i = 0; i < names.Length; i++)
+                int count = Math.Min(names.Length, values.Length);
+                for (var i = 0; i < count; i++)
                 {
-                    object? value = i < values.Length ? values[i] : null!;
+                    object? value = values[i];
                     if (!(value is DeadValue))
                     {
                         yield return new KeyValuePair<string, object?>(names[i], value);
