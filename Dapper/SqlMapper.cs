@@ -3602,7 +3602,7 @@ namespace Dapper
                     if (ctor is null)
                     {
                         string proposedTypes = "(" + string.Join(", ", types.Select((t, i) => t.FullName + " " + names[i]).ToArray()) + ")";
-                        throw new InvalidOperationException($"A parameterless default constructor or one matching signature {proposedTypes} is required for {type.FullName} materialization");
+                        throw new InvalidOperationException($"A parameterless default constructor or a constructor compatible with column signature {proposedTypes} is required for {type.FullName} materialization. Nullable constructor parameters are supported.");
                     }
 
                     if (ctor.GetParameters().Length == 0)
